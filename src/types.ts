@@ -102,7 +102,17 @@ export interface HadithItem {
 export interface AamalCheckItem {
   id: string;
   label: string;
-  category: 'prayer' | 'sunnah' | 'quran' | 'dhikr' | 'charity' | 'character';
+  category:
+    | 'prayer'
+    | 'sunnah'
+    | 'quran'
+    | 'dhikr'
+    | 'morning_evening'
+    | 'bedtime'
+    | 'character'
+    | 'knowledge'
+    | 'social'
+    | 'charity';
   arabicLabel?: string;
   completed: boolean;
   points: number;
