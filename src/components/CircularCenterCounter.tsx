@@ -4,6 +4,7 @@ import { ThemeMode } from '../types';
 
 interface CircularCenterCounterProps {
   totalCount: number;
+  dailyCount?: number;
   totalZikrs: number;
   completedGoals: number;
   onGlobalReset: () => void;
@@ -13,6 +14,7 @@ interface CircularCenterCounterProps {
 
 export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
   totalCount,
+  dailyCount,
   totalZikrs,
   completedGoals,
   onGlobalReset,
@@ -20,6 +22,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
   themeMode = 'day',
 }) => {
   const isDay = themeMode === 'day';
+  const effectiveDaily = typeof dailyCount === 'number' ? dailyCount : totalCount;
 
   return (
     <section
@@ -123,18 +126,20 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
             </span>
 
             {/* Inset Sub-metrics pill */}
-            <div
-              className={`mt-2 flex items-center gap-2 text-[10px] px-3 py-1 rounded-full font-semibold border ${
-                isDay
-                  ? 'bg-white text-[#1c6469] border-[#d2ece9] shadow-sm'
-                  : 'bg-[#0a262c] text-[#86b5bc] border-[#184850]'
-              }`}
-            >
-              <span>{totalZikrs} Active Counters</span>
-              <span>•</span>
-              <span className={isDay ? 'text-amber-600 font-bold' : 'text-amber-300 font-bold'}>
-                {completedGoals} Goals Met
-              </span>
+            <div className="mt-2 flex flex-col items-center gap-1">
+              <div
+                className={`flex items-center gap-2 text-[10px] px-3 py-1 rounded-full font-semibold border ${
+                  isDay
+                    ? 'bg-white text-[#1c6469] border-[#d2ece9] shadow-sm'
+                    : 'bg-[#0a262c] text-[#86b5bc] border-[#184850]'
+                }`}
+              >
+                <span>আজকের জিকির: <strong className="text-emerald-500 font-mono">{effectiveDaily.toLocaleString()}</strong></span>
+                <span>•</span>
+                <span className={isDay ? 'text-amber-600 font-bold' : 'text-amber-300 font-bold'}>
+                  {completedGoals} Goals Met
+                </span>
+              </div>
             </div>
           </div>
         </div>

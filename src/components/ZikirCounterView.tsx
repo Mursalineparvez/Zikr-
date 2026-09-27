@@ -6,6 +6,7 @@ import { Plus, FileText, CheckCircle2, Target, RotateCcw } from 'lucide-react';
 
 interface ZikirCounterViewProps {
   masterTotal: number;
+  dailyTotal?: number;
   zikrs: ZikrItem[];
   completedGoals: number;
   onIncrement: (id: string) => void;
@@ -27,6 +28,7 @@ interface ZikirCounterViewProps {
 
 export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   masterTotal,
+  dailyTotal,
   zikrs,
   completedGoals,
   onIncrement,
@@ -59,6 +61,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
       {/* Center: Dedicated Circular Master Total Counter */}
       <CircularCenterCounter
         totalCount={masterTotal}
+        dailyCount={dailyTotal}
         totalZikrs={zikrs.length}
         completedGoals={completedGoals}
         onGlobalReset={onGlobalReset}

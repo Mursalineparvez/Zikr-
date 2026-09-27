@@ -25,6 +25,28 @@ import {
 } from 'lucide-react';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
+import { findSavedAccount, saveAccountToRegistry, GOOGLE_DEMO_ACCOUNTS } from '../utils/accountRegistry';
+
+const GoogleIcon = () => (
+  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+    <path
+      fill="#4285F4"
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+    />
+  </svg>
+);
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -58,7 +80,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   // Sub-modals / views
   const [activeSubModal, setActiveSubModal] = useState<
-    'none' | 'edit_profile' | 'feedback' | 'bookmarks' | 'downloads' | 'logout_confirm'
+    'none' | 'edit_profile' | 'google_auth' | 'feedback' | 'bookmarks' | 'downloads' | 'logout_confirm'
   >('none');
 
   // Edit Profile Form State (User-editable)
@@ -68,7 +90,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [editLocation, setEditLocation] = useState(userProfile.location || '');
   const [editDeviceModel, setEditDeviceModel] = useState(userProfile.deviceModel || '');
   const [editOsVersion, setEditOsVersion] = useState(userProfile.osVersion || '');
+  const [accountRecoveryNotice, setAccountRecoveryNotice] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Custom Google input state
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+  const [customGoogleName, setCustomGoogleName] = useState('');
 
   // Feedback Form State
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -195,18 +222,64 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
   };
 
+  // Handle instant Google Sign In
+  const handleGoogleSignIn = (account: { name: string; emailOrPhone: string; photoUrl: string }) => {
+    const existing = findSavedAccount(account.emailOrPhone);
+    const updated: UserProfile = {
+      ...userProfile,
+      name: account.name,
+      emailOrPhone: account.emailOrPhone,
+      photoUrl: account.photoUrl || (existing?.photoUrl ?? DEFAULT_AVATARS[0]),
+      location: existing?.location || userProfile.location || '4C2J 8FX, BD',
+      deviceModel: existing?.deviceModel || userProfile.deviceModel || 'vivo ~~ V2144',
+      osVersion: existing?.osVersion || userProfile.osVersion || '35_15',
+      isSignedIn: true,
+      isVerified: true,
+      authProvider: 'google',
+    };
+    saveAccountToRegistry(updated);
+    onUpdateProfile(updated);
+    setActiveSubModal('none');
+    if (soundEnabled) soundHaptics.playMilestone();
+  };
+
+  // Check and restore previous account when typing email or phone
+  const handleEmailOrPhoneChange = (val: string) => {
+    setEditEmailOrPhone(val);
+    if (!val.trim()) {
+      setAccountRecoveryNotice(null);
+      return;
+    }
+    const existing = findSavedAccount(val);
+    if (existing && existing.name) {
+      setAccountRecoveryNotice(`✨ Welcome back! Restored previous profile for "${existing.name}".`);
+      setEditName(existing.name);
+      if (existing.photoUrl) setEditPhotoUrl(existing.photoUrl);
+      if (existing.location) setEditLocation(existing.location);
+      if (existing.deviceModel) setEditDeviceModel(existing.deviceModel);
+      if (existing.osVersion) setEditOsVersion(existing.osVersion);
+    } else {
+      setAccountRecoveryNotice(null);
+    }
+  };
+
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateProfile({
+    const existing = findSavedAccount(editEmailOrPhone);
+    const updated: UserProfile = {
       ...userProfile,
-      name: editName.trim() || 'User',
+      name: editName.trim() || existing?.name || 'User',
       emailOrPhone: editEmailOrPhone.trim() || '',
-      photoUrl: editPhotoUrl,
-      location: editLocation.trim() || '4C2J 8FX, BD',
-      deviceModel: editDeviceModel.trim() || 'vivo ~~ V2144',
-      osVersion: editOsVersion.trim() || '35_15',
+      photoUrl: editPhotoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
+      location: editLocation.trim() || existing?.location || '4C2J 8FX, BD',
+      deviceModel: editDeviceModel.trim() || existing?.deviceModel || 'vivo ~~ V2144',
+      osVersion: editOsVersion.trim() || existing?.osVersion || '35_15',
       isSignedIn: true,
-    });
+      isVerified: true,
+      authProvider: userProfile.authProvider || 'email',
+    };
+    saveAccountToRegistry(updated);
+    onUpdateProfile(updated);
     setActiveSubModal('none');
     if (soundEnabled) soundHaptics.playMilestone();
   };
@@ -323,18 +396,25 @@ ${msg}`;
                   ) : (
                     <User className="w-7 h-7 text-emerald-600 dark:text-emerald-300" />
                   )}
+                  {userProfile.authProvider === 'google' && (
+                    <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-xs">
+                      <GoogleIcon />
+                    </div>
+                  )}
                 </div>
 
                 {/* Name and Email */}
                 <div className="min-w-0">
-                  <h3 className="font-black text-sm sm:text-base truncate leading-snug">
-                    {userProfile.name}
-                  </h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-black text-sm sm:text-base truncate leading-snug">
+                      {userProfile.name}
+                    </h3>
+                  </div>
                   <p className="text-xs text-slate-500 dark:text-teal-300/80 truncate font-mono">
                     {userProfile.emailOrPhone || 'Verified ZikrMate User'}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <div className="flex items-center gap-1 mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                    <ShieldCheck className="w-3.5 h-3.5 fill-emerald-500/20" />
                     <span>ZikrMate Verified</span>
                   </div>
                 </div>
@@ -358,7 +438,7 @@ ${msg}`;
             </div>
           ) : (
             <div
-              className={`p-4 rounded-2xl border shadow-md transition-all flex items-center justify-between gap-3 ${
+              className={`p-4 rounded-2xl border shadow-md transition-all space-y-3 ${
                 isDay
                   ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'
                   : 'bg-gradient-to-r from-[#09282f] to-[#0e3b45] border-[#1f5e6b]'
@@ -370,23 +450,40 @@ ${msg}`;
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-bold text-sm leading-snug text-slate-900 dark:text-white">
-                    Sign In / লগইন করুন
+                    Sign In to ZikrMate (অ্যাকাউন্ট লগইন)
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-teal-200/80 truncate">
-                    আপনার নাম ও ইমেইল যুক্ত করুন
+                  <p className="text-[11px] text-slate-500 dark:text-teal-200/80">
+                    ডাটা সেভ ও ভেরিফায়েড প্রোফাইল পেতে লগইন করুন
                   </p>
                 </div>
               </div>
 
-              <button
-                onClick={() => {
-                  setActiveSubModal('edit_profile');
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer shrink-0"
-              >
-                Sign In
-              </button>
+              {/* Action Buttons: Google vs Email/Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSubModal('google_auth');
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                >
+                  <GoogleIcon />
+                  <span>Sign In with Google</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSubModal('edit_profile');
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Email / Phone Sign In</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -566,6 +663,30 @@ ${msg}`;
                 </button>
               </div>
 
+              {/* Google Fast Sign In Button */}
+              <button
+                type="button"
+                onClick={() => setActiveSubModal('google_auth')}
+                className="w-full py-2.5 px-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+              >
+                <GoogleIcon />
+                <span>Continue with Google (গুগল দিয়ে লগইন)</span>
+              </button>
+
+              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                <div className="flex-1 h-px bg-slate-200 dark:bg-teal-900/60" />
+                <span>Or with Email & Phone</span>
+                <div className="flex-1 h-px bg-slate-200 dark:bg-teal-900/60" />
+              </div>
+
+              {/* Account Recovery Banner */}
+              {accountRecoveryNotice && (
+                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-[11px] text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1.5 animate-in fade-in">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                  <span>{accountRecoveryNotice}</span>
+                </div>
+              )}
+
               {/* Photo selector */}
               <div className="flex flex-col items-center space-y-2">
                 <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-emerald-500 shadow-md">
@@ -623,7 +744,7 @@ ${msg}`;
               <form onSubmit={handleSaveProfile} className="space-y-3 text-xs">
                 <div>
                   <label className="font-bold block mb-1 text-slate-500 dark:text-teal-200">
-                    Full Name
+                    Full Name (নাম)
                   </label>
                   <input
                     type="text"
@@ -641,13 +762,13 @@ ${msg}`;
 
                 <div>
                   <label className="font-bold block mb-1 text-slate-500 dark:text-teal-200">
-                    Email / Phone
+                    Email / Phone (ইমেইল বা ফোন)
                   </label>
                   <input
                     type="text"
                     required
                     value={editEmailOrPhone}
-                    onChange={(e) => setEditEmailOrPhone(e.target.value)}
+                    onChange={(e) => handleEmailOrPhoneChange(e.target.value)}
                     placeholder="Enter email or phone number..."
                     className={`w-full rounded-xl px-3 py-2 border font-semibold focus:outline-none ${
                       isDay
@@ -738,6 +859,103 @@ ${msg}`;
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- SUB-MODAL: GOOGLE AUTH CHOOSER ----------------- */}
+        {activeSubModal === 'google_auth' && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+            <div
+              className={`w-full max-w-sm rounded-3xl border p-5 shadow-2xl space-y-4 ${
+                isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0f343c] text-white border-[#1c5763]'
+              }`}
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+                <div className="flex items-center gap-2">
+                  <GoogleIcon />
+                  <h3 className="font-bold text-sm">Sign In with Google</h3>
+                </div>
+                <button
+                  onClick={() => setActiveSubModal('none')}
+                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-teal-900/40"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="text-xs text-slate-500 dark:text-teal-200">
+                Choose an account to continue to <strong>ZikrMate</strong>:
+              </div>
+
+              {/* Demo / Saved Google Accounts */}
+              <div className="space-y-2">
+                {GOOGLE_DEMO_ACCOUNTS.map((acc, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleGoogleSignIn(acc)}
+                    className={`w-full p-2.5 rounded-2xl border flex items-center gap-3 transition active:scale-95 text-left cursor-pointer ${
+                      isDay
+                        ? 'bg-slate-50 hover:bg-emerald-50/70 border-slate-200'
+                        : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850]'
+                    }`}
+                  >
+                    <img
+                      src={acc.photoUrl}
+                      alt={acc.name}
+                      className="w-9 h-9 rounded-full object-cover border border-emerald-400 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-xs truncate">{acc.name}</div>
+                      <div className="text-[11px] text-slate-400 font-mono truncate">{acc.emailOrPhone}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom Google Account Input */}
+              <div className="pt-2 border-t border-slate-100 dark:border-teal-900/40 space-y-2">
+                <div className="text-[11px] font-bold text-slate-500 dark:text-teal-300">
+                  Or enter your Google Account:
+                </div>
+                <input
+                  type="text"
+                  placeholder="Your Full Name..."
+                  value={customGoogleName}
+                  onChange={(e) => setCustomGoogleName(e.target.value)}
+                  className={`w-full rounded-xl px-3 py-2 border text-xs focus:outline-none ${
+                    isDay
+                      ? 'bg-slate-50 border-slate-300 text-slate-900'
+                      : 'bg-[#092226] border-[#184850] text-white'
+                  }`}
+                />
+                <input
+                  type="email"
+                  placeholder="yourname@gmail.com..."
+                  value={customGoogleEmail}
+                  onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                  className={`w-full rounded-xl px-3 py-2 border text-xs focus:outline-none ${
+                    isDay
+                      ? 'bg-slate-50 border-slate-300 text-slate-900'
+                      : 'bg-[#092226] border-[#184850] text-white'
+                  }`}
+                />
+                <button
+                  type="button"
+                  disabled={!customGoogleEmail.trim() || !customGoogleName.trim()}
+                  onClick={() => {
+                    handleGoogleSignIn({
+                      name: customGoogleName.trim(),
+                      emailOrPhone: customGoogleEmail.trim(),
+                      photoUrl: DEFAULT_AVATARS[0],
+                    });
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
+                >
+                  Confirm Google Sign In
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -912,6 +1130,25 @@ ${msg}`;
                               : 'bg-[#092226] border-[#184850] text-white'
                           }`}
                         />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1.5 pt-1 text-[10px]">
+                      <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                        <div className="text-slate-400 dark:text-teal-300/70 font-semibold">App Version</div>
+                        <div className="font-bold text-emerald-700 dark:text-emerald-300 font-mono">411_38.1</div>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                        <div className="text-slate-400 dark:text-teal-300/70 font-semibold">App Lang</div>
+                        <div className="font-bold text-emerald-700 dark:text-emerald-300">
+                          {selectedLanguage === 'bn' ? 'Bangla' : selectedLanguage === 'en' ? 'English' : 'Arabic'}
+                        </div>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-center">
+                        <div className="text-slate-400 dark:text-teal-300/70 font-semibold">Device Lang</div>
+                        <div className="font-bold text-emerald-700 dark:text-emerald-300 font-mono">
+                          {typeof navigator !== 'undefined' && navigator.language ? navigator.language.split('-')[0] : 'en'}
+                        </div>
                       </div>
                     </div>
                   </div>

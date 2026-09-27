@@ -118,6 +118,13 @@ export interface AamalDayLog {
   items: AamalCheckItem[];
   quranPagesRead: number;
   dhikrCount: number;
+  zikrBreakdown?: Array<{
+    name: string;
+    count: number;
+    target?: number;
+    arabic?: string;
+    transliteration?: string;
+  }>;
   reflectionNotes?: string;
   completedRatio: number; // 0 to 1
 }
@@ -135,6 +142,8 @@ export interface UserProfile {
   emailOrPhone: string;
   photoUrl: string;
   isSignedIn: boolean;
+  isVerified?: boolean;
+  authProvider?: 'google' | 'email' | 'phone' | 'guest';
   location?: string;
   deviceModel?: string;
   osVersion?: string;

@@ -23,6 +23,9 @@ import { ZikrModal } from './components/ZikrModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { StandaloneExportModal } from './components/StandaloneExportModal';
 import { ProfileModal } from './components/ProfileModal';
+import { HistoryReportModal } from './components/HistoryReportModal';
+import { saveAccountToRegistry } from './utils/accountRegistry';
+import { createInitialDayLog } from './utils/aamalTrackerData';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -151,6 +154,9 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('zikrmate_user_profile', JSON.stringify(userProfile));
+      if (userProfile.isSignedIn && (userProfile.emailOrPhone || userProfile.name)) {
+        saveAccountToRegistry(userProfile);
+      }
     } catch {}
   }, [userProfile]);
 
@@ -158,16 +164,34 @@ export default function App() {
   const [isZikrModalOpen, setIsZikrModalOpen] = useState(false);
   const [zikrToEdit, setZikrToEdit] = useState<ZikrItem | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isHistoryReportModalOpen, setIsHistoryReportModalOpen] = useState(false);
   const [isStandaloneModalOpen, setIsStandaloneModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Wake lock sentinel ref
   const wakeLockRef = useRef<any>(null);
 
-  // Save zikrs to localStorage on every change
+  // Save zikrs to localStorage on every change and sync with today's Aamal day log
   useEffect(() => {
     try {
       localStorage.setItem('noor_zikr_items', JSON.stringify(zikrs));
+
+      // Synchronize with today's Aamal day log
+      const todayKey = new Date().toISOString().split('T')[0];
+      const aamalKey = `zikrmate_aamal_${todayKey}`;
+      const raw = localStorage.getItem(aamalKey);
+      let dayLog = raw ? JSON.parse(raw) : createInitialDayLog(todayKey);
+
+      dayLog.dhikrCount = zikrs.reduce((sum, z) => sum + (z.count || 0), 0);
+      dayLog.zikrBreakdown = zikrs.map((z) => ({
+        name: z.name,
+        count: z.count || 0,
+        target: z.target,
+        arabic: z.arabic,
+        transliteration: z.transliteration,
+      }));
+
+      localStorage.setItem(aamalKey, JSON.stringify(dayLog));
     } catch (e) {
       console.error('Failed to save zikrs to localStorage', e);
     }
@@ -193,6 +217,88 @@ export default function App() {
     document.body.classList.toggle('theme-day', isDay);
     document.body.classList.toggle('theme-night', !isDay);
   }, [settings]);
+
+  // Lifetime Cumulative Grand Total Count (Persists across midnight resets until manual Reset All)
+  const [lifetimeTotalCount, setLifetimeTotalCount] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('zikrmate_lifetime_total_count');
+      if (saved !== null) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 0) return parsed;
+      }
+    } catch {}
+    // Initial fallback to current zikrs sum
+    return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('zikrmate_lifetime_total_count', String(lifetimeTotalCount));
+    } catch {}
+  }, [lifetimeTotalCount]);
+
+  // Master Daily Total Count (Resets at midnight 12:00 AM)
+  const dailyTotal = useMemo(() => {
+    return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+  }, [zikrs]);
+
+  // Midnight Auto-Refresh: Checks if a new day has started (12:00 AM / 00:00)
+  useEffect(() => {
+    const checkMidnightRefresh = () => {
+      const todayKey = new Date().toISOString().split('T')[0];
+      const lastActiveDate = localStorage.getItem('zikrmate_last_active_date_key');
+
+      if (!lastActiveDate) {
+        localStorage.setItem('zikrmate_last_active_date_key', todayKey);
+        return;
+      }
+
+      if (lastActiveDate !== todayKey) {
+        // A new day has begun! Auto-archive yesterday's zikrs if counts were > 0
+        const currentSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+        if (currentSum > 0) {
+          const autoSession: HistorySession = {
+            id: `midnight_session_${Date.now()}`,
+            timestamp: Date.now(),
+            dateStr: `${lastActiveDate} (Midnight Auto-Save)`,
+            totalCount: currentSum,
+            breakdown: zikrs.map((z) => ({
+              name: z.name,
+              count: z.count,
+              target: z.target,
+              arabic: z.arabic,
+            })),
+          };
+
+          setHistorySessions((prev) => [autoSession, ...prev]);
+
+          // Also update aamal log for that date if exists
+          try {
+            const aamalKey = `zikrmate_aamal_${lastActiveDate}`;
+            const rawAamal = localStorage.getItem(aamalKey);
+            if (rawAamal) {
+              const parsed = JSON.parse(rawAamal);
+              parsed.dhikrCount = (parsed.dhikrCount || 0) + currentSum;
+              localStorage.setItem(aamalKey, JSON.stringify(parsed));
+            }
+          } catch {}
+        }
+
+        // Reset today's individual counters to 0 for a fresh day
+        setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
+        localStorage.setItem('zikrmate_last_active_date_key', todayKey);
+
+        showToast('🌙 রাত ১২:০০ টা - নতুন দিনের জন্য জিকির কাউন্টার ফ্রেশ করা হয়েছে। সর্বমোট কাউন্ট সংরক্ষিত আছে।');
+      }
+    };
+
+    // Run check on mount
+    checkMidnightRefresh();
+
+    // Check periodically every 15 seconds for midnight transition
+    const interval = setInterval(checkMidnightRefresh, 15000);
+    return () => clearInterval(interval);
+  }, [zikrs]);
 
   // Screen Awake Lock management
   useEffect(() => {
@@ -258,6 +364,9 @@ export default function App() {
       )
     );
 
+    // Increment Lifetime Grand Total
+    setLifetimeTotalCount((prev) => prev + 1);
+
     if (settings.vibrationEnabled) {
       if (isGoalJustReached) {
         soundHaptics.triggerVibration('target');
@@ -297,6 +406,9 @@ export default function App() {
           : item
       )
     );
+
+    setLifetimeTotalCount((prev) => Math.max(0, prev - 1));
+
     if (settings.vibrationEnabled) soundHaptics.vibrate(30);
     if (settings.soundEnabled) soundHaptics.playTap();
   };
@@ -383,26 +495,29 @@ export default function App() {
   const handleGlobalReset = () => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Global Counter Reset',
-      message: `Are you sure you want to reset ALL ${zikrs.length} individual counters to 0? The current master total of ${masterTotal} will be cleared.`,
+      title: 'Global Counter Reset (রিসেট অল)',
+      message: `আপনি কি নিশ্চিত যে সকল কাউন্টার ও সর্বমোট গণনা (${lifetimeTotalCount.toLocaleString()}) রিসেট করতে চান?`,
       confirmLabel: 'Yes, Reset All to 0',
       isDanger: true,
       onConfirm: () => {
         setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
+        setLifetimeTotalCount(0);
         if (settings.vibrationEnabled) soundHaptics.vibrate([70, 50, 70]);
         if (settings.soundEnabled) soundHaptics.playReset();
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
-        showToast('All counters reset to 0');
+        showToast('All counters & Grand Total reset to 0');
       },
     });
   };
 
   // Save current counts to History archive
   const handleSaveSession = () => {
-    if (masterTotal === 0) {
+    if (dailyTotal === 0 && lifetimeTotalCount === 0) {
       showToast('Cannot save empty session (Total is 0)');
       return;
     }
+
+    const currentTotal = dailyTotal > 0 ? dailyTotal : lifetimeTotalCount;
 
     const newSession: HistorySession = {
       id: `session_${Date.now()}`,
@@ -415,7 +530,7 @@ export default function App() {
         hour: '2-digit',
         minute: '2-digit',
       }),
-      totalCount: masterTotal,
+      totalCount: currentTotal,
       breakdown: zikrs.map((z) => ({
         name: z.name,
         count: z.count,
@@ -426,7 +541,7 @@ export default function App() {
 
     setHistorySessions((prev) => [newSession, ...prev]);
     if (settings.soundEnabled) soundHaptics.playMilestone();
-    showToast(`Saved session: ${masterTotal} total counts archived!`);
+    showToast(`Saved session: ${currentTotal} total counts archived!`);
   };
 
   // Save Add/Edit Zikr
@@ -503,19 +618,10 @@ export default function App() {
     setActiveModule('zikir_counter');
   };
 
-  // PDF Export
-  const handleExportPdf = async () => {
-    setIsExportingPdf(true);
-    showToast('Generating official PDF report...');
-    try {
-      await generateZikrPdfReport(zikrs, masterTotal);
-      showToast('PDF downloaded successfully!');
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to export PDF. Check console.');
-    } finally {
-      setIsExportingPdf(false);
-    }
+  // PDF Export - Opens the Comprehensive Multi-Period Report Generator (1 Day / 1 Month / 4 Months / 1 Year / 10 Years)
+  const handleExportPdf = () => {
+    setIsHistoryReportModalOpen(true);
+    if (settings.soundEnabled) soundHaptics.playTap();
   };
 
   // 7 module items metadata
@@ -531,7 +637,7 @@ export default function App() {
       label: NAV_TRANSLATIONS.zikir_counter[selectedLanguage],
       arabic: 'الذِّكْر',
       icon: '📿',
-      badge: masterTotal,
+      badge: dailyTotal > 0 ? dailyTotal : lifetimeTotalCount,
     },
     {
       id: 'quran',
@@ -689,7 +795,8 @@ export default function App() {
         {/* 1. ZIKIR COUNTER VIEW (HOME PAGE) */}
         {activeModule === 'zikir_counter' && (
           <ZikirCounterView
-            masterTotal={masterTotal}
+            masterTotal={lifetimeTotalCount}
+            dailyTotal={dailyTotal}
             zikrs={zikrs}
             completedGoals={completedGoals}
             onIncrement={handleIncrement}
@@ -765,6 +872,8 @@ export default function App() {
             soundEnabled={settings.soundEnabled}
             themeMode={settings.themeMode}
             selectedLanguage={selectedLanguage}
+            userProfile={userProfile}
+            liveZikrs={zikrs}
           />
         )}
       </main>
@@ -843,6 +952,17 @@ export default function App() {
       <StandaloneExportModal
         isOpen={isStandaloneModalOpen}
         onClose={() => setIsStandaloneModalOpen(false)}
+      />
+
+      {/* Multi-Period History & PDF Report Generator Modal (1 Day, 1 Month, 4 Months, 1 Year, 10 Years) */}
+      <HistoryReportModal
+        isOpen={isHistoryReportModalOpen}
+        onClose={() => setIsHistoryReportModalOpen(false)}
+        soundEnabled={settings.soundEnabled}
+        themeMode={settings.themeMode}
+        selectedLanguage={selectedLanguage}
+        userProfile={userProfile}
+        liveZikrs={zikrs}
       />
 
       {/* User Profile Account Modal (Matching uploaded photo) */}
