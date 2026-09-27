@@ -61,29 +61,26 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     'none' | 'edit_profile' | 'feedback' | 'bookmarks' | 'downloads' | 'logout_confirm'
   >('none');
 
-  // Edit Profile Form State
+  // Edit Profile Form State (User-editable)
   const [editName, setEditName] = useState(userProfile.name);
   const [editEmailOrPhone, setEditEmailOrPhone] = useState(userProfile.emailOrPhone);
   const [editPhotoUrl, setEditPhotoUrl] = useState(userProfile.photoUrl);
+  const [editLocation, setEditLocation] = useState(userProfile.location || '');
+  const [editDeviceModel, setEditDeviceModel] = useState(userProfile.deviceModel || '');
+  const [editOsVersion, setEditOsVersion] = useState(userProfile.osVersion || '');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Feedback Form State
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackUserEmail, setFeedbackUserEmail] = useState(userProfile.emailOrPhone || '');
+  const [feedbackLocation, setFeedbackLocation] = useState(userProfile.location || '');
+  const [feedbackModel, setFeedbackModel] = useState(userProfile.deviceModel || '');
+  const [feedbackOsVersion, setFeedbackOsVersion] = useState(userProfile.osVersion || '');
   const [feedbackChannel, setFeedbackChannel] = useState<'whatsapp' | 'email'>('whatsapp');
+  const [showDeviceSettings, setShowDeviceSettings] = useState(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
-  useEffect(() => {
-    setEditName(userProfile.name);
-    setEditEmailOrPhone(userProfile.emailOrPhone);
-    setEditPhotoUrl(userProfile.photoUrl);
-    if (userProfile.emailOrPhone) {
-      setFeedbackUserEmail(userProfile.emailOrPhone);
-    }
-  }, [userProfile]);
-
-  if (!isOpen) return null;
-
-  // Auto-detect user's device info from browser/hardware environment
+  // Auto-detect user's real device info from browser/hardware environment
   const getDetectedDeviceInfo = () => {
     if (typeof window === 'undefined') {
       return {
@@ -131,6 +128,58 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     return { model, osVersion, deviceLanguage };
   };
 
+  // Real GPS & Timezone Location detector
+  const handleDetectLocation = () => {
+    setIsDetectingLocation(true);
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(4);
+          const lon = pos.coords.longitude.toFixed(4);
+          const locStr = `${lat}°, ${lon}° (GPS, BD)`;
+          setEditLocation(locStr);
+          setFeedbackLocation(locStr);
+          setIsDetectingLocation(false);
+          if (soundEnabled) soundHaptics.playTap();
+        },
+        () => {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+          const locStr = tz.includes('Dhaka') ? '4C2J 8FX, BD' : tz.replace('_', ' ') || 'Bangladesh';
+          setEditLocation(locStr);
+          setFeedbackLocation(locStr);
+          setIsDetectingLocation(false);
+          if (soundEnabled) soundHaptics.playTap();
+        },
+        { timeout: 6000 }
+      );
+    } else {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+      const locStr = tz.includes('Dhaka') ? '4C2J 8FX, BD' : tz.replace('_', ' ') || 'Bangladesh';
+      setEditLocation(locStr);
+      setFeedbackLocation(locStr);
+      setIsDetectingLocation(false);
+    }
+  };
+
+  useEffect(() => {
+    const detected = getDetectedDeviceInfo();
+    setEditName(userProfile.name);
+    setEditEmailOrPhone(userProfile.emailOrPhone);
+    setEditPhotoUrl(userProfile.photoUrl);
+    setEditLocation(userProfile.location || '4C2J 8FX, BD');
+    setEditDeviceModel(userProfile.deviceModel || detected.model);
+    setEditOsVersion(userProfile.osVersion || detected.osVersion);
+
+    if (userProfile.emailOrPhone) {
+      setFeedbackUserEmail(userProfile.emailOrPhone);
+    }
+    setFeedbackLocation(userProfile.location || '4C2J 8FX, BD');
+    setFeedbackModel(userProfile.deviceModel || detected.model);
+    setFeedbackOsVersion(userProfile.osVersion || detected.osVersion);
+  }, [userProfile]);
+
+  if (!isOpen) return null;
+
   // Handle Photo Upload (Convert file to Data URL for persistence)
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -153,6 +202,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       name: editName.trim() || 'User',
       emailOrPhone: editEmailOrPhone.trim() || '',
       photoUrl: editPhotoUrl,
+      location: editLocation.trim() || '4C2J 8FX, BD',
+      deviceModel: editDeviceModel.trim() || 'vivo ~~ V2144',
+      osVersion: editOsVersion.trim() || '35_15',
       isSignedIn: true,
     });
     setActiveSubModal('none');
@@ -164,12 +216,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const msg = (customMsg !== undefined ? customMsg : feedbackMessage).trim() || '[আপনার মূল্যবান মতামত বা ফিডব্যাক এখানে লিখুন]';
     const emailValue = feedbackUserEmail.trim() || userProfile.emailOrPhone || 'user@zikrmate.app';
     const detected = getDetectedDeviceInfo();
-    const modelValue = userProfile.deviceModel || detected.model || 'vivo ~~ V2144';
-    const osValue = userProfile.osVersion || detected.osVersion || '35_15';
+    const modelValue = feedbackModel.trim() || userProfile.deviceModel || detected.model || 'vivo ~~ V2144';
+    const osValue = feedbackOsVersion.trim() || userProfile.osVersion || detected.osVersion || '35_15';
     const appVerValue = userProfile.appVersion || '411_38.1';
-    const langValue = selectedLanguage === 'bn' ? 'Bangla' : selectedLanguage === 'en' ? 'English' : 'Bangla';
+    const langValue = selectedLanguage === 'bn' ? 'Bangla' : selectedLanguage === 'en' ? 'English' : 'Arabic';
     const devLangValue = detected.deviceLanguage || (typeof navigator !== 'undefined' && navigator.language ? navigator.language.slice(0, 2) : 'en');
-    const locationValue = userProfile.location || '4C2J 8FX, BD';
+    const locationValue = feedbackLocation.trim() || userProfile.location || '4C2J 8FX, BD';
 
     return `ZikrMate
 Email: ${emailValue}
@@ -605,6 +657,71 @@ ${msg}`;
                   />
                 </div>
 
+                {/* Location with GPS detect */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-500 dark:text-teal-200 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Location (লোকেশন)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={isDetectingLocation}
+                      className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                    >
+                      {isDetectingLocation ? 'Detecting...' : '📍 Detect GPS'}
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={editLocation}
+                    onChange={(e) => setEditLocation(e.target.value)}
+                    placeholder="e.g. 4C2J 8FX, BD or Dhaka, Bangladesh..."
+                    className={`w-full rounded-xl px-3 py-2 border font-semibold focus:outline-none ${
+                      isDay
+                        ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                        : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                    }`}
+                  />
+                </div>
+
+                {/* Device Model & OS */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="font-bold block mb-1 text-slate-500 dark:text-teal-200 text-[11px]">
+                      Device Model
+                    </label>
+                    <input
+                      type="text"
+                      value={editDeviceModel}
+                      onChange={(e) => setEditDeviceModel(e.target.value)}
+                      placeholder="e.g. vivo ~~ V2144"
+                      className={`w-full rounded-xl px-2.5 py-1.5 border text-xs focus:outline-none ${
+                        isDay
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                          : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1 text-slate-500 dark:text-teal-200 text-[11px]">
+                      OS Version
+                    </label>
+                    <input
+                      type="text"
+                      value={editOsVersion}
+                      onChange={(e) => setEditOsVersion(e.target.value)}
+                      placeholder="e.g. 35_15"
+                      className={`w-full rounded-xl px-2.5 py-1.5 border text-xs focus:outline-none ${
+                        isDay
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                          : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                      }`}
+                    />
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2 pt-2">
                   <button
                     type="button"
@@ -720,10 +837,85 @@ ${msg}`;
                 />
               </div>
 
-              {/* Auto Info Badge */}
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-700 dark:text-emerald-300">
-                <Info className="w-3.5 h-3.5 shrink-0" />
-                <span>ডিভাইস মডেল ও অ্যাপ ভার্সন স্বয়ংক্রিয়ভাবে মেসেজের সাথে যুক্ত হবে।</span>
+              {/* Device Info & Location Expandable Customizer */}
+              <div className="space-y-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setShowDeviceSettings(!showDeviceSettings)}
+                  className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center justify-between w-full cursor-pointer"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Device & Location Info (ডিভাইস ও লোকেশন তথ্য)</span>
+                  </span>
+                  <span>{showDeviceSettings ? '▲ Hide' : '▼ Customize / ভিউ'}</span>
+                </button>
+
+                {showDeviceSettings && (
+                  <div className="p-3 rounded-xl border border-slate-200 dark:border-teal-900/60 bg-slate-50 dark:bg-[#071d22] space-y-2 text-xs animate-in fade-in">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-bold text-slate-500 dark:text-teal-200">
+                          Location (লোকেশন):
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleDetectLocation}
+                          disabled={isDetectingLocation}
+                          className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+                        >
+                          {isDetectingLocation ? 'Detecting...' : '📍 Auto GPS'}
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={feedbackLocation}
+                        onChange={(e) => setFeedbackLocation(e.target.value)}
+                        placeholder="e.g. 4C2J 8FX, BD or Dhaka, Bangladesh"
+                        className={`w-full rounded-lg px-2.5 py-1.5 border text-xs focus:outline-none ${
+                          isDay
+                            ? 'bg-white border-slate-300 text-slate-900'
+                            : 'bg-[#092226] border-[#184850] text-white'
+                        }`}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold block mb-0.5 text-slate-500 dark:text-teal-200">
+                          Model:
+                        </label>
+                        <input
+                          type="text"
+                          value={feedbackModel}
+                          onChange={(e) => setFeedbackModel(e.target.value)}
+                          placeholder="Device model"
+                          className={`w-full rounded-lg px-2 py-1 border text-[11px] focus:outline-none ${
+                            isDay
+                              ? 'bg-white border-slate-300 text-slate-900'
+                              : 'bg-[#092226] border-[#184850] text-white'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold block mb-0.5 text-slate-500 dark:text-teal-200">
+                          OS Version:
+                        </label>
+                        <input
+                          type="text"
+                          value={feedbackOsVersion}
+                          onChange={(e) => setFeedbackOsVersion(e.target.value)}
+                          placeholder="OS version"
+                          className={`w-full rounded-lg px-2 py-1 border text-[11px] focus:outline-none ${
+                            isDay
+                              ? 'bg-white border-slate-300 text-slate-900'
+                              : 'bg-[#092226] border-[#184850] text-white'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Send Buttons */}
