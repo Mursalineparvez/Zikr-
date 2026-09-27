@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ZikrItem, ThemeMode, ZikrLanguage } from '../types';
 import { CircularCenterCounter } from './CircularCenterCounter';
 import { ZikrCard } from './ZikrCard';
-import { Plus, FileText, CheckCircle2, Target, RotateCcw, ChevronUp, Sparkles } from 'lucide-react';
+import { PortableFloatingCounter } from './PortableFloatingCounter';
+import { Plus, FileText, CheckCircle2, Target, RotateCcw } from 'lucide-react';
 import { ZIKIR_UI } from '../utils/appTranslations';
 
 interface ZikirCounterViewProps {
@@ -51,20 +52,17 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   const isDay = themeMode === 'day';
   const [filterMode, setFilterMode] = useState<'all' | 'targets' | 'completed'>('all');
   const [showFloatingCounter, setShowFloatingCounter] = useState(false);
-  const [isFloatingPopping, setIsFloatingPopping] = useState(false);
-  const [floatingParticles, setFloatingParticles] = useState<{ id: number; text: string }[]>([]);
-  const prevMasterRef = useRef(masterTotal);
 
-  // Monitor scroll position to show/hide floating circular popup
+  // Monitor scroll position to show/hide portable floating popup
   useEffect(() => {
     const handleScroll = () => {
       const topDial = document.getElementById('main-circular-center-counter');
       if (topDial) {
         const rect = topDial.getBoundingClientRect();
-        // If bottom of top dial is scrolled past the top of the viewport
-        setShowFloatingCounter(rect.bottom < 120);
+        // Show portable counter whenever user scrolls past top circular counter
+        setShowFloatingCounter(rect.bottom < 140);
       } else {
-        setShowFloatingCounter(window.scrollY > 250);
+        setShowFloatingCounter(window.scrollY > 200);
       }
     };
 
@@ -72,30 +70,6 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Pop-up bounce effect on floating dial when masterTotal increments
-  useEffect(() => {
-    if (masterTotal > prevMasterRef.current) {
-      setIsFloatingPopping(true);
-      const newId = Date.now();
-      setFloatingParticles((prev) => [...prev.slice(-3), { id: newId, text: '+1' }]);
-
-      const timer = setTimeout(() => {
-        setIsFloatingPopping(false);
-      }, 350);
-
-      const partTimer = setTimeout(() => {
-        setFloatingParticles((prev) => prev.filter((p) => p.id !== newId));
-      }, 700);
-
-      prevMasterRef.current = masterTotal;
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(partTimer);
-      };
-    }
-    prevMasterRef.current = masterTotal;
-  }, [masterTotal]);
 
   const scrollToTopDial = () => {
     const topDial = document.getElementById('main-circular-center-counter');
@@ -257,7 +231,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
 
       {/* Grid of Individual 12 Zikr Cards */}
       {filteredZikrs.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 pb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 pb-20">
           {filteredZikrs.map((zikr, index) => (
             <ZikrCard
               key={zikr.id}
@@ -294,67 +268,16 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
         </div>
       )}
 
-      {/* ================= STICKY FLOATING POP-UP CIRCULAR COUNTER ================= */}
-      {/* Pops up when scrolling down through the lower zikr cards */}
-      <div
-        className={`fixed bottom-24 right-4 sm:right-6 z-40 transition-all duration-300 pointer-events-auto ${
-          showFloatingCounter
-            ? 'opacity-100 translate-y-0 scale-100'
-            : 'opacity-0 translate-y-8 scale-75 pointer-events-none'
-        }`}
-      >
-        {/* Floating Particles from Mini Circle */}
-        {floatingParticles.map((p) => (
-          <span
-            key={p.id}
-            className="absolute -top-3 left-1/2 -translate-x-1/2 font-black text-sm text-emerald-400 dark:text-emerald-300 drop-shadow-lg pointer-events-none z-50 animate-out fade-out slide-out-to-top duration-700"
-          >
-            {p.text}
-          </span>
-        ))}
-
-        <button
-          onClick={scrollToTopDial}
-          className={`group relative rounded-full p-1.5 transition-all duration-200 active:scale-90 shadow-2xl flex items-center justify-center cursor-pointer border ${
-            isFloatingPopping
-              ? 'scale-115 ring-4 ring-emerald-400/60 shadow-emerald-500/40'
-              : 'scale-100 hover:scale-105'
-          } ${
-            isDay
-              ? 'bg-gradient-to-tr from-[#164e52] via-[#247b82] to-[#3aa2aa] border-white text-white shadow-teal-900/30'
-              : 'bg-gradient-to-tr from-[#092226] via-[#12414a] to-[#2dd4bf] border-[#2dd4bf]/40 text-white shadow-black/80'
-          }`}
-          title="Scroll to Central Master Counter"
-        >
-          {/* Inner Circle Dial */}
-          <div
-            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center p-1 relative shadow-inner ${
-              isDay
-                ? 'bg-[#edf5f4] text-[#103e42] border border-white'
-                : 'bg-gradient-to-b from-[#092226] via-[#0d2d33] to-[#092226] text-white border border-[#1a4a52]'
-            }`}
-          >
-            <div className="flex items-center gap-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-              <span>TOTAL</span>
-            </div>
-
-            {/* Live Pop-Up Count Digits */}
-            <div
-              className={`font-black font-mono text-sm sm:text-base tracking-tight leading-tight transition-transform duration-150 ${
-                isFloatingPopping ? 'scale-125 text-emerald-500' : ''
-              }`}
-            >
-              {masterTotal.toLocaleString()}
-            </div>
-
-            <div className="text-[8px] opacity-70 flex items-center gap-0.5 text-teal-600 dark:text-teal-300">
-              <ChevronUp className="w-2.5 h-2.5 group-hover:-translate-y-0.5 transition-transform" />
-              <span>Top</span>
-            </div>
-          </div>
-        </button>
-      </div>
+      {/* ================= PORTABLE & DRAGGABLE LARGE FLOATING POP-UP COUNTER ================= */}
+      <PortableFloatingCounter
+        masterTotal={masterTotal}
+        dailyTotal={dailyTotal}
+        completedGoals={completedGoals}
+        isVisible={showFloatingCounter}
+        themeMode={themeMode}
+        selectedLanguage={selectedLanguage}
+        onScrollToTop={scrollToTopDial}
+      />
     </div>
   );
 };
