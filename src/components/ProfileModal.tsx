@@ -70,7 +70,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   // Feedback Form State
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackChannel, setFeedbackChannel] = useState<'whatsapp' | 'email'>('whatsapp');
-  const [copiedFeedback, setCopiedFeedback] = useState(false);
 
   useEffect(() => {
     setEditName(userProfile.name);
@@ -129,14 +128,6 @@ Location: ${locationValue}
 
 Assalamualaikum wa Rahmatullah,
 ${msg}`;
-  };
-
-  const handleCopyFeedback = () => {
-    const text = buildFeedbackText();
-    navigator.clipboard.writeText(text);
-    setCopiedFeedback(true);
-    if (soundEnabled) soundHaptics.playTap();
-    setTimeout(() => setCopiedFeedback(false), 2000);
   };
 
   const handleSendFeedback = () => {
@@ -237,7 +228,7 @@ ${msg}`;
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>Muslim Bangla Verified</span>
+                  <span>ZikrMate Verified</span>
                 </div>
               </div>
             </div>
@@ -402,7 +393,7 @@ ${msg}`;
           >
             <div className="font-bold flex items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Muslim Bangla • ZikrMate v411_38.1</span>
+              <span>ZikrMate v411_38.1</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-teal-300/70">
               "Remember Me; I will remember you." — Surah Al-Baqarah 2:152
@@ -602,12 +593,12 @@ ${msg}`;
               </div>
 
               {/* Feedback Message Input */}
-              <div className="space-y-1 text-xs">
+              <div className="space-y-1.5 text-xs">
                 <label className="font-bold block text-slate-500 dark:text-teal-200">
                   Your Feedback / Message (আপনার মূল্যবান মতামত বা অভিযোগ):
                 </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={feedbackMessage}
                   onChange={(e) => setFeedbackMessage(e.target.value)}
                   placeholder="Type your message, suggestion, or question here..."
@@ -617,37 +608,6 @@ ${msg}`;
                       : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
                   }`}
                 />
-              </div>
-
-              {/* Formatted Message Preview (Matching the user's exact specification) */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 dark:text-teal-300/80 flex items-center gap-1">
-                    <Info className="w-3 h-3" />
-                    <span>Auto-Formatted Payload Preview:</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleCopyFeedback}
-                    className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    {copiedFeedback ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-500" />
-                        <span>Copied!</span>
-                      </>
-                    ) : (
-                      <span>Copy Text</span>
-                    )}
-                  </button>
-                </div>
-                <pre
-                  className={`p-3 rounded-xl border text-[10px] font-mono whitespace-pre-wrap leading-relaxed max-h-36 overflow-y-auto ${
-                    isDay ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-[#071b1f] border-teal-900/60 text-teal-200'
-                  }`}
-                >
-                  {buildFeedbackText()}
-                </pre>
               </div>
 
               {/* Send Buttons */}
