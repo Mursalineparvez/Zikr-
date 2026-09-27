@@ -61,6 +61,38 @@ export const NAV_TRANSLATIONS: Record<NavModule, Record<ZikrLanguage, string>> =
     id: 'Pelacak Amal',
     tr: 'Amel Takibi',
   },
+  other: {
+    bn: 'অন্যান্য (Other)',
+    en: 'Other',
+    ur: 'دیگر فیچرز',
+    hi: 'अन्य फीचर्स',
+    id: 'Lainnya',
+    tr: 'Diğer',
+  },
+  tablig: {
+    bn: 'দৈনিক তাবলিগ',
+    en: 'Daily Tablig',
+    ur: 'دعوت و تبلیغ',
+    hi: 'दैनिक तबलीग़',
+    id: 'Tabligh Harian',
+    tr: 'Tebliğ',
+  },
+  allah_names: {
+    bn: 'আল্লাহর ৯৯ নাম',
+    en: 'Allah 99 Names',
+    ur: 'اسماء الحسنیٰ',
+    hi: 'अल्लाह के ९९ नाम',
+    id: 'Asmaul Husna',
+    tr: 'Esmâ-ül Hüsnâ',
+  },
+  hajj_umrah: {
+    bn: 'হজ ও ওমরাহ',
+    en: 'Hajj & Umrah',
+    ur: 'حج و عمرہ',
+    hi: 'हज व उमराह',
+    id: 'Haji & Umrah',
+    tr: 'Hac ve Umre',
+  },
 };
 
 /**

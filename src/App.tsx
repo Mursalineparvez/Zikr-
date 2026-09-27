@@ -19,6 +19,7 @@ import { HadithView } from './components/HadithView';
 import { SalatTimeView } from './components/SalatTimeView';
 import { DuaView } from './components/DuaView';
 import { AamalTrackerView } from './components/AamalTrackerView';
+import { OtherIslamicHubView, OtherSubSection } from './components/OtherIslamicHubView';
 import { ZikrModal } from './components/ZikrModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { StandaloneExportModal } from './components/StandaloneExportModal';
@@ -624,13 +625,17 @@ export default function App() {
     if (settings.soundEnabled) soundHaptics.playTap();
   };
 
-  // 7 module items metadata
+  // Primary 5 module items metadata (Zikir Counter, Quran, Salat Time, Aamal Tracker, Other)
+  const otherModules: NavModule[] = ['other', 'dua', 'hadith', 'kitab', 'tablig', 'allah_names', 'hajj_umrah'];
+  const isOtherActive = otherModules.includes(activeModule);
+
   const moduleTabs: Array<{
     id: NavModule;
     label: string;
     arabic: string;
     icon: string;
     badge?: string | number;
+    isActive: boolean;
   }> = [
     {
       id: 'zikir_counter',
@@ -638,42 +643,36 @@ export default function App() {
       arabic: 'الذِّكْر',
       icon: '📿',
       badge: dailyTotal > 0 ? dailyTotal : lifetimeTotalCount,
+      isActive: activeModule === 'zikir_counter',
     },
     {
       id: 'quran',
       label: NAV_TRANSLATIONS.quran[selectedLanguage],
       arabic: 'القرآن',
       icon: '📖',
-    },
-    {
-      id: 'kitab',
-      label: NAV_TRANSLATIONS.kitab[selectedLanguage],
-      arabic: 'الكتب',
-      icon: '📚',
-    },
-    {
-      id: 'hadith',
-      label: NAV_TRANSLATIONS.hadith[selectedLanguage],
-      arabic: 'الحديث',
-      icon: '📜',
+      isActive: activeModule === 'quran',
     },
     {
       id: 'salat_time',
       label: NAV_TRANSLATIONS.salat_time[selectedLanguage],
       arabic: 'الصلاة',
       icon: '🕌',
-    },
-    {
-      id: 'dua',
-      label: NAV_TRANSLATIONS.dua[selectedLanguage],
-      arabic: 'الدعاء',
-      icon: '🤲',
+      isActive: activeModule === 'salat_time',
     },
     {
       id: 'aamal_tracker',
       label: NAV_TRANSLATIONS.aamal_tracker[selectedLanguage],
       arabic: 'الأعمال',
       icon: '📋',
+      isActive: activeModule === 'aamal_tracker',
+    },
+    {
+      id: 'other',
+      label: selectedLanguage === 'bn' ? 'অন্যান্য (Other)' : 'Other',
+      arabic: 'أخرى',
+      icon: '✨',
+      badge: '6 Tools',
+      isActive: isOtherActive,
     },
   ];
 
@@ -756,7 +755,7 @@ export default function App() {
           {/* Module Selector Category Bar (Matches upper given pill buttons) */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             {moduleTabs.map((tab) => {
-              const isActive = activeModule === tab.id;
+              const isActive = tab.isActive;
               return (
                 <button
                   key={tab.id}
@@ -832,21 +831,7 @@ export default function App() {
           />
         )}
 
-        {/* 3. KITAB VIEW */}
-        {activeModule === 'kitab' && (
-          <KitabView themeMode={settings.themeMode} />
-        )}
-
-        {/* 4. HADITH VIEW */}
-        {activeModule === 'hadith' && (
-          <HadithView
-            soundEnabled={settings.soundEnabled}
-            themeMode={settings.themeMode}
-            selectedLanguage={selectedLanguage}
-          />
-        )}
-
-        {/* 5. SALAT TIME VIEW */}
+        {/* 3. SALAT TIME VIEW */}
         {activeModule === 'salat_time' && (
           <SalatTimeView
             soundEnabled={settings.soundEnabled}
@@ -855,18 +840,7 @@ export default function App() {
           />
         )}
 
-        {/* 6. DUA VIEW */}
-        {activeModule === 'dua' && (
-          <DuaView
-            onAddDuaToCounters={handleAddDuaToCounters}
-            activeCounters={zikrs}
-            soundEnabled={settings.soundEnabled}
-            themeMode={settings.themeMode}
-            selectedLanguage={selectedLanguage}
-          />
-        )}
-
-        {/* 7. AAMAL TRACKER VIEW */}
+        {/* 4. AAMAL TRACKER VIEW */}
         {activeModule === 'aamal_tracker' && (
           <AamalTrackerView
             soundEnabled={settings.soundEnabled}
@@ -874,6 +848,32 @@ export default function App() {
             selectedLanguage={selectedLanguage}
             userProfile={userProfile}
             liveZikrs={zikrs}
+          />
+        )}
+
+        {/* 5. OTHER ISLAMIC HUB VIEW (DUA, HADITH, KITAB, DAILY TABLIG, ALLAH 99 NAMES, HAJJ & UMRAH) */}
+        {isOtherActive && (
+          <OtherIslamicHubView
+            onAddDuaToCounters={handleAddDuaToCounters}
+            activeCounters={zikrs}
+            soundEnabled={settings.soundEnabled}
+            themeMode={settings.themeMode}
+            selectedLanguage={selectedLanguage}
+            initialSubSection={
+              activeModule === 'dua'
+                ? 'dua'
+                : activeModule === 'hadith'
+                ? 'hadith'
+                : activeModule === 'kitab'
+                ? 'kitab'
+                : activeModule === 'tablig'
+                ? 'tablig'
+                : activeModule === 'allah_names'
+                ? 'allah_names'
+                : activeModule === 'hajj_umrah'
+                ? 'hajj_umrah'
+                : 'hub'
+            }
           />
         )}
       </main>

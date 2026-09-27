@@ -3,11 +3,11 @@ import { NavModule, ThemeMode, ZikrLanguage } from '../types';
 import { NAV_TRANSLATIONS } from '../utils/appTranslations';
 import {
   BookOpen,
-  BookMarked,
   Clock,
-  Heart,
   Award,
   Plus,
+  Sparkles,
+  Layers,
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -27,53 +27,50 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   const isDay = themeMode === 'day';
 
+  const otherModules: NavModule[] = ['other', 'dua', 'hadith', 'kitab', 'tablig', 'allah_names', 'hajj_umrah'];
+  const isOtherActive = otherModules.includes(activeModule);
+
   const navItems: Array<{
     id: NavModule;
     label: string;
     arabic: string;
     icon: React.ReactNode;
+    isActive: boolean;
   }> = [
     {
       id: 'zikir_counter',
       label: NAV_TRANSLATIONS.zikir_counter[selectedLanguage],
       arabic: 'الذِّكْر',
       icon: <span className="text-base">📿</span>,
+      isActive: activeModule === 'zikir_counter',
     },
     {
       id: 'quran',
       label: NAV_TRANSLATIONS.quran[selectedLanguage],
       arabic: 'القرآن',
       icon: <BookOpen className="w-4 h-4" />,
-    },
-    {
-      id: 'kitab',
-      label: NAV_TRANSLATIONS.kitab[selectedLanguage],
-      arabic: 'الكتب',
-      icon: <BookMarked className="w-4 h-4" />,
-    },
-    {
-      id: 'hadith',
-      label: NAV_TRANSLATIONS.hadith[selectedLanguage],
-      arabic: 'الحديث',
-      icon: <span className="text-base">📜</span>,
+      isActive: activeModule === 'quran',
     },
     {
       id: 'salat_time',
       label: NAV_TRANSLATIONS.salat_time[selectedLanguage],
       arabic: 'الصلاة',
       icon: <Clock className="w-4 h-4" />,
-    },
-    {
-      id: 'dua',
-      label: NAV_TRANSLATIONS.dua[selectedLanguage],
-      arabic: 'الدعاء',
-      icon: <Heart className="w-4 h-4" />,
+      isActive: activeModule === 'salat_time',
     },
     {
       id: 'aamal_tracker',
       label: NAV_TRANSLATIONS.aamal_tracker[selectedLanguage],
       arabic: 'الأعمال',
       icon: <Award className="w-4 h-4" />,
+      isActive: activeModule === 'aamal_tracker',
+    },
+    {
+      id: 'other',
+      label: selectedLanguage === 'bn' ? 'অন্যান্য' : 'Other',
+      arabic: 'أخرى',
+      icon: <Layers className="w-4 h-4" />,
+      isActive: isOtherActive,
     },
   ];
 
@@ -103,15 +100,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             : 'bg-[#0a262c]/95 border-[#194c55] shadow-2xl shadow-[#082024]/80'
         }`}
       >
-        <div className="flex items-center justify-between overflow-x-auto gap-1 scrollbar-none py-1">
+        <div className="flex items-center justify-around gap-1 py-1">
           {navItems.map((item) => {
-            const isActive = activeModule === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => onModuleChange(item.id)}
-                className={`flex flex-col items-center justify-center min-w-[58px] py-1 px-1.5 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0 ${
-                  isActive
+                className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
+                  item.isActive
                     ? isDay
                       ? 'text-white font-bold bg-[#1c6469] shadow-md shadow-[#135d66]/20'
                       : 'text-white font-bold bg-[#1c6469] border border-[#247b82] shadow-md'
@@ -124,7 +120,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   {item.icon}
                 </div>
                 <span className="text-[10px] tracking-tight mt-0.5 whitespace-nowrap">
-                  {item.label.split(' ')[0]}
+                  {item.label}
                 </span>
               </button>
             );

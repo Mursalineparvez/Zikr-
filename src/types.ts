@@ -42,11 +42,15 @@ export type ThemeMode = 'day' | 'night';
 export type NavModule =
   | 'zikir_counter'
   | 'quran'
+  | 'salat_time'
+  | 'aamal_tracker'
+  | 'other'
   | 'kitab'
   | 'hadith'
-  | 'salat_time'
   | 'dua'
-  | 'aamal_tracker';
+  | 'tablig'
+  | 'allah_names'
+  | 'hajj_umrah';
 
 export type DuaCategory =
   | 'salat'

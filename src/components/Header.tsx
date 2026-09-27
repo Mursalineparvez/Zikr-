@@ -65,18 +65,45 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  const otherModules: NavModule[] = ['other', 'dua', 'hadith', 'kitab', 'tablig', 'allah_names', 'hajj_umrah'];
+  const isOtherActive = otherModules.includes(activeModule);
+
   const navItems: Array<{
     id: NavModule;
     label: string;
     icon: React.ReactNode;
+    isActive: boolean;
   }> = [
-    { id: 'zikir_counter', label: NAV_TRANSLATIONS.zikir_counter[selectedLanguage], icon: <span>📿</span> },
-    { id: 'quran', label: NAV_TRANSLATIONS.quran[selectedLanguage], icon: <BookOpen className="w-3.5 h-3.5" /> },
-    { id: 'kitab', label: NAV_TRANSLATIONS.kitab[selectedLanguage], icon: <BookMarked className="w-3.5 h-3.5" /> },
-    { id: 'hadith', label: NAV_TRANSLATIONS.hadith[selectedLanguage], icon: <span>📜</span> },
-    { id: 'salat_time', label: NAV_TRANSLATIONS.salat_time[selectedLanguage], icon: <Clock className="w-3.5 h-3.5" /> },
-    { id: 'dua', label: NAV_TRANSLATIONS.dua[selectedLanguage], icon: <Heart className="w-3.5 h-3.5" /> },
-    { id: 'aamal_tracker', label: NAV_TRANSLATIONS.aamal_tracker[selectedLanguage], icon: <Award className="w-3.5 h-3.5" /> },
+    {
+      id: 'zikir_counter',
+      label: NAV_TRANSLATIONS.zikir_counter[selectedLanguage],
+      icon: <span>📿</span>,
+      isActive: activeModule === 'zikir_counter',
+    },
+    {
+      id: 'quran',
+      label: NAV_TRANSLATIONS.quran[selectedLanguage],
+      icon: <BookOpen className="w-3.5 h-3.5" />,
+      isActive: activeModule === 'quran',
+    },
+    {
+      id: 'salat_time',
+      label: NAV_TRANSLATIONS.salat_time[selectedLanguage],
+      icon: <Clock className="w-3.5 h-3.5" />,
+      isActive: activeModule === 'salat_time',
+    },
+    {
+      id: 'aamal_tracker',
+      label: NAV_TRANSLATIONS.aamal_tracker[selectedLanguage],
+      icon: <Award className="w-3.5 h-3.5" />,
+      isActive: activeModule === 'aamal_tracker',
+    },
+    {
+      id: 'other',
+      label: selectedLanguage === 'bn' ? 'অন্যান্য' : 'Other',
+      icon: <span>✨</span>,
+      isActive: isOtherActive,
+    },
   ];
 
   const isDay = themeMode === 'day';
@@ -116,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Desktop Nav Items */}
         <nav className="hidden md:flex items-center gap-1 bg-white/10 p-1 rounded-2xl border border-white/20 backdrop-blur-md">
           {navItems.map((item) => {
-            const isActive = activeModule === item.id;
+            const isActive = item.isActive;
             return (
               <button
                 key={item.id}
