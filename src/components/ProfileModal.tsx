@@ -117,7 +117,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const devLangValue = typeof navigator !== 'undefined' && navigator.language ? navigator.language.slice(0, 2) : 'en';
     const locationValue = userProfile.location || '4C2J 8FX, BD';
 
-    return `মুসলিম বাংলা
+    return `ZikrMate
 Email: ${emailValue}
 Model: ${modelValue}
 Version: ${osValue}
@@ -140,7 +140,7 @@ ${msg}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     } else {
       const recipient = 'mdmursalineparvez@gmail.com';
-      const subject = encodeURIComponent('মুসলিম বাংলা - ফিডব্যাক (ZikrMate)');
+      const subject = encodeURIComponent('ZikrMate - Feedback');
       const body = encodeURIComponent(formattedText);
       const mailtoUrl = `mailto:${recipient}?subject=${subject}&body=${body}`;
       window.location.href = mailtoUrl;
