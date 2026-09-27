@@ -70,6 +70,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   // Feedback Form State
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackChannel, setFeedbackChannel] = useState<'whatsapp' | 'email'>('whatsapp');
+  const [copiedFeedback, setCopiedFeedback] = useState(false);
 
   useEffect(() => {
     setEditName(userProfile.name);
@@ -107,9 +108,35 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   // Generate WhatsApp / Email payload formatted exactly as requested
-  const buildFeedbackText = () => {
-    const header = `মুসলিম বাংলা\nEmail: ${userProfile.emailOrPhone || 'mdmursalineparvez@gmail.com'}\nModel: ${userProfile.deviceModel || 'vivo ~~ V2144'}\nVersion: ${userProfile.osVersion || '35_15'}\nApp Version: ${userProfile.appVersion || '411_38.1'}\nLanguage: Bangla\nDeviceLanguage: en\nLocation: ${userProfile.location || '4C2J 8FX, BD'}\n\nAssalamualaikum wa Rahmatullah,\n${feedbackMessage.trim() || 'I would like to share my feedback on ZikrMate.'}`;
-    return header;
+  const buildFeedbackText = (customMsg?: string) => {
+    const msg = (customMsg !== undefined ? customMsg : feedbackMessage).trim() || '[আপনার মূল্যবান মতামত বা ফিডব্যাক এখানে লিখুন]';
+    const emailValue = userProfile.emailOrPhone || 'mdmursalineparvez@gmail.com';
+    const modelValue = userProfile.deviceModel || 'vivo ~~ V2144';
+    const osValue = userProfile.osVersion || '35_15';
+    const appVerValue = userProfile.appVersion || '411_38.1';
+    const langValue = selectedLanguage === 'bn' ? 'Bangla' : selectedLanguage === 'en' ? 'English' : 'Bangla';
+    const devLangValue = typeof navigator !== 'undefined' && navigator.language ? navigator.language.slice(0, 2) : 'en';
+    const locationValue = userProfile.location || '4C2J 8FX, BD';
+
+    return `মুসলিম বাংলা
+Email: ${emailValue}
+Model: ${modelValue}
+Version: ${osValue}
+App Version: ${appVerValue}
+Language: ${langValue}
+DeviceLanguage: ${devLangValue}
+Location: ${locationValue}
+
+Assalamualaikum wa Rahmatullah,
+${msg}`;
+  };
+
+  const handleCopyFeedback = () => {
+    const text = buildFeedbackText();
+    navigator.clipboard.writeText(text);
+    setCopiedFeedback(true);
+    if (soundEnabled) soundHaptics.playTap();
+    setTimeout(() => setCopiedFeedback(false), 2000);
   };
 
   const handleSendFeedback = () => {
@@ -122,7 +149,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       window.open(url, '_blank', 'noopener,noreferrer');
     } else {
       const recipient = 'mdmursalineparvez@gmail.com';
-      const subject = encodeURIComponent('মুসলিম বাংলা (ZikrMate) User Feedback');
+      const subject = encodeURIComponent('মুসলিম বাংলা - ফিডব্যাক (ZikrMate)');
       const body = encodeURIComponent(formattedText);
       const mailtoUrl = `mailto:${recipient}?subject=${subject}&body=${body}`;
       window.location.href = mailtoUrl;
@@ -594,10 +621,26 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
               {/* Formatted Message Preview (Matching the user's exact specification) */}
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 dark:text-teal-300/80 flex items-center gap-1">
-                  <Info className="w-3 h-3" />
-                  <span>Auto-Formatted Payload Preview:</span>
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-400 dark:text-teal-300/80 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    <span>Auto-Formatted Payload Preview:</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyFeedback}
+                    className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedFeedback ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-500" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <span>Copy Text</span>
+                    )}
+                  </button>
+                </div>
                 <pre
                   className={`p-3 rounded-xl border text-[10px] font-mono whitespace-pre-wrap leading-relaxed max-h-36 overflow-y-auto ${
                     isDay ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-[#071b1f] border-teal-900/60 text-teal-200'
