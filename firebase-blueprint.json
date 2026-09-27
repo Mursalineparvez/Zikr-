@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with verification status",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "verificationMethod": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "deviceModel": { "type": "string" },
+        "osVersion": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "name", "isVerified"]
+    },
+    "UserZikrData": {
+      "title": "UserZikrData",
+      "description": "User zikr history, counts and synced data across devices",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "zikrsJson": { "type": "string" },
+        "historyJson": { "type": "string" },
+        "streakJson": { "type": "string" },
+        "settingsJson": { "type": "string" },
+        "totalCount": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "totalCount", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores user profile and verification status"
+    },
+    "/users/{userId}/data/{docId}": {
+      "schema": "UserZikrData",
+      "description": "Stores user zikr history, streak, and synced counts across all devices"
+    }
+  }
+}

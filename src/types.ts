@@ -157,10 +157,13 @@ export interface UserProfile {
   photoUrl: string;
   isSignedIn: boolean;
   isVerified?: boolean;
+  verificationMethod?: 'email' | 'phone' | 'google';
+  verificationDate?: string;
   authProvider?: 'google' | 'email' | 'phone' | 'guest';
   location?: string;
   deviceModel?: string;
   osVersion?: string;
   appVersion?: string;
+  lastSyncedAt?: number;
 }
 

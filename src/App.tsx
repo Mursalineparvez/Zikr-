@@ -27,6 +27,10 @@ import { ProfileModal } from './components/ProfileModal';
 import { HistoryReportModal } from './components/HistoryReportModal';
 import { saveAccountToRegistry } from './utils/accountRegistry';
 import { createInitialDayLog, recordZikrIncrementInAamal } from './utils/aamalTrackerData';
+import {
+  saveUserDataToCloud,
+  loadUserDataFromCloud,
+} from './services/firebase';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -130,6 +134,13 @@ export default function App() {
 
   // User Profile Account state (Guest by default until signed in)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
+
+  const handleOpenProfileModal = (tab: 'profile' | 'settings' = 'profile') => {
+    setProfileModalTab(tab);
+    setIsProfileModalOpen(true);
+  };
+
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem('zikrmate_user_profile');
@@ -151,6 +162,112 @@ export default function App() {
       appVersion: '411_38.1',
     };
   });
+
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+  const [lastCloudSyncTimestamp, setLastCloudSyncTimestamp] = useState<number | undefined>(() => {
+    return userProfile.lastSyncedAt;
+  });
+
+  // When user is signed in with email or phone, automatically debounced sync to Firestore
+  const cloudSyncDebounceRef = useRef<any>(null);
+  useEffect(() => {
+    if (userProfile.isSignedIn && userProfile.emailOrPhone) {
+      if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
+      cloudSyncDebounceRef.current = setTimeout(async () => {
+        const ok = await saveUserDataToCloud(
+          userProfile.emailOrPhone,
+          userProfile,
+          zikrs,
+          historySessions,
+          settings
+        );
+        if (ok) {
+          const now = Date.now();
+          setLastCloudSyncTimestamp(now);
+        }
+      }, 2500);
+    }
+    return () => {
+      if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
+    };
+  }, [zikrs, historySessions, userProfile, settings]);
+
+  // Handler when user signs in with email/phone and cloud data is restored
+  const handleCloudDataLoaded = (cloudData: {
+    profile?: Partial<UserProfile>;
+    zikrs?: ZikrItem[];
+    history?: HistorySession[];
+    settings?: AppSettings;
+    foundInCloud?: boolean;
+  }) => {
+    if (cloudData.zikrs && cloudData.zikrs.length > 0) {
+      setZikrs((prev) => {
+        const cloudMap = new Map(cloudData.zikrs!.map((z) => [z.id, z]));
+        const merged = prev.map((localZikr) => {
+          const fromCloud = cloudMap.get(localZikr.id);
+          if (fromCloud) {
+            return {
+              ...localZikr,
+              count: Math.max(localZikr.count, fromCloud.count || 0),
+              target: fromCloud.target ?? localZikr.target,
+              updatedAt: Math.max(localZikr.updatedAt, fromCloud.updatedAt || 0),
+            };
+          }
+          return localZikr;
+        });
+
+        // Add any custom items from cloud that are not in local list
+        const localIds = new Set(prev.map((z) => z.id));
+        const extraFromCloud = cloudData.zikrs!.filter((z) => !localIds.has(z.id));
+        return [...merged, ...extraFromCloud];
+      });
+    }
+
+    if (cloudData.history && cloudData.history.length > 0) {
+      setHistorySessions((prev) => {
+        const idSet = new Set(prev.map((h) => h.id));
+        const newFromCloud = cloudData.history!.filter((h) => !idSet.has(h.id));
+        return [...prev, ...newFromCloud];
+      });
+    }
+
+    if (cloudData.settings) {
+      setSettings((prev) => ({ ...prev, ...cloudData.settings }));
+    }
+
+    const now = Date.now();
+    setLastCloudSyncTimestamp(now);
+    showToast('☁️ ক্লাউড ডাটা সফলভাবে রিস্টোর হয়েছে! যেকোনো ডিভাইসে আপনার হিস্ট্রি সুরক্ষিত।');
+  };
+
+  // Manual Trigger Cloud Sync
+  const handleTriggerCloudSync = async (): Promise<boolean> => {
+    if (!userProfile.isSignedIn || !userProfile.emailOrPhone) {
+      showToast('লগইন করুন ক্লাউডে ডাটা সেভ করার জন্য');
+      return false;
+    }
+
+    setIsSyncingCloud(true);
+    const ok = await saveUserDataToCloud(
+      userProfile.emailOrPhone,
+      userProfile,
+      zikrs,
+      historySessions,
+      settings
+    );
+    setIsSyncingCloud(false);
+
+    if (ok) {
+      const now = Date.now();
+      setLastCloudSyncTimestamp(now);
+      setUserProfile((prev) => ({ ...prev, lastSyncedAt: now }));
+      showToast('☁️ ক্লাউডে সব জিকির হিস্ট্রি ও প্রোফাইল সফলভাবে সিঙ্ক হয়েছে!');
+      return true;
+    } else {
+      showToast('⚠️ ক্লাউড সিঙ্কে সমস্যা হয়েছে, অফলাইনে ডাটা সুরক্ষিত আছে');
+      return false;
+    }
+  };
 
   useEffect(() => {
     try {
@@ -321,6 +438,14 @@ export default function App() {
     const nextVal = !settings.soundEnabled;
     setSettings((prev) => ({ ...prev, soundEnabled: nextVal }));
     showToast(nextVal ? 'Sound effects enabled' : 'Muted audio');
+  };
+
+  // Vibration toggle
+  const handleToggleVibration = () => {
+    const nextVal = !settings.vibrationEnabled;
+    setSettings((prev) => ({ ...prev, vibrationEnabled: nextVal }));
+    if (nextVal && navigator.vibrate) navigator.vibrate(50);
+    showToast(nextVal ? 'Vibration enabled' : 'Vibration disabled');
   };
 
   // Increment Zikr
@@ -677,7 +802,7 @@ export default function App() {
         isExportingPdf={isExportingPdf}
         onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
         userProfile={userProfile}
-        onOpenProfile={() => setIsProfileModalOpen(true)}
+        onOpenProfile={(tab = 'profile') => handleOpenProfileModal(tab)}
       />
 
       {/* Toast Notification Popup */}
@@ -940,7 +1065,7 @@ export default function App() {
         liveZikrs={zikrs}
       />
 
-      {/* User Profile Account Modal (Matching uploaded photo) */}
+      {/* User Profile Account Modal (With Embedded Settings & Firebase Cloud Sync) */}
       <ProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
@@ -948,8 +1073,25 @@ export default function App() {
         onUpdateProfile={setUserProfile}
         onNavigateModule={setActiveModule}
         themeMode={settings.themeMode}
+        onToggleThemeMode={handleToggleThemeMode}
         selectedLanguage={selectedLanguage}
+        onSelectLanguage={(lang) => {
+          setSelectedLanguage(lang);
+          const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+          showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
+        }}
         soundEnabled={settings.soundEnabled}
+        onToggleSound={handleToggleSound}
+        vibrationEnabled={settings.vibrationEnabled}
+        onToggleVibration={handleToggleVibration}
+        onExportPdf={handleExportPdf}
+        onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
+        onResetAllCounters={handleGlobalReset}
+        initialTab={profileModalTab}
+        onCloudDataLoaded={handleCloudDataLoaded}
+        onTriggerCloudSync={handleTriggerCloudSync}
+        isSyncingCloud={isSyncingCloud}
+        lastCloudSyncTimestamp={lastCloudSyncTimestamp}
       />
     </div>
   );

@@ -22,10 +22,48 @@ import {
   Upload,
   Sparkles,
   Download,
+  Settings,
+  Sun,
+  Moon,
+  Globe,
+  Volume2,
+  VolumeX,
+  FileText,
+  Code,
+  RotateCcw,
+  SlidersHorizontal,
+  ChevronRight,
+  Cloud,
+  RefreshCw,
+  KeyRound,
+  ShieldAlert,
+  CheckCircle2,
+  ArrowRight,
+  Lock,
 } from 'lucide-react';
-import { UserProfile, ThemeMode, ZikrLanguage, NavModule } from '../types';
+import confetti from 'canvas-confetti';
+import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
 import { findSavedAccount, saveAccountToRegistry, GOOGLE_DEMO_ACCOUNTS } from '../utils/accountRegistry';
+import { SUPPORTED_LANGUAGES } from '../utils/constants';
+import {
+  generateVerificationOtp,
+  verifySubmittedOtp,
+  loadUserDataFromCloud,
+} from '../services/firebase';
+
+const COUNTRY_CODES = [
+  { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
+  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: '+1', flag: '🇺🇸', name: 'USA / Canada' },
+  { code: '+44', flag: '🇬🇧', name: 'United Kingdom' },
+  { code: '+971', flag: '🇦🇪', name: 'UAE' },
+  { code: '+91', flag: '🇮🇳', name: 'India' },
+  { code: '+92', flag: '🇵🇰', name: 'Pakistan' },
+  { code: '+60', flag: '🇲🇾', name: 'Malaysia' },
+  { code: '+62', flag: '🇮🇩', name: 'Indonesia' },
+  { code: '+90', flag: '🇹🇷', name: 'Turkey' },
+];
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -55,8 +93,27 @@ interface ProfileModalProps {
   onUpdateProfile: (updated: UserProfile) => void;
   onNavigateModule: (module: NavModule) => void;
   themeMode: ThemeMode;
+  onToggleThemeMode?: () => void;
   selectedLanguage: ZikrLanguage;
+  onSelectLanguage?: (lang: ZikrLanguage) => void;
   soundEnabled: boolean;
+  onToggleSound?: () => void;
+  vibrationEnabled?: boolean;
+  onToggleVibration?: () => void;
+  onExportPdf?: () => void;
+  onOpenStandaloneModal?: () => void;
+  onResetAllCounters?: () => void;
+  initialTab?: 'profile' | 'settings';
+  onCloudDataLoaded?: (data: {
+    profile?: Partial<UserProfile>;
+    zikrs?: ZikrItem[];
+    history?: HistorySession[];
+    settings?: AppSettings;
+    foundInCloud?: boolean;
+  }) => void;
+  onTriggerCloudSync?: () => Promise<boolean>;
+  isSyncingCloud?: boolean;
+  lastCloudSyncTimestamp?: number;
 }
 
 const DEFAULT_AVATARS = [
@@ -73,15 +130,63 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onUpdateProfile,
   onNavigateModule,
   themeMode,
+  onToggleThemeMode,
   selectedLanguage,
+  onSelectLanguage,
   soundEnabled,
+  onToggleSound,
+  vibrationEnabled = true,
+  onToggleVibration,
+  onExportPdf,
+  onOpenStandaloneModal,
+  onResetAllCounters,
+  initialTab = 'profile',
+  onCloudDataLoaded,
+  onTriggerCloudSync,
+  isSyncingCloud = false,
+  lastCloudSyncTimestamp,
 }) => {
   const isDay = themeMode === 'day';
+  const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
 
   // Sub-modals / views
   const [activeSubModal, setActiveSubModal] = useState<
-    'none' | 'edit_profile' | 'google_auth' | 'feedback' | 'bookmarks' | 'downloads' | 'logout_confirm'
+    'none' | 'verified_auth' | 'edit_profile' | 'google_auth' | 'feedback' | 'bookmarks' | 'downloads' | 'logout_confirm'
   >('none');
+
+  // Verification & Authentication State
+  const [authMethod, setAuthMethod] = useState<'email' | 'phone' | 'google'>('email');
+  const [verificationStep, setVerificationStep] = useState<'input' | 'otp' | 'success'>('input');
+  const [inputEmail, setInputEmail] = useState('');
+  const [inputPhone, setInputPhone] = useState('');
+  const [selectedCountryCode, setSelectedCountryCode] = useState('+880');
+  const [inputName, setInputName] = useState('');
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+  const [generatedOtpCode, setGeneratedOtpCode] = useState('');
+  const [otpCountdown, setOtpCountdown] = useState(60);
+  const [otpErrorMessage, setOtpErrorMessage] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [cloudSyncMessage, setCloudSyncMessage] = useState<string | null>(null);
+  const [showOtpNotification, setShowOtpNotification] = useState(false);
+  const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  // OTP Countdown timer
+  useEffect(() => {
+    let timer: any;
+    if (verificationStep === 'otp' && otpCountdown > 0) {
+      timer = setInterval(() => {
+        setOtpCountdown((c) => (c > 0 ? c - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [verificationStep, otpCountdown]);
 
   // Edit Profile Form State (User-editable)
   const [editName, setEditName] = useState(userProfile.name);
@@ -222,24 +327,203 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
   };
 
-  // Handle instant Google Sign In
-  const handleGoogleSignIn = (account: { name: string; emailOrPhone: string; photoUrl: string }) => {
-    const existing = findSavedAccount(account.emailOrPhone);
+  // Open Verified Auth Sub-modal
+  const handleOpenVerifiedAuth = (method: 'email' | 'phone' | 'google' = 'email') => {
+    setAuthMethod(method);
+    setVerificationStep('input');
+    setOtpErrorMessage(null);
+    setShowOtpNotification(false);
+    setOtpDigits(['', '', '', '', '', '']);
+    setCloudSyncMessage(null);
+    if (method === 'email' && !inputEmail) {
+      setInputEmail(userProfile.emailOrPhone && userProfile.emailOrPhone.includes('@') ? userProfile.emailOrPhone : '');
+    }
+    if (method === 'phone' && !inputPhone) {
+      const existingDigits = userProfile.emailOrPhone && !userProfile.emailOrPhone.includes('@')
+        ? userProfile.emailOrPhone.replace(/\D/g, '')
+        : '';
+      setInputPhone(existingDigits);
+    }
+    if (!inputName) {
+      setInputName(userProfile.name || '');
+    }
+    setActiveSubModal('verified_auth');
+  };
+
+  // Send 6-digit OTP code to email or phone
+  const handleSendOtp = () => {
+    setOtpErrorMessage(null);
+    const target =
+      authMethod === 'email'
+        ? inputEmail.trim().toLowerCase()
+        : `${selectedCountryCode}${inputPhone.replace(/^0+/, '').trim()}`;
+
+    if (authMethod === 'email') {
+      if (!inputEmail.includes('@') || !inputEmail.includes('.')) {
+        setOtpErrorMessage('সঠিক ইমেইল অ্যাড্রেস লিখুন (e.g. name@gmail.com)');
+        return;
+      }
+    } else {
+      const rawDigits = inputPhone.replace(/\D/g, '');
+      if (rawDigits.length < 8) {
+        setOtpErrorMessage('সঠিক মোবাইল নম্বর লিখুন (অন্তত ৮-১১ ডিজিট)');
+        return;
+      }
+    }
+
+    const methodType: 'email' | 'phone' = authMethod === 'phone' ? 'phone' : 'email';
+    const code = generateVerificationOtp(target, methodType);
+    setGeneratedOtpCode(code);
+    setOtpDigits(['', '', '', '', '', '']);
+    setOtpCountdown(60);
+    setShowOtpNotification(true);
+    setVerificationStep('otp');
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  // Auto-fill OTP on clicking notification
+  const handleAutoFillOtp = () => {
+    if (!generatedOtpCode) return;
+    const digits = generatedOtpCode.split('').slice(0, 6);
+    setOtpDigits(digits);
+    if (soundEnabled) soundHaptics.playTap();
+    // Focus last input
+    setTimeout(() => {
+      otpInputsRef.current[5]?.focus();
+    }, 50);
+  };
+
+  // OTP digit typing handler
+  const handleOtpDigitChange = (index: number, val: string) => {
+    setOtpErrorMessage(null);
+    const clean = val.replace(/\D/g, '');
+
+    // Pasted code
+    if (clean.length > 1) {
+      const digits = clean.slice(0, 6).split('');
+      const next = [...otpDigits];
+      digits.forEach((d, i) => {
+        next[i] = d;
+      });
+      setOtpDigits(next);
+      const focusIdx = Math.min(digits.length, 5);
+      otpInputsRef.current[focusIdx]?.focus();
+      return;
+    }
+
+    const next = [...otpDigits];
+    next[index] = clean;
+    setOtpDigits(next);
+
+    if (clean && index < 5) {
+      otpInputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpInputsRef.current[index - 1]?.focus();
+    }
+  };
+
+  // Confirm OTP and complete verified sign in with cloud restore
+  const handleConfirmOtp = async () => {
+    const fullEntered = otpDigits.join('');
+    if (fullEntered.length < 6) {
+      setOtpErrorMessage('অনুগ্রহ করে ৬ ডিজিটের সম্পূর্ণ কোডটি লিখুন');
+      return;
+    }
+
+    const target =
+      authMethod === 'email'
+        ? inputEmail.trim().toLowerCase()
+        : `${selectedCountryCode}${inputPhone.replace(/^0+/, '').trim()}`;
+
+    setIsVerifying(true);
+    setOtpErrorMessage(null);
+
+    const verificationResult = verifySubmittedOtp(target, fullEntered);
+    if (!verificationResult.success) {
+      setIsVerifying(false);
+      setOtpErrorMessage(verificationResult.message);
+      if (soundEnabled) soundHaptics.playTap();
+      return;
+    }
+
+    // Step Success!
+    setVerificationStep('success');
+    setCloudSyncMessage('যাচাই সম্পন্ন! ক্লাউড থেকে আপনার সকল ইতিহাস লোড হচ্ছে...');
+    confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
+    if (soundEnabled) soundHaptics.playMilestone();
+
+    // Cross-device cloud history load
+    const cloudData = await loadUserDataFromCloud(target);
+    if (cloudData && onCloudDataLoaded) {
+      onCloudDataLoaded(cloudData);
+    }
+
+    const detected = getDetectedDeviceInfo();
     const updated: UserProfile = {
-      ...userProfile,
-      name: account.name,
-      emailOrPhone: account.emailOrPhone,
-      photoUrl: account.photoUrl || (existing?.photoUrl ?? DEFAULT_AVATARS[0]),
-      location: existing?.location || userProfile.location || '4C2J 8FX, BD',
-      deviceModel: existing?.deviceModel || userProfile.deviceModel || 'vivo ~~ V2144',
-      osVersion: existing?.osVersion || userProfile.osVersion || '35_15',
+      name:
+        inputName.trim() ||
+        cloudData?.profile?.name ||
+        (authMethod === 'email' ? inputEmail.split('@')[0] : 'ZikrMate User'),
+      emailOrPhone: target,
+      photoUrl: cloudData?.profile?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
+      location: cloudData?.profile?.location || userProfile.location || '4C2J 8FX, BD',
+      deviceModel: cloudData?.profile?.deviceModel || userProfile.deviceModel || detected.model,
+      osVersion: cloudData?.profile?.osVersion || userProfile.osVersion || detected.osVersion,
       isSignedIn: true,
       isVerified: true,
+      verificationMethod: authMethod,
+      verificationDate: new Date().toISOString(),
+      authProvider: authMethod,
+      lastSyncedAt: Date.now(),
+    };
+
+    saveAccountToRegistry(updated);
+    onUpdateProfile(updated);
+    setIsVerifying(false);
+
+    setTimeout(() => {
+      setActiveSubModal('none');
+      setVerificationStep('input');
+    }, 1500);
+  };
+
+  // Handle instant Google Sign In with cloud sync
+  const handleGoogleSignIn = async (account: { name: string; emailOrPhone: string; photoUrl: string }) => {
+    setIsVerifying(true);
+    setCloudSyncMessage('গুগল অ্যাকাউন্ট যাচাই ও ক্লাউড ডাটা লোড হচ্ছে...');
+
+    // Load cloud data for this email across ANY device
+    const cloudData = await loadUserDataFromCloud(account.emailOrPhone);
+    if (cloudData && onCloudDataLoaded) {
+      onCloudDataLoaded(cloudData);
+    }
+
+    const existing = findSavedAccount(account.emailOrPhone);
+    const detected = getDetectedDeviceInfo();
+    const updated: UserProfile = {
+      ...userProfile,
+      name: account.name || cloudData?.profile?.name || existing?.name || 'Google User',
+      emailOrPhone: account.emailOrPhone,
+      photoUrl: account.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
+      location: existing?.location || userProfile.location || '4C2J 8FX, BD',
+      deviceModel: existing?.deviceModel || userProfile.deviceModel || detected.model,
+      osVersion: existing?.osVersion || userProfile.osVersion || detected.osVersion,
+      isSignedIn: true,
+      isVerified: true,
+      verificationMethod: 'google',
+      verificationDate: new Date().toISOString(),
       authProvider: 'google',
+      lastSyncedAt: Date.now(),
     };
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
+    setIsVerifying(false);
     setActiveSubModal('none');
+    confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
     if (soundEnabled) soundHaptics.playMilestone();
   };
 
@@ -363,7 +647,13 @@ ${msg}`;
             >
               <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
             </button>
-            <h2 className="text-lg font-bold tracking-tight">Profile</h2>
+            <h2 className="text-lg font-bold tracking-tight">
+              {activeTab === 'settings'
+                ? selectedLanguage === 'bn'
+                  ? 'অ্যাপ সেটিংস'
+                  : 'Settings'
+                : 'Profile'}
+            </h2>
           </div>
 
           <button
@@ -375,117 +665,221 @@ ${msg}`;
           </button>
         </div>
 
+        {/* Top Segmented Navigation Tabs: Profile / Sign In vs Settings */}
+        <div className="bg-[#236841] px-4 py-2 flex items-center justify-center shrink-0 border-b border-emerald-600/30">
+          <div className="w-full grid grid-cols-2 p-1 rounded-2xl bg-black/25 backdrop-blur-md border border-white/10 text-xs font-bold text-white shadow-inner">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('profile');
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
+                activeTab === 'profile'
+                  ? 'bg-white text-[#1a5530] shadow-md font-extrabold'
+                  : 'text-emerald-100 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>{userProfile.isSignedIn ? userProfile.name.split(' ')[0] || 'Profile' : 'Sign In'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('settings');
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
+                activeTab === 'settings'
+                  ? 'bg-white text-[#1a5530] shadow-md font-extrabold'
+                  : 'text-emerald-100 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>{selectedLanguage === 'bn' ? 'সেটিংস' : 'Settings'}</span>
+            </button>
+          </div>
+        </div>
+
         {/* 2. BODY CONTENT (SCROLLABLE) */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* USER PROFILE CARD (Conditional: Signed in vs Sign in prompt) */}
-          {userProfile.isSignedIn && userProfile.name ? (
-            <div
-              className={`p-4 rounded-2xl border shadow-md transition-all flex items-center justify-between gap-3 ${
-                isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                {/* Profile Image with subtle border */}
-                <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm shrink-0 bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
-                  {userProfile.photoUrl ? (
-                    <img
-                      src={userProfile.photoUrl}
-                      alt={userProfile.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-7 h-7 text-emerald-600 dark:text-emerald-300" />
-                  )}
-                  {userProfile.authProvider === 'google' && (
-                    <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-xs">
-                      <GoogleIcon />
+          {/* TAB 1: PROFILE & SIGN IN VIEW */}
+          {activeTab === 'profile' && (
+            <>
+              {/* USER PROFILE CARD (Conditional: Signed in vs Sign in prompt) */}
+              {userProfile.isSignedIn && userProfile.name ? (
+                <div
+                  className={`p-4 rounded-2xl border shadow-md transition-all space-y-3 ${
+                    isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Profile Image with subtle border */}
+                      <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm shrink-0 bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
+                        {userProfile.photoUrl ? (
+                          <img
+                            src={userProfile.photoUrl}
+                            alt={userProfile.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-7 h-7 text-emerald-600 dark:text-emerald-300" />
+                        )}
+                        {userProfile.authProvider === 'google' && (
+                          <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-xs">
+                            <GoogleIcon />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Name and Email */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-black text-sm sm:text-base truncate leading-snug">
+                            {userProfile.name}
+                          </h3>
+                          {userProfile.isVerified && (
+                            <span className="p-0.5 rounded-full bg-emerald-500 text-white shrink-0" title="Verified Account">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-teal-300/80 truncate font-mono">
+                          {userProfile.emailOrPhone || 'Verified ZikrMate User'}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                            <ShieldCheck className="w-3 h-3" />
+                            <span>
+                              {userProfile.verificationMethod === 'email'
+                                ? 'ইমেইল ভেরিফাইড (Email Verified)'
+                                : userProfile.verificationMethod === 'phone'
+                                ? 'ফোন ভেরিফাইড (Phone Verified)'
+                                : 'গুগল ভেরিফাইড (Verified Account)'}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Name and Email */}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-black text-sm sm:text-base truncate leading-snug">
-                      {userProfile.name}
-                    </h3>
+                    {/* Edit Profile Button */}
+                    <button
+                      onClick={() => {
+                        setActiveSubModal('edit_profile');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer shrink-0 ${
+                        isDay
+                          ? 'bg-slate-100 hover:bg-emerald-50 border-slate-200 text-slate-700 hover:text-emerald-600'
+                          : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850] text-teal-200'
+                      }`}
+                      title="Edit Profile"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-teal-300/80 truncate font-mono">
-                    {userProfile.emailOrPhone || 'Verified ZikrMate User'}
-                  </p>
-                  <div className="flex items-center gap-1 mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                    <ShieldCheck className="w-3.5 h-3.5 fill-emerald-500/20" />
-                    <span>ZikrMate Verified</span>
+
+                  {/* Cloud Sync Status & Cross-Device Sync Indicator */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-teal-900/40 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-600 dark:text-teal-200">
+                      <Cloud className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <div className="leading-tight">
+                        <div className="font-bold text-[11px] flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                          <span>Firebase Cloud Sync Active</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          যে ডিভাইসেই লগইন করবেন, সব হিস্ট্রি স্বয়ংক্রিয়ভাবে থাকবে
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (onTriggerCloudSync) {
+                          await onTriggerCloudSync();
+                        }
+                        if (soundEnabled) soundHaptics.playMilestone();
+                      }}
+                      disabled={isSyncingCloud}
+                      className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] flex items-center gap-1 transition active:scale-95 cursor-pointer shrink-0"
+                      title="Sync current counts to cloud"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+                      <span>{isSyncingCloud ? 'Syncing...' : 'Sync Now'}</span>
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Edit Profile Button */}
-              <button
-                onClick={() => {
-                  setActiveSubModal('edit_profile');
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer shrink-0 ${
-                  isDay
-                    ? 'bg-slate-100 hover:bg-emerald-50 border-slate-200 text-slate-700 hover:text-emerald-600'
-                    : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850] text-teal-200'
-                }`}
-                title="Edit Profile"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div
-              className={`p-4 rounded-2xl border shadow-md transition-all space-y-3 ${
-                isDay
-                  ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'
-                  : 'bg-gradient-to-r from-[#09282f] to-[#0e3b45] border-[#1f5e6b]'
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40">
-                  <User className="w-6 h-6" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold text-sm leading-snug text-slate-900 dark:text-white">
-                    Sign In to ZikrMate (অ্যাকাউন্ট লগইন)
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-teal-200/80">
-                    ডাটা সেভ ও ভেরিফায়েড প্রোফাইল পেতে লগইন করুন
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons: Google vs Email/Phone */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSubModal('google_auth');
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+              ) : (
+                <div
+                  className={`p-4 rounded-2xl border shadow-md transition-all space-y-3 ${
+                    isDay
+                      ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/40 border-emerald-200'
+                      : 'bg-gradient-to-r from-[#09282f] via-[#0d343c] to-[#0e3b45] border-[#1f5e6b]'
+                  }`}
                 >
-                  <GoogleIcon />
-                  <span>Sign In with Google</span>
-                </button>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40 shadow-inner">
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-sm leading-snug text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span>Verified Sign In</span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold">
+                          Cloud History
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-slate-600 dark:text-teal-200/80 leading-relaxed">
+                        ইমেইল বা ফোন নম্বর ভেরিফাই করে লগইন করুন। যেকোনো ডিভাইস থেকে লগইন করলে আপনার সকল জিকির ও হিস্ট্রি অক্ষুণ্ণ থাকবে।
+                      </p>
+                    </div>
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSubModal('edit_profile');
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>Email / Phone Sign In</span>
-                </button>
-              </div>
-            </div>
-          )}
+                  {/* Action Buttons: Email Verification vs Phone Verification vs Google */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleOpenVerifiedAuth('email');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Email Verification (ইমেইল)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleOpenVerifiedAuth('phone');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className="py-2.5 px-3 rounded-xl bg-[#0e4b52] hover:bg-[#135d66] text-white font-bold text-xs border border-teal-500/40 shadow-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-teal-300" />
+                      <span>Phone SMS (মোবাইল নম্বর)</span>
+                    </button>
+                  </div>
+
+                  <div className="text-center pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleOpenVerifiedAuth('google');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-teal-200 hover:text-emerald-600 dark:hover:text-emerald-300 transition cursor-pointer"
+                    >
+                      <GoogleIcon />
+                      <span>Or Continue with Google One-Tap</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
           {/* 3. MENU OPTIONS LIST (Matching the requested items from screenshot) */}
           <div
@@ -541,6 +935,40 @@ ${msg}`;
                 </div>
               </div>
               <span className="text-xs font-mono font-bold text-slate-400">3 books</span>
+            </button>
+
+            {/* Option: Settings & Preferences */}
+            <button
+              onClick={() => {
+                setActiveTab('settings');
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`w-full p-3.5 flex items-center justify-between text-left transition cursor-pointer ${
+                isDay ? 'hover:bg-slate-50' : 'hover:bg-teal-950/40'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                  <Settings className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-sm flex items-center gap-1.5">
+                    <span>{selectedLanguage === 'bn' ? 'অ্যাপ সেটিংস ও পছন্দ' : 'Settings & Preferences'}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold uppercase">
+                      App
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                    {selectedLanguage === 'bn'
+                      ? 'থিম, ভাষা, অডিও সাউন্ড, ভাইব্রেশন ও ডাটা রিসেট'
+                      : 'Theme, Language, Sound, PDF & Data Reset'}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span>Open</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
             </button>
 
             {/* Option 3: Prayer Settings */}
@@ -636,6 +1064,343 @@ ${msg}`;
               "Remember Me; I will remember you." — Surah Al-Baqarah 2:152
             </p>
           </div>
+            </>
+          )}
+
+          {/* TAB 2: COMPREHENSIVE SETTINGS VIEW */}
+          {activeTab === 'settings' && (
+            <div className="space-y-4 animate-in fade-in duration-200 pb-2">
+              {/* 1. Theme Mode Switcher */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-2.5 ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    <Sun className="w-4 h-4 text-amber-500" />
+                    <span>{selectedLanguage === 'bn' ? 'থিম মোড' : 'Theme Mode'}</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                    {isDay ? 'Day Mode ☀️' : 'Night Mode 🌙'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isDay && onToggleThemeMode) onToggleThemeMode();
+                      if (soundEnabled) soundHaptics.playTap();
+                    }}
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition active:scale-95 cursor-pointer ${
+                      isDay
+                        ? 'bg-amber-500 text-white border-amber-600 shadow-md'
+                        : 'bg-[#092226] text-slate-300 border-[#184850] hover:bg-teal-900/40'
+                    }`}
+                  >
+                    <Sun className="w-4 h-4 text-amber-300" />
+                    <span>Day Mode</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isDay && onToggleThemeMode) onToggleThemeMode();
+                      if (soundEnabled) soundHaptics.playTap();
+                    }}
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition active:scale-95 cursor-pointer ${
+                      !isDay
+                        ? 'bg-teal-700 text-white border-teal-500 shadow-md'
+                        : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                    }`}
+                  >
+                    <Moon className="w-4 h-4 text-teal-200" />
+                    <span>Night Mode</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Language Selection (All 6 Languages) */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-2.5 ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    <Globe className="w-4 h-4 text-emerald-500" />
+                    <span>{selectedLanguage === 'bn' ? 'ভাষা নির্বাচন' : 'Language'}</span>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.nativeName}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {SUPPORTED_LANGUAGES.map((lang) => {
+                    const isSelected = selectedLanguage === lang.code;
+                    return (
+                      <button
+                        key={lang.code}
+                        type="button"
+                        onClick={() => {
+                          if (onSelectLanguage) onSelectLanguage(lang.code);
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between transition active:scale-95 cursor-pointer text-left ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-700 shadow-md'
+                            : isDay
+                            ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                            : 'bg-[#092226] hover:bg-teal-900/40 text-teal-200 border-[#184850]'
+                        }`}
+                      >
+                        <span className="truncate">{lang.nativeName}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Audio & Vibration Toggles */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                }`}
+              >
+                <div className="font-bold text-sm flex items-center gap-2">
+                  <Volume2 className="w-4 h-4 text-emerald-500" />
+                  <span>{selectedLanguage === 'bn' ? 'শব্দ ও ভাইব্রেশন' : 'Sound & Haptics'}</span>
+                </div>
+
+                {/* Sound Toggle */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#092226] border border-slate-200 dark:border-[#184850]">
+                  <div className="flex items-center gap-2.5">
+                    {soundEnabled ? (
+                      <Volume2 className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <VolumeX className="w-4 h-4 text-slate-400" />
+                    )}
+                    <div>
+                      <div className="text-xs font-bold">
+                        {selectedLanguage === 'bn' ? 'কাউন্টার সাউন্ড' : 'Counter Sound'}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {soundEnabled
+                          ? selectedLanguage === 'bn'
+                            ? 'সক্রিয় আছে'
+                            : 'Active'
+                          : selectedLanguage === 'bn'
+                          ? 'বন্ধ আছে'
+                          : 'Muted'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => soundHaptics.playMilestone()}
+                      className="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25"
+                    >
+                      Test
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onToggleSound) onToggleSound();
+                      }}
+                      className={`w-11 h-6 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer ${
+                        soundEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                          soundEnabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Vibration Toggle */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#092226] border border-slate-200 dark:border-[#184850]">
+                  <div className="flex items-center gap-2.5">
+                    <Smartphone className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <div className="text-xs font-bold">
+                        {selectedLanguage === 'bn' ? 'হ্যাপটিক ভাইব্রেশন' : 'Haptic Vibration'}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {vibrationEnabled
+                          ? selectedLanguage === 'bn'
+                            ? 'স্পর্শে মৃদু কম্পন'
+                            : 'Touch Haptics Active'
+                          : selectedLanguage === 'bn'
+                          ? 'কম্পন বন্ধ'
+                          : 'Vibration Off'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (navigator.vibrate) navigator.vibrate(80);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className="px-2 py-1 rounded-lg text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/25"
+                    >
+                      Test
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onToggleVibration) onToggleVibration();
+                      }}
+                      className={`w-11 h-6 rounded-full transition-colors relative flex items-center p-0.5 cursor-pointer ${
+                        vibrationEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                          vibrationEnabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Reports & Tools */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-2.5 ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                }`}
+              >
+                <div className="font-bold text-sm flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-rose-500" />
+                  <span>{selectedLanguage === 'bn' ? 'রিপোর্ট ও টুলস' : 'Reports & Tools'}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      if (onExportPdf) onExportPdf();
+                    }}
+                    className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                      isDay
+                        ? 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                        : 'bg-[#092226] hover:bg-teal-900/40 text-teal-200 border-[#184850]'
+                    }`}
+                  >
+                    <FileText className="w-5 h-5 text-rose-500" />
+                    <span>PDF Report</span>
+                    <span className="text-[10px] text-slate-400 font-normal">১ দিন থেকে ১০ বছর</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      if (onOpenStandaloneModal) onOpenStandaloneModal();
+                    }}
+                    className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                      isDay
+                        ? 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                        : 'bg-[#092226] hover:bg-teal-900/40 text-teal-200 border-[#184850]'
+                    }`}
+                  >
+                    <Code className="w-5 h-5 text-blue-500" />
+                    <span>APK &amp; PWA Guide</span>
+                    <span className="text-[10px] text-slate-400 font-normal">অফলাইন প্যাকেজিং</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 5. Data Reset & Counter Management */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-2.5 ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                }`}
+              >
+                <div className="font-bold text-sm flex items-center justify-between text-rose-600 dark:text-rose-400">
+                  <div className="flex items-center gap-2">
+                    <RotateCcw className="w-4 h-4" />
+                    <span>{selectedLanguage === 'bn' ? 'কাউন্টার রিসেট' : 'Reset Counters'}</span>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-slate-500 dark:text-teal-300/80 leading-relaxed">
+                  {selectedLanguage === 'bn'
+                    ? 'সবগুলো জিকিরের কাউন্ট শূন্য (০) করা হবে। তবে জিকিরের নাম ও টার্গেট অক্ষুণ্ণ থাকবে।'
+                    : 'Resets all active Zikr counts to 0 while keeping your custom targets and list intact.'}
+                </p>
+
+                {showResetConfirm ? (
+                  <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 space-y-2">
+                    <p className="text-xs font-bold text-rose-700 dark:text-rose-300">
+                      {selectedLanguage === 'bn'
+                        ? 'আপনি কি নিশ্চিত সব কাউন্টার রিসেট করতে চান?'
+                        : 'Are you sure you want to reset all counters?'}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onResetAllCounters) onResetAllCounters();
+                          setShowResetConfirm(false);
+                          if (soundEnabled) soundHaptics.playMilestone();
+                        }}
+                        className="py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs"
+                      >
+                        {selectedLanguage === 'bn' ? 'হ্যাঁ, রিসেট করুন' : 'Yes, Reset All'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowResetConfirm(false)}
+                        className="py-1.5 px-3 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs"
+                      >
+                        {selectedLanguage === 'bn' ? 'বাতিল' : 'Cancel'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirm(true)}
+                    className="w-full py-2.5 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-900/50 flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>{selectedLanguage === 'bn' ? 'সব কাউন্টার রিসেট করুন' : 'Reset All Counters'}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* 6. Device & Application Info */}
+              <div
+                className={`p-4 rounded-2xl border text-xs space-y-2 ${
+                  isDay ? 'bg-[#f4faf9] border-[#d2ece9]' : 'bg-[#071f25] border-[#174853]'
+                }`}
+              >
+                <div className="font-bold flex items-center justify-between text-slate-700 dark:text-teal-200">
+                  <span>{selectedLanguage === 'bn' ? 'ডিভাইস ও সিস্টেম তথ্য' : 'System Information'}</span>
+                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">Offline Safe</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-teal-300/80 font-mono">
+                  <div>Model: {userProfile.deviceModel || 'vivo ~~ V2144'}</div>
+                  <div>OS: {userProfile.osVersion || '35_15'}</div>
+                  <div>App: ZikrMate v411_38.1</div>
+                  <div>Location: {userProfile.location || '4C2J 8FX, BD'}</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ----------------- SUB-MODAL 1: EDIT PROFILE ----------------- */}
@@ -863,99 +1628,467 @@ ${msg}`;
           </div>
         )}
 
-        {/* ----------------- SUB-MODAL: GOOGLE AUTH CHOOSER ----------------- */}
-        {activeSubModal === 'google_auth' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+        {/* ----------------- SUB-MODAL: VERIFIED AUTH (EMAIL OTP, PHONE SMS, & GOOGLE) ----------------- */}
+        {activeSubModal === 'verified_auth' && (
+          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div
-              className={`w-full max-w-sm rounded-3xl border p-5 shadow-2xl space-y-4 ${
+              className={`w-full max-w-sm rounded-3xl border p-5 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto ${
                 isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0f343c] text-white border-[#1c5763]'
               }`}
             >
+              {/* Header */}
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
                 <div className="flex items-center gap-2">
-                  <GoogleIcon />
-                  <h3 className="font-bold text-sm">Sign In with Google</h3>
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm sm:text-base leading-tight">
+                      Verified Sign In &amp; Cloud Sync
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-teal-300/80">
+                      যেকোনো ডিভাইসে ইতিহাস অক্ষুণ্ণ রাখার নিরাপদ ব্যবস্থা
+                    </p>
+                  </div>
                 </div>
                 <button
-                  onClick={() => setActiveSubModal('none')}
-                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-teal-900/40"
+                  type="button"
+                  onClick={() => {
+                    setActiveSubModal('none');
+                    setVerificationStep('input');
+                  }}
+                  className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-teal-900/40 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="text-xs text-slate-500 dark:text-teal-200">
-                Choose an account to continue to <strong>ZikrMate</strong>:
-              </div>
+              {/* STEP 1: METHOD SELECTION & CREDENTIALS INPUT */}
+              {verificationStep === 'input' && (
+                <div className="space-y-3.5 animate-in fade-in">
+                  {/* Method Switcher Tabs: Email vs Phone vs Google */}
+                  <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100 dark:bg-[#071f25] border border-slate-200 dark:border-teal-900/50 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMethod('email');
+                        setOtpErrorMessage(null);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`py-2 rounded-xl flex items-center justify-center gap-1 transition cursor-pointer ${
+                        authMethod === 'email'
+                          ? 'bg-white dark:bg-[#134952] text-emerald-700 dark:text-emerald-300 shadow-sm font-extrabold'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-teal-300'
+                      }`}
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Email</span>
+                    </button>
 
-              {/* Demo / Saved Google Accounts */}
-              <div className="space-y-2">
-                {GOOGLE_DEMO_ACCOUNTS.map((acc, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleGoogleSignIn(acc)}
-                    className={`w-full p-2.5 rounded-2xl border flex items-center gap-3 transition active:scale-95 text-left cursor-pointer ${
-                      isDay
-                        ? 'bg-slate-50 hover:bg-emerald-50/70 border-slate-200'
-                        : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850]'
-                    }`}
-                  >
-                    <img
-                      src={acc.photoUrl}
-                      alt={acc.name}
-                      className="w-9 h-9 rounded-full object-cover border border-emerald-400 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-xs truncate">{acc.name}</div>
-                      <div className="text-[11px] text-slate-400 font-mono truncate">{acc.emailOrPhone}</div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMethod('phone');
+                        setOtpErrorMessage(null);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`py-2 rounded-xl flex items-center justify-center gap-1 transition cursor-pointer ${
+                        authMethod === 'phone'
+                          ? 'bg-white dark:bg-[#134952] text-emerald-700 dark:text-emerald-300 shadow-sm font-extrabold'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-teal-300'
+                      }`}
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Phone SMS</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMethod('google');
+                        setOtpErrorMessage(null);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`py-2 rounded-xl flex items-center justify-center gap-1 transition cursor-pointer ${
+                        authMethod === 'google'
+                          ? 'bg-white dark:bg-[#134952] text-emerald-700 dark:text-emerald-300 shadow-sm font-extrabold'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-teal-300'
+                      }`}
+                    >
+                      <GoogleIcon />
+                      <span>Google</span>
+                    </button>
+                  </div>
+
+                  {/* 1. EMAIL AUTH FORM */}
+                  {authMethod === 'email' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Full Name (আপনার নাম)
+                        </label>
+                        <input
+                          type="text"
+                          value={inputName}
+                          onChange={(e) => setInputName(e.target.value)}
+                          placeholder="e.g. Md. Mursaline Parvez"
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Email Address (ইমেইল ঠিকানা) *
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={inputEmail}
+                          onChange={(e) => setInputEmail(e.target.value)}
+                          placeholder="yourname@gmail.com"
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                          }`}
+                        />
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+                        <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>
+                          লগইনের আগে আপনার ইমেইলে একটি ৬ ডিজিটের ভেরিফিকেশন ওটিপি কোড পাঠানো হবে।
+                        </span>
+                      </div>
+
+                      {otpErrorMessage && (
+                        <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
+                          <ShieldAlert className="w-4 h-4 shrink-0" />
+                          <span>{otpErrorMessage}</span>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send 6-Digit OTP Code (কোড পাঠান)</span>
+                      </button>
                     </div>
-                  </button>
-                ))}
-              </div>
+                  )}
 
-              {/* Custom Google Account Input */}
-              <div className="pt-2 border-t border-slate-100 dark:border-teal-900/40 space-y-2">
-                <div className="text-[11px] font-bold text-slate-500 dark:text-teal-300">
-                  Or enter your Google Account:
+                  {/* 2. PHONE NUMBER SMS AUTH FORM */}
+                  {authMethod === 'phone' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Full Name (আপনার নাম)
+                        </label>
+                        <input
+                          type="text"
+                          value={inputName}
+                          onChange={(e) => setInputName(e.target.value)}
+                          placeholder="e.g. Abdullah Al-Mamun"
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Mobile Number (মোবাইল নম্বর) *
+                        </label>
+                        <div className="flex gap-1.5">
+                          <select
+                            value={selectedCountryCode}
+                            onChange={(e) => setSelectedCountryCode(e.target.value)}
+                            className={`rounded-xl px-2 py-2 border text-xs font-bold focus:outline-none ${
+                              isDay
+                                ? 'bg-slate-50 border-slate-300 text-slate-900'
+                                : 'bg-[#092226] border-[#184850] text-white'
+                            }`}
+                          >
+                            {COUNTRY_CODES.map((c) => (
+                              <option key={c.code} value={c.code}>
+                                {c.flag} {c.code}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="tel"
+                            required
+                            value={inputPhone}
+                            onChange={(e) => setInputPhone(e.target.value)}
+                            placeholder="01712345678"
+                            className={`flex-1 rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                              isDay
+                                ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                                : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-[11px] text-teal-800 dark:text-teal-300 flex items-start gap-2">
+                        <Smartphone className="w-3.5 h-3.5 text-teal-500 shrink-0 mt-0.5" />
+                        <span>
+                          নম্বর ভেরিফিকেশনের জন্য ইনস্ট্যান্ট SMS ওটিপি কোড পাঠানো হবে।
+                        </span>
+                      </div>
+
+                      {otpErrorMessage && (
+                        <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
+                          <ShieldAlert className="w-4 h-4 shrink-0" />
+                          <span>{otpErrorMessage}</span>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send SMS OTP (এসএমএস কোড পাঠান)</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 3. GOOGLE ONE-TAP ACCOUNTS */}
+                  {authMethod === 'google' && (
+                    <div className="space-y-2.5">
+                      <div className="text-xs text-slate-500 dark:text-teal-200">
+                        লগইন করতে আপনার গুগল অ্যাকাউন্ট নির্বাচন করুন:
+                      </div>
+
+                      <div className="space-y-1.5">
+                        {GOOGLE_DEMO_ACCOUNTS.map((acc, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleGoogleSignIn(acc)}
+                            className={`w-full p-2.5 rounded-2xl border flex items-center gap-3 transition active:scale-95 text-left cursor-pointer ${
+                              isDay
+                                ? 'bg-slate-50 hover:bg-emerald-50/70 border-slate-200'
+                                : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850]'
+                            }`}
+                          >
+                            <img
+                              src={acc.photoUrl}
+                              alt={acc.name}
+                              className="w-9 h-9 rounded-full object-cover border border-emerald-400 shrink-0"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="font-bold text-xs truncate">{acc.name}</div>
+                              <div className="text-[10px] text-slate-400 font-mono truncate">{acc.emailOrPhone}</div>
+                            </div>
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                              Verify &amp; Sync
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Custom Google Account Input */}
+                      <div className="pt-2 border-t border-slate-100 dark:border-teal-900/40 space-y-2">
+                        <div className="text-[11px] font-bold text-slate-500 dark:text-teal-300">
+                          বা আপনার নিজস্ব গুগল ইমেইল দিন:
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Your Full Name..."
+                          value={customGoogleName}
+                          onChange={(e) => setCustomGoogleName(e.target.value)}
+                          className={`w-full rounded-xl px-3 py-2 border text-xs focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900'
+                              : 'bg-[#092226] border-[#184850] text-white'
+                          }`}
+                        />
+                        <input
+                          type="email"
+                          placeholder="yourname@gmail.com..."
+                          value={customGoogleEmail}
+                          onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                          className={`w-full rounded-xl px-3 py-2 border text-xs focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900'
+                              : 'bg-[#092226] border-[#184850] text-white'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          disabled={!customGoogleEmail.trim() || !customGoogleName.trim()}
+                          onClick={() => {
+                            handleGoogleSignIn({
+                              name: customGoogleName.trim(),
+                              emailOrPhone: customGoogleEmail.trim(),
+                              photoUrl: DEFAULT_AVATARS[0],
+                            });
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
+                        >
+                          Confirm &amp; Load Cloud Data
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <input
-                  type="text"
-                  placeholder="Your Full Name..."
-                  value={customGoogleName}
-                  onChange={(e) => setCustomGoogleName(e.target.value)}
-                  className={`w-full rounded-xl px-3 py-2 border text-xs focus:outline-none ${
-                    isDay
-                      ? 'bg-slate-50 border-slate-300 text-slate-900'
-                      : 'bg-[#092226] border-[#184850] text-white'
-                  }`}
-                />
-                <input
-                  type="email"
-                  placeholder="yourname@gmail.com..."
-                  value={customGoogleEmail}
-                  onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                  className={`w-full rounded-xl px-3 py-2 border text-xs focus:outline-none ${
-                    isDay
-                      ? 'bg-slate-50 border-slate-300 text-slate-900'
-                      : 'bg-[#092226] border-[#184850] text-white'
-                  }`}
-                />
-                <button
-                  type="button"
-                  disabled={!customGoogleEmail.trim() || !customGoogleName.trim()}
-                  onClick={() => {
-                    handleGoogleSignIn({
-                      name: customGoogleName.trim(),
-                      emailOrPhone: customGoogleEmail.trim(),
-                      photoUrl: DEFAULT_AVATARS[0],
-                    });
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
-                >
-                  Confirm Google Sign In
-                </button>
-              </div>
+              )}
+
+              {/* STEP 2: 6-DIGIT OTP VERIFICATION ENTRY */}
+              {verificationStep === 'otp' && (
+                <div className="space-y-4 animate-in fade-in">
+                  {/* Interactive Push Banner for effortless code viewing and auto-fill */}
+                  {showOtpNotification && generatedOtpCode && (
+                    <div
+                      onClick={handleAutoFillOtp}
+                      className="p-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg border border-emerald-400/50 cursor-pointer active:scale-95 transition space-y-1"
+                    >
+                      <div className="flex items-center justify-between text-[11px] font-bold opacity-90">
+                        <span className="flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>{authMethod === 'email' ? 'Security Email OTP' : 'Security SMS OTP'}</span>
+                        </span>
+                        <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Tap to Auto-fill</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl font-mono font-black tracking-widest bg-black/20 px-2.5 py-1 rounded-xl">
+                          {generatedOtpCode}
+                        </span>
+                        <span className="text-[11px] underline font-bold">Auto Fill (স্বয়ংক্রিয় পূরণ) →</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Target announcement */}
+                  <div className="text-center space-y-1">
+                    <p className="text-xs text-slate-500 dark:text-teal-200">
+                      নিচের ঠিকানায় প্রেরিত ৬-সংখ্যার কোডটি প্রবেশ করান:
+                    </p>
+                    <p className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      {authMethod === 'email'
+                        ? inputEmail
+                        : `${selectedCountryCode} ${inputPhone}`}
+                    </p>
+                  </div>
+
+                  {/* 6 Digit Inputs */}
+                  <div className="flex justify-between gap-1.5 sm:gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((idx) => (
+                      <input
+                        key={idx}
+                        ref={(el) => {
+                          otpInputsRef.current[idx] = el;
+                        }}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={otpDigits[idx]}
+                        onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                        className={`w-11 h-12 text-center text-lg font-mono font-black rounded-2xl border transition focus:outline-none ${
+                          otpDigits[idx]
+                            ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 ring-2 ring-emerald-500/30'
+                            : isDay
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                            : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Error display */}
+                  {otpErrorMessage && (
+                    <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
+                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                      <span>{otpErrorMessage}</span>
+                    </div>
+                  )}
+
+                  {/* Countdown Timer & Resend */}
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-teal-300/80 pt-1">
+                    <span>
+                      {otpCountdown > 0 ? (
+                        <span className="font-mono font-semibold">
+                          কোডের মেয়াদ: 00:{otpCountdown < 10 ? `0${otpCountdown}` : otpCountdown}
+                        </span>
+                      ) : (
+                        <span className="text-amber-500 font-bold">কোডের মেয়াদ শেষ</span>
+                      )}
+                    </span>
+
+                    <button
+                      type="button"
+                      disabled={otpCountdown > 0}
+                      onClick={handleSendOtp}
+                      className="text-xs font-bold text-emerald-600 dark:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
+                    >
+                      Resend Code (পুনরায় পাঠান)
+                    </button>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setVerificationStep('input')}
+                      className="py-2.5 px-3 rounded-xl border border-slate-300 dark:border-teal-900/60 font-bold text-xs hover:bg-slate-100 dark:hover:bg-teal-900/30 transition cursor-pointer"
+                    >
+                      Back
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isVerifying || otpDigits.join('').length < 6}
+                      onClick={handleConfirmOtp}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                    >
+                      {isVerifying ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Verifying...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Verify &amp; Restore History (যাচাই করুন)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: SUCCESS CELEBRATION & CLOUD RESTORE */}
+              {verificationStep === 'success' && (
+                <div className="p-6 text-center space-y-3 animate-in zoom-in-95 duration-200">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 mx-auto flex items-center justify-center border-2 border-emerald-500 shadow-lg">
+                    <Check className="w-8 h-8 stroke-[3]" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-base text-emerald-600 dark:text-emerald-400">
+                      ✓ ভেরিফিকেশন সফল হয়েছে!
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-teal-200 mt-1">
+                      {cloudSyncMessage || 'ক্লাউড থেকে আপনার সকল ইতিহাস লোড হচ্ছে...'}
+                    </p>
+                  </div>
+                  <div className="pt-2 flex items-center justify-center gap-2 text-xs font-mono text-emerald-700 dark:text-emerald-300">
+                    <Cloud className="w-4 h-4 animate-bounce" />
+                    <span>Cross-Device Cloud Synced</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
