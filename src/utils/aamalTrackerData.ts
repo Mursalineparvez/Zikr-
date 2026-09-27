@@ -433,6 +433,77 @@ export function saveAamalLogForDate(dateKey: string, log: AamalDayLog): void {
   }
 }
 
+/**
+ * Permanently records a zikr tap into today's Aamal Tracker history.
+ * Even if the user resets their live counter to 0, this history remains intact!
+ */
+export function recordZikrIncrementInAamal(
+  zikr: { name: string; target?: number; arabic?: string; transliteration?: string },
+  incrementBy: number = 1,
+  dateKey: string = getTodayDateKey()
+): void {
+  try {
+    const dayLog = getAamalLogForDate(dateKey);
+    dayLog.dhikrCount = (dayLog.dhikrCount || 0) + incrementBy;
+
+    if (!dayLog.zikrBreakdown) {
+      dayLog.zikrBreakdown = [];
+    }
+
+    const existingIndex = dayLog.zikrBreakdown.findIndex(
+      (z) => z.name === zikr.name || (zikr.arabic && z.arabic === zikr.arabic)
+    );
+
+    if (existingIndex >= 0) {
+      dayLog.zikrBreakdown[existingIndex].count =
+        (dayLog.zikrBreakdown[existingIndex].count || 0) + incrementBy;
+      if (zikr.target) dayLog.zikrBreakdown[existingIndex].target = zikr.target;
+    } else {
+      dayLog.zikrBreakdown.push({
+        name: zikr.name,
+        count: incrementBy,
+        target: zikr.target,
+        arabic: zikr.arabic,
+        transliteration: zikr.transliteration,
+      });
+    }
+
+    // Auto-complete daily tasbeeh when milestone reached
+    const tasbeehItem = dayLog.items.find((i) => i.id === 'daily_tasbeeh');
+    if (tasbeehItem && !tasbeehItem.completed && dayLog.dhikrCount >= 33) {
+      tasbeehItem.completed = true;
+    }
+
+    const zikrNameLower = (zikr.name + ' ' + (zikr.transliteration || '')).toLowerCase();
+    if (zikrNameLower.includes('istighfar') || zikrNameLower.includes('astaghfirullah')) {
+      const istighfarItem = dayLog.items.find((i) => i.id === 'istighfar_100');
+      const itemBreakdown = dayLog.zikrBreakdown.find((z) => z.name === zikr.name);
+      if (istighfarItem && (itemBreakdown?.count || 0) >= 100) {
+        istighfarItem.completed = true;
+      }
+    }
+
+    if (
+      zikrNameLower.includes('salawat') ||
+      zikrNameLower.includes('durood') ||
+      zikrNameLower.includes('sallallahu')
+    ) {
+      const salawatItem = dayLog.items.find((i) => i.id === 'salawat_prophet');
+      const itemBreakdown = dayLog.zikrBreakdown.find((z) => z.name === zikr.name);
+      if (salawatItem && (itemBreakdown?.count || 0) >= 100) {
+        salawatItem.completed = true;
+      }
+    }
+
+    const completedCount = dayLog.items.filter((i) => i.completed).length;
+    dayLog.completedRatio = dayLog.items.length > 0 ? completedCount / dayLog.items.length : 0;
+
+    saveAamalLogForDate(dateKey, dayLog);
+  } catch (e) {
+    console.error('Failed to record zikr increment in aamal history', e);
+  }
+}
+
 export function getAllAamalLogs(): Record<string, AamalDayLog> {
   const logs: Record<string, AamalDayLog> = {};
   try {

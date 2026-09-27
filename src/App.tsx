@@ -26,7 +26,7 @@ import { StandaloneExportModal } from './components/StandaloneExportModal';
 import { ProfileModal } from './components/ProfileModal';
 import { HistoryReportModal } from './components/HistoryReportModal';
 import { saveAccountToRegistry } from './utils/accountRegistry';
-import { createInitialDayLog } from './utils/aamalTrackerData';
+import { createInitialDayLog, recordZikrIncrementInAamal } from './utils/aamalTrackerData';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -172,27 +172,10 @@ export default function App() {
   // Wake lock sentinel ref
   const wakeLockRef = useRef<any>(null);
 
-  // Save zikrs to localStorage on every change and sync with today's Aamal day log
+  // Save zikrs to localStorage on every change
   useEffect(() => {
     try {
       localStorage.setItem('noor_zikr_items', JSON.stringify(zikrs));
-
-      // Synchronize with today's Aamal day log
-      const todayKey = new Date().toISOString().split('T')[0];
-      const aamalKey = `zikrmate_aamal_${todayKey}`;
-      const raw = localStorage.getItem(aamalKey);
-      let dayLog = raw ? JSON.parse(raw) : createInitialDayLog(todayKey);
-
-      dayLog.dhikrCount = zikrs.reduce((sum, z) => sum + (z.count || 0), 0);
-      dayLog.zikrBreakdown = zikrs.map((z) => ({
-        name: z.name,
-        count: z.count || 0,
-        target: z.target,
-        arabic: z.arabic,
-        transliteration: z.transliteration,
-      }));
-
-      localStorage.setItem(aamalKey, JSON.stringify(dayLog));
     } catch (e) {
       console.error('Failed to save zikrs to localStorage', e);
     }
@@ -255,7 +238,7 @@ export default function App() {
       }
 
       if (lastActiveDate !== todayKey) {
-        // A new day has begun! Auto-archive yesterday's zikrs if counts were > 0
+        // A new day has begun! Auto-archive yesterday's session if counts were > 0
         const currentSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
         if (currentSum > 0) {
           const autoSession: HistorySession = {
@@ -272,24 +255,13 @@ export default function App() {
           };
 
           setHistorySessions((prev) => [autoSession, ...prev]);
-
-          // Also update aamal log for that date if exists
-          try {
-            const aamalKey = `zikrmate_aamal_${lastActiveDate}`;
-            const rawAamal = localStorage.getItem(aamalKey);
-            if (rawAamal) {
-              const parsed = JSON.parse(rawAamal);
-              parsed.dhikrCount = (parsed.dhikrCount || 0) + currentSum;
-              localStorage.setItem(aamalKey, JSON.stringify(parsed));
-            }
-          } catch {}
         }
 
-        // Reset today's individual counters to 0 for a fresh day
+        // Reset individual counters to 0 for a fresh day, while Grand Total and all Aamal Tracker history are permanently preserved
         setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
         localStorage.setItem('zikrmate_last_active_date_key', todayKey);
 
-        showToast('🌙 রাত ১২:০০ টা - নতুন দিনের জন্য জিকির কাউন্টার ফ্রেশ করা হয়েছে। সর্বমোট কাউন্ট সংরক্ষিত আছে।');
+        showToast('🌙 রাত ১২:০০ টা - নতুন দিনের জন্য জিকির কাউন্টার ফ্রেশ করা হয়েছে। সর্বমোট কাউন্ট ও আমল হিস্ট্রি অক্ষুণ্ণ রয়েছে।');
       }
     };
 
@@ -367,6 +339,9 @@ export default function App() {
 
     // Increment Lifetime Grand Total
     setLifetimeTotalCount((prev) => prev + 1);
+
+    // Permanently record in today's Aamal Tracker History (persists even if zikr counter is reset)
+    recordZikrIncrementInAamal(targetZikr, 1);
 
     if (settings.vibrationEnabled) {
       if (isGoalJustReached) {
