@@ -50,6 +50,7 @@ import {
   generateVerificationOtp,
   verifySubmittedOtp,
   loadUserDataFromCloud,
+  CloudZikrState,
 } from '../services/firebase';
 
 const COUNTRY_CODES = [
@@ -104,13 +105,7 @@ interface ProfileModalProps {
   onOpenStandaloneModal?: () => void;
   onResetAllCounters?: () => void;
   initialTab?: 'profile' | 'settings';
-  onCloudDataLoaded?: (data: {
-    profile?: Partial<UserProfile>;
-    zikrs?: ZikrItem[];
-    history?: HistorySession[];
-    settings?: AppSettings;
-    foundInCloud?: boolean;
-  }) => void;
+  onCloudDataLoaded?: (data: CloudZikrState) => void;
   onTriggerCloudSync?: () => Promise<boolean>;
   isSyncingCloud?: boolean;
   lastCloudSyncTimestamp?: number;

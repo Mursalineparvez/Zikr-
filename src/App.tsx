@@ -26,10 +26,17 @@ import { StandaloneExportModal } from './components/StandaloneExportModal';
 import { ProfileModal } from './components/ProfileModal';
 import { HistoryReportModal } from './components/HistoryReportModal';
 import { saveAccountToRegistry } from './utils/accountRegistry';
-import { createInitialDayLog, recordZikrIncrementInAamal } from './utils/aamalTrackerData';
+import {
+  createInitialDayLog,
+  recordZikrIncrementInAamal,
+  getAllAamalLogs,
+} from './utils/aamalTrackerData';
 import {
   saveUserDataToCloud,
   loadUserDataFromCloud,
+  subscribeToUserDataInCloud,
+  getDeviceId,
+  CloudZikrState,
 } from './services/firebase';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
 
@@ -132,6 +139,25 @@ export default function App() {
   // Active module navigation
   const [activeModule, setActiveModule] = useState<NavModule>('zikir_counter');
 
+  // Lifetime Cumulative Grand Total Count (Persists across midnight resets until manual Reset All)
+  const [lifetimeTotalCount, setLifetimeTotalCount] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('zikrmate_lifetime_total_count');
+      if (saved !== null) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 0) return parsed;
+      }
+    } catch {}
+    // Initial fallback to current zikrs sum
+    return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('zikrmate_lifetime_total_count', String(lifetimeTotalCount));
+    } catch {}
+  }, [lifetimeTotalCount]);
+
   // User Profile Account state (Guest by default until signed in)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
@@ -168,76 +194,170 @@ export default function App() {
     return userProfile.lastSyncedAt;
   });
 
-  // When user is signed in with email or phone, automatically debounced sync to Firestore
-  const cloudSyncDebounceRef = useRef<any>(null);
+  // Multi-Device Cloud Synchronization Refs
+  const isCloudSyncReadyRef = useRef<boolean>(false);
+  const isRemoteUpdateRef = useRef<boolean>(false);
+
+  // 1. Real-time Multi-Device Cloud Subscription (Listens for updates from ANY device)
   useEffect(() => {
-    if (userProfile.isSignedIn && userProfile.emailOrPhone) {
-      if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
-      cloudSyncDebounceRef.current = setTimeout(async () => {
-        const ok = await saveUserDataToCloud(
-          userProfile.emailOrPhone,
+    if (!userProfile.isSignedIn || !userProfile.emailOrPhone) {
+      isCloudSyncReadyRef.current = false;
+      return;
+    }
+
+    const emailOrPhone = userProfile.emailOrPhone.trim().toLowerCase();
+    const currentDeviceId = getDeviceId();
+
+    const unsubscribe = subscribeToUserDataInCloud(emailOrPhone, (cloudData, isInitial) => {
+      if (!cloudData.foundInCloud) {
+        // Cloud has no saved state yet: mark ready & seed local state to cloud
+        isCloudSyncReadyRef.current = true;
+        const allAamal = getAllAamalLogs();
+        saveUserDataToCloud(
+          emailOrPhone,
           userProfile,
           zikrs,
           historySessions,
-          settings
+          lifetimeTotalCount,
+          settings,
+          allAamal
         );
-        if (ok) {
-          const now = Date.now();
-          setLastCloudSyncTimestamp(now);
+        return;
+      }
+
+      // If this update was made on THIS device, ignore to avoid feedback loop
+      const isFromOtherDevice = cloudData.senderDeviceId && cloudData.senderDeviceId !== currentDeviceId;
+
+      // On initial load of this device OR when remote device updates state:
+      if (isInitial || isFromOtherDevice) {
+        isRemoteUpdateRef.current = true;
+
+        if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
+          setZikrs(cloudData.zikrs);
+          try {
+            localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
+          } catch {}
         }
-      }, 2500);
+
+        if (cloudData.history && Array.isArray(cloudData.history)) {
+          setHistorySessions(cloudData.history);
+          try {
+            localStorage.setItem('noor_zikr_history', JSON.stringify(cloudData.history));
+          } catch {}
+        }
+
+        if (typeof cloudData.lifetimeTotalCount === 'number') {
+          setLifetimeTotalCount(cloudData.lifetimeTotalCount);
+          try {
+            localStorage.setItem('zikrmate_lifetime_total_count', String(cloudData.lifetimeTotalCount));
+          } catch {}
+        }
+
+        if (cloudData.settings) {
+          setSettings((prev) => ({ ...prev, ...cloudData.settings }));
+        }
+
+        if (cloudData.aamalLogs && typeof cloudData.aamalLogs === 'object') {
+          try {
+            for (const [dateKey, logData] of Object.entries(cloudData.aamalLogs)) {
+              localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(logData));
+            }
+          } catch {}
+        }
+
+        const now = Date.now();
+        setLastCloudSyncTimestamp(now);
+        isCloudSyncReadyRef.current = true;
+
+        if (isFromOtherDevice) {
+          showToast('🔄 অন্য ডিভাইস থেকে জিকির ও হিস্ট্রি লাইভ আপডেট হয়েছে!');
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [userProfile.isSignedIn, userProfile.emailOrPhone]);
+
+  // 2. Debounced auto-save to cloud when user changes counters on THIS device
+  const cloudSyncDebounceRef = useRef<any>(null);
+  useEffect(() => {
+    if (!userProfile.isSignedIn || !userProfile.emailOrPhone) return;
+
+    // Do NOT echo remote updates back to cloud
+    if (isRemoteUpdateRef.current) {
+      isRemoteUpdateRef.current = false;
+      return;
     }
+
+    // Do NOT push local blank state before cloud data has been loaded
+    if (!isCloudSyncReadyRef.current) return;
+
+    if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
+    cloudSyncDebounceRef.current = setTimeout(async () => {
+      const allAamal = getAllAamalLogs();
+      const ok = await saveUserDataToCloud(
+        userProfile.emailOrPhone,
+        userProfile,
+        zikrs,
+        historySessions,
+        lifetimeTotalCount,
+        settings,
+        allAamal
+      );
+      if (ok) {
+        const now = Date.now();
+        setLastCloudSyncTimestamp(now);
+      }
+    }, 1200);
+
     return () => {
       if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
     };
-  }, [zikrs, historySessions, userProfile, settings]);
+  }, [zikrs, historySessions, lifetimeTotalCount, userProfile, settings]);
 
   // Handler when user signs in with email/phone and cloud data is restored
-  const handleCloudDataLoaded = (cloudData: {
-    profile?: Partial<UserProfile>;
-    zikrs?: ZikrItem[];
-    history?: HistorySession[];
-    settings?: AppSettings;
-    foundInCloud?: boolean;
-  }) => {
-    if (cloudData.zikrs && cloudData.zikrs.length > 0) {
-      setZikrs((prev) => {
-        const cloudMap = new Map(cloudData.zikrs!.map((z) => [z.id, z]));
-        const merged = prev.map((localZikr) => {
-          const fromCloud = cloudMap.get(localZikr.id);
-          if (fromCloud) {
-            return {
-              ...localZikr,
-              count: Math.max(localZikr.count, fromCloud.count || 0),
-              target: fromCloud.target ?? localZikr.target,
-              updatedAt: Math.max(localZikr.updatedAt, fromCloud.updatedAt || 0),
-            };
-          }
-          return localZikr;
-        });
+  const handleCloudDataLoaded = (cloudData: CloudZikrState) => {
+    isRemoteUpdateRef.current = true;
+    isCloudSyncReadyRef.current = true;
 
-        // Add any custom items from cloud that are not in local list
-        const localIds = new Set(prev.map((z) => z.id));
-        const extraFromCloud = cloudData.zikrs!.filter((z) => !localIds.has(z.id));
-        return [...merged, ...extraFromCloud];
-      });
+    if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
+      setZikrs(cloudData.zikrs);
+      try {
+        localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
+      } catch {}
     }
 
-    if (cloudData.history && cloudData.history.length > 0) {
-      setHistorySessions((prev) => {
-        const idSet = new Set(prev.map((h) => h.id));
-        const newFromCloud = cloudData.history!.filter((h) => !idSet.has(h.id));
-        return [...prev, ...newFromCloud];
-      });
+    if (cloudData.history && Array.isArray(cloudData.history)) {
+      setHistorySessions(cloudData.history);
+      try {
+        localStorage.setItem('noor_zikr_history', JSON.stringify(cloudData.history));
+      } catch {}
+    }
+
+    if (typeof cloudData.lifetimeTotalCount === 'number') {
+      setLifetimeTotalCount(cloudData.lifetimeTotalCount);
+      try {
+        localStorage.setItem('zikrmate_lifetime_total_count', String(cloudData.lifetimeTotalCount));
+      } catch {}
     }
 
     if (cloudData.settings) {
       setSettings((prev) => ({ ...prev, ...cloudData.settings }));
     }
 
+    if (cloudData.aamalLogs && typeof cloudData.aamalLogs === 'object') {
+      try {
+        for (const [dateKey, logData] of Object.entries(cloudData.aamalLogs)) {
+          localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(logData));
+        }
+      } catch {}
+    }
+
     const now = Date.now();
     setLastCloudSyncTimestamp(now);
-    showToast('☁️ ক্লাউড ডাটা সফলভাবে রিস্টোর হয়েছে! যেকোনো ডিভাইসে আপনার হিস্ট্রি সুরক্ষিত।');
+    showToast('☁️ ক্লাউড থেকে সব হিস্ট্রি ও কাউন্ট সফলভাবে লোড হয়েছে!');
   };
 
   // Manual Trigger Cloud Sync
@@ -248,12 +368,15 @@ export default function App() {
     }
 
     setIsSyncingCloud(true);
+    const allAamal = getAllAamalLogs();
     const ok = await saveUserDataToCloud(
       userProfile.emailOrPhone,
       userProfile,
       zikrs,
       historySessions,
-      settings
+      lifetimeTotalCount,
+      settings,
+      allAamal
     );
     setIsSyncingCloud(false);
 
@@ -318,25 +441,6 @@ export default function App() {
     document.body.classList.toggle('theme-day', isDay);
     document.body.classList.toggle('theme-night', !isDay);
   }, [settings]);
-
-  // Lifetime Cumulative Grand Total Count (Persists across midnight resets until manual Reset All)
-  const [lifetimeTotalCount, setLifetimeTotalCount] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('zikrmate_lifetime_total_count');
-      if (saved !== null) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 0) return parsed;
-      }
-    } catch {}
-    // Initial fallback to current zikrs sum
-    return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('zikrmate_lifetime_total_count', String(lifetimeTotalCount));
-    } catch {}
-  }, [lifetimeTotalCount]);
 
   // Master Daily Total Count (Resets at midnight 12:00 AM)
   const dailyTotal = useMemo(() => {

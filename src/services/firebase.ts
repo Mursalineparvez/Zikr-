@@ -4,7 +4,9 @@ import {
   doc,
   getDoc,
   setDoc,
+  onSnapshot,
   setLogLevel,
+  Unsubscribe,
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { UserProfile, ZikrItem, HistorySession, AppSettings } from '../types';
@@ -22,44 +24,67 @@ export const db = firebaseConfig.firestoreDatabaseId
   ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
   : getFirestore(app);
 
-// 3. Test Connection safe helper
+// 3. Unique Device ID to distinguish between different devices (e.g. mobile vs pc)
+export function getDeviceId(): string {
+  try {
+    let id = localStorage.getItem('zikrmate_device_uid');
+    if (!id) {
+      id = 'dev_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+      localStorage.setItem('zikrmate_device_uid', id);
+    }
+    return id;
+  } catch {
+    return 'dev_browser';
+  }
+}
+
+// 4. Test Connection safe helper
 export async function testFirestoreConnection(): Promise<boolean> {
   return typeof navigator !== 'undefined' ? navigator.onLine : true;
 }
 
-// 4. Sanitize email or phone number to make a robust Firestore document ID
+// 5. Sanitize email or phone number to make a robust Firestore document ID
 export function sanitizeUserKey(emailOrPhone: string): string {
   if (!emailOrPhone) return 'guest_user';
   return 'u_' + emailOrPhone.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
 }
 
-export interface CloudZikrPayload {
-  profile: UserProfile;
-  zikrs: ZikrItem[];
-  history: HistorySession[];
+export interface CloudZikrState {
+  profile?: Partial<UserProfile>;
+  zikrs?: ZikrItem[];
+  history?: HistorySession[];
   settings?: AppSettings;
+  lifetimeTotalCount?: number;
   totalCount?: number;
-  lastSyncedAt: number;
+  aamalLogs?: Record<string, any>;
+  lastSyncedAt?: number;
+  updatedAtMs?: number;
+  senderDeviceId?: string;
+  foundInCloud: boolean;
 }
 
 /**
- * Save user profile and all zikr count / history sessions into Firebase Firestore
- * This guarantees that when the user logs in from any device with their email/phone,
- * all their past records and history will be loaded!
+ * Save user profile and all zikr counts / lifetime total / history sessions / aamal into Firebase Firestore
+ * This guarantees that when the user logs in from ANY device with their email,
+ * all their past records and history will be identical across all devices!
  */
 export async function saveUserDataToCloud(
   emailOrPhone: string,
   profile: UserProfile,
   zikrs: ZikrItem[],
   history: HistorySession[],
-  settings?: AppSettings
+  lifetimeTotalCount: number,
+  settings?: AppSettings,
+  aamalLogs?: Record<string, any>
 ): Promise<boolean> {
   if (!emailOrPhone) return false;
   const userKey = sanitizeUserKey(emailOrPhone);
+  const currentDeviceId = getDeviceId();
 
   try {
     const totalCount = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
     const nowIso = new Date().toISOString();
+    const nowMs = Date.now();
 
     // 1. Save or update user profile document
     const userDocRef = doc(db, 'users', userKey);
@@ -90,8 +115,12 @@ export async function saveUserDataToCloud(
         zikrsJson: JSON.stringify(zikrs),
         historyJson: JSON.stringify(history),
         settingsJson: settings ? JSON.stringify(settings) : '{}',
+        aamalLogsJson: aamalLogs ? JSON.stringify(aamalLogs) : '{}',
         totalCount: totalCount,
+        lifetimeTotalCount: lifetimeTotalCount,
         updatedAt: nowIso,
+        updatedAtMs: nowMs,
+        senderDeviceId: currentDeviceId,
       },
       { merge: true }
     );
@@ -104,8 +133,10 @@ export async function saveUserDataToCloud(
           profile,
           zikrs,
           history,
+          lifetimeTotalCount,
           settings,
-          lastSyncedAt: Date.now(),
+          aamalLogs,
+          lastSyncedAt: nowMs,
         })
       );
     } catch {}
@@ -122,13 +153,7 @@ export async function saveUserDataToCloud(
  */
 export async function loadUserDataFromCloud(
   emailOrPhone: string
-): Promise<{
-  profile: Partial<UserProfile>;
-  zikrs: ZikrItem[];
-  history: HistorySession[];
-  settings?: AppSettings;
-  foundInCloud: boolean;
-} | null> {
+): Promise<CloudZikrState | null> {
   if (!emailOrPhone) return null;
   const userKey = sanitizeUserKey(emailOrPhone);
 
@@ -145,6 +170,10 @@ export async function loadUserDataFromCloud(
     let loadedZikrs: ZikrItem[] = [];
     let loadedHistory: HistorySession[] = [];
     let loadedSettings: AppSettings | undefined = undefined;
+    let loadedLifetimeTotal: number | undefined = undefined;
+    let loadedAamalLogs: Record<string, any> | undefined = undefined;
+    let loadedUpdatedAtMs: number | undefined = undefined;
+    let loadedSenderDeviceId: string | undefined = undefined;
     let foundInCloud = false;
 
     if (profileSnap.exists()) {
@@ -184,6 +213,19 @@ export async function loadUserDataFromCloud(
           }
         } catch {}
       }
+      if (dData.aamalLogsJson) {
+        try {
+          const parsedAamal = JSON.parse(dData.aamalLogsJson);
+          if (parsedAamal && typeof parsedAamal === 'object') {
+            loadedAamalLogs = parsedAamal;
+          }
+        } catch {}
+      }
+      if (typeof dData.lifetimeTotalCount === 'number') {
+        loadedLifetimeTotal = dData.lifetimeTotalCount;
+      }
+      loadedUpdatedAtMs = dData.updatedAtMs;
+      loadedSenderDeviceId = dData.senderDeviceId;
       foundInCloud = true;
     }
 
@@ -198,6 +240,8 @@ export async function loadUserDataFromCloud(
             zikrs: parsedCache.zikrs || [],
             history: parsedCache.history || [],
             settings: parsedCache.settings,
+            lifetimeTotalCount: parsedCache.lifetimeTotalCount,
+            aamalLogs: parsedCache.aamalLogs,
             foundInCloud: false,
           };
         }
@@ -209,12 +253,101 @@ export async function loadUserDataFromCloud(
       zikrs: loadedZikrs,
       history: loadedHistory,
       settings: loadedSettings,
+      lifetimeTotalCount: loadedLifetimeTotal,
+      aamalLogs: loadedAamalLogs,
+      updatedAtMs: loadedUpdatedAtMs,
+      senderDeviceId: loadedSenderDeviceId,
       foundInCloud,
     };
   } catch (error) {
     console.error('Failed to load user cloud data from Firebase:', error);
     return null;
   }
+}
+
+/**
+ * Real-time listener for cloud changes across multiple devices!
+ * When Device 1 increments a zikr or updates history, Device 2's snapshot fires
+ * and instantaneously updates the state so all devices stay 100% identical!
+ */
+export function subscribeToUserDataInCloud(
+  emailOrPhone: string,
+  onUpdate: (data: CloudZikrState, isInitial: boolean) => void
+): Unsubscribe {
+  if (!emailOrPhone) {
+    return () => {};
+  }
+
+  const userKey = sanitizeUserKey(emailOrPhone);
+  const dataDocRef = doc(db, 'users', userKey, 'data', 'zikrState');
+  let isInitial = true;
+
+  const unsubscribe = onSnapshot(
+    dataDocRef,
+    (snap) => {
+      if (!snap.exists()) {
+        if (isInitial) {
+          isInitial = false;
+          onUpdate({ foundInCloud: false }, true);
+        }
+        return;
+      }
+
+      const dData = snap.data();
+      let loadedZikrs: ZikrItem[] = [];
+      let loadedHistory: HistorySession[] = [];
+      let loadedSettings: AppSettings | undefined = undefined;
+      let loadedAamalLogs: Record<string, any> | undefined = undefined;
+
+      if (dData.zikrsJson) {
+        try {
+          const parsedZikrs = JSON.parse(dData.zikrsJson);
+          if (Array.isArray(parsedZikrs)) loadedZikrs = parsedZikrs;
+        } catch {}
+      }
+      if (dData.historyJson) {
+        try {
+          const parsedHistory = JSON.parse(dData.historyJson);
+          if (Array.isArray(parsedHistory)) loadedHistory = parsedHistory;
+        } catch {}
+      }
+      if (dData.settingsJson) {
+        try {
+          const parsedSettings = JSON.parse(dData.settingsJson);
+          if (parsedSettings && typeof parsedSettings === 'object') {
+            loadedSettings = parsedSettings;
+          }
+        } catch {}
+      }
+      if (dData.aamalLogsJson) {
+        try {
+          const parsedAamal = JSON.parse(dData.aamalLogsJson);
+          if (parsedAamal && typeof parsedAamal === 'object') {
+            loadedAamalLogs = parsedAamal;
+          }
+        } catch {}
+      }
+
+      const state: CloudZikrState = {
+        zikrs: loadedZikrs,
+        history: loadedHistory,
+        settings: loadedSettings,
+        lifetimeTotalCount: dData.lifetimeTotalCount,
+        aamalLogs: loadedAamalLogs,
+        updatedAtMs: dData.updatedAtMs,
+        senderDeviceId: dData.senderDeviceId,
+        foundInCloud: true,
+      };
+
+      onUpdate(state, isInitial);
+      isInitial = false;
+    },
+    (err) => {
+      console.warn('Firestore subscription error:', err);
+    }
+  );
+
+  return unsubscribe;
 }
 
 // 5. Verification OTP Store & Dispatcher
