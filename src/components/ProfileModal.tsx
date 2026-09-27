@@ -46,6 +46,7 @@ import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySessi
 import { soundHaptics } from '../utils/audioHaptics';
 import { findSavedAccount, saveAccountToRegistry, GOOGLE_DEMO_ACCOUNTS } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 import {
   generateVerificationOtp,
   verifySubmittedOtp,
@@ -144,6 +145,33 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const isDay = themeMode === 'day';
   const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // PWA Install capabilities inside Settings
+  const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
+  const [showInstallGuideModal, setShowInstallGuideModal] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [installFeedback, setInstallFeedback] = useState<string | null>(null);
+
+  const handleInstallApp = async () => {
+    if (soundEnabled) soundHaptics.playTap();
+    if (isInstalled) {
+      setInstallFeedback('✓ অ্যাপটি ইতিমধ্যেই আপনার ডিভাইসে সফলভাবে ইনস্টল করা আছে!');
+      setTimeout(() => setInstallFeedback(null), 3000);
+      return;
+    }
+    if (isInstallable) {
+      setIsInstalling(true);
+      const res = await install();
+      setIsInstalling(false);
+      if (res) {
+        setInstallFeedback('✓ অভিনন্দন! ZikrMate অ্যাপটি হোম স্ক্রিনে ইনস্টল হয়েছে!');
+        confetti({ particleCount: 65, spread: 65, origin: { y: 0.6 } });
+      }
+      setTimeout(() => setInstallFeedback(null), 4000);
+    } else {
+      setShowInstallGuideModal(true);
+    }
+  };
 
   useEffect(() => {
     if (initialTab) {
@@ -966,6 +994,46 @@ ${msg}`;
               </span>
             </button>
 
+            {/* Option: Install App on Device */}
+            <button
+              onClick={() => {
+                setActiveTab('settings');
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`w-full p-3.5 flex items-center justify-between text-left transition cursor-pointer ${
+                isDay ? 'hover:bg-slate-50' : 'hover:bg-teal-950/40'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-sm flex items-center gap-1.5">
+                    <span>{selectedLanguage === 'bn' ? 'মোবাইলে অ্যাপ ইনস্টল' : 'Install App (PWA)'}</span>
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded-full font-extrabold uppercase ${
+                        isInstalled
+                          ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-emerald-600 text-white'
+                      }`}
+                    >
+                      {isInstalled ? 'Installed ✓' : 'Install 📲'}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                    {selectedLanguage === 'bn'
+                      ? 'হোম স্ক্রিনে ইনস্টল করে অফলাইনে দ্রুত ব্যবহার করুন'
+                      : 'Add to mobile home screen for 1-tap offline use'}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span>{isInstalled ? 'Active' : 'Settings'}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            </button>
+
             {/* Option 3: Prayer Settings */}
             <button
               onClick={() => {
@@ -1065,6 +1133,93 @@ ${msg}`;
           {/* TAB 2: COMPREHENSIVE SETTINGS VIEW */}
           {activeTab === 'settings' && (
             <div className="space-y-4 animate-in fade-in duration-200 pb-2">
+              {/* 0. Primary App Install Card (Direct 1-Click Install or Guide) */}
+              <div
+                className={`p-4 rounded-2xl border shadow-md space-y-3 transition-all ${
+                  isDay
+                    ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/60 border-emerald-200'
+                    : 'bg-gradient-to-r from-[#07242a] via-[#0c333a] to-[#0f3d46] border-[#1f5c68]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40 shadow-inner">
+                      <Smartphone className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white leading-tight">
+                          {selectedLanguage === 'bn' ? 'মোবাইলে ZikrMate অ্যাপ ইনস্টল করুন' : 'Install ZikrMate App'}
+                        </h4>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                            isInstalled
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                          }`}
+                        >
+                          {isInstalled ? 'Installed ✓' : 'PWA App'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 dark:text-teal-200/80 mt-0.5 leading-snug">
+                        {selectedLanguage === 'bn'
+                          ? 'হোম স্ক্রিনে সরাসরি অ্যাপের মতো রাখুন, ইন্টারনেট ছাড়াই ১০০% অফলাইনে চলবে।'
+                          : 'Add to mobile Home Screen for 1-tap instant offline access.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Features Highlights */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[10px] font-semibold text-slate-600 dark:text-teal-200/90">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/70 dark:bg-[#07191d] border border-emerald-500/20">
+                    ⚡ দ্রুত লোড
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/70 dark:bg-[#07191d] border border-emerald-500/20">
+                    📴 ১০০% অফলাইন
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/70 dark:bg-[#07191d] border border-emerald-500/20">
+                    📱 ফুলস্ক্রিন অ্যাপ
+                  </span>
+                </div>
+
+                {/* Install Button & Feedback */}
+                <div className="pt-1">
+                  {isInstalled ? (
+                    <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-600/15 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>অ্যাপটি ইতিমধ্যেই আপনার ডিভাইসে সফলভাবে ইনস্টল আছে</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleInstallApp}
+                      disabled={isInstalling}
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xs shadow-md shadow-emerald-700/20 flex items-center justify-center gap-2 transition cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>
+                        {isInstalling
+                          ? 'ইনস্টল হচ্ছে...'
+                          : isInstallable
+                          ? selectedLanguage === 'bn'
+                            ? 'Install App (১-ক্লিকে ইনস্টল করুন)'
+                            : 'Install App Now'
+                          : selectedLanguage === 'bn'
+                          ? 'Install App (ইনস্টল করার নিয়ম)'
+                          : 'How to Install App'}
+                      </span>
+                    </button>
+                  )}
+
+                  {installFeedback && (
+                    <div className="mt-2 p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 text-emerald-700 dark:text-emerald-300 text-xs font-bold text-center animate-in fade-in">
+                      {installFeedback}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* 1. Theme Mode Switcher */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-2.5 ${
@@ -2451,6 +2606,105 @@ ${msg}`;
                   Logout
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- SUB-MODAL 6: APP INSTALL GUIDE (Android, iOS Safari & Chrome) ----------------- */}
+        {showInstallGuideModal && (
+          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div
+              className={`w-full max-w-md rounded-3xl border p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto ${
+                isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0f343c] text-white border-[#1c5763]'
+              }`}
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm sm:text-base leading-tight">
+                      মোবাইলে অ্যাপ ইনস্টল করার নিয়ম
+                    </h3>
+                    <p className="text-[10px] text-slate-400 dark:text-teal-300/80">
+                      ZikrMate Progressive Web App (PWA) Install Guide
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowInstallGuideModal(false)}
+                  className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-teal-900/40 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Instructions Tab/Blocks */}
+              <div className="space-y-3 text-xs leading-relaxed">
+                {/* Android / Chrome Guide */}
+                <div
+                  className={`p-3.5 rounded-2xl border space-y-2 ${
+                    isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#092226] border-[#184850]'
+                  }`}
+                >
+                  <div className="font-bold text-xs flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
+                    <span className="text-base">🤖</span>
+                    <span>Android / Google Chrome / Edge ব্যবহারকারীদের জন্য:</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-600 dark:text-teal-200 font-medium pl-1">
+                    <li>
+                      ব্রাউজারের উপরে ডানদিকের <strong>থ্রি-ডট মেনু (⋮)</strong> বাটনে ট্যাপ করুন।
+                    </li>
+                    <li>
+                      মেনু থেকে <strong>"Install app"</strong> অথবা <strong>"Add to Home screen"</strong> (হোম স্ক্রিনে যোগ করুন) চাপুন।
+                    </li>
+                    <li>
+                      <strong>"Install"</strong> বাটনে ক্লিক করলেই অ্যাপটি সরাসরি আপনার মোবাইলের হোম স্ক্রিনে সেভ হয়ে যাবে।
+                    </li>
+                  </ol>
+                </div>
+
+                {/* iPhone / iPad Safari Guide */}
+                <div
+                  className={`p-3.5 rounded-2xl border space-y-2 ${
+                    isDay ? 'bg-blue-50/60 border-blue-200' : 'bg-[#09252c] border-[#184f58]'
+                  }`}
+                >
+                  <div className="font-bold text-xs flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
+                    <span className="text-base">🍎</span>
+                    <span>iPhone / iPad (iOS Safari) ব্যবহারকারীদের জন্য:</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-600 dark:text-teal-200 font-medium pl-1">
+                    <li>
+                      Safari ব্রাউজারের নিচে থাকা <strong>Share (শেয়ার / তীরচিহ্ন)</strong> বাটনে ট্যাপ করুন।
+                    </li>
+                    <li>
+                      নিচের অপশনগুলো স্ক্রোল করে <strong>"Add to Home Screen"</strong> বেছে নিন।
+                    </li>
+                    <li>
+                      উপরে ডানদিকের <strong>"Add"</strong> বাটনে ট্যাপ করুন।
+                    </li>
+                  </ol>
+                </div>
+
+                {/* Benefits Callout */}
+                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-200 flex items-start gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span>
+                    ইনস্টল হওয়ার পর এটি যেকোনো আসল অ্যাপের মতো ফুলস্ক্রিনে চলবে এবং কোনো ইন্টারনেট সংযোগ ছাড়াই অফলাইনে জিকির কাউন্ট সচল থাকবে।
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowInstallGuideModal(false)}
+                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
+              >
+                বুঝেছি, ধন্যবাদ
+              </button>
             </div>
           </div>
         )}
