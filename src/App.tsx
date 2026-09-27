@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage } from './types';
+import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage, UserProfile } from './types';
 import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES } from './utils/constants';
 import { soundHaptics } from './utils/audioHaptics';
 import { generateZikrPdfReport } from './utils/exportPdf';
@@ -22,6 +22,7 @@ import { AamalTrackerView } from './components/AamalTrackerView';
 import { ZikrModal } from './components/ZikrModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { StandaloneExportModal } from './components/StandaloneExportModal';
+import { ProfileModal } from './components/ProfileModal';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -122,6 +123,30 @@ export default function App() {
 
   // Active module navigation
   const [activeModule, setActiveModule] = useState<NavModule>('zikir_counter');
+
+  // User Profile Account state (Matching uploaded Profile screenshot)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    try {
+      const saved = localStorage.getItem('zikrmate_user_profile');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      name: 'Md. Mursaline Parvez',
+      emailOrPhone: 'mdmursalineparvez@gmail.com',
+      photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      location: '4C2J 8FX, BD',
+      deviceModel: 'vivo ~~ V2144',
+      osVersion: '35_15',
+      appVersion: '411_38.1',
+    };
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('zikrmate_user_profile', JSON.stringify(userProfile));
+    } catch {}
+  }, [userProfile]);
 
   // Modals state
   const [isZikrModalOpen, setIsZikrModalOpen] = useState(false);
@@ -565,6 +590,8 @@ export default function App() {
         onExportPdf={handleExportPdf}
         isExportingPdf={isExportingPdf}
         onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
+        userProfile={userProfile}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
       />
 
       {/* Toast Notification Popup */}
@@ -810,6 +837,18 @@ export default function App() {
       <StandaloneExportModal
         isOpen={isStandaloneModalOpen}
         onClose={() => setIsStandaloneModalOpen(false)}
+      />
+
+      {/* User Profile Account Modal (Matching uploaded photo) */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        userProfile={userProfile}
+        onUpdateProfile={setUserProfile}
+        onNavigateModule={setActiveModule}
+        themeMode={settings.themeMode}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={settings.soundEnabled}
       />
     </div>
   );

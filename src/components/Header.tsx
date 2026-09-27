@@ -17,9 +17,10 @@ import {
   Check,
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
-import { NavModule, ThemeMode, ZikrLanguage } from '../types';
+import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { NAV_TRANSLATIONS } from '../utils/appTranslations';
+import { User } from 'lucide-react';
 
 interface HeaderProps {
   activeModule: NavModule;
@@ -33,6 +34,8 @@ interface HeaderProps {
   onExportPdf: () => void;
   isExportingPdf: boolean;
   onOpenStandaloneModal: () => void;
+  userProfile?: UserProfile;
+  onOpenProfile?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -47,6 +50,8 @@ export const Header: React.FC<HeaderProps> = ({
   onExportPdf,
   isExportingPdf,
   onOpenStandaloneModal,
+  userProfile,
+  onOpenProfile,
 }) => {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showIOSModal, setShowIOSModal] = useState(false);
@@ -236,6 +241,30 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 opacity-75" />}
           </button>
+
+          {/* User Account / Profile Button (From screenshot) */}
+          {onOpenProfile && (
+            <button
+              onClick={onOpenProfile}
+              className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-2xl border border-white/25 bg-white/20 hover:bg-white/30 text-white transition active:scale-95 cursor-pointer backdrop-blur-md shadow-sm"
+              title={`Profile: ${userProfile?.name || 'My Account'}`}
+            >
+              <div className="w-6 h-6 sm:w-6 sm:h-6 rounded-full overflow-hidden border border-emerald-300 shadow-xs flex items-center justify-center bg-emerald-700">
+                {userProfile?.photoUrl ? (
+                  <img
+                    src={userProfile.photoUrl}
+                    alt={userProfile.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-white" />
+                )}
+              </div>
+              <span className="hidden md:inline text-xs font-bold truncate max-w-[100px]">
+                {userProfile?.name?.split(' ')[0] || 'Profile'}
+              </span>
+            </button>
+          )}
 
           {/* Export PDF Button */}
           <button

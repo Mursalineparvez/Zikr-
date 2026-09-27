@@ -129,3 +129,14 @@ export interface AppSettings {
   theme: AppTheme;
   themeMode: ThemeMode;
 }
+
+export interface UserProfile {
+  name: string;
+  emailOrPhone: string;
+  photoUrl: string;
+  location?: string;
+  deviceModel?: string;
+  osVersion?: string;
+  appVersion?: string;
+}
+
