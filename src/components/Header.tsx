@@ -246,11 +246,15 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenProfile && (
             <button
               onClick={onOpenProfile}
-              className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-2xl border border-white/25 bg-white/20 hover:bg-white/30 text-white transition active:scale-95 cursor-pointer backdrop-blur-md shadow-sm"
-              title={`Profile: ${userProfile?.name || 'My Account'}`}
+              className={`flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-2xl border transition active:scale-95 cursor-pointer backdrop-blur-md shadow-sm ${
+                userProfile?.isSignedIn
+                  ? 'border-emerald-300/40 bg-emerald-500/25 hover:bg-emerald-500/35 text-white'
+                  : 'border-white/25 bg-white/20 hover:bg-white/30 text-white'
+              }`}
+              title={userProfile?.isSignedIn ? `Profile: ${userProfile.name}` : 'Sign In / Profile'}
             >
-              <div className="w-6 h-6 sm:w-6 sm:h-6 rounded-full overflow-hidden border border-emerald-300 shadow-xs flex items-center justify-center bg-emerald-700">
-                {userProfile?.photoUrl ? (
+              <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-300 shadow-xs flex items-center justify-center bg-emerald-700 shrink-0">
+                {userProfile?.isSignedIn && userProfile?.photoUrl ? (
                   <img
                     src={userProfile.photoUrl}
                     alt={userProfile.name}
@@ -260,8 +264,10 @@ export const Header: React.FC<HeaderProps> = ({
                   <User className="w-3.5 h-3.5 text-white" />
                 )}
               </div>
-              <span className="hidden md:inline text-xs font-bold truncate max-w-[100px]">
-                {userProfile?.name?.split(' ')[0] || 'Profile'}
+              <span className="hidden sm:inline text-xs font-bold truncate max-w-[100px]">
+                {userProfile?.isSignedIn
+                  ? userProfile?.name?.split(' ')[0] || 'User'
+                  : 'Sign In'}
               </span>
             </button>
           )}

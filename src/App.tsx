@@ -124,17 +124,23 @@ export default function App() {
   // Active module navigation
   const [activeModule, setActiveModule] = useState<NavModule>('zikir_counter');
 
-  // User Profile Account state (Matching uploaded Profile screenshot)
+  // User Profile Account state (Guest by default until signed in)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem('zikrmate_user_profile');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed.isSignedIn === 'boolean') {
+          return parsed;
+        }
+      }
     } catch {}
     return {
-      name: 'Md. Mursaline Parvez',
-      emailOrPhone: 'mdmursalineparvez@gmail.com',
-      photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      name: '',
+      emailOrPhone: '',
+      photoUrl: '',
+      isSignedIn: false,
       location: '4C2J 8FX, BD',
       deviceModel: 'vivo ~~ V2144',
       osVersion: '35_15',

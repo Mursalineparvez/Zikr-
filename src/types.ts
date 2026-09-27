@@ -134,6 +134,7 @@ export interface UserProfile {
   name: string;
   emailOrPhone: string;
   photoUrl: string;
+  isSignedIn: boolean;
   location?: string;
   deviceModel?: string;
   osVersion?: string;

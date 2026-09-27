@@ -69,15 +69,67 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   // Feedback Form State
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackUserEmail, setFeedbackUserEmail] = useState(userProfile.emailOrPhone || '');
   const [feedbackChannel, setFeedbackChannel] = useState<'whatsapp' | 'email'>('whatsapp');
 
   useEffect(() => {
     setEditName(userProfile.name);
     setEditEmailOrPhone(userProfile.emailOrPhone);
     setEditPhotoUrl(userProfile.photoUrl);
+    if (userProfile.emailOrPhone) {
+      setFeedbackUserEmail(userProfile.emailOrPhone);
+    }
   }, [userProfile]);
 
   if (!isOpen) return null;
+
+  // Auto-detect user's device info from browser/hardware environment
+  const getDetectedDeviceInfo = () => {
+    if (typeof window === 'undefined') {
+      return {
+        model: 'vivo ~~ V2144',
+        osVersion: '35_15',
+        deviceLanguage: 'en',
+      };
+    }
+
+    const ua = navigator.userAgent || '';
+    let model = 'vivo ~~ V2144';
+    let osVersion = '35_15';
+    const deviceLanguage = (navigator.language || 'en').split('-')[0];
+
+    if (/Android/i.test(ua)) {
+      const androidMatch = ua.match(/Android\s+([0-9\._]+)/i);
+      if (androidMatch) {
+        osVersion = `${androidMatch[1]}_15`;
+      }
+      const modelMatch = ua.match(/;\s*([^;]+?)\s*Build/i);
+      if (modelMatch && modelMatch[1]) {
+        model = modelMatch[1].trim();
+      } else if (/vivo/i.test(ua)) {
+        model = 'vivo ~~ V2144';
+      } else if (/Samsung|SM-/i.test(ua)) {
+        const smMatch = ua.match(/(SM-[A-Z0-9]+)/i);
+        model = smMatch ? `Samsung ~~ ${smMatch[1]}` : 'Samsung Galaxy';
+      } else if (/Xiaomi|Redmi/i.test(ua)) {
+        model = 'Xiaomi Redmi';
+      } else {
+        model = 'Android Device';
+      }
+    } else if (/iPhone/i.test(ua)) {
+      model = 'Apple iPhone';
+      const iosMatch = ua.match(/OS\s+([0-9_]+)/i);
+      if (iosMatch) osVersion = iosMatch[1].replace(/_/g, '.');
+    } else if (/Windows/i.test(ua)) {
+      model = 'Windows PC';
+      osVersion = '11_64';
+    } else if (/Macintosh/i.test(ua)) {
+      model = 'Apple Mac';
+      osVersion = '14_1';
+    }
+
+    return { model, osVersion, deviceLanguage };
+  };
 
   // Handle Photo Upload (Convert file to Data URL for persistence)
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,8 +151,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     onUpdateProfile({
       ...userProfile,
       name: editName.trim() || 'User',
-      emailOrPhone: editEmailOrPhone.trim() || 'mdmursalineparvez@gmail.com',
+      emailOrPhone: editEmailOrPhone.trim() || '',
       photoUrl: editPhotoUrl,
+      isSignedIn: true,
     });
     setActiveSubModal('none');
     if (soundEnabled) soundHaptics.playMilestone();
@@ -109,12 +162,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   // Generate WhatsApp / Email payload formatted exactly as requested
   const buildFeedbackText = (customMsg?: string) => {
     const msg = (customMsg !== undefined ? customMsg : feedbackMessage).trim() || '[আপনার মূল্যবান মতামত বা ফিডব্যাক এখানে লিখুন]';
-    const emailValue = userProfile.emailOrPhone || 'mdmursalineparvez@gmail.com';
-    const modelValue = userProfile.deviceModel || 'vivo ~~ V2144';
-    const osValue = userProfile.osVersion || '35_15';
+    const emailValue = feedbackUserEmail.trim() || userProfile.emailOrPhone || 'user@zikrmate.app';
+    const detected = getDetectedDeviceInfo();
+    const modelValue = userProfile.deviceModel || detected.model || 'vivo ~~ V2144';
+    const osValue = userProfile.osVersion || detected.osVersion || '35_15';
     const appVerValue = userProfile.appVersion || '411_38.1';
     const langValue = selectedLanguage === 'bn' ? 'Bangla' : selectedLanguage === 'en' ? 'English' : 'Bangla';
-    const devLangValue = typeof navigator !== 'undefined' && navigator.language ? navigator.language.slice(0, 2) : 'en';
+    const devLangValue = detected.deviceLanguage || (typeof navigator !== 'undefined' && navigator.language ? navigator.language.slice(0, 2) : 'en');
     const locationValue = userProfile.location || '4C2J 8FX, BD';
 
     return `ZikrMate
@@ -198,57 +252,91 @@ ${msg}`;
 
         {/* 2. BODY CONTENT (SCROLLABLE) */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* USER PROFILE CARD (Matching screenshot with white/dark card, shadow, user photo, name, email) */}
-          <div
-            className={`p-4 rounded-2xl border shadow-md transition-all flex items-center justify-between gap-3 ${
-              isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              {/* Profile Image with subtle border */}
-              <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm shrink-0 bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
-                {userProfile.photoUrl ? (
-                  <img
-                    src={userProfile.photoUrl}
-                    alt={userProfile.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-7 h-7 text-emerald-600 dark:text-emerald-300" />
-                )}
-              </div>
+          {/* USER PROFILE CARD (Conditional: Signed in vs Sign in prompt) */}
+          {userProfile.isSignedIn && userProfile.name ? (
+            <div
+              className={`p-4 rounded-2xl border shadow-md transition-all flex items-center justify-between gap-3 ${
+                isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Profile Image with subtle border */}
+                <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm shrink-0 bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
+                  {userProfile.photoUrl ? (
+                    <img
+                      src={userProfile.photoUrl}
+                      alt={userProfile.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-7 h-7 text-emerald-600 dark:text-emerald-300" />
+                  )}
+                </div>
 
-              {/* Name and Email */}
-              <div className="min-w-0">
-                <h3 className="font-black text-sm sm:text-base truncate leading-snug">
-                  {userProfile.name || 'Md. Mursaline Parvez'}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-teal-300/80 truncate font-mono">
-                  {userProfile.emailOrPhone || 'mdmursalineparvez@gmail.com'}
-                </p>
-                <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>ZikrMate Verified</span>
+                {/* Name and Email */}
+                <div className="min-w-0">
+                  <h3 className="font-black text-sm sm:text-base truncate leading-snug">
+                    {userProfile.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-teal-300/80 truncate font-mono">
+                    {userProfile.emailOrPhone || 'Verified ZikrMate User'}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span>ZikrMate Verified</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Edit Profile Button */}
-            <button
-              onClick={() => {
-                setActiveSubModal('edit_profile');
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer shrink-0 ${
+              {/* Edit Profile Button */}
+              <button
+                onClick={() => {
+                  setActiveSubModal('edit_profile');
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer shrink-0 ${
+                  isDay
+                    ? 'bg-slate-100 hover:bg-emerald-50 border-slate-200 text-slate-700 hover:text-emerald-600'
+                    : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850] text-teal-200'
+                }`}
+                title="Edit Profile"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div
+              className={`p-4 rounded-2xl border shadow-md transition-all flex items-center justify-between gap-3 ${
                 isDay
-                  ? 'bg-slate-100 hover:bg-emerald-50 border-slate-200 text-slate-700 hover:text-emerald-600'
-                  : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850] text-teal-200'
+                  ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'
+                  : 'bg-gradient-to-r from-[#09282f] to-[#0e3b45] border-[#1f5e6b]'
               }`}
-              title="Edit Profile"
             >
-              <Edit2 className="w-4 h-4" />
-            </button>
-          </div>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40">
+                  <User className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-sm leading-snug text-slate-900 dark:text-white">
+                    Sign In / লগইন করুন
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-teal-200/80 truncate">
+                    আপনার নাম ও ইমেইল যুক্ত করুন
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setActiveSubModal('edit_profile');
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer shrink-0"
+              >
+                Sign In
+              </button>
+            </div>
+          )}
 
           {/* 3. MENU OPTIONS LIST (Matching the requested items from screenshot) */}
           <div
@@ -412,7 +500,11 @@ ${msg}`;
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
                 <h3 className="font-bold text-base flex items-center gap-2">
                   <User className="w-4 h-4 text-emerald-600" />
-                  <span>Edit Account Profile</span>
+                  <span>
+                    {userProfile.isSignedIn && userProfile.name
+                      ? 'Edit Account Profile'
+                      : 'Sign In / Account Setup (লগইন)'}
+                  </span>
                 </h3>
                 <button
                   onClick={() => setActiveSubModal('none')}
@@ -504,7 +596,7 @@ ${msg}`;
                     required
                     value={editEmailOrPhone}
                     onChange={(e) => setEditEmailOrPhone(e.target.value)}
-                    placeholder="e.g. mdmursalineparvez@gmail.com or phone..."
+                    placeholder="Enter email or phone number..."
                     className={`w-full rounded-xl px-3 py-2 border font-semibold focus:outline-none ${
                       isDay
                         ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
@@ -525,7 +617,7 @@ ${msg}`;
                     type="submit"
                     className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-md active:scale-95"
                   >
-                    Save Changes
+                    {userProfile.isSignedIn && userProfile.name ? 'Save Changes' : 'Sign In / Save'}
                   </button>
                 </div>
               </form>
@@ -592,13 +684,31 @@ ${msg}`;
                 </div>
               </div>
 
+              {/* User Email Input */}
+              <div className="space-y-1 text-xs">
+                <label className="font-bold block text-slate-500 dark:text-teal-200">
+                  Your Email / Phone (আপনার ইমেইল বা ফোন নম্বর):
+                </label>
+                <input
+                  type="text"
+                  value={feedbackUserEmail}
+                  onChange={(e) => setFeedbackUserEmail(e.target.value)}
+                  placeholder="Enter your email or phone..."
+                  className={`w-full rounded-xl px-3 py-2 border font-medium text-xs focus:outline-none ${
+                    isDay
+                      ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                      : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                  }`}
+                />
+              </div>
+
               {/* Feedback Message Input */}
-              <div className="space-y-1.5 text-xs">
+              <div className="space-y-1 text-xs">
                 <label className="font-bold block text-slate-500 dark:text-teal-200">
                   Your Feedback / Message (আপনার মূল্যবান মতামত বা অভিযোগ):
                 </label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={feedbackMessage}
                   onChange={(e) => setFeedbackMessage(e.target.value)}
                   placeholder="Type your message, suggestion, or question here..."
@@ -608,6 +718,12 @@ ${msg}`;
                       : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
                   }`}
                 />
+              </div>
+
+              {/* Auto Info Badge */}
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-700 dark:text-emerald-300">
+                <Info className="w-3.5 h-3.5 shrink-0" />
+                <span>ডিভাইস মডেল ও অ্যাপ ভার্সন স্বয়ংক্রিয়ভাবে মেসেজের সাথে যুক্ত হবে।</span>
               </div>
 
               {/* Send Buttons */}
@@ -765,12 +881,12 @@ ${msg}`;
                 <button
                   onClick={() => {
                     onUpdateProfile({
-                      name: 'Muslim Guest',
-                      emailOrPhone: 'guest@muslimbangla.org',
+                      name: '',
+                      emailOrPhone: '',
                       photoUrl: '',
+                      isSignedIn: false,
                     });
                     setActiveSubModal('none');
-                    onClose();
                     if (soundEnabled) soundHaptics.playMilestone();
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold"
