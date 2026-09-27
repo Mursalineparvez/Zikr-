@@ -3,14 +3,10 @@ import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem } from '../types';
 import {
   Heart,
   BookMarked,
-  BookOpen,
   Users,
   Sparkles,
-  Compass,
   Layers,
   ChevronRight,
-  ArrowLeft,
-  Award,
 } from 'lucide-react';
 import { DuaView } from './DuaView';
 import { HadithView } from './HadithView';
@@ -19,6 +15,7 @@ import { DailyTabligView } from './DailyTabligView';
 import { AllahNamesView } from './AllahNamesView';
 import { HajjUmrahView } from './HajjUmrahView';
 import { soundHaptics } from '../utils/audioHaptics';
+import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
 
 export type OtherSubSection =
   | 'hub'
@@ -52,63 +49,75 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   const hubItems = [
     {
       id: 'dua' as OtherSubSection,
-      titleBn: 'দু’আ ও মুনাজাত',
-      titleEn: 'Dua & Supplications',
+      title: NAV_TRANSLATIONS.dua[selectedLanguage],
       arabic: 'الأدعية المأثورة',
-      descBn: 'কুরআন ও সুন্নাহর সহিহ মাসনুন দোয়াসমূহ, অর্থ ও উচ্চারণসহ',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'কুরআন ও সুন্নাহর সহিহ মাসনুন দোয়াসমূহ, অর্থ ও উচ্চারণসহ'
+          : 'Authentic Masnoon Duas from the Quran and Sunnah with translation',
       icon: <Heart className="w-6 h-6 text-rose-500" />,
       color: 'from-rose-500/15 to-pink-500/10 border-rose-500/30',
-      badge: 'সহিহ দু’আ',
+      badge: selectedLanguage === 'bn' ? 'সহিহ দু’আ' : 'Authentic Dua',
     },
     {
       id: 'hadith' as OtherSubSection,
-      titleBn: 'হাদিস সম্ভার',
-      titleEn: 'Hadith Collection',
+      title: NAV_TRANSLATIONS.hadith[selectedLanguage],
       arabic: 'الحديث النبوي',
-      descBn: 'বুখারি, মুসলিম, তিরমিজি ও রিয়াদুস সলেহীনের নির্বাচিত হাদিস',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'বুখারি, মুসলিম, তিরমিজি ও রিয়াদুস সলেহীনের নির্বাচিত হাদিস'
+          : 'Selected authentic Hadiths from Bukhari, Muslim, Tirmidhi, and Riyad us-Saliheen',
       icon: <span className="text-2xl">📜</span>,
       color: 'from-amber-500/15 to-yellow-500/10 border-amber-500/30',
-      badge: 'নবীজির বাণী',
+      badge: selectedLanguage === 'bn' ? 'নবীজির বাণী' : 'Prophetic Hadith',
     },
     {
       id: 'kitab' as OtherSubSection,
-      titleBn: 'কিতাব লাইব্রেরি',
-      titleEn: 'Kitab Library',
+      title: NAV_TRANSLATIONS.kitab[selectedLanguage],
       arabic: 'المكتبة الإسلامية',
-      descBn: 'ক্লাসিক্যাল ইসলামিক বই, তাফসির ও জরুরি ফেকাহ গ্রন্থমালা',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'ক্লাসিক্যাল ইসলামিক বই, তাফসির ও জরুরি ফেকাহ গ্রন্থমালা'
+          : 'Classical Islamic books, Tafsir collections, and essential Fiqh literature',
       icon: <BookMarked className="w-6 h-6 text-blue-500" />,
       color: 'from-blue-500/15 to-cyan-500/10 border-blue-500/30',
-      badge: 'অনলাইন লাইব্রেরি',
+      badge: selectedLanguage === 'bn' ? 'অনলাইন লাইব্রেরি' : 'Digital Library',
     },
     {
       id: 'tablig' as OtherSubSection,
-      titleBn: 'দৈনিক তাবলিগ ও বয়ান',
-      titleEn: 'Daily Tablig & Bayan',
+      title: NAV_TRANSLATIONS.tablig[selectedLanguage],
       arabic: 'الدعوة والتبليغ',
-      descBn: 'দাওয়াতের ৬ সিফাত, ফাজায়েল, মসজিদওয়ারী ৫ আমল ও গাশতের আদব',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'দাওয়াতের ৬ সিফাত, ফাজায়েল, মসজিদওয়ারী ৫ আমল ও গাশতের আদব'
+          : 'The 6 qualities of Dawah, virtues, daily 5 masjid deeds, and etiquette of Gasht',
       icon: <Users className="w-6 h-6 text-emerald-500" />,
       color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
-      badge: '৬ সিফাত ও মেহনত',
+      badge: selectedLanguage === 'bn' ? '৬ সিফাত ও মেহনত' : '6 Qualities',
     },
     {
       id: 'allah_names' as OtherSubSection,
-      titleBn: 'আল্লাহর ৯৯টি নাম (আসমাউল হুসনা)',
-      titleEn: 'Allah 99 Names',
+      title: NAV_TRANSLATIONS.allah_names[selectedLanguage],
       arabic: 'أسماء الله الحسنى',
-      descBn: 'আল্লাহর ৯৯টি গুণবাচক নাম, অর্থ, ফজিলত ও অডিও উচ্চারণ',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'আল্লাহর ৯৯টি গুণবাচক নাম, অর্থ, ফজিলত ও অডিও উচ্চারণ'
+          : '99 Beautiful Names of Allah with meanings, virtues, and audio pronunciations',
       icon: <Sparkles className="w-6 h-6 text-amber-400" />,
       color: 'from-amber-500/15 to-orange-500/10 border-amber-500/30',
-      badge: '৯৯ নাম ও ফজিলত',
+      badge: selectedLanguage === 'bn' ? '৯৯ নাম ও ফজিলত' : '99 Names',
     },
     {
       id: 'hajj_umrah' as OtherSubSection,
-      titleBn: 'হজ ও ওমরাহ পূর্ণাঙ্গ গাইড',
-      titleEn: 'Hajj & Umrah Guide',
+      title: NAV_TRANSLATIONS.hajj_umrah[selectedLanguage],
       arabic: 'الحج والعمرة',
-      descBn: 'ওমরাহ ও হজের ৫ দিনের ধারাবাহিক নিয়মাবলী, তালবিয়াহ ও মাসনুন দোয়া',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'ওমরাহ ও হজের ৫ দিনের ধারাবাহিক নিয়মাবলী, তালবিয়াহ ও মাসনুন দোয়া'
+          : 'Step-by-step Umrah rituals and 5 days of Hajj guide with Talbiyah audio',
       icon: <span className="text-2xl">🕋</span>,
       color: 'from-teal-500/15 to-emerald-500/10 border-teal-500/30',
-      badge: 'সচিত্র নিয়মাবলী',
+      badge: selectedLanguage === 'bn' ? 'সচিত্র নিয়মাবলী' : 'Complete Guide',
     },
   ];
 
@@ -132,7 +141,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
-          <span>অন্যান্য হাব (All Features)</span>
+          <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
         </button>
 
         <button
@@ -146,7 +155,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <Heart className="w-3.5 h-3.5" />
-          <span>দু’আ ও মুনাজাত</span>
+          <span>{NAV_TRANSLATIONS.dua[selectedLanguage]}</span>
         </button>
 
         <button
@@ -160,7 +169,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <span>📜</span>
-          <span>হাদিস সম্ভার</span>
+          <span>{NAV_TRANSLATIONS.hadith[selectedLanguage]}</span>
         </button>
 
         <button
@@ -174,7 +183,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <BookMarked className="w-3.5 h-3.5" />
-          <span>কিতাব লাইব্রেরি</span>
+          <span>{NAV_TRANSLATIONS.kitab[selectedLanguage]}</span>
         </button>
 
         <button
@@ -188,7 +197,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <Users className="w-3.5 h-3.5" />
-          <span>দৈনিক তাবলিগ</span>
+          <span>{NAV_TRANSLATIONS.tablig[selectedLanguage]}</span>
         </button>
 
         <button
@@ -202,7 +211,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>আল্লাহর ৯৯ নাম</span>
+          <span>{NAV_TRANSLATIONS.allah_names[selectedLanguage]}</span>
         </button>
 
         <button
@@ -216,7 +225,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <span>🕋</span>
-          <span>হজ ও ওমরাহ</span>
+          <span>{NAV_TRANSLATIONS.hajj_umrah[selectedLanguage]}</span>
         </button>
       </div>
 
@@ -236,10 +245,10 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               <span>ইসলামিক ফিচার সম্ভার • Comprehensive Islamic Suite</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              অন্যান্য ইসলামিক ফিচারসমূহ (Other Features)
+              {OTHER_HUB_UI.bannerTitle[selectedLanguage]}
             </h2>
             <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-xl">
-              দু’আ, হাদিস, কিতাব লাইব্রেরি, দৈনিক তাবলিগ, আসমাউল হুসনা এবং হজ-ওমরাহর পূর্ণাঙ্গ গাইড একসাথে।
+              {OTHER_HUB_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
 
@@ -269,15 +278,15 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     {item.arabic}
                   </div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    {item.titleBn}
+                    {item.title}
                   </h3>
                   <p className={`text-xs mt-1 leading-relaxed ${isDay ? 'text-slate-500' : 'text-teal-200/80'}`}>
-                    {item.descBn}
+                    {item.desc}
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-teal-900/30 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  <span>ওপেন করুন (Open)</span>
+                  <span>{OTHER_HUB_UI.openCard[selectedLanguage]}</span>
                   <ChevronRight className="w-4 h-4" />
                 </div>
               </div>

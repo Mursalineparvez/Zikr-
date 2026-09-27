@@ -5,14 +5,11 @@ import {
   Search,
   Sparkles,
   Volume2,
-  Heart,
-  BookmarkCheck,
   Check,
   Award,
-  BookOpen,
-  Info,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
+import { ALLAH_NAMES_UI } from '../utils/appTranslations';
 
 interface AllahNamesViewProps {
   soundEnabled: boolean;
@@ -27,7 +24,6 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
 }) => {
   const isDay = themeMode === 'day';
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedName, setSelectedName] = useState<AllahNameItem | null>(null);
   const [memorizedMap, setMemorizedMap] = useState<Record<number, boolean>>(() => {
     try {
       const saved = localStorage.getItem('zikrmate_allah_names_memorized');
@@ -92,10 +88,10 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
               <span>أَسْمَاءُ اللَّهِ الْحُسْنَى • 99 Beautiful Names of Allah</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              আসমাউল হুসনা (আল্লাহর ৯৯টি গুণবাচক নাম)
+              {ALLAH_NAMES_UI.bannerTitle[selectedLanguage]}
             </h2>
             <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-xl">
-              "আল্লাহর রয়েছে নিরানব্বইটি নাম, যে ব্যক্তি এগুলো মুখস্থ করবে ও অন্তরে ধারণ করবে সে জান্নাতে প্রবেশ করবে।" (সহিহ বুখারি)
+              {ALLAH_NAMES_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
 
@@ -109,9 +105,11 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
             >
               <Award className="w-5 h-5 text-amber-500" />
               <div>
-                <div className="text-[10px] text-slate-400 font-bold uppercase">মুখস্থ সম্পন্ন</div>
+                <div className="text-[10px] text-slate-400 font-bold uppercase">
+                  {ALLAH_NAMES_UI.memorized[selectedLanguage]}
+                </div>
                 <div className="text-sm font-black font-mono text-emerald-600 dark:text-amber-300">
-                  {memorizedCount} / 99 টি
+                  {memorizedCount} / 99
                 </div>
               </div>
             </div>
@@ -125,7 +123,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="নাম, অর্থ বা নম্বর দিয়ে খুঁজুন (যেমন: আর-রহমান, পরম দয়ালু, 1)..."
+            placeholder={ALLAH_NAMES_UI.searchPlaceholder[selectedLanguage]}
             className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-black/25 border border-white/25 text-white placeholder-teal-200/60 text-xs focus:outline-none focus:ring-2 focus:ring-white/40"
           />
           {searchQuery && (
@@ -133,7 +131,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
               onClick={() => setSearchQuery('')}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-teal-200 hover:text-white"
             >
-              মুছুন
+              {ALLAH_NAMES_UI.clear[selectedLanguage]}
             </button>
           )}
         </div>
@@ -164,7 +162,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                   </span>
                   <div>
                     <h3 className={`text-sm font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                      {name.nameBn}
+                      {selectedLanguage === 'en' ? name.transliteration : name.nameBn}
                     </h3>
                     <div className="text-[11px] text-slate-400 font-medium">
                       {name.transliteration}
@@ -172,6 +170,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                   </div>
                 </div>
 
+                {/* Arabic Calligraphy (Pure Arabic) */}
                 <div className="text-right">
                   <div className="font-arabic text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 leading-tight">
                     {name.arabic}
@@ -182,11 +181,13 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
               {/* Meaning */}
               <div className="space-y-1 py-1">
                 <div className={`text-xs font-semibold ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
-                  {name.meaningBn}
+                  {selectedLanguage === 'bn' ? name.meaningBn : name.meaningEn}
                 </div>
-                <div className="text-[11px] text-slate-400 italic">
-                  {name.meaningEn}
-                </div>
+                {selectedLanguage === 'bn' && (
+                  <div className="text-[11px] text-slate-400 italic">
+                    {name.meaningEn}
+                  </div>
+                )}
               </div>
 
               {/* Benefit / Fazilat Box */}
@@ -195,7 +196,9 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                   isDay ? 'bg-slate-50 text-slate-600' : 'bg-[#07191d] text-teal-200/90'
                 }`}
               >
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">ফজিলত: </span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  {ALLAH_NAMES_UI.benefit[selectedLanguage]}
+                </span>
                 {name.benefitBn}
               </div>
 
@@ -208,10 +211,10 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                       ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
                       : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-teal-200'
                   }`}
-                  title="আরবি উচ্চারণ শুনুন"
+                  title="Arabic Audio"
                 >
                   <Volume2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>উচ্চারণ</span>
+                  <span>{ALLAH_NAMES_UI.pronunciation[selectedLanguage]}</span>
                 </button>
 
                 <button
@@ -225,7 +228,11 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                   }`}
                 >
                   <Check className={`w-3.5 h-3.5 ${isMemorized ? 'stroke-[3]' : ''}`} />
-                  <span>{isMemorized ? 'মুখস্থ হয়েছে' : 'মুখস্থ করুন'}</span>
+                  <span>
+                    {isMemorized
+                      ? ALLAH_NAMES_UI.memorizedBtn[selectedLanguage]
+                      : ALLAH_NAMES_UI.memorizeBtn[selectedLanguage]}
+                  </span>
                 </button>
               </div>
             </div>

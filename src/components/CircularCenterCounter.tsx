@@ -1,6 +1,7 @@
-import React from 'react';
-import { RotateCcw, BookmarkPlus, Sparkles, CheckCircle2 } from 'lucide-react';
-import { ThemeMode } from '../types';
+import React, { useEffect, useState, useRef } from 'react';
+import { RotateCcw, BookmarkPlus, Sparkles } from 'lucide-react';
+import { ThemeMode, ZikrLanguage } from '../types';
+import { ZIKIR_UI } from '../utils/appTranslations';
 
 interface CircularCenterCounterProps {
   totalCount: number;
@@ -10,6 +11,7 @@ interface CircularCenterCounterProps {
   onGlobalReset: () => void;
   onSaveSession: () => void;
   themeMode?: ThemeMode;
+  selectedLanguage?: ZikrLanguage;
 }
 
 export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
@@ -20,13 +22,43 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
   onGlobalReset,
   onSaveSession,
   themeMode = 'day',
+  selectedLanguage = 'bn',
 }) => {
   const isDay = themeMode === 'day';
   const effectiveDaily = typeof dailyCount === 'number' ? dailyCount : totalCount;
 
+  const [isPopping, setIsPopping] = useState(false);
+  const [popParticles, setPopParticles] = useState<{ id: number; text: string }[]>([]);
+  const prevCountRef = useRef(totalCount);
+
+  // Pop-up trigger when totalCount increments
+  useEffect(() => {
+    if (totalCount > prevCountRef.current) {
+      setIsPopping(true);
+      const newId = Date.now();
+      setPopParticles((prev) => [...prev.slice(-4), { id: newId, text: '+1' }]);
+
+      const timeout = setTimeout(() => {
+        setIsPopping(false);
+      }, 350);
+
+      const particleTimeout = setTimeout(() => {
+        setPopParticles((prev) => prev.filter((p) => p.id !== newId));
+      }, 700);
+
+      prevCountRef.current = totalCount;
+      return () => {
+        clearTimeout(timeout);
+        clearTimeout(particleTimeout);
+      };
+    }
+    prevCountRef.current = totalCount;
+  }, [totalCount]);
+
   return (
     <section
-      className={`relative overflow-hidden rounded-[28px] transition-colors duration-300 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl ${
+      id="main-circular-center-counter"
+      className={`relative overflow-hidden rounded-[28px] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl ${
         isDay
           ? 'bg-white border border-[#d6e8e5] shadow-[#135d66]/5'
           : 'bg-[#0e2f36] border border-[#1a515c] shadow-[#082024]/60'
@@ -34,9 +66,9 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
     >
       {/* Decorative ambient flares */}
       <div
-        className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
-          isDay ? 'bg-teal-500/10' : 'bg-teal-400/15'
-        }`}
+        className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none transition-opacity duration-300 ${
+          isPopping ? 'opacity-100 scale-110' : 'opacity-70'
+        } ${isDay ? 'bg-teal-500/20' : 'bg-teal-400/25'}`}
       />
       <div
         className={`absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
@@ -47,20 +79,23 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
       {/* Top Quranic Bismillah & Subtitle */}
       <div className="relative z-10 mb-2 space-y-1">
         <div
-          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1 ${
+          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1 transition-transform ${
+            isPopping ? 'scale-105' : 'scale-100'
+          } ${
             isDay
               ? 'bg-[#e6f3f2] text-[#1c6469] border border-[#cbe4e1]'
-              : 'bg-[#0a262c] text-[#2dd4bf] border border-[#184850]'
+              : 'bg-[#0a262c] text-[#2dd4bf] border-[#184850]'
           }`}
         >
           <span
-            className={`w-2 h-2 rounded-full animate-pulse ${
-              isDay ? 'bg-[#1c6469]' : 'bg-[#2dd4bf]'
+            className={`w-2 h-2 rounded-full ${
+              isPopping ? 'bg-emerald-400 animate-ping' : isDay ? 'bg-[#1c6469]' : 'bg-[#2dd4bf]'
             }`}
           />
-          <span>Central Master Counter • সর্বমোট তাসবীহ</span>
+          <span>{ZIKIR_UI.centralMasterCounter[selectedLanguage]}</span>
         </div>
 
+        {/* Arabic remains purely Arabic */}
         <div
           dir="rtl"
           className={`font-arabic text-2xl sm:text-3xl font-bold tracking-wide select-none ${
@@ -70,15 +105,29 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
           بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </div>
         <p className={`text-xs ${isDay ? 'text-[#4e7478]' : 'text-[#90b8be]'}`}>
-          সকল সক্রিয় যিকিরের তাৎক্ষণিক সর্বমোট সমষ্টি (Real-time aggregate total)
+          {ZIKIR_UI.realtimeSubtitle[selectedLanguage]}
         </p>
       </div>
 
-      {/* Large Circular Center Dial */}
+      {/* Large Circular Center Dial with Pop-up Animation */}
       <div className="relative z-10 my-3 flex items-center justify-center">
-        {/* Outer Halo with Teal/Emerald Gradient */}
+        {/* Floating "+1" Pop Particles */}
+        {popParticles.map((particle) => (
+          <span
+            key={particle.id}
+            className="absolute -top-4 font-black text-lg text-emerald-400 dark:text-emerald-300 drop-shadow-md pointer-events-none z-30 animate-out fade-out slide-out-to-top duration-700"
+          >
+            {particle.text}
+          </span>
+        ))}
+
+        {/* Outer Halo with Teal/Emerald Gradient with Pop-Up Bounce */}
         <div
-          className={`relative w-56 h-56 sm:w-64 sm:h-64 rounded-full p-2.5 transition-all shadow-2xl flex items-center justify-center ${
+          className={`relative w-56 h-56 sm:w-64 sm:h-64 rounded-full p-2.5 transition-transform duration-200 ease-out shadow-2xl flex items-center justify-center ${
+            isPopping
+              ? 'scale-105 ring-8 ring-emerald-500/30'
+              : 'scale-100 ring-0'
+          } ${
             isDay
               ? 'bg-gradient-to-tr from-[#164e52] via-[#247b82] to-[#3aa2aa] shadow-[#135d66]/20'
               : 'bg-gradient-to-tr from-[#144d52] via-[#1c6469] to-[#2dd4bf] shadow-[#082024]/80'
@@ -86,7 +135,9 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
         >
           {/* Inner Circular Face */}
           <div
-            className={`w-full h-full rounded-full flex flex-col items-center justify-center p-4 relative shadow-inner ${
+            className={`w-full h-full rounded-full flex flex-col items-center justify-center p-4 relative shadow-inner transition-transform duration-200 ${
+              isPopping ? 'scale-[1.02]' : 'scale-100'
+            } ${
               isDay
                 ? 'bg-[#edf5f4] border-2 border-white'
                 : 'bg-gradient-to-b from-[#092226] via-[#0d2d33] to-[#092226] border border-[#1a4a52]'
@@ -105,13 +156,13 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
               }`}
             >
               <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>সর্বমোট তাসবীহ গণনা</span>
+              <span>{ZIKIR_UI.masterTasbeehCount[selectedLanguage]}</span>
             </span>
 
-            {/* Giant Digits */}
+            {/* Giant Digits with Pop Spring Effect */}
             <div
-              className={`text-5xl sm:text-6xl font-black tracking-tight font-sans drop-shadow-md select-none transition-transform duration-150 ${
-                isDay ? 'text-[#103e42]' : 'text-white'
+              className={`text-5xl sm:text-6xl font-black tracking-tight font-sans drop-shadow-md select-none transition-all duration-150 ${
+                isPopping ? 'scale-110 text-emerald-500' : isDay ? 'text-[#103e42]' : 'text-white'
               }`}
             >
               {totalCount.toLocaleString()}
@@ -134,10 +185,13 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
                     : 'bg-[#0a262c] text-[#86b5bc] border-[#184850]'
                 }`}
               >
-                <span>আজকের জিকির: <strong className="text-emerald-500 font-mono">{effectiveDaily.toLocaleString()}</strong></span>
+                <span>
+                  {ZIKIR_UI.todayDhikr[selectedLanguage]}{' '}
+                  <strong className="text-emerald-500 font-mono">{effectiveDaily.toLocaleString()}</strong>
+                </span>
                 <span>•</span>
                 <span className={isDay ? 'text-amber-600 font-bold' : 'text-amber-300 font-bold'}>
-                  {completedGoals} Goals Met
+                  {completedGoals} {ZIKIR_UI.goalsMet[selectedLanguage]}
                 </span>
               </div>
             </div>
@@ -151,18 +205,16 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
         <button
           type="button"
           onClick={onSaveSession}
-          title="Save this count snapshot into History log"
           className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md transition active:scale-95 cursor-pointer bg-[#1c6469] hover:bg-[#154f53] text-white shadow-[#135d66]/20 border border-teal-400/30"
         >
           <BookmarkPlus className="w-4 h-4 text-teal-200" />
-          <span>Save Session to History</span>
+          <span>{ZIKIR_UI.saveSession[selectedLanguage]}</span>
         </button>
 
         {/* Global Reset */}
         <button
           type="button"
           onClick={onGlobalReset}
-          title="Reset all counters to 0"
           className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-semibold transition active:scale-95 cursor-pointer border ${
             isDay
               ? 'bg-white hover:bg-red-50 text-red-600 border-red-200 shadow-sm'
@@ -170,7 +222,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
           }`}
         >
           <RotateCcw className="w-4 h-4" />
-          <span>Reset All</span>
+          <span>{ZIKIR_UI.resetAll[selectedLanguage]}</span>
         </button>
       </div>
     </section>

@@ -409,7 +409,19 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>লিখুন (আমল তালিকা)</span>
+          <span>
+            {selectedLanguage === 'bn'
+              ? 'লিখুন (আমল তালিকা)'
+              : selectedLanguage === 'ur'
+              ? 'اعمال فہرست'
+              : selectedLanguage === 'hi'
+              ? 'आमाल सूची'
+              : selectedLanguage === 'id'
+              ? 'Daftar Amal'
+              : selectedLanguage === 'tr'
+              ? 'Amel Listesi'
+              : 'Daily Checklist'}
+          </span>
         </button>
 
         <button
@@ -424,7 +436,19 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }`}
         >
           <CalendarIcon className="w-4 h-4" />
-          <span>রেকর্ড (ক্যালেন্ডার)</span>
+          <span>
+            {selectedLanguage === 'bn'
+              ? 'রেকর্ড (ক্যালেন্ডার)'
+              : selectedLanguage === 'ur'
+              ? 'کیلنڈر ریکارڈ'
+              : selectedLanguage === 'hi'
+              ? 'कैलेंडर रिकॉर्ड'
+              : selectedLanguage === 'id'
+              ? 'Kalender Riwayat'
+              : selectedLanguage === 'tr'
+              ? 'Takvim Geçmişi'
+              : 'Calendar Record'}
+          </span>
         </button>
 
         <button
@@ -439,7 +463,19 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }`}
         >
           <TrendingUp className="w-4 h-4" />
-          <span>তুলনা ও অগ্রগতি</span>
+          <span>
+            {selectedLanguage === 'bn'
+              ? 'তুলনা ও অগ্রগতি'
+              : selectedLanguage === 'ur'
+              ? 'پیشرفت و موازنہ'
+              : selectedLanguage === 'hi'
+              ? 'प्रगति व तुलना'
+              : selectedLanguage === 'id'
+              ? 'Analisis & Kemajuan'
+              : selectedLanguage === 'tr'
+              ? 'İlerleme ve İstatistik'
+              : 'Analytics & Trends'}
+          </span>
         </button>
       </div>
 
