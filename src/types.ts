@@ -83,15 +83,24 @@ export interface DuaItem {
   }>>;
 }
 
+export interface HadithBookMeta {
+  id: string;
+  arabicName: string;
+  titles: Record<ZikrLanguage, string>;
+  chaptersCount: number;
+  hadithCount: number;
+  author: string;
+}
+
 export interface HadithItem {
   id: string;
-  book: 'Sahih al-Bukhari' | 'Sahih Muslim' | 'Sunan Abi Dawud' | 'Jami` at-Tirmidhi' | 'An-Nawawi 40 Hadith';
+  book: string;
   hadithNumber: string;
   chapter: string;
   narrator: string;
   arabicText: string;
   englishTranslation: string;
-  topic: 'Faith & Tawheed' | 'Salah & Purification' | 'Character & Akhlaq' | 'Dhikr & Dua' | 'Charity & Kindness' | 'Patience & Trials' | 'Repentance & Mercy';
+  topic: string;
   grade: 'Sahih' | 'Hasan';
   reflection?: string;
   translations?: Partial<Record<ZikrLanguage, {
