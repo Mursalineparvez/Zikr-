@@ -160,6 +160,7 @@ export interface UserProfile {
   verificationMethod?: 'email' | 'phone' | 'google';
   verificationDate?: string;
   authProvider?: 'google' | 'email' | 'phone' | 'guest';
+  password?: string; // Account password for exclusive secure access
   location?: string;
   deviceModel?: string;
   osVersion?: string;

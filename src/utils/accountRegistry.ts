@@ -1,13 +1,10 @@
 import { UserProfile } from '../types';
 
 const ACCOUNTS_DB_KEY = 'zikrmate_cloud_accounts_vault_v1';
-const CURRENT_SESSION_KEY = 'zikrmate_user_profile';
 
 export interface SavedAccountRecord {
   profile: UserProfile;
   savedAt: string;
-  totalZikrsCount?: number;
-  bookmarksCount?: number;
 }
 
 /**
@@ -72,24 +69,3 @@ export const findSavedAccount = (emailOrPhoneOrName: string): UserProfile | null
 
   return null;
 };
-
-/**
- * Simulated Google Accounts for Google Sign In
- */
-export const GOOGLE_DEMO_ACCOUNTS = [
-  {
-    name: 'Md. Mursaline Parvez',
-    emailOrPhone: 'mdmursalineparvez@gmail.com',
-    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Abdullah Al-Mamun',
-    emailOrPhone: 'abdullah.mamun@gmail.com',
-    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Fatima Tuz Zahra',
-    emailOrPhone: 'fatima.zahra@gmail.com',
-    photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-  },
-];

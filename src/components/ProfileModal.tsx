@@ -44,7 +44,7 @@ import {
 import confetti from 'canvas-confetti';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
-import { findSavedAccount, saveAccountToRegistry, GOOGLE_DEMO_ACCOUNTS } from '../utils/accountRegistry';
+import { findSavedAccount, saveAccountToRegistry } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import {
@@ -191,6 +191,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [inputPhone, setInputPhone] = useState('');
   const [selectedCountryCode, setSelectedCountryCode] = useState('+880');
   const [inputName, setInputName] = useState('');
+  const [inputPassword, setInputPassword] = useState('');
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
   const [generatedOtpCode, setGeneratedOtpCode] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(60);
@@ -321,17 +322,39 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setEditName(userProfile.name);
     setEditEmailOrPhone(userProfile.emailOrPhone);
     setEditPhotoUrl(userProfile.photoUrl);
-    setEditLocation(userProfile.location || '4C2J 8FX, BD');
     setEditDeviceModel(userProfile.deviceModel || detected.model);
     setEditOsVersion(userProfile.osVersion || detected.osVersion);
 
     if (userProfile.emailOrPhone) {
       setFeedbackUserEmail(userProfile.emailOrPhone);
     }
-    setFeedbackLocation(userProfile.location || '4C2J 8FX, BD');
     setFeedbackModel(userProfile.deviceModel || detected.model);
     setFeedbackOsVersion(userProfile.osVersion || detected.osVersion);
-  }, [userProfile]);
+
+    if (isOpen) {
+      // Automatically fetch Network Location (IP Geolocation & Timezone) from user's device network
+      fetch('https://ipapi.co/json/')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.city && data.country_name) {
+            const netLoc = `${data.city}, ${data.country_name} (Network Location)`;
+            setEditLocation(netLoc);
+            setFeedbackLocation(netLoc);
+          } else {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+            const netLoc = tz.replace('_', ' ') + ' (Network Timezone)';
+            setEditLocation(netLoc);
+            setFeedbackLocation(netLoc);
+          }
+        })
+        .catch(() => {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka';
+          const netLoc = tz.replace('_', ' ') + ' (Network Timezone)';
+          setEditLocation(netLoc);
+          setFeedbackLocation(netLoc);
+        });
+    }
+  }, [isOpen, userProfile]);
 
   if (!isOpen) return null;
 
@@ -392,6 +415,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         setOtpErrorMessage('সঠিক মোবাইল নম্বর লিখুন (অন্তত ৮-১১ ডিজিট)');
         return;
       }
+    }
+
+    if (!inputPassword.trim() || inputPassword.trim().length < 4) {
+      setOtpErrorMessage('অনুগ্রহ করে কমপক্ষে ৪ অক্ষরের একটি গোপন পাসওয়ার্ড দিন');
+      return;
+    }
+
+    // Check existing account password protection
+    const existing = findSavedAccount(target);
+    if (existing && existing.password && existing.password !== inputPassword.trim()) {
+      setOtpErrorMessage('ভুল পাসওয়ার্ড! এই অ্যাকাউন্টের সঠিক পাসওয়ার্ড দিন। অন্য কেউ আপনার অ্যাকাউন্টে প্রবেশ করতে পারবে না।');
+      if (soundEnabled) soundHaptics.playTap();
+      return;
     }
 
     const methodType: 'email' | 'phone' = authMethod === 'phone' ? 'phone' : 'email';
@@ -485,17 +521,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       onCloudDataLoaded(cloudData);
     }
 
+    const existing = findSavedAccount(target);
     const detected = getDetectedDeviceInfo();
     const updated: UserProfile = {
       name:
         inputName.trim() ||
         cloudData?.profile?.name ||
+        existing?.name ||
         (authMethod === 'email' ? inputEmail.split('@')[0] : 'ZikrMate User'),
       emailOrPhone: target,
-      photoUrl: cloudData?.profile?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
-      location: cloudData?.profile?.location || userProfile.location || '4C2J 8FX, BD',
-      deviceModel: cloudData?.profile?.deviceModel || userProfile.deviceModel || detected.model,
-      osVersion: cloudData?.profile?.osVersion || userProfile.osVersion || detected.osVersion,
+      photoUrl: cloudData?.profile?.photoUrl || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
+      password: inputPassword.trim() || cloudData?.profile?.password || existing?.password || '',
+      location: cloudData?.profile?.location || existing?.location || userProfile.location || '4C2J 8FX, BD',
+      deviceModel: cloudData?.profile?.deviceModel || existing?.deviceModel || userProfile.deviceModel || detected.model,
+      osVersion: cloudData?.profile?.osVersion || existing?.osVersion || userProfile.osVersion || detected.osVersion,
       isSignedIn: true,
       isVerified: true,
       verificationMethod: authMethod,
@@ -515,23 +554,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   // Handle instant Google Sign In with cloud sync
-  const handleGoogleSignIn = async (account: { name: string; emailOrPhone: string; photoUrl: string }) => {
+  const handleGoogleSignIn = async (account: { name: string; emailOrPhone: string; photoUrl: string; password?: string }) => {
+    const existing = findSavedAccount(account.emailOrPhone);
+    const cloudData = await loadUserDataFromCloud(account.emailOrPhone);
+
+    const savedPassword = existing?.password || cloudData?.profile?.password;
+    if (savedPassword && account.password && savedPassword !== account.password) {
+      setOtpErrorMessage('ভুল পাসওয়ার্ড! এই অ্যাকাউন্টের সঠিক পাসওয়ার্ড দিন।');
+      if (soundEnabled) soundHaptics.playTap();
+      return;
+    }
+
     setIsVerifying(true);
     setCloudSyncMessage('গুগল অ্যাকাউন্ট যাচাই ও ক্লাউড ডাটা লোড হচ্ছে...');
 
-    // Load cloud data for this email across ANY device
-    const cloudData = await loadUserDataFromCloud(account.emailOrPhone);
     if (cloudData && onCloudDataLoaded) {
       onCloudDataLoaded(cloudData);
     }
 
-    const existing = findSavedAccount(account.emailOrPhone);
     const detected = getDetectedDeviceInfo();
     const updated: UserProfile = {
       ...userProfile,
       name: account.name || cloudData?.profile?.name || existing?.name || 'Google User',
-      emailOrPhone: account.emailOrPhone,
+      emailOrPhone: account.emailOrPhone.toLowerCase().trim(),
       photoUrl: account.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
+      password: account.password || savedPassword || '',
       location: existing?.location || userProfile.location || '4C2J 8FX, BD',
       deviceModel: existing?.deviceModel || userProfile.deviceModel || detected.model,
       osVersion: existing?.osVersion || userProfile.osVersion || detected.osVersion,
@@ -1896,6 +1943,7 @@ ${msg}`;
                         </label>
                         <input
                           type="email"
+                          autoComplete="email"
                           required
                           value={inputEmail}
                           onChange={(e) => setInputEmail(e.target.value)}
@@ -1906,6 +1954,27 @@ ${msg}`;
                               : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
                           }`}
                         />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Account Password / PIN (গোপন পাসওয়ার্ড) *
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={inputPassword}
+                          onChange={(e) => setInputPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                          }`}
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          শুধুমাত্র আপনি এই পাসওয়ার্ড দিয়ে আপনার অ্যাকাউন্টে ঢুকতে পারবেন। অন্য কেউ প্রবেশ করতে পারবে না।
+                        </p>
                       </div>
 
                       <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
@@ -1988,6 +2057,27 @@ ${msg}`;
                         </div>
                       </div>
 
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Account Password / PIN (গোপন পাসওয়ার্ড) *
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={inputPassword}
+                          onChange={(e) => setInputPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                          }`}
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          এই পাসওয়ার্ড দিয়ে আপনার অ্যাকাউন্ট সুরক্ষিত থাকবে।
+                        </p>
+                      </div>
+
                       <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-[11px] text-teal-800 dark:text-teal-300 flex items-start gap-2">
                         <Smartphone className="w-3.5 h-3.5 text-teal-500 shrink-0 mt-0.5" />
                         <span>
@@ -2013,83 +2103,91 @@ ${msg}`;
                     </div>
                   )}
 
-                  {/* 3. GOOGLE ONE-TAP ACCOUNTS */}
+                  {/* 3. GOOGLE SIGN-IN (CLEAN & PROFESSIONAL - NO MOCK PRESETS) */}
                   {authMethod === 'google' && (
-                    <div className="space-y-2.5">
+                    <div className="space-y-3">
                       <div className="text-xs text-slate-500 dark:text-teal-200">
-                        লগইন করতে আপনার গুগল অ্যাকাউন্ট নির্বাচন করুন:
+                        আপনার গুগল অ্যাকাউন্ট ও জিমেইল দিয়ে সাইন-ইন করুন:
                       </div>
 
-                      <div className="space-y-1.5">
-                        {GOOGLE_DEMO_ACCOUNTS.map((acc, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleGoogleSignIn(acc)}
-                            className={`w-full p-2.5 rounded-2xl border flex items-center gap-3 transition active:scale-95 text-left cursor-pointer ${
-                              isDay
-                                ? 'bg-slate-50 hover:bg-emerald-50/70 border-slate-200'
-                                : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850]'
-                            }`}
-                          >
-                            <img
-                              src={acc.photoUrl}
-                              alt={acc.name}
-                              className="w-9 h-9 rounded-full object-cover border border-emerald-400 shrink-0"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="font-bold text-xs truncate">{acc.name}</div>
-                              <div className="text-[10px] text-slate-400 font-mono truncate">{acc.emailOrPhone}</div>
-                            </div>
-                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                              Verify &amp; Sync
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Custom Google Account Input */}
-                      <div className="pt-2 border-t border-slate-100 dark:border-teal-900/40 space-y-2">
-                        <div className="text-[11px] font-bold text-slate-500 dark:text-teal-300">
-                          বা আপনার নিজস্ব গুগল ইমেইল দিন:
-                        </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Full Name (আপনার নাম) *
+                        </label>
                         <input
                           type="text"
-                          placeholder="Your Full Name..."
                           value={customGoogleName}
                           onChange={(e) => setCustomGoogleName(e.target.value)}
-                          className={`w-full rounded-xl px-3 py-2 border text-xs focus:outline-none ${
+                          placeholder="Your Full Name..."
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
                             isDay
                               ? 'bg-slate-50 border-slate-300 text-slate-900'
                               : 'bg-[#092226] border-[#184850] text-white'
                           }`}
                         />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Google Gmail Address (জিমেইল ঠিকানা) *
+                        </label>
                         <input
                           type="email"
-                          placeholder="yourname@gmail.com..."
+                          autoComplete="email"
                           value={customGoogleEmail}
                           onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                          className={`w-full rounded-xl px-3 py-2 border text-xs focus:outline-none ${
+                          placeholder="yourname@gmail.com"
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
                             isDay
                               ? 'bg-slate-50 border-slate-300 text-slate-900'
                               : 'bg-[#092226] border-[#184850] text-white'
                           }`}
                         />
-                        <button
-                          type="button"
-                          disabled={!customGoogleEmail.trim() || !customGoogleName.trim()}
-                          onClick={() => {
-                            handleGoogleSignIn({
-                              name: customGoogleName.trim(),
-                              emailOrPhone: customGoogleEmail.trim(),
-                              photoUrl: DEFAULT_AVATARS[0],
-                            });
-                          }}
-                          className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
-                        >
-                          Confirm &amp; Load Cloud Data
-                        </button>
                       </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                          Account Password / PIN (গোপন পাসওয়ার্ড) *
+                        </label>
+                        <input
+                          type="password"
+                          value={inputPassword}
+                          onChange={(e) => setInputPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900'
+                              : 'bg-[#092226] border-[#184850] text-white'
+                          }`}
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          শুধুমাত্র আপনি এই পাসওয়ার্ড দিয়ে আপনার অ্যাকাউন্টে প্রবেশ করতে পারবেন।
+                        </p>
+                      </div>
+
+                      {otpErrorMessage && (
+                        <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
+                          <ShieldAlert className="w-4 h-4 shrink-0" />
+                          <span>{otpErrorMessage}</span>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={!customGoogleEmail.trim() || !customGoogleName.trim() || !inputPassword.trim()}
+                        onClick={() => {
+                          handleGoogleSignIn({
+                            name: customGoogleName.trim(),
+                            emailOrPhone: customGoogleEmail.trim().toLowerCase(),
+                            photoUrl: DEFAULT_AVATARS[0],
+                            password: inputPassword.trim(),
+                          });
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                      >
+                        <GoogleIcon />
+                        <span>Continue with Google &amp; Cloud Sync</span>
+                      </button>
                     </div>
                   )}
                 </div>
