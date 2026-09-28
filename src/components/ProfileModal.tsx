@@ -41,6 +41,8 @@ import {
   ArrowRight,
   Lock,
   Copy,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings } from '../types';
@@ -49,12 +51,15 @@ import { findSavedAccount, saveAccountToRegistry, updateAccountPassword } from '
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import {
-  generateVerificationOtp,
+  checkUserExistsInCloud,
+  generateAndSendVerificationOtp,
   verifySubmittedOtp,
   loadUserDataFromCloud,
   updateCloudUserPassword,
-  generatePasswordResetCode,
+  generateAndSendPasswordResetCode,
   verifyPasswordResetCode,
+  maskEmailOrPhone,
+  getTestingOtpCode,
   CloudZikrState,
 } from '../services/firebase';
 
@@ -189,10 +194,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   >('none');
 
   // Verification & Authentication State
+  const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
   const [authMethod, setAuthMethod] = useState<'email' | 'phone' | 'google'>('email');
   const [verificationStep, setVerificationStep] = useState<
     'input' | 'otp' | 'forgot_password' | 'reset_password' | 'success'
   >('input');
+  const [otpPurpose, setOtpPurpose] = useState<'signup' | 'login' | 'reset'>('signup');
+  const [maskedTargetDisplay, setMaskedTargetDisplay] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [showTestingHelper, setShowTestingHelper] = useState(false);
+
   const [inputEmail, setInputEmail] = useState('');
   const [inputPhone, setInputPhone] = useState('');
   const [selectedCountryCode, setSelectedCountryCode] = useState('+880');
@@ -396,13 +408,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   // Open Verified Auth Sub-modal
-  const handleOpenVerifiedAuth = (method: 'email' | 'phone' | 'google' = 'email') => {
+  const handleOpenVerifiedAuth = (
+    method: 'email' | 'phone' | 'google' = 'email',
+    mode: 'register' | 'login' = 'register'
+  ) => {
     setAuthMethod(method);
+    setAuthMode(mode);
     setVerificationStep('input');
     setOtpErrorMessage(null);
     setShowOtpNotification(false);
     setOtpDigits(['', '', '', '', '', '']);
     setCloudSyncMessage(null);
+    setShowTestingHelper(false);
     if (method === 'email' && !inputEmail) {
       setInputEmail(userProfile.emailOrPhone && userProfile.emailOrPhone.includes('@') ? userProfile.emailOrPhone : '');
     }
@@ -418,9 +435,53 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setActiveSubModal('verified_auth');
   };
 
-  // Send 6-digit OTP code to email or phone
-  const handleSendOtp = () => {
+  // Direct login helper with password
+  const handleDirectPasswordLogin = async (target: string, pass: string) => {
+    setIsVerifying(true);
     setOtpErrorMessage(null);
+    const cloudData = await loadUserDataFromCloud(target);
+    const existing = findSavedAccount(target);
+    const detected = getDetectedDeviceInfo();
+
+    const updated: UserProfile = {
+      name: existing?.name || cloudData?.profile?.name || (target.includes('@') ? target.split('@')[0] : 'ZikrMate User'),
+      emailOrPhone: target,
+      photoUrl: cloudData?.profile?.photoUrl || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
+      password: pass,
+      location: cloudData?.profile?.location || existing?.location || userProfile.location || 'Bangladesh',
+      deviceModel: detected.model,
+      osVersion: detected.osVersion,
+      isSignedIn: true,
+      isVerified: true,
+      verificationMethod: authMethod,
+      verificationDate: new Date().toISOString(),
+      authProvider: authMethod,
+      lastSyncedAt: Date.now(),
+    };
+
+    saveAccountToRegistry(updated);
+    onUpdateProfile(updated);
+
+    setVerificationStep('success');
+    setCloudSyncMessage('পাসওয়ার্ড যাচাই সফল! আপনার সংরক্ষিত তথ্য লোড হচ্ছে...');
+    if (onCloudDataLoaded && cloudData) {
+      onCloudDataLoaded(cloudData, target);
+    }
+
+    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+    if (soundEnabled) soundHaptics.playMilestone();
+    setIsVerifying(false);
+
+    setTimeout(() => {
+      setActiveSubModal('none');
+      setVerificationStep('input');
+    }, 1600);
+  };
+
+  // Send 6-digit OTP code to email or phone for registration, or login
+  const handleSendOtp = async (purposeOverride?: 'signup' | 'login') => {
+    setOtpErrorMessage(null);
+    const currentPurpose: 'signup' | 'login' = purposeOverride || (authMode === 'register' ? 'signup' : 'login');
     const target =
       authMethod === 'email'
         ? inputEmail.trim().toLowerCase()
@@ -444,20 +505,49 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       return;
     }
 
-    // Check existing account password protection
     const existing = findSavedAccount(target);
-    if (existing && existing.password && existing.password !== inputPassword.trim()) {
-      setOtpErrorMessage('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন, অথবা নিচে "পাসওয়ার্ড ভুলে গেছেন?" বাটনে ট্যাপ করে নতুন পাসওয়ার্ড রিসেট করুন।');
+
+    // If REGISTER mode: Ensure account does not already exist
+    if (currentPurpose === 'signup') {
+      const existsInCloud = await checkUserExistsInCloud(target);
+      if (existing || existsInCloud) {
+        setOtpErrorMessage('এই ইমেইল বা ফোনে ইতিমধ্যে একটি অ্যাকাউন্ট তৈরি আছে! অনুগ্রহ করে "লগইন" সিলেক্ট করে লগইন করুন অথবা পাসওয়ার্ড ভুলে গেলে রিসেট করুন।');
+        if (soundEnabled) soundHaptics.playTap();
+        return;
+      }
+    }
+
+    // If LOGIN mode with password: check password match
+    if (currentPurpose === 'login' && !purposeOverride) {
+      if (existing && existing.password && existing.password !== inputPassword.trim()) {
+        setOtpErrorMessage('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন, অথবা নিচে "পাসওয়ার্ড ভুলে গেছেন?" বাটনে ট্যাপ করে নতুন পাসওয়ার্ড রিসেট করুন।');
+        if (soundEnabled) soundHaptics.playTap();
+        return;
+      }
+      // If password matches directly, log in immediately!
+      if (existing && existing.password === inputPassword.trim()) {
+        await handleDirectPasswordLogin(target, inputPassword.trim());
+        return;
+      }
+    }
+
+    // Otherwise, generate and dispatch 6-digit verification code to Email or Phone
+    setIsSendingCode(true);
+    const methodType: 'email' | 'phone' = authMethod === 'phone' ? 'phone' : 'email';
+    const res = await generateAndSendVerificationOtp(target, methodType, currentPurpose);
+    setIsSendingCode(false);
+
+    if (!res.success) {
+      setOtpErrorMessage(res.message);
       if (soundEnabled) soundHaptics.playTap();
       return;
     }
 
-    const methodType: 'email' | 'phone' = authMethod === 'phone' ? 'phone' : 'email';
-    const code = generateVerificationOtp(target, methodType);
-    setGeneratedOtpCode(code);
+    setMaskedTargetDisplay(res.maskedTarget);
+    setOtpPurpose(currentPurpose);
     setOtpDigits(['', '', '', '', '', '']);
     setOtpCountdown(60);
-    setShowOtpNotification(true);
+    setShowTestingHelper(false);
     setVerificationStep('otp');
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -475,13 +565,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setNewPasswordInput('');
     setConfirmNewPasswordInput('');
     setShowTempPasswordNotification(false);
+    setShowTestingHelper(false);
     setVerificationStep('forgot_password');
     setActiveSubModal('verified_auth');
     if (soundEnabled) soundHaptics.playTap();
   };
 
-  // Send Temporary Password and Code to Email or Phone
-  const handleSendForgotPassword = () => {
+  // Send Password Reset Code to Email or Phone
+  const handleSendForgotPassword = async () => {
     setForgotErrorMessage(null);
     let target = forgotTarget.trim();
 
@@ -500,21 +591,21 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       target = `${selectedCountryCode}${target.replace(/^0+/, '').trim()}`;
     }
 
-    // Generate temporary password & verification code
-    const { tempPassword, code } = generatePasswordResetCode(target, forgotMethod);
-    setGeneratedTempPassword(tempPassword);
-    setGeneratedResetCode(code);
-    setShowTempPasswordNotification(true);
+    setIsSendingCode(true);
+    const res = await generateAndSendPasswordResetCode(target, forgotMethod, !!findSavedAccount(target));
+    setIsSendingCode(false);
+
+    if (!res.success) {
+      setForgotErrorMessage(res.message);
+      if (soundEnabled) soundHaptics.playTap();
+      return;
+    }
+
+    setMaskedTargetDisplay(res.maskedTarget);
     setVerificationStep('reset_password');
     setTempPasswordInput('');
+    setShowTestingHelper(false);
     if (soundEnabled) soundHaptics.playMilestone();
-  };
-
-  // Auto-fill temporary password from notification banner
-  const handleAutoFillTempPassword = () => {
-    if (!generatedTempPassword) return;
-    setTempPasswordInput(generatedTempPassword);
-    if (soundEnabled) soundHaptics.playTap();
   };
 
   // Complete Password Reset and Log In
@@ -527,8 +618,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       target = target.startsWith('+') ? target : `${selectedCountryCode}${target.replace(/^0+/, '').trim()}`;
     }
 
-    if (!tempPasswordInput.trim()) {
-      setForgotErrorMessage('ইমেইল বা ফোনে প্রেরিত অস্থায়ী পাসওয়ার্ড বা ভেরিফিকেশন কোডটি দিন');
+    if (!tempPasswordInput.trim() || tempPasswordInput.trim().length < 6) {
+      setForgotErrorMessage('আপনার ইমেইল বা SMS-এ প্রাপ্ত ৬-সংখ্যার সিকিউরিটি রিসেট কোডটি দিন');
       return;
     }
 
@@ -544,7 +635,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     setIsResettingPassword(true);
 
-    // Validate the code or temporary password
+    // Validate the 6-digit reset code
     const verifyResult = verifyPasswordResetCode(target, tempPasswordInput.trim());
     if (!verifyResult.success) {
       setIsResettingPassword(false);
@@ -597,7 +688,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setTimeout(() => {
       setActiveSubModal('none');
       setVerificationStep('input');
-    }, 2400);
+    }, 2000);
   };
 
   // Auto-fill OTP on clicking notification
@@ -661,7 +752,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setIsVerifying(true);
     setOtpErrorMessage(null);
 
-    const verificationResult = verifySubmittedOtp(target, fullEntered);
+    const verificationResult = verifySubmittedOtp(target, fullEntered, otpPurpose);
     if (!verificationResult.success) {
       setIsVerifying(false);
       setOtpErrorMessage(verificationResult.message);
@@ -671,43 +762,66 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     // Step Success!
     setVerificationStep('success');
-    
-    // Cross-device cloud history load
-    const cloudData = await loadUserDataFromCloud(target);
-    const isFirstTime = !cloudData || !cloudData.foundInCloud;
 
-    const existing = findSavedAccount(target);
+    const isSignup = otpPurpose === 'signup';
     const detected = getDetectedDeviceInfo();
-    const updated: UserProfile = {
-      name:
-        inputName.trim() ||
-        cloudData?.profile?.name ||
-        existing?.name ||
-        (authMethod === 'email' ? inputEmail.split('@')[0] : 'ZikrMate User'),
-      emailOrPhone: target,
-      photoUrl: cloudData?.profile?.photoUrl || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
-      password: inputPassword.trim() || cloudData?.profile?.password || existing?.password || '',
-      location: cloudData?.profile?.location || existing?.location || userProfile.location || '4C2J 8FX, BD',
-      deviceModel: detected.model,
-      osVersion: detected.osVersion,
-      isSignedIn: true,
-      isVerified: true,
-      verificationMethod: authMethod,
-      verificationDate: new Date().toISOString(),
-      authProvider: authMethod,
-      lastSyncedAt: Date.now(),
-    };
 
-    saveAccountToRegistry(updated);
-    onUpdateProfile(updated);
+    if (isSignup) {
+      // Brand new account: start clean zero baseline
+      const updated: UserProfile = {
+        name:
+          inputName.trim() ||
+          (authMethod === 'email' ? inputEmail.split('@')[0] : 'ZikrMate User'),
+        emailOrPhone: target,
+        photoUrl: DEFAULT_AVATARS[0],
+        password: inputPassword.trim(),
+        location: userProfile.location || 'Bangladesh',
+        deviceModel: detected.model,
+        osVersion: detected.osVersion,
+        isSignedIn: true,
+        isVerified: true,
+        verificationMethod: authMethod,
+        verificationDate: new Date().toISOString(),
+        authProvider: authMethod,
+        lastSyncedAt: Date.now(),
+      };
 
-    if (isFirstTime) {
-      setCloudSyncMessage('স্বাগতম! নতুন অ্যাকাউন্ট হিসেবে সব গণনা ০ থেকে শুরু হচ্ছে...');
+      saveAccountToRegistry(updated);
+      onUpdateProfile(updated);
+
+      setCloudSyncMessage('স্বাগতম! আপনার অ্যাকাউন্ট সফলভাবে ভেরিফাই ও তৈরি হয়েছে। সব গণনা ০ থেকে শুরু হচ্ছে...');
       if (onCloudDataLoaded) {
         onCloudDataLoaded({ foundInCloud: false }, target);
       }
     } else {
-      setCloudSyncMessage('যাচাই সম্পন্ন! ক্লাউড থেকে আপনার সংরক্ষিত ইতিহাস লোড হচ্ছে...');
+      // Existing login
+      const cloudData = await loadUserDataFromCloud(target);
+      const existing = findSavedAccount(target);
+
+      const updated: UserProfile = {
+        name:
+          inputName.trim() ||
+          cloudData?.profile?.name ||
+          existing?.name ||
+          (authMethod === 'email' ? inputEmail.split('@')[0] : 'ZikrMate User'),
+        emailOrPhone: target,
+        photoUrl: cloudData?.profile?.photoUrl || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
+        password: inputPassword.trim() || cloudData?.profile?.password || existing?.password || '',
+        location: cloudData?.profile?.location || existing?.location || userProfile.location || 'Bangladesh',
+        deviceModel: detected.model,
+        osVersion: detected.osVersion,
+        isSignedIn: true,
+        isVerified: true,
+        verificationMethod: authMethod,
+        verificationDate: new Date().toISOString(),
+        authProvider: authMethod,
+        lastSyncedAt: Date.now(),
+      };
+
+      saveAccountToRegistry(updated);
+      onUpdateProfile(updated);
+
+      setCloudSyncMessage('লগইন ভেরিফিকেশন সম্পন্ন! ক্লাউড থেকে আপনার সংরক্ষিত ইতিহাস লোড হচ্ছে...');
       if (onCloudDataLoaded && cloudData) {
         onCloudDataLoaded(cloudData, target);
       }
@@ -720,7 +834,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setTimeout(() => {
       setActiveSubModal('none');
       setVerificationStep('input');
-    }, 1500);
+    }, 1800);
   };
 
   // Handle instant Google Sign In with cloud sync
@@ -2078,6 +2192,59 @@ ${msg}`;
               {/* STEP 1: METHOD SELECTION & CREDENTIALS INPUT */}
               {verificationStep === 'input' && (
                 <div className="space-y-3.5 animate-in fade-in">
+                  {/* Mode Switcher Tabs: Register vs Sign In */}
+                  <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 dark:bg-[#071f25] border border-slate-200 dark:border-teal-900/50 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('register');
+                        setOtpErrorMessage(null);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        authMode === 'register'
+                          ? 'bg-emerald-600 text-white shadow-sm font-black'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-teal-300'
+                      }`}
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>নতুন অ্যাকাউন্ট (Sign Up)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('login');
+                        setOtpErrorMessage(null);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        authMode === 'login'
+                          ? 'bg-emerald-600 text-white shadow-sm font-black'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-teal-300'
+                      }`}
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>লগইন (Sign In)</span>
+                    </button>
+                  </div>
+
+                  {/* Security Assurance Banner */}
+                  <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <p className="leading-snug">
+                      {authMode === 'register' ? (
+                        <span>
+                          <strong>নিরাপদ অ্যাকাউন্ট ভেরিফিকেশন:</strong> অ্যাকাউন্ট খোলার জন্য আপনার ইমেইল বা ফোনে ৬-সংখ্যার কোড পাঠানো হবে। কোড যাচাই ছাড়া কেউ অ্যাকাউন্ট চালু করতে পারবে না।
+                        </span>
+                      ) : (
+                        <span>
+                          <strong>সুরক্ষিত লগইন:</strong> আপনার গোপন পাসওয়ার্ড দিয়ে লগইন করুন, অথবা পাসওয়ার্ড ভুলে গেলে আপনার ইমেইল/ফোনে ভেরিফিকেশন কোড পাঠিয়ে পাসওয়ার্ড বদল করুন।
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
                   {/* Method Switcher Tabs: Email vs Phone vs Google */}
                   <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100 dark:bg-[#071f25] border border-slate-200 dark:border-teal-900/50 text-[11px] font-bold">
                     <button
@@ -2135,22 +2302,25 @@ ${msg}`;
                   {/* 1. EMAIL AUTH FORM */}
                   {authMethod === 'email' && (
                     <div className="space-y-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                          Full Name (আপনার নাম)
-                        </label>
-                        <input
-                          type="text"
-                          value={inputName}
-                          onChange={(e) => setInputName(e.target.value)}
-                          placeholder="e.g. Md. Mursaline Parvez"
-                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
-                            isDay
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
-                          }`}
-                        />
-                      </div>
+                      {authMode === 'register' && (
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                            Full Name (আপনার নাম) *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={inputName}
+                            onChange={(e) => setInputName(e.target.value)}
+                            placeholder="e.g. Md. Mursaline Parvez"
+                            className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                              isDay
+                                ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                                : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                            }`}
+                          />
+                        </div>
+                      )}
 
                       <div>
                         <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
@@ -2174,39 +2344,40 @@ ${msg}`;
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200">
-                            Account Password / PIN (গোপন পাসওয়ার্ড) *
+                            {authMode === 'register' ? 'Set Account Password (গোপন পাসওয়ার্ড দিন) *' : 'Account Password (পাসওয়ার্ড) *'}
                           </label>
+                          {authMode === 'login' && (
+                            <button
+                              type="button"
+                              onClick={() => handleStartForgotPassword('email')}
+                              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <KeyRound className="w-3 h-3" />
+                              <span>পাসওয়ার্ড ভুলে গেছেন?</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            value={inputPassword}
+                            onChange={(e) => setInputPassword(e.target.value)}
+                            placeholder="কমপক্ষে ৪ অক্ষর (e.g. 1234)"
+                            className={`w-full rounded-xl pl-3 pr-9 py-2 border text-xs font-semibold focus:outline-none ${
+                              isDay
+                                ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                                : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                            }`}
+                          />
                           <button
                             type="button"
-                            onClick={() => handleStartForgotPassword('email')}
-                            className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-teal-200 cursor-pointer"
                           >
-                            <KeyRound className="w-3 h-3" />
-                            <span>পাসওয়ার্ড ভুলে গেছেন?</span>
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
-                        <input
-                          type="password"
-                          required
-                          value={inputPassword}
-                          onChange={(e) => setInputPassword(e.target.value)}
-                          placeholder="••••••••"
-                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
-                            isDay
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
-                          }`}
-                        />
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          শুধুমাত্র আপনি এই পাসওয়ার্ড দিয়ে আপনার অ্যাকাউন্টে ঢুকতে পারবেন।
-                        </p>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
-                        <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>
-                          লগইনের আগে আপনার ইমেইলে একটি ৬ ডিজিটের ভেরিফিকেশন ওটিপি কোড পাঠানো হবে।
-                        </span>
                       </div>
 
                       {otpErrorMessage && (
@@ -2216,36 +2387,82 @@ ${msg}`;
                         </div>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Send 6-Digit OTP Code (কোড পাঠান)</span>
-                      </button>
+                      {authMode === 'register' ? (
+                        <button
+                          type="button"
+                          disabled={isSendingCode || !inputEmail.trim() || !inputPassword.trim()}
+                          onClick={() => handleSendOtp('signup')}
+                          className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                        >
+                          {isSendingCode ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>ইমেইলে কোড পাঠানো হচ্ছে...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-3.5 h-3.5" />
+                              <span>ইমেইল ভেরিফিকেশন কোড পাঠান ও অ্যাকাউন্ট খুলুন</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="space-y-2 pt-1">
+                          <button
+                            type="button"
+                            disabled={isVerifying || !inputEmail.trim() || !inputPassword.trim()}
+                            onClick={() => handleSendOtp('login')}
+                            className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                          >
+                            {isVerifying ? (
+                              <>
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                <span>যাচাই হচ্ছে...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Lock className="w-3.5 h-3.5" />
+                                <span>লগইন করুন (Log In)</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isSendingCode || !inputEmail.trim()}
+                            onClick={() => handleSendOtp('login')}
+                            className="w-full py-2 px-3 rounded-xl border border-emerald-600/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Mail className="w-3 h-3" />
+                            <span>পাসওয়ার্ড ছাড়া ইমেইল কোড (OTP) দিয়ে লগইন</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* 2. PHONE NUMBER SMS AUTH FORM */}
                   {authMethod === 'phone' && (
                     <div className="space-y-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                          Full Name (আপনার নাম)
-                        </label>
-                        <input
-                          type="text"
-                          value={inputName}
-                          onChange={(e) => setInputName(e.target.value)}
-                          placeholder="e.g. Abdullah Al-Mamun"
-                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
-                            isDay
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
-                          }`}
-                        />
-                      </div>
+                      {authMode === 'register' && (
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                            Full Name (আপনার নাম) *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={inputName}
+                            onChange={(e) => setInputName(e.target.value)}
+                            placeholder="e.g. Abdullah Al-Mamun"
+                            className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                              isDay
+                                ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                                : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                            }`}
+                          />
+                        </div>
+                      )}
 
                       <div>
                         <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
@@ -2285,39 +2502,40 @@ ${msg}`;
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200">
-                            Account Password / PIN (গোপন পাসওয়ার্ড) *
+                            {authMode === 'register' ? 'Set Account Password (গোপন পাসওয়ার্ড দিন) *' : 'Account Password (পাসওয়ার্ড) *'}
                           </label>
+                          {authMode === 'login' && (
+                            <button
+                              type="button"
+                              onClick={() => handleStartForgotPassword('phone')}
+                              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <KeyRound className="w-3 h-3" />
+                              <span>পাসওয়ার্ড ভুলে গেছেন?</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            value={inputPassword}
+                            onChange={(e) => setInputPassword(e.target.value)}
+                            placeholder="কমপক্ষে ৪ অক্ষর (e.g. 1234)"
+                            className={`w-full rounded-xl pl-3 pr-9 py-2 border text-xs font-semibold focus:outline-none ${
+                              isDay
+                                ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                                : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                            }`}
+                          />
                           <button
                             type="button"
-                            onClick={() => handleStartForgotPassword('phone')}
-                            className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-teal-200 cursor-pointer"
                           >
-                            <KeyRound className="w-3 h-3" />
-                            <span>পাসওয়ার্ড ভুলে গেছেন?</span>
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
-                        <input
-                          type="password"
-                          required
-                          value={inputPassword}
-                          onChange={(e) => setInputPassword(e.target.value)}
-                          placeholder="••••••••"
-                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
-                            isDay
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
-                          }`}
-                        />
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          এই পাসওয়ার্ড দিয়ে আপনার অ্যাকাউন্ট সুরক্ষিত থাকবে।
-                        </p>
-                      </div>
-
-                      <div className="p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-[11px] text-teal-800 dark:text-teal-300 flex items-start gap-2">
-                        <Smartphone className="w-3.5 h-3.5 text-teal-500 shrink-0 mt-0.5" />
-                        <span>
-                          নম্বর ভেরিফিকেশনের জন্য ইনস্ট্যান্ট SMS ওটিপি কোড পাঠানো হবে।
-                        </span>
                       </div>
 
                       {otpErrorMessage && (
@@ -2327,40 +2545,87 @@ ${msg}`;
                         </div>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Send SMS OTP (এসএমএস কোড পাঠান)</span>
-                      </button>
+                      {authMode === 'register' ? (
+                        <button
+                          type="button"
+                          disabled={isSendingCode || !inputPhone.trim() || !inputPassword.trim()}
+                          onClick={() => handleSendOtp('signup')}
+                          className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                        >
+                          {isSendingCode ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>SMS কোড পাঠানো হচ্ছে...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-3.5 h-3.5" />
+                              <span>SMS ভেরিফিকেশন কোড পাঠান ও অ্যাকাউন্ট খুলুন</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="space-y-2 pt-1">
+                          <button
+                            type="button"
+                            disabled={isVerifying || !inputPhone.trim() || !inputPassword.trim()}
+                            onClick={() => handleSendOtp('login')}
+                            className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                          >
+                            {isVerifying ? (
+                              <>
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                <span>যাচাই হচ্ছে...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Lock className="w-3.5 h-3.5" />
+                                <span>লগইন করুন (Log In)</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isSendingCode || !inputPhone.trim()}
+                            onClick={() => handleSendOtp('login')}
+                            className="w-full py-2 px-3 rounded-xl border border-emerald-600/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Smartphone className="w-3 h-3" />
+                            <span>পাসওয়ার্ড ছাড়া SMS ওটিপি দিয়ে লগইন</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* 3. GOOGLE SIGN-IN (CLEAN & PROFESSIONAL - NO MOCK PRESETS) */}
+                  {/* 3. GOOGLE SIGN-IN */}
                   {authMethod === 'google' && (
                     <div className="space-y-3">
                       <div className="text-xs text-slate-500 dark:text-teal-200">
-                        আপনার গুগল অ্যাকাউন্ট ও জিমেইল দিয়ে সাইন-ইন করুন:
+                        {authMode === 'register'
+                          ? 'গুগল জিমেইল দিয়ে নতুন ভেরিফাইড অ্যাকাউন্ট খুলুন:'
+                          : 'আপনার গুগল অ্যাকাউন্ট দিয়ে নিরাপদে লগইন করুন:'}
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                          Full Name (আপনার নাম) *
-                        </label>
-                        <input
-                          type="text"
-                          value={customGoogleName}
-                          onChange={(e) => setCustomGoogleName(e.target.value)}
-                          placeholder="Your Full Name..."
-                          className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
-                            isDay
-                              ? 'bg-slate-50 border-slate-300 text-slate-900'
-                              : 'bg-[#092226] border-[#184850] text-white'
-                          }`}
-                        />
-                      </div>
+                      {authMode === 'register' && (
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                            Full Name (আপনার নাম) *
+                          </label>
+                          <input
+                            type="text"
+                            value={customGoogleName}
+                            onChange={(e) => setCustomGoogleName(e.target.value)}
+                            placeholder="Your Full Name..."
+                            className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                              isDay
+                                ? 'bg-slate-50 border-slate-300 text-slate-900'
+                                : 'bg-[#092226] border-[#184850] text-white'
+                            }`}
+                          />
+                        </div>
+                      )}
 
                       <div>
                         <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
@@ -2385,14 +2650,16 @@ ${msg}`;
                           <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200">
                             Account Password / PIN (গোপন পাসওয়ার্ড) *
                           </label>
-                          <button
-                            type="button"
-                            onClick={() => handleStartForgotPassword('google')}
-                            className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
-                          >
-                            <KeyRound className="w-3 h-3" />
-                            <span>পাসওয়ার্ড ভুলে গেছেন?</span>
-                          </button>
+                          {authMode === 'login' && (
+                            <button
+                              type="button"
+                              onClick={() => handleStartForgotPassword('google')}
+                              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <KeyRound className="w-3 h-3" />
+                              <span>পাসওয়ার্ড ভুলে গেছেন?</span>
+                            </button>
+                          )}
                         </div>
                         <input
                           type="password"
@@ -2405,9 +2672,6 @@ ${msg}`;
                               : 'bg-[#092226] border-[#184850] text-white'
                           }`}
                         />
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          শুধুমাত্র আপনি এই পাসওয়ার্ড দিয়ে আপনার অ্যাকাউন্টে প্রবেশ করতে পারবেন।
-                        </p>
                       </div>
 
                       {otpErrorMessage && (
@@ -2419,10 +2683,10 @@ ${msg}`;
 
                       <button
                         type="button"
-                        disabled={!customGoogleEmail.trim() || !customGoogleName.trim() || !inputPassword.trim()}
+                        disabled={!customGoogleEmail.trim() || !inputPassword.trim()}
                         onClick={() => {
                           handleGoogleSignIn({
-                            name: customGoogleName.trim(),
+                            name: customGoogleName.trim() || customGoogleEmail.split('@')[0],
                             emailOrPhone: customGoogleEmail.trim().toLowerCase(),
                             photoUrl: DEFAULT_AVATARS[0],
                             password: inputPassword.trim(),
@@ -2431,7 +2695,7 @@ ${msg}`;
                         className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
                       >
                         <GoogleIcon />
-                        <span>Continue with Google &amp; Cloud Sync</span>
+                        <span>Continue with Google &amp; Sync</span>
                       </button>
                     </div>
                   )}
@@ -2441,13 +2705,13 @@ ${msg}`;
               {/* STEP: FORGOT PASSWORD - REQUEST NEW TEMPORARY PASSWORD */}
               {verificationStep === 'forgot_password' && (
                 <div className="space-y-3.5 animate-in fade-in">
-                  <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                  <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1.5">
                     <div className="font-bold flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
                       <KeyRound className="w-4 h-4 shrink-0" />
                       <span>পাসওয়ার্ড পুনরুদ্ধার ও রিসেট (Forgot Password)</span>
                     </div>
                     <p className="text-[11px] leading-relaxed opacity-90">
-                      আপনার অ্যাকাউন্টের ইমেইল বা ফোন নম্বরে তাৎক্ষণিক একটি অস্থায়ী পাসওয়ার্ড ও ভেরিফিকেশন কোড পাঠানো হবে। সেটি ব্যবহার করে আপনি নিজের পছন্দমতো নতুন পাসওয়ার্ড সেট করতে পারবেন।
+                      আপনার নিবন্ধিত ইমেইল বা ফোন নম্বরে ৬-সংখ্যার সিকিউরিটি রিসেট কোড পাঠানো হবে। সেই কোড দিয়ে যাচাই সম্পন্ন করার পর আপনি নতুন পাসওয়ার্ড সেট করতে পারবেন।
                     </p>
                   </div>
 
@@ -2492,7 +2756,7 @@ ${msg}`;
                   {forgotMethod === 'email' ? (
                     <div>
                       <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                        Registered Email (রেজিস্টার্ড ইমেইল) *
+                        Registered Email (নিবন্ধিত ইমেইল) *
                       </label>
                       <input
                         type="email"
@@ -2511,7 +2775,7 @@ ${msg}`;
                   ) : (
                     <div>
                       <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                        Registered Phone Number (রেজিস্টার্ড মোবাইল নম্বর) *
+                        Registered Phone Number (নিবন্ধিত মোবাইল নম্বর) *
                       </label>
                       <div className="flex gap-1.5">
                         <select
@@ -2567,92 +2831,59 @@ ${msg}`;
 
                     <button
                       type="button"
+                      disabled={isSendingCode || !forgotTarget.trim()}
                       onClick={handleSendForgotPassword}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
                     >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>নতুন পাসওয়ার্ড কোড পাঠান</span>
+                      {isSendingCode ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>কোড পাঠানো হচ্ছে...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          <span>রিসেট কোড পাঠান</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* STEP: RESET PASSWORD - ENTER TEMPORARY PASSWORD & SET NEW PASSWORD */}
+              {/* STEP: RESET PASSWORD - ENTER CODE & SET NEW PASSWORD */}
               {verificationStep === 'reset_password' && (
                 <div className="space-y-3.5 animate-in fade-in">
-                  {/* Notification Banner with generated temporary password */}
-                  {showTempPasswordNotification && generatedTempPassword && (
-                    <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg border border-emerald-400/50 space-y-2">
-                      <div className="flex items-center justify-between text-[11px] font-bold opacity-90">
-                        <span className="flex items-center gap-1.5">
-                          <KeyRound className="w-4 h-4 text-emerald-200" />
-                          <span>{forgotMethod === 'email' ? '📧 ইমেইলে প্রেরিত নতুন পাসওয়ার্ড' : '📱 ফোনে SMS-এ প্রেরিত নতুন পাসওয়ার্ড'}</span>
-                        </span>
-                        <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">Temporary PIN</span>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-black/25 p-2 rounded-xl border border-white/10">
-                        <div>
-                          <div className="text-[10px] uppercase font-mono opacity-80">অস্থায়ী পাসওয়ার্ড:</div>
-                          <div className="text-xl font-mono font-black tracking-wider text-emerald-200">
-                            {generatedTempPassword}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard?.writeText(generatedTempPassword);
-                              setCopiedTempPass(true);
-                              setTimeout(() => setCopiedTempPass(false), 2000);
-                              if (soundEnabled) soundHaptics.playTap();
-                            }}
-                            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95"
-                          >
-                            <Copy className="w-3 h-3" />
-                            <span>{copiedTempPass ? 'কপি হয়েছে!' : 'কপি'}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleAutoFillTempPassword}
-                            className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-[10px] font-extrabold shadow flex items-center gap-1 cursor-pointer transition active:scale-95"
-                          >
-                            <span>Auto-Fill ↵</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <p className="text-[10px] opacity-90 leading-tight">
-                        নিচের ফিল্ডে এই অস্থায়ী পাসওয়ার্ডটি দিন এবং আপনার পছন্দমতো একটি নতুন স্থায়ী পাসওয়ার্ড সেট করুন।
-                      </p>
+                  <div className="p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-xs text-teal-800 dark:text-teal-300 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-teal-700 dark:text-teal-400">
+                      <KeyRound className="w-4 h-4 shrink-0" />
+                      <span>রিসেট কোড যাচাই ও নতুন পাসওয়ার্ড</span>
                     </div>
-                  )}
+                    <p className="text-[11px] leading-relaxed opacity-90">
+                      আপনার ঠিকানায় ({maskedTargetDisplay || forgotTarget}) ৬-সংখ্যার রিসেট কোড পাঠানো হয়েছে। ইনবক্স, স্প্যাম বা SMS চেক করে কোডটি দিন।
+                    </p>
+                  </div>
 
-                  {/* Inputs: Temp Password + New Password + Confirm */}
+                  {/* Inputs: 6-digit Reset Code + New Password + Confirm */}
                   <div className="space-y-2.5 text-xs">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                        Temporary Password / 6-digit Code (অস্থায়ী পাসওয়ার্ড বা কোড) *
+                        Security Reset Code (৬-সংখ্যার রিসেট কোড) *
                       </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          required
-                          value={tempPasswordInput}
-                          onChange={(e) => setTempPasswordInput(e.target.value)}
-                          placeholder="e.g. Zikr8492 or 6-digit code"
-                          className={`w-full rounded-xl px-3 py-2 border text-xs font-mono font-bold focus:outline-none ${
-                            isDay
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
-                          }`}
-                        />
-                        {tempPasswordInput && (
-                          <span className="absolute right-2.5 top-2.5 text-emerald-500">
-                            <Check className="w-3.5 h-3.5" />
-                          </span>
-                        )}
-                      </div>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                        value={tempPasswordInput}
+                        onChange={(e) => setTempPasswordInput(e.target.value.replace(/\D/g, ''))}
+                        placeholder="e.g. 849201"
+                        className={`w-full rounded-xl px-3 py-2 border text-xs font-mono font-bold tracking-widest text-center focus:outline-none ${
+                          isDay
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                            : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                        }`}
+                      />
                     </div>
 
                     <div>
@@ -2711,7 +2942,7 @@ ${msg}`;
 
                     <button
                       type="button"
-                      disabled={isResettingPassword || !tempPasswordInput.trim() || !newPasswordInput.trim()}
+                      disabled={isResettingPassword || tempPasswordInput.trim().length < 6 || !newPasswordInput.trim()}
                       onClick={handleCompletePasswordReset}
                       className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
                     >
@@ -2728,69 +2959,82 @@ ${msg}`;
                       )}
                     </button>
                   </div>
+
+                  {/* Optional preview sandbox test helper */}
+                  <div className="pt-1 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowTestingHelper(!showTestingHelper)}
+                      className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-teal-300 underline cursor-pointer"
+                    >
+                      কোড পেতে কোনো সমস্যা হচ্ছে? (সাহায্য)
+                    </button>
+                    {showTestingHelper && (
+                      <div className="mt-2 p-2.5 rounded-xl bg-slate-100 dark:bg-[#071f25] border border-slate-200 dark:border-teal-900/40 text-[11px] text-left text-slate-600 dark:text-slate-300 space-y-1">
+                        <p>• অনুগ্রহ করে আপনার ইমেইলের Spam বা All Mail ফোল্ডার চেক করুন।</p>
+                        <p>
+                          • প্রিভিউ বা অফলাইন টেস্টের জন্য রিসেট কোড:{' '}
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                            {getTestingOtpCode(forgotTarget)}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
               {/* STEP 2: 6-DIGIT OTP VERIFICATION ENTRY */}
               {verificationStep === 'otp' && (
                 <div className="space-y-4 animate-in fade-in">
-                  {/* Interactive Push Banner for effortless code viewing and auto-fill */}
-                  {showOtpNotification && generatedOtpCode && (
-                    <div
-                      onClick={handleAutoFillOtp}
-                      className="p-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg border border-emerald-400/50 cursor-pointer active:scale-95 transition space-y-1"
-                    >
-                      <div className="flex items-center justify-between text-[11px] font-bold opacity-90">
-                        <span className="flex items-center gap-1.5">
-                          <Lock className="w-3.5 h-3.5" />
-                          <span>{authMethod === 'email' ? 'Security Email OTP' : 'Security SMS OTP'}</span>
-                        </span>
-                        <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Tap to Auto-fill</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xl font-mono font-black tracking-widest bg-black/20 px-2.5 py-1 rounded-xl">
-                          {generatedOtpCode}
-                        </span>
-                        <span className="text-[11px] underline font-bold">Auto Fill (স্বয়ংক্রিয় পূরণ) →</span>
-                      </div>
+                  {/* Security Target announcement */}
+                  <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-1">
+                    <div className="flex items-center justify-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold text-xs">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>
+                        {otpPurpose === 'signup'
+                          ? 'নতুন অ্যাকাউন্ট ভেরিফিকেশন'
+                          : otpPurpose === 'login'
+                          ? 'লগইন ভেরিফিকেশন'
+                          : 'পাসওয়ার্ড রিসেট ভেরিফিকেশন'}
+                      </span>
                     </div>
-                  )}
-
-                  {/* Target announcement */}
-                  <div className="text-center space-y-1">
-                    <p className="text-xs text-slate-500 dark:text-teal-200">
-                      নিচের ঠিকানায় প্রেরিত ৬-সংখ্যার কোডটি প্রবেশ করান:
+                    <p className="text-[11px] text-slate-600 dark:text-teal-200/90 leading-tight">
+                      আপনার {authMethod === 'email' ? 'ইমেইল ঠিকানায়' : 'মোবাইল নম্বরে'} ৬-সংখ্যার সিকিউরিটি কোড পাঠানো হয়েছে:
                     </p>
-                    <p className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {authMethod === 'email'
-                        ? inputEmail
-                        : `${selectedCountryCode} ${inputPhone}`}
+                    <p className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400">
+                      {maskedTargetDisplay || maskEmailOrPhone(authMethod === 'email' ? inputEmail : `${selectedCountryCode} ${inputPhone}`)}
                     </p>
                   </div>
 
                   {/* 6 Digit Inputs */}
-                  <div className="flex justify-between gap-1.5 sm:gap-2">
-                    {[0, 1, 2, 3, 4, 5].map((idx) => (
-                      <input
-                        key={idx}
-                        ref={(el) => {
-                          otpInputsRef.current[idx] = el;
-                        }}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={otpDigits[idx]}
-                        onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className={`w-11 h-12 text-center text-lg font-mono font-black rounded-2xl border transition focus:outline-none ${
-                          otpDigits[idx]
-                            ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 ring-2 ring-emerald-500/30'
-                            : isDay
-                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                            : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
-                        }`}
-                      />
-                    ))}
+                  <div className="space-y-1.5">
+                    <label className="block text-center text-[11px] font-bold text-slate-500 dark:text-teal-200">
+                      ইমেইল বা মেসেজে পাওয়া ৬-সংখ্যার কোডটি লিখুন:
+                    </label>
+                    <div className="flex justify-between gap-1.5 sm:gap-2">
+                      {[0, 1, 2, 3, 4, 5].map((idx) => (
+                        <input
+                          key={idx}
+                          ref={(el) => {
+                            otpInputsRef.current[idx] = el;
+                          }}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={otpDigits[idx]}
+                          onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                          onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                          className={`w-11 h-12 text-center text-lg font-mono font-black rounded-2xl border transition focus:outline-none ${
+                            otpDigits[idx]
+                              ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 ring-2 ring-emerald-500/30'
+                              : isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
 
                   {/* Error display */}
@@ -2815,8 +3059,8 @@ ${msg}`;
 
                     <button
                       type="button"
-                      disabled={otpCountdown > 0}
-                      onClick={handleSendOtp}
+                      disabled={otpCountdown > 0 || isSendingCode}
+                      onClick={() => handleSendOtp(otpPurpose === 'signup' ? 'signup' : 'login')}
                       className="text-xs font-bold text-emerald-600 dark:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed hover:underline cursor-pointer"
                     >
                       Resend Code (পুনরায় পাঠান)
@@ -2847,10 +3091,40 @@ ${msg}`;
                       ) : (
                         <>
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>Verify &amp; Restore History (যাচাই করুন)</span>
+                          <span>
+                            {otpPurpose === 'signup'
+                              ? 'কোড যাচাই ও অ্যাকাউন্ট চালু করুন'
+                              : 'কোড যাচাই ও লগইন সম্পন্ন করুন'}
+                          </span>
                         </>
                       )}
                     </button>
+                  </div>
+
+                  {/* Optional preview sandbox test helper */}
+                  <div className="pt-1 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowTestingHelper(!showTestingHelper)}
+                      className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-teal-300 underline cursor-pointer"
+                    >
+                      কোড পেতে কোনো সমস্যা হচ্ছে? (সাহায্য)
+                    </button>
+                    {showTestingHelper && (
+                      <div className="mt-2 p-2.5 rounded-xl bg-slate-100 dark:bg-[#071f25] border border-slate-200 dark:border-teal-900/40 text-[11px] text-left text-slate-600 dark:text-slate-300 space-y-1">
+                        <p>• ইমেইলের Spam বা All Mail ফোল্ডার চেক করুন।</p>
+                        <p>
+                          • প্রিভিউ বা অফলাইন টেস্টের জন্য কোড:{' '}
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                            {getTestingOtpCode(
+                              authMethod === 'email'
+                                ? inputEmail
+                                : `${selectedCountryCode}${inputPhone.replace(/^0+/, '').trim()}`
+                            )}
+                          </span>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
