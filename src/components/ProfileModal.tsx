@@ -240,45 +240,48 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const getDetectedDeviceInfo = () => {
     if (typeof window === 'undefined') {
       return {
-        model: 'vivo ~~ V2144',
-        osVersion: '35_15',
+        model: 'Windows PC',
+        osVersion: '11_64',
         deviceLanguage: 'en',
       };
     }
 
     const ua = navigator.userAgent || '';
-    let model = 'vivo ~~ V2144';
-    let osVersion = '35_15';
+    let model = 'Windows PC';
+    let osVersion = '11_64';
     const deviceLanguage = (navigator.language || 'en').split('-')[0];
 
-    if (/Android/i.test(ua)) {
+    if (/Windows/i.test(ua)) {
+      model = 'Windows PC';
+      osVersion = '11_64';
+    } else if (/Macintosh|MacIntel/i.test(ua)) {
+      model = 'Apple Mac';
+      osVersion = '14_1';
+    } else if (/iPhone/i.test(ua)) {
+      model = 'Apple iPhone';
+      const iosMatch = ua.match(/OS\s+([0-9_]+)/i);
+      if (iosMatch) osVersion = iosMatch[1].replace(/_/g, '.');
+    } else if (/Android/i.test(ua)) {
       const androidMatch = ua.match(/Android\s+([0-9\._]+)/i);
       if (androidMatch) {
-        osVersion = `${androidMatch[1]}_15`;
+        osVersion = `${androidMatch[1]}`;
       }
       const modelMatch = ua.match(/;\s*([^;]+?)\s*Build/i);
       if (modelMatch && modelMatch[1]) {
         model = modelMatch[1].trim();
       } else if (/vivo/i.test(ua)) {
-        model = 'vivo ~~ V2144';
+        model = 'vivo V2144';
       } else if (/Samsung|SM-/i.test(ua)) {
         const smMatch = ua.match(/(SM-[A-Z0-9]+)/i);
-        model = smMatch ? `Samsung ~~ ${smMatch[1]}` : 'Samsung Galaxy';
+        model = smMatch ? `Samsung ${smMatch[1]}` : 'Samsung Galaxy';
       } else if (/Xiaomi|Redmi/i.test(ua)) {
         model = 'Xiaomi Redmi';
       } else {
-        model = 'Android Device';
+        model = 'Android Phone';
       }
-    } else if (/iPhone/i.test(ua)) {
-      model = 'Apple iPhone';
-      const iosMatch = ua.match(/OS\s+([0-9_]+)/i);
-      if (iosMatch) osVersion = iosMatch[1].replace(/_/g, '.');
-    } else if (/Windows/i.test(ua)) {
-      model = 'Windows PC';
-      osVersion = '11_64';
-    } else if (/Macintosh/i.test(ua)) {
-      model = 'Apple Mac';
-      osVersion = '14_1';
+    } else if (/Linux/i.test(ua)) {
+      model = 'Linux PC';
+      osVersion = 'Ubuntu';
     }
 
     return { model, osVersion, deviceLanguage };
@@ -322,14 +325,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setEditName(userProfile.name);
     setEditEmailOrPhone(userProfile.emailOrPhone);
     setEditPhotoUrl(userProfile.photoUrl);
-    setEditDeviceModel(userProfile.deviceModel || detected.model);
-    setEditOsVersion(userProfile.osVersion || detected.osVersion);
+    setEditDeviceModel(detected.model);
+    setEditOsVersion(detected.osVersion);
 
     if (userProfile.emailOrPhone) {
       setFeedbackUserEmail(userProfile.emailOrPhone);
     }
-    setFeedbackModel(userProfile.deviceModel || detected.model);
-    setFeedbackOsVersion(userProfile.osVersion || detected.osVersion);
+    setFeedbackModel(detected.model);
+    setFeedbackOsVersion(detected.osVersion);
 
     if (isOpen) {
       // Automatically fetch Network Location (IP Geolocation & Timezone) from user's device network
@@ -533,8 +536,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       photoUrl: cloudData?.profile?.photoUrl || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
       password: inputPassword.trim() || cloudData?.profile?.password || existing?.password || '',
       location: cloudData?.profile?.location || existing?.location || userProfile.location || '4C2J 8FX, BD',
-      deviceModel: cloudData?.profile?.deviceModel || existing?.deviceModel || userProfile.deviceModel || detected.model,
-      osVersion: cloudData?.profile?.osVersion || existing?.osVersion || userProfile.osVersion || detected.osVersion,
+      deviceModel: detected.model,
+      osVersion: detected.osVersion,
       isSignedIn: true,
       isVerified: true,
       verificationMethod: authMethod,
@@ -580,8 +583,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       photoUrl: account.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
       password: account.password || savedPassword || '',
       location: existing?.location || userProfile.location || '4C2J 8FX, BD',
-      deviceModel: existing?.deviceModel || userProfile.deviceModel || detected.model,
-      osVersion: existing?.osVersion || userProfile.osVersion || detected.osVersion,
+      deviceModel: detected.model,
+      osVersion: detected.osVersion,
       isSignedIn: true,
       isVerified: true,
       verificationMethod: 'google',
