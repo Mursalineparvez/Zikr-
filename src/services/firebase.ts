@@ -450,3 +450,132 @@ export function verifySubmittedOtp(target: string, enteredCode: string): { succe
 
   return { success: false, message: `Incorrect code entered. ${5 - pending.attempts} attempts remaining.` };
 }
+
+// 6. Cloud Password Update & Forgot Password Service
+export async function updateCloudUserPassword(
+  emailOrPhone: string,
+  newPassword: string
+): Promise<boolean> {
+  if (!emailOrPhone || !newPassword) return false;
+  const userKey = sanitizeUserKey(emailOrPhone);
+  try {
+    const userDocRef = doc(db, 'users', userKey);
+    await setDoc(
+      userDocRef,
+      {
+        password: newPassword,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (error) {
+    console.error('Failed to update user password in Firestore:', error);
+    return false;
+  }
+}
+
+export interface PendingPasswordReset {
+  target: string;
+  type: 'email' | 'phone';
+  tempPassword: string;
+  code: string;
+  expiresAt: number;
+  attempts: number;
+}
+
+const PENDING_RESET_KEY = 'zikrmate_pending_password_reset';
+
+export function generatePasswordResetCode(
+  target: string,
+  type: 'email' | 'phone'
+): { tempPassword: string; code: string } {
+  // Generate friendly 8-char temporary password (e.g. Zikr4921)
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const tempPassword = `Zikr${randomNum}`;
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+  const resetData: PendingPasswordReset = {
+    target: target.toLowerCase().trim(),
+    type,
+    tempPassword,
+    code,
+    expiresAt: Date.now() + 15 * 60 * 1000, // 15 mins
+    attempts: 0,
+  };
+
+  try {
+    sessionStorage.setItem(PENDING_RESET_KEY, JSON.stringify(resetData));
+  } catch {}
+
+  return { tempPassword, code };
+}
+
+export function getPendingPasswordReset(): PendingPasswordReset | null {
+  try {
+    const raw = sessionStorage.getItem(PENDING_RESET_KEY);
+    if (raw) {
+      const parsed: PendingPasswordReset = JSON.parse(raw);
+      if (parsed.expiresAt > Date.now()) {
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+export function verifyPasswordResetCode(
+  target: string,
+  enteredTempPassOrCode: string
+): { success: boolean; message: string } {
+  const pending = getPendingPasswordReset();
+  const normalizedTarget = target.toLowerCase().trim();
+  const entered = enteredTempPassOrCode.trim();
+
+  if (!pending) {
+    return {
+      success: false,
+      message: 'রিসেট কোড বা অস্থায়ী পাসওয়ার্ডের মেয়াদ শেষ হয়েছে। অনুগ্রহ করে আবার পাঠান।',
+    };
+  }
+
+  if (pending.target !== normalizedTarget) {
+    return {
+      success: false,
+      message: 'টার্গেট ইমেইল বা ফোন নম্বরের অমিল রয়েছে। অনুগ্রহ করে সঠিক তথ্য দিন।',
+    };
+  }
+
+  if (pending.attempts >= 5) {
+    return {
+      success: false,
+      message: 'অতিরিক্ত ভুল চেষ্টা করা হয়েছে। অনুগ্রহ করে নতুন করে কোড চেয়ে নিন।',
+    };
+  }
+
+  pending.attempts += 1;
+  try {
+    sessionStorage.setItem(PENDING_RESET_KEY, JSON.stringify(pending));
+  } catch {}
+
+  if (
+    pending.tempPassword.toLowerCase() === entered.toLowerCase() ||
+    pending.code === entered
+  ) {
+    try {
+      sessionStorage.removeItem(PENDING_RESET_KEY);
+    } catch {}
+    return { success: true, message: 'সফলভাবে যাচাই করা হয়েছে!' };
+  }
+
+  return {
+    success: false,
+    message: `ভুল পাসওয়ার্ড বা কোড দেওয়া হয়েছে। আর ${5 - pending.attempts} বার চেষ্টা বাকি আছে।`,
+  };
+}
+
+export function clearPendingPasswordReset(): void {
+  try {
+    sessionStorage.removeItem(PENDING_RESET_KEY);
+  } catch {}
+}

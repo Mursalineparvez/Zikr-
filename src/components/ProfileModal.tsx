@@ -40,17 +40,21 @@ import {
   CheckCircle2,
   ArrowRight,
   Lock,
+  Copy,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
-import { findSavedAccount, saveAccountToRegistry } from '../utils/accountRegistry';
+import { findSavedAccount, saveAccountToRegistry, updateAccountPassword } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import {
   generateVerificationOtp,
   verifySubmittedOtp,
   loadUserDataFromCloud,
+  updateCloudUserPassword,
+  generatePasswordResetCode,
+  verifyPasswordResetCode,
   CloudZikrState,
 } from '../services/firebase';
 
@@ -186,7 +190,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   // Verification & Authentication State
   const [authMethod, setAuthMethod] = useState<'email' | 'phone' | 'google'>('email');
-  const [verificationStep, setVerificationStep] = useState<'input' | 'otp' | 'success'>('input');
+  const [verificationStep, setVerificationStep] = useState<
+    'input' | 'otp' | 'forgot_password' | 'reset_password' | 'success'
+  >('input');
   const [inputEmail, setInputEmail] = useState('');
   const [inputPhone, setInputPhone] = useState('');
   const [selectedCountryCode, setSelectedCountryCode] = useState('+880');
@@ -200,6 +206,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [cloudSyncMessage, setCloudSyncMessage] = useState<string | null>(null);
   const [showOtpNotification, setShowOtpNotification] = useState(false);
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Forgot Password & Reset State
+  const [forgotTarget, setForgotTarget] = useState('');
+  const [forgotMethod, setForgotMethod] = useState<'email' | 'phone'>('email');
+  const [tempPasswordInput, setTempPasswordInput] = useState('');
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [confirmNewPasswordInput, setConfirmNewPasswordInput] = useState('');
+  const [generatedTempPassword, setGeneratedTempPassword] = useState('');
+  const [generatedResetCode, setGeneratedResetCode] = useState('');
+  const [showTempPasswordNotification, setShowTempPasswordNotification] = useState(false);
+  const [forgotErrorMessage, setForgotErrorMessage] = useState<string | null>(null);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [copiedTempPass, setCopiedTempPass] = useState(false);
 
   // OTP Countdown timer
   useEffect(() => {
@@ -428,7 +447,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     // Check existing account password protection
     const existing = findSavedAccount(target);
     if (existing && existing.password && existing.password !== inputPassword.trim()) {
-      setOtpErrorMessage('ভুল পাসওয়ার্ড! এই অ্যাকাউন্টের সঠিক পাসওয়ার্ড দিন। অন্য কেউ আপনার অ্যাকাউন্টে প্রবেশ করতে পারবে না।');
+      setOtpErrorMessage('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন, অথবা নিচে "পাসওয়ার্ড ভুলে গেছেন?" বাটনে ট্যাপ করে নতুন পাসওয়ার্ড রিসেট করুন।');
       if (soundEnabled) soundHaptics.playTap();
       return;
     }
@@ -441,6 +460,144 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setShowOtpNotification(true);
     setVerificationStep('otp');
     if (soundEnabled) soundHaptics.playTap();
+  };
+
+  // Start Forgot Password Flow
+  const handleStartForgotPassword = (method?: 'email' | 'phone' | 'google') => {
+    const chosenMethod = method === 'phone' ? 'phone' : 'email';
+    setForgotMethod(chosenMethod);
+    const target = chosenMethod === 'email'
+      ? (inputEmail || (userProfile.emailOrPhone?.includes('@') ? userProfile.emailOrPhone : '') || '')
+      : (inputPhone || (!userProfile.emailOrPhone?.includes('@') ? userProfile.emailOrPhone?.replace(/\D/g, '') : '') || '');
+    setForgotTarget(target);
+    setForgotErrorMessage(null);
+    setTempPasswordInput('');
+    setNewPasswordInput('');
+    setConfirmNewPasswordInput('');
+    setShowTempPasswordNotification(false);
+    setVerificationStep('forgot_password');
+    setActiveSubModal('verified_auth');
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  // Send Temporary Password and Code to Email or Phone
+  const handleSendForgotPassword = () => {
+    setForgotErrorMessage(null);
+    let target = forgotTarget.trim();
+
+    if (forgotMethod === 'email') {
+      if (!target.includes('@') || !target.includes('.')) {
+        setForgotErrorMessage('সঠিক ইমেইল অ্যাড্রেস লিখুন (e.g. name@gmail.com)');
+        return;
+      }
+      target = target.toLowerCase();
+    } else {
+      const rawDigits = target.replace(/\D/g, '');
+      if (rawDigits.length < 8) {
+        setForgotErrorMessage('সঠিক মোবাইল নম্বর লিখুন (অন্তত ৮-১১ ডিজিট)');
+        return;
+      }
+      target = `${selectedCountryCode}${target.replace(/^0+/, '').trim()}`;
+    }
+
+    // Generate temporary password & verification code
+    const { tempPassword, code } = generatePasswordResetCode(target, forgotMethod);
+    setGeneratedTempPassword(tempPassword);
+    setGeneratedResetCode(code);
+    setShowTempPasswordNotification(true);
+    setVerificationStep('reset_password');
+    setTempPasswordInput('');
+    if (soundEnabled) soundHaptics.playMilestone();
+  };
+
+  // Auto-fill temporary password from notification banner
+  const handleAutoFillTempPassword = () => {
+    if (!generatedTempPassword) return;
+    setTempPasswordInput(generatedTempPassword);
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  // Complete Password Reset and Log In
+  const handleCompletePasswordReset = async () => {
+    setForgotErrorMessage(null);
+    let target = forgotTarget.trim();
+    if (forgotMethod === 'email') {
+      target = target.toLowerCase();
+    } else {
+      target = target.startsWith('+') ? target : `${selectedCountryCode}${target.replace(/^0+/, '').trim()}`;
+    }
+
+    if (!tempPasswordInput.trim()) {
+      setForgotErrorMessage('ইমেইল বা ফোনে প্রেরিত অস্থায়ী পাসওয়ার্ড বা ভেরিফিকেশন কোডটি দিন');
+      return;
+    }
+
+    if (!newPasswordInput.trim() || newPasswordInput.trim().length < 4) {
+      setForgotErrorMessage('নতুন পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে');
+      return;
+    }
+
+    if (newPasswordInput.trim() !== confirmNewPasswordInput.trim()) {
+      setForgotErrorMessage('নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড দুটি একই হতে হবে');
+      return;
+    }
+
+    setIsResettingPassword(true);
+
+    // Validate the code or temporary password
+    const verifyResult = verifyPasswordResetCode(target, tempPasswordInput.trim());
+    if (!verifyResult.success) {
+      setIsResettingPassword(false);
+      setForgotErrorMessage(verifyResult.message);
+      if (soundEnabled) soundHaptics.playTap();
+      return;
+    }
+
+    // Success! Save new password to registry and Firestore
+    const newPass = newPasswordInput.trim();
+    updateAccountPassword(target, newPass);
+    await updateCloudUserPassword(target, newPass);
+
+    // Load existing cloud data or initialize
+    const cloudData = await loadUserDataFromCloud(target);
+
+    // Update profile
+    const existing = findSavedAccount(target);
+    const detected = getDetectedDeviceInfo();
+    const updatedProf: UserProfile = {
+      ...userProfile,
+      name: existing?.name || (cloudData?.profile?.name) || (target.includes('@') ? target.split('@')[0] : 'ZikrMate User'),
+      emailOrPhone: target,
+      photoUrl: existing?.photoUrl || cloudData?.profile?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
+      isSignedIn: true,
+      isVerified: true,
+      verificationMethod: forgotMethod,
+      verificationDate: new Date().toISOString(),
+      password: newPass,
+      location: editLocation || userProfile.location || 'Bangladesh',
+      deviceModel: detected.model,
+      osVersion: detected.osVersion,
+    };
+
+    saveAccountToRegistry(updatedProf);
+    onUpdateProfile(updatedProf);
+
+    if (cloudData && cloudData.foundInCloud && onCloudDataLoaded) {
+      onCloudDataLoaded(cloudData);
+    } else if (onCloudDataLoaded) {
+      onCloudDataLoaded({ foundInCloud: false });
+    }
+
+    setIsResettingPassword(false);
+    setVerificationStep('success');
+    setCloudSyncMessage('পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে এবং অ্যাকাউন্ট লগইন হয়েছে!');
+    confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
+    if (soundEnabled) soundHaptics.playMilestone();
+
+    setTimeout(() => {
+      setActiveSubModal('none');
+      setVerificationStep('input');
+    }, 2400);
   };
 
   // Auto-fill OTP on clicking notification
@@ -1152,6 +1309,40 @@ ${msg}`;
               </div>
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                 Send 💬
+              </span>
+            </button>
+
+            {/* Option: Password & Security (পাসওয়ার্ড পরিবর্তন) */}
+            <button
+              onClick={() => {
+                handleStartForgotPassword(userProfile.emailOrPhone?.includes('@') ? 'email' : 'phone');
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`w-full p-3.5 flex items-center justify-between text-left transition cursor-pointer ${
+                isDay ? 'hover:bg-slate-50' : 'hover:bg-teal-950/40'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-sm flex items-center gap-1.5">
+                    <span>{selectedLanguage === 'bn' ? 'পাসওয়ার্ড ও নিরাপত্তা' : 'Password & Security'}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold uppercase">
+                      Reset
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                    {selectedLanguage === 'bn'
+                      ? 'পাসওয়ার্ড ভুলে গেলে পুনরুদ্ধার বা নতুন পাসওয়ার্ড সেট করুন'
+                      : 'Reset or update your account password'}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span>{selectedLanguage === 'bn' ? 'রিসেট' : 'Change'}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </span>
             </button>
 
@@ -1978,9 +2169,19 @@ ${msg}`;
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                          Account Password / PIN (গোপন পাসওয়ার্ড) *
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200">
+                            Account Password / PIN (গোপন পাসওয়ার্ড) *
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleStartForgotPassword('email')}
+                            className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                          >
+                            <KeyRound className="w-3 h-3" />
+                            <span>পাসওয়ার্ড ভুলে গেছেন?</span>
+                          </button>
+                        </div>
                         <input
                           type="password"
                           required
@@ -1994,7 +2195,7 @@ ${msg}`;
                           }`}
                         />
                         <p className="text-[10px] text-slate-400 mt-1">
-                          শুধুমাত্র আপনি এই পাসওয়ার্ড দিয়ে আপনার অ্যাকাউন্টে ঢুকতে পারবেন। অন্য কেউ প্রবেশ করতে পারবে না।
+                          শুধুমাত্র আপনি এই পাসওয়ার্ড দিয়ে আপনার অ্যাকাউন্টে ঢুকতে পারবেন।
                         </p>
                       </div>
 
@@ -2079,9 +2280,19 @@ ${msg}`;
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                          Account Password / PIN (গোপন পাসওয়ার্ড) *
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200">
+                            Account Password / PIN (গোপন পাসওয়ার্ড) *
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleStartForgotPassword('phone')}
+                            className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                          >
+                            <KeyRound className="w-3 h-3" />
+                            <span>পাসওয়ার্ড ভুলে গেছেন?</span>
+                          </button>
+                        </div>
                         <input
                           type="password"
                           required
@@ -2167,9 +2378,19 @@ ${msg}`;
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
-                          Account Password / PIN (গোপন পাসওয়ার্ড) *
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200">
+                            Account Password / PIN (গোপন পাসওয়ার্ড) *
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleStartForgotPassword('google')}
+                            className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                          >
+                            <KeyRound className="w-3 h-3" />
+                            <span>পাসওয়ার্ড ভুলে গেছেন?</span>
+                          </button>
+                        </div>
                         <input
                           type="password"
                           value={inputPassword}
@@ -2211,6 +2432,299 @@ ${msg}`;
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* STEP: FORGOT PASSWORD - REQUEST NEW TEMPORARY PASSWORD */}
+              {verificationStep === 'forgot_password' && (
+                <div className="space-y-3.5 animate-in fade-in">
+                  <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                      <KeyRound className="w-4 h-4 shrink-0" />
+                      <span>পাসওয়ার্ড পুনরুদ্ধার ও রিসেট (Forgot Password)</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed opacity-90">
+                      আপনার অ্যাকাউন্টের ইমেইল বা ফোন নম্বরে তাৎক্ষণিক একটি অস্থায়ী পাসওয়ার্ড ও ভেরিফিকেশন কোড পাঠানো হবে। সেটি ব্যবহার করে আপনি নিজের পছন্দমতো নতুন পাসওয়ার্ড সেট করতে পারবেন।
+                    </p>
+                  </div>
+
+                  {/* Method Switcher Tabs for Recovery: Email vs Phone */}
+                  <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 dark:bg-[#071f25] border border-slate-200 dark:border-teal-900/50 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotMethod('email');
+                        setForgotErrorMessage(null);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        forgotMethod === 'email'
+                          ? 'bg-white dark:bg-[#134952] text-emerald-700 dark:text-emerald-300 shadow-sm font-extrabold'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-teal-300'
+                      }`}
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Email Recovery</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotMethod('phone');
+                        setForgotErrorMessage(null);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`py-2 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        forgotMethod === 'phone'
+                          ? 'bg-white dark:bg-[#134952] text-emerald-700 dark:text-emerald-300 shadow-sm font-extrabold'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-teal-300'
+                      }`}
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Phone SMS</span>
+                    </button>
+                  </div>
+
+                  {/* Target Input */}
+                  {forgotMethod === 'email' ? (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                        Registered Email (রেজিস্টার্ড ইমেইল) *
+                      </label>
+                      <input
+                        type="email"
+                        autoFocus
+                        required
+                        value={forgotTarget}
+                        onChange={(e) => setForgotTarget(e.target.value)}
+                        placeholder="yourname@gmail.com"
+                        className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                          isDay
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                            : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                        }`}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                        Registered Phone Number (রেজিস্টার্ড মোবাইল নম্বর) *
+                      </label>
+                      <div className="flex gap-1.5">
+                        <select
+                          value={selectedCountryCode}
+                          onChange={(e) => setSelectedCountryCode(e.target.value)}
+                          className={`rounded-xl px-2 py-2 border text-xs font-bold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900'
+                              : 'bg-[#092226] border-[#184850] text-white'
+                          }`}
+                        >
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.flag} {c.code}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="tel"
+                          autoFocus
+                          required
+                          value={forgotTarget}
+                          onChange={(e) => setForgotTarget(e.target.value)}
+                          placeholder="01712345678"
+                          className={`flex-1 rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {forgotErrorMessage && (
+                    <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
+                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                      <span>{forgotErrorMessage}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVerificationStep('input');
+                        setForgotErrorMessage(null);
+                      }}
+                      className="py-2.5 px-3 rounded-xl border border-slate-300 dark:border-teal-900/60 font-bold text-xs hover:bg-slate-100 dark:hover:bg-teal-900/30 transition cursor-pointer"
+                    >
+                      লগইনে ফিরে যান
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSendForgotPassword}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>নতুন পাসওয়ার্ড কোড পাঠান</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP: RESET PASSWORD - ENTER TEMPORARY PASSWORD & SET NEW PASSWORD */}
+              {verificationStep === 'reset_password' && (
+                <div className="space-y-3.5 animate-in fade-in">
+                  {/* Notification Banner with generated temporary password */}
+                  {showTempPasswordNotification && generatedTempPassword && (
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg border border-emerald-400/50 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-bold opacity-90">
+                        <span className="flex items-center gap-1.5">
+                          <KeyRound className="w-4 h-4 text-emerald-200" />
+                          <span>{forgotMethod === 'email' ? '📧 ইমেইলে প্রেরিত নতুন পাসওয়ার্ড' : '📱 ফোনে SMS-এ প্রেরিত নতুন পাসওয়ার্ড'}</span>
+                        </span>
+                        <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">Temporary PIN</span>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-black/25 p-2 rounded-xl border border-white/10">
+                        <div>
+                          <div className="text-[10px] uppercase font-mono opacity-80">অস্থায়ী পাসওয়ার্ড:</div>
+                          <div className="text-xl font-mono font-black tracking-wider text-emerald-200">
+                            {generatedTempPassword}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(generatedTempPassword);
+                              setCopiedTempPass(true);
+                              setTimeout(() => setCopiedTempPass(false), 2000);
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95"
+                          >
+                            <Copy className="w-3 h-3" />
+                            <span>{copiedTempPass ? 'কপি হয়েছে!' : 'কপি'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleAutoFillTempPassword}
+                            className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-[10px] font-extrabold shadow flex items-center gap-1 cursor-pointer transition active:scale-95"
+                          >
+                            <span>Auto-Fill ↵</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] opacity-90 leading-tight">
+                        নিচের ফিল্ডে এই অস্থায়ী পাসওয়ার্ডটি দিন এবং আপনার পছন্দমতো একটি নতুন স্থায়ী পাসওয়ার্ড সেট করুন।
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Inputs: Temp Password + New Password + Confirm */}
+                  <div className="space-y-2.5 text-xs">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                        Temporary Password / 6-digit Code (অস্থায়ী পাসওয়ার্ড বা কোড) *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          required
+                          value={tempPasswordInput}
+                          onChange={(e) => setTempPasswordInput(e.target.value)}
+                          placeholder="e.g. Zikr8492 or 6-digit code"
+                          className={`w-full rounded-xl px-3 py-2 border text-xs font-mono font-bold focus:outline-none ${
+                            isDay
+                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                              : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                          }`}
+                        />
+                        {tempPasswordInput && (
+                          <span className="absolute right-2.5 top-2.5 text-emerald-500">
+                            <Check className="w-3.5 h-3.5" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                        Set New Password (নতুন পাসওয়ার্ড দিন) *
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={newPasswordInput}
+                        onChange={(e) => setNewPasswordInput(e.target.value)}
+                        placeholder="কমপক্ষে ৪ অক্ষরের নতুন পাসওয়ার্ড"
+                        className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                          isDay
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                            : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-500 dark:text-teal-200 mb-1">
+                        Confirm New Password (পাসওয়ার্ডটি পুনরায় লিখুন) *
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={confirmNewPasswordInput}
+                        onChange={(e) => setConfirmNewPasswordInput(e.target.value)}
+                        placeholder="নতুন পাসওয়ার্ডটি আবার লিখুন"
+                        className={`w-full rounded-xl px-3 py-2 border text-xs font-semibold focus:outline-none ${
+                          isDay
+                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
+                            : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {forgotErrorMessage && (
+                    <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
+                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                      <span>{forgotErrorMessage}</span>
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setVerificationStep('forgot_password')}
+                      className="py-2.5 px-3 rounded-xl border border-slate-300 dark:border-teal-900/60 font-bold text-xs hover:bg-slate-100 dark:hover:bg-teal-900/30 transition cursor-pointer"
+                    >
+                      Back
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isResettingPassword || !tempPasswordInput.trim() || !newPasswordInput.trim()}
+                      onClick={handleCompletePasswordReset}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                    >
+                      {isResettingPassword ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Updating Password...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Change Password &amp; Log In (পাসওয়ার্ড বদল ও লগইন)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
 
