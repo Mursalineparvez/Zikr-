@@ -107,27 +107,28 @@ export async function saveUserDataToCloud(
     const nowIso = new Date().toISOString();
     const nowMs = Date.now();
 
-    // 1. Save or update user profile document
+    // 1. Save or update user profile document (never overwrite password with empty)
     const userDocRef = doc(db, 'users', userKey);
-    await setDoc(
-      userDocRef,
-      {
-        uid: userKey,
-        name: profile.name || 'ZikrMate User',
-        email: emailOrPhone.includes('@') ? emailOrPhone.toLowerCase().trim() : '',
-        phone: !emailOrPhone.includes('@') ? emailOrPhone.trim() : '',
-        isVerified: profile.isVerified ?? true,
-        verificationMethod: profile.verificationMethod || (emailOrPhone.includes('@') ? 'email' : 'phone'),
-        photoUrl: profile.photoUrl || '',
-        password: profile.password || '',
-        location: profile.location || '',
-        deviceModel: profile.deviceModel || 'Web Browser',
-        osVersion: profile.osVersion || 'Cloud Sync',
-        createdAt: profile.verificationDate || nowIso,
-        updatedAt: nowIso,
-      },
-      { merge: true }
-    );
+    const userDocPayload: Record<string, any> = {
+      uid: userKey,
+      name: profile.name || 'ZikrMate User',
+      email: emailOrPhone.includes('@') ? emailOrPhone.toLowerCase().trim() : '',
+      phone: !emailOrPhone.includes('@') ? emailOrPhone.trim() : '',
+      isVerified: profile.isVerified ?? true,
+      verificationMethod: profile.verificationMethod || (emailOrPhone.includes('@') ? 'email' : 'phone'),
+      photoUrl: profile.photoUrl || '',
+      location: profile.location || '',
+      deviceModel: profile.deviceModel || 'Web Browser',
+      osVersion: profile.osVersion || 'Cloud Sync',
+      updatedAt: nowIso,
+    };
+    if (profile.password) {
+      userDocPayload.password = profile.password;
+    }
+    if (profile.verificationDate) {
+      userDocPayload.createdAt = profile.verificationDate;
+    }
+    await setDoc(userDocRef, userDocPayload, { merge: true });
 
     // 2. Save complete zikr counters, custom items, history sessions, and profile
     const dataDocRef = doc(db, 'users', userKey, 'data', 'zikrState');
@@ -790,4 +791,78 @@ export function clearPendingPasswordReset(): void {
     sessionStorage.removeItem(PENDING_RESET_KEY);
   } catch {}
 }
+
+/**
+ * Verify user password against Firebase Cloud Firestore and local storage vault
+ */
+export async function verifyUserCloudPassword(
+  emailOrPhone: string,
+  inputPassword: string
+): Promise<{
+  exists: boolean;
+  passwordMatches: boolean;
+  cloudData?: CloudZikrState | null;
+  savedPassword?: string;
+  userProfile?: Partial<UserProfile>;
+}> {
+  if (!emailOrPhone) return { exists: false, passwordMatches: false };
+  const target = emailOrPhone.trim();
+  const cleanInput = inputPassword.trim();
+
+  // 1. Fetch from Firestore
+  const cloudData = await loadUserDataFromCloud(target);
+  const cloudPass = cloudData?.profile?.password;
+
+  // 2. Fetch from local registry
+  const localRegistryRaw = localStorage.getItem('zikrmate_cloud_accounts_vault_v1');
+  let localPass = '';
+  let localProf: UserProfile | undefined = undefined;
+
+  if (localRegistryRaw) {
+    try {
+      const reg = JSON.parse(localRegistryRaw);
+      const cleanTarget = target.toLowerCase();
+      for (const k of Object.keys(reg)) {
+        const item = reg[k];
+        if (
+          k === cleanTarget ||
+          item.profile?.emailOrPhone?.toLowerCase().trim() === cleanTarget
+        ) {
+          localProf = item.profile;
+          localPass = item.profile?.password || '';
+          break;
+        }
+      }
+    } catch {}
+  }
+
+  const exists = !!(cloudData?.foundInCloud || localProf);
+  const effectivePassword = cloudPass || localPass || '';
+
+  if (!exists) {
+    return { exists: false, passwordMatches: false };
+  }
+
+  // If password exists, compare directly
+  if (effectivePassword) {
+    const isMatch = effectivePassword.trim() === cleanInput;
+    return {
+      exists: true,
+      passwordMatches: isMatch,
+      cloudData,
+      savedPassword: effectivePassword,
+      userProfile: cloudData?.profile || localProf,
+    };
+  }
+
+  // Account exists in cloud or local without a set password
+  return {
+    exists: true,
+    passwordMatches: true,
+    cloudData,
+    savedPassword: '',
+    userProfile: cloudData?.profile || localProf,
+  };
+}
+
 

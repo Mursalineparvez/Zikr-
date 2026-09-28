@@ -47,7 +47,7 @@ import {
 import confetti from 'canvas-confetti';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
-import { findSavedAccount, saveAccountToRegistry, updateAccountPassword } from '../utils/accountRegistry';
+import { findSavedAccount, saveAccountToRegistry, updateAccountPassword, normalizeIdentifier } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import {
@@ -60,6 +60,7 @@ import {
   verifyPasswordResetCode,
   maskEmailOrPhone,
   getTestingOtpCode,
+  verifyUserCloudPassword,
   CloudZikrState,
 } from '../services/firebase';
 
@@ -443,8 +444,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const existing = findSavedAccount(target);
     const detected = getDetectedDeviceInfo();
 
+    const effectiveName =
+      existing?.name ||
+      cloudData?.profile?.name ||
+      (target.includes('@') ? target.split('@')[0] : 'ZikrMate User');
+
     const updated: UserProfile = {
-      name: existing?.name || cloudData?.profile?.name || (target.includes('@') ? target.split('@')[0] : 'ZikrMate User'),
+      name: effectiveName,
       emailOrPhone: target,
       photoUrl: cloudData?.profile?.photoUrl || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
       password: pass,
@@ -478,14 +484,30 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }, 1600);
   };
 
+  // Helper to compute normalized identifier based on input and country code
+  const getNormalizedTarget = (): string => {
+    if (authMethod === 'email') {
+      return inputEmail.trim().toLowerCase();
+    }
+    const raw = inputPhone.trim();
+    if (raw.startsWith('+')) {
+      return `+${raw.replace(/\D/g, '')}`;
+    }
+    const cleanDigits = raw.replace(/\D/g, '');
+    if (cleanDigits.startsWith('880')) {
+      return `+${cleanDigits}`;
+    }
+    if (cleanDigits.startsWith('01') && cleanDigits.length === 11) {
+      return `+880${cleanDigits.slice(1)}`;
+    }
+    return `${selectedCountryCode}${cleanDigits.replace(/^0+/, '')}`;
+  };
+
   // Send 6-digit OTP code to email or phone for registration, or login
   const handleSendOtp = async (purposeOverride?: 'signup' | 'login') => {
     setOtpErrorMessage(null);
     const currentPurpose: 'signup' | 'login' = purposeOverride || (authMode === 'register' ? 'signup' : 'login');
-    const target =
-      authMethod === 'email'
-        ? inputEmail.trim().toLowerCase()
-        : `${selectedCountryCode}${inputPhone.replace(/^0+/, '').trim()}`;
+    const target = getNormalizedTarget();
 
     if (authMethod === 'email') {
       if (!inputEmail.includes('@') || !inputEmail.includes('.')) {
@@ -505,10 +527,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       return;
     }
 
-    const existing = findSavedAccount(target);
-
     // If REGISTER mode: Ensure account does not already exist
     if (currentPurpose === 'signup') {
+      const existing = findSavedAccount(target);
       const existsInCloud = await checkUserExistsInCloud(target);
       if (existing || existsInCloud) {
         setOtpErrorMessage('এই ইমেইল বা ফোনে ইতিমধ্যে একটি অ্যাকাউন্ট তৈরি আছে! অনুগ্রহ করে "লগইন" সিলেক্ট করে লগইন করুন অথবা পাসওয়ার্ড ভুলে গেলে রিসেট করুন।');
@@ -517,16 +538,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       }
     }
 
-    // If LOGIN mode with password: check password match
+    // If LOGIN mode with password: check password match against Firestore & Local Vault
     if (currentPurpose === 'login' && !purposeOverride) {
-      if (existing && existing.password && existing.password !== inputPassword.trim()) {
-        setOtpErrorMessage('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন, অথবা নিচে "পাসওয়ার্ড ভুলে গেছেন?" বাটনে ট্যাপ করে নতুন পাসওয়ার্ড রিসেট করুন।');
+      setIsVerifying(true);
+      const verifyResult = await verifyUserCloudPassword(target, inputPassword.trim());
+      setIsVerifying(false);
+
+      if (verifyResult.exists) {
+        if (verifyResult.passwordMatches) {
+          await handleDirectPasswordLogin(target, inputPassword.trim());
+          return;
+        } else {
+          setOtpErrorMessage('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন, অথবা নিচে "পাসওয়ার্ড ভুলে গেছেন?" বাটনে ট্যাপ করে নতুন পাসওয়ার্ড রিসেট করুন।');
+          if (soundEnabled) soundHaptics.playTap();
+          return;
+        }
+      } else {
+        // Account does not exist anywhere yet
+        setOtpErrorMessage('এই অ্যাকাউন্টের কোনো রেকর্ড পাওয়া যায়নি। অনুগ্রহ করে "নতুন অ্যাকাউন্ট (Sign Up)" বেছে নিয়ে অ্যাকাউন্ট খুলুন।');
         if (soundEnabled) soundHaptics.playTap();
-        return;
-      }
-      // If password matches directly, log in immediately!
-      if (existing && existing.password === inputPassword.trim()) {
-        await handleDirectPasswordLogin(target, inputPassword.trim());
         return;
       }
     }
@@ -920,6 +950,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       name: editName.trim() || existing?.name || 'User',
       emailOrPhone: editEmailOrPhone.trim() || '',
       photoUrl: editPhotoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
+      password: userProfile.password || existing?.password || '',
       location: editLocation.trim() || existing?.location || '4C2J 8FX, BD',
       deviceModel: editDeviceModel.trim() || existing?.deviceModel || 'vivo ~~ V2144',
       osVersion: editOsVersion.trim() || existing?.osVersion || '35_15',

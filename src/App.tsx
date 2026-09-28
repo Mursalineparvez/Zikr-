@@ -342,7 +342,12 @@ export default function App() {
         isRemoteUpdateRef.current = true;
 
         if (cloudData.profile && typeof cloudData.profile === 'object') {
-          setUserProfile((prev) => ({ ...prev, ...cloudData.profile, isSignedIn: true }));
+          setUserProfile((prev) => ({
+            ...prev,
+            ...cloudData.profile,
+            password: cloudData.profile?.password || prev.password || '',
+            isSignedIn: true,
+          }));
         }
 
         if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
