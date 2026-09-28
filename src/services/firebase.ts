@@ -1,8 +1,10 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
+  initializeFirestore,
   getFirestore,
   doc,
   getDoc,
+  getDocFromServer,
   setDoc,
   onSnapshot,
   setLogLevel,
@@ -11,18 +13,29 @@ import {
 import firebaseConfig from '../../firebase-applet-config.json';
 import { UserProfile, ZikrItem, HistorySession, AppSettings } from '../types';
 
-// Silence verbose connection / offline warnings from internal Firestore logger
+// Silence verbose internal warnings from internal Firestore logger
 try {
-  setLogLevel('error');
+  setLogLevel('silent');
 } catch {}
 
 // 1. Initialize Firebase App
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// 2. Initialize Firestore Database using provisioned database ID
-export const db = firebaseConfig.firestoreDatabaseId
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
+// 2. Initialize Firestore Database using provisioned database ID with long-polling resilience
+export const db = (() => {
+  const dbId = firebaseConfig.firestoreDatabaseId || undefined;
+  try {
+    return initializeFirestore(
+      app,
+      {
+        experimentalAutoDetectLongPolling: true,
+      },
+      dbId
+    );
+  } catch {
+    return dbId ? getFirestore(app, dbId) : getFirestore(app);
+  }
+})();
 
 // 3. Unique Device ID to distinguish between different devices (e.g. mobile vs pc)
 export function getDeviceId(): string {
@@ -40,7 +53,15 @@ export function getDeviceId(): string {
 
 // 4. Test Connection safe helper
 export async function testFirestoreConnection(): Promise<boolean> {
-  return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return false;
+  }
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // 5. Sanitize email or phone number to make a robust Firestore document ID

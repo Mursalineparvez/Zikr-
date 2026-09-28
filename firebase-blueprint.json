@@ -33,6 +33,15 @@
         "updatedAt": { "type": "string" }
       },
       "required": ["userId", "totalCount", "updatedAt"]
+    },
+    "ConnectionHealth": {
+      "title": "ConnectionHealth",
+      "description": "Document used to validate connectivity to Firestore backend",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string" },
+        "timestamp": { "type": "string" }
+      }
     }
   },
   "firestore": {
@@ -43,6 +52,10 @@
     "/users/{userId}/data/{docId}": {
       "schema": "UserZikrData",
       "description": "Stores user zikr history, streak, and synced counts across all devices"
+    },
+    "/test/{testId}": {
+      "schema": "ConnectionHealth",
+      "description": "Health check connection test document"
     }
   }
 }
