@@ -514,15 +514,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     // Step Success!
     setVerificationStep('success');
-    setCloudSyncMessage('যাচাই সম্পন্ন! ক্লাউড থেকে আপনার সকল ইতিহাস লোড হচ্ছে...');
-    confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
-    if (soundEnabled) soundHaptics.playMilestone();
-
+    
     // Cross-device cloud history load
     const cloudData = await loadUserDataFromCloud(target);
-    if (cloudData && onCloudDataLoaded) {
-      onCloudDataLoaded(cloudData);
+    const isFirstTime = !cloudData || !cloudData.foundInCloud;
+
+    if (isFirstTime) {
+      setCloudSyncMessage('স্বাগতম! নতুন অ্যাকাউন্ট হিসেবে সব গণনা ০ থেকে শুরু হচ্ছে...');
+      if (onCloudDataLoaded) {
+        onCloudDataLoaded({ foundInCloud: false });
+      }
+    } else {
+      setCloudSyncMessage('যাচাই সম্পন্ন! ক্লাউড থেকে আপনার সংরক্ষিত ইতিহাস লোড হচ্ছে...');
+      if (onCloudDataLoaded && cloudData) {
+        onCloudDataLoaded(cloudData);
+      }
     }
+
+    confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
+    if (soundEnabled) soundHaptics.playMilestone();
 
     const existing = findSavedAccount(target);
     const detected = getDetectedDeviceInfo();
@@ -568,11 +578,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       return;
     }
 
+    const isFirstTime = !cloudData || !cloudData.foundInCloud;
     setIsVerifying(true);
-    setCloudSyncMessage('গুগল অ্যাকাউন্ট যাচাই ও ক্লাউড ডাটা লোড হচ্ছে...');
 
-    if (cloudData && onCloudDataLoaded) {
-      onCloudDataLoaded(cloudData);
+    if (isFirstTime) {
+      setCloudSyncMessage('স্বাগতম! নতুন গুগল অ্যাকাউন্ট হিসেবে সব গণনা ০ থেকে শুরু হচ্ছে...');
+      if (onCloudDataLoaded) {
+        onCloudDataLoaded({ foundInCloud: false });
+      }
+    } else {
+      setCloudSyncMessage('গুগল অ্যাকাউন্ট যাচাই ও ক্লাউড ডাটা লোড হচ্ছে...');
+      if (cloudData && onCloudDataLoaded) {
+        onCloudDataLoaded(cloudData);
+      }
     }
 
     const detected = getDetectedDeviceInfo();

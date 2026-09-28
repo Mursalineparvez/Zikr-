@@ -504,6 +504,23 @@ export function recordZikrIncrementInAamal(
   }
 }
 
+export function clearAllAamalLogs(): void {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('zikrmate_aamal_')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+    const today = getTodayDateKey();
+    saveAamalLogForDate(today, createInitialDayLog(today));
+  } catch (e) {
+    console.error('Failed to clear aamal logs', e);
+  }
+}
+
 export function getAllAamalLogs(): Record<string, AamalDayLog> {
   const logs: Record<string, AamalDayLog> = {};
   try {

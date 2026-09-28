@@ -180,6 +180,31 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
             </div>
           </div>
 
+          {/* New Account / 0 Counts Notice Banner */}
+          {reportData.totalDhikrSum === 0 && (
+            <div
+              className={`p-3.5 rounded-2xl border text-xs flex items-start gap-2.5 ${
+                isDay
+                  ? 'bg-amber-50/90 border-amber-200 text-amber-900'
+                  : 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">
+                  {selectedLanguage === 'bn'
+                    ? 'নতুন সূচনা: আপনার বর্তমান জিকির গণনা ০ রয়েছে'
+                    : 'Fresh Account: Your current Dhikr count is 0'}
+                </p>
+                <p className="text-[11px] opacity-90 mt-0.5 leading-relaxed">
+                  {selectedLanguage === 'bn'
+                    ? 'হোমস্ক্রিনের তাসবীহ ও জিকির বোতামে ট্যাপ করে পাঠ শুরু করলেই স্বয়ংক্রিয়ভাবে এখানে নির্ভুল হিস্ট্রি ও রিপোর্ট তৈরি হতে থাকবে।'
+                    : 'As soon as you begin reciting dhikr on the home screen, your personal history report will be compiled here.'}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Aggregated Sum Metrics Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {/* Grand Total Dhikr */}
