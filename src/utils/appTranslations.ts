@@ -70,12 +70,12 @@ export const NAV_TRANSLATIONS: Record<NavModule, Record<ZikrLanguage, string>> =
     tr: 'Diğer',
   },
   tablig: {
-    bn: 'দৈনিক তাবলিগ',
-    en: 'Daily Tablig',
+    bn: 'দাওয়াত ও তাবলিগ',
+    en: 'Dawah & Tabligh',
     ur: 'دعوت و تبلیغ',
-    hi: 'दैनिक तबलीग़',
-    id: 'Tabligh Harian',
-    tr: 'Tebliğ',
+    hi: 'दवत व तबलीग़',
+    id: 'Dawah & Tabligh',
+    tr: 'Davas ve Tebliğ',
   },
   allah_names: {
     bn: 'আল্লাহর ৯৯ নাম',

@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
-import { TABLIG_6_SIFATS, DAILY_TABLIG_GUIDELINES, TabligSifatItem } from '../data/tabligData';
+import { TABLIG_COMPLETE_CHAPTERS, TabligChapterDetail } from '../data/tabligData';
 import { ThemeMode, ZikrLanguage } from '../types';
 import {
-  Sparkles,
-  Award,
   BookOpen,
   Users,
-  Compass,
-  Heart,
   ChevronRight,
   ChevronDown,
   CheckCircle2,
-  Volume2,
-  Clock,
+  Sparkles,
+  Award,
+  BookmarkCheck,
+  Search,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 
@@ -28,8 +26,18 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   selectedLanguage = 'bn',
 }) => {
   const isDay = themeMode === 'day';
-  const [activeTab, setActiveTab] = useState<'sifat' | 'daily_amal' | 'gasht'>('sifat');
-  const [expandedSifat, setExpandedSifat] = useState<string>('kalima');
+  const [expandedChapter, setExpandedChapter] = useState<string>('sifats_intro');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const filteredChapters = TABLIG_COMPLETE_CHAPTERS.filter((chap) => {
+    const query = searchQuery.toLowerCase();
+    if (!query) return true;
+    const matchTitle = chap.title.toLowerCase().includes(query) || chap.subtitle.toLowerCase().includes(query);
+    const matchSec = chap.sections.some(
+      (s) => s.heading.toLowerCase().includes(query) || s.content.toLowerCase().includes(query)
+    );
+    return matchTitle || matchSec;
+  });
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
@@ -45,192 +53,127 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
               <Users className="w-3.5 h-3.5 text-amber-300" />
-              <span>الدَّعْوَةُ وَالتَّبْلِيغُ • Dawah, Sifat &amp; Daily Masjid Mehnat</span>
+              <span>الدَّعْوَةُ وَالتَّبْلِيغُ • Complete Authentic Tabligh Syllabus &amp; Bayan</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              দৈনিক তাবলিগ ও বয়ান (দাওয়াতের ৬ সিফাত ও মেহনত)
+              দাওয়াত ও তাবলিগ (পূর্ণাঙ্গ সিলেবাস ও বিস্তারিত বয়ান)
             </h2>
-            <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-xl">
-              "তোমরাই সর্বোত্তম উম্মত, মানবজাতির কল্যাণের জন্য যাদের উদ্ভব ঘটানো হয়েছে; তোমরা সৎকাজের আদেশ করো এবং অসৎকাজ থেকে নিষেধ করো।" — সূরা আলে ইমরান (৩:১১০)
+            <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-3xl">
+              ৬ সিফাত, কালেমা, নামাজ, ইলম ও জিকির, ইকরাম, নিয়ত, তাবলীগের ইতিহাস, ইলিয়াস রহ.-এর মালফুজাত এবং গাস্তের আদবসহ সম্পূর্ণ প্রামাণিক ও বিস্তারিত সংকলন।
             </p>
           </div>
         </div>
       </div>
 
-      {/* Subtabs */}
-      <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-200 dark:bg-[#092226] border border-slate-300 dark:border-[#14424a]">
-        <button
-          onClick={() => {
-            setActiveTab('sifat');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === 'sifat'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="তাবলিগের যেকোনো বিষয় বা শব্দ দিয়ে খুঁজুন (যেমন: নামাজ, ইলম, গাস্ত, ইতিহাস)..."
+          className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-xs sm:text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+            isDay
+              ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'
+              : 'bg-[#0a242a] border-[#16444e] text-white placeholder-teal-400/60'
           }`}
-        >
-          <Award className="w-4 h-4" />
-          <span>তাবলিগের ৬ সিফাত</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab('daily_amal');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === 'daily_amal'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          <span>দৈনিক ৫ আমল</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab('gasht');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === 'gasht'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          <Compass className="w-4 h-4" />
-          <span>গাশত ও মাশওয়ারা আদব</span>
-        </button>
+        />
       </div>
 
-      {/* 1. তাবলিগের ৬ সিফাত */}
-      {activeTab === 'sifat' && (
-        <div className="space-y-3">
-          {TABLIG_6_SIFATS.map((sifat) => {
-            const isExpanded = expandedSifat === sifat.id;
-            return (
-              <div
-                key={sifat.id}
-                className={`rounded-3xl border shadow-md overflow-hidden transition-all ${
-                  isDay ? 'bg-white border-slate-200' : 'bg-[#0a242a] border-[#16444e]'
-                }`}
-              >
-                <button
-                  onClick={() => {
-                    setExpandedSifat(isExpanded ? '' : sifat.id);
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className={`w-full p-4 sm:p-5 flex items-center justify-between text-left transition cursor-pointer ${
-                    isDay ? 'hover:bg-slate-50' : 'hover:bg-teal-950/40'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-sm font-mono">
-                      {sifat.numberBn}
-                    </span>
-                    <div>
-                      <h3 className={`text-sm sm:text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                        {sifat.titleBn}
-                      </h3>
-                      <div className="font-arabic text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
-                        {sifat.arabicTitle}
-                      </div>
-                    </div>
-                  </div>
-
-                  {isExpanded ? (
-                    <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" />
-                  )}
-                </button>
-
-                {isExpanded && (
-                  <div className="p-4 sm:p-5 pt-0 space-y-3.5 border-t border-slate-100 dark:border-teal-900/30 text-xs sm:text-sm">
-                    {/* Aim */}
-                    <div
-                      className={`p-3.5 rounded-2xl border ${
-                        isDay ? 'bg-emerald-50/70 border-emerald-200 text-slate-800' : 'bg-[#071f23] border-emerald-500/30 text-teal-100'
-                      }`}
-                    >
-                      <strong className="text-emerald-600 dark:text-emerald-400 block mb-1">
-                        🎯 উদ্দেশ্য ও তাৎপর্য:
-                      </strong>
-                      <p className="leading-relaxed">{sifat.aimBn}</p>
-                    </div>
-
-                    {/* Virtue */}
-                    <div
-                      className={`p-3.5 rounded-2xl border ${
-                        isDay ? 'bg-amber-50/70 border-amber-200 text-slate-800' : 'bg-[#1f1a07] border-amber-500/30 text-amber-100'
-                      }`}
-                    >
-                      <strong className="text-amber-600 dark:text-amber-400 block mb-1">
-                        ⭐ ফজিলত ও হাদিসের সুসংবাদ:
-                      </strong>
-                      <p className="leading-relaxed">{sifat.virtueBn}</p>
-                    </div>
-
-                    {/* How to gain */}
-                    <div
-                      className={`p-3.5 rounded-2xl border ${
-                        isDay ? 'bg-blue-50/70 border-blue-200 text-slate-800' : 'bg-[#091f28] border-blue-500/30 text-blue-100'
-                      }`}
-                    >
-                      <strong className="text-blue-600 dark:text-blue-400 block mb-1">
-                        🌱 এই সিফাত হাসিলের উপায়:
-                      </strong>
-                      <p className="leading-relaxed">{sifat.gainMethodBn}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* Chapters Accordion List */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-2">
+          <h3 className={`text-xs font-bold uppercase tracking-wider ${isDay ? 'text-slate-500' : 'text-teal-300'}`}>
+            📚 সম্পূর্ণ অধ্যায়সমূহ ({filteredChapters.length}টি অধ্যায়)
+          </h3>
+          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+            ট্যাপ করে বিস্তারিত পড়ুন
+          </span>
         </div>
-      )}
 
-      {/* 2. দৈনিক ৫ আমল & 3. গাশত ও মাশওয়ারা আদব */}
-      {(activeTab === 'daily_amal' || activeTab === 'gasht') && (
-        <div className="space-y-4">
-          {DAILY_TABLIG_GUIDELINES.filter((g) =>
-            activeTab === 'daily_amal' ? g.category === 'daily' : g.category !== 'daily'
-          ).map((item) => (
+        {filteredChapters.map((chap) => {
+          const isExpanded = expandedChapter === chap.id;
+          return (
             <div
-              key={item.id}
-              className={`p-5 rounded-3xl border shadow-md space-y-3 ${
+              key={chap.id}
+              className={`rounded-3xl border shadow-md overflow-hidden transition-all ${
                 isDay ? 'bg-white border-slate-200' : 'bg-[#0a242a] border-[#16444e]'
               }`}
             >
-              <h3 className={`text-base font-bold flex items-center gap-2 ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                <Sparkles className="w-4 h-4 text-emerald-500" />
-                <span>{item.titleBn}</span>
-              </h3>
-              <p className={`text-xs ${isDay ? 'text-slate-600' : 'text-teal-200/90'}`}>
-                {item.summaryBn}
-              </p>
-
-              <div className="space-y-2 pt-1">
-                {item.keyPoints.map((point, pIdx) => (
-                  <div
-                    key={pIdx}
-                    className={`p-3 rounded-2xl border flex items-start gap-2.5 text-xs sm:text-sm ${
-                      isDay
-                        ? 'bg-slate-50 border-slate-200 text-slate-800'
-                        : 'bg-[#081e22] border-[#16444d] text-teal-100'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>{point}</span>
+              <button
+                onClick={() => {
+                  setExpandedChapter(isExpanded ? '' : chap.id);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`w-full p-4 sm:p-5 flex items-center justify-between text-left transition cursor-pointer ${
+                  isDay ? 'hover:bg-slate-50' : 'hover:bg-teal-950/40'
+                }`}
+              >
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="w-9 h-9 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-sm font-mono shrink-0 shadow-sm">
+                    {chap.numberBn}
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className={`text-sm sm:text-base font-bold truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                      {chap.title}
+                    </h3>
+                    {chap.subtitle && (
+                      <p className="text-xs text-slate-500 dark:text-teal-300/80 truncate mt-0.5">
+                        {chap.subtitle}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {chap.arabic && (
+                    <span className="hidden md:inline font-arabic text-xs text-emerald-600 dark:text-emerald-400 font-bold">
+                      {chap.arabic}
+                    </span>
+                  )}
+                  {isExpanded ? (
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-slate-400" />
+                  )}
+                </div>
+              </button>
+
+              {isExpanded && (
+                <div className="p-4 sm:p-6 pt-0 space-y-4 border-t border-slate-100 dark:border-teal-900/30 text-xs sm:text-sm animate-in fade-in duration-150">
+                  {chap.arabic && (
+                    <div className="pt-3 text-center">
+                      <span className="inline-block px-4 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 font-arabic text-sm text-emerald-600 dark:text-emerald-300 font-bold">
+                        {chap.arabic}
+                      </span>
+                    </div>
+                  )}
+
+                  {chap.sections.map((sec, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-4 sm:p-5 rounded-2xl border ${
+                        isDay ? 'bg-slate-50/80 border-slate-200 text-slate-800' : 'bg-[#071d22] border-teal-900/40 text-teal-100'
+                      }`}
+                    >
+                      {sec.heading && (
+                        <h4 className="font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
+                          <BookmarkCheck className="w-4 h-4" />
+                          <span>{sec.heading}</span>
+                        </h4>
+                      )}
+                      <p className="leading-relaxed whitespace-pre-line text-xs sm:text-sm">
+                        {sec.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 };
