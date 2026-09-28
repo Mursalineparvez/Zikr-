@@ -49,6 +49,8 @@ import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySessi
 import { soundHaptics } from '../utils/audioHaptics';
 import { findSavedAccount, saveAccountToRegistry, updateAccountPassword, normalizeIdentifier } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
+import { getDetectedDeviceInfo } from '../utils/deviceInfo';
+
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import {
   checkUserExistsInCloud,
@@ -268,56 +270,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [showDeviceSettings, setShowDeviceSettings] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
-  // Auto-detect user's real device info from browser/hardware environment
-  const getDetectedDeviceInfo = () => {
-    if (typeof window === 'undefined') {
-      return {
-        model: 'Windows PC',
-        osVersion: '11_64',
-        deviceLanguage: 'en',
-      };
-    }
-
-    const ua = navigator.userAgent || '';
-    let model = 'Windows PC';
-    let osVersion = '11_64';
-    const deviceLanguage = (navigator.language || 'en').split('-')[0];
-
-    if (/Windows/i.test(ua)) {
-      model = 'Windows PC';
-      osVersion = '11_64';
-    } else if (/Macintosh|MacIntel/i.test(ua)) {
-      model = 'Apple Mac';
-      osVersion = '14_1';
-    } else if (/iPhone/i.test(ua)) {
-      model = 'Apple iPhone';
-      const iosMatch = ua.match(/OS\s+([0-9_]+)/i);
-      if (iosMatch) osVersion = iosMatch[1].replace(/_/g, '.');
-    } else if (/Android/i.test(ua)) {
-      const androidMatch = ua.match(/Android\s+([0-9\._]+)/i);
-      if (androidMatch) {
-        osVersion = `${androidMatch[1]}`;
-      }
-      const modelMatch = ua.match(/;\s*([^;]+?)\s*Build/i);
-      if (modelMatch && modelMatch[1]) {
-        model = modelMatch[1].trim();
-      } else if (/vivo/i.test(ua)) {
-        model = 'vivo V2144';
-      } else if (/Samsung|SM-/i.test(ua)) {
-        const smMatch = ua.match(/(SM-[A-Z0-9]+)/i);
-        model = smMatch ? `Samsung ${smMatch[1]}` : 'Samsung Galaxy';
-      } else if (/Xiaomi|Redmi/i.test(ua)) {
-        model = 'Xiaomi Redmi';
-      } else {
-        model = 'Android Phone';
-      }
-    } else if (/Linux/i.test(ua)) {
-      model = 'Linux PC';
-      osVersion = 'Ubuntu';
-    }
-
-    return { model, osVersion, deviceLanguage };
-  };
 
   // Real GPS & Timezone Location detector
   const handleDetectLocation = () => {
@@ -1950,10 +1902,17 @@ ${msg}`;
                   <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">Offline Safe</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-teal-300/80 font-mono">
-                  <div>Model: {userProfile.deviceModel || 'vivo ~~ V2144'}</div>
-                  <div>OS: {userProfile.osVersion || '35_15'}</div>
-                  <div>App: ZikrMate v411_38.1</div>
-                  <div>Location: {userProfile.location || '4C2J 8FX, BD'}</div>
+                  {(() => {
+                    const detectedInfo = getDetectedDeviceInfo();
+                    return (
+                      <>
+                        <div>Model: {userProfile.deviceModel && !userProfile.deviceModel.includes('vivo ~~ V2144') ? userProfile.deviceModel : detectedInfo.model}</div>
+                        <div>OS: {userProfile.osVersion && userProfile.osVersion !== '35_15' ? userProfile.osVersion : detectedInfo.osVersion}</div>
+                        <div>App: {userProfile.appVersion || detectedInfo.appVersion}</div>
+                        <div>Location: {userProfile.location && !userProfile.location.includes('4C2J') ? userProfile.location : detectedInfo.location}</div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

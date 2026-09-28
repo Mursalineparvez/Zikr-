@@ -41,6 +41,8 @@ import {
   CloudZikrState,
 } from './services/firebase';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
+import { getDetectedDeviceInfo } from './utils/deviceInfo';
+
 
 export default function App() {
   // 1. LocalStorage state persistence for Zikr Items (12 Common Zikr items merged with persisted counts)
@@ -161,7 +163,13 @@ export default function App() {
   }, [lifetimeTotalCount]);
 
   // User Profile Account state (Guest by default until signed in)
+  const zikrsRef = useRef(zikrs);
+  useEffect(() => {
+    zikrsRef.current = zikrs;
+  }, [zikrs]);
+
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
   const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
 
   const handleOpenProfileModal = (tab: 'profile' | 'settings' = 'profile') => {
@@ -170,11 +178,24 @@ export default function App() {
   };
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    const detected = getDetectedDeviceInfo();
     try {
       const saved = localStorage.getItem('zikrmate_user_profile');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed.isSignedIn === 'boolean') {
+          if (!parsed.deviceModel || parsed.deviceModel.includes('vivo ~~ V2144')) {
+            parsed.deviceModel = detected.model;
+          }
+          if (!parsed.osVersion || parsed.osVersion === '35_15') {
+            parsed.osVersion = detected.osVersion;
+          }
+          if (!parsed.location || parsed.location.includes('4C2J')) {
+            parsed.location = detected.location;
+          }
+          if (!parsed.appVersion) {
+            parsed.appVersion = detected.appVersion;
+          }
           return parsed;
         }
       }
@@ -184,10 +205,10 @@ export default function App() {
       emailOrPhone: '',
       photoUrl: '',
       isSignedIn: false,
-      location: '4C2J 8FX, BD',
-      deviceModel: 'vivo ~~ V2144',
-      osVersion: '35_15',
-      appVersion: '411_38.1',
+      location: detected.location,
+      deviceModel: detected.model,
+      osVersion: detected.osVersion,
+      appVersion: detected.appVersion,
     };
   });
 
@@ -351,10 +372,33 @@ export default function App() {
         }
 
         if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
-          setZikrs(cloudData.zikrs);
-          try {
-            localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
-          } catch {}
+          const cloudZikrsList = cloudData.zikrs;
+          setZikrs((prevLocalZikrs) => {
+            if (isInitial && prevLocalZikrs.length > 0) {
+              const cloudMap = new Map(cloudZikrsList.map((item) => [item.id, item]));
+              const merged = prevLocalZikrs.map((localItem) => {
+                const cloudItem = cloudMap.get(localItem.id);
+                if (!cloudItem) return localItem;
+                const higherCount = Math.max(localItem.count || 0, cloudItem.count || 0);
+                const newerTime = Math.max(localItem.updatedAt || 0, cloudItem.updatedAt || 0);
+                return {
+                  ...localItem,
+                  ...cloudItem,
+                  count: higherCount,
+                  updatedAt: newerTime,
+                };
+              });
+              try {
+                localStorage.setItem('noor_zikr_items', JSON.stringify(merged));
+              } catch {}
+              return merged;
+            } else {
+              try {
+                localStorage.setItem('noor_zikr_items', JSON.stringify(cloudZikrsList));
+              } catch {}
+              return cloudZikrsList;
+            }
+          });
         }
 
         if (cloudData.history && Array.isArray(cloudData.history)) {
@@ -370,11 +414,16 @@ export default function App() {
         }
 
         if (typeof cloudData.lifetimeTotalCount === 'number') {
-          setLifetimeTotalCount(cloudData.lifetimeTotalCount);
-          try {
-            localStorage.setItem('zikrmate_lifetime_total_count', String(cloudData.lifetimeTotalCount));
-          } catch {}
+          const cloudTotal = cloudData.lifetimeTotalCount;
+          setLifetimeTotalCount((prevLocalTotal) => {
+            const mergedTotal = isInitial ? Math.max(prevLocalTotal || 0, cloudTotal) : cloudTotal;
+            try {
+              localStorage.setItem('zikrmate_lifetime_total_count', String(mergedTotal));
+            } catch {}
+            return mergedTotal;
+          });
         } else {
+
           setLifetimeTotalCount(0);
           try {
             localStorage.setItem('zikrmate_lifetime_total_count', '0');
@@ -620,7 +669,7 @@ export default function App() {
   // Midnight Auto-Refresh: Checks if a new day has started (12:00 AM / 00:00)
   useEffect(() => {
     const checkMidnightRefresh = () => {
-      const todayKey = new Date().toISOString().split('T')[0];
+      const todayKey = getTodayDateKey();
       const lastActiveDate = localStorage.getItem('zikrmate_last_active_date_key');
 
       if (!lastActiveDate) {
@@ -630,14 +679,15 @@ export default function App() {
 
       if (lastActiveDate !== todayKey) {
         // A new day has begun! Auto-archive yesterday's session if counts were > 0
-        const currentSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+        const activeZikrs = zikrsRef.current;
+        const currentSum = activeZikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
         if (currentSum > 0) {
           const autoSession: HistorySession = {
             id: `midnight_session_${Date.now()}`,
             timestamp: Date.now(),
             dateStr: `${lastActiveDate} (Midnight Auto-Save)`,
             totalCount: currentSum,
-            breakdown: zikrs.map((z) => ({
+            breakdown: activeZikrs.map((z) => ({
               name: z.name,
               count: z.count,
               target: z.target,
@@ -662,7 +712,19 @@ export default function App() {
     // Check periodically every 15 seconds for midnight transition
     const interval = setInterval(checkMidnightRefresh, 15000);
     return () => clearInterval(interval);
-  }, [zikrs]);
+  }, []);
+
+  // Guarantee immediate persistence before window refresh / close
+  useEffect(() => {
+    const handleUnload = () => {
+      try {
+        localStorage.setItem('noor_zikr_items', JSON.stringify(zikrsRef.current));
+      } catch {}
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, []);
+
 
   // Screen Awake Lock management
   useEffect(() => {
