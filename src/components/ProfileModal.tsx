@@ -110,7 +110,7 @@ interface ProfileModalProps {
   onOpenStandaloneModal?: () => void;
   onResetAllCounters?: () => void;
   initialTab?: 'profile' | 'settings';
-  onCloudDataLoaded?: (data: CloudZikrState) => void;
+  onCloudDataLoaded?: (data: CloudZikrState, targetEmailOrPhone?: string) => void;
   onTriggerCloudSync?: () => Promise<boolean>;
   isSyncingCloud?: boolean;
   lastCloudSyncTimestamp?: number;
@@ -583,9 +583,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     onUpdateProfile(updatedProf);
 
     if (cloudData && cloudData.foundInCloud && onCloudDataLoaded) {
-      onCloudDataLoaded(cloudData);
+      onCloudDataLoaded(cloudData, target);
     } else if (onCloudDataLoaded) {
-      onCloudDataLoaded({ foundInCloud: false });
+      onCloudDataLoaded({ foundInCloud: false }, target);
     }
 
     setIsResettingPassword(false);
@@ -676,21 +676,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const cloudData = await loadUserDataFromCloud(target);
     const isFirstTime = !cloudData || !cloudData.foundInCloud;
 
-    if (isFirstTime) {
-      setCloudSyncMessage('স্বাগতম! নতুন অ্যাকাউন্ট হিসেবে সব গণনা ০ থেকে শুরু হচ্ছে...');
-      if (onCloudDataLoaded) {
-        onCloudDataLoaded({ foundInCloud: false });
-      }
-    } else {
-      setCloudSyncMessage('যাচাই সম্পন্ন! ক্লাউড থেকে আপনার সংরক্ষিত ইতিহাস লোড হচ্ছে...');
-      if (onCloudDataLoaded && cloudData) {
-        onCloudDataLoaded(cloudData);
-      }
-    }
-
-    confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
-    if (soundEnabled) soundHaptics.playMilestone();
-
     const existing = findSavedAccount(target);
     const detected = getDetectedDeviceInfo();
     const updated: UserProfile = {
@@ -715,6 +700,21 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
+
+    if (isFirstTime) {
+      setCloudSyncMessage('স্বাগতম! নতুন অ্যাকাউন্ট হিসেবে সব গণনা ০ থেকে শুরু হচ্ছে...');
+      if (onCloudDataLoaded) {
+        onCloudDataLoaded({ foundInCloud: false }, target);
+      }
+    } else {
+      setCloudSyncMessage('যাচাই সম্পন্ন! ক্লাউড থেকে আপনার সংরক্ষিত ইতিহাস লোড হচ্ছে...');
+      if (onCloudDataLoaded && cloudData) {
+        onCloudDataLoaded(cloudData, target);
+      }
+    }
+
+    confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
+    if (soundEnabled) soundHaptics.playMilestone();
     setIsVerifying(false);
 
     setTimeout(() => {
@@ -725,8 +725,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   // Handle instant Google Sign In with cloud sync
   const handleGoogleSignIn = async (account: { name: string; emailOrPhone: string; photoUrl: string; password?: string }) => {
-    const existing = findSavedAccount(account.emailOrPhone);
-    const cloudData = await loadUserDataFromCloud(account.emailOrPhone);
+    const targetEmail = account.emailOrPhone.toLowerCase().trim();
+    const existing = findSavedAccount(targetEmail);
+    const cloudData = await loadUserDataFromCloud(targetEmail);
 
     const savedPassword = existing?.password || cloudData?.profile?.password;
     if (savedPassword && account.password && savedPassword !== account.password) {
@@ -738,23 +739,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const isFirstTime = !cloudData || !cloudData.foundInCloud;
     setIsVerifying(true);
 
-    if (isFirstTime) {
-      setCloudSyncMessage('স্বাগতম! নতুন গুগল অ্যাকাউন্ট হিসেবে সব গণনা ০ থেকে শুরু হচ্ছে...');
-      if (onCloudDataLoaded) {
-        onCloudDataLoaded({ foundInCloud: false });
-      }
-    } else {
-      setCloudSyncMessage('গুগল অ্যাকাউন্ট যাচাই ও ক্লাউড ডাটা লোড হচ্ছে...');
-      if (cloudData && onCloudDataLoaded) {
-        onCloudDataLoaded(cloudData);
-      }
-    }
-
     const detected = getDetectedDeviceInfo();
     const updated: UserProfile = {
       ...userProfile,
-      name: account.name || cloudData?.profile?.name || existing?.name || 'Google User',
-      emailOrPhone: account.emailOrPhone.toLowerCase().trim(),
+      name: account.name || cloudData?.profile?.name || existing?.name || (targetEmail.includes('@') ? targetEmail.split('@')[0] : 'Google User'),
+      emailOrPhone: targetEmail,
       photoUrl: account.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
       password: account.password || savedPassword || '',
       location: existing?.location || userProfile.location || '4C2J 8FX, BD',
@@ -767,8 +756,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       authProvider: 'google',
       lastSyncedAt: Date.now(),
     };
+
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
+
+    if (isFirstTime) {
+      setCloudSyncMessage('স্বাগতম! নতুন গুগল অ্যাকাউন্ট হিসেবে সব গণনা ০ থেকে শুরু হচ্ছে...');
+      if (onCloudDataLoaded) {
+        onCloudDataLoaded({ foundInCloud: false }, targetEmail);
+      }
+    } else {
+      setCloudSyncMessage('গুগল অ্যাকাউন্ট যাচাই ও ক্লাউড ডাটা লোড হচ্ছে...');
+      if (cloudData && onCloudDataLoaded) {
+        onCloudDataLoaded(cloudData, targetEmail);
+      }
+    }
+
     setIsVerifying(false);
     setActiveSubModal('none');
     confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
@@ -1840,7 +1843,7 @@ ${msg}`;
               {/* Google Fast Sign In Button */}
               <button
                 type="button"
-                onClick={() => setActiveSubModal('google_auth')}
+                onClick={() => handleOpenVerifiedAuth('google')}
                 className="w-full py-2.5 px-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
               >
                 <GoogleIcon />

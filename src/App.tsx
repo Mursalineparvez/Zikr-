@@ -200,6 +200,72 @@ export default function App() {
   const isCloudSyncReadyRef = useRef<boolean>(false);
   const isRemoteUpdateRef = useRef<boolean>(false);
 
+  // Helper: Apply cloud data snapshot to active state
+  const applyCloudDataToState = (cloudData: CloudZikrState) => {
+    isRemoteUpdateRef.current = true;
+    isCloudSyncReadyRef.current = true;
+
+    if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
+      setZikrs(cloudData.zikrs);
+      try {
+        localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
+      } catch {}
+    } else {
+      const freshZikrs: ZikrItem[] = DEFAULT_ZIKRS.map((item) => ({
+        ...item,
+        count: 0,
+        updatedAt: Date.now(),
+      }));
+      setZikrs(freshZikrs);
+      try {
+        localStorage.setItem('noor_zikr_items', JSON.stringify(freshZikrs));
+      } catch {}
+    }
+
+    if (cloudData.history && Array.isArray(cloudData.history)) {
+      setHistorySessions(cloudData.history);
+      try {
+        localStorage.setItem('noor_zikr_history', JSON.stringify(cloudData.history));
+      } catch {}
+    } else {
+      setHistorySessions([]);
+      try {
+        localStorage.setItem('noor_zikr_history', JSON.stringify([]));
+      } catch {}
+    }
+
+    if (typeof cloudData.lifetimeTotalCount === 'number') {
+      setLifetimeTotalCount(cloudData.lifetimeTotalCount);
+      try {
+        localStorage.setItem('zikrmate_lifetime_total_count', String(cloudData.lifetimeTotalCount));
+      } catch {}
+    } else {
+      setLifetimeTotalCount(0);
+      try {
+        localStorage.setItem('zikrmate_lifetime_total_count', '0');
+      } catch {}
+    }
+
+    if (cloudData.settings) {
+      setSettings((prev) => ({ ...prev, ...cloudData.settings }));
+    }
+
+    if (cloudData.aamalLogs && typeof cloudData.aamalLogs === 'object') {
+      try {
+        clearAllAamalLogs();
+        for (const [dateKey, logData] of Object.entries(cloudData.aamalLogs)) {
+          localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(logData));
+        }
+      } catch {}
+    } else {
+      clearAllAamalLogs();
+    }
+
+    const now = Date.now();
+    setLastCloudSyncTimestamp(now);
+    showToast('☁️ ক্লাউড থেকে সব হিস্ট্রি ও কাউন্ট সফলভাবে লোড হয়েছে!');
+  };
+
   // Helper: Initialize fresh ZERO state when a user first signs in or logs in
   const initializeFreshZeroUserState = async (targetProfile: UserProfile) => {
     isRemoteUpdateRef.current = true;
@@ -232,9 +298,10 @@ export default function App() {
     } catch {}
 
     // 6. Save zero baseline state to cloud for this user
-    if (targetProfile.emailOrPhone) {
+    const targetEmail = (targetProfile.emailOrPhone || '').toLowerCase().trim();
+    if (targetEmail) {
       await saveUserDataToCloud(
-        targetProfile.emailOrPhone,
+        targetEmail,
         targetProfile,
         freshZikrs,
         [],
@@ -375,63 +442,19 @@ export default function App() {
   }, [zikrs, historySessions, lifetimeTotalCount, userProfile, settings]);
 
   // Handler when user signs in with email/phone and cloud data is restored
-  const handleCloudDataLoaded = (cloudData: CloudZikrState) => {
+  const handleCloudDataLoaded = (cloudData: CloudZikrState, targetEmailOrPhone?: string) => {
+    const targetEmail = (targetEmailOrPhone || userProfile.emailOrPhone || '').toLowerCase().trim();
     if (!cloudData.foundInCloud) {
       // First signin / new user! Initialize everything to 0
-      initializeFreshZeroUserState(userProfile);
+      initializeFreshZeroUserState({
+        ...userProfile,
+        emailOrPhone: targetEmail,
+        isSignedIn: true,
+      });
       return;
     }
 
-    isRemoteUpdateRef.current = true;
-    isCloudSyncReadyRef.current = true;
-
-    if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
-      setZikrs(cloudData.zikrs);
-      try {
-        localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
-      } catch {}
-    }
-
-    if (cloudData.history && Array.isArray(cloudData.history)) {
-      setHistorySessions(cloudData.history);
-      try {
-        localStorage.setItem('noor_zikr_history', JSON.stringify(cloudData.history));
-      } catch {}
-    } else {
-      setHistorySessions([]);
-      try {
-        localStorage.setItem('noor_zikr_history', JSON.stringify([]));
-      } catch {}
-    }
-
-    if (typeof cloudData.lifetimeTotalCount === 'number') {
-      setLifetimeTotalCount(cloudData.lifetimeTotalCount);
-      try {
-        localStorage.setItem('zikrmate_lifetime_total_count', String(cloudData.lifetimeTotalCount));
-      } catch {}
-    } else {
-      setLifetimeTotalCount(0);
-      try {
-        localStorage.setItem('zikrmate_lifetime_total_count', '0');
-      } catch {}
-    }
-
-    if (cloudData.settings) {
-      setSettings((prev) => ({ ...prev, ...cloudData.settings }));
-    }
-
-    if (cloudData.aamalLogs && typeof cloudData.aamalLogs === 'object') {
-      try {
-        clearAllAamalLogs();
-        for (const [dateKey, logData] of Object.entries(cloudData.aamalLogs)) {
-          localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(logData));
-        }
-      } catch {}
-    }
-
-    const now = Date.now();
-    setLastCloudSyncTimestamp(now);
-    showToast('☁️ ক্লাউড থেকে সব হিস্ট্রি ও কাউন্ট সফলভাবে লোড হয়েছে!');
+    applyCloudDataToState(cloudData);
   };
 
   // Manual Trigger Cloud Sync
@@ -468,11 +491,15 @@ export default function App() {
 
   const handleUpdateProfile = async (updated: UserProfile) => {
     const wasSignedIn = userProfile.isSignedIn;
+    const oldEmail = (userProfile.emailOrPhone || '').toLowerCase().trim();
+    const newEmail = (updated.emailOrPhone || '').toLowerCase().trim();
+    const isLoginOrSwitch = updated.isSignedIn && (!wasSignedIn || oldEmail !== newEmail);
+
     setUserProfile(updated);
     try {
       localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
 
-      // Handle LOGOUT: Clean and zero state so next user/guest doesn't see old counts
+      // 1. Handle LOGOUT: Clean and zero state so next user/guest doesn't see old counts
       if (wasSignedIn && !updated.isSignedIn) {
         const resetZikrs: ZikrItem[] = DEFAULT_ZIKRS.map((item) => ({
           ...item,
@@ -492,23 +519,30 @@ export default function App() {
         return;
       }
 
-      if (updated.isSignedIn && updated.emailOrPhone) {
+      // 2. Handle LOGIN or SWITCHING ACCOUNT (from guest or another user)
+      if (isLoginOrSwitch && newEmail) {
         saveAccountToRegistry(updated);
 
-        // If this is a newly signed-in user, check if they exist in cloud
-        if (!wasSignedIn) {
-          const cloudData = await loadUserDataFromCloud(updated.emailOrPhone);
-          if (!cloudData || !cloudData.foundInCloud) {
-            await initializeFreshZeroUserState(updated);
-            return;
-          } else {
-            handleCloudDataLoaded(cloudData);
-            return;
-          }
-        }
+        // Fetch cloud data for this specific new account
+        const cloudData = await loadUserDataFromCloud(newEmail);
 
+        if (!cloudData || !cloudData.foundInCloud) {
+          // BRAND NEW ID / NEW GMAIL!
+          // MUST initialize everything to zero! Previous user's data on device must NOT be shown!
+          await initializeFreshZeroUserState(updated);
+          return;
+        } else {
+          // Existing user with saved cloud history: restore THAT user's data!
+          applyCloudDataToState(cloudData);
+          return;
+        }
+      }
+
+      // 3. Same user profile edits (e.g. updating name, avatar photo, password, settings)
+      if (updated.isSignedIn && newEmail) {
+        saveAccountToRegistry(updated);
         await saveUserDataToCloud(
-          updated.emailOrPhone,
+          newEmail,
           updated,
           zikrs,
           historySessions,
@@ -516,9 +550,11 @@ export default function App() {
           settings,
           getAllAamalLogs()
         );
-        showToast('✓ প্রোফাইল ও ছবি ক্লাউডে সফলভাবে আপডেট হয়েছে!');
+        showToast('✓ প্রোফাইল তথ্য ক্লাউডে সফলভাবে সংরক্ষিত হয়েছে!');
       }
-    } catch {}
+    } catch (e) {
+      console.error('Error in handleUpdateProfile:', e);
+    }
   };
 
   useEffect(() => {
