@@ -108,12 +108,13 @@ export async function saveUserDataToCloud(
       { merge: true }
     );
 
-    // 2. Save complete zikr counters, custom items, and history sessions
+    // 2. Save complete zikr counters, custom items, history sessions, and profile
     const dataDocRef = doc(db, 'users', userKey, 'data', 'zikrState');
     await setDoc(
       dataDocRef,
       {
         userId: userKey,
+        profileJson: JSON.stringify(profile),
         zikrsJson: JSON.stringify(zikrs),
         historyJson: JSON.stringify(history),
         settingsJson: settings ? JSON.stringify(settings) : '{}',
@@ -197,6 +198,14 @@ export async function loadUserDataFromCloud(
 
     if (dataSnap.exists()) {
       const dData = dataSnap.data();
+      if (dData.profileJson) {
+        try {
+          const parsedProfile = JSON.parse(dData.profileJson);
+          if (parsedProfile && typeof parsedProfile === 'object') {
+            loadedProfile = { ...loadedProfile, ...parsedProfile };
+          }
+        } catch {}
+      }
       if (dData.zikrsJson) {
         try {
           const parsedZikrs = JSON.parse(dData.zikrsJson);
@@ -298,10 +307,20 @@ export function subscribeToUserDataInCloud(
       }
 
       const dData = snap.data();
+      let loadedProfile: Partial<UserProfile> | undefined = undefined;
       let loadedZikrs: ZikrItem[] = [];
       let loadedHistory: HistorySession[] = [];
       let loadedSettings: AppSettings | undefined = undefined;
       let loadedAamalLogs: Record<string, any> | undefined = undefined;
+
+      if (dData.profileJson) {
+        try {
+          const parsedProfile = JSON.parse(dData.profileJson);
+          if (parsedProfile && typeof parsedProfile === 'object') {
+            loadedProfile = parsedProfile;
+          }
+        } catch {}
+      }
 
       if (dData.zikrsJson) {
         try {
@@ -333,6 +352,7 @@ export function subscribeToUserDataInCloud(
       }
 
       const state: CloudZikrState = {
+        profile: loadedProfile,
         zikrs: loadedZikrs,
         history: loadedHistory,
         settings: loadedSettings,

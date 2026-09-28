@@ -232,6 +232,10 @@ export default function App() {
       if (isInitial || isFromOtherDevice) {
         isRemoteUpdateRef.current = true;
 
+        if (cloudData.profile && typeof cloudData.profile === 'object') {
+          setUserProfile((prev) => ({ ...prev, ...cloudData.profile, isSignedIn: true }));
+        }
+
         if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
           setZikrs(cloudData.zikrs);
           try {
@@ -390,6 +394,26 @@ export default function App() {
       showToast('⚠️ ক্লাউড সিঙ্কে সমস্যা হয়েছে, অফলাইনে ডাটা সুরক্ষিত আছে');
       return false;
     }
+  };
+
+  const handleUpdateProfile = async (updated: UserProfile) => {
+    setUserProfile(updated);
+    try {
+      localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
+      if (updated.isSignedIn && updated.emailOrPhone) {
+        saveAccountToRegistry(updated);
+        await saveUserDataToCloud(
+          updated.emailOrPhone,
+          updated,
+          zikrs,
+          historySessions,
+          lifetimeTotalCount,
+          settings,
+          getAllAamalLogs()
+        );
+        showToast('✓ প্রোফাইল ও ছবি ক্লাউডে সফলভাবে আপডেট হয়েছে!');
+      }
+    } catch {}
   };
 
   useEffect(() => {
@@ -1174,7 +1198,7 @@ export default function App() {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         userProfile={userProfile}
-        onUpdateProfile={setUserProfile}
+        onUpdateProfile={handleUpdateProfile}
         onNavigateModule={setActiveModule}
         themeMode={settings.themeMode}
         onToggleThemeMode={handleToggleThemeMode}
