@@ -10,39 +10,39 @@ import {
   QuranAyah,
   QuranWord,
   QURAN_RECITERS,
-  POPULAR_SURAHS_NUMBERS,
   fetchAyahTafsir,
 } from '../utils/quranService';
+import { ThemeMode, ZikrLanguage } from '../types';
+import { soundHaptics } from '../utils/audioHaptics';
 import {
+  QURAN_UI,
+  SURAH_MEANINGS,
+} from '../utils/appTranslations';
+import { SUPPORTED_LANGUAGES } from '../utils/constants';
+
+const POPULAR_SURAHS = [1, 18, 36, 55, 56, 67, 78, 112, 113, 114];
+import {
+  Search,
+  BookOpen,
+  Volume2,
   Play,
   Pause,
-  Search,
-  Volume2,
-  VolumeX,
-  Bookmark,
-  Check,
-  BookOpen,
-  Book,
-  ChevronRight,
   ChevronLeft,
-  ChevronDown,
-  ArrowLeft,
-  Type,
+  ChevronRight,
+  Bookmark,
   Share2,
-  Sparkles,
+  Check,
   RotateCcw,
-  SlidersHorizontal,
-  ArrowUp,
+  Sparkles,
+  Sliders,
   X,
+  VolumeX,
   RefreshCw,
   LayoutGrid,
-  Info,
+  ChevronDown,
+  Book,
   Globe,
 } from 'lucide-react';
-import { soundHaptics } from '../utils/audioHaptics';
-import { ThemeMode, ZikrLanguage } from '../types';
-import { QURAN_UI, SURAH_MEANINGS } from '../utils/appTranslations';
-import { SUPPORTED_LANGUAGES } from '../utils/constants';
 
 interface QuranViewProps {
   soundEnabled: boolean;
@@ -51,71 +51,58 @@ interface QuranViewProps {
   onSelectLanguage?: (lang: ZikrLanguage) => void;
 }
 
-type TabType = 'all' | 'meccan' | 'medinan' | 'popular' | 'bookmarks';
-type FontSize = 'normal' | 'large' | 'xl' | '2xl';
+type TabType = 'all' | 'popular' | 'meccan' | 'medinan' | 'bookmarks';
+type FontSizeType = 'normal' | 'large' | 'xl' | '2xl';
 
 interface BookmarkItem {
   surahNumber: number;
   ayahNumber: number;
   surahName: string;
   surahEnglishName: string;
-  arabicSnippet?: string;
-  translationSnippet?: string;
+  arabicSnippet: string;
+  translationSnippet: string;
   timestamp: number;
 }
 
 export const QuranView: React.FC<QuranViewProps> = ({
   soundEnabled,
-  themeMode = 'day',
+  themeMode = 'night',
   selectedLanguage = 'bn',
   onSelectLanguage,
 }) => {
   const isDay = themeMode === 'day';
 
-  // Navigation & Surah State
+  // Navigation & Selection state
   const [selectedSurahNumber, setSelectedSurahNumber] = useState<number | null>(null);
   const [surahDetail, setSurahDetail] = useState<QuranSurahDetail | null>(null);
-  const [isLoadingSurah, setIsLoadingSurah] = useState(false);
+  const [isLoadingSurah, setIsLoadingSurah] = useState<boolean>(false);
   const [surahLoadError, setSurahLoadError] = useState<string | null>(null);
 
-  // Filters & Search
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+  // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabType>('all');
   const [selectedJuz, setSelectedJuz] = useState<number | 'all'>('all');
-  const [isSurahSearchOpen, setIsSurahSearchOpen] = useState(false);
   const [surahSearchText, setSurahSearchText] = useState('');
+  const [isSurahSearchOpen, setIsSurahSearchOpen] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
 
-  // Reader Customizations (Word-by-word toggle enabled by default)
-  const [wordByWordMode, setWordByWordMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('noor_quran_wbw_mode');
-    return saved !== null ? saved === 'true' : true;
-  });
-  const [selectedReciterId, setSelectedReciterId] = useState<string>(() => {
-    return localStorage.getItem('noor_quran_reciter') || 'ar.alafasy';
-  });
-  const [fontSize, setFontSize] = useState<FontSize>(() => {
-    return (localStorage.getItem('noor_quran_fontsize') as FontSize) || 'large';
-  });
-  const [showTranslation, setShowTranslation] = useState<boolean>(() => {
-    const saved = localStorage.getItem('noor_quran_show_trans');
-    return saved !== null ? saved === 'true' : true;
-  });
-  const [showTransliteration, setShowTransliteration] = useState<boolean>(() => {
-    const saved = localStorage.getItem('noor_quran_show_pronounce');
-    return saved !== null ? saved === 'true' : true;
-  });
+  // Reader Customization & Display Settings
+  const [wordByWordMode, setWordByWordMode] = useState<boolean>(true);
+  const [showTranslation, setShowTranslation] = useState<boolean>(true);
+  const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
+  const [fontSize, setFontSize] = useState<FontSizeType>('large');
+  const [selectedReciterId, setSelectedReciterId] = useState<string>('ar.alafasy');
   const [autoScroll, setAutoScroll] = useState<boolean>(true);
 
   // Audio Playback State
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playingMode, setPlayingMode] = useState<'surah' | 'ayah' | null>(null);
   const [currentPlayingAyahNum, setCurrentPlayingAyahNum] = useState<number | null>(null);
   const [audioProgress, setAudioProgress] = useState<number>(0);
-  const [audioDuration, setAudioDuration] = useState<number>(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
+  const [audioDuration, setAudioDuration] = useState<number>(0);
 
-  // Bookmarks & Last Read
+  // Bookmarks & Last Read persistence
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(() => {
     try {
       const saved = localStorage.getItem('noor_quran_bookmarks');
@@ -135,7 +122,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
       const saved = localStorage.getItem('noor_quran_last_read');
       if (saved) return JSON.parse(saved);
     } catch {}
-    // Default fallback to Surah 1 Al-Faatiha
     return {
       surahNumber: 1,
       ayahNumber: 1,
@@ -155,7 +141,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
   // UI Interactive States
   const [copiedAyah, setCopiedAyah] = useState<number | null>(null);
-  const [jumpVerseInput, setJumpVerseInput] = useState('');
 
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -184,16 +169,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
           }
         }
       }
-      setIsPlaying(false);
-      setPlayingMode(null);
-      setCurrentPlayingAyahNum(null);
-      setAudioProgress(0);
+      stopAudio();
     };
 
     const handleError = () => {
-      setIsPlaying(false);
-      setPlayingMode(null);
-      setCurrentPlayingAyahNum(null);
+      stopAudio();
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -201,86 +181,47 @@ export const QuranView: React.FC<QuranViewProps> = ({
     audio.addEventListener('error', handleError);
 
     return () => {
-      audio.pause();
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
-      audio.src = '';
+      audio.pause();
     };
   }, [surahDetail, currentPlayingAyahNum, playingMode]);
 
-  // Save customizations
+  // Save Bookmarks
   useEffect(() => {
-    localStorage.setItem('noor_quran_wbw_mode', String(wordByWordMode));
-  }, [wordByWordMode]);
-
-  useEffect(() => {
-    localStorage.setItem('noor_quran_reciter', selectedReciterId);
-  }, [selectedReciterId]);
-
-  useEffect(() => {
-    localStorage.setItem('noor_quran_fontsize', fontSize);
-  }, [fontSize]);
-
-  useEffect(() => {
-    localStorage.setItem('noor_quran_show_trans', String(showTranslation));
-  }, [showTranslation]);
-
-  useEffect(() => {
-    localStorage.setItem('noor_quran_show_pronounce', String(showTransliteration));
-  }, [showTransliteration]);
-
-  useEffect(() => {
-    localStorage.setItem('noor_quran_bookmarks', JSON.stringify(bookmarks));
+    try {
+      localStorage.setItem('noor_quran_bookmarks', JSON.stringify(bookmarks));
+    } catch {}
   }, [bookmarks]);
 
-  // Reload current Surah if user changes language anywhere in the app
+  // Save Last Read
   useEffect(() => {
-    if (selectedSurahNumber !== null) {
-      loadSurah(selectedSurahNumber, currentPlayingAyahNum || undefined);
+    if (lastRead) {
+      try {
+        localStorage.setItem('noor_quran_last_read', JSON.stringify(lastRead));
+      } catch {}
     }
-  }, [selectedLanguage]);
+  }, [lastRead]);
 
-  // Language Change Handler that updates both local view & global app language
-  const handleLanguageChange = (newLang: ZikrLanguage) => {
-    if (onSelectLanguage) {
-      onSelectLanguage(newLang);
-    }
-    try {
-      localStorage.setItem('zikrmate_selected_language', newLang);
-    } catch {}
-    setShowLanguagePicker(false);
-    if (soundEnabled) soundHaptics.playTap();
-  };
-
-  // Load a full Surah
+  // Load a Surah by number
   const loadSurah = async (surahNumber: number, targetAyahNumber?: number) => {
     setSelectedSurahNumber(surahNumber);
     setIsLoadingSurah(true);
     setSurahLoadError(null);
-    setIsSurahSearchOpen(false);
-    setSurahSearchText('');
+    stopAudio();
 
     try {
-      const detail = await fetchSurah(surahNumber, selectedReciterId, selectedLanguage);
+      const detail = await fetchSurah(surahNumber, selectedLanguage);
       setSurahDetail(detail);
 
       const targetAyah = targetAyahNumber || 1;
       setLastRead({
-        surahNumber: detail.number,
+        surahNumber,
         ayahNumber: targetAyah,
         surahName: detail.name,
         surahEnglishName: detail.englishName,
       });
-      localStorage.setItem(
-        'noor_quran_last_read',
-        JSON.stringify({
-          surahNumber: detail.number,
-          ayahNumber: targetAyah,
-          surahName: detail.name,
-          surahEnglishName: detail.englishName,
-        })
-      );
 
       if (targetAyahNumber) {
         setTimeout(() => {
@@ -290,13 +231,24 @@ export const QuranView: React.FC<QuranViewProps> = ({
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err: any) {
-      setSurahLoadError(err.message || 'Failed to load Surah data. Please check internet connection.');
+      setSurahLoadError(err.message || 'সূরা লোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।');
     } finally {
       setIsLoadingSurah(false);
     }
   };
 
-  // Scroll smoothly to specific Ayah
+  // Switch language and reload active surah if open
+  const handleLanguageChange = (lang: ZikrLanguage) => {
+    if (onSelectLanguage) {
+      onSelectLanguage(lang);
+    }
+    setShowLanguagePicker(false);
+    if (selectedSurahNumber !== null) {
+      loadSurah(selectedSurahNumber);
+    }
+  };
+
+  // Scroll to Ayah
   const scrollToAyah = (ayahNum: number) => {
     const el = ayahRefs.current.get(ayahNum);
     if (el) {
@@ -304,7 +256,35 @@ export const QuranView: React.FC<QuranViewProps> = ({
     }
   };
 
-  // Play Full Surah Audio
+  // Play audio for an individual Ayah
+  const playAyahAudio = (ayah: QuranAyah) => {
+    if (!audioRef.current) return;
+    const audioUrl = ayah.audioUrl || `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber}.mp3`;
+
+    if (isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === ayah.number) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    audioRef.current.src = audioUrl;
+    audioRef.current
+      .play()
+      .then(() => {
+        setIsPlaying(true);
+        setPlayingMode('ayah');
+        setCurrentPlayingAyahNum(ayah.number);
+        if (autoScroll) {
+          scrollToAyah(ayah.number);
+        }
+      })
+      .catch((err) => {
+        console.error('Audio play error:', err);
+        setIsPlaying(false);
+      });
+  };
+
+  // Play audio for entire Surah
   const playSurahAudio = () => {
     if (!audioRef.current || !surahDetail) return;
 
@@ -314,209 +294,153 @@ export const QuranView: React.FC<QuranViewProps> = ({
       return;
     }
 
-    if (soundEnabled) soundHaptics.playTap();
-    const reciter = QURAN_RECITERS.find((r) => r.id === selectedReciterId);
-    const surahPadded = String(surahDetail.number).padStart(3, '0');
-    const audioUrl = reciter?.surahAudioBase
-      ? `${reciter.surahAudioBase}/${surahPadded}.mp3`
-      : surahDetail.audioUrl || `https://cdn.islamic.network/quran/audio-surah/128/${selectedReciterId}/${surahDetail.number}.mp3`;
-
-    audioRef.current.src = audioUrl;
-    audioRef.current
-      .play()
-      .then(() => {
-        setIsPlaying(true);
-        setPlayingMode('surah');
-        setCurrentPlayingAyahNum(null);
-      })
-      .catch((err) => {
-        console.warn('Playback error:', err);
-        setIsPlaying(false);
-      });
-  };
-
-  // Play Single Ayah Audio
-  const playAyahAudio = (ayah: QuranAyah) => {
-    if (!audioRef.current) return;
-
-    if (isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === ayah.number) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      setCurrentPlayingAyahNum(null);
-      return;
+    const firstAyah = surahDetail.ayahs[0];
+    if (firstAyah) {
+      playAyahAudio(firstAyah);
+      setPlayingMode('ayah');
     }
-
-    if (soundEnabled) soundHaptics.playTap();
-    const url = ayah.audioUrl || `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber}.mp3`;
-    audioRef.current.src = url;
-    audioRef.current
-      .play()
-      .then(() => {
-        setIsPlaying(true);
-        setPlayingMode('ayah');
-        setCurrentPlayingAyahNum(ayah.number);
-
-        if (autoScroll) {
-          scrollToAyah(ayah.number);
-        }
-      })
-      .catch((err) => {
-        console.warn('Ayah audio playback notice:', err);
-        setIsPlaying(false);
-      });
   };
 
+  // Stop audio
   const stopAudio = () => {
     if (audioRef.current) {
       audioRef.current.pause();
-      setIsPlaying(false);
-      setPlayingMode(null);
-      setCurrentPlayingAyahNum(null);
+      audioRef.current.currentTime = 0;
     }
+    setIsPlaying(false);
+    setPlayingMode(null);
+    setCurrentPlayingAyahNum(null);
+    setAudioProgress(0);
+    setAudioCurrentTime(0);
   };
 
-  // Open Tafsir Modal for an Ayah
+  // Toggle bookmark
+  const toggleBookmark = (
+    surahNum: number,
+    ayahNum: number,
+    arabic: string,
+    translation: string
+  ) => {
+    const sMeta = ALL_114_SURAHS.find((s) => s.number === surahNum);
+    const existingIndex = bookmarks.findIndex(
+      (b) => b.surahNumber === surahNum && b.ayahNumber === ayahNum
+    );
+
+    if (existingIndex >= 0) {
+      setBookmarks((prev) => prev.filter((_, i) => i !== existingIndex));
+    } else {
+      const newBookmark: BookmarkItem = {
+        surahNumber: surahNum,
+        ayahNumber: ayahNum,
+        surahName: sMeta?.name || '',
+        surahEnglishName: sMeta?.englishName || '',
+        arabicSnippet: arabic.slice(0, 60),
+        translationSnippet: translation.slice(0, 80),
+        timestamp: Date.now(),
+      };
+      setBookmarks((prev) => [newBookmark, ...prev]);
+    }
+
+    if (soundEnabled) soundHaptics.playTap();
+    setActiveAyahActionMenu(null);
+  };
+
+  const isAyahBookmarked = (surahNum: number, ayahNum: number): boolean => {
+    return bookmarks.some((b) => b.surahNumber === surahNum && b.ayahNumber === ayahNum);
+  };
+
+  // Open Tafsir Modal
   const handleOpenTafsir = async (ayah: QuranAyah) => {
+    if (!surahDetail) return;
     setActiveTafsirAyah(ayah);
     setShowTafsirModal(true);
-    setActiveAyahActionMenu(null);
     setIsLoadingTafsir(true);
-    if (soundEnabled) soundHaptics.playTap();
+    setActiveAyahActionMenu(null);
 
     try {
-      const tafsir = await fetchAyahTafsir(surahDetail?.number || 1, ayah.number, selectedLanguage);
-      setTafsirContent(tafsir);
+      const data = await fetchAyahTafsir(surahDetail.number, ayah.number, selectedLanguage);
+      setTafsirContent(data);
     } catch {
       setTafsirContent({
-        author: selectedLanguage === 'bn' ? 'তাফসীর ও শানে নুযুল' : 'Tafsir & Commentary',
-        text: selectedLanguage === 'bn' ? 'এই আয়াতের বিস্তারিত তাফসীর ও অনুবাদ লোড করা হচ্ছে...' : 'Loading detailed Tafsir & commentary...',
+        author: selectedLanguage === 'bn' ? 'তাফসীর' : 'Tafsir',
+        text: selectedLanguage === 'bn' ? 'তাফসীর লোড করা সম্ভব হয়নি।' : 'Could not load Tafsir.',
       });
     } finally {
       setIsLoadingTafsir(false);
     }
   };
 
-  // Bookmark Toggle
-  const toggleBookmark = (
-    surahNumber: number,
-    ayahNumber: number,
-    arabicSnippet: string,
-    translationSnippet: string
-  ) => {
-    const isBookmarked = bookmarks.some(
-      (b) => b.surahNumber === surahNumber && b.ayahNumber === ayahNumber
-    );
-
-    if (isBookmarked) {
-      setBookmarks(
-        bookmarks.filter((b) => !(b.surahNumber === surahNumber && b.ayahNumber === ayahNumber))
-      );
-      if (soundEnabled) soundHaptics.playTap();
-    } else {
-      const meta = ALL_114_SURAHS.find((s) => s.number === surahNumber);
-      const newBookmark: BookmarkItem = {
-        surahNumber,
-        ayahNumber,
-        surahName: meta?.name || `Surah ${surahNumber}`,
-        surahEnglishName: meta?.englishName || `Surah ${surahNumber}`,
-        arabicSnippet: arabicSnippet.slice(0, 100),
-        translationSnippet: translationSnippet.slice(0, 120),
-        timestamp: Date.now(),
-      };
-      setBookmarks([newBookmark, ...bookmarks]);
-      if (soundEnabled) soundHaptics.playMilestone();
-    }
-    setActiveAyahActionMenu(null);
-  };
-
-  const isAyahBookmarked = (surahNumber: number, ayahNumber: number): boolean => {
-    return bookmarks.some((b) => b.surahNumber === surahNumber && b.ayahNumber === ayahNumber);
-  };
-
   // Copy Ayah
   const handleCopyAyah = (ayah: QuranAyah) => {
     if (!surahDetail) return;
-    const text = `${ayah.arabic}\n\n"${ayah.translation}"\n\n— Quran ${surahDetail.englishName} (${surahDetail.number}:${ayah.number})`;
+    const text = `${ayah.arabic}\n\n${ayah.translation}\n\n[সূরা ${surahDetail.englishName} : আয়াত ${ayah.number}]`;
     navigator.clipboard.writeText(text);
     setCopiedAyah(ayah.number);
-    setActiveAyahActionMenu(null);
-    if (soundEnabled) soundHaptics.playTap();
     setTimeout(() => setCopiedAyah(null), 2000);
+    setActiveAyahActionMenu(null);
   };
 
   // Share Ayah
-  const handleShareAyah = async (ayah: QuranAyah) => {
+  const handleShareAyah = (ayah: QuranAyah) => {
     if (!surahDetail) return;
-    const shareData = {
-      title: `Noble Quran ${surahDetail.englishName} (${surahDetail.number}:${ayah.number})`,
-      text: `${ayah.arabic}\n\n"${ayah.translation}"\n\n— Surah ${surahDetail.englishName} (${surahDetail.number}:${ayah.number})`,
-      url: window.location.href,
-    };
-    setActiveAyahActionMenu(null);
+    const text = `${ayah.arabic}\n\n${ayah.translation}\n\n- সূরা ${surahDetail.englishName} (${ayah.number})`;
     if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch {}
+      navigator.share({
+        title: `সূরা ${surahDetail.englishName} - আয়াত ${ayah.number}`,
+        text: text,
+      });
     } else {
-      handleCopyAyah(ayah);
+      navigator.clipboard.writeText(text);
+      setCopiedAyah(ayah.number);
+      setTimeout(() => setCopiedAyah(null), 2000);
     }
+    setActiveAyahActionMenu(null);
   };
 
-  // Jump to Ayah
-  const handleJumpSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const ayahNum = parseInt(jumpVerseInput, 10);
-    if (!surahDetail || isNaN(ayahNum)) return;
-    if (ayahNum >= 1 && ayahNum <= surahDetail.numberOfAyahs) {
-      scrollToAyah(ayahNum);
-      setJumpVerseInput('');
-      setShowDetailsModal(false);
-    }
-  };
+  // Filtered Surahs List for the Directory
+  const filteredSurahs = useMemo(() => {
+    return ALL_114_SURAHS.filter((surah) => {
+      // 1. Tab filter
+      if (activeTab === 'popular' && !POPULAR_SURAHS.includes(surah.number)) return false;
+      if (activeTab === 'meccan' && surah.revelationType !== 'Meccan') return false;
+      if (activeTab === 'medinan' && surah.revelationType !== 'Medinan') return false;
 
-  // Filtered verses inside open Surah
+      // 2. Juz filter
+      if (selectedJuz !== 'all' && surah.startJuz !== selectedJuz) return false;
+
+      // 3. Search text
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const numMatch = String(surah.number) === q;
+        const nameMatch = surah.englishName.toLowerCase().includes(q);
+        const transMatch = surah.englishNameTranslation.toLowerCase().includes(q);
+        const arabicMatch = surah.name.includes(q);
+        const localMeaning = (SURAH_MEANINGS[surah.number]?.[selectedLanguage] || '').toLowerCase().includes(q);
+        return numMatch || nameMatch || transMatch || arabicMatch || localMeaning;
+      }
+
+      return true;
+    });
+  }, [activeTab, selectedJuz, searchQuery, selectedLanguage]);
+
+  // Ayahs to display in Reader View with optional inner-search filter
   const displayedAyahs = useMemo(() => {
     if (!surahDetail) return [];
     if (!surahSearchText.trim()) return surahDetail.ayahs;
+
     const q = surahSearchText.toLowerCase().trim();
     return surahDetail.ayahs.filter(
       (a) =>
         String(a.number) === q ||
         a.arabic.includes(q) ||
         a.translation.toLowerCase().includes(q) ||
-        a.transliteration.toLowerCase().includes(q) ||
-        a.translations?.some((t) => t.text.toLowerCase().includes(q))
+        (a.transliteration && a.transliteration.toLowerCase().includes(q))
     );
   }, [surahDetail, surahSearchText]);
 
-  // Filtered 114 Surahs
-  const filteredSurahs = useMemo(() => {
-    return ALL_114_SURAHS.filter((surah) => {
-      const q = searchQuery.toLowerCase().trim();
-      const meaning = SURAH_MEANINGS[surah.number]?.[selectedLanguage] || surah.englishNameTranslation;
-      const matchesSearch =
-        !q ||
-        surah.englishName.toLowerCase().includes(q) ||
-        surah.englishNameTranslation.toLowerCase().includes(q) ||
-        meaning.toLowerCase().includes(q) ||
-        surah.name.includes(q) ||
-        String(surah.number) === q;
-
-      const matchesJuz = selectedJuz === 'all' || surah.startJuz === selectedJuz;
-
-      if (!matchesSearch || !matchesJuz) return false;
-
-      if (activeTab === 'meccan') return surah.revelationType === 'Meccan';
-      if (activeTab === 'medinan') return surah.revelationType === 'Medinan';
-      if (activeTab === 'popular') return POPULAR_SURAHS_NUMBERS.includes(surah.number);
-
-      return true;
-    });
-  }, [searchQuery, selectedJuz, activeTab, selectedLanguage]);
-
-  const formatTime = (secs: number) => {
-    const mins = Math.floor(secs / 60);
-    const remainder = Math.floor(secs % 60);
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const remainder = Math.floor(seconds % 60);
     return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
   };
 
@@ -534,8 +458,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
       {/* ======================================================== */}
       {selectedSurahNumber !== null ? (
         <div className="space-y-4">
-          {/* TOP ISLAMIC GREEN HEADER BAR */}
-          <div className="sticky top-0 z-40 bg-[#1e6132] dark:bg-[#134427] text-white shadow-md rounded-2xl px-3.5 py-3 flex items-center justify-between gap-2 border border-emerald-500/20">
+          {/* TOP ISLAMIC HEADER BAR (Cohesive Home Page Theme) */}
+          <div
+            className={`sticky top-0 z-40 text-white shadow-xl rounded-2xl px-4 py-3 flex items-center justify-between gap-3 border transition-colors ${
+              isDay
+                ? 'bg-gradient-to-r from-[#144d52] via-[#1a5e64] to-[#257277] border-[#2d7d83]/40 shadow-[#135d66]/15'
+                : 'bg-gradient-to-r from-[#07191e] via-[#0b262d] to-[#10363e] border-[#163c46] shadow-black/60'
+            }`}
+          >
             {/* Left: Back Arrow */}
             <button
               onClick={() => {
@@ -543,10 +473,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 setSelectedSurahNumber(null);
                 setSurahDetail(null);
               }}
-              className="p-1.5 -ml-1 rounded-xl hover:bg-black/20 active:scale-95 transition cursor-pointer"
+              className="p-2 -ml-1 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer flex items-center justify-center"
               title={selectedLanguage === 'bn' ? 'সূরা তালিকায় ফিরে যান' : 'Back to Surah List'}
             >
-              <ChevronLeft className="w-6 h-6 text-white" />
+              <ChevronLeft className="w-5 h-5 text-white stroke-[2.5]" />
             </button>
 
             {/* Center: Surah Title */}
@@ -555,43 +485,59 @@ export const QuranView: React.FC<QuranViewProps> = ({
               onClick={() => setShowDetailsModal(true)}
             >
               <div className="flex items-center gap-1.5">
-                <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                <h2 className="text-base sm:text-lg font-extrabold text-white tracking-wide drop-shadow-sm">
                   {surahDetail ? surahDetail.englishName : ALL_114_SURAHS[selectedSurahNumber - 1]?.englishName || 'Surah'}
                 </h2>
               </div>
-              <span className="text-[10px] text-emerald-100/90 font-medium">
-                {surahDetail ? `${surahDetail.name} • ${surahDetail.numberOfAyahs} ${QURAN_UI.ayahs[selectedLanguage]}` : '...'}
+              <span className="text-[11px] text-[#2dd4bf] font-semibold flex items-center gap-1">
+                <span>{surahDetail?.name || ''}</span>
+                <span>•</span>
+                <span>
+                  {surahDetail
+                    ? `${surahDetail.numberOfAyahs} ${QURAN_UI.ayahs[selectedLanguage]}`
+                    : '...'}
+                </span>
               </span>
             </div>
 
             {/* Right: Language Picker & Search Icons */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setShowLanguagePicker(!showLanguagePicker)}
-                className="p-1.5 rounded-xl hover:bg-black/20 active:scale-95 transition cursor-pointer flex items-center gap-1 text-xs font-bold text-emerald-100"
+                className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer flex items-center gap-1.5 text-xs font-bold text-teal-100 border border-white/15"
                 title="Change Language"
               >
-                <Globe className="w-4 h-4 text-emerald-200" />
+                <Globe className="w-3.5 h-3.5 text-[#2dd4bf]" />
                 <span className="text-[10px] uppercase font-mono">{selectedLanguage}</span>
               </button>
 
               <button
                 onClick={() => setIsSurahSearchOpen(!isSurahSearchOpen)}
-                className="p-1.5 rounded-xl hover:bg-black/20 active:scale-95 transition cursor-pointer"
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer"
                 title="Search Verses"
               >
-                <Search className="w-5 h-5 text-white" />
+                <Search className="w-4 h-4 text-white" />
               </button>
             </div>
           </div>
 
           {/* Quick Language Switcher Dropdown */}
           {showLanguagePicker && (
-            <div className="p-3 rounded-2xl bg-white dark:bg-[#071f25] border border-emerald-500/30 shadow-xl space-y-2 animate-in fade-in slide-in-from-top-2">
-              <div className="text-[11px] font-bold text-slate-500 dark:text-emerald-300 flex items-center justify-between">
+            <div
+              className={`p-3.5 rounded-2xl border shadow-xl space-y-2.5 animate-in fade-in slide-in-from-top-2 ${
+                isDay
+                  ? 'bg-white border-[#dcebe8] text-slate-800'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-white'
+              }`}
+            >
+              <div
+                className={`text-[11px] font-bold flex items-center justify-between ${
+                  isDay ? 'text-[#144d52]' : 'text-[#2dd4bf]'
+                }`}
+              >
                 <span>{selectedLanguage === 'bn' ? 'কুরআনের ভাষা বেছে নিন' : 'Select Quran Language'}</span>
-                <button onClick={() => setShowLanguagePicker(false)} className="text-slate-400 hover:text-slate-600">
-                  <X className="w-3.5 h-3.5" />
+                <button onClick={() => setShowLanguagePicker(false)} className="text-slate-400 hover:text-white p-1">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -599,15 +545,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   <button
                     key={lang.code}
                     onClick={() => handleLanguageChange(lang.code)}
-                    className={`p-2 rounded-xl text-xs font-bold flex items-center gap-2 border transition cursor-pointer ${
+                    className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 border transition active:scale-95 cursor-pointer ${
                       selectedLanguage === lang.code
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-md'
+                        ? isDay
+                          ? 'bg-[#1c6469] text-white border-[#1c6469] shadow-md'
+                          : 'bg-[#1c6469] text-white border-[#288a91] shadow-md'
                         : isDay
-                        ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#092227] border-[#184850] text-emerald-200 hover:bg-[#0d2f36]'
+                        ? 'bg-[#edf5f4] border-[#d2ece9] text-[#133e42] hover:bg-[#d8ece9]'
+                        : 'bg-[#0a1620] border-[#162c3a] text-[#8ebac0] hover:text-white hover:bg-[#102330]'
                     }`}
                   >
-                    <span>{lang.flag}</span>
+                    <span className="text-base">{lang.flag}</span>
                     <span className="truncate">{lang.nativeName}</span>
                   </button>
                 ))}
@@ -617,8 +565,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
           {/* Quick Search Inside Surah Pop-down */}
           {isSurahSearchOpen && (
-            <div className="p-3 rounded-2xl bg-white dark:bg-[#071f25] border border-emerald-500/30 shadow-lg flex items-center gap-2">
-              <Search className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <div
+              className={`p-3 rounded-2xl border shadow-lg flex items-center gap-2 ${
+                isDay ? 'bg-white border-[#dcebe8]' : 'bg-[#0e1c26] border-[#1a3342]'
+              }`}
+            >
+              <Search className="w-4 h-4 text-[#2dd4bf] shrink-0" />
               <input
                 type="text"
                 autoFocus
@@ -629,10 +581,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 }
                 value={surahSearchText}
                 onChange={(e) => setSurahSearchText(e.target.value)}
-                className="flex-1 bg-transparent text-xs font-semibold focus:outline-none text-slate-800 dark:text-slate-100"
+                className={`flex-1 bg-transparent text-xs font-semibold focus:outline-none ${
+                  isDay ? 'text-slate-800 placeholder-slate-400' : 'text-white placeholder-[#507d85]'
+                }`}
               />
               {surahSearchText && (
-                <button onClick={() => setSurahSearchText('')} className="p-1 text-slate-400 hover:text-slate-600">
+                <button onClick={() => setSurahSearchText('')} className="p-1 text-slate-400 hover:text-white">
                   <X className="w-4 h-4" />
                 </button>
               )}
@@ -641,9 +595,15 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
           {/* Audio Playing Floating Tracker Bar */}
           {isPlaying && (
-            <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white shadow-lg flex items-center justify-between gap-3 text-xs border border-emerald-400/30">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+            <div
+              className={`p-3 rounded-2xl text-white shadow-xl flex items-center justify-between gap-3 text-xs border ${
+                isDay
+                  ? 'bg-gradient-to-r from-[#144d52] to-[#1c6469] border-teal-300/40'
+                  : 'bg-gradient-to-r from-[#0d2a35] via-[#103642] to-[#154654] border-[#226371]'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#2dd4bf] animate-ping shrink-0" />
                 <span className="font-bold truncate">
                   {playingMode === 'ayah'
                     ? `${selectedLanguage === 'bn' ? 'তিলাওয়াত: আয়াত' : 'Reciting: Ayah'} ${currentPlayingAyahNum}`
@@ -651,12 +611,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <span className="text-[11px] font-mono text-emerald-200">
+                <span className="text-[11px] font-mono text-[#2dd4bf]">
                   {formatTime(audioCurrentTime)} / {formatTime(audioDuration || 0)}
                 </span>
                 <button
                   onClick={stopAudio}
-                  className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white cursor-pointer"
+                  className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white cursor-pointer active:scale-95"
                 >
                   <Pause className="w-3.5 h-3.5 fill-current" />
                 </button>
@@ -664,19 +624,23 @@ export const QuranView: React.FC<QuranViewProps> = ({
             </div>
           )}
 
-          {/* Bismillah Calligraphy (For surahs other than 9 and 1) */}
+          {/* Bismillah Calligraphy Card (Matching Home Page Theme) */}
           {surahDetail && surahDetail.number !== 9 && surahDetail.number !== 1 && (
             <div
-              className={`py-5 px-4 rounded-2xl text-center border shadow-sm ${
+              className={`py-5 px-4 rounded-[26px] text-center border shadow-xl transition-colors ${
                 isDay
-                  ? 'bg-white border-slate-200 text-[#164e52]'
-                  : 'bg-[#0b2830] border-[#184850] text-[#34d399]'
+                  ? 'bg-white border-[#dcebe8] text-[#144d52]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-[#2dd4bf] shadow-black/50'
               }`}
             >
-              <div className="font-arabic text-2xl sm:text-3xl font-bold leading-relaxed tracking-wide">
+              <div className="font-arabic text-2xl sm:text-3xl font-bold leading-relaxed tracking-wide drop-shadow-sm">
                 بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
               </div>
-              <p className={`text-[11px] mt-1.5 italic ${isDay ? 'text-[#507579]' : 'text-emerald-300/80'}`}>
+              <p
+                className={`text-[11px] mt-1.5 italic font-medium ${
+                  isDay ? 'text-[#507579]' : 'text-[#7ba3a9]'
+                }`}
+              >
                 {selectedLanguage === 'bn'
                   ? 'পরম করুণাময় ও অসীম দয়ালু আল্লাহর নামে শুরু করছি'
                   : 'In the name of Allah, the Entirely Merciful, the Especially Merciful.'}
@@ -690,16 +654,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className={`p-6 rounded-2xl border animate-pulse space-y-4 ${
-                    isDay ? 'bg-white border-slate-200' : 'bg-[#0b2830] border-[#184850]'
+                  className={`p-6 rounded-[26px] border animate-pulse space-y-4 ${
+                    isDay ? 'bg-white border-[#dcebe8]' : 'bg-[#0e1c26] border-[#1a3342]'
                   }`}
                 >
                   <div className="flex justify-between items-center">
-                    <div className={`w-8 h-8 rounded-full ${isDay ? 'bg-slate-200' : 'bg-[#06191d]'}`} />
-                    <div className={`w-16 h-4 rounded-lg ${isDay ? 'bg-slate-200' : 'bg-[#06191d]'}`} />
+                    <div className={`w-8 h-8 rounded-full ${isDay ? 'bg-slate-200' : 'bg-[#152a36]'}`} />
+                    <div className={`w-16 h-4 rounded-lg ${isDay ? 'bg-slate-200' : 'bg-[#152a36]'}`} />
                   </div>
-                  <div className={`w-full h-16 rounded-xl ${isDay ? 'bg-slate-100' : 'bg-[#082025]'}`} />
-                  <div className={`w-full h-6 rounded-lg ${isDay ? 'bg-slate-100' : 'bg-[#082025]'}`} />
+                  <div className={`w-full h-16 rounded-xl ${isDay ? 'bg-slate-100' : 'bg-[#152a36]'}`} />
+                  <div className={`w-full h-6 rounded-lg ${isDay ? 'bg-slate-100' : 'bg-[#152a36]'}`} />
                 </div>
               ))}
             </div>
@@ -707,11 +671,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
           {/* Error Message & Retry */}
           {surahLoadError && (
-            <div className="p-8 rounded-2xl bg-red-500/10 border border-red-500/30 text-center space-y-3">
-              <p className="text-red-600 dark:text-red-400 font-semibold text-sm">{surahLoadError}</p>
+            <div className="p-8 rounded-[26px] bg-red-500/10 border border-red-500/30 text-center space-y-3">
+              <p className="text-red-500 dark:text-red-400 font-semibold text-sm">{surahLoadError}</p>
               <button
                 onClick={() => loadSurah(selectedSurahNumber)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1c6469] hover:bg-[#154f53] text-white text-xs font-bold transition active:scale-95 cursor-pointer shadow-md"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>{selectedLanguage === 'bn' ? 'পুনরায় চেষ্টা করুন (Retry)' : 'Retry Loading'}</span>
@@ -720,7 +684,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
           )}
 
           {/* ======================================================== */}
-          {/* AYAH CARDS (WORD-BY-WORD & TRANSLATIONS AS IN IMAGE)    */}
+          {/* AYAH CARDS (VIBRANT, HIGH-CONTRAST & HOME THEME COMPLIANT) */}
           {/* ======================================================== */}
           {surahDetail && !isLoadingSurah && (
             <div className="space-y-4">
@@ -739,23 +703,27 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       else ayahRefs.current.delete(ayah.number);
                     }}
                     id={`ayah-${ayah.number}`}
-                    className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+                    className={`rounded-[26px] border transition-all duration-300 overflow-hidden ${
                       isThisAyahPlaying
                         ? isDay
-                          ? 'bg-[#f4fbf8] border-2 border-emerald-600 shadow-lg ring-2 ring-emerald-500/20'
-                          : 'bg-[#0e353d] border-2 border-emerald-400 shadow-lg ring-2 ring-emerald-400/20'
+                          ? 'bg-[#eef8f7] border-2 border-[#1c6469] shadow-xl ring-2 ring-[#1c6469]/20'
+                          : 'bg-[#122836] border-2 border-[#2dd4bf] shadow-xl ring-2 ring-[#2dd4bf]/25'
                         : bookmarked
                         ? isDay
-                          ? 'bg-[#fffdf7] border-amber-300 shadow-sm'
-                          : 'bg-[#142d2a] border-amber-500/50 shadow-sm'
+                          ? 'bg-[#fffdf7] border-amber-300 shadow-md'
+                          : 'bg-[#19221a] border-amber-500/50 shadow-md'
                         : isDay
-                        ? 'bg-white border-slate-200/80 hover:border-slate-300 shadow-sm'
-                        : 'bg-[#092227] border-[#184850] hover:border-[#266e7c] shadow-sm'
+                        ? 'bg-white border-[#dcebe8] hover:border-[#b4ded8] shadow-md shadow-[#135d66]/5'
+                        : 'bg-[#0e1c26] border-[#1a3342] hover:border-[#274d63] shadow-xl shadow-black/40'
                     }`}
                   >
-                    {/* Top Source Header (As seen in screenshot) */}
+                    {/* Top Source Header */}
                     {index === 0 && (
-                      <div className="px-5 pt-3 pb-1 text-[11px] text-slate-400 dark:text-emerald-300/80 font-medium">
+                      <div
+                        className={`px-5 pt-3.5 pb-1 text-[11px] font-bold ${
+                          isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+                        }`}
+                      >
                         {selectedLanguage === 'bn' ? 'ইসলামিক ফাউন্ডেশন' : 'Verified Translation'}
                       </div>
                     )}
@@ -765,8 +733,20 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       <div className="flex items-center justify-between">
                         {/* Left: Ornate Circular Ayah Number Badge */}
                         <div className="relative flex items-center justify-center">
-                          <div className="w-9 h-9 rounded-full border-2 border-dashed border-emerald-600/70 dark:border-emerald-400/70 flex items-center justify-center p-0.5 bg-emerald-50/50 dark:bg-emerald-950/40 shadow-inner">
-                            <div className="w-7 h-7 rounded-full border border-emerald-600/40 dark:border-emerald-400/40 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                          <div
+                            className={`w-9 h-9 rounded-full border-2 border-dashed flex items-center justify-center p-0.5 shadow-inner ${
+                              isDay
+                                ? 'border-[#1c6469]/70 bg-[#edf5f4]'
+                                : 'border-[#2dd4bf]/70 bg-[#071922]'
+                            }`}
+                          >
+                            <div
+                              className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold ${
+                                isDay
+                                  ? 'border-[#1c6469]/40 text-[#144d52]'
+                                  : 'border-[#2dd4bf]/40 text-[#2dd4bf]'
+                              }`}
+                            >
                               {ayah.number}
                             </div>
                           </div>
@@ -776,50 +756,100 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         <div className="relative">
                           <button
                             onClick={() => setActiveAyahActionMenu(isMenuOpen ? null : ayah.number)}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0e353d] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition cursor-pointer flex items-center gap-1"
+                            className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 border ${
+                              isDay
+                                ? 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+                                : 'bg-[#08151e] hover:bg-[#122836] border-[#1a3342]'
+                            }`}
                             title="More Options"
                           >
                             <span className="w-2 h-2 rounded-full bg-amber-400" />
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            <span className="w-2 h-2 rounded-full bg-[#2dd4bf]" />
                             <span className="w-2 h-2 rounded-full bg-rose-400" />
                           </button>
 
                           {/* Ayah Popup Menu */}
                           {isMenuOpen && (
-                            <div className="absolute right-0 top-8 z-30 w-48 rounded-xl bg-white dark:bg-[#071f25] border border-slate-200 dark:border-[#184850] shadow-xl py-1.5 text-xs text-slate-700 dark:text-slate-200 animate-in fade-in zoom-in-95 duration-150">
+                            <div
+                              className={`absolute right-0 top-10 z-30 w-52 rounded-2xl border shadow-2xl py-2 text-xs animate-in fade-in zoom-in-95 duration-150 ${
+                                isDay
+                                  ? 'bg-white border-slate-200 text-slate-700 shadow-slate-300'
+                                  : 'bg-[#0e1c26] border-[#1a3342] text-slate-100 shadow-black'
+                              }`}
+                            >
                               <button
                                 onClick={() => playAyahAudio(ayah)}
-                                className="w-full px-3.5 py-2 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 cursor-pointer"
+                                className={`w-full px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer font-medium ${
+                                  isDay ? 'hover:bg-slate-100' : 'hover:bg-[#152e3c]'
+                                }`}
                               >
-                                {isThisAyahPlaying ? <Pause className="w-3.5 h-3.5 text-emerald-600" /> : <Play className="w-3.5 h-3.5 text-emerald-600" />}
-                                <span>{isThisAyahPlaying ? (selectedLanguage === 'bn' ? 'অডিও থামান' : 'Pause Audio') : (selectedLanguage === 'bn' ? 'আয়াত তিলাওয়াত শুনুন' : 'Play Ayah Audio')}</span>
+                                {isThisAyahPlaying ? (
+                                  <Pause className="w-4 h-4 text-[#2dd4bf]" />
+                                ) : (
+                                  <Play className="w-4 h-4 text-[#2dd4bf]" />
+                                )}
+                                <span>
+                                  {isThisAyahPlaying
+                                    ? selectedLanguage === 'bn'
+                                      ? 'অডিও থামান'
+                                      : 'Pause Audio'
+                                    : selectedLanguage === 'bn'
+                                    ? 'আয়াত তিলাওয়াত শুনুন'
+                                    : 'Play Ayah Audio'}
+                                </span>
                               </button>
                               <button
                                 onClick={() => handleOpenTafsir(ayah)}
-                                className="w-full px-3.5 py-2 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 cursor-pointer"
+                                className={`w-full px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer font-medium ${
+                                  isDay ? 'hover:bg-slate-100' : 'hover:bg-[#152e3c]'
+                                }`}
                               >
-                                <BookOpen className="w-3.5 h-3.5 text-teal-600" />
+                                <BookOpen className="w-4 h-4 text-amber-400" />
                                 <span>{selectedLanguage === 'bn' ? 'তাফসীর ও ব্যাখ্যা দেখুন' : 'View Tafsir'}</span>
                               </button>
                               <button
-                                onClick={() => toggleBookmark(surahDetail.number, ayah.number, ayah.arabic, ayah.translation)}
-                                className="w-full px-3.5 py-2 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 cursor-pointer"
+                                onClick={() =>
+                                  toggleBookmark(surahDetail.number, ayah.number, ayah.arabic, ayah.translation)
+                                }
+                                className={`w-full px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer font-medium ${
+                                  isDay ? 'hover:bg-slate-100' : 'hover:bg-[#152e3c]'
+                                }`}
                               >
-                                <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? 'text-amber-500 fill-amber-500' : 'text-slate-500'}`} />
-                                <span>{bookmarked ? (selectedLanguage === 'bn' ? 'বুকমার্ক মুছুন' : 'Remove Bookmark') : (selectedLanguage === 'bn' ? 'বুকমার্ক করুন' : 'Bookmark Ayah')}</span>
+                                <Bookmark
+                                  className={`w-4 h-4 ${
+                                    bookmarked ? 'text-amber-500 fill-amber-500' : 'text-slate-400'
+                                  }`}
+                                />
+                                <span>
+                                  {bookmarked
+                                    ? selectedLanguage === 'bn'
+                                      ? 'বুকমার্ক মুছুন'
+                                      : 'Remove Bookmark'
+                                    : selectedLanguage === 'bn'
+                                    ? 'বুকমার্ক করুন'
+                                    : 'Bookmark Ayah'}
+                                </span>
                               </button>
                               <button
                                 onClick={() => handleCopyAyah(ayah)}
-                                className="w-full px-3.5 py-2 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 cursor-pointer"
+                                className={`w-full px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer font-medium ${
+                                  isDay ? 'hover:bg-slate-100' : 'hover:bg-[#152e3c]'
+                                }`}
                               >
-                                {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Book className="w-3.5 h-3.5 text-slate-500" />}
+                                {isCopied ? (
+                                  <Check className="w-4 h-4 text-[#2dd4bf]" />
+                                ) : (
+                                  <Book className="w-4 h-4 text-slate-400" />
+                                )}
                                 <span>{selectedLanguage === 'bn' ? 'আয়াত কপি করুন' : 'Copy Ayah'}</span>
                               </button>
                               <button
                                 onClick={() => handleShareAyah(ayah)}
-                                className="w-full px-3.5 py-2 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center gap-2 cursor-pointer"
+                                className={`w-full px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer font-medium ${
+                                  isDay ? 'hover:bg-slate-100' : 'hover:bg-[#152e3c]'
+                                }`}
                               >
-                                <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                                <Share2 className="w-4 h-4 text-slate-400" />
                                 <span>{selectedLanguage === 'bn' ? 'শেয়ার করুন' : 'Share Ayah'}</span>
                               </button>
                             </div>
@@ -827,27 +857,37 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         </div>
                       </div>
 
-                      {/* ARABIC WORD-BY-WORD (শব্দে শব্দে অর্থ) LAYOUT */}
+                      {/* ARABIC WORD-BY-WORD (HIGH-CONTRAST & BRILLIANT IN NIGHT MODE) */}
                       {wordByWordMode && ayah.words && ayah.words.length > 0 ? (
                         <div
                           dir="rtl"
-                          className="flex flex-wrap items-start justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-5 py-2"
+                          className="flex flex-wrap items-start justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-5 py-2.5"
                         >
                           {ayah.words.map((word, wIdx) => (
                             <div
                               key={wIdx}
-                              className="flex flex-col items-center text-center group cursor-pointer p-1 rounded-xl hover:bg-emerald-500/10 transition"
+                              className={`flex flex-col items-center text-center group cursor-pointer p-2 rounded-2xl transition-all ${
+                                isDay
+                                  ? 'hover:bg-[#edf5f4] border border-transparent hover:border-[#cbe4e1]'
+                                  : 'hover:bg-[#152e3c] border border-transparent hover:border-[#1e4456]'
+                              }`}
                             >
-                              {/* Arabic Word Script */}
+                              {/* Arabic Word Script (Pure High Contrast) */}
                               <span
-                                className="font-arabic text-2xl sm:text-3xl font-bold leading-relaxed text-slate-900 dark:text-white transition group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
+                                className={`font-arabic text-2xl sm:text-3xl font-bold leading-relaxed transition drop-shadow-sm ${
+                                  isDay
+                                    ? 'text-[#0f172a] group-hover:text-[#1c6469]'
+                                    : 'text-[#f8fafc] group-hover:text-[#2dd4bf]'
+                                }`}
                               >
                                 {word.arabic}
                               </span>
                               {/* Word Meaning Translation */}
                               <span
                                 dir="ltr"
-                                className="text-[11px] sm:text-xs text-slate-600 dark:text-emerald-200/90 font-sans mt-1 px-1 text-center max-w-[90px] leading-tight font-medium"
+                                className={`text-[11px] sm:text-xs font-sans mt-1 px-1 text-center max-w-[95px] leading-tight font-semibold ${
+                                  isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+                                }`}
                               >
                                 {word.translation}
                               </span>
@@ -859,11 +899,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         <div
                           dir="rtl"
                           className={`font-arabic font-bold ${
-                            isDay ? 'text-slate-900' : 'text-white'
-                          } ${arabicFontClass} text-right my-2 leading-[2.4]`}
+                            isDay ? 'text-[#0f172a]' : 'text-[#f8fafc]'
+                          } ${arabicFontClass} text-right my-2 leading-[2.4] drop-shadow-sm`}
                         >
                           {ayah.arabic}
-                          <span className="inline-flex items-center justify-center w-7 h-7 mx-1.5 rounded-full border border-emerald-500/50 text-xs font-mono text-emerald-600 dark:text-emerald-400 align-middle">
+                          <span
+                            className={`inline-flex items-center justify-center w-7 h-7 mx-1.5 rounded-full border text-xs font-mono font-bold align-middle ${
+                              isDay
+                                ? 'border-[#1c6469] text-[#1c6469] bg-[#edf5f4]'
+                                : 'border-[#2dd4bf]/70 text-[#2dd4bf] bg-[#07131b]'
+                            }`}
+                          >
                             {ayah.number}
                           </span>
                         </div>
@@ -871,31 +917,55 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
                       {/* Transliteration (Pronunciation) */}
                       {showTransliteration && ayah.transliteration && (
-                        <div className="text-xs sm:text-sm italic font-sans text-emerald-700 dark:text-emerald-300 leading-relaxed pt-1 font-medium">
+                        <div
+                          className={`text-xs sm:text-sm italic font-sans leading-relaxed pt-1 font-semibold ${
+                            isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+                          }`}
+                        >
                           {ayah.transliteration}
                         </div>
                       )}
 
                       {/* MULTIPLE TRANSLATIONS BELOW ARABIC */}
                       {showTranslation && (
-                        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-[#143d44]">
+                        <div
+                          className={`space-y-3 pt-3 border-t ${
+                            isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
+                          }`}
+                        >
                           {ayah.translations && ayah.translations.length > 0 ? (
                             ayah.translations.map((trans, tIdx) => (
                               <div key={tIdx} className="space-y-1">
-                                <div className="text-[11px] font-bold text-slate-400 dark:text-emerald-400">
+                                <div
+                                  className={`text-[11px] font-bold ${
+                                    isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+                                  }`}
+                                >
                                   {trans.translator}
                                 </div>
-                                <div className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 font-sans font-normal">
+                                <div
+                                  className={`text-xs sm:text-sm leading-relaxed font-sans font-normal ${
+                                    isDay ? 'text-[#1e293b]' : 'text-[#e2e8f0]'
+                                  }`}
+                                >
                                   {trans.text}
                                 </div>
                               </div>
                             ))
                           ) : (
                             <div className="space-y-1">
-                              <div className="text-[11px] font-bold text-slate-400 dark:text-emerald-400">
+                              <div
+                                className={`text-[11px] font-bold ${
+                                  isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+                                }`}
+                              >
                                 {selectedLanguage === 'bn' ? 'মুফতী তাকী উসমানী' : 'Translation'}
                               </div>
-                              <div className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 font-sans font-normal">
+                              <div
+                                className={`text-xs sm:text-sm leading-relaxed font-sans font-normal ${
+                                  isDay ? 'text-[#1e293b]' : 'text-[#e2e8f0]'
+                                }`}
+                              >
                                 {ayah.translation}
                               </div>
                             </div>
@@ -910,19 +980,31 @@ export const QuranView: React.FC<QuranViewProps> = ({
           )}
 
           {/* ======================================================== */}
-          {/* BOTTOM FIXED ACTION BAR (EXACT 5 BUTTONS FROM IMAGE)   */}
+          {/* BOTTOM FIXED ACTION BAR (MATCHING HOME PAGE THEME)     */}
           {/* ======================================================== */}
-          <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#06191d] border-t border-slate-200 dark:border-[#143d44] shadow-2xl py-2 px-3 sm:px-6">
-            <div className="max-w-xl mx-auto flex items-center justify-between gap-1 text-slate-600 dark:text-slate-300">
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-40 border-t shadow-2xl py-2 px-3 sm:px-6 backdrop-blur-xl transition-colors ${
+              isDay
+                ? 'bg-white/95 border-[#d6e8e5] text-[#133e42]'
+                : 'bg-[#0a1620]/95 border-[#162c3a] text-[#7ba3a9]'
+            }`}
+          >
+            <div className="max-w-xl mx-auto flex items-center justify-between gap-1">
               {/* 1. Tafsir Button */}
               <button
                 onClick={() => {
                   const firstAyah = displayedAyahs[0] || surahDetail?.ayahs[0];
                   if (firstAyah) handleOpenTafsir(firstAyah);
                 }}
-                className="flex flex-col items-center justify-center gap-1 p-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer flex-1"
+                className={`flex flex-col items-center justify-center gap-1 p-1 transition cursor-pointer flex-1 ${
+                  isDay ? 'hover:text-[#1c6469]' : 'hover:text-[#2dd4bf]'
+                }`}
               >
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    isDay ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/15 text-amber-400'
+                  }`}
+                >
                   <BookOpen className="w-4 h-4" />
                 </div>
                 <span className="text-[10px] font-bold">Tafsir</span>
@@ -935,30 +1017,50 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   if (soundEnabled) soundHaptics.playTap();
                 }}
                 className={`flex flex-col items-center justify-center gap-1 p-1 transition cursor-pointer flex-1 ${
-                  !wordByWordMode ? 'text-emerald-600 dark:text-emerald-400' : 'hover:text-emerald-600 dark:hover:text-emerald-400'
+                  !wordByWordMode
+                    ? isDay
+                      ? 'text-[#1c6469]'
+                      : 'text-[#2dd4bf]'
+                    : isDay
+                    ? 'hover:text-[#1c6469]'
+                    : 'hover:text-[#2dd4bf]'
                 }`}
               >
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    isDay ? 'bg-[#edf5f4] text-[#1c6469]' : 'bg-[#152e3c] text-[#2dd4bf]'
+                  }`}
+                >
                   <Book className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-bold">
+                <span className="text-[10px] font-bold whitespace-nowrap">
                   {wordByWordMode ? 'Without word' : 'Word by word'}
                 </span>
               </button>
 
-              {/* 3. Prominent Circular Play Audio Button (Center Pink/Rose) */}
+              {/* 3. Prominent Circular Play Audio Button */}
               <button
                 onClick={playSurahAudio}
                 className="flex flex-col items-center justify-center -mt-3 transition active:scale-95 cursor-pointer"
               >
-                <div className="w-12 h-12 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-500/30 border-2 border-white dark:border-[#06191d]">
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl border-2 cursor-pointer ${
+                    isDay
+                      ? 'bg-[#1c6469] hover:bg-[#154f53] text-white border-white shadow-[#135d66]/30'
+                      : 'bg-[#1c6469] hover:bg-[#154f53] text-white border-[#2dd4bf]/40 shadow-black/80'
+                  }`}
+                >
                   {isPlaying && playingMode === 'surah' ? (
                     <Pause className="w-5 h-5 fill-current" />
                   ) : (
                     <Play className="w-5 h-5 fill-current ml-0.5" />
                   )}
                 </div>
-                <span className="text-[10px] font-bold mt-1 text-rose-600 dark:text-rose-400">
+                <span
+                  className={`text-[10px] font-bold mt-1 ${
+                    isDay ? 'text-[#1c6469]' : 'text-[#2dd4bf]'
+                  }`}
+                >
                   {isPlaying && playingMode === 'surah' ? 'Pause' : 'Play Audio'}
                 </span>
               </button>
@@ -970,13 +1072,21 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   if (soundEnabled) soundHaptics.playTap();
                 }}
                 className={`flex flex-col items-center justify-center gap-1 p-1 transition cursor-pointer flex-1 ${
-                  autoScroll ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'
+                  autoScroll
+                    ? isDay
+                      ? 'text-[#1c6469]'
+                      : 'text-[#2dd4bf]'
+                    : 'text-slate-400'
                 }`}
               >
-                <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    isDay ? 'bg-[#edf5f4] text-[#1c6469]' : 'bg-[#152e3c] text-[#2dd4bf]'
+                  }`}
+                >
                   <RotateCcw className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-bold">
+                <span className="text-[10px] font-bold whitespace-nowrap">
                   AutoScroll: {autoScroll ? 'ON' : 'OFF'}
                 </span>
               </button>
@@ -984,9 +1094,15 @@ export const QuranView: React.FC<QuranViewProps> = ({
               {/* 5. Details / Surah Info Button */}
               <button
                 onClick={() => setShowDetailsModal(true)}
-                className="flex flex-col items-center justify-center gap-1 p-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer flex-1"
+                className={`flex flex-col items-center justify-center gap-1 p-1 transition cursor-pointer flex-1 ${
+                  isDay ? 'hover:text-[#1c6469]' : 'hover:text-[#2dd4bf]'
+                }`}
               >
-                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    isDay ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/15 text-indigo-400'
+                  }`}
+                >
                   <LayoutGrid className="w-4 h-4" />
                 </div>
                 <span className="text-[10px] font-bold">Details</span>
@@ -996,14 +1112,20 @@ export const QuranView: React.FC<QuranViewProps> = ({
         </div>
       ) : (
         /* ======================================================== */
-        /* 2. SURAH INDEX DIRECTORY (MATCHING IMAGE SCREENSHOT EXACTLY) */
+        /* 2. SURAH INDEX DIRECTORY (MATCHING HOME PAGE THEME)       */
         /* ======================================================== */
         <div className="space-y-4">
-          {/* Majestic Hero Banner (Matching image.png exactly) */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#14535b] to-[#0e3b42] dark:from-[#134d54] dark:to-[#0c343b] border border-teal-500/25 p-5 sm:p-6 shadow-xl text-white">
+          {/* Majestic Hero Banner */}
+          <div
+            className={`relative overflow-hidden rounded-[28px] border p-5 sm:p-6 shadow-xl text-white ${
+              isDay
+                ? 'bg-gradient-to-b from-[#14535b] to-[#0e3b42] border-teal-500/25'
+                : 'bg-gradient-to-b from-[#0e1c26] to-[#071018] border-[#1a3342] shadow-black/50'
+            }`}
+          >
             <div className="space-y-3">
               {/* Pill badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-teal-100 text-xs font-semibold tracking-wide backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-[#2dd4bf] text-xs font-semibold tracking-wide backdrop-blur-md">
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>الْقُرْآنُ الْكَرِيمُ • The Noble Qur'an</span>
               </div>
@@ -1013,27 +1135,33 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                   The Noble Quran
                 </h2>
-                <p className="text-xs sm:text-sm text-teal-100/90 leading-relaxed mt-1">
+                <p className="text-xs sm:text-sm text-[#8ebac0] leading-relaxed mt-1">
                   Complete 114 Surahs with Arabic Uthmani text, verified translations, and crystal-clear recitations
                 </p>
               </div>
 
               {/* Stats Chips */}
               <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                <span className="px-3 py-1.5 rounded-xl bg-black/30 border border-white/10 text-white font-medium">
+                <span className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white font-medium">
                   114 All Surahs (114)
                 </span>
-                <span className="px-3 py-1.5 rounded-xl bg-black/30 border border-white/10 text-teal-100 font-medium">
+                <span className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-[#2dd4bf] font-medium">
                   86 Meccan • 28 Medinan
                 </span>
-                <span className="px-3 py-1.5 rounded-xl bg-black/30 border border-white/10 text-teal-100 font-medium">
+                <span className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-[#8ebac0] font-medium">
                   30 Juz
                 </span>
               </div>
 
-              {/* Nested Continue Reading Card (Matching image.png) */}
+              {/* Nested Continue Reading Card */}
               {lastRead && (
-                <div className="mt-3 rounded-2xl bg-[#08282d]/90 border border-teal-500/30 p-4 space-y-2 shadow-inner">
+                <div
+                  className={`mt-3 rounded-2xl border p-4 space-y-2 shadow-inner ${
+                    isDay
+                      ? 'bg-white/10 border-white/20'
+                      : 'bg-[#060d13]/90 border-[#1a3342]'
+                  }`}
+                >
                   <div className="text-[10px] uppercase font-bold tracking-wider text-[#2dd4bf] flex items-center gap-1.5">
                     <RotateCcw className="w-3 h-3 text-[#2dd4bf]" />
                     <span>CONTINUE READING</span>
@@ -1042,13 +1170,13 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     <h4 className="text-base font-bold text-white">
                       {lastRead.surahEnglishName}
                     </h4>
-                    <p className="text-xs text-[#7da9af] font-medium">
+                    <p className="text-xs text-[#8ebac0] font-medium">
                       Ayah • {lastRead.ayahNumber} {lastRead.surahName}
                     </p>
                   </div>
                   <button
                     onClick={() => loadSurah(lastRead.surahNumber, lastRead.ayahNumber)}
-                    className="w-full py-2.5 px-4 rounded-xl bg-[#1a626a] hover:bg-[#20757f] active:scale-98 text-white text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                    className="w-full py-2.5 px-4 rounded-xl bg-[#1c6469] hover:bg-[#154f53] active:scale-98 text-white text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer mt-1 border border-teal-400/30"
                   >
                     <span>Resume Ayah {lastRead.ayahNumber}</span>
                     <ChevronRight className="w-4 h-4 text-white" />
@@ -1058,7 +1186,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
             </div>
           </div>
 
-          {/* Search Bar (Matching image.png) */}
+          {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2dd4bf]" />
             <input
@@ -1068,29 +1196,29 @@ export const QuranView: React.FC<QuranViewProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full pl-11 pr-10 py-3 rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none transition shadow-sm ${
                 isDay
-                  ? 'bg-white border-[#d2ece9] text-slate-900 placeholder-[#7ca2a7] focus:border-[#1c6469]'
-                  : 'bg-[#092227] border-[#164048] text-white placeholder-[#457b85] focus:border-[#2dd4bf]'
+                  ? 'bg-white border-[#dcebe8] text-slate-900 placeholder-[#7ca2a7] focus:border-[#1c6469]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-white placeholder-[#507d85] focus:border-[#2dd4bf]'
               }`}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-[#7ca2a7] hover:text-white"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Juz Dropdown Selector (Matching image.png) */}
+          {/* Juz Dropdown Selector */}
           <div className="relative">
             <select
               value={selectedJuz}
               onChange={(e) => setSelectedJuz(e.target.value === 'all' ? 'all' : Number(e.target.value))}
               className={`w-full appearance-none px-4 py-3 rounded-2xl border text-xs sm:text-sm font-semibold focus:outline-none transition cursor-pointer pr-10 ${
                 isDay
-                  ? 'bg-white border-[#d2ece9] text-[#1c6469]'
-                  : 'bg-[#092227] border-[#164048] text-[#8ebac0] focus:border-[#2dd4bf]'
+                  ? 'bg-white border-[#dcebe8] text-[#144d52]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-[#8ebac0] focus:border-[#2dd4bf]'
               }`}
             >
               <option value="all">All Juz (1 - 30)</option>
@@ -1100,10 +1228,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[#7da9af]" />
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[#7ba3a9]" />
           </div>
 
-          {/* Category Filter Tabs (Matching image.png pill row) */}
+          {/* Category Filter Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             {(['all', 'popular', 'meccan', 'medinan', 'bookmarks'] as TabType[]).map((tab) => {
               const label = {
@@ -1123,12 +1251,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     setActiveTab(tab);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer border ${
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer border ${
                     active
-                      ? 'bg-[#1c6469] text-white border-[#247c83] shadow-md shadow-[#135d66]/20'
+                      ? isDay
+                        ? 'bg-[#1c6469] text-white border-[#1c6469] shadow-md shadow-[#135d66]/20'
+                        : 'bg-[#1c6469] text-white border-[#288a91] shadow-lg shadow-black/40'
                       : isDay
-                      ? 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      : 'bg-[#092227] text-[#7ea7ad] border-[#164048] hover:text-white'
+                      ? 'bg-[#edf5f4] text-[#2d6a70] border-[#d2ece9] hover:bg-[#d8ece9]'
+                      : 'bg-[#0a1620] text-[#7ba3a9] hover:text-white border-[#162c3a]'
                   }`}
                 >
                   {label}
@@ -1142,15 +1272,15 @@ export const QuranView: React.FC<QuranViewProps> = ({
             <div className="space-y-3">
               {bookmarks.length === 0 ? (
                 <div
-                  className={`p-8 rounded-3xl border text-center space-y-2 ${
-                    isDay ? 'bg-white border-slate-200' : 'bg-[#092227] border-[#164048]'
+                  className={`p-8 rounded-[28px] border text-center space-y-2 ${
+                    isDay ? 'bg-white border-[#dcebe8]' : 'bg-[#0e1c26] border-[#1a3342]'
                   }`}
                 >
                   <Bookmark className="w-10 h-10 mx-auto text-amber-500/40" />
-                  <h4 className="font-bold text-sm text-slate-800 dark:text-white">
+                  <h4 className={`font-bold text-sm ${isDay ? 'text-slate-800' : 'text-white'}`}>
                     No bookmarks saved
                   </h4>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  <p className="text-xs text-[#7ba3a9] max-w-sm mx-auto">
                     Tap the 3-dots menu on any verse while reading to save bookmarks.
                   </p>
                 </div>
@@ -1162,19 +1292,27 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       onClick={() => loadSurah(b.surahNumber, b.ayahNumber)}
                       className={`p-4 rounded-2xl border transition cursor-pointer hover:scale-[1.01] active:scale-98 ${
                         isDay
-                          ? 'bg-white border-slate-200 hover:border-emerald-500 shadow-sm'
-                          : 'bg-[#092227] border-[#164048] hover:border-teal-400'
+                          ? 'bg-white border-[#dcebe8] hover:border-[#1c6469] shadow-sm'
+                          : 'bg-[#0e1c26] border-[#1a3342] hover:border-[#2dd4bf]'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-teal-600 dark:text-[#2dd4bf]">
+                        <span
+                          className={`text-xs font-bold ${
+                            isDay ? 'text-[#144d52]' : 'text-[#2dd4bf]'
+                          }`}
+                        >
                           {b.surahEnglishName} • Ayah {b.ayahNumber}
                         </span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-[#7ba3a9]">
                           {new Date(b.timestamp).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-700 dark:text-slate-200 line-clamp-2 italic">
+                      <p
+                        className={`text-xs line-clamp-2 italic ${
+                          isDay ? 'text-slate-700' : 'text-slate-200'
+                        }`}
+                      >
                         "{b.translationSnippet || b.arabicSnippet}"
                       </p>
                     </div>
@@ -1183,7 +1321,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
               )}
             </div>
           ) : (
-            /* Surah Card Directory Grid (Matching image.png exactly) */
+            /* Surah Card Directory Grid */
             <div className="space-y-2.5 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:space-y-0 sm:gap-3">
               {filteredSurahs.map((surah) => {
                 const meaning = SURAH_MEANINGS[surah.number]?.[selectedLanguage] || surah.englishNameTranslation;
@@ -1192,19 +1330,19 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   <div
                     key={surah.number}
                     onClick={() => loadSurah(surah.number)}
-                    className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 cursor-pointer hover:shadow-md hover:scale-[1.005] active:scale-98 flex items-center justify-between gap-3 ${
+                    className={`p-3.5 sm:p-4 rounded-[22px] border transition-all duration-200 cursor-pointer hover:shadow-lg hover:scale-[1.005] active:scale-98 flex items-center justify-between gap-3 ${
                       isDay
-                        ? 'bg-white border-[#d2ece9] hover:border-[#1c6469] shadow-sm'
-                        : 'bg-[#092227] border-[#143d44] hover:border-[#215f6b] shadow-sm'
+                        ? 'bg-white border-[#dcebe8] hover:border-[#1c6469] shadow-md shadow-[#135d66]/5'
+                        : 'bg-[#0e1c26] border-[#1a3342] hover:border-[#274d63] shadow-lg shadow-black/40'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      {/* Number Badge Box (Matching image.png square) */}
+                      {/* Number Badge Box */}
                       <div
                         className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold text-xs shrink-0 shadow-inner ${
                           isDay
-                            ? 'bg-[#e6f3f2] text-[#1c6469] border-[#cbe4e1]'
-                            : 'bg-[#06191f] text-[#2dd4bf] border-[#13383f]'
+                            ? 'bg-[#edf5f4] text-[#144d52] border-[#cbe4e1]'
+                            : 'bg-[#07131b] text-[#2dd4bf] border-[#162c3a]'
                         }`}
                       >
                         {surah.number}
@@ -1220,10 +1358,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           >
                             {surah.englishName}
                           </h4>
-                          {/* Orange indicator dot as in image.png */}
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                         </div>
-                        <p className={`text-xs truncate ${isDay ? 'text-slate-500' : 'text-[#7da9af]'}`}>
+                        <p className={`text-xs truncate ${isDay ? 'text-slate-500' : 'text-[#7ba3a9]'}`}>
                           {meaning}
                         </p>
                         <p className={`text-[11px] font-medium mt-0.5 ${isDay ? 'text-[#7ca2a7]' : 'text-[#4e828a]'}`}>
@@ -1232,16 +1369,18 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Right: Arabic Calligraphy Name & Revelation Pill (Matching image.png) */}
+                    {/* Right: Arabic Calligraphy Name & Revelation Pill */}
                     <div className="flex flex-col items-end shrink-0">
-                      <div className="font-arabic text-xl font-bold text-[#2dd4bf] leading-tight">
+                      <div className="font-arabic text-xl font-bold text-[#2dd4bf] leading-tight drop-shadow-sm">
                         {surah.name}
                       </div>
                       <span
                         className={`text-[9px] font-bold px-2 py-0.5 rounded-md mt-1 border ${
                           surah.revelationType === 'Meccan'
                             ? 'bg-[#2b1906] border-[#4e2f0a] text-[#f59e0b]'
-                            : 'bg-[#07242a] border-[#144751] text-[#2dd4bf]'
+                            : isDay
+                            ? 'bg-[#edf5f4] border-[#cbe4e1] text-[#144d52]'
+                            : 'bg-[#07131b] border-[#162c3a] text-[#2dd4bf]'
                         }`}
                       >
                         {surah.revelationType}
@@ -1259,16 +1398,22 @@ export const QuranView: React.FC<QuranViewProps> = ({
       {/* TAFSIR MODAL                                             */}
       {/* ======================================================== */}
       {showTafsirModal && activeTafsirAyah && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div
-            className={`w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl border shadow-2xl p-6 space-y-4 ${
-              isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#071f25] border-[#184850] text-white'
+            className={`w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-[28px] border shadow-2xl p-6 space-y-4 ${
+              isDay
+                ? 'bg-white border-[#dcebe8] text-slate-900 shadow-xl'
+                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-black'
             }`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[#184850]">
+            <div
+              className={`flex items-center justify-between pb-3 border-b ${
+                isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
+              }`}
+            >
               <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <BookOpen className="w-5 h-5 text-[#2dd4bf]" />
                 <h3 className="font-bold text-base">
                   {selectedLanguage === 'bn'
                     ? `সূরা ${surahDetail?.englishName} • আয়াত ${activeTafsirAyah.number} এর তাফসীর`
@@ -1277,175 +1422,159 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </div>
               <button
                 onClick={() => setShowTafsirModal(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600"
+                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Arabic & Translation Summary */}
-            <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-500/20 space-y-2">
-              <div dir="rtl" className="font-arabic text-xl font-bold text-emerald-800 dark:text-emerald-300 text-right">
+            <div
+              className={`p-4 rounded-2xl border space-y-2 ${
+                isDay ? 'bg-[#edf5f4] border-[#d2ece9]' : 'bg-[#07131b] border-[#162c3a]'
+              }`}
+            >
+              <div className="font-arabic text-xl text-right font-bold text-[#2dd4bf]">
                 {activeTafsirAyah.arabic}
               </div>
-              <p className="text-xs text-slate-700 dark:text-slate-200 italic font-medium">
+              <div className={`text-xs italic ${isDay ? 'text-slate-700' : 'text-[#e2e8f0]'}`}>
                 "{activeTafsirAyah.translation}"
-              </p>
+              </div>
             </div>
 
             {/* Tafsir Body */}
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                {tafsirContent?.author}
+            {isLoadingTafsir ? (
+              <div className="py-8 text-center space-y-3">
+                <div className="w-8 h-8 mx-auto border-3 border-[#2dd4bf] border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs text-[#7ba3a9]">
+                  {selectedLanguage === 'bn' ? 'তাফসীর লোড হচ্ছে...' : 'Loading Tafsir...'}
+                </p>
               </div>
-              {isLoadingTafsir ? (
-                <div className="py-8 text-center space-y-2 text-xs text-slate-400">
-                  <RefreshCw className="w-5 h-5 animate-spin mx-auto text-emerald-500" />
-                  <span>{selectedLanguage === 'bn' ? 'তাফসীর লোড হচ্ছে...' : 'Loading Tafsir...'}</span>
+            ) : tafsirContent ? (
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-[#2dd4bf]/10 border border-[#2dd4bf]/20 text-[#2dd4bf] text-xs font-bold">
+                  <span>{tafsirContent.author}</span>
                 </div>
-              ) : (
-                <div className="text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300 font-sans whitespace-pre-line max-h-80 overflow-y-auto pr-2">
-                  {tafsirContent?.text}
-                </div>
-              )}
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => setShowTafsirModal(false)}
-                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition active:scale-95 cursor-pointer"
-              >
-                {selectedLanguage === 'bn' ? 'বন্ধ করুন' : 'Close'}
-              </button>
-            </div>
+                <div
+                  className={`text-sm leading-relaxed whitespace-pre-line font-sans ${
+                    isDay ? 'text-slate-800' : 'text-[#e2e8f0]'
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: tafsirContent.text }}
+                />
+              </div>
+            ) : (
+              <div className="py-6 text-center text-xs text-slate-400">
+                তাফসীর তথ্য পাওয়া যায়নি।
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* ======================================================== */}
-      {/* SURAH DETAILS & RECITER PICKER MODAL                     */}
+      {/* SURAH DETAILS MODAL                                      */}
       {/* ======================================================== */}
       {showDetailsModal && surahDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div
-            className={`w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl border shadow-2xl p-6 space-y-5 ${
-              isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#071f25] border-[#184850] text-white'
+            className={`w-full max-w-md rounded-[28px] border shadow-2xl p-6 space-y-4 ${
+              isDay
+                ? 'bg-white border-[#dcebe8] text-slate-900'
+                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-black'
             }`}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[#184850]">
-              <div className="flex items-center gap-2">
-                <Info className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                <h3 className="font-bold text-base">
-                  {surahDetail.englishName} ({surahDetail.fullNameArabic})
-                </h3>
-              </div>
+            <div
+              className={`flex items-center justify-between pb-3 border-b ${
+                isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
+              }`}
+            >
+              <h3 className="font-bold text-base">
+                {selectedLanguage === 'bn' ? 'সূরার পরিচিতি ও বিবরণ' : 'Surah Details'}
+              </h3>
               <button
                 onClick={() => setShowDetailsModal(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600"
+                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#092227] border border-slate-200 dark:border-[#184850]">
-                <span className="text-[10px] text-slate-400">{QURAN_UI.ayahs[selectedLanguage]}</span>
-                <p className="font-bold text-sm text-emerald-600">{surahDetail.numberOfAyahs}</p>
+            <div className="text-center py-2 space-y-1">
+              <div className="font-arabic text-3xl font-bold text-[#2dd4bf]">
+                {surahDetail.name}
               </div>
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#092227] border border-slate-200 dark:border-[#184850]">
-                <span className="text-[10px] text-slate-400">Type</span>
-                <p className="font-bold text-sm text-emerald-600">{surahDetail.revelationType}</p>
+              <h4 className="text-lg font-bold">{surahDetail.englishName}</h4>
+              <p className="text-xs text-[#7ba3a9]">
+                {SURAH_MEANINGS[surahDetail.number]?.[selectedLanguage] || surahDetail.englishNameTranslation}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              <div
+                className={`p-3 rounded-xl border ${
+                  isDay ? 'bg-[#edf5f4] border-[#d2ece9]' : 'bg-[#07131b] border-[#162c3a]'
+                }`}
+              >
+                <span className="text-[10px] text-[#7ba3a9]">
+                  {selectedLanguage === 'bn' ? 'মোট আয়াত' : 'Total Ayahs'}
+                </span>
+                <p className="font-bold text-sm text-[#2dd4bf]">{surahDetail.numberOfAyahs}</p>
               </div>
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#092227] border border-slate-200 dark:border-[#184850]">
-                <span className="text-[10px] text-slate-400">{QURAN_UI.juz[selectedLanguage]}</span>
-                <p className="font-bold text-sm text-emerald-600">{surahDetail.startJuz}</p>
+
+              <div
+                className={`p-3 rounded-xl border ${
+                  isDay ? 'bg-[#edf5f4] border-[#d2ece9]' : 'bg-[#07131b] border-[#162c3a]'
+                }`}
+              >
+                <span className="text-[10px] text-[#7ba3a9]">
+                  {selectedLanguage === 'bn' ? 'অবতীর্ণের স্থান' : 'Revelation Place'}
+                </span>
+                <p className="font-bold text-sm text-[#2dd4bf]">{surahDetail.revelationType}</p>
               </div>
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#092227] border border-slate-200 dark:border-[#184850]">
-                <span className="text-[10px] text-slate-400">Surah #</span>
-                <p className="font-bold text-sm text-emerald-600">{surahDetail.number} / 114</p>
+
+              <div
+                className={`p-3 rounded-xl border ${
+                  isDay ? 'bg-[#edf5f4] border-[#d2ece9]' : 'bg-[#07131b] border-[#162c3a]'
+                }`}
+              >
+                <span className="text-[10px] text-[#7ba3a9]">
+                  {selectedLanguage === 'bn' ? 'পারা / জুয' : 'Juz'}
+                </span>
+                <p className="font-bold text-sm text-[#2dd4bf]">Juz {surahDetail.startJuz}</p>
+              </div>
+
+              <div
+                className={`p-3 rounded-xl border ${
+                  isDay ? 'bg-[#edf5f4] border-[#d2ece9]' : 'bg-[#07131b] border-[#162c3a]'
+                }`}
+              >
+                <span className="text-[10px] text-[#7ba3a9]">
+                  {selectedLanguage === 'bn' ? 'সূরা ক্রম' : 'Surah Number'}
+                </span>
+                <p className="font-bold text-sm text-[#2dd4bf]">#{surahDetail.number}</p>
               </div>
             </div>
 
-            {/* Language Selector Inside Details */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-600 dark:text-emerald-300 flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5" />
-                <span>কুরআন ভাষা (Quran Translation Language):</span>
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {SUPPORTED_LANGUAGES.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => handleLanguageChange(lang.code)}
-                    className={`p-2 rounded-xl text-xs font-bold flex items-center gap-2 border transition cursor-pointer ${
-                      selectedLanguage === lang.code
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                        : isDay
-                        ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#092227] border-[#184850] text-emerald-200 hover:bg-[#0d2f36]'
-                    }`}
-                  >
-                    <span>{lang.flag}</span>
-                    <span className="truncate">{lang.nativeName}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Reciter Selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-600 dark:text-emerald-300">
-                কুরআন কারী (Reciter):
+            {/* Reciter Selector inside Details */}
+            <div className="space-y-1.5 pt-2">
+              <label className="text-xs font-bold text-[#7ba3a9]">
+                {selectedLanguage === 'bn' ? 'ক্বারী নির্বাচন করুন' : 'Select Reciter'}
               </label>
               <select
                 value={selectedReciterId}
-                onChange={(e) => {
-                  setSelectedReciterId(e.target.value);
-                  loadSurah(surahDetail.number);
-                }}
-                className="w-full p-2.5 rounded-xl border text-xs font-semibold bg-slate-50 dark:bg-[#092227] border-slate-200 dark:border-[#184850] text-slate-800 dark:text-white focus:outline-none"
+                onChange={(e) => setSelectedReciterId(e.target.value)}
+                className={`w-full p-2.5 rounded-xl border text-xs font-semibold focus:outline-none cursor-pointer ${
+                  isDay
+                    ? 'bg-white border-[#d2ece9] text-[#144d52]'
+                    : 'bg-[#07131b] border-[#162c3a] text-[#8ebac0]'
+                }`}
               >
                 {QURAN_RECITERS.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.name} ({r.arabicName})
+                    {r.name} ({r.subtext})
                   </option>
                 ))}
               </select>
-            </div>
-
-            {/* Jump to Verse Input */}
-            <form onSubmit={handleJumpSubmit} className="space-y-2">
-              <label className="text-xs font-bold text-slate-600 dark:text-emerald-300">
-                {selectedLanguage === 'bn' ? `নির্দিষ্ট আয়াতে যান (Jump to Ayah 1-${surahDetail.numberOfAyahs}):` : `Jump to Ayah (1-${surahDetail.numberOfAyahs}):`}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  min="1"
-                  max={surahDetail.numberOfAyahs}
-                  placeholder={`1-${surahDetail.numberOfAyahs}`}
-                  value={jumpVerseInput}
-                  onChange={(e) => setJumpVerseInput(e.target.value)}
-                  className="flex-1 p-2.5 rounded-xl border text-xs font-semibold bg-slate-50 dark:bg-[#092227] border-slate-200 dark:border-[#184850] text-slate-800 dark:text-white focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition active:scale-95 cursor-pointer"
-                >
-                  {selectedLanguage === 'bn' ? 'যান (Go)' : 'Go'}
-                </button>
-              </div>
-            </form>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="px-5 py-2 rounded-xl bg-slate-200 dark:bg-[#143d44] hover:bg-slate-300 text-slate-800 dark:text-white text-xs font-bold transition active:scale-95 cursor-pointer"
-              >
-                {selectedLanguage === 'bn' ? 'ঠিক আছে' : 'Done'}
-              </button>
             </div>
           </div>
         </div>
