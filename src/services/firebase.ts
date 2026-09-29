@@ -1,6 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
+  initializeAuth,
+  browserLocalPersistence,
+  browserPopupRedirectResolver,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
@@ -30,10 +33,22 @@ try {
 // 1. Initialize Firebase App
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// 2. Initialize Auth
-export const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
+// 2. Safely initialize Auth with persistence & popup resolver fallback
+export const auth = (() => {
+  try {
+    return getAuth(app);
+  } catch {
+    try {
+      return initializeAuth(app, {
+        persistence: browserLocalPersistence,
+        popupRedirectResolver: browserPopupRedirectResolver,
+      });
+    } catch (err) {
+      console.warn('Firebase auth initialization fallback notice:', err);
+      return null;
+    }
+  }
+})();
 
 /**
  * Real Firebase Google Sign-In with popup
@@ -44,7 +59,30 @@ export async function signInWithGoogleAuth(): Promise<{
   error?: string;
 }> {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
+    let authInstance = auth;
+    if (!authInstance) {
+      try {
+        authInstance = getAuth(app);
+      } catch {
+        try {
+          authInstance = initializeAuth(app, {
+            persistence: browserLocalPersistence,
+            popupRedirectResolver: browserPopupRedirectResolver,
+          });
+        } catch {}
+      }
+    }
+
+    if (!authInstance) {
+      return {
+        success: false,
+        error: 'Google Sign-In is initializing. Please try again.',
+      };
+    }
+
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: 'select_account' });
+    const result = await signInWithPopup(authInstance, googleProvider);
     const user = result.user;
     return {
       success: true,
