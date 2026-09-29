@@ -51,7 +51,8 @@ export const auth = (() => {
 })();
 
 /**
- * Real Firebase Google Sign-In with popup
+ * Real Firebase Google Sign-In with account selection prompt
+ * Ensures that both Phone (Mobile) and Laptop (Desktop) always show the Google Account Chooser screen!
  */
 export async function signInWithGoogleAuth(): Promise<{
   success: boolean;
@@ -81,7 +82,13 @@ export async function signInWithGoogleAuth(): Promise<{
     }
 
     const googleProvider = new GoogleAuthProvider();
-    googleProvider.setCustomParameters({ prompt: 'select_account' });
+    // 'select_account' forces Google to always prompt the user to choose their account on both phone and laptop
+    googleProvider.setCustomParameters({
+      prompt: 'select_account',
+    });
+    googleProvider.addScope('profile');
+    googleProvider.addScope('email');
+
     const result = await signInWithPopup(authInstance, googleProvider);
     const user = result.user;
     return {

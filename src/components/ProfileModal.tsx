@@ -1096,15 +1096,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
   };
 
-  // 1-Click Fast Google & Passwordless Authentication
+  // 1-Click Fast Google & Account Picker Authentication
   const handleTriggerGoogleAuth = async () => {
     setIsVerifying(true);
     setOtpErrorMessage(null);
 
-    // 1. Try Firebase Popup (Desktop / Unblocked browsers)
     try {
       const result = await signInWithGoogleAuth();
-      if (result.success && result.user) {
+      if (result.success && result.user && result.user.email) {
         await handleGoogleSignIn({
           name: result.user.name,
           emailOrPhone: result.user.email,
@@ -1112,28 +1111,27 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         });
         setIsVerifying(false);
         return;
+      } else {
+        setIsVerifying(false);
+        if (
+          result.error &&
+          !result.error.toLowerCase().includes('closed-by-user') &&
+          !result.error.toLowerCase().includes('popup-closed') &&
+          !result.error.toLowerCase().includes('cancelled')
+        ) {
+          setOtpErrorMessage(
+            'গুগল অ্যাকাউন্ট নির্বাচন বাতিল বা বিঘ্নিত হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
+          );
+        }
+        return;
       }
-    } catch (err) {
-      console.warn('Google popup attempt notice:', err);
+    } catch (err: any) {
+      console.warn('Google auth trigger error:', err);
+      setIsVerifying(false);
+      setOtpErrorMessage(
+        'গুগল সাইন-ইনে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন বা ইমেইল/মোবাইল দিয়ে চেষ্টা করুন।'
+      );
     }
-
-    // 2. Mobile 1-Click Fast Login Fallback (100% Guaranteed on phone without password)
-    const candidateEmail =
-      inputEmail.trim() ||
-      (userProfile.emailOrPhone?.includes('@') ? userProfile.emailOrPhone : '') ||
-      'mdmursalineparvez@gmail.com';
-
-    const candidateName =
-      inputName.trim() ||
-      (userProfile.name && userProfile.name !== 'User' ? userProfile.name : '') ||
-      candidateEmail.split('@')[0];
-
-    await handleGoogleSignIn({
-      name: candidateName,
-      emailOrPhone: candidateEmail,
-      photoUrl: userProfile.photoUrl || DEFAULT_AVATARS[0],
-    });
-    setIsVerifying(false);
   };
 
   // Password strength calculator
@@ -2492,8 +2490,8 @@ ${msg}`;
                     </button>
                   </div>
 
-                  {/* Returning Google User Quick Card */}
-                  {previousGoogleAccount?.email && (
+                  {/* Returning Google User Quick Card (Only in Login Mode) */}
+                  {authMode === 'login' && previousGoogleAccount?.email && (
                     <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/15 border border-emerald-500/30 text-xs space-y-2.5 animate-in fade-in">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
@@ -2506,7 +2504,7 @@ ${msg}`;
                               </div>
                             )}
                           </div>
-                          <div className="text-left leading-tight truncate max-w-[200px]">
+                          <div className="text-left leading-tight truncate max-w-[170px]">
                             <span className="font-extrabold text-slate-800 dark:text-teal-100 block truncate text-xs">
                               {previousGoogleAccount.name || 'Google User'}
                             </span>
@@ -2515,9 +2513,24 @@ ${msg}`;
                             </span>
                           </div>
                         </div>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-black">
-                          পূর্বের আইডি
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-black">
+                            পূর্বের আইডি
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try {
+                                localStorage.removeItem('zikrmate_last_google_user');
+                              } catch {}
+                              setPreviousGoogleAccount(null);
+                            }}
+                            className="text-[10px] text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 underline ml-1 cursor-pointer"
+                            title="অন্য অ্যাকাউন্ট ব্যবহার করুন"
+                          >
+                            মুছুন
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex gap-2 pt-0.5">
