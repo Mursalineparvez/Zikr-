@@ -1,12 +1,12 @@
 import { ZikrItem, ZikrLanguage } from '../types';
 
-export const SUPPORTED_LANGUAGES: Array<{ code: ZikrLanguage; label: string; nativeName: string }> = [
-  { code: 'bn', label: 'বাংলা', nativeName: 'বাংলা (Bengali)' },
-  { code: 'en', label: 'English', nativeName: 'English' },
-  { code: 'ur', label: 'اردو', nativeName: 'اردو (Urdu)' },
-  { code: 'hi', label: 'हिन्दी', nativeName: 'हिन्दी (Hindi)' },
-  { code: 'id', label: 'Bahasa', nativeName: 'Bahasa Indonesia' },
-  { code: 'tr', label: 'Türkçe', nativeName: 'Türkçe (Turkish)' },
+export const SUPPORTED_LANGUAGES: Array<{ code: ZikrLanguage; label: string; nativeName: string; flag: string }> = [
+  { code: 'bn', label: 'বাংলা', nativeName: 'বাংলা (Bengali)', flag: '🇧🇩' },
+  { code: 'en', label: 'English', nativeName: 'English', flag: '🇬🇧' },
+  { code: 'ur', label: 'اردو', nativeName: 'اردو (Urdu)', flag: '🇵🇰' },
+  { code: 'hi', label: 'हिन्दी', nativeName: 'हिन्दी (Hindi)', flag: '🇮🇳' },
+  { code: 'id', label: 'Bahasa', nativeName: 'Bahasa Indonesia', flag: '🇮🇩' },
+  { code: 'tr', label: 'Türkçe', nativeName: 'Türkçe (Turkish)', flag: '🇹🇷' },
 ];
 
 export const DEFAULT_ZIKRS: ZikrItem[] = [

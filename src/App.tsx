@@ -1395,6 +1395,7 @@ export default function App() {
             soundEnabled={settings.soundEnabled}
             themeMode={settings.themeMode}
             selectedLanguage={selectedLanguage}
+            onSelectLanguage={setSelectedLanguage}
           />
         )}
 
