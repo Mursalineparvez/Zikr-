@@ -184,7 +184,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
   return (
     <div
       className={`rounded-3xl border shadow-sm transition-colors overflow-hidden ${
-        isDay ? 'bg-white border-[#dcebe8]' : 'bg-[#0e2f36] border-[#1a515c]'
+        isDay ? 'bg-white border-[#dcebe8] shadow-md shadow-[#006747]/5' : 'bg-[#0e2f36] border-[#1a515c]'
       }`}
     >
       {/* 1. HEADER BAR: Green accent bar + Faraj Prayer Time + Completion counter + With Caution dropdown */}
@@ -192,10 +192,10 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           {/* Left: Indicator Bar & Title */}
           <div className="flex items-center gap-2.5">
-            <div className="w-2 h-6 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/40" />
+            <div className="w-2 h-6 rounded-full bg-[#00875a] shadow-md shadow-[#00875a]/40" />
             <div>
               <div className="flex items-center gap-2">
-                <h2 className={`text-base sm:text-lg font-black tracking-tight ${isDay ? 'text-[#103e42]' : 'text-white'}`}>
+                <h2 className={`text-base sm:text-lg font-black tracking-tight ${isDay ? 'text-[#0a3328]' : 'text-white'}`}>
                   {SALAT_UI.farajPrayerTime[selectedLanguage]}
                 </h2>
                 {/* Completed daily counter pill */}

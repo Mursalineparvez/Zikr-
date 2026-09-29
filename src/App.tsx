@@ -1247,8 +1247,8 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-20 md:pb-8 selection:bg-teal-500 selection:text-white ${
-        isDay ? 'bg-[#edf5f4] text-[#133e42]' : 'bg-[#070e14] text-[#f1f8f7]'
+      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-20 md:pb-8 selection:bg-emerald-600 selection:text-white ${
+        isDay ? 'bg-[#f4faf8] text-[#0a3328]' : 'bg-[#070e14] text-[#f1f8f7]'
       }`}
     >
       {/* Top Header */}
@@ -1277,7 +1277,7 @@ export default function App() {
         <div
           className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 border ${
             isDay
-              ? 'bg-[#1c6469] text-white border-teal-300 shadow-[#135d66]/30'
+              ? 'bg-[#006747] text-white border-emerald-300 shadow-[#006747]/30'
               : 'bg-[#0e242d] text-[#2dd4bf] border-[#20525d] shadow-black/80'
           }`}
         >
@@ -1288,28 +1288,28 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6">
-        {/* Top Islamic Greeting & Module Switcher Card (Black type with teal accents) */}
+        {/* Top Islamic Greeting & Module Switcher Card */}
         <div
           className={`rounded-[26px] p-3.5 sm:p-4.5 border transition-colors shadow-xl ${
             isDay
-              ? 'bg-white border-[#dcebe8] shadow-[#135d66]/5'
+              ? 'bg-white border-[#dcebe8] shadow-[#006747]/5'
               : 'bg-[#0e1c26] border-[#1a3342] shadow-black/50'
           }`}
         >
           <div
             className={`flex items-center justify-between pb-2.5 mb-2.5 border-b flex-wrap gap-2 text-xs ${
-              isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
+              isDay ? 'border-[#e2edf0]' : 'border-[#152936]'
             }`}
           >
             <div
               className={`flex items-center gap-2 font-bold ${
-                isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+                isDay ? 'text-[#006747]' : 'text-[#2dd4bf]'
               }`}
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span className="font-arabic text-sm">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
             </div>
-            <div className={`text-[11px] font-medium ${isDay ? 'text-[#5f8488]' : 'text-[#7ba3a9]'}`}>
+            <div className={`text-[11px] font-medium ${isDay ? 'text-[#4a6b72]' : 'text-[#7ba3a9]'}`}>
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
@@ -1319,7 +1319,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Module Selector Category Bar (Matches upper given pill buttons) */}
+          {/* Module Selector Category Bar */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             {moduleTabs.map((tab) => {
               const isActive = tab.isActive;
@@ -1330,10 +1330,10 @@ export default function App() {
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer shrink-0 border ${
                     isActive
                       ? isDay
-                        ? 'bg-[#1c6469] text-white border-[#1c6469] shadow-md shadow-[#135d66]/20'
+                        ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
                         : 'bg-[#1c6469] text-white border-[#288a91] shadow-lg shadow-black/40'
                       : isDay
-                      ? 'bg-[#e6f3f2] hover:bg-[#d8ece9] text-[#2d6a70] border-[#d2ece9]'
+                      ? 'bg-[#e2edf0] hover:bg-[#d5e7eb] text-[#2c535a] border-[#cce0e5]'
                       : 'bg-[#0a1620] hover:bg-[#102330] text-[#7ba3a9] hover:text-white border-[#162c3a]'
                   }`}
                 >
@@ -1345,7 +1345,7 @@ export default function App() {
                         isActive
                           ? 'bg-white/20 text-white'
                           : isDay
-                          ? 'bg-white text-[#1c6469] border border-[#cbe4e1]'
+                          ? 'bg-white text-[#006747] border border-[#cbe4e1]'
                           : 'bg-[#050e14] text-[#2dd4bf] border border-[#142834]'
                       }`}
                     >

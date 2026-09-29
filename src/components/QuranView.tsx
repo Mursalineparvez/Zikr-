@@ -462,8 +462,8 @@ export const QuranView: React.FC<QuranViewProps> = ({
           <div
             className={`sticky top-0 z-40 text-white shadow-xl rounded-2xl px-4 py-3 flex items-center justify-between gap-3 border transition-colors ${
               isDay
-                ? 'bg-gradient-to-r from-[#144d52] via-[#1a5e64] to-[#257277] border-[#2d7d83]/40 shadow-[#135d66]/15'
-                : 'bg-gradient-to-r from-[#07191e] via-[#0b262d] to-[#10363e] border-[#163c46] shadow-black/60'
+                ? 'bg-gradient-to-r from-[#005a3e] via-[#006747] to-[#007a52] border-emerald-600/40 shadow-[#006747]/20'
+                : 'bg-gradient-to-r from-[#07191e] via-[#0b262d] to-[#10363e] text-white border-[#163c46] shadow-black/60'
             }`}
           >
             {/* Left: Back Arrow */}
@@ -1119,7 +1119,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
           <div
             className={`relative overflow-hidden rounded-[28px] border p-5 sm:p-6 shadow-xl text-white ${
               isDay
-                ? 'bg-gradient-to-b from-[#14535b] to-[#0e3b42] border-teal-500/25'
+                ? 'bg-[#006747] border-emerald-600/40 shadow-[#006747]/20'
                 : 'bg-gradient-to-b from-[#0e1c26] to-[#071018] border-[#1a3342] shadow-black/50'
             }`}
           >
@@ -1158,7 +1158,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <div
                   className={`mt-3 rounded-2xl border p-4 space-y-2 shadow-inner ${
                     isDay
-                      ? 'bg-white/10 border-white/20'
+                      ? 'bg-black/25 border-white/20'
                       : 'bg-[#060d13]/90 border-[#1a3342]'
                   }`}
                 >
@@ -1176,7 +1176,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   </div>
                   <button
                     onClick={() => loadSurah(lastRead.surahNumber, lastRead.ayahNumber)}
-                    className="w-full py-2.5 px-4 rounded-xl bg-[#1c6469] hover:bg-[#154f53] active:scale-98 text-white text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer mt-1 border border-teal-400/30"
+                    className="w-full py-2.5 px-4 rounded-xl bg-[#009b68] hover:bg-[#00ab73] active:scale-98 text-white text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer mt-1 border border-white/20"
                   >
                     <span>Resume Ayah {lastRead.ayahNumber}</span>
                     <ChevronRight className="w-4 h-4 text-white" />
@@ -1196,7 +1196,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full pl-11 pr-10 py-3 rounded-2xl border text-xs sm:text-sm font-medium focus:outline-none transition shadow-sm ${
                 isDay
-                  ? 'bg-white border-[#dcebe8] text-slate-900 placeholder-[#7ca2a7] focus:border-[#1c6469]'
+                  ? 'bg-white border-[#dcebe8] text-slate-900 placeholder-[#7ca2a7] focus:border-[#006747]'
                   : 'bg-[#0e1c26] border-[#1a3342] text-white placeholder-[#507d85] focus:border-[#2dd4bf]'
               }`}
             />
@@ -1217,7 +1217,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
               onChange={(e) => setSelectedJuz(e.target.value === 'all' ? 'all' : Number(e.target.value))}
               className={`w-full appearance-none px-4 py-3 rounded-2xl border text-xs sm:text-sm font-semibold focus:outline-none transition cursor-pointer pr-10 ${
                 isDay
-                  ? 'bg-white border-[#dcebe8] text-[#144d52]'
+                  ? 'bg-white border-[#dcebe8] text-[#006747]'
                   : 'bg-[#0e1c26] border-[#1a3342] text-[#8ebac0] focus:border-[#2dd4bf]'
               }`}
             >
@@ -1254,10 +1254,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer border ${
                     active
                       ? isDay
-                        ? 'bg-[#1c6469] text-white border-[#1c6469] shadow-md shadow-[#135d66]/20'
+                        ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
                         : 'bg-[#1c6469] text-white border-[#288a91] shadow-lg shadow-black/40'
                       : isDay
-                      ? 'bg-[#edf5f4] text-[#2d6a70] border-[#d2ece9] hover:bg-[#d8ece9]'
+                      ? 'bg-[#e2edf0] text-[#2c535a] border-[#cce0e5] hover:bg-[#d5e7eb]'
                       : 'bg-[#0a1620] text-[#7ba3a9] hover:text-white border-[#162c3a]'
                   }`}
                 >
@@ -1332,7 +1332,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     onClick={() => loadSurah(surah.number)}
                     className={`p-3.5 sm:p-4 rounded-[22px] border transition-all duration-200 cursor-pointer hover:shadow-lg hover:scale-[1.005] active:scale-98 flex items-center justify-between gap-3 ${
                       isDay
-                        ? 'bg-white border-[#dcebe8] hover:border-[#1c6469] shadow-md shadow-[#135d66]/5'
+                        ? 'bg-white border-[#dcebe8] hover:border-[#006747] shadow-md shadow-[#006747]/5'
                         : 'bg-[#0e1c26] border-[#1a3342] hover:border-[#274d63] shadow-lg shadow-black/40'
                     }`}
                   >
@@ -1341,7 +1341,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       <div
                         className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold text-xs shrink-0 shadow-inner ${
                           isDay
-                            ? 'bg-[#edf5f4] text-[#144d52] border-[#cbe4e1]'
+                            ? 'bg-[#e6f7f2] text-[#00875a] border-[#c3edd9]'
                             : 'bg-[#07131b] text-[#2dd4bf] border-[#162c3a]'
                         }`}
                       >
@@ -1353,7 +1353,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         <div className="flex items-center gap-1.5">
                           <h4
                             className={`text-sm font-bold truncate ${
-                              isDay ? 'text-[#103e42]' : 'text-white'
+                              isDay ? 'text-[#0a3328]' : 'text-white'
                             }`}
                           >
                             {surah.englishName}
@@ -1363,7 +1363,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         <p className={`text-xs truncate ${isDay ? 'text-slate-500' : 'text-[#7ba3a9]'}`}>
                           {meaning}
                         </p>
-                        <p className={`text-[11px] font-medium mt-0.5 ${isDay ? 'text-[#7ca2a7]' : 'text-[#4e828a]'}`}>
+                        <p className={`text-[11px] font-medium mt-0.5 ${isDay ? 'text-[#4a6b72]' : 'text-[#4e828a]'}`}>
                           {surah.numberOfAyahs} Ayahs • Juz {surah.startJuz}
                         </p>
                       </div>
@@ -1371,7 +1371,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
                     {/* Right: Arabic Calligraphy Name & Revelation Pill */}
                     <div className="flex flex-col items-end shrink-0">
-                      <div className="font-arabic text-xl font-bold text-[#2dd4bf] leading-tight drop-shadow-sm">
+                      <div className={`font-arabic text-xl font-bold leading-tight drop-shadow-sm ${
+                        isDay ? 'text-[#006747]' : 'text-[#2dd4bf]'
+                      }`}>
                         {surah.name}
                       </div>
                       <span
@@ -1379,7 +1381,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           surah.revelationType === 'Meccan'
                             ? 'bg-[#2b1906] border-[#4e2f0a] text-[#f59e0b]'
                             : isDay
-                            ? 'bg-[#edf5f4] border-[#cbe4e1] text-[#144d52]'
+                            ? 'bg-[#e6f7f2] border-[#c3edd9] text-[#00875a]'
                             : 'bg-[#07131b] border-[#162c3a] text-[#2dd4bf]'
                         }`}
                       >

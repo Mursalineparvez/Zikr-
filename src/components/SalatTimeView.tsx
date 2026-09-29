@@ -343,12 +343,12 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               onClick={() => setCurrentDate(new Date())}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition active:scale-95 cursor-pointer ${
                 isDay
-                  ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#1c6469] border-[#d2ece9]'
+                  ? 'bg-[#eefbf6] hover:bg-[#e2f7ef] text-[#006747] border-[#c3edd9]'
                   : 'bg-[#0a262c] hover:bg-[#123e47] text-teal-200 border-[#184850]'
               }`}
               title="Click to reset to Today"
             >
-              <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <Calendar className="w-3.5 h-3.5 text-[#00875a] dark:text-emerald-400" />
               <span>{datePillFormatted}</span>
             </button>
 
@@ -371,12 +371,12 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
             onClick={() => setShowSettingsDrawer(true)}
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border transition cursor-pointer active:scale-95 max-w-[130px] sm:max-w-[170px] truncate ${
               isDay
-                ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#1c6469] border-[#d2ece9]'
+                ? 'bg-[#eefbf6] hover:bg-[#e2f7ef] text-[#006747] border-[#c3edd9]'
                 : 'bg-[#0a262c] hover:bg-[#123e47] text-teal-200 border-[#184850]'
             }`}
             title="Change City or Detect GPS"
           >
-            <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <MapPin className="w-3.5 h-3.5 text-[#00875a] dark:text-emerald-400 shrink-0" />
             <span className="truncate">{selectedCity.name}</span>
             <ChevronDown className="w-3 h-3 opacity-70 shrink-0" />
           </button>
@@ -390,14 +390,14 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
             }}
             className={`relative p-2 rounded-xl border transition active:scale-95 cursor-pointer ${
               isDay
-                ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#1c6469] border-[#d2ece9]'
+                ? 'bg-[#eefbf6] hover:bg-[#e2f7ef] text-[#006747] border-[#c3edd9]'
                 : 'bg-[#0a262c] hover:bg-[#123e47] text-teal-200 border-[#184850]'
             }`}
             title={`${activeAlertsCount} active prayer alerts`}
           >
-            <Bell className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <Bell className="w-4 h-4 text-[#00875a] dark:text-emerald-400" />
             {activeAlertsCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#00875a] text-white text-[9px] font-black flex items-center justify-center shadow-sm">
                 {activeAlertsCount}
               </span>
             )}

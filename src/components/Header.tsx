@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header
       className={`sticky top-0 z-40 px-3 py-2.5 sm:px-6 transition-colors duration-300 shadow-lg ${
         isDay
-          ? 'bg-gradient-to-r from-[#144d52] via-[#1a5e64] to-[#257277] text-white border-b border-[#2d7d83]/40 shadow-[#135d66]/15'
+          ? 'bg-gradient-to-r from-[#005a3e] via-[#006747] to-[#007a52] text-white border-b border-emerald-600/40 shadow-[#006747]/20'
           : 'bg-gradient-to-r from-[#07191e] via-[#0b262d] to-[#10363e] text-white border-b border-[#163c46] shadow-black/60'
       }`}
     >
@@ -127,11 +127,11 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white drop-shadow-sm">
                 ZikrMate
               </h1>
-              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-white/20 text-teal-100 font-bold border border-white/30">
+              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-white/20 text-emerald-100 font-bold border border-white/30">
                 PWA
               </span>
             </div>
-            <p className="text-[10px] text-teal-100/90 font-medium hidden sm:block">
+            <p className="text-[10px] text-emerald-100/90 font-medium hidden sm:block">
               Islamic Companion &amp; Counter
             </p>
           </div>
@@ -147,8 +147,8 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => onModuleChange(item.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 cursor-pointer ${
                   isActive
-                    ? 'bg-white text-[#165a60] font-bold shadow-md shadow-teal-900/10'
-                    : 'text-teal-100/90 hover:text-white hover:bg-white/10'
+                    ? 'bg-white text-[#006747] font-bold shadow-md'
+                    : 'text-emerald-100/90 hover:text-white hover:bg-white/10'
                 }`}
               >
                 {item.icon}

@@ -112,7 +112,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
   return (
     <div
       className={`rounded-3xl border shadow-sm transition-all duration-300 overflow-hidden relative ${
-        isDay ? 'bg-white border-[#dcebe8]' : 'bg-[#0e2f36] border-[#1a515c]'
+        isDay ? 'bg-white border-[#dcebe8] shadow-md shadow-[#006747]/5' : 'bg-[#0e2f36] border-[#1a515c]'
       }`}
     >
       {/* Dynamic ambient backdrop light */}
@@ -124,10 +124,10 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
         {/* 1. TOP TITLE BAR (SOLAR TRAJECTORY & NEXT PRAYER + STATUS) */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-teal-400 shadow-sm shadow-teal-400/80 animate-pulse shrink-0" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#00875a] shadow-sm shadow-[#00875a]/80 animate-pulse shrink-0" />
             <h2
               className={`text-xs sm:text-sm font-black tracking-wider uppercase ${
-                isDay ? 'text-[#103e42]' : 'text-teal-100'
+                isDay ? 'text-[#0a3328]' : 'text-teal-100'
               }`}
             >
               Solar Trajectory &amp; Next Prayer

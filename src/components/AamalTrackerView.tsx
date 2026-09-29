@@ -293,7 +293,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
       <div
         className={`p-4 sm:p-5 rounded-3xl border shadow-xl ${
           isDay
-            ? 'bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 text-white border-emerald-600/40'
+            ? 'bg-[#006747] text-white border-emerald-600/40 shadow-[#006747]/20'
             : 'bg-gradient-to-r from-[#0b292e] via-[#103a42] to-[#154b55] text-white border-[#1c5a66]'
         }`}
       >
@@ -305,11 +305,11 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             <div>
               <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
                 <span>মুহাসাবাহ</span>
-                <span className="text-xs font-normal text-teal-200 opacity-90 hidden sm:inline">
+                <span className="text-xs font-normal text-emerald-100 opacity-90 hidden sm:inline">
                   (দৈনিক আত্মশুদ্ধি ও আমল ট্র্যাকার)
                 </span>
               </h1>
-              <p className="text-[11px] text-teal-100/90 font-medium">
+              <p className="text-[11px] text-emerald-100/90 font-medium">
                 حاسبوا أنفسكم قبل أن تحاسبوا • প্রতিদিনের নেক আমলের হিসাব
               </p>
             </div>
@@ -321,7 +321,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 setIsExportModalOpen(true);
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold shadow-md transition active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#009b68] hover:bg-[#00ab73] text-white text-xs font-bold shadow-md transition active:scale-95 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">পিডিএফ / রিপোর্ট ডাউনলোড</span>
@@ -341,17 +341,17 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           </button>
 
           <div className="text-center flex-1">
-            <div className="text-base sm:text-lg font-black tracking-wide text-amber-200 font-sans">
+            <div className="text-base sm:text-lg font-black tracking-wide text-[#facc15] font-sans">
               {selectedDateFormatted}
             </div>
             {isSelectedToday ? (
-              <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-bold">
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold border border-white/25">
                 ● আজকের দিন (Today)
               </span>
             ) : (
               <button
                 onClick={handleJumpToToday}
-                className="text-[10px] text-teal-200 underline hover:text-white"
+                className="text-[10px] text-emerald-100 underline hover:text-white"
               >
                 আজকের তারিখে ফিরুন (Go to Today)
               </button>
@@ -369,10 +369,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
 
         {/* 2 Quick Summary Indicator Pills (০/৫ নামাজ ও ০/৩৯ আমল) */}
         <div className="grid grid-cols-2 gap-2.5 pt-3">
-          <div className="p-2.5 rounded-2xl bg-black/20 backdrop-blur-md border border-white/20 flex items-center justify-between">
+          <div className="p-2.5 rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-lg">🕌</span>
-              <span className="text-xs font-bold text-teal-100">নামাজ</span>
+              <span className="text-xs font-bold text-emerald-100">নামাজ</span>
             </div>
             <div className="text-sm sm:text-base font-black font-mono text-emerald-300">
               {selectedLanguage === 'bn'
@@ -381,12 +381,12 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             </div>
           </div>
 
-          <div className="p-2.5 rounded-2xl bg-black/20 backdrop-blur-md border border-white/20 flex items-center justify-between">
+          <div className="p-2.5 rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-lg">✅</span>
-              <span className="text-xs font-bold text-teal-100">আমল</span>
+              <span className="text-xs font-bold text-emerald-100">আমল</span>
             </div>
-            <div className="text-sm sm:text-base font-black font-mono text-amber-300">
+            <div className="text-sm sm:text-base font-black font-mono text-[#facc15]">
               {selectedLanguage === 'bn'
                 ? `${completedAmalCount}/${totalAmalCount}`
                 : `${completedAmalCount}/${totalAmalCount}`}
@@ -396,7 +396,11 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
       </div>
 
       {/* ===================== 3 MAIN SUBTABS: লিখুন / রেকর্ড / তুলনা ===================== */}
-      <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-200 dark:bg-[#092226] border border-slate-300 dark:border-[#14424a]">
+      <div className={`flex items-center gap-1.5 p-1 rounded-2xl border ${
+        isDay
+          ? 'bg-[#e2edf0] border-[#d2e2e6]'
+          : 'bg-[#092226] border-[#14424a]'
+      }`}>
         <button
           onClick={() => {
             setActiveSubTab('checklist');
@@ -404,8 +408,12 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }}
           className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
             activeSubTab === 'checklist'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
+              ? isDay
+                ? 'bg-[#006747] text-white shadow-md'
+                : 'bg-emerald-600 text-white shadow-md'
+              : isDay
+              ? 'text-[#3b6269] hover:text-[#006747]'
+              : 'text-teal-200 hover:text-white'
           }`}
         >
           <BookOpen className="w-4 h-4" />
@@ -431,8 +439,12 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }}
           className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
             activeSubTab === 'calendar'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
+              ? isDay
+                ? 'bg-[#006747] text-white shadow-md'
+                : 'bg-emerald-600 text-white shadow-md'
+              : isDay
+              ? 'text-[#3b6269] hover:text-[#006747]'
+              : 'text-teal-200 hover:text-white'
           }`}
         >
           <CalendarIcon className="w-4 h-4" />
@@ -458,8 +470,12 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }}
           className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
             activeSubTab === 'trends'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
+              ? isDay
+                ? 'bg-[#006747] text-white shadow-md'
+                : 'bg-emerald-600 text-white shadow-md'
+              : isDay
+              ? 'text-[#3b6269] hover:text-[#006747]'
+              : 'text-teal-200 hover:text-white'
           }`}
         >
           <TrendingUp className="w-4 h-4" />
@@ -467,14 +483,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             {selectedLanguage === 'bn'
               ? 'তুলনা ও অগ্রগতি'
               : selectedLanguage === 'ur'
-              ? 'پیشرفت و موازنہ'
+              ? 'پیشرفت'
               : selectedLanguage === 'hi'
-              ? 'प्रगति व तुलना'
+              ? 'प्रगति'
               : selectedLanguage === 'id'
-              ? 'Analisis & Kemajuan'
+              ? 'Kemajuan'
               : selectedLanguage === 'tr'
-              ? 'İlerleme ve İstatistik'
-              : 'Analytics & Trends'}
+              ? 'İlerleme'
+              : 'Trends & Stats'}
           </span>
         </button>
       </div>
@@ -533,7 +549,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         onClick={() => handleToggleItem(w.id)}
                         className={`p-2.5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer ${
                           isCompleted
-                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/40'
+                            ? 'bg-[#00875a] text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/40'
                             : isDay
                             ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
                             : 'bg-[#081e22] hover:bg-[#123940] border-[#17464f] text-teal-200'

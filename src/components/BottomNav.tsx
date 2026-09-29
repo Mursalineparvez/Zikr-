@@ -82,7 +82,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           onClick={onOpenAddModal}
           className={`fixed bottom-20 sm:bottom-6 right-5 sm:right-8 z-40 w-14 h-14 rounded-2xl active:scale-95 text-white shadow-2xl flex items-center justify-center transition-transform cursor-pointer border ${
             isDay
-              ? 'bg-[#1c6469] hover:bg-[#154f53] border-teal-400/40 shadow-[#135d66]/30'
+              ? 'bg-[#006747] hover:bg-[#005a3e] border-emerald-400/50 shadow-[#006747]/30'
               : 'bg-[#1c6469] hover:bg-[#154f53] text-white border-teal-400/50 shadow-[#082024]/80'
           }`}
           aria-label="Add New Zikr"
@@ -96,7 +96,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       <nav
         className={`fixed bottom-0 left-0 right-0 z-30 px-2 py-1.5 md:hidden backdrop-blur-xl transition-colors duration-300 border-t ${
           isDay
-            ? 'bg-white/95 border-[#d6e8e5] shadow-2xl shadow-[#135d66]/15'
+            ? 'bg-white/95 border-[#d6e8e5] shadow-2xl shadow-[#006747]/15'
             : 'bg-[#0a262c]/95 border-[#194c55] shadow-2xl shadow-[#082024]/80'
         }`}
       >
@@ -109,10 +109,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
                   item.isActive
                     ? isDay
-                      ? 'text-white font-bold bg-[#1c6469] shadow-md shadow-[#135d66]/20'
+                      ? 'text-white font-bold bg-[#006747] shadow-md shadow-[#006747]/20'
                       : 'text-white font-bold bg-[#1c6469] border border-[#247b82] shadow-md'
                     : isDay
-                    ? 'text-[#507579] hover:text-[#1c6469]'
+                    ? 'text-[#456c72] hover:text-[#006747]'
                     : 'text-[#60878e] hover:text-[#2dd4bf]'
                 }`}
               >

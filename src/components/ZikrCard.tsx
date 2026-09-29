@@ -93,7 +93,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
           <span
             className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
               isDay
-                ? 'bg-[#e8f3f1] text-[#1c6469] border-[#cce5e2]'
+                ? 'bg-[#e6f7f2] text-[#00875a] border-[#c3edd9]'
                 : 'bg-[#092226] text-[#2dd4bf] border-[#133c44]'
             }`}
           >
@@ -255,7 +255,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
           e.stopPropagation();
           onIncrement(zikr.id);
         }}
-        className="w-full py-3 sm:py-3.5 mt-1 rounded-2xl text-sm sm:text-base font-bold shadow-md transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-[#1c6469] hover:bg-[#154f53] text-white shadow-[#135d66]/20 border border-teal-400/30"
+        className="w-full py-3 sm:py-3.5 mt-1 rounded-2xl text-sm sm:text-base font-bold shadow-md transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-[#006747] hover:bg-[#005a3e] text-white shadow-[#006747]/20 border border-emerald-400/30"
       >
         <Plus className="w-4 h-4 stroke-[3]" />
         <span>+1 গণনা ({displayPronunciation})</span>
