@@ -46,46 +46,138 @@ import { getDetectedDeviceInfo } from './utils/deviceInfo';
 
 
 export default function App() {
-  // 1. LocalStorage state persistence for Zikr Items (12 Common Zikr items merged with persisted counts)
+  // 1. LocalStorage state persistence for Zikr Items (Merged with recovery from backup, history, and aamal logs)
   const [zikrs, setZikrs] = useState<ZikrItem[]>(() => {
     try {
       const saved = localStorage.getItem('noor_zikr_items');
+      let parsed: any[] | null = null;
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const parsedMap = new Map<string, any>(parsed.map((item: any) => [item.id, item]));
-          const nameMap = new Map<string, any>(
-            parsed.map((item: any) => [
-              (item.name || item.pronunciationBn || '').toLowerCase().replace(/[^a-z0-9]/g, ''),
-              item,
-            ])
-          );
+        try {
+          const json = JSON.parse(saved);
+          if (Array.isArray(json) && json.length > 0) {
+            parsed = json;
+          }
+        } catch {}
+      }
 
-          // Populate all 12 Common Zikrs, restoring counts if user had already incremented them
-          const mergedList: ZikrItem[] = DEFAULT_ZIKRS.map((defaultItem) => {
-            const normalizedName = defaultItem.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const existing = parsedMap.get(defaultItem.id) || nameMap.get(normalizedName);
-            if (existing) {
-              return {
-                ...defaultItem,
-                count: typeof existing.count === 'number' ? existing.count : 0,
-                updatedAt: existing.updatedAt || defaultItem.updatedAt,
-                target: typeof existing.target === 'number' && existing.target > 0 ? existing.target : defaultItem.target,
-              };
+      // Check sum of parsed items
+      let parsedSum = parsed
+        ? parsed.reduce((acc, curr) => acc + (typeof curr.count === 'number' ? curr.count : 0), 0)
+        : 0;
+
+      // RECOVERY SYSTEM:
+      // If parsed items are 0 or empty, recover the previous counts from backup, history, or aamal logs!
+      if (parsedSum === 0) {
+        // 1. Check persistent backup
+        try {
+          const backupRaw = localStorage.getItem('zikrmate_active_zikrs_backup');
+          if (backupRaw) {
+            const backupJson = JSON.parse(backupRaw);
+            if (Array.isArray(backupJson)) {
+              const bSum = backupJson.reduce((acc, curr) => acc + (typeof curr.count === 'number' ? curr.count : 0), 0);
+              if (bSum > 0) {
+                parsed = backupJson;
+                parsedSum = bSum;
+              }
             }
-            return defaultItem;
-          });
+          }
+        } catch {}
 
-          // Also preserve any custom items the user may have added
-          const defaultIds = new Set(DEFAULT_ZIKRS.map((d) => d.id));
-          const customItems = parsed.filter(
-            (item: any) =>
-              !defaultIds.has(item.id) &&
-              !nameMap.has(item.name?.toLowerCase().replace(/[^a-z0-9]/g, ''))
-          );
-
-          return [...mergedList, ...customItems];
+        // 2. Check noor_zikr_history for most recent session with count breakdown
+        if (parsedSum === 0) {
+          try {
+            const histRaw = localStorage.getItem('noor_zikr_history');
+            if (histRaw) {
+              const hist = JSON.parse(histRaw);
+              if (Array.isArray(hist) && hist.length > 0) {
+                const sessionWithCounts = hist.find((s: any) =>
+                  Array.isArray(s.breakdown) && s.breakdown.some((b: any) => (b.count || 0) > 0)
+                );
+                if (sessionWithCounts && Array.isArray(sessionWithCounts.breakdown)) {
+                  parsed = sessionWithCounts.breakdown;
+                  parsedSum = sessionWithCounts.totalCount || sessionWithCounts.breakdown.reduce((acc: number, curr: any) => acc + (curr.count || 0), 0);
+                }
+              }
+            }
+          } catch {}
         }
+
+        // 3. Check today's or any recent Aamal log zikrBreakdown
+        if (parsedSum === 0) {
+          try {
+            const todayKey = getTodayDateKey();
+            const aamalRaw = localStorage.getItem(`zikrmate_aamal_${todayKey}`);
+            if (aamalRaw) {
+              const aamal = JSON.parse(aamalRaw);
+              if (aamal && Array.isArray(aamal.zikrBreakdown) && aamal.zikrBreakdown.length > 0) {
+                const aamalSum = aamal.zikrBreakdown.reduce((acc: number, curr: any) => acc + (curr.count || 0), 0);
+                if (aamalSum > 0) {
+                  parsed = aamal.zikrBreakdown;
+                  parsedSum = aamalSum;
+                }
+              }
+            }
+
+            if (parsedSum === 0) {
+              const allLogs = getAllAamalLogs();
+              const dates = Object.keys(allLogs).sort().reverse();
+              for (const d of dates) {
+                const log = allLogs[d];
+                if (log && Array.isArray(log.zikrBreakdown) && log.zikrBreakdown.length > 0) {
+                  const bSum = log.zikrBreakdown.reduce((acc: number, curr: any) => acc + (curr.count || 0), 0);
+                  if (bSum > 0) {
+                    parsed = log.zikrBreakdown;
+                    parsedSum = bSum;
+                    break;
+                  }
+                }
+              }
+            }
+          } catch {}
+        }
+      }
+
+      if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+        const parsedMap = new Map<string, any>(parsed.map((item: any) => [item.id, item]));
+        const nameMap = new Map<string, any>(
+          parsed.map((item: any) => [
+            (item.name || item.pronunciationBn || '').toLowerCase().replace(/[^a-z0-9]/g, ''),
+            item,
+          ])
+        );
+
+        // Populate all 12 Common Zikrs, restoring counts
+        const mergedList: ZikrItem[] = DEFAULT_ZIKRS.map((defaultItem) => {
+          const normalizedName = defaultItem.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const existing = parsedMap.get(defaultItem.id) || nameMap.get(normalizedName);
+          if (existing) {
+            return {
+              ...defaultItem,
+              count: typeof existing.count === 'number' ? existing.count : 0,
+              updatedAt: existing.updatedAt || defaultItem.updatedAt,
+              target: typeof existing.target === 'number' && existing.target > 0 ? existing.target : defaultItem.target,
+            };
+          }
+          return defaultItem;
+        });
+
+        // Also preserve any custom items the user may have added
+        const defaultIds = new Set(DEFAULT_ZIKRS.map((d) => d.id));
+        const customItems = parsed.filter(
+          (item: any) =>
+            item.id &&
+            !defaultIds.has(item.id) &&
+            !nameMap.has((item.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''))
+        );
+
+        const finalList = [...mergedList, ...customItems];
+        try {
+          localStorage.setItem('noor_zikr_items', JSON.stringify(finalList));
+          if (parsedSum > 0) {
+            localStorage.setItem('zikrmate_active_zikrs_backup', JSON.stringify(finalList));
+          }
+        } catch {}
+        return finalList;
       }
     } catch {
       // Fallback
@@ -286,11 +378,20 @@ export default function App() {
     // 2. Multi-device live sync vs Local refresh protection
     // If update came from ANOTHER device, ALWAYS apply cloud data to match identically!
     // If update is from THIS device and is initial snapshot:
-    // If local was higher than cloud (e.g. user refreshed immediately after clicking), keep local and sync to cloud!
-    const shouldKeepLocalOnRefresh = !isFromOtherDevice && isInitialSnapshot && localGrandTotal > cloudGrandTotal;
+    // If local was higher or equal and local has counts, keep local and sync to cloud!
+    const cloudZikrSum = Array.isArray(cloudData.zikrs)
+      ? cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0)
+      : 0;
+    const shouldKeepLocalOnRefresh =
+      !isFromOtherDevice &&
+      isInitialSnapshot &&
+      (localGrandTotal > cloudGrandTotal ||
+        localZikrSum > cloudZikrSum ||
+        (localZikrSum > 0 && cloudZikrSum === 0) ||
+        (localGrandTotal === cloudGrandTotal && localZikrSum > 0 && cloudZikrSum === 0));
 
     if (shouldKeepLocalOnRefresh) {
-      // Local has newer uncommitted counts on this device, push local to cloud
+      // Local has newer/valid uncommitted counts on this device, push local to cloud
       const targetEmail = (userProfile.emailOrPhone || '').toLowerCase().trim();
       if (targetEmail) {
         saveUserDataToCloud(
@@ -317,11 +418,18 @@ export default function App() {
     // Otherwise (from other device OR cloud is newer/equal): apply cloud data!
     let appliedZikrs = zikrsRef.current;
     if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
-      appliedZikrs = cloudData.zikrs;
-      setZikrs(cloudData.zikrs);
-      try {
-        localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
-      } catch {}
+      const incomingSum = cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+      // Safety: Never wipe non-zero local counts with all-zero cloud counts on local refresh
+      if (incomingSum > 0 || isFromOtherDevice || localZikrSum === 0) {
+        appliedZikrs = cloudData.zikrs;
+        setZikrs(cloudData.zikrs);
+        try {
+          localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
+          if (incomingSum > 0) {
+            localStorage.setItem('zikrmate_active_zikrs_backup', JSON.stringify(cloudData.zikrs));
+          }
+        } catch {}
+      }
     }
 
     // Synchronize History Sessions
@@ -436,7 +544,24 @@ export default function App() {
 
     const unsubscribe = subscribeToUserDataInCloud(emailOrPhone, (cloudData, isInitial) => {
       if (!cloudData.foundInCloud) {
-        // Cloud has no saved state yet: This is the user's first signin / login!
+        // If local device already has counted data, save local data to cloud instead of resetting to 0!
+        const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
+        const hasExistingLocalData = localZikrSum > 0 || lifetimeTotalCountRef.current > 0;
+        if (hasExistingLocalData) {
+          saveUserDataToCloud(
+            emailOrPhone,
+            userProfile,
+            zikrsRef.current,
+            historySessions,
+            Math.max(lifetimeTotalCountRef.current, localZikrSum),
+            settings,
+            getAllAamalLogs()
+          ).catch(() => {});
+          isCloudSyncReadyRef.current = true;
+          return;
+        }
+
+        // Only initialize fresh zero if local is truly empty
         initializeFreshZeroUserState(userProfile);
         return;
       }
@@ -635,6 +760,10 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('noor_zikr_items', JSON.stringify(zikrs));
+      const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+      if (activeSum > 0) {
+        localStorage.setItem('zikrmate_active_zikrs_backup', JSON.stringify(zikrs));
+      }
       syncTodayAamalWithLiveZikrs(zikrs);
     } catch (e) {
       console.error('Failed to save zikrs to localStorage', e);
@@ -667,9 +796,9 @@ export default function App() {
     return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
   }, [zikrs]);
 
-  // Midnight Auto-Refresh: Checks if a new day has started (12:00 AM / 00:00)
+  // Daily Transition Check: Updates active date key and syncs Aamal day logs without resetting live counters
   useEffect(() => {
-    const checkMidnightRefresh = () => {
+    const checkDateTransition = () => {
       const todayKey = getTodayDateKey();
       const lastActiveDate = localStorage.getItem('zikrmate_last_active_date_key');
 
@@ -679,39 +808,18 @@ export default function App() {
       }
 
       if (lastActiveDate !== todayKey) {
-        // A new day has begun! Auto-archive yesterday's session if counts were > 0
-        const activeZikrs = zikrsRef.current;
-        const currentSum = activeZikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-        if (currentSum > 0) {
-          const autoSession: HistorySession = {
-            id: `midnight_session_${Date.now()}`,
-            timestamp: Date.now(),
-            dateStr: `${lastActiveDate} (Midnight Auto-Save)`,
-            totalCount: currentSum,
-            breakdown: activeZikrs.map((z) => ({
-              name: z.name,
-              count: z.count,
-              target: z.target,
-              arabic: z.arabic,
-            })),
-          };
-
-          setHistorySessions((prev) => [autoSession, ...prev]);
-        }
-
-        // Reset individual counters to 0 for a fresh day, while Grand Total and all Aamal Tracker history are permanently preserved
-        setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
+        // A new day has begun: update date key without resetting counters
         localStorage.setItem('zikrmate_last_active_date_key', todayKey);
-
-        showToast('🌙 রাত ১২:০০ টা - নতুন দিনের জন্য জিকির কাউন্টার ফ্রেশ করা হয়েছে। সর্বমোট কাউন্ট ও আমল হিস্ট্রি অক্ষুণ্ণ রয়েছে।');
+        // Ensure today's Aamal log is initialized and synchronized with active counts
+        syncTodayAamalWithLiveZikrs(zikrsRef.current, todayKey);
       }
     };
 
     // Run check on mount
-    checkMidnightRefresh();
+    checkDateTransition();
 
-    // Check periodically every 15 seconds for midnight transition
-    const interval = setInterval(checkMidnightRefresh, 15000);
+    // Check periodically for day transitions
+    const interval = setInterval(checkDateTransition, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -721,6 +829,10 @@ export default function App() {
       try {
         localStorage.setItem('noor_zikr_items', JSON.stringify(zikrsRef.current));
         localStorage.setItem('zikrmate_lifetime_total_count', String(lifetimeTotalCountRef.current));
+        const activeSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
+        if (activeSum > 0) {
+          localStorage.setItem('zikrmate_active_zikrs_backup', JSON.stringify(zikrsRef.current));
+        }
       } catch {}
     };
     window.addEventListener('beforeunload', handleUnload);
@@ -953,6 +1065,9 @@ export default function App() {
         lastSyncedSignatureRef.current = '';
         setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
         setLifetimeTotalCount(0);
+        try {
+          localStorage.removeItem('zikrmate_active_zikrs_backup');
+        } catch {}
         if (settings.vibrationEnabled) soundHaptics.vibrate([70, 50, 70]);
         if (settings.soundEnabled) soundHaptics.playReset();
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
