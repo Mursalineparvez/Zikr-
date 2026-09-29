@@ -157,6 +157,11 @@ export default function App() {
     return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
   });
 
+  const lifetimeTotalCountRef = useRef(lifetimeTotalCount);
+  useEffect(() => {
+    lifetimeTotalCountRef.current = lifetimeTotalCount;
+  }, [lifetimeTotalCount]);
+
   useEffect(() => {
     try {
       localStorage.setItem('zikrmate_lifetime_total_count', String(lifetimeTotalCount));
@@ -240,10 +245,16 @@ export default function App() {
   // Multi-Device Cloud Synchronization Refs
   const isCloudSyncReadyRef = useRef<boolean>(false);
   const lastSyncedSignatureRef = useRef<string>('');
+  const lastLocalActionTimestampRef = useRef<number>(0);
 
   // Helper: Apply cloud data snapshot to active state (Seamless cross-device, web & app sync!)
-  const applyCloudDataToState = (cloudData: CloudZikrState, isFromOtherDevice: boolean = false) => {
+  const applyCloudDataToState = (cloudData: CloudZikrState, isFromOtherDevice: boolean = false, isInitialSnapshot: boolean = false) => {
     isCloudSyncReadyRef.current = true;
+
+    // Calculate current local total count
+    const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
+    const localGrandTotal = Math.max(lifetimeTotalCount, localZikrSum);
+    const cloudGrandTotal = typeof cloudData.lifetimeTotalCount === 'number' ? cloudData.lifetimeTotalCount : 0;
 
     // 1. Synchronize Profile (photoUrl, password, name, location) across all devices / web & app!
     let mergedProfile = userProfile;
@@ -272,8 +283,39 @@ export default function App() {
       });
     }
 
-    // 2. Synchronize Zikr counts across devices (Guaranteed identical counts everywhere)
-    let appliedZikrs = zikrs;
+    // 2. Multi-device live sync vs Local refresh protection
+    // If update came from ANOTHER device, ALWAYS apply cloud data to match identically!
+    // If update is from THIS device and is initial snapshot:
+    // If local was higher than cloud (e.g. user refreshed immediately after clicking), keep local and sync to cloud!
+    const shouldKeepLocalOnRefresh = !isFromOtherDevice && isInitialSnapshot && localGrandTotal > cloudGrandTotal;
+
+    if (shouldKeepLocalOnRefresh) {
+      // Local has newer uncommitted counts on this device, push local to cloud
+      const targetEmail = (userProfile.emailOrPhone || '').toLowerCase().trim();
+      if (targetEmail) {
+        saveUserDataToCloud(
+          targetEmail,
+          userProfile,
+          zikrsRef.current,
+          historySessions,
+          localGrandTotal,
+          settings,
+          getAllAamalLogs()
+        ).catch(() => {});
+      }
+      lastSyncedSignatureRef.current = getStateSignature(
+        zikrsRef.current,
+        historySessions,
+        localGrandTotal,
+        mergedProfile,
+        settings
+      );
+      setLastCloudSyncTimestamp(Date.now());
+      return;
+    }
+
+    // Otherwise (from other device OR cloud is newer/equal): apply cloud data!
+    let appliedZikrs = zikrsRef.current;
     if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
       appliedZikrs = cloudData.zikrs;
       setZikrs(cloudData.zikrs);
@@ -282,7 +324,7 @@ export default function App() {
       } catch {}
     }
 
-    // 3. Synchronize History Sessions
+    // Synchronize History Sessions
     let appliedHistory = historySessions;
     if (cloudData.history && Array.isArray(cloudData.history)) {
       appliedHistory = cloudData.history;
@@ -292,7 +334,7 @@ export default function App() {
       } catch {}
     }
 
-    // 4. Synchronize Lifetime Total Count
+    // Synchronize Lifetime Total Count
     let appliedLifetime = lifetimeTotalCount;
     if (typeof cloudData.lifetimeTotalCount === 'number') {
       appliedLifetime = cloudData.lifetimeTotalCount;
@@ -302,14 +344,14 @@ export default function App() {
       } catch {}
     }
 
-    // 5. Synchronize App Settings
+    // Synchronize App Settings
     let appliedSettings = settings;
     if (cloudData.settings) {
       appliedSettings = { ...settings, ...cloudData.settings };
       setSettings(appliedSettings);
     }
 
-    // 6. Synchronize Aamal Logs
+    // Synchronize Aamal Logs
     if (cloudData.aamalLogs && typeof cloudData.aamalLogs === 'object') {
       try {
         clearAllAamalLogs();
@@ -319,7 +361,7 @@ export default function App() {
       } catch {}
     }
 
-    // Record applied state signature to ensure this incoming cloud state is never re-saved back
+    // Record applied state signature to ensure this incoming cloud state is not treated as a new local edit
     lastSyncedSignatureRef.current = getStateSignature(
       appliedZikrs,
       appliedHistory,
@@ -403,10 +445,10 @@ export default function App() {
       const isFromOtherDevice = !!(cloudData.senderDeviceId && cloudData.senderDeviceId !== currentDeviceId);
 
       // Apply latest cloud data to local state
-      applyCloudDataToState(cloudData, isFromOtherDevice);
+      applyCloudDataToState(cloudData, isFromOtherDevice, isInitial);
 
       if (isFromOtherDevice && !isInitial) {
-        showToast('🔄 অন্য ডিভাইস/ওয়েব থেকে জিকির ও প্রোফাইল লাইভ আপডেট হয়েছে!');
+        showToast('🔄 অন্য ডিভাইস থেকে জিকির লাইভ সিঙ্ক হয়েছে!');
       }
     });
 
@@ -415,7 +457,7 @@ export default function App() {
     };
   }, [userProfile.isSignedIn, userProfile.emailOrPhone]);
 
-  // 2. Debounced auto-save to cloud when user changes counters on THIS device (Fast 60ms sync)
+  // 2. Snappy auto-save to cloud when user changes counters on THIS device (Ultra-fast 30ms sync)
   const cloudSyncDebounceRef = useRef<any>(null);
   useEffect(() => {
     if (!userProfile.isSignedIn || !userProfile.emailOrPhone) return;
@@ -446,7 +488,7 @@ export default function App() {
         const now = Date.now();
         setLastCloudSyncTimestamp(now);
       }
-    }, 60);
+    }, 30);
 
     return () => {
       if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
@@ -678,10 +720,15 @@ export default function App() {
     const handleUnload = () => {
       try {
         localStorage.setItem('noor_zikr_items', JSON.stringify(zikrsRef.current));
+        localStorage.setItem('zikrmate_lifetime_total_count', String(lifetimeTotalCountRef.current));
       } catch {}
     };
     window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
+    window.addEventListener('pagehide', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+      window.removeEventListener('pagehide', handleUnload);
+    };
   }, []);
 
 
@@ -863,6 +910,7 @@ export default function App() {
       confirmLabel: 'Reset to 0',
       isDanger: false,
       onConfirm: () => {
+        lastSyncedSignatureRef.current = '';
         setZikrs((prev) =>
           prev.map((item) =>
             item.id === zikr.id ? { ...item, count: 0, updatedAt: Date.now() } : item
@@ -885,6 +933,7 @@ export default function App() {
       confirmLabel: 'Delete Forever',
       isDanger: true,
       onConfirm: () => {
+        lastSyncedSignatureRef.current = '';
         setZikrs((prev) => prev.filter((item) => item.id !== zikr.id));
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         showToast(`Deleted ${zikr.name}`);
@@ -901,6 +950,7 @@ export default function App() {
       confirmLabel: 'Yes, Reset All to 0',
       isDanger: true,
       onConfirm: () => {
+        lastSyncedSignatureRef.current = '';
         setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
         setLifetimeTotalCount(0);
         if (settings.vibrationEnabled) soundHaptics.vibrate([70, 50, 70]);
@@ -940,6 +990,7 @@ export default function App() {
       })),
     };
 
+    lastSyncedSignatureRef.current = '';
     setHistorySessions((prev) => [newSession, ...prev]);
     if (settings.soundEnabled) soundHaptics.playMilestone();
     showToast(`Saved session: ${currentTotal} total counts archived!`);
@@ -950,6 +1001,7 @@ export default function App() {
     data: Omit<ZikrItem, 'id' | 'createdAt' | 'count' | 'updatedAt'>,
     id?: string
   ) => {
+    lastSyncedSignatureRef.current = '';
     const now = Date.now();
     if (id) {
       setZikrs((prev) =>
