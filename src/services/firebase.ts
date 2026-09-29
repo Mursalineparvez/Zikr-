@@ -163,6 +163,7 @@ export interface CloudZikrState {
   updatedAtMs?: number;
   senderDeviceId?: string;
   foundInCloud: boolean;
+  hasZikrData?: boolean;
 }
 
 /**
@@ -202,6 +203,8 @@ export async function saveUserDataToCloud(
       deviceModel: profile.deviceModel || 'Web Browser',
       osVersion: profile.osVersion || 'Cloud Sync',
       updatedAt: nowIso,
+      updatedAtMs: nowMs,
+      senderDeviceId: currentDeviceId,
     };
     if (profile.password) {
       userDocPayload.password = profile.password;
@@ -243,6 +246,7 @@ export async function saveUserDataToCloud(
           settings,
           aamalLogs,
           lastSyncedAt: nowMs,
+          updatedAtMs: nowMs,
         })
       );
     } catch {}
@@ -281,6 +285,7 @@ export async function loadUserDataFromCloud(
     let loadedUpdatedAtMs: number | undefined = undefined;
     let loadedSenderDeviceId: string | undefined = undefined;
     let foundInCloud = false;
+    let hasZikrData = false;
 
     if (profileSnap.exists()) {
       const pData = profileSnap.data();
@@ -296,6 +301,12 @@ export async function loadUserDataFromCloud(
         deviceModel: pData.deviceModel,
         osVersion: pData.osVersion,
       };
+      if (pData.updatedAtMs) {
+        loadedUpdatedAtMs = pData.updatedAtMs;
+      }
+      if (pData.senderDeviceId) {
+        loadedSenderDeviceId = pData.senderDeviceId;
+      }
       foundInCloud = true;
     }
 
@@ -312,7 +323,10 @@ export async function loadUserDataFromCloud(
       if (dData.zikrsJson) {
         try {
           const parsedZikrs = JSON.parse(dData.zikrsJson);
-          if (Array.isArray(parsedZikrs)) loadedZikrs = parsedZikrs;
+          if (Array.isArray(parsedZikrs) && parsedZikrs.length > 0) {
+            loadedZikrs = parsedZikrs;
+            hasZikrData = true;
+          }
         } catch {}
       }
       if (dData.historyJson) {
@@ -340,8 +354,12 @@ export async function loadUserDataFromCloud(
       if (typeof dData.lifetimeTotalCount === 'number') {
         loadedLifetimeTotal = dData.lifetimeTotalCount;
       }
-      loadedUpdatedAtMs = dData.updatedAtMs;
-      loadedSenderDeviceId = dData.senderDeviceId;
+      if (dData.updatedAtMs) {
+        loadedUpdatedAtMs = Math.max(loadedUpdatedAtMs || 0, dData.updatedAtMs);
+      }
+      if (dData.senderDeviceId) {
+        loadedSenderDeviceId = dData.senderDeviceId;
+      }
       foundInCloud = true;
     }
 
@@ -358,7 +376,9 @@ export async function loadUserDataFromCloud(
             settings: parsedCache.settings,
             lifetimeTotalCount: parsedCache.lifetimeTotalCount,
             aamalLogs: parsedCache.aamalLogs,
+            updatedAtMs: parsedCache.updatedAtMs,
             foundInCloud: false,
+            hasZikrData: false,
           };
         }
       } catch {}
@@ -374,6 +394,7 @@ export async function loadUserDataFromCloud(
       updatedAtMs: loadedUpdatedAtMs,
       senderDeviceId: loadedSenderDeviceId,
       foundInCloud,
+      hasZikrData,
     };
   } catch (error) {
     console.error('Failed to load user cloud data from Firebase:', error);
@@ -382,9 +403,10 @@ export async function loadUserDataFromCloud(
 }
 
 /**
- * Real-time listener for cloud changes across multiple devices!
- * When Device 1 increments a zikr or updates history, Device 2's snapshot fires
- * and instantaneously updates the state so all devices stay 100% identical!
+ * Real-time listener for cloud changes across multiple devices, web, and app!
+ * Listens to both the user profile document (for photoUrl, password, name changes)
+ * and the zikrState document (for real-time zikr counts, history, and aamal).
+ * When Device 1 changes photo, password, or counts, Device 2 / Web / App instantaneously updates!
  */
 export function subscribeToUserDataInCloud(
   emailOrPhone: string,
@@ -396,44 +418,62 @@ export function subscribeToUserDataInCloud(
 
   const userKey = sanitizeUserKey(emailOrPhone);
   const dataDocRef = doc(db, 'users', userKey, 'data', 'zikrState');
+  const profileDocRef = doc(db, 'users', userKey);
   let isInitial = true;
 
-  const unsubscribe = onSnapshot(
-    dataDocRef,
-    (snap) => {
-      // Ignore local optimistic writes before server confirmation
-      if (snap.metadata.hasPendingWrites) {
-        return;
-      }
+  let latestProfileDoc: any = null;
+  let latestDataDoc: any = null;
 
-      if (!snap.exists()) {
-        if (isInitial) {
-          isInitial = false;
-          onUpdate({ foundInCloud: false }, true);
-        }
-        return;
-      }
+  const emitMergedState = () => {
+    let loadedProfile: Partial<UserProfile> = {};
+    let loadedZikrs: ZikrItem[] | undefined = undefined;
+    let loadedHistory: HistorySession[] | undefined = undefined;
+    let loadedSettings: AppSettings | undefined = undefined;
+    let loadedAamalLogs: Record<string, any> | undefined = undefined;
+    let loadedLifetimeTotal: number | undefined = undefined;
+    let loadedUpdatedAtMs: number | undefined = undefined;
+    let loadedSenderDeviceId: string | undefined = undefined;
+    let foundInCloud = false;
+    let hasZikrData = false;
 
-      const dData = snap.data();
-      let loadedProfile: Partial<UserProfile> | undefined = undefined;
-      let loadedZikrs: ZikrItem[] = [];
-      let loadedHistory: HistorySession[] = [];
-      let loadedSettings: AppSettings | undefined = undefined;
-      let loadedAamalLogs: Record<string, any> | undefined = undefined;
+    // 1. Process profile doc (photoUrl, password, name, etc.)
+    if (latestProfileDoc && latestProfileDoc.exists()) {
+      const pData = latestProfileDoc.data();
+      loadedProfile = {
+        name: pData.name,
+        emailOrPhone: pData.email || pData.phone || emailOrPhone,
+        photoUrl: pData.photoUrl,
+        password: pData.password || '',
+        location: pData.location,
+        isSignedIn: true,
+        isVerified: pData.isVerified ?? true,
+        verificationMethod: pData.verificationMethod,
+        deviceModel: pData.deviceModel,
+        osVersion: pData.osVersion,
+      };
+      if (pData.updatedAtMs) loadedUpdatedAtMs = pData.updatedAtMs;
+      if (pData.senderDeviceId) loadedSenderDeviceId = pData.senderDeviceId;
+      foundInCloud = true;
+    }
 
+    // 2. Process data doc (zikrs, history, lifetime count, aamal)
+    if (latestDataDoc && latestDataDoc.exists()) {
+      const dData = latestDataDoc.data();
       if (dData.profileJson) {
         try {
-          const parsedProfile = JSON.parse(dData.profileJson);
-          if (parsedProfile && typeof parsedProfile === 'object') {
-            loadedProfile = parsedProfile;
+          const parsed = JSON.parse(dData.profileJson);
+          if (parsed && typeof parsed === 'object') {
+            loadedProfile = { ...loadedProfile, ...parsed };
           }
         } catch {}
       }
-
       if (dData.zikrsJson) {
         try {
           const parsedZikrs = JSON.parse(dData.zikrsJson);
-          if (Array.isArray(parsedZikrs)) loadedZikrs = parsedZikrs;
+          if (Array.isArray(parsedZikrs)) {
+            loadedZikrs = parsedZikrs;
+            hasZikrData = true;
+          }
         } catch {}
       }
       if (dData.historyJson) {
@@ -458,28 +498,63 @@ export function subscribeToUserDataInCloud(
           }
         } catch {}
       }
+      if (typeof dData.lifetimeTotalCount === 'number') {
+        loadedLifetimeTotal = dData.lifetimeTotalCount;
+      }
+      if (dData.updatedAtMs) {
+        loadedUpdatedAtMs = Math.max(loadedUpdatedAtMs || 0, dData.updatedAtMs);
+      }
+      if (dData.senderDeviceId) {
+        loadedSenderDeviceId = dData.senderDeviceId;
+      }
+      foundInCloud = true;
+    }
 
-      const state: CloudZikrState = {
-        profile: loadedProfile,
-        zikrs: loadedZikrs,
-        history: loadedHistory,
-        settings: loadedSettings,
-        lifetimeTotalCount: dData.lifetimeTotalCount,
-        aamalLogs: loadedAamalLogs,
-        updatedAtMs: dData.updatedAtMs,
-        senderDeviceId: dData.senderDeviceId,
-        foundInCloud: true,
-      };
+    const state: CloudZikrState = {
+      profile: loadedProfile,
+      zikrs: loadedZikrs,
+      history: loadedHistory,
+      settings: loadedSettings,
+      lifetimeTotalCount: loadedLifetimeTotal,
+      aamalLogs: loadedAamalLogs,
+      updatedAtMs: loadedUpdatedAtMs,
+      senderDeviceId: loadedSenderDeviceId,
+      foundInCloud,
+      hasZikrData,
+    };
 
-      onUpdate(state, isInitial);
-      isInitial = false;
+    onUpdate(state, isInitial);
+    isInitial = false;
+  };
+
+  const unsubData = onSnapshot(
+    dataDocRef,
+    (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
+      latestDataDoc = snap;
+      emitMergedState();
     },
     (err) => {
-      console.warn('Firestore subscription error:', err);
+      console.warn('Firestore data snapshot sync notice:', err);
     }
   );
 
-  return unsubscribe;
+  const unsubProfile = onSnapshot(
+    profileDocRef,
+    (snap) => {
+      if (snap.metadata.hasPendingWrites) return;
+      latestProfileDoc = snap;
+      emitMergedState();
+    },
+    (err) => {
+      console.warn('Firestore profile snapshot sync notice:', err);
+    }
+  );
+
+  return () => {
+    unsubData();
+    unsubProfile();
+  };
 }
 
 // 5. Verification OTP Store & Dispatcher
