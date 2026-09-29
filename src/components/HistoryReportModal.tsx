@@ -35,6 +35,7 @@ interface HistoryReportModalProps {
   initialRange?: HistoryPeriodRange;
   selectedDayKey?: string;
   liveZikrs?: ZikrItem[];
+  masterTotal?: number;
 }
 
 export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
@@ -47,6 +48,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
   initialRange = '1month',
   selectedDayKey,
   liveZikrs,
+  masterTotal,
 }) => {
   const isDay = themeMode === 'day';
   const [selectedRange, setSelectedRange] = useState<HistoryPeriodRange>(initialRange);
@@ -219,7 +221,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                 {selectedLanguage === 'bn' ? 'সর্বমোট জিকির (Sum)' : 'Total Dhikr Sum'}
               </span>
               <div className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-amber-300 font-mono mt-1">
-                {reportData.totalDhikrSum.toLocaleString()}
+                {(masterTotal !== undefined ? masterTotal : reportData.totalDhikrSum).toLocaleString()}
               </div>
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400/80 font-semibold">
                 {reportData.activeDaysCount} Days Active

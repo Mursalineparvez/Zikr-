@@ -46,7 +46,7 @@ import { getDetectedDeviceInfo } from './utils/deviceInfo';
 
 
 export default function App() {
-  // 1. LocalStorage state persistence for Zikr Items (Merged with recovery from backup, history, and aamal logs)
+  // 1. LocalStorage state persistence for Zikr Items
   const [zikrs, setZikrs] = useState<ZikrItem[]>(() => {
     try {
       const saved = localStorage.getItem('noor_zikr_items');
@@ -60,83 +60,6 @@ export default function App() {
         } catch {}
       }
 
-      // Check sum of parsed items
-      let parsedSum = parsed
-        ? parsed.reduce((acc, curr) => acc + (typeof curr.count === 'number' ? curr.count : 0), 0)
-        : 0;
-
-      // RECOVERY SYSTEM:
-      // If parsed items are 0 or empty, recover the previous counts from backup, history, or aamal logs!
-      if (parsedSum === 0) {
-        // 1. Check persistent backup
-        try {
-          const backupRaw = localStorage.getItem('zikrmate_active_zikrs_backup');
-          if (backupRaw) {
-            const backupJson = JSON.parse(backupRaw);
-            if (Array.isArray(backupJson)) {
-              const bSum = backupJson.reduce((acc, curr) => acc + (typeof curr.count === 'number' ? curr.count : 0), 0);
-              if (bSum > 0) {
-                parsed = backupJson;
-                parsedSum = bSum;
-              }
-            }
-          }
-        } catch {}
-
-        // 2. Check noor_zikr_history for most recent session with count breakdown
-        if (parsedSum === 0) {
-          try {
-            const histRaw = localStorage.getItem('noor_zikr_history');
-            if (histRaw) {
-              const hist = JSON.parse(histRaw);
-              if (Array.isArray(hist) && hist.length > 0) {
-                const sessionWithCounts = hist.find((s: any) =>
-                  Array.isArray(s.breakdown) && s.breakdown.some((b: any) => (b.count || 0) > 0)
-                );
-                if (sessionWithCounts && Array.isArray(sessionWithCounts.breakdown)) {
-                  parsed = sessionWithCounts.breakdown;
-                  parsedSum = sessionWithCounts.totalCount || sessionWithCounts.breakdown.reduce((acc: number, curr: any) => acc + (curr.count || 0), 0);
-                }
-              }
-            }
-          } catch {}
-        }
-
-        // 3. Check today's or any recent Aamal log zikrBreakdown
-        if (parsedSum === 0) {
-          try {
-            const todayKey = getTodayDateKey();
-            const aamalRaw = localStorage.getItem(`zikrmate_aamal_${todayKey}`);
-            if (aamalRaw) {
-              const aamal = JSON.parse(aamalRaw);
-              if (aamal && Array.isArray(aamal.zikrBreakdown) && aamal.zikrBreakdown.length > 0) {
-                const aamalSum = aamal.zikrBreakdown.reduce((acc: number, curr: any) => acc + (curr.count || 0), 0);
-                if (aamalSum > 0) {
-                  parsed = aamal.zikrBreakdown;
-                  parsedSum = aamalSum;
-                }
-              }
-            }
-
-            if (parsedSum === 0) {
-              const allLogs = getAllAamalLogs();
-              const dates = Object.keys(allLogs).sort().reverse();
-              for (const d of dates) {
-                const log = allLogs[d];
-                if (log && Array.isArray(log.zikrBreakdown) && log.zikrBreakdown.length > 0) {
-                  const bSum = log.zikrBreakdown.reduce((acc: number, curr: any) => acc + (curr.count || 0), 0);
-                  if (bSum > 0) {
-                    parsed = log.zikrBreakdown;
-                    parsedSum = bSum;
-                    break;
-                  }
-                }
-              }
-            }
-          } catch {}
-        }
-      }
-
       if (parsed && Array.isArray(parsed) && parsed.length > 0) {
         const parsedMap = new Map<string, any>(parsed.map((item: any) => [item.id, item]));
         const nameMap = new Map<string, any>(
@@ -146,14 +69,14 @@ export default function App() {
           ])
         );
 
-        // Populate all 12 Common Zikrs, restoring counts
+        // Populate all Common Zikrs, restoring counts
         const mergedList: ZikrItem[] = DEFAULT_ZIKRS.map((defaultItem) => {
           const normalizedName = defaultItem.name.toLowerCase().replace(/[^a-z0-9]/g, '');
           const existing = parsedMap.get(defaultItem.id) || nameMap.get(normalizedName);
           if (existing) {
             return {
               ...defaultItem,
-              count: typeof existing.count === 'number' ? existing.count : 0,
+              count: typeof existing.count === 'number' ? Math.max(0, existing.count) : 0,
               updatedAt: existing.updatedAt || defaultItem.updatedAt,
               target: typeof existing.target === 'number' && existing.target > 0 ? existing.target : defaultItem.target,
             };
@@ -173,9 +96,6 @@ export default function App() {
         const finalList = [...mergedList, ...customItems];
         try {
           localStorage.setItem('noor_zikr_items', JSON.stringify(finalList));
-          if (parsedSum > 0) {
-            localStorage.setItem('zikrmate_active_zikrs_backup', JSON.stringify(finalList));
-          }
         } catch {}
         return finalList;
       }
@@ -236,17 +156,32 @@ export default function App() {
   // Active module navigation
   const [activeModule, setActiveModule] = useState<NavModule>('zikir_counter');
 
-  // Lifetime Cumulative Grand Total Count (Persists across midnight resets until manual Reset All)
+  // Lifetime Cumulative Grand Total Count (Persists across sessions until manual Reset All)
   const [lifetimeTotalCount, setLifetimeTotalCount] = useState<number>(() => {
+    let savedTotal = 0;
     try {
       const saved = localStorage.getItem('zikrmate_lifetime_total_count');
       if (saved !== null) {
         const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 0) return parsed;
+        if (!isNaN(parsed) && parsed >= 0) {
+          savedTotal = parsed;
+        }
       }
     } catch {}
-    // Initial fallback to current zikrs sum
-    return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+
+    let historyTotal = 0;
+    try {
+      const histRaw = localStorage.getItem('noor_zikr_history');
+      if (histRaw) {
+        const parsedHist = JSON.parse(histRaw);
+        if (Array.isArray(parsedHist)) {
+          historyTotal = parsedHist.reduce((acc: number, s: any) => acc + (s.totalCount || 0), 0);
+        }
+      }
+    } catch {}
+
+    const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+    return Math.max(savedTotal, historyTotal + activeSum, activeSum);
   });
 
   const lifetimeTotalCountRef = useRef(lifetimeTotalCount);
@@ -863,10 +798,13 @@ export default function App() {
     requestWakeLock();
   }, [settings.screenAwake]);
 
-  // Master Total Count
-  const masterTotal = useMemo(() => {
-    return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-  }, [zikrs]);
+  // Master Grand Total Count (Grand cumulative total of all zikrs including history logs sum)
+  const masterGrandTotal = useMemo(() => {
+    const allLogs = getAllAamalLogs();
+    const historySum = Object.values(allLogs).reduce((acc, log) => acc + (log.dhikrCount || 0), 0);
+    const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+    return Math.max(lifetimeTotalCount, historySum, activeSum);
+  }, [zikrs, lifetimeTotalCount, historySessions]);
 
   // Completed Goals Count
   const completedGoals = useMemo(() => {
@@ -1361,7 +1299,7 @@ export default function App() {
         {/* 1. ZIKIR COUNTER VIEW (HOME PAGE) */}
         {activeModule === 'zikir_counter' && (
           <ZikirCounterView
-            masterTotal={lifetimeTotalCount}
+            masterTotal={masterGrandTotal}
             dailyTotal={dailyTotal}
             zikrs={zikrs}
             completedGoals={completedGoals}
@@ -1531,6 +1469,7 @@ export default function App() {
         selectedLanguage={selectedLanguage}
         userProfile={userProfile}
         liveZikrs={zikrs}
+        masterTotal={masterGrandTotal}
       />
 
       {/* User Profile Account Modal (With Embedded Settings & Firebase Cloud Sync) */}

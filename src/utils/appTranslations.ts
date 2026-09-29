@@ -1575,6 +1575,14 @@ export const ZIKIR_UI: Record<string, Record<ZikrLanguage, string>> = {
     id: 'Dzikir Hari Ini:',
     tr: 'Bugünkü Zikir:',
   },
+  totalDhikr: {
+    bn: 'সর্বমোট জিকির:',
+    en: 'Total Dhikr:',
+    ur: 'کل ذکر:',
+    hi: 'कुल ज़िक्र:',
+    id: 'Total Dzikir:',
+    tr: 'Toplam Zikir:',
+  },
   goalsMet: {
     bn: 'লক্ষ্য পূরণ',
     en: 'Goals Met',
