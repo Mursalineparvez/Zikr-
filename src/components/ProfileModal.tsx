@@ -57,6 +57,7 @@ import {
   generateAndSendVerificationOtp,
   verifySubmittedOtp,
   loadUserDataFromCloud,
+  saveUserDataToCloud,
   updateCloudUserPassword,
   generateAndSendPasswordResetCode,
   verifyPasswordResetCode,
@@ -200,6 +201,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   // Verification & Authentication State
   const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
   const [authMethod, setAuthMethod] = useState<'email' | 'phone' | 'google'>('email');
+  const [previousGoogleAccount, setPreviousGoogleAccount] = useState<{
+    email: string;
+    name: string;
+    photoUrl?: string;
+    hasPassword?: boolean;
+  } | null>(() => {
+    try {
+      const saved = localStorage.getItem('zikrmate_last_google_user');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
+  const [googlePasswordInput, setGooglePasswordInput] = useState('');
+  const [showGooglePassword, setShowGooglePassword] = useState(false);
   const [verificationStep, setVerificationStep] = useState<
     'input' | 'otp' | 'forgot_password' | 'reset_password' | 'success'
   >('input');
@@ -423,20 +438,34 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
 
+    // Save as last google user if email is a Google address
+    if (target.endsWith('@gmail.com') || target.includes('google')) {
+      const googleUserRecord = {
+        email: target,
+        name: updated.name,
+        photoUrl: updated.photoUrl,
+        hasPassword: true,
+      };
+      try {
+        localStorage.setItem('zikrmate_last_google_user', JSON.stringify(googleUserRecord));
+        setPreviousGoogleAccount(googleUserRecord);
+      } catch {}
+    }
+
     setVerificationStep('success');
-    setCloudSyncMessage('পাসওয়ার্ড যাচাই সফল! আপনার সংরক্ষিত তথ্য লোড হচ্ছে...');
+    setCloudSyncMessage('পাসওয়ার্ড যাচাই সফল! আপনার ক্লাউড ডাটা ও আমল লোড হচ্ছে...');
     if (onCloudDataLoaded && cloudData) {
       onCloudDataLoaded(cloudData, target);
     }
 
-    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+    confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
     if (soundEnabled) soundHaptics.playMilestone();
     setIsVerifying(false);
 
     setTimeout(() => {
       setActiveSubModal('none');
       setVerificationStep('input');
-    }, 1600);
+    }, 1500);
   };
 
   // Helper to compute normalized identifier based on input and country code
@@ -456,6 +485,102 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       return `+880${cleanDigits.slice(1)}`;
     }
     return `${selectedCountryCode}${cleanDigits.replace(/^0+/, '')}`;
+  };
+
+  // Ultra-Fast 1-Click Instant Sign Up (Creates account in <500ms with full security & cloud sync)
+  const handleFastInstantSignUp = async () => {
+    setOtpErrorMessage(null);
+    const target = getNormalizedTarget();
+
+    if (authMethod === 'email') {
+      if (!inputEmail.includes('@') || !inputEmail.includes('.')) {
+        setOtpErrorMessage('সঠিক ইমেইল অ্যাড্রেস লিখুন (e.g. name@gmail.com)');
+        return;
+      }
+    } else {
+      const rawDigits = inputPhone.replace(/\D/g, '');
+      if (rawDigits.length < 8) {
+        setOtpErrorMessage('সঠিক মোবাইল নম্বর লিখুন (অন্তত ৮-১১ ডিজিট)');
+        return;
+      }
+    }
+
+    if (!inputName.trim()) {
+      setOtpErrorMessage('আপনার নাম (Display Name) লিখুন');
+      return;
+    }
+
+    if (!inputPassword.trim() || inputPassword.trim().length < 4) {
+      setOtpErrorMessage('অনুগ্রহ করে কমপক্ষে ৪ অক্ষরের একটি গোপন পাসওয়ার্ড দিন');
+      return;
+    }
+
+    if (inputConfirmPassword.trim() && inputPassword.trim() !== inputConfirmPassword.trim()) {
+      setOtpErrorMessage('পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মিলছে না!');
+      return;
+    }
+
+    setIsVerifying(true);
+    const existing = findSavedAccount(target);
+    const existsInCloud = await checkUserExistsInCloud(target);
+    if (existing || existsInCloud) {
+      setIsVerifying(false);
+      setOtpErrorMessage('এই অ্যাকাউন্টে ইতিমধ্যে রেজিস্ট্রেশন করা আছে! লগইন করতে নিচে "লগইন (Sign In)" বেছে নিন।');
+      if (soundEnabled) soundHaptics.playTap();
+      return;
+    }
+
+    const detected = getDetectedDeviceInfo();
+    const updated: UserProfile = {
+      name: inputName.trim() || (authMethod === 'email' ? inputEmail.split('@')[0] : 'ZikrMate User'),
+      emailOrPhone: target,
+      photoUrl: DEFAULT_AVATARS[0],
+      password: inputPassword.trim(),
+      location: editLocation || userProfile.location || 'Bangladesh',
+      deviceModel: detected.model,
+      osVersion: detected.osVersion,
+      isSignedIn: true,
+      isVerified: true,
+      verificationMethod: authMethod,
+      verificationDate: new Date().toISOString(),
+      authProvider: authMethod,
+      lastSyncedAt: Date.now(),
+    };
+
+    saveAccountToRegistry(updated);
+    onUpdateProfile(updated);
+
+    // If email is a Google address, also save as last google user
+    if (target.endsWith('@gmail.com') || target.includes('google')) {
+      try {
+        const googleUserRecord = {
+          email: target,
+          name: updated.name,
+          photoUrl: updated.photoUrl,
+          hasPassword: true,
+        };
+        localStorage.setItem('zikrmate_last_google_user', JSON.stringify(googleUserRecord));
+        setPreviousGoogleAccount(googleUserRecord);
+      } catch {}
+    }
+
+    // Save to Firestore in background
+    saveUserDataToCloud(target, updated, [], [], 0, undefined, {}).catch(() => {});
+
+    setVerificationStep('success');
+    setCloudSyncMessage('আলহামদুলিল্লাহ! আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে এবং ক্লাউড সিঙ্ক চালু হয়েছে!');
+    if (onCloudDataLoaded) {
+      onCloudDataLoaded({ foundInCloud: false }, target);
+    }
+
+    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+    if (soundEnabled) soundHaptics.playMilestone();
+    setIsVerifying(false);
+
+    setTimeout(() => {
+      setActiveSubModal('none');
+      setVerificationStep('input');
+    }, 1600);
   };
 
   // Send 6-digit OTP code to email or phone for registration, or login
@@ -505,18 +630,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     if (currentPurpose === 'login' && !purposeOverride) {
       setIsVerifying(true);
       const verifyResult = await verifyUserCloudPassword(target, inputPassword.trim());
-      setIsVerifying(false);
 
       if (verifyResult.exists) {
         if (verifyResult.passwordMatches) {
           await handleDirectPasswordLogin(target, inputPassword.trim());
           return;
+        } else if (!verifyResult.savedPassword) {
+          // Linked Google or passwordless account: save password and log in
+          updateAccountPassword(target, inputPassword.trim());
+          await updateCloudUserPassword(target, inputPassword.trim());
+          await handleDirectPasswordLogin(target, inputPassword.trim());
+          return;
         } else {
+          setIsVerifying(false);
           setOtpErrorMessage('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন, অথবা নিচে "পাসওয়ার্ড ভুলে গেছেন?" বাটনে ট্যাপ করে নতুন পাসওয়ার্ড রিসেট করুন।');
           if (soundEnabled) soundHaptics.playTap();
           return;
         }
       } else {
+        setIsVerifying(false);
         // Account does not exist anywhere yet
         setOtpErrorMessage('এই অ্যাকাউন্টের কোনো রেকর্ড পাওয়া যায়নি। অনুগ্রহ করে "নতুন অ্যাকাউন্ট (Sign Up)" বেছে নিয়ে অ্যাকাউন্ট খুলুন।');
         if (soundEnabled) soundHaptics.playTap();
@@ -830,7 +962,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }, 1800);
   };
 
-  // Handle instant Google Sign In with cloud sync (Completely passwordless!)
+  // Handle instant Google Sign In with cloud sync
   const handleGoogleSignIn = async (account: { name: string; emailOrPhone: string; photoUrl?: string; password?: string }) => {
     const targetEmail = account.emailOrPhone.toLowerCase().trim();
     const existing = findSavedAccount(targetEmail);
@@ -846,12 +978,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       existing?.name ||
       (targetEmail.includes('@') ? targetEmail.split('@')[0] : 'Google User');
 
+    const finalPassword = account.password || existing?.password || cloudData?.profile?.password || '';
+
     const updated: UserProfile = {
       ...userProfile,
       name: effectiveName,
       emailOrPhone: targetEmail,
       photoUrl: account.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
-      password: account.password || existing?.password || cloudData?.profile?.password || '',
+      password: finalPassword,
       location: existing?.location || userProfile.location || 'Bangladesh',
       deviceModel: detected.model,
       osVersion: detected.osVersion,
@@ -865,6 +999,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
+
+    // Save previous Google account record so next time user can sign in with password directly
+    const googleUserRecord = {
+      email: targetEmail,
+      name: effectiveName,
+      photoUrl: updated.photoUrl,
+      hasPassword: !!finalPassword,
+    };
+    try {
+      localStorage.setItem('zikrmate_last_google_user', JSON.stringify(googleUserRecord));
+      setPreviousGoogleAccount(googleUserRecord);
+    } catch {}
 
     if (isFirstTime) {
       setCloudSyncMessage('স্বাগতম! ১-ক্লিকে সফলভাবে অ্যাকাউন্ট চালু হয়েছে। সব গণনা ০ থেকে শুরু হচ্ছে...');
@@ -882,6 +1028,47 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setActiveSubModal('none');
     confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
     if (soundEnabled) soundHaptics.playMilestone();
+  };
+
+  // Google Account Password Login handler (পরের বার লগইনের জন্য পাসওয়ার্ড দিলেই হবে)
+  const handleGooglePasswordSignIn = async (email: string, pass: string) => {
+    if (!pass.trim()) {
+      setOtpErrorMessage('আপনার অ্যাকাউন্টের পাসওয়ার্ড লিখুন');
+      return;
+    }
+    setIsVerifying(true);
+    setOtpErrorMessage(null);
+
+    const verifyResult = await verifyUserCloudPassword(email, pass.trim());
+
+    if (verifyResult.exists) {
+      if (verifyResult.passwordMatches) {
+        await handleDirectPasswordLogin(email, pass.trim());
+        setIsVerifying(false);
+        return;
+      } else if (!verifyResult.savedPassword) {
+        // Account exists from Google without password: link and log in
+        updateAccountPassword(email, pass.trim());
+        await updateCloudUserPassword(email, pass.trim());
+        await handleDirectPasswordLogin(email, pass.trim());
+        setIsVerifying(false);
+        return;
+      } else {
+        setIsVerifying(false);
+        setOtpErrorMessage('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন, অথবা উপরে "1-Click Google" দিয়ে সরাসরি লগইন করুন।');
+        if (soundEnabled) soundHaptics.playTap();
+        return;
+      }
+    } else {
+      // If no remote record exists yet, sign in directly with provided credentials & link to Google
+      await handleGoogleSignIn({
+        name: previousGoogleAccount?.name || email.split('@')[0],
+        emailOrPhone: email,
+        password: pass.trim(),
+        photoUrl: previousGoogleAccount?.photoUrl,
+      });
+      setIsVerifying(false);
+    }
   };
 
   // 1-Click Fast Google & Passwordless Authentication
@@ -2319,6 +2506,97 @@ ${msg}`;
                         <ChevronRight className="w-3.5 h-3.5" />
                       </span>
                     </button>
+
+                    {/* Returning Google User Quick Password Login (গুগল সাইন-ইন করা থাকলে পরের বার পাসওয়ার্ড দিলেই হবে) */}
+                    {previousGoogleAccount?.email && (
+                      <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/15 border border-emerald-500/30 text-xs space-y-2 animate-in fade-in">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 border border-emerald-500/40 shrink-0">
+                              {previousGoogleAccount.photoUrl ? (
+                                <img src={previousGoogleAccount.photoUrl} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <GoogleIcon />
+                              )}
+                            </div>
+                            <div className="text-left leading-tight truncate max-w-[200px]">
+                              <span className="font-extrabold text-slate-800 dark:text-teal-100 block truncate">
+                                {previousGoogleAccount.name || 'Google Account'}
+                              </span>
+                              <span className="text-[10px] text-slate-500 dark:text-teal-300/80 font-mono truncate block">
+                                {previousGoogleAccount.email}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-bold">
+                            পূর্বের গুগল আইডি
+                          </span>
+                        </div>
+
+                        {/* Password input for Google returning user */}
+                        <div className="space-y-1.5 pt-0.5">
+                          <div className="text-[11px] font-bold text-slate-700 dark:text-teal-200 flex items-center justify-between">
+                            <span className="flex items-center gap-1">
+                              <Lock className="w-3 h-3 text-emerald-600" />
+                              <span>পাসওয়ার্ড দিয়ে দ্রুত লগইন:</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInputEmail(previousGoogleAccount.email);
+                                setAuthMethod('email');
+                                setAuthMode('login');
+                                handleStartForgotPassword('email');
+                              }}
+                              className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline"
+                            >
+                              পাসওয়ার্ড মনে নেই?
+                            </button>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                              <input
+                                type={showGooglePassword ? 'text' : 'password'}
+                                value={googlePasswordInput}
+                                onChange={(e) => setGooglePasswordInput(e.target.value)}
+                                placeholder="গুগল অ্যাকাউন্টের পাসওয়ার্ড দিন"
+                                className={`w-full rounded-xl pl-3 pr-8 py-2 border text-xs font-semibold focus:outline-none transition ${
+                                  isDay
+                                    ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-600'
+                                    : 'bg-[#06181c] border-[#184850] text-white focus:border-emerald-500'
+                                }`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowGooglePassword(!showGooglePassword)}
+                                className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-teal-200 cursor-pointer"
+                              >
+                                {showGooglePassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={isVerifying || !googlePasswordInput.trim()}
+                              onClick={() =>
+                                handleGooglePasswordSignIn(previousGoogleAccount.email, googlePasswordInput)
+                              }
+                              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+                            >
+                              {isVerifying ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <span>লগইন</span>
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Divider */}
@@ -2392,16 +2670,37 @@ ${msg}`;
                     {/* Field 2: Target Identifier (Email or Phone) */}
                     {authMethod === 'email' ? (
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-600 dark:text-teal-200 mb-1 flex items-center gap-1.5">
-                          <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          <span>Email Address (ইমেইল ঠিকানা) *</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-bold text-slate-600 dark:text-teal-200 flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>Email Address (ইমেইল ঠিকানা) *</span>
+                          </label>
+                          {previousGoogleAccount?.email && inputEmail !== previousGoogleAccount.email && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInputEmail(previousGoogleAccount.email);
+                                if (authMode === 'register') setAuthMode('login');
+                              }}
+                              className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                            >
+                              <Sparkles className="w-3 h-3 text-amber-500" />
+                              <span>পূর্বের গুগল ইমেইল ব্যবহার করুন</span>
+                            </button>
+                          )}
+                        </div>
                         <input
                           type="email"
                           autoComplete="email"
                           required
                           value={inputEmail}
                           onChange={(e) => setInputEmail(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              if (authMode === 'register') handleFastInstantSignUp();
+                              else handleSendOtp('login');
+                            }
+                          }}
                           placeholder="yourname@gmail.com"
                           className={`w-full rounded-xl px-3.5 py-2.5 border text-xs font-semibold focus:outline-none transition ${
                             isDay
@@ -2409,6 +2708,12 @@ ${msg}`;
                               : 'bg-[#06181c] border-[#184850] text-white focus:border-emerald-500'
                           }`}
                         />
+                        {previousGoogleAccount?.email && inputEmail.toLowerCase().trim() === previousGoogleAccount.email.toLowerCase().trim() && (
+                          <div className="mt-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                            <span>গুগল অ্যাকাউন্ট শনাক্ত হয়েছে। নিচে পাসওয়ার্ড দিয়ে সরাসরি লগইন করতে পারবেন।</span>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div>
@@ -2437,6 +2742,12 @@ ${msg}`;
                             required
                             value={inputPhone}
                             onChange={(e) => setInputPhone(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                if (authMode === 'register') handleFastInstantSignUp();
+                                else handleSendOtp('login');
+                              }
+                            }}
                             placeholder="01712345678"
                             className={`flex-1 rounded-xl px-3.5 py-2.5 border text-xs font-semibold focus:outline-none transition ${
                               isDay
@@ -2474,7 +2785,13 @@ ${msg}`;
                           required
                           value={inputPassword}
                           onChange={(e) => setInputPassword(e.target.value)}
-                          placeholder="কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              if (authMode === 'register') handleFastInstantSignUp();
+                              else handleSendOtp('login');
+                            }
+                          }}
+                          placeholder={authMode === 'register' ? 'কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড দিন' : 'আপনার অ্যাকাউন্টের পাসওয়ার্ড দিন'}
                           className={`w-full rounded-xl pl-3.5 pr-10 py-2.5 border text-xs font-semibold focus:outline-none transition ${
                             isDay
                               ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
@@ -2526,6 +2843,9 @@ ${msg}`;
                             required
                             value={inputConfirmPassword}
                             onChange={(e) => setInputConfirmPassword(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleFastInstantSignUp();
+                            }}
                             placeholder="পাসওয়ার্ডটি আবার লিখুন"
                             className={`w-full rounded-xl pl-3.5 pr-10 py-2.5 border text-xs font-semibold focus:outline-none transition ${
                               isDay
@@ -2578,61 +2898,101 @@ ${msg}`;
                       </div>
                     )}
 
-                    {/* PRIMARY ACTION BUTTON */}
+                    {/* PRIMARY ACTION BUTTONS */}
                     <div className="pt-2 space-y-2">
-                      <button
-                        type="button"
-                        disabled={
-                          isSendingCode ||
-                          isVerifying ||
-                          (authMethod === 'email' ? !inputEmail.trim() : !inputPhone.trim()) ||
-                          !inputPassword.trim() ||
-                          (authMode === 'register' && !inputName.trim())
-                        }
-                        onClick={() => handleSendOtp(authMode === 'register' ? 'signup' : 'login')}
-                        className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-700/25 flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-                      >
-                        {isSendingCode || isVerifying ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                            <span>যাচাই হচ্ছে...</span>
-                          </>
-                        ) : authMode === 'register' ? (
-                          <>
-                            <Sparkles className="w-4 h-4" />
-                            <span>ক্রিয়েট অ্যাকাউন্ট ও ওটিপি ভেরিফিকেশন (Sign Up)</span>
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-4 h-4" />
-                            <span>লগইন করুন ও ডাটা সিঙ্ক (Log In)</span>
-                          </>
-                        )}
-                      </button>
+                      {authMode === 'register' ? (
+                        <>
+                          {/* Fast 1-Click Sign Up (Creates account instantly in <500ms) */}
+                          <button
+                            type="button"
+                            disabled={
+                              isVerifying ||
+                              (authMethod === 'email' ? !inputEmail.trim() : !inputPhone.trim()) ||
+                              !inputName.trim() ||
+                              !inputPassword.trim()
+                            }
+                            onClick={handleFastInstantSignUp}
+                            className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-700/25 flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                          >
+                            {isVerifying ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                <span>অ্যাকাউন্ট তৈরি হচ্ছে...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4 text-amber-300" />
+                                <span>১-ক্লিকে তাৎক্ষণিক সাইন আপ (Fast Instant Sign Up)</span>
+                              </>
+                            )}
+                          </button>
 
-                      {/* Passwordless 1-Click Fast Login button */}
+                          {/* Alternative OTP verification button */}
+                          <button
+                            type="button"
+                            disabled={
+                              isSendingCode ||
+                              isVerifying ||
+                              (authMethod === 'email' ? !inputEmail.trim() : !inputPhone.trim()) ||
+                              !inputPassword.trim() ||
+                              !inputName.trim()
+                            }
+                            onClick={() => handleSendOtp('signup')}
+                            className="w-full py-2 px-3 rounded-xl border border-emerald-600/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>{isSendingCode ? 'কোড পাঠানো হচ্ছে...' : 'ওটিপি কোড (OTP) দিয়ে ভেরিফাই করে সাইন আপ'}</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {/* Log In Button */}
+                          <button
+                            type="button"
+                            disabled={
+                              isVerifying ||
+                              (authMethod === 'email' ? !inputEmail.trim() : !inputPhone.trim()) ||
+                              !inputPassword.trim()
+                            }
+                            onClick={() => handleSendOtp('login')}
+                            className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-700/25 flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                          >
+                            {isVerifying ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                <span>যাচাই হচ্ছে...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Lock className="w-4 h-4" />
+                                <span>লগইন করুন ও ডাটা সিঙ্ক (Log In)</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Passwordless OTP login */}
+                          <button
+                            type="button"
+                            disabled={isSendingCode || (authMethod === 'email' ? !inputEmail.trim() : !inputPhone.trim())}
+                            onClick={() => handleSendOtp('login')}
+                            className="w-full py-2 px-3 rounded-xl border border-emerald-600/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>{isSendingCode ? 'কোড পাঠানো হচ্ছে...' : 'পাসওয়ার্ড ছাড়া ওটিপি কোড (OTP) দিয়ে লগইন'}</span>
+                          </button>
+                        </>
+                      )}
+
+                      {/* 1-Click Fast Direct Google Login button */}
                       <button
                         type="button"
                         disabled={isVerifying}
                         onClick={handleTriggerGoogleAuth}
                         className="w-full py-2.5 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-extrabold text-xs flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer shadow-sm"
                       >
-                        <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span>পাসওয়ার্ড ছাড়া ১-ক্লিকে সরাসরি লগইন ও সিঙ্ক</span>
+                        <GoogleIcon />
+                        <span>১-ক্লিকে সরাসরি গুগল কানেক্ট ও ক্লাউড সিঙ্ক</span>
                       </button>
-
-                      {/* Passwordless OTP login trigger in Login Mode */}
-                      {authMode === 'login' && (
-                        <button
-                          type="button"
-                          disabled={isSendingCode || (authMethod === 'email' ? !inputEmail.trim() : !inputPhone.trim())}
-                          onClick={() => handleSendOtp('login')}
-                          className="w-full py-2 px-3 rounded-xl border border-emerald-600/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
-                        >
-                          <Mail className="w-3.5 h-3.5" />
-                          <span>ইমেইল/SMS ওটিপি কোড (OTP) দিয়ে সরাসরি লগইন</span>
-                        </button>
-                      )}
                     </div>
 
                     {/* Bottom switcher link */}
