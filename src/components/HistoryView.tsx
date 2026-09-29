@@ -1,9 +1,11 @@
 import React from 'react';
-import { HistorySession, ThemeMode, ZikrLanguage } from '../types';
-import { Clock, Trash2, Calendar, FileText, BookmarkCheck, CheckCircle2 } from 'lucide-react';
+import { HistorySession, ThemeMode, ZikrLanguage, ZikrItem } from '../types';
+import { Clock, Trash2, Calendar, FileText, BookmarkCheck, CheckCircle2, Sparkles } from 'lucide-react';
 
 interface HistoryViewProps {
   sessions: HistorySession[];
+  zikrs?: ZikrItem[];
+  lifetimeTotalCount?: number;
   onClearHistory: () => void;
   onExportPdf: () => void;
   isExportingPdf: boolean;
@@ -14,6 +16,8 @@ interface HistoryViewProps {
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
   sessions,
+  zikrs = [],
+  lifetimeTotalCount = 0,
   onClearHistory,
   onExportPdf,
   isExportingPdf,
@@ -21,9 +25,59 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   selectedLanguage = 'bn',
 }) => {
   const isDay = themeMode === 'day';
+  const dailyTotal = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+  const activeZikrs = zikrs.filter((z) => (z.count || 0) > 0);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Active Live Counter Summary Banner */}
+      <div
+        className={`p-5 rounded-3xl border shadow-xl relative overflow-hidden ${
+          isDay
+            ? 'bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white border-emerald-500'
+            : 'bg-gradient-to-br from-[#06282d] via-[#0b3840] to-[#041d21] text-white border-teal-800/80'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold text-teal-300 uppercase tracking-wider mb-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+              <span>{selectedLanguage === 'bn' ? 'আজকের লাইভ রানিং কাউন্টার' : 'Today\'s Active Live Counter'}</span>
+            </div>
+            <div className="text-3xl font-black text-white tracking-tight flex items-baseline gap-2">
+              <span>{dailyTotal.toLocaleString()}</span>
+              <span className="text-xs font-normal text-emerald-200">
+                {selectedLanguage === 'bn' ? 'বার আজকের জিকির সম্পন্ন' : 'times today'}
+              </span>
+            </div>
+          </div>
+
+          <div className="sm:text-right border-t sm:border-t-0 sm:border-l border-emerald-500/30 pt-3 sm:pt-0 sm:pl-4">
+            <div className="text-xs text-teal-300 font-medium">
+              {selectedLanguage === 'bn' ? 'সর্বমোট গ্র্যান্ড টোটাল (লাইফটাইম)' : 'Lifetime Grand Total'}
+            </div>
+            <div className="text-xl font-extrabold text-amber-300 mt-0.5">
+              {lifetimeTotalCount.toLocaleString()}
+            </div>
+          </div>
+        </div>
+
+        {/* Breakdown preview of today's live zikrs if any */}
+        {activeZikrs.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-emerald-500/30 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            {activeZikrs.map((z) => (
+              <div
+                key={z.id}
+                className="bg-black/20 backdrop-blur-sm px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center justify-between"
+              >
+                <span className="truncate text-emerald-100 font-medium">{z.name}</span>
+                <span className="font-bold text-amber-300 ml-1">{z.count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Header Bar */}
       <div
         className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl border shadow-xl ${

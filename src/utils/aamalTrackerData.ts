@@ -434,6 +434,44 @@ export function saveAamalLogForDate(dateKey: string, log: AamalDayLog): void {
 }
 
 /**
+ * Syncs today's Aamal day log directly with the current active live zikr items.
+ * Ensures the Aamal Tracker & PDF reports match the live zikr counter with 100% precision.
+ */
+export function syncTodayAamalWithLiveZikrs(
+  zikrs: Array<{ name: string; count: number; target?: number; arabic?: string; transliteration?: string }>,
+  dateKey: string = getTodayDateKey()
+): void {
+  try {
+    const dayLog = getAamalLogForDate(dateKey);
+    const totalCount = zikrs.reduce((sum, z) => sum + (z.count || 0), 0);
+    dayLog.dhikrCount = totalCount;
+
+    dayLog.zikrBreakdown = zikrs
+      .filter((z) => (z.count || 0) > 0)
+      .map((z) => ({
+        name: z.name,
+        count: z.count,
+        target: z.target,
+        arabic: z.arabic,
+        transliteration: z.transliteration,
+      }));
+
+    // Auto-complete daily tasbeeh when milestone reached
+    const tasbeehItem = dayLog.items.find((i) => i.id === 'daily_tasbeeh');
+    if (tasbeehItem && dayLog.dhikrCount >= 33) {
+      tasbeehItem.completed = true;
+    }
+
+    const completedCount = dayLog.items.filter((i) => i.completed).length;
+    dayLog.completedRatio = dayLog.items.length > 0 ? completedCount / dayLog.items.length : 0;
+
+    saveAamalLogForDate(dateKey, dayLog);
+  } catch (e) {
+    console.error('Failed to sync today aamal with live zikrs', e);
+  }
+}
+
+/**
  * Permanently records a zikr tap into today's Aamal Tracker history.
  * Even if the user resets their live counter to 0, this history remains intact!
  */

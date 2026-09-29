@@ -1,5 +1,14 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import {
   initializeFirestore,
   getFirestore,
   doc,
@@ -20,6 +29,40 @@ try {
 
 // 1. Initialize Firebase App
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+// 2. Initialize Auth
+export const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+/**
+ * Real Firebase Google Sign-In with popup
+ */
+export async function signInWithGoogleAuth(): Promise<{
+  success: boolean;
+  user?: { name: string; email: string; photoUrl: string; uid: string };
+  error?: string;
+}> {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+    return {
+      success: true,
+      user: {
+        name: user.displayName || user.email?.split('@')[0] || 'Google User',
+        email: user.email || '',
+        photoUrl: user.photoURL || '',
+        uid: user.uid,
+      },
+    };
+  } catch (error: any) {
+    console.warn('Google Sign-In popup notice:', error);
+    return {
+      success: false,
+      error: error?.message || 'Google sign-in was cancelled or blocked.',
+    };
+  }
+}
 
 // 2. Initialize Firestore Database using provisioned database ID with long-polling resilience
 export const db = (() => {
@@ -320,6 +363,11 @@ export function subscribeToUserDataInCloud(
   const unsubscribe = onSnapshot(
     dataDocRef,
     (snap) => {
+      // Ignore local optimistic writes before server confirmation
+      if (snap.metadata.hasPendingWrites) {
+        return;
+      }
+
       if (!snap.exists()) {
         if (isInitial) {
           isInitial = false;

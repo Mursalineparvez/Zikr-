@@ -29,6 +29,7 @@ import { saveAccountToRegistry } from './utils/accountRegistry';
 import {
   createInitialDayLog,
   recordZikrIncrementInAamal,
+  syncTodayAamalWithLiveZikrs,
   getAllAamalLogs,
   clearAllAamalLogs,
   getTodayDateKey,
@@ -220,10 +221,12 @@ export default function App() {
   // Multi-Device Cloud Synchronization Refs
   const isCloudSyncReadyRef = useRef<boolean>(false);
   const isRemoteUpdateRef = useRef<boolean>(false);
+  const lastRemoteUpdateTimestampRef = useRef<number>(0);
 
   // Helper: Apply cloud data snapshot to active state
   const applyCloudDataToState = (cloudData: CloudZikrState) => {
     isRemoteUpdateRef.current = true;
+    lastRemoteUpdateTimestampRef.current = Date.now();
     isCloudSyncReadyRef.current = true;
 
     if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
@@ -360,92 +363,7 @@ export default function App() {
 
       // On initial load of this device OR when remote device updates state:
       if (isInitial || isFromOtherDevice) {
-        isRemoteUpdateRef.current = true;
-
-        if (cloudData.profile && typeof cloudData.profile === 'object') {
-          setUserProfile((prev) => ({
-            ...prev,
-            ...cloudData.profile,
-            password: cloudData.profile?.password || prev.password || '',
-            isSignedIn: true,
-          }));
-        }
-
-        if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
-          const cloudZikrsList = cloudData.zikrs;
-          setZikrs((prevLocalZikrs) => {
-            if (isInitial && prevLocalZikrs.length > 0) {
-              const cloudMap = new Map(cloudZikrsList.map((item) => [item.id, item]));
-              const merged = prevLocalZikrs.map((localItem) => {
-                const cloudItem = cloudMap.get(localItem.id);
-                if (!cloudItem) return localItem;
-                const higherCount = Math.max(localItem.count || 0, cloudItem.count || 0);
-                const newerTime = Math.max(localItem.updatedAt || 0, cloudItem.updatedAt || 0);
-                return {
-                  ...localItem,
-                  ...cloudItem,
-                  count: higherCount,
-                  updatedAt: newerTime,
-                };
-              });
-              try {
-                localStorage.setItem('noor_zikr_items', JSON.stringify(merged));
-              } catch {}
-              return merged;
-            } else {
-              try {
-                localStorage.setItem('noor_zikr_items', JSON.stringify(cloudZikrsList));
-              } catch {}
-              return cloudZikrsList;
-            }
-          });
-        }
-
-        if (cloudData.history && Array.isArray(cloudData.history)) {
-          setHistorySessions(cloudData.history);
-          try {
-            localStorage.setItem('noor_zikr_history', JSON.stringify(cloudData.history));
-          } catch {}
-        } else {
-          setHistorySessions([]);
-          try {
-            localStorage.setItem('noor_zikr_history', JSON.stringify([]));
-          } catch {}
-        }
-
-        if (typeof cloudData.lifetimeTotalCount === 'number') {
-          const cloudTotal = cloudData.lifetimeTotalCount;
-          setLifetimeTotalCount((prevLocalTotal) => {
-            const mergedTotal = isInitial ? Math.max(prevLocalTotal || 0, cloudTotal) : cloudTotal;
-            try {
-              localStorage.setItem('zikrmate_lifetime_total_count', String(mergedTotal));
-            } catch {}
-            return mergedTotal;
-          });
-        } else {
-
-          setLifetimeTotalCount(0);
-          try {
-            localStorage.setItem('zikrmate_lifetime_total_count', '0');
-          } catch {}
-        }
-
-        if (cloudData.settings) {
-          setSettings((prev) => ({ ...prev, ...cloudData.settings }));
-        }
-
-        if (cloudData.aamalLogs && typeof cloudData.aamalLogs === 'object') {
-          try {
-            clearAllAamalLogs();
-            for (const [dateKey, logData] of Object.entries(cloudData.aamalLogs)) {
-              localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(logData));
-            }
-          } catch {}
-        }
-
-        const now = Date.now();
-        setLastCloudSyncTimestamp(now);
-        isCloudSyncReadyRef.current = true;
+        applyCloudDataToState(cloudData);
 
         if (isFromOtherDevice) {
           showToast('🔄 অন্য ডিভাইস থেকে জিকির ও হিস্ট্রি লাইভ আপডেট হয়েছে!');
@@ -463,14 +381,14 @@ export default function App() {
   useEffect(() => {
     if (!userProfile.isSignedIn || !userProfile.emailOrPhone) return;
 
+    // Do NOT push local blank state before cloud data has been loaded
+    if (!isCloudSyncReadyRef.current) return;
+
     // Do NOT echo remote updates back to cloud
     if (isRemoteUpdateRef.current) {
       isRemoteUpdateRef.current = false;
       return;
     }
-
-    // Do NOT push local blank state before cloud data has been loaded
-    if (!isCloudSyncReadyRef.current) return;
 
     if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
     cloudSyncDebounceRef.current = setTimeout(async () => {
@@ -488,7 +406,7 @@ export default function App() {
         const now = Date.now();
         setLastCloudSyncTimestamp(now);
       }
-    }, 1200);
+    }, 400);
 
     return () => {
       if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
@@ -631,10 +549,11 @@ export default function App() {
   // Wake lock sentinel ref
   const wakeLockRef = useRef<any>(null);
 
-  // Save zikrs to localStorage on every change
+  // Save zikrs to localStorage on every change and sync with today's Aamal day log
   useEffect(() => {
     try {
       localStorage.setItem('noor_zikr_items', JSON.stringify(zikrs));
+      syncTodayAamalWithLiveZikrs(zikrs);
     } catch (e) {
       console.error('Failed to save zikrs to localStorage', e);
     }
@@ -786,6 +705,7 @@ export default function App() {
 
   // Increment Zikr
   const handleIncrement = (id: string) => {
+    isRemoteUpdateRef.current = false;
     const targetZikr = zikrs.find((item) => item.id === id);
     if (!targetZikr) return;
 
@@ -833,6 +753,7 @@ export default function App() {
 
   // Decrement Zikr
   const handleDecrement = (id: string) => {
+    isRemoteUpdateRef.current = false;
     const targetZikr = zikrs.find((item) => item.id === id);
     if (!targetZikr || targetZikr.count <= 0) return;
 
