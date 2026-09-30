@@ -9,52 +9,80 @@ export interface DeviceInfo {
 export function getDetectedDeviceInfo(): DeviceInfo {
   if (typeof window === 'undefined') {
     return {
-      model: 'Android Phone',
-      osVersion: '10',
+      model: 'Android Mobile Device',
+      osVersion: 'Android 13 / 14',
       location: 'Asia/Dhaka (Network Timezone)',
       appVersion: 'ZikrMate v411_38.1',
-      deviceLanguage: 'en',
+      deviceLanguage: 'bn',
     };
   }
 
   const ua = navigator.userAgent || '';
-  let model = 'Android Phone';
-  let osVersion = '10';
-  const deviceLanguage = (navigator.language || 'en').split('-')[0];
+  let model = 'Android Mobile Device';
+  let osVersion = 'Android';
+  const deviceLanguage = (navigator.language || 'bn').split('-')[0];
 
-  if (/Windows/i.test(ua)) {
-    model = 'Windows PC';
-    osVersion = '11_64';
-  } else if (/Macintosh|MacIntel/i.test(ua)) {
-    model = 'Apple Mac';
-    osVersion = '14_1';
-  } else if (/iPhone/i.test(ua)) {
+  if (/iPhone/i.test(ua)) {
     model = 'Apple iPhone';
+    if (/iPhone11,/i.test(ua)) model = 'Apple iPhone 11';
+    else if (/iPhone12,/i.test(ua)) model = 'Apple iPhone 12';
+    else if (/iPhone13,/i.test(ua)) model = 'Apple iPhone 13';
+    else if (/iPhone14,/i.test(ua)) model = 'Apple iPhone 14';
+    else if (/iPhone15,/i.test(ua)) model = 'Apple iPhone 15';
+    
     const iosMatch = ua.match(/OS\s+([0-9_]+)/i);
-    if (iosMatch) osVersion = iosMatch[1].replace(/_/g, '.');
+    if (iosMatch) osVersion = `iOS ${iosMatch[1].replace(/_/g, '.')}`;
+  } else if (/iPad/i.test(ua)) {
+    model = 'Apple iPad';
+    const iosMatch = ua.match(/OS\s+([0-9_]+)/i);
+    if (iosMatch) osVersion = `iPadOS ${iosMatch[1].replace(/_/g, '.')}`;
   } else if (/Android/i.test(ua)) {
     const androidMatch = ua.match(/Android\s+([0-9\._]+)/i);
     if (androidMatch) {
-      osVersion = androidMatch[1].replace(/_/g, '.');
+      osVersion = `Android ${androidMatch[1].replace(/_/g, '.')}`;
+    } else {
+      osVersion = 'Android OS';
     }
+
+    // Try extracting exact model string
     const modelMatch = ua.match(/;\s*([^;]+?)\s*Build/i);
-    if (modelMatch && modelMatch[1]) {
+    if (modelMatch && modelMatch[1] && !modelMatch[1].toLowerCase().includes('k')) {
       model = modelMatch[1].trim();
-    } else if (/Samsung|SM-/i.test(ua)) {
-      const smMatch = ua.match(/(SM-[A-Z0-9]+)/i);
-      model = smMatch ? `Samsung ${smMatch[1]}` : 'Samsung Galaxy';
-    } else if (/Xiaomi|Redmi|POCO/i.test(ua)) {
-      model = 'Xiaomi Redmi';
+    } else if (/SM-[A-Z0-9]+/i.test(ua)) {
+      const sm = ua.match(/(SM-[A-Z0-9]+)/i);
+      model = sm ? `Samsung ${sm[1]}` : 'Samsung Galaxy';
+    } else if (/Samsung/i.test(ua)) {
+      model = 'Samsung Galaxy Phone';
+    } else if (/Redmi|POCO|Xiaomi|Mi\s+/i.test(ua)) {
+      const miMatch = ua.match(/(Redmi\s*[\w\s]+|POCO\s*[\w\s]+|Mi\s*[\w\s]+)/i);
+      model = miMatch ? miMatch[1].trim() : 'Xiaomi Redmi Phone';
     } else if (/vivo/i.test(ua)) {
-      model = 'Vivo Phone';
-    } else if (/OPPO|Realme/i.test(ua)) {
-      model = 'Oppo / Realme Phone';
+      const vivoMatch = ua.match(/(vivo\s*[\w\s]+)/i);
+      model = vivoMatch ? vivoMatch[1].trim() : 'Vivo Smartphone';
+    } else if (/OPPO/i.test(ua)) {
+      model = 'OPPO Smartphone';
+    } else if (/Realme/i.test(ua)) {
+      model = 'Realme Smartphone';
+    } else if (/OnePlus/i.test(ua)) {
+      model = 'OnePlus Smartphone';
+    } else if (/Pixel/i.test(ua)) {
+      model = 'Google Pixel Phone';
+    } else if (/Infinix/i.test(ua)) {
+      model = 'Infinix Phone';
+    } else if (/TECNO/i.test(ua)) {
+      model = 'Tecno Mobile';
     } else {
       model = 'Android Phone';
     }
+  } else if (/Windows/i.test(ua)) {
+    model = 'Windows Laptop / PC';
+    osVersion = 'Windows 11/10';
+  } else if (/Macintosh|MacIntel/i.test(ua)) {
+    model = 'Apple MacBook / Mac';
+    osVersion = 'macOS';
   } else if (/Linux/i.test(ua)) {
-    model = 'Linux PC';
-    osVersion = 'Ubuntu';
+    model = 'Linux Workstation';
+    osVersion = 'Linux Desktop';
   }
 
   let location = 'Asia/Dhaka (Network Timezone)';

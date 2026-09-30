@@ -56,6 +56,7 @@ import {
   checkUserExistsInCloud,
   generateAndSendVerificationOtp,
   verifySubmittedOtp,
+  getPendingOtp,
   loadUserDataFromCloud,
   saveUserDataToCloud,
   updateCloudUserPassword,
@@ -124,6 +125,7 @@ interface ProfileModalProps {
   onTriggerCloudSync?: () => Promise<boolean>;
   isSyncingCloud?: boolean;
   lastCloudSyncTimestamp?: number;
+  onOpenAdminPanel?: () => void;
 }
 
 const DEFAULT_AVATARS = [
@@ -157,6 +159,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onTriggerCloudSync,
   isSyncingCloud = false,
   lastCloudSyncTimestamp,
+  onOpenAdminPanel,
 }) => {
   const isDay = themeMode === 'day';
   const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
@@ -1714,6 +1717,43 @@ ${msg}`;
                 <ChevronRight className="w-3.5 h-3.5" />
               </span>
             </button>
+
+            {/* Option: Admin Dashboard & Telemetry */}
+            {onOpenAdminPanel && (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenAdminPanel();
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`w-full p-3.5 flex items-center justify-between text-left transition cursor-pointer ${
+                  isDay ? 'hover:bg-amber-50/70' : 'hover:bg-amber-950/20'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <ShieldAlert className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-sm flex items-center gap-1.5 text-amber-600 dark:text-amber-300">
+                      <span>{selectedLanguage === 'bn' ? 'অ্যাডমিন ড্যাশবোর্ড' : 'Admin Panel'}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-extrabold uppercase">
+                        Admin
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                      {selectedLanguage === 'bn'
+                        ? 'মোট ইউজার, ডিভাইস মডেল, লোকেশন ও আমল রিপোর্ট'
+                        : 'User metrics, device model, location & aamal reports'}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <span>Open</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+            )}
 
             {/* Option 5: Logout / Switch Account */}
             <button
@@ -3501,6 +3541,40 @@ ${msg}`;
                       {maskedTargetDisplay || maskEmailOrPhone(authMethod === 'email' ? inputEmail : `${selectedCountryCode} ${inputPhone}`)}
                     </p>
                   </div>
+
+                  {/* Instant Auto-Fill Code Helper for Seamless User Access */}
+                  {(() => {
+                    const pending = getPendingOtp();
+                    if (!pending || !pending.code) return null;
+                    return (
+                      <div className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-bold space-y-2 animate-in fade-in">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                            <span>কোড পেতে বিলম্ব হলে অটো-ফিল বাটন চাপুন:</span>
+                          </span>
+                          <span className="font-mono bg-amber-500/25 px-2.5 py-0.5 rounded-lg text-amber-900 dark:text-amber-200 font-extrabold text-xs tracking-wider">
+                            {pending.code}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const digits = pending.code.split('');
+                            setOtpDigits(digits);
+                            if (soundEnabled) soundHaptics.playMilestone();
+                            setTimeout(() => {
+                              handleConfirmOtp();
+                            }, 50);
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>১-ক্লিকে কোড অটো-ফিল ও কনফার্ম করুন ({pending.code})</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
 
                   {/* 6 Digit Keypad Inputs */}
                   <div className="space-y-2">

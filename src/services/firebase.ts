@@ -19,6 +19,9 @@ import {
   getDoc,
   getDocFromServer,
   setDoc,
+  deleteDoc,
+  collection,
+  getDocs,
   deleteField,
   onSnapshot,
   setLogLevel,
@@ -26,6 +29,7 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { UserProfile, ZikrItem, HistorySession, AppSettings } from '../types';
+import { getDetectedDeviceInfo } from '../utils/deviceInfo';
 
 // Silence verbose internal warnings from internal Firestore logger
 try {
@@ -312,14 +316,28 @@ export async function saveUserDataToCloud(
       safePhotoUrl = safePhotoUrl.substring(0, 100); // Truncate oversized raw data URIs
     }
 
+    const detected = getDetectedDeviceInfo();
+    const effectiveDeviceModel =
+      profile.deviceModel && !profile.deviceModel.includes('vivo ~~ V2144')
+        ? profile.deviceModel
+        : detected.model;
+    const effectiveOsVersion =
+      profile.osVersion && profile.osVersion !== '35_15'
+        ? profile.osVersion
+        : detected.osVersion;
+    const effectiveLocation =
+      profile.location && !profile.location.includes('4C2J')
+        ? profile.location
+        : detected.location;
+
     const safeProfile = {
       name: profile.name,
       emailOrPhone: profile.emailOrPhone,
       isVerified: profile.isVerified,
       verificationMethod: profile.verificationMethod,
-      location: profile.location,
-      deviceModel: profile.deviceModel,
-      osVersion: profile.osVersion,
+      location: effectiveLocation,
+      deviceModel: effectiveDeviceModel,
+      osVersion: effectiveOsVersion,
       photoUrl: safePhotoUrl,
     };
     const profileJsonStr = JSON.stringify(safeProfile);
@@ -334,9 +352,9 @@ export async function saveUserDataToCloud(
       isVerified: profile.isVerified ?? true,
       verificationMethod: profile.verificationMethod || (emailOrPhone.includes('@') ? 'email' : 'phone'),
       photoUrl: safePhotoUrl,
-      location: profile.location || '',
-      deviceModel: profile.deviceModel || 'Web Browser',
-      osVersion: profile.osVersion || 'Cloud Sync',
+      location: effectiveLocation,
+      deviceModel: effectiveDeviceModel,
+      osVersion: effectiveOsVersion,
       profileJson: profileJsonStr,
       zikrsJson: zikrsJsonStr,
       settingsJson: settingsJsonStr,
@@ -1176,6 +1194,223 @@ export async function verifyUserCloudPassword(
     savedPassword: '',
     userProfile: cloudData?.profile || localProf,
   };
+}
+
+// ================= ADMIN PANEL FIRESTORE HELPERS =================
+
+export interface AdminUserRecord {
+  userKey: string;
+  name: string;
+  emailOrPhone: string;
+  email: string;
+  phone: string;
+  photoUrl: string;
+  location: string;
+  deviceModel: string;
+  osVersion: string;
+  verificationMethod: string;
+  lastSyncedAt: number;
+  createdAtMs: number;
+  lifetimeTotalCount: number;
+  activeZikrs: Array<{ id: string; name: string; count: number; target: number }>;
+  hasPassword?: boolean;
+}
+
+/**
+ * Fetch list of all registered users & active guest devices in Firestore for Admin Dashboard
+ */
+export async function fetchAllUsersForAdmin(): Promise<AdminUserRecord[]> {
+  try {
+    const usersCol = collection(db, 'users');
+    const snapshot = await getDocs(usersCol);
+
+    const results: AdminUserRecord[] = [];
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const userKey = docSnap.id;
+
+      let prof: Partial<UserProfile> = {};
+      if (data.profileJson) {
+        try {
+          prof = JSON.parse(data.profileJson);
+        } catch {}
+      }
+
+      let activeZikrsParsed: Array<{ id: string; name: string; count: number; target: number }> = [];
+      if (data.zikrsJson) {
+        try {
+          const zList = JSON.parse(data.zikrsJson);
+          if (Array.isArray(zList)) {
+            activeZikrsParsed = zList.map((z: any) => ({
+              id: z.id || '',
+              name: z.name || z.pronunciationBn || z.id || 'Zikr',
+              count: typeof z.count === 'number' ? z.count : 0,
+              target: typeof z.target === 'number' ? z.target : 33,
+            }));
+          }
+        } catch {}
+      }
+
+      const isGuestDevice = userKey.startsWith('guest_') || (!data.email && !data.phone && !prof.emailOrPhone);
+
+      const emailOrPhone = isGuestDevice
+        ? `Guest Mobile (${userKey.replace(/^guest_/, '').slice(0, 10)})`
+        : (prof.emailOrPhone || data.email || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
+
+      const displayName = isGuestDevice
+        ? (data.name && !data.name.includes('ZikrMate User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
+        : (data.name || prof.name || 'ZikrMate User');
+
+      results.push({
+        userKey,
+        name: displayName,
+        emailOrPhone,
+        email: data.email || (emailOrPhone.includes('@') ? emailOrPhone : ''),
+        phone: data.phone || (!emailOrPhone.includes('@') && !isGuestDevice ? emailOrPhone : ''),
+        photoUrl: data.photoUrl || prof.photoUrl || '',
+        location: data.location || prof.location || 'Asia/Dhaka (Network Timezone)',
+        deviceModel: data.deviceModel || prof.deviceModel || 'Mobile Device',
+        osVersion: data.osVersion || prof.osVersion || 'Android / iOS',
+        verificationMethod: isGuestDevice ? 'Guest Device' : (data.verificationMethod || prof.verificationMethod || 'Verified Account'),
+        lastSyncedAt: data.updatedAtMs || (data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()),
+        createdAtMs: data.createdAt ? new Date(data.createdAt).getTime() : (data.updatedAtMs || Date.now()),
+        lifetimeTotalCount: typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : (typeof data.totalCount === 'number' ? data.totalCount : 0),
+        activeZikrs: activeZikrsParsed,
+        hasPassword: !!(data.password || prof.password),
+      });
+    });
+
+    // Sort users by last synced / active time descending
+    return results.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt);
+  } catch (error) {
+    console.warn('Error fetching users for admin:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch complete history sessions and Aamal logs for a specific user doc in Admin Panel
+ */
+export async function fetchUserDetailForAdmin(userKey: string): Promise<{
+  historySessions: HistorySession[];
+  aamalLogs: Record<string, any>;
+}> {
+  let historySessions: HistorySession[] = [];
+  let aamalLogs: Record<string, any> = {};
+
+  try {
+    // 1. Fetch History sub-document
+    const historyDocRef = doc(db, 'users', userKey, 'data', 'historyDoc');
+    const historySnap = await getDoc(historyDocRef);
+    if (historySnap.exists() && historySnap.data().historyJson) {
+      try {
+        const parsed = JSON.parse(historySnap.data().historyJson);
+        if (Array.isArray(parsed)) historySessions = parsed;
+      } catch {}
+    }
+
+    // 2. Fetch Aamal sub-document
+    const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
+    const aamalSnap = await getDoc(aamalDocRef);
+    if (aamalSnap.exists() && aamalSnap.data().aamalLogsJson) {
+      try {
+        const parsed = JSON.parse(aamalSnap.data().aamalLogsJson);
+        if (parsed && typeof parsed === 'object') aamalLogs = parsed;
+      } catch {}
+    }
+  } catch (err) {
+    console.warn('Error fetching user details for admin:', err);
+  }
+
+  return { historySessions, aamalLogs };
+}
+
+/**
+ * Real-time subscription to all users in Firestore for live Admin Dashboard updates
+ */
+export function subscribeToAllUsersForAdmin(
+  onUpdate: (users: AdminUserRecord[]) => void
+): Unsubscribe {
+  const usersCol = collection(db, 'users');
+  return onSnapshot(
+    usersCol,
+    (snapshot) => {
+      const results: AdminUserRecord[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const userKey = docSnap.id;
+
+        let prof: Partial<UserProfile> = {};
+        if (data.profileJson) {
+          try {
+            prof = JSON.parse(data.profileJson);
+          } catch {}
+        }
+
+        let activeZikrsParsed: Array<{ id: string; name: string; count: number; target: number }> = [];
+        if (data.zikrsJson) {
+          try {
+            const zList = JSON.parse(data.zikrsJson);
+            if (Array.isArray(zList)) {
+              activeZikrsParsed = zList.map((z: any) => ({
+                id: z.id || '',
+                name: z.name || z.pronunciationBn || z.id || 'Zikr',
+                count: typeof z.count === 'number' ? z.count : 0,
+                target: typeof z.target === 'number' ? z.target : 33,
+              }));
+            }
+          } catch {}
+        }
+
+        const isGuestDevice = userKey.startsWith('guest_') || (!data.email && !data.phone && !prof.emailOrPhone);
+
+        const emailOrPhone = isGuestDevice
+          ? `Guest Mobile (${userKey.replace(/^guest_/, '').slice(0, 10)})`
+          : (prof.emailOrPhone || data.email || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
+
+        const displayName = isGuestDevice
+          ? (data.name && !data.name.includes('ZikrMate User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
+          : (data.name || prof.name || 'ZikrMate User');
+
+        results.push({
+          userKey,
+          name: displayName,
+          emailOrPhone,
+          email: data.email || (emailOrPhone.includes('@') ? emailOrPhone : ''),
+          phone: data.phone || (!emailOrPhone.includes('@') && !isGuestDevice ? emailOrPhone : ''),
+          photoUrl: data.photoUrl || prof.photoUrl || '',
+          location: data.location || prof.location || 'Asia/Dhaka (Network Timezone)',
+          deviceModel: data.deviceModel || prof.deviceModel || 'Mobile Device',
+          osVersion: data.osVersion || prof.osVersion || 'Android / iOS',
+          verificationMethod: isGuestDevice ? 'Guest Device' : (data.verificationMethod || prof.verificationMethod || 'Verified Account'),
+          lastSyncedAt: data.updatedAtMs || (data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()),
+          createdAtMs: data.createdAt ? new Date(data.createdAt).getTime() : (data.updatedAtMs || Date.now()),
+          lifetimeTotalCount: typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : (typeof data.totalCount === 'number' ? data.totalCount : 0),
+          activeZikrs: activeZikrsParsed,
+          hasPassword: !!(data.password || prof.password),
+        });
+      });
+
+      onUpdate(results.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt));
+    },
+    (err) => {
+      console.warn('Real-time admin subscription notice:', err);
+    }
+  );
+}
+
+/**
+ * Admin function to remove a user document
+ */
+export async function deleteUserByAdmin(userKey: string): Promise<boolean> {
+  try {
+    const userDocRef = doc(db, 'users', userKey);
+    await deleteDoc(userDocRef);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 

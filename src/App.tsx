@@ -25,6 +25,7 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { StandaloneExportModal } from './components/StandaloneExportModal';
 import { ProfileModal } from './components/ProfileModal';
 import { HistoryReportModal } from './components/HistoryReportModal';
+import { AdminPanelModal } from './components/AdminPanelModal';
 import { saveAccountToRegistry } from './utils/accountRegistry';
 import {
   createInitialDayLog,
@@ -243,6 +244,7 @@ export default function App() {
   }, [zikrs]);
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
   const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
 
@@ -544,24 +546,49 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // 1. Real-time Multi-Device Cloud Subscription (Listens for updates from ANY device, web & app)
+  // 1. Real-time Multi-Device Cloud Subscription & Telemetry Auto-Registration
   useEffect(() => {
+    const currentDeviceId = getDeviceId();
+    const detected = getDetectedDeviceInfo();
+
+    // Determine cloud target key: signed-in email/phone or unique guest device ID
+    const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
+      ? userProfile.emailOrPhone.trim().toLowerCase()
+      : `guest_${currentDeviceId}`;
+
+    // Initial Telemetry Registration for Admin Dashboard on App Startup
+    const effectiveProfile: UserProfile = {
+      ...userProfile,
+      deviceModel: userProfile.deviceModel && !userProfile.deviceModel.includes('vivo ~~ V2144') ? userProfile.deviceModel : detected.model,
+      osVersion: userProfile.osVersion && userProfile.osVersion !== '35_15' ? userProfile.osVersion : detected.osVersion,
+      location: userProfile.location && !userProfile.location.includes('4C2J') ? userProfile.location : detected.location,
+    };
+
+    saveUserDataToCloud(
+      targetKey,
+      effectiveProfile,
+      zikrsRef.current,
+      historySessions,
+      lifetimeTotalCountRef.current,
+      settings,
+      getAllAamalLogs()
+    ).catch(() => {});
+
+    isCloudSyncReadyRef.current = true;
+
+    // If signed-in: Listen for live cross-device updates from other devices on same account
     if (!userProfile.isSignedIn || !userProfile.emailOrPhone) {
-      isCloudSyncReadyRef.current = false;
       return;
     }
 
-    const emailOrPhone = userProfile.emailOrPhone.trim().toLowerCase();
-    const currentDeviceId = getDeviceId();
-
-    const unsubscribe = subscribeToUserDataInCloud(emailOrPhone, (cloudData, isInitial) => {
+    const unsubscribe = subscribeToUserDataInCloud(targetKey, (cloudData, isInitial) => {
       if (!cloudData.foundInCloud) {
         // If local device already has counted data, save local data to cloud instead of resetting to 0!
         const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
         const hasExistingLocalData = localZikrSum > 0 || lifetimeTotalCountRef.current > 0;
         if (hasExistingLocalData) {
           saveUserDataToCloud(
-            emailOrPhone,
+            targetKey,
             userProfile,
             zikrsRef.current,
             historySessions,
@@ -594,12 +621,10 @@ export default function App() {
     };
   }, [userProfile.isSignedIn, userProfile.emailOrPhone]);
 
-  // 2. Snappy auto-save to cloud when user changes counters on THIS device (Ultra-fast 30ms sync)
+  // 2. Snappy auto-save to cloud when user changes counters on THIS device (Ultra-fast 30ms sync for both Guest and Registered devices)
   const cloudSyncDebounceRef = useRef<any>(null);
   useEffect(() => {
-    if (!userProfile.isSignedIn || !userProfile.emailOrPhone) return;
-
-    // Do NOT push local blank state before cloud data has been loaded
+    // Do NOT push local blank state before cloud data has been initialized
     if (!isCloudSyncReadyRef.current) return;
 
     // Check if current state is already identical to what was loaded/synced
@@ -610,10 +635,23 @@ export default function App() {
 
     if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
     cloudSyncDebounceRef.current = setTimeout(async () => {
+      const currentDeviceId = getDeviceId();
+      const detected = getDetectedDeviceInfo();
+      const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
+        ? userProfile.emailOrPhone.trim().toLowerCase()
+        : `guest_${currentDeviceId}`;
+
+      const activeProfile: UserProfile = {
+        ...userProfile,
+        deviceModel: userProfile.deviceModel && !userProfile.deviceModel.includes('vivo ~~ V2144') ? userProfile.deviceModel : detected.model,
+        osVersion: userProfile.osVersion && userProfile.osVersion !== '35_15' ? userProfile.osVersion : detected.osVersion,
+        location: userProfile.location && !userProfile.location.includes('4C2J') ? userProfile.location : detected.location,
+      };
+
       const allAamal = getAllAamalLogs();
       const ok = await saveUserDataToCloud(
-        userProfile.emailOrPhone,
-        userProfile,
+        targetKey,
+        activeProfile,
         zikrs,
         historySessions,
         lifetimeTotalCount,
@@ -1693,6 +1731,16 @@ export default function App() {
         onTriggerCloudSync={handleTriggerCloudSync}
         isSyncingCloud={isSyncingCloud}
         lastCloudSyncTimestamp={lastCloudSyncTimestamp}
+        onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
+      />
+
+      {/* Super Admin Dashboard Modal (User Metrics, Phone Model, Location, Zikr & Aamal Telemetry) */}
+      <AdminPanelModal
+        isOpen={isAdminPanelOpen}
+        onClose={() => setIsAdminPanelOpen(false)}
+        currentUserProfile={userProfile}
+        soundEnabled={settings.soundEnabled}
+        isDayTheme={settings.themeMode === 'day'}
       />
     </div>
   );
