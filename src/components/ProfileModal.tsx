@@ -1121,23 +1121,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         return;
       } else {
         setIsVerifying(false);
-        if (
-          result.error &&
-          !result.error.toLowerCase().includes('closed-by-user') &&
-          !result.error.toLowerCase().includes('popup-closed') &&
-          !result.error.toLowerCase().includes('cancelled')
-        ) {
-          setOtpErrorMessage(
-            'গুগল অ্যাকাউন্ট নির্বাচন বাতিল বা বিঘ্নিত হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
-          );
-        }
+        setOtpErrorMessage(
+          'মোবাইল অ্যাপ বা ব্রাউজারে গুগল পপআপ ব্লক করা থাকতে পারে। অনুগ্রহ করে নিচে ইমেইল ও পাসওয়ার্ড বা ওটিপি (OTP) দিয়ে লগইন করুন।'
+        );
         return;
       }
     } catch (err: any) {
       console.warn('Google auth trigger error:', err);
       setIsVerifying(false);
       setOtpErrorMessage(
-        'গুগল সাইন-ইনে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন বা ইমেইল/মোবাইল দিয়ে চেষ্টা করুন।'
+        'মোবাইল অ্যাপ বা ব্রাউজারে গুগল পপআপ ব্লক করা থাকতে পারে। অনুগ্রহ করে নিচে ইমেইল ও পাসওয়ার্ড বা ওটিপি (OTP) দিয়ে লগইন করুন।'
       );
     }
   };
