@@ -397,17 +397,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setOtpDigits(['', '', '', '', '', '']);
     setCloudSyncMessage(null);
     setShowTestingHelper(false);
-    if (method === 'email' && !inputEmail) {
-      setInputEmail(userProfile.emailOrPhone && userProfile.emailOrPhone.includes('@') ? userProfile.emailOrPhone : '');
-    }
-    if (method === 'phone' && !inputPhone) {
-      const existingDigits = userProfile.emailOrPhone && !userProfile.emailOrPhone.includes('@')
-        ? userProfile.emailOrPhone.replace(/\D/g, '')
-        : '';
-      setInputPhone(existingDigits);
-    }
-    if (!inputName) {
-      setInputName(userProfile.name || '');
+
+    if (mode === 'login') {
+      setInputEmail('');
+      setInputPhone('');
+      setInputPassword('');
+      setInputName('');
+    } else {
+      if (method === 'email' && !inputEmail) {
+        setInputEmail(userProfile.emailOrPhone && userProfile.emailOrPhone.includes('@') ? userProfile.emailOrPhone : '');
+      }
+      if (method === 'phone' && !inputPhone) {
+        const existingDigits = userProfile.emailOrPhone && !userProfile.emailOrPhone.includes('@')
+          ? userProfile.emailOrPhone.replace(/\D/g, '')
+          : '';
+        setInputPhone(existingDigits);
+      }
+      if (!inputName) {
+        setInputName(userProfile.name || '');
+      }
     }
     setActiveSubModal('verified_auth');
   };

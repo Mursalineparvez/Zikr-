@@ -82,9 +82,9 @@ export async function signInWithGoogleAuth(): Promise<{
     }
 
     const googleProvider = new GoogleAuthProvider();
-    // 'select_account' forces Google to always prompt the user to choose their account on both phone and laptop
+    // 'select_account consent' forces Google to always prompt the user to choose their account on both phone and laptop
     googleProvider.setCustomParameters({
-      prompt: 'select_account',
+      prompt: 'select_account consent',
     });
     googleProvider.addScope('profile');
     googleProvider.addScope('email');
