@@ -20,6 +20,13 @@ interface DailyTabligViewProps {
   selectedLanguage?: ZikrLanguage;
 }
 
+interface ChapterMenuItem {
+  id: string;
+  label: string;
+  count: number;
+  match: (heading: string, index: number) => boolean;
+}
+
 export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   soundEnabled,
   themeMode = 'night',
@@ -28,6 +35,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   const isDay = themeMode === 'day';
   const [expandedChapter, setExpandedChapter] = useState<string>('sifats_intro');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [chapterPartFilter, setChapterPartFilter] = useState<Record<string, string>>({});
 
   const filteredChapters = TABLIG_COMPLETE_CHAPTERS.filter((chap) => {
     const query = searchQuery.toLowerCase();
@@ -38,6 +46,54 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
     );
     return matchTitle || matchSec;
   });
+
+  // Extract smart menu items for ANY chapter (grouped bayans, parts, or individual topics)
+  const getChapterMenuItems = (chap: TabligChapterDetail): ChapterMenuItem[] => {
+    if (!chap.sections || chap.sections.length <= 1) return [];
+
+    // 1. Check for major grouped prefixes (like "বাদ মাগরিব বয়ান ১", "পর্ব ১", etc.)
+    const prefixMap = new Map<string, number>();
+    chap.sections.forEach((s) => {
+      const matchGroup = s.heading.match(/^(বাদ মাগরিব বয়ান [১-৩]|পর্ব [১-৩])/);
+      if (matchGroup) {
+        const p = matchGroup[1];
+        prefixMap.set(p, (prefixMap.get(p) || 0) + 1);
+      }
+    });
+
+    if (prefixMap.size > 1) {
+      return Array.from(prefixMap.entries()).map(([prefix, count]) => ({
+        id: prefix,
+        label: prefix,
+        count,
+        match: (heading: string) => heading.startsWith(prefix),
+      }));
+    }
+
+    // 2. For numbered or distinct topics (e.g. Chapter 02 "ঈমান ও একীনের কথা - ১", "দাওয়াত — (১)", 6 sifats, bio, etc.)
+    return chap.sections.map((sec, idx) => {
+      let shortLabel = sec.heading;
+
+      // Clean up common prefixes for cleaner pill display
+      shortLabel = shortLabel
+        .replace(/^ঈমান ও একীনের কথা\s*[-—:]\s*/i, 'কথা - ')
+        .replace(/^দাওয়াত\s*[-—:]\s*\(([০-৯0-9]+)\)/i, 'দাওয়াত $1')
+        .replace(/^ছয় সিফাতের আলোচনা\s*\((.*?)\)/i, '$1')
+        .trim();
+
+      // If still too long, truncate intelligently
+      if (shortLabel.length > 22) {
+        shortLabel = shortLabel.slice(0, 20) + '…';
+      }
+
+      return {
+        id: `sec_${idx}`,
+        label: shortLabel,
+        count: 1,
+        match: (_heading: string, i: number) => i === idx,
+      };
+    });
+  };
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
@@ -150,24 +206,106 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                     </div>
                   )}
 
-                  {chap.sections.map((sec, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-4 sm:p-5 rounded-2xl border ${
-                        isDay ? 'bg-slate-50/80 border-slate-200 text-slate-800' : 'bg-[#071d22] border-teal-900/40 text-teal-100'
-                      }`}
-                    >
-                      {sec.heading && (
-                        <h4 className="font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
-                          <BookmarkCheck className="w-4 h-4" />
-                          <span>{sec.heading}</span>
-                        </h4>
-                      )}
-                      <p className="leading-relaxed whitespace-pre-line text-xs sm:text-sm">
-                        {sec.content}
-                      </p>
-                    </div>
-                  ))}
+                  {/* Smart topic / part navigation menu */}
+                  {(() => {
+                    const menuItems = getChapterMenuItems(chap);
+                    if (menuItems.length > 1) {
+                      const currentFilter = chapterPartFilter[chap.id] || 'all';
+                      return (
+                        <div className="pt-2 flex flex-wrap items-center gap-1.5 sm:gap-2 border-b border-slate-200/60 dark:border-teal-900/40 pb-3">
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-teal-300 mr-1 flex items-center gap-1 shrink-0">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            বিষয় / পর্ব নির্বাচন:
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setChapterPartFilter((prev) => ({ ...prev, [chap.id]: 'all' }));
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer shrink-0 ${
+                              currentFilter === 'all'
+                                ? 'bg-emerald-600 text-white shadow-md'
+                                : isDay
+                                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                : 'bg-[#071d22] hover:bg-teal-900/50 text-teal-200 border border-teal-800/40'
+                            }`}
+                          >
+                            সবগুলো ({chap.sections.length})
+                          </button>
+                          {menuItems.map((item) => {
+                            const isSelected = currentFilter === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => {
+                                  setChapterPartFilter((prev) => ({ ...prev, [chap.id]: item.id }));
+                                  if (soundEnabled) soundHaptics.playTap();
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1 shrink-0 ${
+                                  isSelected
+                                    ? 'bg-emerald-600 text-white shadow-md'
+                                    : isDay
+                                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                    : 'bg-[#071d22] hover:bg-teal-900/50 text-teal-200 border border-teal-800/40'
+                                }`}
+                              >
+                                <span>{item.label}</span>
+                                {item.count > 1 && (
+                                  <span className="text-[10px] opacity-75">({item.count})</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {chap.sections
+                    .filter((sec, idx) => {
+                      const currentFilter = chapterPartFilter[chap.id];
+                      if (!currentFilter || currentFilter === 'all') return true;
+                      const menuItems = getChapterMenuItems(chap);
+                      const activeItem = menuItems.find((m) => m.id === currentFilter);
+                      if (!activeItem) return true;
+                      return activeItem.match(sec.heading, idx);
+                    })
+                    .map((sec, idx) => {
+                      const isMunajat = sec.heading.includes('মোনাজাত') || sec.heading.includes('দোয়া');
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                            isMunajat
+                              ? isDay
+                                ? 'bg-amber-50/70 border-amber-200 text-slate-800'
+                                : 'bg-[#0a2322] border-amber-500/30 text-amber-100 shadow-inner'
+                              : isDay
+                              ? 'bg-slate-50/80 border-slate-200 text-slate-800'
+                              : 'bg-[#071d22] border-teal-900/40 text-teal-100'
+                          }`}
+                        >
+                          {sec.heading && (
+                            <h4
+                              className={`font-bold text-xs sm:text-sm mb-2.5 flex items-center gap-1.5 ${
+                                isMunajat
+                                  ? 'text-amber-600 dark:text-amber-400'
+                                  : 'text-emerald-600 dark:text-emerald-400'
+                              }`}
+                            >
+                              <BookmarkCheck className="w-4 h-4 shrink-0" />
+                              <span>{sec.heading}</span>
+                            </h4>
+                          )}
+                          <p className="leading-relaxed whitespace-pre-line text-xs sm:text-sm">
+                            {sec.content}
+                          </p>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
             </div>
