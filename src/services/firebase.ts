@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -52,12 +53,13 @@ export const auth = (() => {
 })();
 
 /**
- * Real Firebase Google Sign-In with account selection prompt
- * Ensures that both Phone (Mobile) and Laptop (Desktop) always show the Google Account Chooser screen!
+ * Real Firebase Google Sign-In with popup and mobile redirect fallback
+ * Ensures that both Phone (Mobile) and Laptop (Desktop) work reliably!
  */
 export async function signInWithGoogleAuth(): Promise<{
   success: boolean;
   user?: { name: string; email: string; photoUrl: string; uid: string };
+  isRedirecting?: boolean;
   error?: string;
 }> {
   try {
@@ -83,31 +85,72 @@ export async function signInWithGoogleAuth(): Promise<{
     }
 
     const googleProvider = new GoogleAuthProvider();
-    // 'select_account consent' forces Google to always prompt the user to choose their account on both phone and laptop
     googleProvider.setCustomParameters({
       prompt: 'select_account consent',
     });
     googleProvider.addScope('profile');
     googleProvider.addScope('email');
 
-    const result = await signInWithPopup(authInstance, googleProvider);
-    const user = result.user;
-    return {
-      success: true,
-      user: {
-        name: user.displayName || user.email?.split('@')[0] || 'Google User',
-        email: user.email || '',
-        photoUrl: user.photoURL || '',
-        uid: user.uid,
-      },
-    };
+    // Try popup sign-in first
+    try {
+      const result = await signInWithPopup(authInstance, googleProvider);
+      const user = result.user;
+      return {
+        success: true,
+        user: {
+          name: user.displayName || user.email?.split('@')[0] || 'Google User',
+          email: user.email || '',
+          photoUrl: user.photoURL || '',
+          uid: user.uid,
+        },
+      };
+    } catch (popupError: any) {
+      console.warn('Google Sign-In popup notice, falling back to redirect:', popupError);
+      // Fallback to redirect mode for mobile browsers / webviews where popup is blocked
+      await signInWithRedirect(authInstance, googleProvider);
+      return {
+        success: false,
+        isRedirecting: true,
+        error: 'Redirecting to Google Sign-In...',
+      };
+    }
   } catch (error: any) {
-    console.warn('Google Sign-In popup notice:', error);
+    console.warn('Google Sign-In error:', error);
     return {
       success: false,
       error: error?.message || 'Google sign-in was cancelled or blocked.',
     };
   }
+}
+
+/**
+ * Check for Google Sign-In redirect result on app startup (for mobile devices)
+ */
+export async function checkGoogleRedirectResult(): Promise<{
+  success: boolean;
+  user?: { name: string; email: string; photoUrl: string; uid: string };
+  error?: string;
+} | null> {
+  try {
+    let authInstance = auth || getAuth(app);
+    if (!authInstance) return null;
+    const result = await getRedirectResult(authInstance);
+    if (result && result.user) {
+      const user = result.user;
+      return {
+        success: true,
+        user: {
+          name: user.displayName || user.email?.split('@')[0] || 'Google User',
+          email: user.email || '',
+          photoUrl: user.photoURL || '',
+          uid: user.uid,
+        },
+      };
+    }
+  } catch (error: any) {
+    console.warn('Check Google redirect result error:', error);
+  }
+  return null;
 }
 
 // 2. Initialize Firestore Database using provisioned database ID with long-polling resilience
@@ -156,7 +199,18 @@ export async function testFirestoreConnection(): Promise<boolean> {
 // 5. Sanitize email or phone number to make a robust Firestore document ID
 export function sanitizeUserKey(emailOrPhone: string): string {
   if (!emailOrPhone) return 'guest_user';
-  return 'u_' + emailOrPhone.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+  const clean = emailOrPhone.toLowerCase().trim();
+  if (clean.includes('@')) {
+    return 'u_' + clean.replace(/[^a-z0-9]/g, '_');
+  }
+  const digits = clean.replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('01')) {
+    return 'u_880' + digits.slice(1);
+  }
+  if (digits.length === 10 && digits.startsWith('1')) {
+    return 'u_880' + digits;
+  }
+  return 'u_' + (digits || clean.replace(/[^a-z0-9]/g, '_'));
 }
 
 export interface CloudZikrState {

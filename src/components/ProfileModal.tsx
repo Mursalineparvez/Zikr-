@@ -682,10 +682,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           // Fall through to dispatch OTP verification code
         }
       } else {
-        setIsVerifying(false);
-        // Account does not exist anywhere yet
-        setOtpErrorMessage('এই অ্যাকাউন্টের কোনো রেকর্ড পাওয়া যায়নি। অনুগ্রহ করে "নতুন অ্যাকাউন্ট (Sign Up)" বেছে নিয়ে অ্যাকাউন্ট খুলুন।');
-        if (soundEnabled) soundHaptics.playTap();
+        // If account does not exist in cloud yet: automatically initialize user account & log in seamlessly!
+        await handleDirectPasswordLogin(target, inputPassword.trim());
         return;
       }
     }
@@ -1120,10 +1118,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         });
         setIsVerifying(false);
         return;
+      } else if (result.isRedirecting) {
+        // Mobile redirect initiated
+        setCloudSyncMessage('গুগল অ্যাকাউন্ট পেইজে রিডাইরেক্ট করা হচ্ছে...');
+        return;
       } else {
         setIsVerifying(false);
         setOtpErrorMessage(
-          'মোবাইল অ্যাপ বা ব্রাউজারে গুগল পপআপ ব্লক করা থাকতে পারে। অনুগ্রহ করে নিচে ইমেইল ও পাসওয়ার্ড বা ওটিপি (OTP) দিয়ে লগইন করুন।'
+          'মোবাইল অ্যাপে গুগল পপআপ ব্লক থাকলে নিচে ইমেইল/মোবাইল ও পাসওয়ার্ড দিয়ে খুব সহজেই ১-ক্লিকে সাইন-ইন বা নতুন অ্যাকাউন্ট খুলতে পারেন।'
         );
         return;
       }
@@ -1131,7 +1133,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       console.warn('Google auth trigger error:', err);
       setIsVerifying(false);
       setOtpErrorMessage(
-        'মোবাইল অ্যাপ বা ব্রাউজারে গুগল পপআপ ব্লক করা থাকতে পারে। অনুগ্রহ করে নিচে ইমেইল ও পাসওয়ার্ড বা ওটিপি (OTP) দিয়ে লগইন করুন।'
+        'মোবাইল অ্যাপে গুগল পপআপ ব্লক থাকলে নিচে ইমেইল/মোবাইল ও পাসওয়ার্ড দিয়ে খুব সহজেই ১-ক্লিকে সাইন-ইন বা নতুন অ্যাকাউন্ট খুলতে পারেন।'
       );
     }
   };

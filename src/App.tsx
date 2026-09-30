@@ -39,6 +39,7 @@ import {
   loadUserDataFromCloud,
   subscribeToUserDataInCloud,
   getDeviceId,
+  checkGoogleRedirectResult,
   CloudZikrState,
 } from './services/firebase';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
@@ -506,6 +507,42 @@ export default function App() {
     setLastCloudSyncTimestamp(now);
     showToast('✨ স্বাগতম! আপনার অ্যাকাউন্ট নতুনভাবে ০ থেকে শুরু হয়েছে। এখন থেকে আপনার সকল জিকির গণনা ও হিস্ট্রি সংরক্ষিত হবে।');
   };
+
+  // Google Redirect Login Result Check for Mobile Devices
+  useEffect(() => {
+    checkGoogleRedirectResult()
+      .then(async (result) => {
+        if (result && result.success && result.user && result.user.email) {
+          const targetEmail = result.user.email.toLowerCase().trim();
+          const detected = getDetectedDeviceInfo();
+          const cloudData = await loadUserDataFromCloud(targetEmail);
+          const updated: UserProfile = {
+            ...userProfile,
+            name: result.user.name || cloudData?.profile?.name || targetEmail.split('@')[0],
+            emailOrPhone: targetEmail,
+            photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || '',
+            location: userProfile.location || 'Bangladesh',
+            deviceModel: detected.model,
+            osVersion: detected.osVersion,
+            isSignedIn: true,
+            isVerified: true,
+            verificationMethod: 'google',
+            verificationDate: new Date().toISOString(),
+            authProvider: 'google',
+            lastSyncedAt: Date.now(),
+          };
+          saveAccountToRegistry(updated);
+          setUserProfile(updated);
+          try {
+            localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
+          } catch {}
+          if (cloudData && cloudData.foundInCloud) {
+            applyCloudDataToState(cloudData, false, true);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // 1. Real-time Multi-Device Cloud Subscription (Listens for updates from ANY device, web & app)
   useEffect(() => {
