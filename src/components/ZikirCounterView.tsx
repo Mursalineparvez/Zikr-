@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ZikrItem, ThemeMode, ZikrLanguage } from '../types';
+import { ZikrItem, ThemeMode, ZikrLanguage, ZikrRefreshMode } from '../types';
 import { CircularCenterCounter } from './CircularCenterCounter';
 import { ZikrCard } from './ZikrCard';
 import { PortableFloatingCounter } from './PortableFloatingCounter';
-import { Plus, FileText, CheckCircle2, Target, RotateCcw } from 'lucide-react';
+import { Plus, FileText, CheckCircle2, Target, RotateCcw, RotateCw } from 'lucide-react';
 import { ZIKIR_UI } from '../utils/appTranslations';
 
 interface ZikirCounterViewProps {
@@ -11,6 +11,9 @@ interface ZikirCounterViewProps {
   dailyTotal?: number;
   zikrs: ZikrItem[];
   completedGoals: number;
+  refreshMode?: ZikrRefreshMode;
+  onRefreshModeChange?: (mode: ZikrRefreshMode) => void;
+  onManualCounterRefresh?: () => void;
   onIncrement: (id: string) => void;
   onDecrement: (id: string) => void;
   onReset: (zikr: ZikrItem) => void;
@@ -33,6 +36,9 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   dailyTotal,
   zikrs,
   completedGoals,
+  refreshMode = 'fard',
+  onRefreshModeChange,
+  onManualCounterRefresh,
   onIncrement,
   onDecrement,
   onReset,
@@ -100,6 +106,158 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
         selectedLanguage={selectedLanguage}
       />
 
+      {/* ================= REFRESH SYSTEM CARD ================= */}
+      <div
+        className={`p-4 sm:p-5 rounded-3xl border shadow-lg transition-all duration-300 ${
+          isDay
+            ? 'bg-gradient-to-br from-white via-[#f4faf8] to-[#e8f6f3] border-[#cbe4e0]'
+            : 'bg-gradient-to-br from-[#0c2f35] via-[#0f3b43] to-[#12454e] border-[#1b5864]'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
+          <div className="flex items-center gap-2.5">
+            <div
+              className={`p-2 rounded-2xl ${
+                isDay ? 'bg-emerald-100 text-emerald-800' : 'bg-teal-500/20 text-teal-300'
+              }`}
+            >
+              <RotateCw className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className={`text-sm sm:text-base font-black tracking-tight ${isDay ? 'text-[#063b33]' : 'text-white'}`}>
+                {selectedLanguage === 'bn' ? 'রিফ্রেশ সিস্টেম (Refresh System)' : 'Counter Refresh System'}
+              </h3>
+              <p className={`text-xs ${isDay ? 'text-[#2e6259]' : 'text-teal-200/80'}`}>
+                {selectedLanguage === 'bn'
+                  ? '৩টি অপশন থেকে যেকোনো একটি বেছে নিন (ফরজ নামাজ / মাগরিব / ম্যানুয়ালি)'
+                  : 'Choose auto-reset frequency & automatic target presets'}
+              </p>
+            </div>
+          </div>
+
+          {/* Manual Instant Refresh button */}
+          {onManualCounterRefresh && (
+            <button
+              onClick={onManualCounterRefresh}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold border shadow-sm transition active:scale-95 cursor-pointer self-start sm:self-auto ${
+                isDay
+                  ? 'bg-white hover:bg-emerald-50 text-emerald-800 border-emerald-300'
+                  : 'bg-[#144f59] hover:bg-[#1a5f6b] text-teal-100 border-teal-400/40'
+              }`}
+              title={selectedLanguage === 'bn' ? 'সব কাউন্টার ০ করুন' : 'Reset all counters to 0'}
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+              <span>{selectedLanguage === 'bn' ? 'কাউন্টার ০ করুন' : 'Reset Counters'}</span>
+            </button>
+          )}
+        </div>
+
+        {/* 3 Interactive Mode Selection Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+          {/* Mode 1: Every Fard Salah */}
+          <button
+            type="button"
+            onClick={() => onRefreshModeChange && onRefreshModeChange('fard')}
+            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] relative overflow-hidden ${
+              refreshMode === 'fard'
+                ? isDay
+                  ? 'bg-emerald-700 text-white border-emerald-600 shadow-md shadow-emerald-800/20 ring-2 ring-emerald-500/40'
+                  : 'bg-gradient-to-r from-teal-700 to-emerald-700 text-white border-teal-400/60 shadow-lg ring-2 ring-teal-400/50'
+                : isDay
+                ? 'bg-white hover:bg-emerald-50/70 text-[#143d35] border-[#d2ece7]'
+                : 'bg-[#0a262c] hover:bg-[#103840] text-teal-100 border-[#184850]'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-black tracking-wide flex items-center gap-1.5">
+                <span>🕌</span>
+                <span>Every Fard Salah</span>
+              </span>
+              {refreshMode === 'fard' && (
+                <span className="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
+              )}
+            </div>
+            <p
+              className={`text-[11px] font-medium leading-relaxed ${
+                refreshMode === 'fard' ? 'text-teal-100' : isDay ? 'text-gray-600' : 'text-teal-200/70'
+              }`}
+            >
+              {selectedLanguage === 'bn'
+                ? 'প্রত্যেক ফরজ নামাজের পর কাউন্টার ০ হবে • টার্গেট ১-৩৩ বার'
+                : 'Resets to 0 after every Fard prayer • Target 1-33'}
+            </p>
+          </button>
+
+          {/* Mode 2: Daily After Maghrib */}
+          <button
+            type="button"
+            onClick={() => onRefreshModeChange && onRefreshModeChange('maghrib')}
+            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] relative overflow-hidden ${
+              refreshMode === 'maghrib'
+                ? isDay
+                  ? 'bg-emerald-700 text-white border-emerald-600 shadow-md shadow-emerald-800/20 ring-2 ring-emerald-500/40'
+                  : 'bg-gradient-to-r from-teal-700 to-emerald-700 text-white border-teal-400/60 shadow-lg ring-2 ring-teal-400/50'
+                : isDay
+                ? 'bg-white hover:bg-emerald-50/70 text-[#143d35] border-[#d2ece7]'
+                : 'bg-[#0a262c] hover:bg-[#103840] text-teal-100 border-[#184850]'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-black tracking-wide flex items-center gap-1.5">
+                <span>🌅</span>
+                <span>Daily After Maghrib</span>
+              </span>
+              {refreshMode === 'maghrib' && (
+                <span className="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
+              )}
+            </div>
+            <p
+              className={`text-[11px] font-medium leading-relaxed ${
+                refreshMode === 'maghrib' ? 'text-teal-100' : isDay ? 'text-gray-600' : 'text-teal-200/70'
+              }`}
+            >
+              {selectedLanguage === 'bn'
+                ? 'মাগরিবের ওয়াক্ত শুরু হওয়ার সঙ্গে সঙ্গে প্রতিদিন ০ হবে • টার্গেট ৫-১৬৫ বার'
+                : 'Resets daily at Maghrib prayer • Daily target 5-165'}
+            </p>
+          </button>
+
+          {/* Mode 3: Manually */}
+          <button
+            type="button"
+            onClick={() => onRefreshModeChange && onRefreshModeChange('manual')}
+            className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] relative overflow-hidden ${
+              refreshMode === 'manual'
+                ? isDay
+                  ? 'bg-emerald-700 text-white border-emerald-600 shadow-md shadow-emerald-800/20 ring-2 ring-emerald-500/40'
+                  : 'bg-gradient-to-r from-teal-700 to-emerald-700 text-white border-teal-400/60 shadow-lg ring-2 ring-teal-400/50'
+                : isDay
+                ? 'bg-white hover:bg-emerald-50/70 text-[#143d35] border-[#d2ece7]'
+                : 'bg-[#0a262c] hover:bg-[#103840] text-teal-100 border-[#184850]'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-black tracking-wide flex items-center gap-1.5">
+                <span>🖐️</span>
+                <span>Manually</span>
+              </span>
+              {refreshMode === 'manual' && (
+                <span className="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
+              )}
+            </div>
+            <p
+              className={`text-[11px] font-medium leading-relaxed ${
+                refreshMode === 'manual' ? 'text-teal-100' : isDay ? 'text-gray-600' : 'text-teal-200/70'
+              }`}
+            >
+              {selectedLanguage === 'bn'
+                ? 'ব্যবহারকারী নিজে যখন Refresh করবেন তখন ০ হবে • টার্গেট ৫০-২০০ বার'
+                : 'User resets manually • Manual target 50-200'}
+            </p>
+          </button>
+        </div>
+      </div>
+
       {/* Category Pills & Action Bar */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1 flex-wrap gap-2">
@@ -111,7 +269,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             >
               <span>{ZIKIR_UI.commonZikr[selectedLanguage]}</span>
               <span className="text-xs font-normal opacity-70 hidden sm:inline">
-                {ZIKIR_UI.commonZikr12[selectedLanguage]}
+                {selectedLanguage === 'bn' ? '(২৩টি প্রামাণিক যিকির)' : '(23 Authentic Zikrs)'}
               </span>
               <span
                 className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${

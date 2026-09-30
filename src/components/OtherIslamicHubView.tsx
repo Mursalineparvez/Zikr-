@@ -89,11 +89,11 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       arabic: 'الدعوة والتبليغ',
       desc:
         selectedLanguage === 'bn'
-          ? 'দাওয়াতের ৬ সিফাত, ফাজায়েল, মসজিদওয়ারী ৫ আমল ও গাশতের আদব'
+          ? 'দাওয়াতের ৬ সিফত, ফাজায়েল, মসজিদওয়ারী ৫ আমল ও গাশতের আদব'
           : 'The 6 qualities of Dawah, virtues, daily 5 masjid deeds, and etiquette of Gasht',
       icon: <Users className="w-6 h-6 text-emerald-500" />,
       color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
-      badge: selectedLanguage === 'bn' ? '৬ সিফাত ও মেহনত' : '6 Qualities',
+      badge: selectedLanguage === 'bn' ? '৬ সিফত ও মেহনত' : '6 Qualities',
     },
     {
       id: 'allah_names' as OtherSubSection,

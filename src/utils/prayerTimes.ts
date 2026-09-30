@@ -763,3 +763,43 @@ export function calculatePrayerTimes(
     gregorianFormatted,
   };
 }
+
+/**
+ * Fast lightweight prayer time helper for auto-refresh and background checks
+ */
+export function getQuickCurrentPrayerInfo(date: Date = new Date()): {
+  currentPrayer: string;
+  maghribDate: Date;
+} {
+  let lat = 23.8103;
+  let lng = 90.4125;
+  let method = 'Karachi';
+  let madhab = 'Hanafi';
+  try {
+    const sLat = localStorage.getItem('salat_city_lat');
+    const sLng = localStorage.getItem('salat_city_lng');
+    const sMethod = localStorage.getItem('salat_method');
+    const sMadhab = localStorage.getItem('salat_madhab');
+    if (sLat && sLng) {
+      lat = parseFloat(sLat);
+      lng = parseFloat(sLng);
+    }
+    if (sMethod) method = sMethod;
+    if (sMadhab) madhab = sMadhab;
+  } catch {}
+
+  const times = calculatePrayerTimes(
+    lat,
+    lng,
+    'Dhaka',
+    (method as any) || 'Karachi',
+    madhab !== 'Shafi',
+    0,
+    true,
+    date
+  );
+  return {
+    currentPrayer: (times.currentPrayerName || '').toLowerCase(),
+    maghribDate: times.maghribDate,
+  };
+}

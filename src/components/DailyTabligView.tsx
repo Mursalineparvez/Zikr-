@@ -83,7 +83,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
       shortLabel = shortLabel
         .replace(/^ঈমান ও একীনের কথা\s*[-—:]\s*/i, 'কথা - ')
         .replace(/^দাওয়াত\s*[-—:]\s*\(([০-৯0-9]+)\)/i, 'দাওয়াত $1')
-        .replace(/^ছয় সিফাতের আলোচনা\s*\((.*?)\)/i, '$1')
+        .replace(/^ছয় সিফ[াতো]+র আলোচনা\s*\((.*?)\)/i, '$1')
         .trim();
 
       // If still too long, truncate intelligently
@@ -132,7 +132,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
               দাওয়াত ও তাবলিগ (পূর্ণাঙ্গ সিলেবাস ও বিস্তারিত বয়ান)
             </h2>
             <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-3xl">
-              ৬ সিফাত, কালেমা, নামাজ, ইলম ও জিকির, ইকরাম, নিয়ত, তাবলীগের ইতিহাস, ইলিয়াস রহ.-এর মালফুজাত এবং গাস্তের আদবসহ সম্পূর্ণ প্রামাণিক ও বিস্তারিত সংকলন।
+              ৬ সিফত, কালেমা, নামাজ, ইলম ও জিকির, ইকরাম, নিয়ত, তাবলীগের ইতিহাস, ইলিয়াস রহ.-এর মালফুজাত এবং গাস্তের আদবসহ সম্পূর্ণ প্রামাণিক ও বিস্তারিত সংকলন।
             </p>
           </div>
         </div>

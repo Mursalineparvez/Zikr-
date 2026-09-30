@@ -1,5 +1,7 @@
 export type ZikrLanguage = 'bn' | 'en' | 'ur' | 'hi' | 'id' | 'tr';
 
+export type ZikrRefreshMode = 'fard' | 'maghrib' | 'manual';
+
 export interface ZikrTranslations {
   pronunciation?: string;
   meaning?: string;
@@ -16,6 +18,9 @@ export interface ZikrItem {
   translations?: Partial<Record<ZikrLanguage, ZikrTranslations>>;
   count: number;
   target?: number;
+  fardTarget?: number;
+  maghribTarget?: number;
+  manualTarget?: number;
   createdAt: number;
   updatedAt: number;
   color?: string;

@@ -5,8 +5,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage, UserProfile } from './types';
-import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES } from './utils/constants';
+import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage, UserProfile, ZikrRefreshMode } from './types';
+import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES, getTargetForZikrMode } from './utils/constants';
 import { soundHaptics } from './utils/audioHaptics';
 import { generateZikrPdfReport } from './utils/exportPdf';
 import { NAV_TRANSLATIONS } from './utils/appTranslations';
@@ -43,9 +43,21 @@ import {
 } from './services/firebase';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
 import { getDetectedDeviceInfo } from './utils/deviceInfo';
+import { calculatePrayerTimes } from './utils/prayerTimes';
 
 
 export default function App() {
+  // Refresh Mode state ('fard' | 'maghrib' | 'manual')
+  const [refreshMode, setRefreshMode] = useState<ZikrRefreshMode>(() => {
+    try {
+      const saved = localStorage.getItem('zikrmate_refresh_mode');
+      if (saved === 'fard' || saved === 'maghrib' || saved === 'manual') {
+        return saved as ZikrRefreshMode;
+      }
+    } catch {}
+    return 'fard';
+  });
+
   // 1. LocalStorage state persistence for Zikr Items
   const [zikrs, setZikrs] = useState<ZikrItem[]>(() => {
     try {
@@ -60,6 +72,16 @@ export default function App() {
         } catch {}
       }
 
+      const activeRefreshMode = (() => {
+        try {
+          const savedMode = localStorage.getItem('zikrmate_refresh_mode');
+          if (savedMode === 'fard' || savedMode === 'maghrib' || savedMode === 'manual') {
+            return savedMode as ZikrRefreshMode;
+          }
+        } catch {}
+        return 'fard';
+      })();
+
       if (parsed && Array.isArray(parsed) && parsed.length > 0) {
         const parsedMap = new Map<string, any>(parsed.map((item: any) => [item.id, item]));
         const nameMap = new Map<string, any>(
@@ -69,19 +91,23 @@ export default function App() {
           ])
         );
 
-        // Populate all Common Zikrs, restoring counts
+        // Populate all Common Zikrs, restoring counts and syncing target to current refresh mode
         const mergedList: ZikrItem[] = DEFAULT_ZIKRS.map((defaultItem) => {
           const normalizedName = defaultItem.name.toLowerCase().replace(/[^a-z0-9]/g, '');
           const existing = parsedMap.get(defaultItem.id) || nameMap.get(normalizedName);
+          const targetForMode = getTargetForZikrMode(defaultItem, activeRefreshMode);
           if (existing) {
             return {
               ...defaultItem,
               count: typeof existing.count === 'number' ? Math.max(0, existing.count) : 0,
               updatedAt: existing.updatedAt || defaultItem.updatedAt,
-              target: typeof existing.target === 'number' && existing.target > 0 ? existing.target : defaultItem.target,
+              target: targetForMode,
             };
           }
-          return defaultItem;
+          return {
+            ...defaultItem,
+            target: targetForMode,
+          };
         });
 
         // Also preserve any custom items the user may have added
@@ -102,7 +128,21 @@ export default function App() {
     } catch {
       // Fallback
     }
-    return DEFAULT_ZIKRS;
+
+    const initialMode = (() => {
+      try {
+        const savedMode = localStorage.getItem('zikrmate_refresh_mode');
+        if (savedMode === 'fard' || savedMode === 'maghrib' || savedMode === 'manual') {
+          return savedMode as ZikrRefreshMode;
+        }
+      } catch {}
+      return 'fard';
+    })();
+
+    return DEFAULT_ZIKRS.map((item) => ({
+      ...item,
+      target: getTargetForZikrMode(item, initialMode),
+    }));
   });
 
   // History session archives
@@ -758,25 +798,139 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Guarantee immediate persistence before window refresh / close
+  // Auto-Refresh Effect based on refreshMode (fard, maghrib, manual)
   useEffect(() => {
-    const handleUnload = () => {
+    const checkAutoRefresh = () => {
       try {
-        localStorage.setItem('noor_zikr_items', JSON.stringify(zikrsRef.current));
-        localStorage.setItem('zikrmate_lifetime_total_count', String(lifetimeTotalCountRef.current));
-        const activeSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
-        if (activeSum > 0) {
-          localStorage.setItem('zikrmate_active_zikrs_backup', JSON.stringify(zikrsRef.current));
+        const pTimes = calculatePrayerTimes();
+        const currentPrayer = pTimes.currentPrayerName;
+        const now = new Date();
+
+        if (refreshMode === 'fard') {
+          const lastFard = localStorage.getItem('zikrmate_last_fard_segment');
+          const fardNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+          if (fardNames.includes(currentPrayer)) {
+            if (!lastFard) {
+              localStorage.setItem('zikrmate_last_fard_segment', currentPrayer);
+            } else if (lastFard !== currentPrayer) {
+              localStorage.setItem('zikrmate_last_fard_segment', currentPrayer);
+              const hasCounts = zikrsRef.current.some((z) => z.count > 0);
+              if (hasCounts) {
+                lastSyncedSignatureRef.current = '';
+                setZikrs((prev) => prev.map((z) => ({ ...z, count: 0, updatedAt: Date.now() })));
+                showToast(
+                  selectedLanguage === 'bn'
+                    ? '🕌 ফরজ নামাজের পর সকল যিকির কাউন্টার ০ করা হয়েছে!'
+                    : '🕌 Counters reset to 0 after Fard prayer transition!'
+                );
+              }
+            }
+          }
+        } else if (refreshMode === 'maghrib') {
+          const todayKey = getTodayDateKey();
+          const maghribResetKey = `${todayKey}_maghrib`;
+          const lastMaghribReset = localStorage.getItem('zikrmate_last_maghrib_reset_key');
+
+          const maghribTime = pTimes.maghribDate;
+          if (now >= maghribTime) {
+            if (!lastMaghribReset) {
+              localStorage.setItem('zikrmate_last_maghrib_reset_key', maghribResetKey);
+            } else if (lastMaghribReset !== maghribResetKey) {
+              localStorage.setItem('zikrmate_last_maghrib_reset_key', maghribResetKey);
+              const hasCounts = zikrsRef.current.some((z) => z.count > 0);
+              if (hasCounts) {
+                lastSyncedSignatureRef.current = '';
+                setZikrs((prev) => prev.map((z) => ({ ...z, count: 0, updatedAt: Date.now() })));
+                showToast(
+                  selectedLanguage === 'bn'
+                    ? '🌅 মাগরিবের ওয়াক্ত শুরু হওয়ায় সকল যিকির কাউন্টার ০ করা হয়েছে!'
+                    : '🌅 Counters reset to 0 at Maghrib prayer time!'
+                );
+              }
+            }
+          }
         }
-      } catch {}
+      } catch (e) {
+        console.error('Error checking auto-refresh:', e);
+      }
     };
-    window.addEventListener('beforeunload', handleUnload);
-    window.addEventListener('pagehide', handleUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleUnload);
-      window.removeEventListener('pagehide', handleUnload);
+
+    checkAutoRefresh();
+    const interval = setInterval(checkAutoRefresh, 15000);
+    return () => clearInterval(interval);
+  }, [refreshMode, selectedLanguage]);
+
+  // Handle Refresh Mode switch by user
+  const handleRefreshModeChange = (newMode: ZikrRefreshMode) => {
+    setRefreshMode(newMode);
+    try {
+      localStorage.setItem('zikrmate_refresh_mode', newMode);
+    } catch {}
+
+    setZikrs((prev) =>
+      prev.map((item) => {
+        const matchedDefault = DEFAULT_ZIKRS.find(
+          (d) => d.id === item.id || (item.name && d.name.toLowerCase() === item.name.toLowerCase())
+        );
+
+        const fardTarget = item.fardTarget ?? matchedDefault?.fardTarget;
+        const maghribTarget = item.maghribTarget ?? matchedDefault?.maghribTarget;
+        const manualTarget = item.manualTarget ?? matchedDefault?.manualTarget;
+
+        const updatedItem = {
+          ...item,
+          fardTarget,
+          maghribTarget,
+          manualTarget,
+        };
+
+        const newTarget = getTargetForZikrMode(updatedItem, newMode);
+
+        return {
+          ...updatedItem,
+          target: newTarget,
+          updatedAt: Date.now(),
+        };
+      })
+    );
+
+    const modeLabels: Record<ZikrRefreshMode, { bn: string; en: string }> = {
+      fard: {
+        bn: 'রিফ্রেশ মোড: প্রত্যেক ফরজ নামাজের পর কাউন্টার ০ হবে (টার্গেট: ১-৩৩)',
+        en: 'Refresh Mode: Reset after Every Fard Salah',
+      },
+      maghrib: {
+        bn: 'রিফ্রেশ মোড: প্রতিদিন মাগরিবের পর কাউন্টার ০ হবে (টার্গেট: ৫-১৬৫)',
+        en: 'Refresh Mode: Reset Daily After Maghrib',
+      },
+      manual: {
+        bn: 'রিফ্রেশ মোড: ম্যানুয়ালি রিফ্রেশ (টার্গেট: ৫০-২০০)',
+        en: 'Refresh Mode: Manual Reset Only',
+      },
     };
-  }, []);
+    showToast(modeLabels[newMode][selectedLanguage === 'bn' ? 'bn' : 'en']);
+  };
+
+  // Manual counter refresh button handler
+  const handleManualCounterRefresh = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: selectedLanguage === 'bn' ? 'সব কাউন্টার ০ করুন' : 'Reset All Counters',
+      message: selectedLanguage === 'bn'
+        ? 'আপনি কি নিশ্চিত যে সমস্ত যিকির কাউন্টার ০ করতে চান? (আপনার মাস্টার টোটাল এবং হিস্ট্রি সুরক্ষিত থাকবে)'
+        : 'Are you sure you want to reset all individual Zikr counters to 0? (Master total and history will remain safe)',
+      confirmLabel: selectedLanguage === 'bn' ? 'হ্যাঁ, ০ করুন' : 'Yes, Reset to 0',
+      isDanger: false,
+      onConfirm: () => {
+        lastSyncedSignatureRef.current = '';
+        setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
+        if (settings.vibrationEnabled) soundHaptics.vibrate(50);
+        if (settings.soundEnabled) soundHaptics.playReset();
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        showToast(selectedLanguage === 'bn' ? 'সকল যিকির কাউন্টার ০ করা হয়েছে' : 'All Zikr counters reset to 0');
+      },
+    });
+  };
 
 
   // Screen Awake Lock management
@@ -1303,6 +1457,9 @@ export default function App() {
             dailyTotal={dailyTotal}
             zikrs={zikrs}
             completedGoals={completedGoals}
+            refreshMode={refreshMode}
+            onRefreshModeChange={handleRefreshModeChange}
+            onManualCounterRefresh={handleManualCounterRefresh}
             onIncrement={handleIncrement}
             onDecrement={handleDecrement}
             onReset={handleConfirmResetIndividual}
