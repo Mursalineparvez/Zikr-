@@ -43,14 +43,15 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
   // Get pronunciation and meaning according to selected language
   const translationData = zikr.translations?.[currentLang];
   const displayPronunciation =
+    (currentLang === 'bn' ? zikr.pronunciationBn : translationData?.pronunciation) ||
     translationData?.pronunciation ||
-    (currentLang === 'bn' ? zikr.pronunciationBn : null) ||
     zikr.transliteration ||
     zikr.name;
 
   const displayMeaning =
+    (currentLang === 'bn' ? (zikr.meaningBn || zikr.meaning) : translationData?.meaning) ||
     translationData?.meaning ||
-    (currentLang === 'bn' ? zikr.meaningBn : null) ||
+    zikr.meaningBn ||
     zikr.meaning ||
     '';
 
@@ -140,17 +141,25 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
       </div>
 
       {/* Main Content:
-          1. Arabic Zikir (Large & Centered, RTL)
+          1. Arabic Zikir (Centered, RTL, compact font for long texts like Ayatul Kursi)
           2. Pronunciation (Gold / Yellow accent color)
-          3. Meaning (Full text, clearly readable, never truncated)
+          3. Meaning (Full text, clearly readable, compact font)
       */}
-      <div className="py-2 text-center space-y-2">
+      <div className="py-2 text-center space-y-1.5">
         {/* 1. Arabic Zikir */}
         {displayArabic && (
           <div
             dir="rtl"
             style={{ direction: 'rtl', textAlign: 'center' }}
-            className={`font-arabic text-2xl sm:text-3xl font-bold leading-relaxed select-none transition-colors ${
+            className={`font-arabic font-bold leading-relaxed select-none transition-colors break-words ${
+              displayArabic.length > 150
+                ? 'text-xs sm:text-sm py-1'
+                : displayArabic.length > 70
+                ? 'text-sm sm:text-base'
+                : displayArabic.length > 35
+                ? 'text-lg sm:text-xl'
+                : 'text-xl sm:text-2xl'
+            } ${
               isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
             }`}
           >
@@ -161,7 +170,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         {/* 2. Pronunciation in selected language */}
         <div
           dir={isUrdu ? 'rtl' : 'ltr'}
-          className={`text-center font-bold text-base sm:text-lg text-amber-400 tracking-wide ${
+          className={`text-center font-bold text-sm sm:text-base text-amber-400 tracking-wide ${
             isUrdu ? 'font-arabic' : ''
           }`}
         >
@@ -172,7 +181,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         {displayMeaning && (
           <div
             dir={isUrdu ? 'rtl' : 'ltr'}
-            className={`text-xs sm:text-sm leading-relaxed px-1 sm:px-2 break-words whitespace-normal ${
+            className={`text-xs leading-relaxed px-1 break-words whitespace-normal opacity-90 ${
               isDay ? 'text-[#395c60]' : 'text-[#a2c5cb]'
             }`}
           >

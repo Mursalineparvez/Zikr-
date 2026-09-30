@@ -18,6 +18,7 @@ import {
   getDoc,
   getDocFromServer,
   setDoc,
+  deleteField,
   onSnapshot,
   setLogLevel,
   Unsubscribe,
@@ -173,6 +174,51 @@ export interface CloudZikrState {
   hasZikrData?: boolean;
 }
 
+// Helper to minify Zikr list for cloud storage by stripping static translation objects
+function minifyZikrsForCloud(zikrs: ZikrItem[]) {
+  return (zikrs || []).map((z) => ({
+    id: z.id,
+    count: z.count || 0,
+    target: z.target,
+    fardTarget: z.fardTarget,
+    maghribTarget: z.maghribTarget,
+    manualTarget: z.manualTarget,
+    name: z.name,
+    arabic: z.arabic,
+    color: z.color,
+    updatedAt: z.updatedAt,
+  }));
+}
+
+// Helper to minify history sessions (keeps last 80 sessions)
+function minifyHistoryForCloud(history: HistorySession[]) {
+  const sliced = (history || []).slice(-80);
+  return sliced.map((h) => ({
+    id: h.id,
+    timestamp: h.timestamp,
+    dateStr: h.dateStr,
+    totalCount: h.totalCount,
+    note: h.note || undefined,
+    breakdown: (h.breakdown || []).map((b) => ({
+      name: b.name,
+      count: b.count,
+      target: b.target,
+      arabic: b.arabic,
+    })),
+  }));
+}
+
+// Helper to minify Aamal day logs (keeps last 120 days)
+function minifyAamalLogsForCloud(aamalLogs?: Record<string, any>) {
+  if (!aamalLogs) return {};
+  const keys = Object.keys(aamalLogs).sort().slice(-120);
+  const result: Record<string, any> = {};
+  for (const k of keys) {
+    result[k] = aamalLogs[k];
+  }
+  return result;
+}
+
 /**
  * Save user profile and all zikr counts / lifetime total / history sessions / aamal into Firebase Firestore
  * This guarantees that when the user logs in from ANY device with their email,
@@ -196,13 +242,35 @@ export async function saveUserDataToCloud(
     const nowIso = new Date().toISOString();
     const nowMs = Date.now();
 
-    const zikrsJsonStr = JSON.stringify(zikrs);
-    const historyJsonStr = JSON.stringify(history);
-    const settingsJsonStr = settings ? JSON.stringify(settings) : '{}';
-    const aamalLogsJsonStr = aamalLogs ? JSON.stringify(aamalLogs) : '{}';
-    const profileJsonStr = JSON.stringify(profile);
+    // Minify payloads to prevent Firestore 1 MB single-document limit
+    const minifiedZikrs = minifyZikrsForCloud(zikrs);
+    const minifiedHistory = minifyHistoryForCloud(history);
+    const minifiedAamal = minifyAamalLogsForCloud(aamalLogs);
 
-    // 1. Save lightweight profile, zikrs, settings in primary user document (< 100 KB)
+    const zikrsJsonStr = JSON.stringify(minifiedZikrs);
+    const historyJsonStr = JSON.stringify(minifiedHistory);
+    const settingsJsonStr = settings ? JSON.stringify(settings) : '{}';
+    const aamalLogsJsonStr = JSON.stringify(minifiedAamal);
+
+    // Ensure photoUrl is kept lightweight (< 30KB) if base64 data URI
+    let safePhotoUrl = profile.photoUrl || '';
+    if (safePhotoUrl.length > 40000) {
+      safePhotoUrl = safePhotoUrl.substring(0, 100); // Truncate oversized raw data URIs
+    }
+
+    const safeProfile = {
+      name: profile.name,
+      emailOrPhone: profile.emailOrPhone,
+      isVerified: profile.isVerified,
+      verificationMethod: profile.verificationMethod,
+      location: profile.location,
+      deviceModel: profile.deviceModel,
+      osVersion: profile.osVersion,
+      photoUrl: safePhotoUrl,
+    };
+    const profileJsonStr = JSON.stringify(safeProfile);
+
+    // 1. Save lightweight profile, zikrs, settings in primary user document (< 20 KB)
     const userDocRef = doc(db, 'users', userKey);
     const userDocPayload: Record<string, any> = {
       uid: userKey,
@@ -211,7 +279,7 @@ export async function saveUserDataToCloud(
       phone: !emailOrPhone.includes('@') ? emailOrPhone.trim() : '',
       isVerified: profile.isVerified ?? true,
       verificationMethod: profile.verificationMethod || (emailOrPhone.includes('@') ? 'email' : 'phone'),
-      photoUrl: profile.photoUrl || '',
+      photoUrl: safePhotoUrl,
       location: profile.location || '',
       deviceModel: profile.deviceModel || 'Web Browser',
       osVersion: profile.osVersion || 'Cloud Sync',
@@ -223,6 +291,12 @@ export async function saveUserDataToCloud(
       updatedAt: nowIso,
       updatedAtMs: nowMs,
       senderDeviceId: currentDeviceId,
+      // Delete legacy bloated fields from top-level user doc if they existed previously!
+      historyJson: deleteField(),
+      aamalLogsJson: deleteField(),
+      fullHistory: deleteField(),
+      quranData: deleteField(),
+      quranLogs: deleteField(),
     };
     if (profile.password) {
       userDocPayload.password = profile.password;
@@ -232,11 +306,11 @@ export async function saveUserDataToCloud(
     }
     await setDoc(userDocRef, userDocPayload, { merge: true });
 
-    // 2. Save heavy history sessions in separate sub-document (prevents 1MB single-document size limit)
+    // 2. Save heavy history sessions in separate sub-document
     const historyDocRef = doc(db, 'users', userKey, 'data', 'historyDoc');
     setDoc(historyDocRef, { historyJson: historyJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
 
-    // 3. Save heavy aamal logs in separate sub-document (prevents 1MB single-document size limit)
+    // 3. Save heavy aamal logs in separate sub-document
     const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
     setDoc(aamalDocRef, { aamalLogsJson: aamalLogsJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
 
