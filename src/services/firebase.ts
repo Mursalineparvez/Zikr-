@@ -985,8 +985,12 @@ export async function verifyUserCloudPassword(
   const target = emailOrPhone.trim();
   const cleanInput = inputPassword.trim();
 
-  // 1. Fetch from Firestore
-  const cloudData = await loadUserDataFromCloud(target);
+  // 1. Fetch from Firestore (try original and alternative formats if phone)
+  let cloudData = await loadUserDataFromCloud(target);
+  if (!cloudData?.foundInCloud && !target.includes('@')) {
+    const altTarget = target.startsWith('+') ? target.replace(/^\+/, '') : `+${target}`;
+    cloudData = await loadUserDataFromCloud(altTarget);
+  }
   const cloudPass = cloudData?.profile?.password;
 
   // 2. Fetch from local registry
@@ -998,11 +1002,16 @@ export async function verifyUserCloudPassword(
     try {
       const reg = JSON.parse(localRegistryRaw);
       const cleanTarget = target.toLowerCase();
+      const altCleanTarget = cleanTarget.startsWith('+') ? cleanTarget.replace(/^\+/, '') : `+${cleanTarget}`;
       for (const k of Object.keys(reg)) {
         const item = reg[k];
+        const regKey = k.toLowerCase();
+        const regEmailPhone = item.profile?.emailOrPhone?.toLowerCase().trim() || '';
         if (
-          k === cleanTarget ||
-          item.profile?.emailOrPhone?.toLowerCase().trim() === cleanTarget
+          regKey === cleanTarget ||
+          regKey === altCleanTarget ||
+          regEmailPhone === cleanTarget ||
+          regEmailPhone === altCleanTarget
         ) {
           localProf = item.profile;
           localPass = item.profile?.password || '';

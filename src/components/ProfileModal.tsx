@@ -675,10 +675,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           await handleDirectPasswordLogin(target, inputPassword.trim());
           return;
         } else {
+          // Password is wrong! As requested, when password is wrong, trigger verification (OTP)
           setIsVerifying(false);
-          setOtpErrorMessage('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন, অথবা নিচে "পাসওয়ার্ড ভুলে গেছেন?" বাটনে ট্যাপ করে নতুন পাসওয়ার্ড রিসেট করুন।');
+          setOtpErrorMessage('পাসওয়ার্ড ভুল হয়েছে! নিরাপত্তার জন্য আপনার ফোন বা মেইলে ভেরিফিকেশন কোড পাঠানো হচ্ছে...');
           if (soundEnabled) soundHaptics.playTap();
-          return;
+          // Fall through to dispatch OTP verification code
         }
       } else {
         setIsVerifying(false);
@@ -3594,30 +3595,9 @@ ${msg}`;
                     </button>
                   </div>
 
-                  {/* Preview test helper */}
-                  <div className="pt-1 text-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowTestingHelper(!showTestingHelper)}
-                      className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-teal-300 underline cursor-pointer"
-                    >
-                      কোড পেতে কোনো সমস্যা হচ্ছে? (সাহায্য)
-                    </button>
-                    {showTestingHelper && (
-                      <div className="mt-2 p-2.5 rounded-xl bg-slate-100 dark:bg-[#06181c] border border-slate-200 dark:border-teal-900/40 text-[11px] text-left text-slate-600 dark:text-slate-300 space-y-1">
-                        <p>• অনুগ্রহ করে আপনার ইমেইলের Spam বা All Mail ফোল্ডার চেক করুন।</p>
-                        <p>
-                          • প্রিভিউ বা টেস্ট কোড:{' '}
-                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                            {getTestingOtpCode(
-                              authMethod === 'email'
-                                ? inputEmail
-                                : `${selectedCountryCode}${inputPhone.replace(/^0+/, '').trim()}`
-                            )}
-                          </span>
-                        </p>
-                      </div>
-                    )}
+                  {/* Help notice without showing code directly on screen */}
+                  <div className="pt-1 text-center text-[11px] text-slate-500 dark:text-teal-300">
+                    অনুগ্রহ করে আপনার ইমেইল ইনবক্স, স্প্যাম (Spam) বা মোবাইল SMS চেক করুন।
                   </div>
                 </div>
               )}
