@@ -51,6 +51,11 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   const getChapterMenuItems = (chap: TabligChapterDetail): ChapterMenuItem[] => {
     if (!chap.sections || chap.sections.length <= 1) return [];
 
+    // Specifically exclude chapter 10 (tabligh_120_core) so all 120 points show sequentially without filter menu
+    if (chap.id === 'tabligh_120_core') {
+      return [];
+    }
+
     // 1. Check for major grouped prefixes (like "বাদ মাগরিব বয়ান ১", "পর্ব ১", etc.)
     const prefixMap = new Map<string, number>();
     chap.sections.forEach((s) => {
