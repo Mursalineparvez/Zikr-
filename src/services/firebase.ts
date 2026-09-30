@@ -202,7 +202,7 @@ export async function saveUserDataToCloud(
     const aamalLogsJsonStr = aamalLogs ? JSON.stringify(aamalLogs) : '{}';
     const profileJsonStr = JSON.stringify(profile);
 
-    // 1. Save all data atomically in primary user document
+    // 1. Save lightweight profile, zikrs, settings in primary user document (< 100 KB)
     const userDocRef = doc(db, 'users', userKey);
     const userDocPayload: Record<string, any> = {
       uid: userKey,
@@ -217,9 +217,7 @@ export async function saveUserDataToCloud(
       osVersion: profile.osVersion || 'Cloud Sync',
       profileJson: profileJsonStr,
       zikrsJson: zikrsJsonStr,
-      historyJson: historyJsonStr,
       settingsJson: settingsJsonStr,
-      aamalLogsJson: aamalLogsJsonStr,
       totalCount: totalCount,
       lifetimeTotalCount: lifetimeTotalCount,
       updatedAt: nowIso,
@@ -234,27 +232,15 @@ export async function saveUserDataToCloud(
     }
     await setDoc(userDocRef, userDocPayload, { merge: true });
 
-    // 2. Also keep sub-document synchronized in background for full backwards compatibility
-    const dataDocRef = doc(db, 'users', userKey, 'data', 'zikrState');
-    setDoc(
-      dataDocRef,
-      {
-        userId: userKey,
-        profileJson: profileJsonStr,
-        zikrsJson: zikrsJsonStr,
-        historyJson: historyJsonStr,
-        settingsJson: settingsJsonStr,
-        aamalLogsJson: aamalLogsJsonStr,
-        totalCount: totalCount,
-        lifetimeTotalCount: lifetimeTotalCount,
-        updatedAt: nowIso,
-        updatedAtMs: nowMs,
-        senderDeviceId: currentDeviceId,
-      },
-      { merge: true }
-    ).catch(() => {});
+    // 2. Save heavy history sessions in separate sub-document (prevents 1MB single-document size limit)
+    const historyDocRef = doc(db, 'users', userKey, 'data', 'historyDoc');
+    setDoc(historyDocRef, { historyJson: historyJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
 
-    // 3. Update local cache
+    // 3. Save heavy aamal logs in separate sub-document (prevents 1MB single-document size limit)
+    const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
+    setDoc(aamalDocRef, { aamalLogsJson: aamalLogsJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
+
+    // 4. Update local cache
     try {
       localStorage.setItem(
         `zikrmate_cloud_cache_${userKey}`,
@@ -289,20 +275,26 @@ export async function loadUserDataFromCloud(
 
   try {
     const profileDocRef = doc(db, 'users', userKey);
+    const historyDocRef = doc(db, 'users', userKey, 'data', 'historyDoc');
+    const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
     const dataDocRef = doc(db, 'users', userKey, 'data', 'zikrState');
 
-    const profileSnap = await getDoc(profileDocRef);
-    let rawData: any = profileSnap.exists() ? profileSnap.data() : null;
+    const [profileSnap, historySnap, aamalSnap, dataSnap] = await Promise.all([
+      getDoc(profileDocRef),
+      getDoc(historyDocRef).catch(() => null),
+      getDoc(aamalDocRef).catch(() => null),
+      getDoc(dataDocRef).catch(() => null),
+    ]);
 
-    // Check legacy sub-document if main doc has no zikr data yet
-    if (!rawData || !rawData.zikrsJson) {
-      try {
-        const dataSnap = await getDoc(dataDocRef);
-        if (dataSnap.exists()) {
-          const dataDocData = dataSnap.data();
-          rawData = { ...(rawData || {}), ...dataDocData };
-        }
-      } catch {}
+    let rawData: any = profileSnap.exists() ? profileSnap.data() : null;
+    if (dataSnap && dataSnap.exists()) {
+      rawData = { ...(rawData || {}), ...dataSnap.data() };
+    }
+    if (historySnap && historySnap.exists()) {
+      rawData = { ...(rawData || {}), ...historySnap.data() };
+    }
+    if (aamalSnap && aamalSnap.exists()) {
+      rawData = { ...(rawData || {}), ...aamalSnap.data() };
     }
 
     if (!rawData) {
