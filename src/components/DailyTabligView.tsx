@@ -100,6 +100,18 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
     });
   };
 
+  // Sanitize and clean raw text formatting (# symbols, --- horizontal rules, and extra spaces)
+  const formatCleanContent = (raw: string): string => {
+    if (!raw) return '';
+    return raw
+      .replace(/^\s*[-—_]{3,}\s*$/gm, '') // remove --- separator lines
+      .replace(/^[ \t]*#+[ \t]*/gm, '') // remove #, ##, ###, #### markdown heading markers
+      .replace(/#/g, '') // remove any remaining rogue # symbols
+      .replace(/[ \t]+$/gm, '') // remove trailing whitespaces on each line
+      .replace(/\n{3,}/g, '\n\n') // collapse multiple blank lines into standard spacing
+      .trim();
+  };
+
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
       {/* Banner */}
@@ -306,7 +318,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                             </h4>
                           )}
                           <p className="leading-relaxed whitespace-pre-line text-xs sm:text-sm">
-                            {sec.content}
+                            {formatCleanContent(sec.content)}
                           </p>
                         </div>
                       );
