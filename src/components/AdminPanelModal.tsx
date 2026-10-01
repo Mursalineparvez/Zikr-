@@ -75,26 +75,56 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [userToDelete, setUserToDelete] = useState<AdminUserRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-  // Load users list when modal opens & admin is authenticated
-  const loadUsersData = async () => {
-    if (!isOwner) return;
-    setIsLoading(true);
-    const data = await fetchAllUsersForAdmin();
-
-    // Also merge any local accounts from registry if missing from cloud response
+  // Helper to merge cloud records with local device registry
+  const mergeCloudAndVaultUsers = (cloudData: AdminUserRecord[]): AdminUserRecord[] => {
     const localVault = getAllSavedAccounts();
-    const existingKeys = new Set(data.map((u) => u.userKey.toLowerCase()));
-    const existingEmails = new Set(data.map((u) => u.email.toLowerCase()).filter(Boolean));
+    const userMap = new Map<string, AdminUserRecord>();
 
-    const merged = [...data];
+    // 1. Add all users from cloud
+    cloudData.forEach((u) => {
+      userMap.set(u.userKey.toLowerCase(), { ...u });
+      if (u.email) {
+        userMap.set(u.email.toLowerCase(), userMap.get(u.userKey.toLowerCase())!);
+      }
+    });
+
+    // 2. Merge with locally saved accounts
     Object.values(localVault).forEach((acc) => {
       const p = acc.profile;
       const em = (p.emailOrPhone || '').toLowerCase().trim();
+      if (!em) return;
+
       const uk = 'u_' + em.replace(/[^a-z0-9]/g, '_');
-      if (em && !existingKeys.has(uk) && (!em.includes('@') || !existingEmails.has(em))) {
-        merged.push({
+      const existing = userMap.get(uk) || userMap.get(em);
+      const localTime = p.lastSyncedAt || (acc.savedAt ? new Date(acc.savedAt).getTime() : Date.now());
+
+      if (existing) {
+        // Upgrade existing with recent local session data
+        if (localTime > existing.lastSyncedAt) {
+          existing.lastSyncedAt = localTime;
+        }
+        if (p.name && (!existing.name || existing.name.includes('ZikrMate User'))) {
+          existing.name = p.name;
+        }
+        if (p.photoUrl && !existing.photoUrl) {
+          existing.photoUrl = p.photoUrl;
+        }
+        if (p.deviceModel && !existing.deviceModel.includes('Vivo')) {
+          existing.deviceModel = p.deviceModel;
+        }
+        if (p.location) {
+          existing.location = p.location;
+        }
+        if (p.authProvider === 'google') {
+          existing.verificationMethod = 'Google Sign-In';
+        }
+        if (p.password) {
+          existing.hasPassword = true;
+        }
+      } else {
+        const newRecord: AdminUserRecord = {
           userKey: uk,
-          name: p.name || em.split('@')[0] || 'User',
+          name: p.name || (em.includes('@') ? em.split('@')[0] : 'User'),
           emailOrPhone: em,
           email: em.includes('@') ? em : '',
           phone: !em.includes('@') ? em : '',
@@ -102,18 +132,40 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           location: p.location || 'Bangladesh',
           deviceModel: p.deviceModel || 'Mobile Device',
           osVersion: p.osVersion || 'Android',
-          verificationMethod: p.authProvider === 'google' ? 'Google Sign-In' : 'Verified Account',
-          lastSyncedAt: p.lastSyncedAt || Date.now(),
-          createdAtMs: Date.now(),
+          verificationMethod: p.authProvider === 'google' ? 'Google Sign-In' : (em.includes('@') ? 'Google / Email' : 'Phone Verified'),
+          lastSyncedAt: localTime,
+          createdAtMs: acc.savedAt ? new Date(acc.savedAt).getTime() : Date.now(),
           lifetimeTotalCount: 0,
           activeZikrs: [],
           hasPassword: !!p.password,
-        });
+        };
+        userMap.set(uk, newRecord);
+        if (em.includes('@')) {
+          userMap.set(em, newRecord);
+        }
       }
     });
 
-    setUsers(merged.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt));
-    setIsLoading(false);
+    // Deduplicate unique objects and sort descending by last activity
+    const uniqueUsers = Array.from(new Set(userMap.values()));
+    return uniqueUsers.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt);
+  };
+
+  // Load users list when modal opens & admin is authenticated
+  const loadUsersData = async () => {
+    if (!isOwner) return;
+    setIsLoading(true);
+    try {
+      const data = await fetchAllUsersForAdmin();
+      const merged = mergeCloudAndVaultUsers(data);
+      setUsers(merged);
+    } catch (e) {
+      console.warn('loadUsersData notice:', e);
+      const fallback = mergeCloudAndVaultUsers([]);
+      setUsers(fallback);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -122,38 +174,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setIsAdminAuthenticated(true);
     loadUsersData();
     const unsubscribe = subscribeToAllUsersForAdmin((data) => {
-      // Merge with vault as well
-      const localVault = getAllSavedAccounts();
-      const existingKeys = new Set(data.map((u) => u.userKey.toLowerCase()));
-      const existingEmails = new Set(data.map((u) => u.email.toLowerCase()).filter(Boolean));
-
-      const merged = [...data];
-      Object.values(localVault).forEach((acc) => {
-        const p = acc.profile;
-        const em = (p.emailOrPhone || '').toLowerCase().trim();
-        const uk = 'u_' + em.replace(/[^a-z0-9]/g, '_');
-        if (em && !existingKeys.has(uk) && (!em.includes('@') || !existingEmails.has(em))) {
-          merged.push({
-            userKey: uk,
-            name: p.name || em.split('@')[0] || 'User',
-            emailOrPhone: em,
-            email: em.includes('@') ? em : '',
-            phone: !em.includes('@') ? em : '',
-            photoUrl: p.photoUrl || '',
-            location: p.location || 'Bangladesh',
-            deviceModel: p.deviceModel || 'Mobile Device',
-            osVersion: p.osVersion || 'Android',
-            verificationMethod: p.authProvider === 'google' ? 'Google Sign-In' : 'Verified Account',
-            lastSyncedAt: p.lastSyncedAt || Date.now(),
-            createdAtMs: Date.now(),
-            lifetimeTotalCount: 0,
-            activeZikrs: [],
-            hasPassword: !!p.password,
-          });
-        }
-      });
-
-      setUsers(merged.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt));
+      const merged = mergeCloudAndVaultUsers(data);
+      setUsers(merged);
       setIsLoading(false);
     });
     return () => {

@@ -397,7 +397,22 @@ export async function saveUserDataToCloud(
     if (profile.verificationDate) {
       userDocPayload.createdAt = profile.verificationDate;
     }
-    await setDoc(userDocRef, userDocPayload, { merge: true });
+
+    // Wrap setDoc in race with timeout so write stream backoff never blocks UI
+    try {
+      const setDocPromise = setDoc(userDocRef, userDocPayload, { merge: true });
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Write timeout')), 3500));
+      await Promise.race([setDocPromise, timeoutPromise]);
+    } catch (writeErr: any) {
+      if (writeErr?.code === 'resource-exhausted' || writeErr?.message?.includes('Quota limit exceeded')) {
+        console.warn('Firestore write quota limit reached. Falling back to local offline vault.');
+        try {
+          localStorage.setItem('zikrmate_firestore_quota_exhausted', 'true');
+        } catch {}
+      } else {
+        console.warn('Firestore user doc write notice:', writeErr?.message || writeErr);
+      }
+    }
 
     // 2. ONLY save heavy history sessions sub-doc if history has entries
     if (history && history.length > 0) {
@@ -415,7 +430,7 @@ export async function saveUserDataToCloud(
       setDoc(aamalDocRef, { aamalLogsJson: aamalLogsJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
     }
 
-    // 4. Update local cache
+    // 4. Always update local cache & account record
     try {
       localStorage.setItem(
         `zikrmate_cloud_cache_${userKey}`,
@@ -434,14 +449,7 @@ export async function saveUserDataToCloud(
 
     return true;
   } catch (error: any) {
-    if (error?.code === 'resource-exhausted' || error?.message?.includes('Quota limit exceeded')) {
-      console.warn('Firestore write quota limit reached. Falling back to local offline vault.');
-      try {
-        localStorage.setItem('zikrmate_firestore_quota_exhausted', 'true');
-      } catch {}
-    } else {
-      console.error('Failed to sync user data to Firebase Firestore:', error);
-    }
+    console.warn('saveUserDataToCloud notice:', error?.message || error);
     return false;
   }
 }
@@ -1258,11 +1266,17 @@ export interface AdminUserRecord {
 export async function fetchAllUsersForAdmin(): Promise<AdminUserRecord[]> {
   try {
     const usersCol = collection(db, 'users');
-    let snapshot;
+    let snapshot: any;
     try {
-      snapshot = await getDocsFromServer(usersCol);
+      const getPromise = getDocs(usersCol);
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+      snapshot = await Promise.race([getPromise, timeoutPromise]);
     } catch {
-      snapshot = await getDocs(usersCol);
+      snapshot = null;
+    }
+
+    if (!snapshot) {
+      return [];
     }
 
     const results: AdminUserRecord[] = [];
