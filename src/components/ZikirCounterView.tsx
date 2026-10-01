@@ -3,8 +3,9 @@ import { ZikrItem, ThemeMode, ZikrLanguage, ZikrRefreshMode } from '../types';
 import { CircularCenterCounter } from './CircularCenterCounter';
 import { ZikrCard } from './ZikrCard';
 import { PortableFloatingCounter } from './PortableFloatingCounter';
-import { Plus, FileText, CheckCircle2, Target, RotateCcw, RotateCw } from 'lucide-react';
+import { Plus, FileText, CheckCircle2, Target, RotateCcw, RotateCw, Clock, Sparkles } from 'lucide-react';
 import { ZIKIR_UI } from '../utils/appTranslations';
+import { PrayerSegmentDetails } from '../utils/prayerTimes';
 
 interface ZikirCounterViewProps {
   masterTotal: number;
@@ -12,6 +13,7 @@ interface ZikirCounterViewProps {
   zikrs: ZikrItem[];
   completedGoals: number;
   refreshMode?: ZikrRefreshMode;
+  currentPrayerSegment?: PrayerSegmentDetails;
   onRefreshModeChange?: (mode: ZikrRefreshMode) => void;
   onManualCounterRefresh?: () => void;
   onIncrement: (id: string) => void;
@@ -37,6 +39,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   zikrs,
   completedGoals,
   refreshMode = 'fard',
+  currentPrayerSegment,
   onRefreshModeChange,
   onManualCounterRefresh,
   onIncrement,
@@ -255,6 +258,62 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 : 'User resets manually • Manual target 50-200'}
             </p>
           </button>
+        </div>
+
+        {/* Live Auto-Refresh Status Pill */}
+        <div
+          className={`mt-3 pt-2.5 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
+            isDay ? 'border-[#cbe4e0] text-[#1c6469]' : 'border-[#1b5864] text-teal-200/90'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 font-medium">
+            <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <span>
+              {refreshMode === 'fard' ? (
+                selectedLanguage === 'bn' ? (
+                  currentPrayerSegment ? (
+                    <>
+                      বর্তমান পর্যায়: <strong className="text-amber-400">{currentPrayerSegment.prayerNameBn}</strong> • {currentPrayerSegment.nextTransitionNameBn} পর স্বয়ংক্রিয়ভাবে কাউন্টার ০ হবে
+                    </>
+                  ) : (
+                    'প্রতিটি ফরজ নামাজের ওয়াক্ত শেষ হওয়ার সাথে সাথে কাউন্টার স্বয়ংক্রিয়ভাবে ০ হবে'
+                  )
+                ) : (
+                  currentPrayerSegment ? (
+                    <>
+                      Current Window: <strong className="text-amber-400">{currentPrayerSegment.prayerNameEn}</strong> • Auto resets to 0 at {currentPrayerSegment.nextTransitionNameEn}
+                    </>
+                  ) : (
+                    'Counters reset to 0 automatically after each fard prayer window'
+                  )
+                )
+              ) : refreshMode === 'maghrib' ? (
+                selectedLanguage === 'bn' ? (
+                  'মাগরিবের ওয়াক্ত হওয়ার সাথে সাথে প্রতিদিন সমস্ত কাউন্টার স্বয়ংক্রিয়ভাবে ০ হবে'
+                ) : (
+                  'All counters automatically reset to 0 daily at Maghrib sunset'
+                )
+              ) : (
+                selectedLanguage === 'bn' ? (
+                  'ম্যানুয়াল মোড সক্রিয়: উপরের "কাউন্টার ০ করুন" বাটনে চাপলে ০ হবে'
+                ) : (
+                  'Manual mode active: Click "Reset Counters" to zero'
+                )
+              )}
+            </span>
+          </div>
+
+          <span
+            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+              refreshMode === 'fard'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : refreshMode === 'maghrib'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+            }`}
+          >
+            {refreshMode === 'fard' ? '✓ Auto Fard Sync' : refreshMode === 'maghrib' ? '✓ Maghrib Sync' : '✓ Manual'}
+          </span>
         </div>
       </div>
 

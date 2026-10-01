@@ -126,6 +126,9 @@ interface ProfileModalProps {
   isSyncingCloud?: boolean;
   lastCloudSyncTimestamp?: number;
   onOpenAdminPanel?: () => void;
+  zikrs?: ZikrItem[];
+  historySessions?: HistorySession[];
+  lifetimeTotalCount?: number;
 }
 
 const DEFAULT_AVATARS = [
@@ -160,6 +163,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   isSyncingCloud = false,
   lastCloudSyncTimestamp,
   onOpenAdminPanel,
+  zikrs = [],
+  historySessions = [],
+  lifetimeTotalCount = 0,
 }) => {
   const isDay = themeMode === 'day';
   const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
@@ -414,7 +420,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
 
     // Save background cloud profile
-    saveUserDataToCloud(targetKey, updated, [], [], 0, undefined, {}).catch(() => {});
+    saveUserDataToCloud(targetKey, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
 
     setVerificationStep('success');
     confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
@@ -509,7 +515,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       onCloudDataLoaded({ foundInCloud: false }, emailClean);
     }
 
-    saveUserDataToCloud(emailClean, updated, [], [], 0, undefined, {}).catch(() => {});
+    saveUserDataToCloud(emailClean, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
 
     setVerificationStep('success');
     setCloudSyncMessage('ভেরিফিকেশন সফল! ক্লাউড থেকে আপনার ডাটা সিঙ্ক হয়েছে।');
@@ -560,7 +566,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           onCloudDataLoaded({ foundInCloud: false }, targetEmail);
         }
 
-        saveUserDataToCloud(targetEmail, updated, [], [], 0, undefined, {}).catch(() => {});
+        saveUserDataToCloud(targetEmail, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
 
         setIsVerifying(false);
         setActiveSubModal('none');

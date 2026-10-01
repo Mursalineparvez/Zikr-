@@ -34,6 +34,8 @@ import {
   getAllAamalLogs,
   clearAllAamalLogs,
   getTodayDateKey,
+  getTodayDhikrTotal,
+  resetTodayDhikrTotal,
 } from './utils/aamalTrackerData';
 import {
   saveUserDataToCloud,
@@ -41,11 +43,12 @@ import {
   subscribeToUserDataInCloud,
   getDeviceId,
   checkGoogleRedirectResult,
+  listenToAuthChanges,
   CloudZikrState,
 } from './services/firebase';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
 import { getDetectedDeviceInfo } from './utils/deviceInfo';
-import { calculatePrayerTimes } from './utils/prayerTimes';
+import { calculatePrayerTimes, getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
 
 
 export default function App() {
@@ -60,8 +63,28 @@ export default function App() {
     return 'fard';
   });
 
+  // Track current prayer segment details in reactive state
+  const [currentPrayerSegment, setCurrentPrayerSegment] = useState<PrayerSegmentDetails>(() => {
+    return getCurrentPrayerSegmentDetails();
+  });
+
   // 1. LocalStorage state persistence for Zikr Items
   const [zikrs, setZikrs] = useState<ZikrItem[]>(() => {
+    const currentSegment = getCurrentPrayerSegmentDetails();
+    const lastActiveSegment = localStorage.getItem('zikrmate_last_active_fard_segment');
+    const lastActiveDate = localStorage.getItem('zikrmate_last_active_date_key');
+    const lastMaghribDay = localStorage.getItem('zikrmate_last_maghrib_day');
+
+    const activeRefreshMode = (() => {
+      try {
+        const savedMode = localStorage.getItem('zikrmate_refresh_mode');
+        if (savedMode === 'fard' || savedMode === 'maghrib' || savedMode === 'manual') {
+          return savedMode as ZikrRefreshMode;
+        }
+      } catch {}
+      return 'fard';
+    })();
+
     try {
       const saved = localStorage.getItem('noor_zikr_items');
       let parsed: any[] | null = null;
@@ -74,17 +97,31 @@ export default function App() {
         } catch {}
       }
 
-      const activeRefreshMode = (() => {
-        try {
-          const savedMode = localStorage.getItem('zikrmate_refresh_mode');
-          if (savedMode === 'fard' || savedMode === 'maghrib' || savedMode === 'manual') {
-            return savedMode as ZikrRefreshMode;
-          }
-        } catch {}
-        return 'fard';
-      })();
-
       if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+        // Check if saved counts are from a previous prayer window or previous day
+        const maxUpdatedAt = Math.max(0, ...parsed.map((p: any) => p.updatedAt || 0));
+        const isFardExpired = activeRefreshMode === 'fard' && (
+          (lastActiveSegment && lastActiveSegment !== currentSegment.segmentKey) ||
+          (maxUpdatedAt > 0 && maxUpdatedAt < currentSegment.segmentStart.getTime())
+        );
+        const isMaghribExpired = activeRefreshMode === 'maghrib' && (
+          (lastMaghribDay && lastMaghribDay !== currentSegment.islamicDayKey)
+        );
+        const isDayExpired = Boolean(lastActiveDate && lastActiveDate !== currentSegment.calendarDateKey);
+        const shouldZeroLiveCounters = isFardExpired || isMaghribExpired || isDayExpired;
+
+        if (shouldZeroLiveCounters) {
+          localStorage.setItem('zikrmate_last_active_fard_segment', currentSegment.segmentKey);
+          localStorage.setItem('zikrmate_last_maghrib_day', currentSegment.islamicDayKey);
+          localStorage.setItem('zikrmate_last_active_date_key', currentSegment.calendarDateKey);
+          try {
+            localStorage.removeItem('zikrmate_active_zikrs_backup');
+          } catch {}
+          if (isDayExpired) {
+            resetTodayDhikrTotal(currentSegment.calendarDateKey);
+          }
+        }
+
         const parsedMap = new Map<string, any>(parsed.map((item: any) => [item.id, item]));
         const nameMap = new Map<string, any>(
           parsed.map((item: any) => [
@@ -99,9 +136,10 @@ export default function App() {
           const existing = parsedMap.get(defaultItem.id) || nameMap.get(normalizedName);
           const targetForMode = getTargetForZikrMode(defaultItem, activeRefreshMode);
           if (existing) {
+            const rawCount = typeof existing.count === 'number' ? Math.max(0, existing.count) : 0;
             return {
               ...defaultItem,
-              count: typeof existing.count === 'number' ? Math.max(0, existing.count) : 0,
+              count: shouldZeroLiveCounters ? 0 : rawCount,
               updatedAt: existing.updatedAt || defaultItem.updatedAt,
               target: targetForMode,
             };
@@ -119,7 +157,10 @@ export default function App() {
             item.id &&
             !defaultIds.has(item.id) &&
             !nameMap.has((item.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''))
-        );
+        ).map((c: any) => ({
+          ...c,
+          count: shouldZeroLiveCounters ? 0 : (typeof c.count === 'number' ? Math.max(0, c.count) : 0),
+        }));
 
         const finalList = [...mergedList, ...customItems];
         try {
@@ -131,19 +172,13 @@ export default function App() {
       // Fallback
     }
 
-    const initialMode = (() => {
-      try {
-        const savedMode = localStorage.getItem('zikrmate_refresh_mode');
-        if (savedMode === 'fard' || savedMode === 'maghrib' || savedMode === 'manual') {
-          return savedMode as ZikrRefreshMode;
-        }
-      } catch {}
-      return 'fard';
-    })();
+    localStorage.setItem('zikrmate_last_active_fard_segment', currentSegment.segmentKey);
+    localStorage.setItem('zikrmate_last_maghrib_day', currentSegment.islamicDayKey);
+    localStorage.setItem('zikrmate_last_active_date_key', currentSegment.calendarDateKey);
 
     return DEFAULT_ZIKRS.map((item) => ({
       ...item,
-      target: getTargetForZikrMode(item, initialMode),
+      target: getTargetForZikrMode(item, activeRefreshMode),
     }));
   });
 
@@ -314,11 +349,13 @@ export default function App() {
 
   // Multi-Device Cloud Synchronization Refs
   const isCloudSyncReadyRef = useRef<boolean>(false);
+  const isApplyingRemoteUpdateRef = useRef<boolean>(false);
   const lastSyncedSignatureRef = useRef<string>('');
   const lastLocalActionTimestampRef = useRef<number>(0);
 
   // Helper: Apply cloud data snapshot to active state (Seamless cross-device, web & app sync!)
   const applyCloudDataToState = (cloudData: CloudZikrState, isFromOtherDevice: boolean = false, isInitialSnapshot: boolean = false) => {
+    isApplyingRemoteUpdateRef.current = true;
     isCloudSyncReadyRef.current = true;
 
     // Calculate current local total count
@@ -354,18 +391,25 @@ export default function App() {
     }
 
     // 2. Multi-device live sync vs Local refresh protection
-    // If update came from ANOTHER device, ALWAYS apply cloud data to match identically!
-    // If update is from THIS device and is initial snapshot:
-    // If local was higher or equal and local has counts, keep local and sync to cloud!
+    const lastLocalResetTimestamp = parseInt(localStorage.getItem('zikrmate_last_reset_timestamp') || '0', 10);
+    const cloudUpdatedAtMs = cloudData.updatedAtMs || 0;
+    const currentSegment = getCurrentPrayerSegmentDetails();
+
+    const isCloudResetStale = lastLocalResetTimestamp > 0 && cloudUpdatedAtMs <= lastLocalResetTimestamp;
+    const isCloudSegmentExpired = refreshMode === 'fard' && cloudUpdatedAtMs > 0 && cloudUpdatedAtMs < currentSegment.segmentStart.getTime();
+
     const cloudZikrSum = Array.isArray(cloudData.zikrs)
       ? cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0)
       : 0;
+
     const shouldKeepLocalOnRefresh =
       !isFromOtherDevice &&
       isInitialSnapshot &&
       (localGrandTotal > cloudGrandTotal ||
         localZikrSum > cloudZikrSum ||
         (localZikrSum > 0 && cloudZikrSum === 0) ||
+        isCloudResetStale ||
+        isCloudSegmentExpired ||
         (localGrandTotal === cloudGrandTotal && localZikrSum > 0 && cloudZikrSum === 0));
 
     if (shouldKeepLocalOnRefresh) {
@@ -396,17 +440,24 @@ export default function App() {
     // Otherwise (from other device OR cloud is newer/equal): apply cloud data!
     let appliedZikrs = zikrsRef.current;
     if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
-      const incomingSum = cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-      // Safety: Never wipe non-zero local counts with all-zero cloud counts on local refresh
-      if (incomingSum > 0 || isFromOtherDevice || localZikrSum === 0) {
-        appliedZikrs = cloudData.zikrs;
-        setZikrs(cloudData.zikrs);
+      if (isCloudResetStale || isCloudSegmentExpired) {
+        // Stale cloud counts from past prayer or before local reset: keep clean 0
+        const zeroed = zikrsRef.current.map((z) => ({ ...z, count: 0 }));
+        appliedZikrs = zeroed;
+        setZikrs(zeroed);
         try {
-          localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
-          if (incomingSum > 0) {
-            localStorage.setItem('zikrmate_active_zikrs_backup', JSON.stringify(cloudData.zikrs));
-          }
+          localStorage.setItem('noor_zikr_items', JSON.stringify(zeroed));
+          localStorage.removeItem('zikrmate_active_zikrs_backup');
         } catch {}
+      } else {
+        const incomingSum = cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+        if (isFromOtherDevice || (incomingSum > 0 && cloudUpdatedAtMs >= lastLocalActionTimestampRef.current)) {
+          appliedZikrs = cloudData.zikrs;
+          setZikrs(cloudData.zikrs);
+          try {
+            localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
+          } catch {}
+        }
       }
     }
 
@@ -510,7 +561,7 @@ export default function App() {
     showToast('✨ স্বাগতম! আপনার অ্যাকাউন্ট নতুনভাবে ০ থেকে শুরু হয়েছে। এখন থেকে আপনার সকল জিকির গণনা ও হিস্ট্রি সংরক্ষিত হবে।');
   };
 
-  // Google Redirect Login Result Check for Mobile Devices
+  // Google Redirect Login Result Check & Firebase Auth State Listener
   useEffect(() => {
     checkGoogleRedirectResult()
       .then(async (result) => {
@@ -540,23 +591,69 @@ export default function App() {
           } catch {}
           if (cloudData && cloudData.foundInCloud) {
             applyCloudDataToState(cloudData, false, true);
+          } else {
+            // First time Google Sign-In: save immediately to Firestore so Admin dashboard sees it!
+            saveUserDataToCloud(
+              targetEmail,
+              updated,
+              zikrsRef.current,
+              historySessions,
+              lifetimeTotalCountRef.current,
+              settings,
+              getAllAamalLogs()
+            ).catch(() => {});
           }
         }
       })
       .catch(() => {});
+
+    // Listen to Firebase Auth persistence state changes
+    const unsubAuth = listenToAuthChanges(async (authUser) => {
+      if (authUser && authUser.email) {
+        const targetEmail = authUser.email.toLowerCase().trim();
+        setUserProfile((prev) => {
+          if (prev.isSignedIn && prev.emailOrPhone?.toLowerCase().trim() === targetEmail) {
+            return prev;
+          }
+          const detected = getDetectedDeviceInfo();
+          const updated: UserProfile = {
+            ...prev,
+            name: authUser.name || prev.name || targetEmail.split('@')[0],
+            emailOrPhone: targetEmail,
+            photoUrl: authUser.photoUrl || prev.photoUrl || '',
+            isSignedIn: true,
+            isVerified: true,
+            verificationMethod: 'google',
+            verificationDate: prev.verificationDate || new Date().toISOString(),
+            authProvider: 'google',
+            lastSyncedAt: Date.now(),
+          };
+          saveAccountToRegistry(updated);
+          try {
+            localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+    });
+
+    return () => {
+      unsubAuth();
+    };
   }, []);
 
   // 1. Real-time Multi-Device Cloud Subscription & Telemetry Auto-Registration
   useEffect(() => {
+    // Only subscribe & save for signed-in accounts to conserve Firestore quota
+    if (!userProfile.isSignedIn || !userProfile.emailOrPhone) {
+      return;
+    }
+
     const currentDeviceId = getDeviceId();
     const detected = getDetectedDeviceInfo();
+    const targetKey = userProfile.emailOrPhone.trim().toLowerCase();
 
-    // Determine cloud target key: signed-in email/phone or unique guest device ID
-    const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
-      ? userProfile.emailOrPhone.trim().toLowerCase()
-      : `guest_${currentDeviceId}`;
-
-    // Initial Telemetry Registration for Admin Dashboard on App Startup
+    // Initial Telemetry Registration for Admin Dashboard
     const effectiveProfile: UserProfile = {
       ...userProfile,
       deviceModel: userProfile.deviceModel && !userProfile.deviceModel.includes('vivo ~~ V2144') ? userProfile.deviceModel : detected.model,
@@ -575,11 +672,6 @@ export default function App() {
     ).catch(() => {});
 
     isCloudSyncReadyRef.current = true;
-
-    // If signed-in: Listen for live cross-device updates from other devices on same account
-    if (!userProfile.isSignedIn || !userProfile.emailOrPhone) {
-      return;
-    }
 
     const unsubscribe = subscribeToUserDataInCloud(targetKey, (cloudData, isInitial) => {
       if (!cloudData.foundInCloud) {
@@ -621,11 +713,23 @@ export default function App() {
     };
   }, [userProfile.isSignedIn, userProfile.emailOrPhone]);
 
-  // 2. Snappy auto-save to cloud when user changes counters on THIS device (Ultra-fast 30ms sync for both Guest and Registered devices)
+  // 2. Safe Debounced Auto-Save to Cloud (Prevents loops and preserves Firestore daily quota)
   const cloudSyncDebounceRef = useRef<any>(null);
   useEffect(() => {
     // Do NOT push local blank state before cloud data has been initialized
     if (!isCloudSyncReadyRef.current) return;
+
+    // If change was triggered by incoming cloud update, DO NOT echo back!
+    if (isApplyingRemoteUpdateRef.current) {
+      isApplyingRemoteUpdateRef.current = false;
+      return;
+    }
+
+    // Only save to cloud if user is signed in, OR if guest has made actual counts (>0)
+    const localZikrSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+    if (!userProfile.isSignedIn && localZikrSum === 0 && lifetimeTotalCount === 0) {
+      return;
+    }
 
     // Check if current state is already identical to what was loaded/synced
     const currentSignature = getStateSignature(zikrs, historySessions, lifetimeTotalCount, userProfile, settings);
@@ -639,7 +743,9 @@ export default function App() {
       const detected = getDetectedDeviceInfo();
       const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
         ? userProfile.emailOrPhone.trim().toLowerCase()
-        : `guest_${currentDeviceId}`;
+        : (localZikrSum > 0 || lifetimeTotalCount > 0 ? `guest_${currentDeviceId}` : null);
+
+      if (!targetKey) return;
 
       const activeProfile: UserProfile = {
         ...userProfile,
@@ -663,7 +769,7 @@ export default function App() {
         const now = Date.now();
         setLastCloudSyncTimestamp(now);
       }
-    }, 30);
+    }, 2000); // 2000ms debounce protects Firestore daily write quota
 
     return () => {
       if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
@@ -841,87 +947,127 @@ export default function App() {
     document.body.classList.toggle('theme-night', !isDay);
   }, [settings]);
 
-  // Master Daily Total Count (Resets at midnight 12:00 AM)
-  const dailyTotal = useMemo(() => {
-    return zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-  }, [zikrs]);
+  // Dedicated State for Today's Dhikr Count (Resets to 0 on a new day or when reset)
+  const [dailyTotalState, setDailyTotalState] = useState<number>(() => {
+    const todayKey = getTodayDateKey();
+    const lastActiveDate = localStorage.getItem('zikrmate_last_active_date_key');
+    if (lastActiveDate && lastActiveDate !== todayKey) {
+      return 0;
+    }
+    return getTodayDhikrTotal(todayKey);
+  });
 
-  // Daily Transition Check: Updates active date key and syncs Aamal day logs without resetting live counters
-  useEffect(() => {
-    const checkDateTransition = () => {
-      const todayKey = getTodayDateKey();
-      const lastActiveDate = localStorage.getItem('zikrmate_last_active_date_key');
+  const dailyTotal = dailyTotalState;
 
-      if (!lastActiveDate) {
-        localStorage.setItem('zikrmate_last_active_date_key', todayKey);
-        return;
-      }
-
-      if (lastActiveDate !== todayKey) {
-        // A new day has begun: update date key without resetting counters
-        localStorage.setItem('zikrmate_last_active_date_key', todayKey);
-        // Ensure today's Aamal log is initialized and synchronized with active counts
-        syncTodayAamalWithLiveZikrs(zikrsRef.current, todayKey);
-      }
-    };
-
-    // Run check on mount
-    checkDateTransition();
-
-    // Check periodically for day transitions
-    const interval = setInterval(checkDateTransition, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Auto-Refresh Effect based on refreshMode (fard, maghrib, manual)
+  // Auto-Refresh Effect based on refreshMode (fard, maghrib, manual) & Calendar Day Transitions
   useEffect(() => {
     const checkAutoRefresh = () => {
       try {
-        const pTimes = calculatePrayerTimes();
-        const currentPrayer = pTimes.currentPrayerName;
-        const now = new Date();
+        const currentSegment = getCurrentPrayerSegmentDetails();
+        setCurrentPrayerSegment(currentSegment);
+        const now = Date.now();
+        const todayKey = currentSegment.calendarDateKey;
+        const lastActiveDate = localStorage.getItem('zikrmate_last_active_date_key');
 
-        if (refreshMode === 'fard') {
-          const lastFard = localStorage.getItem('zikrmate_last_fard_segment');
-          const fardNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-          if (fardNames.includes(currentPrayer)) {
-            if (!lastFard) {
-              localStorage.setItem('zikrmate_last_fard_segment', currentPrayer);
-            } else if (lastFard !== currentPrayer) {
-              localStorage.setItem('zikrmate_last_fard_segment', currentPrayer);
-              const hasCounts = zikrsRef.current.some((z) => z.count > 0);
-              if (hasCounts) {
-                lastSyncedSignatureRef.current = '';
-                setZikrs((prev) => prev.map((z) => ({ ...z, count: 0, updatedAt: Date.now() })));
-                showToast(
-                  selectedLanguage === 'bn'
-                    ? '🕌 ফরজ নামাজের পর সকল যিকির কাউন্টার ০ করা হয়েছে!'
-                    : '🕌 Counters reset to 0 after Fard prayer transition!'
-                );
-              }
+        // 1. Calendar Day Transition (00:00 midnight)
+        if (lastActiveDate && lastActiveDate !== todayKey) {
+          localStorage.setItem('zikrmate_last_active_date_key', todayKey);
+          setDailyTotalState(0);
+          resetTodayDhikrTotal(todayKey);
+
+          // If mode is fard or maghrib, active card counters also start clean at 0
+          if (refreshMode !== 'manual') {
+            const hasCounts = zikrsRef.current.some((z) => z.count > 0);
+            if (hasCounts) {
+              const resetZikrs = zikrsRef.current.map((z) => ({ ...z, count: 0, updatedAt: now }));
+              setZikrs(resetZikrs);
+              lastLocalActionTimestampRef.current = now;
+              localStorage.setItem('zikrmate_last_reset_timestamp', String(now));
+              try {
+                localStorage.setItem('noor_zikr_items', JSON.stringify(resetZikrs));
+                localStorage.removeItem('zikrmate_active_zikrs_backup');
+              } catch {}
+              const curDevId = getDeviceId();
+              const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
+                ? userProfile.emailOrPhone.trim().toLowerCase()
+                : `guest_${curDevId}`;
+              saveUserDataToCloud(targetKey, userProfile, resetZikrs, historySessions, lifetimeTotalCountRef.current, settings, getAllAamalLogs()).catch(() => {});
             }
           }
-        } else if (refreshMode === 'maghrib') {
-          const todayKey = getTodayDateKey();
-          const maghribResetKey = `${todayKey}_maghrib`;
-          const lastMaghribReset = localStorage.getItem('zikrmate_last_maghrib_reset_key');
+        } else if (!lastActiveDate) {
+          localStorage.setItem('zikrmate_last_active_date_key', todayKey);
+        }
 
-          const maghribTime = pTimes.maghribDate;
-          if (now >= maghribTime) {
-            if (!lastMaghribReset) {
-              localStorage.setItem('zikrmate_last_maghrib_reset_key', maghribResetKey);
-            } else if (lastMaghribReset !== maghribResetKey) {
-              localStorage.setItem('zikrmate_last_maghrib_reset_key', maghribResetKey);
-              const hasCounts = zikrsRef.current.some((z) => z.count > 0);
-              if (hasCounts) {
-                lastSyncedSignatureRef.current = '';
-                setZikrs((prev) => prev.map((z) => ({ ...z, count: 0, updatedAt: Date.now() })));
-                showToast(
-                  selectedLanguage === 'bn'
-                    ? '🌅 মাগরিবের ওয়াক্ত শুরু হওয়ায় সকল যিকির কাউন্টার ০ করা হয়েছে!'
-                    : '🌅 Counters reset to 0 at Maghrib prayer time!'
-                );
-              }
+        // 2. Mode: Every Fard Salah (Every fard prayer transition / window end)
+        if (refreshMode === 'fard') {
+          const lastFardSegment = localStorage.getItem('zikrmate_last_active_fard_segment');
+
+          if (!lastFardSegment) {
+            localStorage.setItem('zikrmate_last_active_fard_segment', currentSegment.segmentKey);
+          } else if (lastFardSegment !== currentSegment.segmentKey) {
+            // Previous fard prayer window or Duha period has ended!
+            localStorage.setItem('zikrmate_last_active_fard_segment', currentSegment.segmentKey);
+            const hasCounts = zikrsRef.current.some((z) => z.count > 0);
+            if (hasCounts) {
+              lastLocalActionTimestampRef.current = now;
+              localStorage.setItem('zikrmate_last_reset_timestamp', String(now));
+              const zeroedZikrs = zikrsRef.current.map((z) => ({ ...z, count: 0, updatedAt: now }));
+              setZikrs(zeroedZikrs);
+              try {
+                localStorage.setItem('noor_zikr_items', JSON.stringify(zeroedZikrs));
+                localStorage.removeItem('zikrmate_active_zikrs_backup');
+              } catch {}
+
+              const curDevId = getDeviceId();
+              const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
+                ? userProfile.emailOrPhone.trim().toLowerCase()
+                : `guest_${curDevId}`;
+              saveUserDataToCloud(targetKey, userProfile, zeroedZikrs, historySessions, lifetimeTotalCountRef.current, settings, getAllAamalLogs()).catch(() => {});
+
+              lastSyncedSignatureRef.current = getStateSignature(zeroedZikrs, historySessions, lifetimeTotalCountRef.current, userProfile, settings);
+
+              showToast(
+                selectedLanguage === 'bn'
+                  ? '🕌 ফরজ নামাজের পর সকল যিকির কাউন্টার ০ করা হয়েছে!'
+                  : '🕌 Counters reset to 0 after Fard prayer!'
+              );
+            }
+          }
+        }
+
+        // 3. Mode: Daily After Maghrib
+        else if (refreshMode === 'maghrib') {
+          const lastMaghribDay = localStorage.getItem('zikrmate_last_maghrib_day');
+
+          if (!lastMaghribDay) {
+            localStorage.setItem('zikrmate_last_maghrib_day', currentSegment.islamicDayKey);
+          } else if (lastMaghribDay !== currentSegment.islamicDayKey) {
+            // Maghrib time entered! New Islamic day begins!
+            localStorage.setItem('zikrmate_last_maghrib_day', currentSegment.islamicDayKey);
+            const hasCounts = zikrsRef.current.some((z) => z.count > 0);
+            if (hasCounts) {
+              lastLocalActionTimestampRef.current = now;
+              localStorage.setItem('zikrmate_last_reset_timestamp', String(now));
+              const zeroedZikrs = zikrsRef.current.map((z) => ({ ...z, count: 0, updatedAt: now }));
+              setZikrs(zeroedZikrs);
+              try {
+                localStorage.setItem('noor_zikr_items', JSON.stringify(zeroedZikrs));
+                localStorage.removeItem('zikrmate_active_zikrs_backup');
+              } catch {}
+
+              const curDevId = getDeviceId();
+              const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
+                ? userProfile.emailOrPhone.trim().toLowerCase()
+                : `guest_${curDevId}`;
+              saveUserDataToCloud(targetKey, userProfile, zeroedZikrs, historySessions, lifetimeTotalCountRef.current, settings, getAllAamalLogs()).catch(() => {});
+
+              lastSyncedSignatureRef.current = getStateSignature(zeroedZikrs, historySessions, lifetimeTotalCountRef.current, userProfile, settings);
+
+              showToast(
+                selectedLanguage === 'bn'
+                  ? '🌅 মাগরিবের ওয়াক্ত হওয়ায় সকল যিকির কাউন্টার ০ করা হয়েছে!'
+                  : '🌅 Counters reset to 0 at Maghrib prayer time!'
+              );
             }
           }
         }
@@ -931,8 +1077,21 @@ export default function App() {
     };
 
     checkAutoRefresh();
-    const interval = setInterval(checkAutoRefresh, 15000);
-    return () => clearInterval(interval);
+    const interval = setInterval(checkAutoRefresh, 10000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkAutoRefresh();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', checkAutoRefresh);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', checkAutoRefresh);
+    };
   }, [refreshMode, selectedLanguage]);
 
   // Handle Refresh Mode switch by user
@@ -992,13 +1151,44 @@ export default function App() {
       isOpen: true,
       title: selectedLanguage === 'bn' ? 'সব কাউন্টার ০ করুন' : 'Reset All Counters',
       message: selectedLanguage === 'bn'
-        ? 'আপনি কি নিশ্চিত যে সমস্ত যিকির কাউন্টার ০ করতে চান? (আপনার মাস্টার টোটাল এবং হিস্ট্রি সুরক্ষিত থাকবে)'
-        : 'Are you sure you want to reset all individual Zikr counters to 0? (Master total and history will remain safe)',
+        ? 'আপনি কি নিশ্চিত যে সমস্ত যিকির কাউন্টার ও আজকের গণনা ০ করতে চান? (আপনার মাস্টার টোটাল এবং হিস্ট্রি সুরক্ষিত থাকবে)'
+        : 'Are you sure you want to reset all individual Zikr counters and today\'s count to 0? (Master total and history will remain safe)',
       confirmLabel: selectedLanguage === 'bn' ? 'হ্যাঁ, ০ করুন' : 'Yes, Reset to 0',
       isDanger: false,
-      onConfirm: () => {
-        lastSyncedSignatureRef.current = '';
-        setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
+      onConfirm: async () => {
+        const now = Date.now();
+        lastLocalActionTimestampRef.current = now;
+        localStorage.setItem('zikrmate_last_reset_timestamp', String(now));
+        try {
+          localStorage.removeItem('zikrmate_active_zikrs_backup');
+        } catch {}
+
+        const zeroed = zikrs.map((item) => ({ ...item, count: 0, updatedAt: now }));
+        setZikrs(zeroed);
+        resetTodayDhikrTotal();
+        setDailyTotalState(0);
+
+        try {
+          localStorage.setItem('noor_zikr_items', JSON.stringify(zeroed));
+        } catch {}
+
+        const curDevId = getDeviceId();
+        const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
+          ? userProfile.emailOrPhone.trim().toLowerCase()
+          : `guest_${curDevId}`;
+
+        saveUserDataToCloud(
+          targetKey,
+          userProfile,
+          zeroed,
+          historySessions,
+          lifetimeTotalCount,
+          settings,
+          getAllAamalLogs()
+        ).catch(() => {});
+
+        lastSyncedSignatureRef.current = getStateSignature(zeroed, historySessions, lifetimeTotalCount, userProfile, settings);
+
         if (settings.vibrationEnabled) soundHaptics.vibrate(50);
         if (settings.soundEnabled) soundHaptics.playReset();
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
@@ -1079,17 +1269,26 @@ export default function App() {
     const isGoalJustReached = targetZikr.target && newCount === targetZikr.target;
     const now = Date.now();
 
+    const curSeg = getCurrentPrayerSegmentDetails(new Date(now));
+    localStorage.setItem('zikrmate_last_active_fard_segment', curSeg.segmentKey);
+    localStorage.setItem('zikrmate_last_maghrib_day', curSeg.islamicDayKey);
+    localStorage.setItem('zikrmate_last_active_date_key', curSeg.calendarDateKey);
+    lastLocalActionTimestampRef.current = now;
+
     setZikrs((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, count: newCount, updatedAt: now } : item
       )
     );
 
+    // Increment today's daily count
+    setDailyTotalState((prev) => prev + 1);
+
     // Increment Lifetime Grand Total
     setLifetimeTotalCount((prev) => prev + 1);
 
     // Permanently record in today's Aamal Tracker History (persists even if zikr counter is reset)
-    recordZikrIncrementInAamal(targetZikr, 1);
+    recordZikrIncrementInAamal(targetZikr, 1, curSeg.calendarDateKey);
 
     if (settings.vibrationEnabled) {
       if (isGoalJustReached) {
@@ -1125,6 +1324,7 @@ export default function App() {
     if (!targetZikr || targetZikr.count <= 0) return;
 
     const now = Date.now();
+    lastLocalActionTimestampRef.current = now;
 
     setZikrs((prev) =>
       prev.map((item) =>
@@ -1134,6 +1334,7 @@ export default function App() {
       )
     );
 
+    setDailyTotalState((prev) => Math.max(0, prev - 1));
     setLifetimeTotalCount((prev) => Math.max(0, prev - 1));
 
     if (settings.vibrationEnabled) soundHaptics.vibrate(30);
@@ -1190,9 +1391,11 @@ export default function App() {
       isDanger: false,
       onConfirm: () => {
         lastSyncedSignatureRef.current = '';
+        const now = Date.now();
+        lastLocalActionTimestampRef.current = now;
         setZikrs((prev) =>
           prev.map((item) =>
-            item.id === zikr.id ? { ...item, count: 0, updatedAt: Date.now() } : item
+            item.id === zikr.id ? { ...item, count: 0, updatedAt: now } : item
           )
         );
         if (settings.vibrationEnabled) soundHaptics.vibrate(60);
@@ -1225,16 +1428,40 @@ export default function App() {
     setConfirmDialog({
       isOpen: true,
       title: 'Global Counter Reset (রিসেট অল)',
-      message: `আপনি কি নিশ্চিত যে সকল কাউন্টার ও সর্বমোট গণনা (${lifetimeTotalCount.toLocaleString()}) রিসেট করতে চান?`,
+      message: `আপনি কি নিশ্চিত যে সকল কাউন্টার, আজকের গণনা ও সর্বমোট গণনা (${lifetimeTotalCount.toLocaleString()}) রিসেট করতে চান?`,
       confirmLabel: 'Yes, Reset All to 0',
       isDanger: true,
-      onConfirm: () => {
-        lastSyncedSignatureRef.current = '';
-        setZikrs((prev) => prev.map((item) => ({ ...item, count: 0, updatedAt: Date.now() })));
+      onConfirm: async () => {
+        const now = Date.now();
+        lastLocalActionTimestampRef.current = now;
+        localStorage.setItem('zikrmate_last_reset_timestamp', String(now));
+        const zeroed = zikrs.map((item) => ({ ...item, count: 0, updatedAt: now }));
+        setZikrs(zeroed);
         setLifetimeTotalCount(0);
+        resetTodayDhikrTotal();
+        setDailyTotalState(0);
         try {
+          localStorage.setItem('noor_zikr_items', JSON.stringify(zeroed));
           localStorage.removeItem('zikrmate_active_zikrs_backup');
         } catch {}
+
+        const curDevId = getDeviceId();
+        const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
+          ? userProfile.emailOrPhone.trim().toLowerCase()
+          : `guest_${curDevId}`;
+
+        saveUserDataToCloud(
+          targetKey,
+          userProfile,
+          zeroed,
+          historySessions,
+          0,
+          settings,
+          getAllAamalLogs()
+        ).catch(() => {});
+
+        lastSyncedSignatureRef.current = getStateSignature(zeroed, historySessions, 0, userProfile, settings);
+
         if (settings.vibrationEnabled) soundHaptics.vibrate([70, 50, 70]);
         if (settings.soundEnabled) soundHaptics.playReset();
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
@@ -1533,6 +1760,7 @@ export default function App() {
             zikrs={zikrs}
             completedGoals={completedGoals}
             refreshMode={refreshMode}
+            currentPrayerSegment={currentPrayerSegment}
             onRefreshModeChange={handleRefreshModeChange}
             onManualCounterRefresh={handleManualCounterRefresh}
             onIncrement={handleIncrement}
@@ -1732,6 +1960,9 @@ export default function App() {
         isSyncingCloud={isSyncingCloud}
         lastCloudSyncTimestamp={lastCloudSyncTimestamp}
         onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
+        zikrs={zikrs}
+        historySessions={historySessions}
+        lifetimeTotalCount={lifetimeTotalCount}
       />
 
       {/* Super Admin Dashboard Modal (User Metrics, Phone Model, Location, Zikr & Aamal Telemetry) */}

@@ -18,6 +18,7 @@ import {
   doc,
   getDoc,
   getDocFromServer,
+  getDocsFromServer,
   setDoc,
   deleteDoc,
   collection,
@@ -155,6 +156,32 @@ export async function checkGoogleRedirectResult(): Promise<{
     console.warn('Check Google redirect result error:', error);
   }
   return null;
+}
+
+/**
+ * Real-time listener for Firebase Auth session changes (supports cross-device & PWA restarts)
+ */
+export function listenToAuthChanges(
+  callback: (user: { name: string; email: string; photoUrl: string; uid: string } | null) => void
+): Unsubscribe {
+  try {
+    const authInstance = auth || getAuth(app);
+    if (!authInstance) return () => {};
+    return onAuthStateChanged(authInstance, (user: FirebaseUser | null) => {
+      if (user && user.email) {
+        callback({
+          name: user.displayName || user.email.split('@')[0] || 'User',
+          email: user.email,
+          photoUrl: user.photoURL || '',
+          uid: user.uid,
+        });
+      } else {
+        callback(null);
+      }
+    });
+  } catch {
+    return () => {};
+  }
 }
 
 // 2. Initialize Firestore Database using provisioned database ID with long-polling resilience
@@ -346,11 +373,11 @@ export async function saveUserDataToCloud(
     const userDocRef = doc(db, 'users', userKey);
     const userDocPayload: Record<string, any> = {
       uid: userKey,
-      name: profile.name || 'ZikrMate User',
+      name: profile.name || (emailOrPhone.includes('@') ? emailOrPhone.split('@')[0] : 'ZikrMate User'),
       email: emailOrPhone.includes('@') ? emailOrPhone.toLowerCase().trim() : '',
       phone: !emailOrPhone.includes('@') ? emailOrPhone.trim() : '',
       isVerified: profile.isVerified ?? true,
-      verificationMethod: profile.verificationMethod || (emailOrPhone.includes('@') ? 'email' : 'phone'),
+      verificationMethod: profile.verificationMethod || (emailOrPhone.includes('@') ? (profile.authProvider === 'google' ? 'google' : 'email') : 'phone'),
       photoUrl: safePhotoUrl,
       location: effectiveLocation,
       deviceModel: effectiveDeviceModel,
@@ -363,12 +390,6 @@ export async function saveUserDataToCloud(
       updatedAt: nowIso,
       updatedAtMs: nowMs,
       senderDeviceId: currentDeviceId,
-      // Delete legacy bloated fields from top-level user doc if they existed previously!
-      historyJson: deleteField(),
-      aamalLogsJson: deleteField(),
-      fullHistory: deleteField(),
-      quranData: deleteField(),
-      quranLogs: deleteField(),
     };
     if (profile.password) {
       userDocPayload.password = profile.password;
@@ -378,13 +399,21 @@ export async function saveUserDataToCloud(
     }
     await setDoc(userDocRef, userDocPayload, { merge: true });
 
-    // 2. Save heavy history sessions in separate sub-document
-    const historyDocRef = doc(db, 'users', userKey, 'data', 'historyDoc');
-    setDoc(historyDocRef, { historyJson: historyJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
+    // 2. ONLY save heavy history sessions sub-doc if history has entries
+    if (history && history.length > 0) {
+      const minifiedHistory = minifyHistoryForCloud(history);
+      const historyJsonStr = JSON.stringify(minifiedHistory);
+      const historyDocRef = doc(db, 'users', userKey, 'data', 'historyDoc');
+      setDoc(historyDocRef, { historyJson: historyJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
+    }
 
-    // 3. Save heavy aamal logs in separate sub-document
-    const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
-    setDoc(aamalDocRef, { aamalLogsJson: aamalLogsJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
+    // 3. ONLY save heavy aamal logs sub-doc if aamalLogs has entries
+    if (aamalLogs && Object.keys(aamalLogs).length > 0) {
+      const minifiedAamal = minifyAamalLogsForCloud(aamalLogs);
+      const aamalLogsJsonStr = JSON.stringify(minifiedAamal);
+      const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
+      setDoc(aamalDocRef, { aamalLogsJson: aamalLogsJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
+    }
 
     // 4. Update local cache
     try {
@@ -404,8 +433,15 @@ export async function saveUserDataToCloud(
     } catch {}
 
     return true;
-  } catch (error) {
-    console.error('Failed to sync user data to Firebase Firestore:', error);
+  } catch (error: any) {
+    if (error?.code === 'resource-exhausted' || error?.message?.includes('Quota limit exceeded')) {
+      console.warn('Firestore write quota limit reached. Falling back to local offline vault.');
+      try {
+        localStorage.setItem('zikrmate_firestore_quota_exhausted', 'true');
+      } catch {}
+    } else {
+      console.error('Failed to sync user data to Firebase Firestore:', error);
+    }
     return false;
   }
 }
@@ -1222,11 +1258,16 @@ export interface AdminUserRecord {
 export async function fetchAllUsersForAdmin(): Promise<AdminUserRecord[]> {
   try {
     const usersCol = collection(db, 'users');
-    const snapshot = await getDocs(usersCol);
+    let snapshot;
+    try {
+      snapshot = await getDocsFromServer(usersCol);
+    } catch {
+      snapshot = await getDocs(usersCol);
+    }
 
     const results: AdminUserRecord[] = [];
 
-    snapshot.forEach((docSnap) => {
+    snapshot.forEach((docSnap: any) => {
       const data = docSnap.data();
       const userKey = docSnap.id;
 
@@ -1254,25 +1295,37 @@ export async function fetchAllUsersForAdmin(): Promise<AdminUserRecord[]> {
 
       const isGuestDevice = userKey.startsWith('guest_') || (!data.email && !data.phone && !prof.emailOrPhone);
 
+      let rawEmail = data.email || prof.emailOrPhone || '';
+      if (!rawEmail.includes('@') && userKey.startsWith('u_') && userKey.includes('_gmail_com')) {
+        rawEmail = userKey.replace(/^u_/, '').replace(/_gmail_com$/, '@gmail.com');
+      }
+
       const emailOrPhone = isGuestDevice
         ? `Guest Mobile (${userKey.replace(/^guest_/, '').slice(0, 10)})`
-        : (prof.emailOrPhone || data.email || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
+        : (rawEmail || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
 
       const displayName = isGuestDevice
         ? (data.name && !data.name.includes('ZikrMate User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
-        : (data.name || prof.name || 'ZikrMate User');
+        : (data.name || prof.name || (rawEmail ? rawEmail.split('@')[0] : 'ZikrMate User'));
+
+      let method = isGuestDevice
+        ? 'Guest Device'
+        : (data.verificationMethod || prof.verificationMethod || (rawEmail.includes('@') ? 'Google / Email' : 'Verified Account'));
+      if (method === 'google' || rawEmail.endsWith('@gmail.com')) {
+        method = 'Google Sign-In';
+      }
 
       results.push({
         userKey,
         name: displayName,
         emailOrPhone,
-        email: data.email || (emailOrPhone.includes('@') ? emailOrPhone : ''),
+        email: rawEmail || (emailOrPhone.includes('@') ? emailOrPhone : ''),
         phone: data.phone || (!emailOrPhone.includes('@') && !isGuestDevice ? emailOrPhone : ''),
         photoUrl: data.photoUrl || prof.photoUrl || '',
         location: data.location || prof.location || 'Asia/Dhaka (Network Timezone)',
-        deviceModel: data.deviceModel || prof.deviceModel || 'Mobile Device',
-        osVersion: data.osVersion || prof.osVersion || 'Android / iOS',
-        verificationMethod: isGuestDevice ? 'Guest Device' : (data.verificationMethod || prof.verificationMethod || 'Verified Account'),
+        deviceModel: data.deviceModel || prof.deviceModel || 'Android / Mobile Device',
+        osVersion: data.osVersion || prof.osVersion || 'Android',
+        verificationMethod: method,
         lastSyncedAt: data.updatedAtMs || (data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()),
         createdAtMs: data.createdAt ? new Date(data.createdAt).getTime() : (data.updatedAtMs || Date.now()),
         lifetimeTotalCount: typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : (typeof data.totalCount === 'number' ? data.totalCount : 0),
@@ -1365,25 +1418,37 @@ export function subscribeToAllUsersForAdmin(
 
         const isGuestDevice = userKey.startsWith('guest_') || (!data.email && !data.phone && !prof.emailOrPhone);
 
+        let rawEmail = data.email || prof.emailOrPhone || '';
+        if (!rawEmail.includes('@') && userKey.startsWith('u_') && userKey.includes('_gmail_com')) {
+          rawEmail = userKey.replace(/^u_/, '').replace(/_gmail_com$/, '@gmail.com');
+        }
+
         const emailOrPhone = isGuestDevice
           ? `Guest Mobile (${userKey.replace(/^guest_/, '').slice(0, 10)})`
-          : (prof.emailOrPhone || data.email || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
+          : (rawEmail || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
 
         const displayName = isGuestDevice
           ? (data.name && !data.name.includes('ZikrMate User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
-          : (data.name || prof.name || 'ZikrMate User');
+          : (data.name || prof.name || (rawEmail ? rawEmail.split('@')[0] : 'ZikrMate User'));
+
+        let method = isGuestDevice
+          ? 'Guest Device'
+          : (data.verificationMethod || prof.verificationMethod || (rawEmail.includes('@') ? 'Google / Email' : 'Verified Account'));
+        if (method === 'google' || rawEmail.endsWith('@gmail.com')) {
+          method = 'Google Sign-In';
+        }
 
         results.push({
           userKey,
           name: displayName,
           emailOrPhone,
-          email: data.email || (emailOrPhone.includes('@') ? emailOrPhone : ''),
+          email: rawEmail || (emailOrPhone.includes('@') ? emailOrPhone : ''),
           phone: data.phone || (!emailOrPhone.includes('@') && !isGuestDevice ? emailOrPhone : ''),
           photoUrl: data.photoUrl || prof.photoUrl || '',
           location: data.location || prof.location || 'Asia/Dhaka (Network Timezone)',
-          deviceModel: data.deviceModel || prof.deviceModel || 'Mobile Device',
-          osVersion: data.osVersion || prof.osVersion || 'Android / iOS',
-          verificationMethod: isGuestDevice ? 'Guest Device' : (data.verificationMethod || prof.verificationMethod || 'Verified Account'),
+          deviceModel: data.deviceModel || prof.deviceModel || 'Android / Mobile Device',
+          osVersion: data.osVersion || prof.osVersion || 'Android',
+          verificationMethod: method,
           lastSyncedAt: data.updatedAtMs || (data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()),
           createdAtMs: data.createdAt ? new Date(data.createdAt).getTime() : (data.updatedAtMs || Date.now()),
           lifetimeTotalCount: typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : (typeof data.totalCount === 'number' ? data.totalCount : 0),

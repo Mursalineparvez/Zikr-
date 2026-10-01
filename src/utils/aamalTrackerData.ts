@@ -437,28 +437,69 @@ export function saveAamalLogForDate(dateKey: string, log: AamalDayLog): void {
  * Syncs today's Aamal day log directly with the current active live zikr items.
  * Ensures the Aamal Tracker & PDF reports match the live zikr counter with 100% precision.
  */
+export function getTodayDhikrTotal(dateKey: string = getTodayDateKey()): number {
+  try {
+    const dayLog = getAamalLogForDate(dateKey);
+    return typeof dayLog.dhikrCount === 'number' && !isNaN(dayLog.dhikrCount) ? Math.max(0, dayLog.dhikrCount) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function resetTodayDhikrTotal(dateKey: string = getTodayDateKey()): void {
+  try {
+    const dayLog = getAamalLogForDate(dateKey);
+    dayLog.dhikrCount = 0;
+    dayLog.zikrBreakdown = [];
+    const tasbeehItem = dayLog.items.find((i) => i.id === 'daily_tasbeeh');
+    if (tasbeehItem) tasbeehItem.completed = false;
+    const completedCount = dayLog.items.filter((i) => i.completed).length;
+    dayLog.completedRatio = dayLog.items.length > 0 ? completedCount / dayLog.items.length : 0;
+    saveAamalLogForDate(dateKey, dayLog);
+  } catch (e) {
+    console.error('Failed to reset today dhikr total', e);
+  }
+}
+
 export function syncTodayAamalWithLiveZikrs(
   zikrs: Array<{ name: string; count: number; target?: number; arabic?: string; transliteration?: string }>,
   dateKey: string = getTodayDateKey()
 ): void {
   try {
     const dayLog = getAamalLogForDate(dateKey);
-    const totalCount = zikrs.reduce((sum, z) => sum + (z.count || 0), 0);
-    dayLog.dhikrCount = totalCount;
+    const activeSum = zikrs.reduce((sum, z) => sum + (z.count || 0), 0);
 
-    dayLog.zikrBreakdown = zikrs
-      .filter((z) => (z.count || 0) > 0)
-      .map((z) => ({
-        name: z.name,
-        count: z.count,
-        target: z.target,
-        arabic: z.arabic,
-        transliteration: z.transliteration,
-      }));
+    // If active cards have counts higher than recorded dayLog.dhikrCount, sync upward
+    if (activeSum > (dayLog.dhikrCount || 0)) {
+      dayLog.dhikrCount = activeSum;
+    }
+
+    // Merge active breakdowns without wiping existing recorded history
+    if (activeSum > 0) {
+      if (!dayLog.zikrBreakdown) dayLog.zikrBreakdown = [];
+      for (const z of zikrs) {
+        if ((z.count || 0) > 0) {
+          const idx = dayLog.zikrBreakdown.findIndex(
+            (b) => b.name === z.name || (z.arabic && b.arabic === z.arabic)
+          );
+          if (idx >= 0) {
+            dayLog.zikrBreakdown[idx].count = Math.max(dayLog.zikrBreakdown[idx].count || 0, z.count);
+          } else {
+            dayLog.zikrBreakdown.push({
+              name: z.name,
+              count: z.count,
+              target: z.target,
+              arabic: z.arabic,
+              transliteration: z.transliteration,
+            });
+          }
+        }
+      }
+    }
 
     // Auto-complete daily tasbeeh when milestone reached
     const tasbeehItem = dayLog.items.find((i) => i.id === 'daily_tasbeeh');
-    if (tasbeehItem && dayLog.dhikrCount >= 33) {
+    if (tasbeehItem && (dayLog.dhikrCount || 0) >= 33) {
       tasbeehItem.completed = true;
     }
 

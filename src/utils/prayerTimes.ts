@@ -767,6 +767,178 @@ export function calculatePrayerTimes(
 /**
  * Fast lightweight prayer time helper for auto-refresh and background checks
  */
+export interface PrayerSegmentDetails {
+  segmentKey: string; // Unique prayer segment identifier (e.g., "2026-09-30_fajr", "2026-09-30_duha", "2026-09-30_dhuhr")
+  currentPrayer: 'Fajr' | 'Duha' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
+  isFardActive: boolean;
+  prayerNameBn: string;
+  prayerNameEn: string;
+  segmentStart: Date;
+  segmentEnd: Date;
+  nextTransitionNameBn: string;
+  nextTransitionNameEn: string;
+  islamicDayKey: string; // Changes strictly at Maghrib (sunset)
+  calendarDateKey: string; // YYYY-MM-DD
+}
+
+export function getCurrentPrayerSegmentDetails(date: Date = new Date()): PrayerSegmentDetails {
+  let lat = 23.8103;
+  let lng = 90.4125;
+  let method = 'Karachi';
+  let madhab = 'Hanafi';
+  try {
+    const sLat = localStorage.getItem('salat_city_lat');
+    const sLng = localStorage.getItem('salat_city_lng');
+    const sMethod = localStorage.getItem('salat_method');
+    const sMadhab = localStorage.getItem('salat_madhab');
+    if (sLat && sLng) {
+      lat = parseFloat(sLat);
+      lng = parseFloat(sLng);
+    }
+    if (sMethod) method = sMethod;
+    if (sMadhab) madhab = sMadhab;
+  } catch {}
+
+  const times = calculatePrayerTimes(
+    lat,
+    lng,
+    'Dhaka',
+    (method as any) || 'Karachi',
+    madhab !== 'Shafi',
+    0,
+    true,
+    date
+  );
+
+  const now = date;
+  const nowMs = now.getTime();
+  const todayDateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayDateKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+  const fajrMs = times.fajrDate.getTime();
+  const sunriseMs = times.sunriseDate.getTime();
+  const dhuhrMs = times.dhuhrDate.getTime();
+  const asrMs = times.asrDate.getTime();
+  const maghribMs = times.maghribDate.getTime();
+  const ishaMs = times.ishaDate.getTime();
+
+  // In Islam, a new Islamic day starts at Maghrib (sunset)
+  const islamicDayKey = nowMs >= maghribMs ? `${todayDateKey}_islamic` : `${yesterdayDateKey}_islamic`;
+
+  if (nowMs < fajrMs) {
+    // Before Fajr (late night continuation from yesterday's Isha)
+    return {
+      segmentKey: `${yesterdayDateKey}_isha`,
+      currentPrayer: 'Isha',
+      isFardActive: true,
+      prayerNameBn: 'ইশা',
+      prayerNameEn: 'Isha',
+      segmentStart: times.ishaDate,
+      segmentEnd: times.fajrDate,
+      nextTransitionNameBn: 'ফজর ওয়াক্ত শুরু',
+      nextTransitionNameEn: 'Fajr Start',
+      islamicDayKey,
+      calendarDateKey: todayDateKey,
+    };
+  } else if (nowMs >= fajrMs && nowMs < sunriseMs) {
+    // Fajr active window: ends at sunrise!
+    return {
+      segmentKey: `${todayDateKey}_fajr`,
+      currentPrayer: 'Fajr',
+      isFardActive: true,
+      prayerNameBn: 'ফজর',
+      prayerNameEn: 'Fajr',
+      segmentStart: times.fajrDate,
+      segmentEnd: times.sunriseDate,
+      nextTransitionNameBn: 'ফজর ওয়াক্ত শেষ (সূর্যোদয়)',
+      nextTransitionNameEn: 'Sunrise (Fajr End)',
+      islamicDayKey,
+      calendarDateKey: todayDateKey,
+    };
+  } else if (nowMs >= sunriseMs && nowMs < dhuhrMs) {
+    // Post-Fajr: Sunrise to Dhuhr (Duha / Ishraq period)
+    return {
+      segmentKey: `${todayDateKey}_duha`,
+      currentPrayer: 'Duha',
+      isFardActive: false,
+      prayerNameBn: 'দুহা / চাশত',
+      prayerNameEn: 'Duha',
+      segmentStart: times.sunriseDate,
+      segmentEnd: times.dhuhrDate,
+      nextTransitionNameBn: 'যোহর ওয়াক্ত শুরু',
+      nextTransitionNameEn: 'Dhuhr Start',
+      islamicDayKey,
+      calendarDateKey: todayDateKey,
+    };
+  } else if (nowMs >= dhuhrMs && nowMs < asrMs) {
+    // Dhuhr active window: ends at Asr
+    return {
+      segmentKey: `${todayDateKey}_dhuhr`,
+      currentPrayer: 'Dhuhr',
+      isFardActive: true,
+      prayerNameBn: 'যোহর',
+      prayerNameEn: 'Dhuhr',
+      segmentStart: times.dhuhrDate,
+      segmentEnd: times.asrDate,
+      nextTransitionNameBn: 'আসর ওয়াক্ত শুরু (যোহর শেষ)',
+      nextTransitionNameEn: 'Asr Start (Dhuhr End)',
+      islamicDayKey,
+      calendarDateKey: todayDateKey,
+    };
+  } else if (nowMs >= asrMs && nowMs < maghribMs) {
+    // Asr active window: ends at Maghrib
+    return {
+      segmentKey: `${todayDateKey}_asr`,
+      currentPrayer: 'Asr',
+      isFardActive: true,
+      prayerNameBn: 'আসর',
+      prayerNameEn: 'Asr',
+      segmentStart: times.asrDate,
+      segmentEnd: times.maghribDate,
+      nextTransitionNameBn: 'মাগরিব ওয়াক্ত শুরু (আসর শেষ)',
+      nextTransitionNameEn: 'Maghrib Start (Asr End)',
+      islamicDayKey,
+      calendarDateKey: todayDateKey,
+    };
+  } else if (nowMs >= maghribMs && nowMs < ishaMs) {
+    // Maghrib active window: ends at Isha
+    return {
+      segmentKey: `${todayDateKey}_maghrib`,
+      currentPrayer: 'Maghrib',
+      isFardActive: true,
+      prayerNameBn: 'মাগরিব',
+      prayerNameEn: 'Maghrib',
+      segmentStart: times.maghribDate,
+      segmentEnd: times.ishaDate,
+      nextTransitionNameBn: 'ইশা ওয়াক্ত শুরু (মাগরিব শেষ)',
+      nextTransitionNameEn: 'Isha Start (Maghrib End)',
+      islamicDayKey,
+      calendarDateKey: todayDateKey,
+    };
+  } else {
+    // nowMs >= ishaMs: Isha active window until tomorrow's Fajr
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowTimes = calculatePrayerTimes(lat, lng, 'Dhaka', (method as any) || 'Karachi', madhab !== 'Shafi', 0, true, tomorrow);
+    return {
+      segmentKey: `${todayDateKey}_isha`,
+      currentPrayer: 'Isha',
+      isFardActive: true,
+      prayerNameBn: 'ইশা',
+      prayerNameEn: 'Isha',
+      segmentStart: times.ishaDate,
+      segmentEnd: tomorrowTimes.fajrDate,
+      nextTransitionNameBn: 'ফজর ওয়াক্ত শুরু (ইশা শেষ)',
+      nextTransitionNameEn: 'Fajr Start (Isha End)',
+      islamicDayKey,
+      calendarDateKey: todayDateKey,
+    };
+  }
+}
+
 export function getQuickCurrentPrayerInfo(date: Date = new Date()): {
   currentPrayer: string;
   maghribDate: Date;

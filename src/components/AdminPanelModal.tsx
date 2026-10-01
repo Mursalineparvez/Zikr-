@@ -31,6 +31,7 @@ import {
 } from '../services/firebase';
 import { HistorySession, UserProfile } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
+import { getAllSavedAccounts } from '../utils/accountRegistry';
 
 interface AdminPanelModalProps {
   isOpen: boolean;
@@ -84,7 +85,39 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const loadUsersData = async () => {
     setIsLoading(true);
     const data = await fetchAllUsersForAdmin();
-    setUsers(data);
+
+    // Also merge any local accounts from registry if missing from cloud response
+    const localVault = getAllSavedAccounts();
+    const existingKeys = new Set(data.map((u) => u.userKey.toLowerCase()));
+    const existingEmails = new Set(data.map((u) => u.email.toLowerCase()).filter(Boolean));
+
+    const merged = [...data];
+    Object.values(localVault).forEach((acc) => {
+      const p = acc.profile;
+      const em = (p.emailOrPhone || '').toLowerCase().trim();
+      const uk = 'u_' + em.replace(/[^a-z0-9]/g, '_');
+      if (em && !existingKeys.has(uk) && (!em.includes('@') || !existingEmails.has(em))) {
+        merged.push({
+          userKey: uk,
+          name: p.name || em.split('@')[0] || 'User',
+          emailOrPhone: em,
+          email: em.includes('@') ? em : '',
+          phone: !em.includes('@') ? em : '',
+          photoUrl: p.photoUrl || '',
+          location: p.location || 'Bangladesh',
+          deviceModel: p.deviceModel || 'Mobile Device',
+          osVersion: p.osVersion || 'Android',
+          verificationMethod: p.authProvider === 'google' ? 'Google Sign-In' : 'Verified Account',
+          lastSyncedAt: p.lastSyncedAt || Date.now(),
+          createdAtMs: Date.now(),
+          lifetimeTotalCount: 0,
+          activeZikrs: [],
+          hasPassword: !!p.password,
+        });
+      }
+    });
+
+    setUsers(merged.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt));
     setIsLoading(false);
   };
 
@@ -92,14 +125,47 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     if (!isOpen) return;
 
     const email = (currentUserProfile.emailOrPhone || '').toLowerCase().trim();
-    if (email === 'mdmursalineparvez@gmail.com') {
+    const isOwner = email === 'mdmursalineparvez@gmail.com';
+    if (isOwner) {
       setIsAdminAuthenticated(true);
     }
 
-    if (isAdminAuthenticated) {
-      setIsLoading(true);
+    const authorized = isOwner || isAdminAuthenticated;
+    if (authorized) {
+      loadUsersData();
       const unsubscribe = subscribeToAllUsersForAdmin((data) => {
-        setUsers(data);
+        // Merge with vault as well
+        const localVault = getAllSavedAccounts();
+        const existingKeys = new Set(data.map((u) => u.userKey.toLowerCase()));
+        const existingEmails = new Set(data.map((u) => u.email.toLowerCase()).filter(Boolean));
+
+        const merged = [...data];
+        Object.values(localVault).forEach((acc) => {
+          const p = acc.profile;
+          const em = (p.emailOrPhone || '').toLowerCase().trim();
+          const uk = 'u_' + em.replace(/[^a-z0-9]/g, '_');
+          if (em && !existingKeys.has(uk) && (!em.includes('@') || !existingEmails.has(em))) {
+            merged.push({
+              userKey: uk,
+              name: p.name || em.split('@')[0] || 'User',
+              emailOrPhone: em,
+              email: em.includes('@') ? em : '',
+              phone: !em.includes('@') ? em : '',
+              photoUrl: p.photoUrl || '',
+              location: p.location || 'Bangladesh',
+              deviceModel: p.deviceModel || 'Mobile Device',
+              osVersion: p.osVersion || 'Android',
+              verificationMethod: p.authProvider === 'google' ? 'Google Sign-In' : 'Verified Account',
+              lastSyncedAt: p.lastSyncedAt || Date.now(),
+              createdAtMs: Date.now(),
+              lifetimeTotalCount: 0,
+              activeZikrs: [],
+              hasPassword: !!p.password,
+            });
+          }
+        });
+
+        setUsers(merged.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt));
         setIsLoading(false);
       });
       return () => {
@@ -176,7 +242,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       return nowMs - u.lastSyncedAt <= 24 * 60 * 60 * 1000;
     }
     if (filterType === 'google') {
-      return u.verificationMethod === 'google' || u.email.endsWith('@gmail.com');
+      return (
+        u.verificationMethod.toLowerCase().includes('google') ||
+        u.email.toLowerCase().includes('@gmail.com') ||
+        u.emailOrPhone.toLowerCase().includes('@gmail.com')
+      );
     }
     if (filterType === 'phone') {
       return u.verificationMethod === 'phone' || !!u.phone;
@@ -456,7 +526,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-teal-300'
                   }`}
                 >
-                  Google Sign-In
+                  Google Sign-In ({users.filter((u) => u.verificationMethod.toLowerCase().includes('google') || u.email.toLowerCase().includes('@gmail.com') || u.emailOrPhone.toLowerCase().includes('@gmail.com')).length})
                 </button>
               </div>
             </div>
