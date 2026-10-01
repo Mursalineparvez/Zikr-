@@ -1959,20 +1959,26 @@ export default function App() {
         onTriggerCloudSync={handleTriggerCloudSync}
         isSyncingCloud={isSyncingCloud}
         lastCloudSyncTimestamp={lastCloudSyncTimestamp}
-        onOpenAdminPanel={() => setIsAdminPanelOpen(true)}
+        onOpenAdminPanel={
+          (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com'
+            ? () => setIsAdminPanelOpen(true)
+            : undefined
+        }
         zikrs={zikrs}
         historySessions={historySessions}
         lifetimeTotalCount={lifetimeTotalCount}
       />
 
-      {/* Super Admin Dashboard Modal (User Metrics, Phone Model, Location, Zikr & Aamal Telemetry) */}
-      <AdminPanelModal
-        isOpen={isAdminPanelOpen}
-        onClose={() => setIsAdminPanelOpen(false)}
-        currentUserProfile={userProfile}
-        soundEnabled={settings.soundEnabled}
-        isDayTheme={settings.themeMode === 'day'}
-      />
+      {/* Super Admin Dashboard Modal (Strictly only for mdmursalineparvez@gmail.com) */}
+      {(userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com' && (
+        <AdminPanelModal
+          isOpen={isAdminPanelOpen}
+          onClose={() => setIsAdminPanelOpen(false)}
+          currentUserProfile={userProfile}
+          soundEnabled={settings.soundEnabled}
+          isDayTheme={settings.themeMode === 'day'}
+        />
+      )}
     </div>
   );
 }

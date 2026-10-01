@@ -48,17 +48,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   soundEnabled,
   isDayTheme,
 }) => {
-  // Admin Authentication State
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    // Auto authorize if email matches owner email or if admin token exists in localStorage
-    const email = (currentUserProfile.emailOrPhone || '').toLowerCase().trim();
-    if (email === 'mdmursalineparvez@gmail.com') return true;
-    try {
-      return localStorage.getItem('zikrmate_admin_session_auth') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const currentEmail = (currentUserProfile.emailOrPhone || '').toLowerCase().trim();
+  const isOwner = currentEmail === 'mdmursalineparvez@gmail.com';
+
+  // Admin Authentication State (Strictly only for mdmursalineparvez@gmail.com)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(isOwner);
 
   const [adminPinInput, setAdminPinInput] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
@@ -83,6 +77,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
   // Load users list when modal opens & admin is authenticated
   const loadUsersData = async () => {
+    if (!isOwner) return;
     setIsLoading(true);
     const data = await fetchAllUsersForAdmin();
 
@@ -122,59 +117,52 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !isOwner) return;
 
-    const email = (currentUserProfile.emailOrPhone || '').toLowerCase().trim();
-    const isOwner = email === 'mdmursalineparvez@gmail.com';
-    if (isOwner) {
-      setIsAdminAuthenticated(true);
-    }
+    setIsAdminAuthenticated(true);
+    loadUsersData();
+    const unsubscribe = subscribeToAllUsersForAdmin((data) => {
+      // Merge with vault as well
+      const localVault = getAllSavedAccounts();
+      const existingKeys = new Set(data.map((u) => u.userKey.toLowerCase()));
+      const existingEmails = new Set(data.map((u) => u.email.toLowerCase()).filter(Boolean));
 
-    const authorized = isOwner || isAdminAuthenticated;
-    if (authorized) {
-      loadUsersData();
-      const unsubscribe = subscribeToAllUsersForAdmin((data) => {
-        // Merge with vault as well
-        const localVault = getAllSavedAccounts();
-        const existingKeys = new Set(data.map((u) => u.userKey.toLowerCase()));
-        const existingEmails = new Set(data.map((u) => u.email.toLowerCase()).filter(Boolean));
-
-        const merged = [...data];
-        Object.values(localVault).forEach((acc) => {
-          const p = acc.profile;
-          const em = (p.emailOrPhone || '').toLowerCase().trim();
-          const uk = 'u_' + em.replace(/[^a-z0-9]/g, '_');
-          if (em && !existingKeys.has(uk) && (!em.includes('@') || !existingEmails.has(em))) {
-            merged.push({
-              userKey: uk,
-              name: p.name || em.split('@')[0] || 'User',
-              emailOrPhone: em,
-              email: em.includes('@') ? em : '',
-              phone: !em.includes('@') ? em : '',
-              photoUrl: p.photoUrl || '',
-              location: p.location || 'Bangladesh',
-              deviceModel: p.deviceModel || 'Mobile Device',
-              osVersion: p.osVersion || 'Android',
-              verificationMethod: p.authProvider === 'google' ? 'Google Sign-In' : 'Verified Account',
-              lastSyncedAt: p.lastSyncedAt || Date.now(),
-              createdAtMs: Date.now(),
-              lifetimeTotalCount: 0,
-              activeZikrs: [],
-              hasPassword: !!p.password,
-            });
-          }
-        });
-
-        setUsers(merged.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt));
-        setIsLoading(false);
+      const merged = [...data];
+      Object.values(localVault).forEach((acc) => {
+        const p = acc.profile;
+        const em = (p.emailOrPhone || '').toLowerCase().trim();
+        const uk = 'u_' + em.replace(/[^a-z0-9]/g, '_');
+        if (em && !existingKeys.has(uk) && (!em.includes('@') || !existingEmails.has(em))) {
+          merged.push({
+            userKey: uk,
+            name: p.name || em.split('@')[0] || 'User',
+            emailOrPhone: em,
+            email: em.includes('@') ? em : '',
+            phone: !em.includes('@') ? em : '',
+            photoUrl: p.photoUrl || '',
+            location: p.location || 'Bangladesh',
+            deviceModel: p.deviceModel || 'Mobile Device',
+            osVersion: p.osVersion || 'Android',
+            verificationMethod: p.authProvider === 'google' ? 'Google Sign-In' : 'Verified Account',
+            lastSyncedAt: p.lastSyncedAt || Date.now(),
+            createdAtMs: Date.now(),
+            lifetimeTotalCount: 0,
+            activeZikrs: [],
+            hasPassword: !!p.password,
+          });
+        }
       });
-      return () => {
-        unsubscribe();
-      };
-    }
-  }, [isOpen, isAdminAuthenticated, currentUserProfile.emailOrPhone]);
 
-  if (!isOpen) return null;
+      setUsers(merged.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt));
+      setIsLoading(false);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [isOpen, isOwner]);
+
+  // Strictly block any non-owner access
+  if (!isOpen || !isOwner) return null;
 
   // Handle Admin PIN Login
   const handleAdminPinSubmit = (e: React.FormEvent) => {

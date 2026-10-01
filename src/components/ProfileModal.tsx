@@ -960,8 +960,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">💬</span>
                 </button>
 
-                {/* Admin Dashboard */}
-                {onOpenAdminPanel && (
+                {/* Admin Dashboard (Exclusively visible ONLY to mdmursalineparvez@gmail.com) */}
+                {onOpenAdminPanel && (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com' && (
                   <button
                     type="button"
                     onClick={() => {
@@ -979,8 +979,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <div>
                         <div className="font-bold text-sm text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
                           <span>অ্যাডমিন ড্যাশবোর্ড</span>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 uppercase font-bold">
-                            Admin
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-900 uppercase font-black">
+                            Super Admin
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
