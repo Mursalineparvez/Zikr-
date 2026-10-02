@@ -47,7 +47,7 @@ CONSISTENCY IN DEEDS:
 The Messenger of Allah ﷺ said:
 أَحَبُّ الأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ
 "The most beloved of deeds to Allah are those that are most consistent, even if they are small." — Sahih Bukhari (6464).`,
-      1: `لَا إِلٰهَ إِلَّا اللهُ مُحَمَّدٌ رَّسُولُ اللهِ ﷺ
+      1: `لَا إِلٰهَ إِلَّا اللهُ مُحَمَّدٌ رَّসُولُ اللهِ ﷺ
 "There is no deity worthy of worship except Allah, and Muhammad ﷺ is the Messenger of Allah."
 
 THE PURPOSE OF IMAN:
@@ -134,11 +134,11 @@ HOW TO ATTAIN THIS QUALITY:
 • Maintain humility during the action.
 • Seek forgiveness (Istighfar) after completing the action, fearing any hidden pride.`,
       6: `Allah Almighty states:
-وَمَنْ أَحْسَنُ قَوْلًا مِّمَّن دَعَا إِلَى اللَّهِ وَعَمِلَ صَالِحًا وَقَالَ إِنَّনِي مِنَ الْمُسْلِمِينَ
+وَمَنْ أَحْسَنُ قَوْلًا مِّمَّن دَعَا إِلَى اللَّهِ وَعَمِلَ صَالِحًا وَقَالَ إِنَّنِي مِنَ الْمُسْلِمِينَ
 "And who is better in speech than one who invites to Allah and does righteousness and says, 'Indeed, I am of the Muslims'?" — Surah Fussilat (41:33)
 
 كُنتُمْ خَيْرَ أُمَّةٍ أُخْرِجَتْ لِلنَّاسِ تَأْمُرُونَ بِالْمَعْرُوفِ وَتَنْهَوْنَ عَنِ الْمُنكَرِ
-"You are the best nation produced for mankind. You enjoin what is right and forbid what is wrong and believe in Allah." — Surah Ali 'Imran (3:110)
+"You are the best nation produced for mankind. You enjoin what is right and forbid what is wrong and believe in Allah." — Surah Ali 'Imran (3:31)
 
 THE PURPOSE:
 To take up the mission of the Prophets by sacrificing time, wealth, and comfort to revive Islam in our own lives, bring humanity closer to Allah, and spread the message of peace and truth across the globe.
@@ -234,6 +234,178 @@ His Famous Saying:
 
 4. The Essence of Islamic Life:
 "A true believer lives with the fear of Allah in his heart, the Sunnah in his actions, love for the creation in his interactions, and concern for the Hereafter in his mind."`,
+    },
+  },
+  gasht_adab: {
+    headings: {
+      0: 'Part 1: 1. Objective & True Spirit of Gasht (Dawah Tour)',
+      1: 'Part 1: 2. Core Responsibilities of the Ameer',
+      2: 'Part 1: 3. Etiquettes & Manner of the Speaker (Mutakallim)',
+      3: 'Part 1: 4. Role of the Guide (Rahbar)',
+      4: 'Part 1: 5. Walking in Supplication & Lowering the Gaze',
+      5: 'Part 1: 6. Visiting Homes & Inviting with Love',
+      6: 'Part 1: 7. Bringing Brothers Gently to the Masjid',
+      7: 'Part 1: 8. Supplication During Gasht (Dhikr & Fikr)',
+      8: 'Part 1: 9. Practical Order of Speech',
+      9: 'Part 1: 10. Concluding the Tour & Sincere Istighfar',
+    },
+    pills: {
+      0: 'Gasht Spirit',
+      1: 'Ameer Duties',
+      2: 'Speaker Adab',
+      3: 'Guide Role',
+      4: 'Lowering Gaze',
+      5: 'Visiting Homes',
+      6: 'Bringing to Masjid',
+      7: 'Dhikr in Tour',
+      8: 'Speech Order',
+      9: 'Closing Istighfar',
+    },
+    contents: {
+      0: `THE PURPOSE OF GASHT (DAWAH VISITATION):
+Gasht is the revival of the Prophetic tradition of going door to door to invite people to the remembrance of Allah and congregational Salah.
+
+Key Principles:
+1. Walk on the right side of the street with humility and lowered gaze.
+2. Engage in silent Dhikr and Istighfar while walking.
+3. Treat every Muslim with deep respect and brotherly affection.
+4. Speak only beneficial words that remind of the Greatness of Allah and the reality of the Hereafter.`,
+      1: `DUTIES OF THE AMEER DURING GASHT:
+• Keep the Jama'ah disciplined, focused, and spiritually connected to Allah.
+• Ensure the team remains punctual, avoids loud laughter, and respects private properties.
+• Make continuous silent dua for the guidance and opening of hearts.`,
+      2: `ETIQUETTES OF THE MUTAKALLIM (SPEAKER):
+• Speak with warmth, humility, and sincerity (no arrogance or lecturing).
+• Remind the brother of the blessing of Iman and the beauty of fulfilling the five daily prayers in the Masjid.
+• Avoid controversial topics, politics, or disputation; focus purely on the Greatness of Allah and the Prophet's Sunnah.`,
+      3: `ROLE OF THE RAHBAR (LOCAL GUIDE):
+• A local resident who knows the neighborhood and respectfully introduces the team to residents.
+• Points out the doors and respectfully knocks or greets with Salam.`,
+      4: `DISCIPLINE ON THE ROAD:
+The Prophet ﷺ said: "Give the road its due right: lowering the gaze, refraining from harm, returning greetings of peace, and enjoining good and forbidding evil." (Sahih Bukhari).`,
+    },
+  },
+  iman_yaqeen_chapter: {
+    headings: {
+      0: 'Iman & Yaqeen Discourse 1: The Supreme Omnipotence of Allah',
+      1: 'Iman & Yaqeen Discourse 2: Signs in the Seven Heavens & the Cosmos',
+      2: 'Iman & Yaqeen Discourse 3: The Reality of the Soul and Life',
+      3: 'Iman & Yaqeen Discourse 4: The Transience & Deception of the Dunya',
+      4: 'Iman & Yaqeen Discourse 5: The Journey to the Eternal Hereafter',
+      5: 'Iman & Yaqeen Discourse 6: The Reality of the Grave & Barzakh',
+      6: 'Iman & Yaqeen Discourse 7: Standing Before Allah on the Day of Judgment',
+      7: 'Iman & Yaqeen Discourse 8: Preparation, Repentance & Concluding Munajat',
+    },
+    pills: {
+      0: '1. Divine Power',
+      1: '2. Cosmos Signs',
+      2: '3. Soul Reality',
+      3: '4. Dunya Reality',
+      4: '5. Akhirah Journey',
+      5: '6. Grave Barzakh',
+      6: '7. Day of Judgment',
+      7: '8. Preparation',
+    },
+    contents: {
+      0: `THE SUPREME OMNIPOTENCE OF ALLAH:
+Allah Almighty is the sole Creator, Sustainer, and Sovereign of all that exists. Everything happens exclusively by His Will and Command.
+
+Allah states in Surah Al-Mulk (67:1):
+تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ
+"Blessed is He in whose hand is dominion, and He is over all things competent."
+
+True Yaqeen means the heart rests with complete certainty that Allah alone can benefit or harm, give honor or disgrace, and answer all needs.`,
+      1: `SIGNS IN THE SEVEN HEAVENS & THE COSMOS:
+Allah commands us to reflect upon His majestic creation:
+إِنَّ فِي خَلْقِ السَّمَاوَاتِ وَالأَرْضِ وَاخْتِلافِ اللَّيْلِ وَالنَّهَارِ لآيَاتٍ لِّأُولِي الأَلْبَابِ
+"Indeed, in the creation of the heavens and the earth and the alternation of the night and the day are signs for those of understanding." (Surah Ali 'Imran 3:190).`,
+    },
+  },
+  bad_maghrib_bayan: {
+    headings: {
+      0: 'Post-Maghrib Bayan 1: Introduction & Praise of Allah',
+      1: 'Post-Maghrib Bayan 1: Love of Allah & Its Living Evidence',
+      2: 'Post-Maghrib Bayan 1: Sacrifices of Prophet Muhammad ﷺ',
+      3: 'Post-Maghrib Bayan 1: Sunnah as Our Complete Way of Life',
+      4: 'Post-Maghrib Bayan 1: Connecting Deeply with the Holy Quran',
+      5: 'Post-Maghrib Bayan 1: Salah: Direct Meeting with the Creator',
+      6: 'Post-Maghrib Bayan 1: Heartfelt Supplication & Munajat',
+    },
+    pills: {
+      0: 'Intro & Hamd',
+      1: 'Love of Allah',
+      2: 'Prophet Love',
+      3: 'Living Sunnah',
+      4: 'Quran Bond',
+      5: 'Meeting in Salah',
+      6: 'Heartfelt Dua',
+    },
+    contents: {
+      0: `POST-MAGHRIB DISCOURSE (BAYAN):
+Respected brothers, after the Maghrib prayer, the atmosphere in the house of Allah is filled with angels and divine mercy.
+
+Let us ask ourselves:
+• What is our true purpose on this earth?
+• For whom are we spending our days and nights?
+• Have we prepared for the moment our eyes close in death?
+
+Let us revive our love for Allah and make firm resolutions tonight to obey His commands.`,
+    },
+  },
+  dawat_chapter: {
+    headings: {
+      0: 'Foundations of Dawah (Discourse 1): The Prophetic Mission',
+      1: 'Foundations of Dawah (Discourse 2): Reality & Supreme Virtues',
+      2: 'Foundations of Dawah (Discourse 3): Sacrifices of the Companions',
+      3: 'Foundations of Dawah (Discourse 4): Practical Manners in Calling to Allah',
+      4: 'Foundations of Dawah (Discourse 5): Safeguarding the Heart with Taqwa',
+    },
+    pills: {
+      0: 'Prophetic Mission',
+      1: 'Supreme Virtues',
+      2: 'Sahabah Sacrifices',
+      3: 'Practical Manners',
+      4: 'Heart Taqwa',
+    },
+    contents: {
+      0: `THE NOBLE MISSION OF DAWAH:
+Allah Almighty sent thousands of Prophets with the singular mission of guiding mankind from the darkness of ignorance into the light of Iman.
+
+Prophet Muhammad ﷺ was sent as a mercy to all worlds. By his passing, the responsibility of conveying this message (Tabligh) was entrusted upon his entire Ummah.
+
+The Prophet ﷺ said:
+بَلِّغُوا عَنِّي وَلَوْ آيَةً
+"Convey from me, even if it is a single verse." — Sahih Bukhari (3461).`,
+    },
+  },
+  tabligh_120_core: {
+    headings: {
+      0: 'Muzakarah 1: Sincerity & Rectification of Intention (Ikhlas)',
+      1: 'Muzakarah 2: Preserving Punctuality in the Five Daily Prayers',
+      2: 'Muzakarah 3: The 14 Sacred Rights of Parents in Islam',
+      3: 'Muzakarah 4: Honoring and Seeking Knowledge from Islamic Scholars (Ulama)',
+      4: 'Muzakarah 5: The 5 Essential Daily Deeds in the Local Masjid',
+      5: 'Muzakarah 6: Guarding the Tongue Against Slander and Backbiting',
+      6: 'Muzakarah 7: Essential Etiquettes of Daily Remembrance (Dhikr)',
+      7: 'Muzakarah 8: Preparation for Death, the Grave, and the Day of Judgment',
+    },
+    pills: {
+      0: '1. Ikhlas',
+      1: '2. 5 Prayers',
+      2: '3. Parents Rights',
+      3: '4. Respect Ulama',
+      4: '5. 5 Masjid Deeds',
+      5: '6. Guard Tongue',
+      6: '7. Dhikr Adab',
+      7: '8. Akhirah Prep',
+    },
+    contents: {
+      0: `MUZAKARAH PRINCIPLE 1: IKHLAS & INTENTION:
+Every single action in Islam depends upon the purity of intention. Ensure your heart seeks only the pleasure of Allah, free from ostentation, fame, or praise.`,
+      1: `MUZAKARAH PRINCIPLE 2: PRAYER IN CONGREGATION:
+The Prophet ﷺ emphasized that whoever prays in congregation for forty days, catching the opening Takbeer, receives freedom from the Fire and freedom from hypocrisy.`,
+      2: `MUZAKARAH PRINCIPLE 3: HONORING PARENTS:
+Allah has paired His worship with kindness to parents (Surah Al-Isra 17:23). Never utter a word of disrespect to them and pray for their forgiveness continuously.`,
     },
   },
 };
