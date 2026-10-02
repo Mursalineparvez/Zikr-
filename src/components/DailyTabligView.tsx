@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import { TABLIG_COMPLETE_CHAPTERS, TabligChapterDetail } from '../data/tabligData';
+import { TABLIGH_ENGLISH_CHAPTER_CONTENTS } from '../data/tabligEnglishData';
 import { ThemeMode, ZikrLanguage } from '../types';
 import {
-  BookOpen,
   Users,
   ChevronRight,
   ChevronDown,
-  CheckCircle2,
   Sparkles,
-  Award,
   BookmarkCheck,
   Search,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
-import { TABLIG_UI } from '../utils/appTranslations';
+import { TABLIG_UI, TABLIG_CHAPTER_TRANSLATIONS } from '../utils/appTranslations';
 
 interface DailyTabligViewProps {
   soundEnabled: boolean;
@@ -28,20 +26,174 @@ interface ChapterMenuItem {
   match: (heading: string, index: number) => boolean;
 }
 
+function translateCommonBengaliPhrase(phrase: string): string {
+  if (!phrase) return '';
+  return phrase
+    .replace(/ভূমিকা ও প্রারম্ভিক হামদ-সানা/g, 'Introduction & Praise of Allah')
+    .replace(/আল্লাহ কে ও তাঁর আজমত/g, 'Who is Allah & His Supreme Majesty')
+    .replace(/আল্লাহর মহব্বত ও তার প্রমাণ/g, 'Love of Allah & Its Evidence')
+    .replace(/রাসুলুল্লাহ ﷺ-এর মহব্বত ও কুরবানি/g, 'Love & Sacrifices of Prophet Muhammad ﷺ')
+    .replace(/রাসুলুল্লাহ ﷺ আমাদের একমাত্র আদর্শ/g, 'Prophet Muhammad ﷺ as Our Sole Role Model')
+    .replace(/সুন্নত শুধু পোশাকে নয়, সমগ্র জীবনে/g, 'Sunnah in the Entire Life, Not Just Attire')
+    .replace(/আল্লাহকে স্মরণ করা ও দিলের শান্তি/g, 'Remembrance of Allah & Peace of Heart')
+    .replace(/কুরআনের সঙ্গে সম্পর্ক/g, 'Connection with the Holy Quran')
+    .replace(/নামাজ—আল্লাহর সঙ্গে সরাসরি সম্পর্ক/g, 'Salah: Direct Connection with Allah')
+    .replace(/তাওবা—আল্লাহর রহমতের দরজা সবসময় খোলা/g, 'Tawbah: The Gates of Mercy Are Ever-Open')
+    .replace(/আমাদের জীবন ও মেহনত কার জন্য\?/g, 'For Whom is Our Life and Effort?')
+    .replace(/আল্লাহর মহব্বত পেতে হলে রাসুল ﷺ-এর অনুসরণ/g, 'Obtaining Allah\'s Love Through Following the Prophet ﷺ')
+    .replace(/আসুন, আজ কিছু পাক্কা নিয়ত করি/g, 'Let Us Make Sincere Intentions Today')
+    .replace(/শেষ কথা ও জীবনের আসল লক্ষ্য/g, 'Concluding Counsel & True Purpose of Life')
+    .replace(/মোনাজাত ও আকুল দোয়া/g, 'Heartfelt Supplication (Munajat)')
+    .replace(/ভূমিকা ও আত্মজিজ্ঞাসা/g, 'Introduction & Self-Reflection')
+    .replace(/দুনিয়ার ব্যস্ততা আর দিলের গাফলত/g, 'Worldly Distractions and Spiritual Neglect')
+    .replace(/আল্লাহর জিকির—দিলের খাবার/g, 'Dhikr: Food for the Heart')
+    .replace(/আল্লাহ আমাদের স্মরণ করবেন!/g, 'Allah Will Remember Us!')
+    .replace(/দিলের সবচেয়ে বড় রোগ—গাফলত ও তার চিকিৎসা/g, 'Neglect: The Greatest Heart Disease & Its Remedy')
+    .replace(/নামাজ—আল্লাহর সঙ্গে সাক্ষাতের ডাক/g, 'Salah: The Call to Meet Allah')
+    .replace(/সিজদার মূল্য ও আল্লাহর আশ্রয়/g, 'Value of Sujood & Seeking Refuge in Allah')
+    .replace(/কুরআন—দিলের নূর ও ঈমানের চার্জ/g, 'Quran: Light of the Heart & Spiritual Energy')
+    .replace(/ছোট আমলকে ছোট মনে করব না/g, 'Never Belittle Any Good Deed')
+    .replace(/ইস্তিগফারের মেহনত ও তাওবা/g, 'Power of Istighfar & Repentance')
+    .replace(/রাসুলুল্লাহ ﷺ-এর সুন্নত জীবনে আনা/g, 'Bringing the Sunnah into Practical Life')
+    .replace(/ঘরে দ্বীন নিয়ে আসি ও পরিবারের হক/g, 'Bringing Islam into the Home & Family Rights')
+    .replace(/মানুষের হক ও আখলাক/g, 'Rights of Fellow Humans & Noble Character')
+    .replace(/নিজের ইসলাহ ও প্রতিদিনের হিসাব/g, 'Self-Rectification & Daily Accountability')
+    .replace(/আমরা কীভাবে শুরু করব\?/g, 'How Do We Begin?')
+    .replace(/ভূমিকা ও আল্লাহর বড়ত্ব ও নেয়ামতের শুকরিয়া/g, 'Praising the Greatness of Allah & Gratitude')
+    .replace(/আমরা কার বান্দা\? \(আমাদের আসল পরিচয়\)/g, 'Whose Servants Are We? (Our True Identity)')
+    .replace(/আল্লাহর নেয়ামত গুনে শেষ করা যাবে না/g, 'Allah\'s Countless Blessings')
+    .replace(/ইয়াকিন কী\? \(দিলের গভীর বিশ্বাস\)/g, 'What is Yaqeen? (Firm Inner Faith)')
+    .replace(/আল্লাহ আমাদের সঙ্গে আছেন/g, 'Allah is with Us')
+    .replace(/দুনিয়া কেন আমাদের এত টানে\?/g, 'Why Does the World Attract Us So Much?')
+    .replace(/মৃত্যুর কথা মনে করা/g, 'Remembering Death')
+    .replace(/কবরের জন্য কী প্রস্তুতি আছে\?/g, 'Preparation for the Grave')
+    .replace(/নামাজ ঠিক করি \(কামিয়াবির আসল আহ্বান\)/g, 'Perfecting Salah: The Call to Success')
+    .replace(/কুরআনকে জীবনের সঙ্গী করি/g, 'Making the Quran Our Lifelong Companion')
+    .replace(/আল্লাহর জিকিরে দিলের শান্তি/g, 'Inner Peace in Allah\'s Remembrance')
+    .replace(/রাসুলুল্লাহ ﷺ-এর মহব্বত ও অনুসরণ/g, 'Love & Obedience to the Messenger ﷺ')
+    .replace(/ঘর থেকে সুন্নতের শুরু/g, 'Starting Sunnah at Home')
+    .replace(/নিজের গুনাহকে ছোট মনে করব না/g, 'Do Not Deem Any Sin Small')
+    .replace(/আল্লাহর রহমত থেকে নিরাশ হব না/g, 'Never Despair of Allah\'s Mercy')
+    .replace(/আজকের কিছু পাক্কা নিয়ত \(১০টি অঙ্গীকার\)/g, '10 Noble Resolutions for Today')
+    .replace(/আকুল মোনাজাত ও দুআ/g, 'Heartfelt Dua & Supplication')
+    .replace(/গাস্তে কথা বলার নিয়ম/g, 'Rules of Speech in Gasht')
+    .replace(/রাহবার ও মুতাকাল্লিমের কাজ/g, 'Roles of Rahbar & Mutakallim')
+    .replace(/ফজীলত ও পূর্ণ তরতীব/g, 'Virtues & Complete Etiquettes')
+    .replace(/গাস্তের সুন্দর পূর্ণ তরতীব/g, 'Complete Method & Etiquettes of Gasht')
+    .replace(/গাস্তের সবচেয়ে বড় শিক্ষা/g, 'Greatest Lessons of Gasht')
+    .replace(/গাস্তের সময় জিকির ও ফিকির/g, 'Dhikr & Contemplation During Gasht')
+    .replace(/কেউ দাওয়াত গ্রহণ না করলে কী করব\?/g, 'What to Do if Someone Declines the Dawah?')
+    .replace(/গাস্তের পর নিজের হিসাব/g, 'Self-Evaluation After Gasht')
+    .replace(/একটি গুরুত্বপূর্ণ সতর্কতা—হাদিস বলার ক্ষেত্রে/g, 'Crucial Precaution: Precision in Quoting Hadiths')
+    .replace(/আমিরের দায়িত্ব/g, 'Responsibilities of the Ameer')
+    .replace(/মুতাকাল্লিমের আদব/g, 'Etiquettes of the Speaker (Mutakallim)')
+    .replace(/রাহবারের আদব/g, 'Etiquettes of the Guide (Rahbar)')
+    .replace(/মাতা-পিতার হক/g, 'Rights of Parents')
+    .replace(/পিতামাতার প্রতি ১৪টি হক/g, '14 Essential Rights of Parents')
+    .replace(/অন্তরের রোগ/g, 'Diseases of the Heart')
+    .replace(/জিকিরের জন্য চারটি আদব/g, '4 Etiquettes of Dhikr')
+    .replace(/নামাজের জন্য পাঁচটি গুরুত্বপূর্ণ বিষয়/g, '5 Crucial Elements of Salah')
+    .replace(/কিয়ামতের দিন বান্দার চারটি প্রশ্ন/g, '4 Questions on the Day of Judgment')
+    .replace(/উম্মতের ধ্বংসের দুটি কারণ/g, '2 Causes of Destruction for Nations')
+    .replace(/সাহাবায়ে কেরামের সাহায্য/g, 'Help & Sacrifices of the Sahabah')
+    .replace(/মানুষের চার দুশমন/g, 'The 4 Enemies of Man')
+    .replace(/দাওয়াতের কাজে পাঁচটি উপকার/g, '5 Great Benefits of Dawah Effort')
+    .replace(/দাওয়াতের কাজ থেকে দূরে থাকার ক্ষতি/g, 'Harm of Neglecting Dawah')
+    .replace(/গুরুত্বপূর্ণ সমাপ্তি কথা/g, 'Important Concluding Counsel');
+}
+
 export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   soundEnabled,
   themeMode = 'night',
   selectedLanguage = 'bn',
 }) => {
   const isDay = themeMode === 'day';
+  const isBn = selectedLanguage === 'bn';
   const [expandedChapter, setExpandedChapter] = useState<string>('sifats_intro');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [chapterPartFilter, setChapterPartFilter] = useState<Record<string, string>>({});
 
+  const getChapterTitle = (chap: TabligChapterDetail): string => {
+    const t = TABLIG_CHAPTER_TRANSLATIONS[chap.id];
+    if (t?.title) {
+      return t.title[selectedLanguage] || t.title['en'] || chap.title;
+    }
+    return chap.title;
+  };
+
+  const getChapterSubtitle = (chap: TabligChapterDetail): string => {
+    const t = TABLIG_CHAPTER_TRANSLATIONS[chap.id];
+    if (t?.subtitle) {
+      return t.subtitle[selectedLanguage] || t.subtitle['en'] || chap.subtitle;
+    }
+    return chap.subtitle;
+  };
+
+  const getLocalizedSectionHeading = (chapId: string, secHeading: string, index: number): string => {
+    if (isBn) return secHeading;
+
+    const chapData = TABLIGH_ENGLISH_CHAPTER_CONTENTS[chapId];
+    if (chapData?.headings && chapData.headings[index]) {
+      return chapData.headings[index];
+    }
+
+    let h = secHeading;
+    h = h
+      .replace(/^ছয় সিফতের আলোচনা\s*\(ভূমিকা\)/i, 'Discussion on 6 Qualities (Introduction)')
+      .replace(/^১\.\s*কালেমা/i, '1. Kalimah: Tayyibah (Faith & Declaration)')
+      .replace(/^২\.\s*নামাজ/i, '2. Salah: Prayers with Devotion & Humility')
+      .replace(/^৩\.\s*ইলম ও জিকির/i, '3. Ilm & Dhikr: Sacred Knowledge & Remembrance')
+      .replace(/^৪\.\s*ইকরামুল মুসলিমী?ন/i, '4. Ikramul Muslimeen: Honoring Fellow Muslims')
+      .replace(/^৫\.\s*তাসহীহে নিয়ত/i, '5. Ikhlas & Sincerity of Intention')
+      .replace(/^৬\.\s*দাওয়াত ও তাবলিগ/i, '6. Dawah & Tabligh: Calling to Allah')
+      .replace(/^পর্ব ([১-৩0-9]+)\s*:\s*([০-৯0-9]+)\.\s*(.*)/i, (m, part, num, rest) => {
+        const pNum = part === '১' ? '1' : part === '২' ? '2' : part === '৩' ? '3' : part;
+        return `Part ${pNum} : ${num}. ${translateCommonBengaliPhrase(rest)}`;
+      })
+      .replace(/বাদ মাগরিব বয়ান ([১-৩0-9]+)\s*:\s*(.*)/i, (m, pNum, rest) => {
+        const num = pNum === '১' ? '1' : pNum === '২' ? '2' : pNum === '৩' ? '3' : pNum;
+        return `Post-Maghrib Bayan ${num} : ${translateCommonBengaliPhrase(rest)}`;
+      })
+      .replace(/^ঈমান ও একীনের কথা\s*[-—:]\s*([০-৯0-9]+)/i, 'Iman & Yaqeen Discourse $1')
+      .replace(/^দাওয়াত\s*[-—:]\s*\(([০-৯0-9]+)\)/i, 'Dawah Principles (Discourse $1)')
+      .replace(/^([০-৯0-9]+)\.\s*(.*)/i, (m, num, rest) => {
+        return `${num}. ${translateCommonBengaliPhrase(rest)}`;
+      });
+
+    return h;
+  };
+
+  const getLocalizedSectionContent = (chapId: string, rawContent: string, index: number): string => {
+    if (!isBn) {
+      const chapData = TABLIGH_ENGLISH_CHAPTER_CONTENTS[chapId];
+      if (chapData?.contents && chapData.contents[index]) {
+        return chapData.contents[index];
+      }
+    }
+    if (!rawContent) return '';
+    return rawContent
+      .replace(/^\s*[-—_]{3,}\s*$/gm, '')
+      .replace(/^[ \t]*#+[ \t]*/gm, '')
+      .replace(/#/g, '')
+      .replace(/[ \t]+$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  };
+
   const filteredChapters = TABLIG_COMPLETE_CHAPTERS.filter((chap) => {
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
-    const matchTitle = chap.title.toLowerCase().includes(query) || chap.subtitle.toLowerCase().includes(query);
+    const currentTitle = getChapterTitle(chap).toLowerCase();
+    const currentSub = getChapterSubtitle(chap).toLowerCase();
+    const origTitle = chap.title.toLowerCase();
+    const origSub = chap.subtitle.toLowerCase();
+
+    const matchTitle =
+      currentTitle.includes(query) ||
+      currentSub.includes(query) ||
+      origTitle.includes(query) ||
+      origSub.includes(query);
+
     const matchSec = chap.sections.some(
       (s) => s.heading.toLowerCase().includes(query) || s.content.toLowerCase().includes(query)
     );
@@ -66,24 +218,52 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
     });
 
     if (prefixMap.size > 1) {
-      return Array.from(prefixMap.entries()).map(([prefix, count]) => ({
-        id: prefix,
-        label: prefix,
-        count,
-        match: (heading: string) => heading.startsWith(prefix),
-      }));
+      return Array.from(prefixMap.entries()).map(([prefix, count]) => {
+        let label = prefix;
+        if (!isBn) {
+          label = label
+            .replace('বাদ মাগরিব বয়ান ১', 'Maghrib Bayan 1')
+            .replace('বাদ মাগরিব বয়ান ২', 'Maghrib Bayan 2')
+            .replace('বাদ মাগরিব বয়ান ৩', 'Maghrib Bayan 3')
+            .replace('পর্ব ১', 'Part 1')
+            .replace('পর্ব ২', 'Part 2')
+            .replace('পর্ব ৩', 'Part 3');
+        }
+        return {
+          id: prefix,
+          label,
+          count,
+          match: (heading: string) => heading.startsWith(prefix),
+        };
+      });
     }
 
     return chap.sections.map((sec, idx) => {
       let shortLabel = sec.heading;
-      shortLabel = shortLabel
-        .replace(/^ঈমান ও একীনের কথা\s*[-—:]\s*/i, 'কথা - ')
-        .replace(/^দাওয়াত\s*[-—:]\s*\(([০-৯0-9]+)\)/i, 'দাওয়াত $1')
-        .replace(/^ছয় সিফ[াতো]+র আলোচনা\s*\((.*?)\)/i, '$1')
-        .trim();
 
-      if (shortLabel.length > 22) {
-        shortLabel = shortLabel.slice(0, 20) + '…';
+      if (!isBn) {
+        const chapData = TABLIGH_ENGLISH_CHAPTER_CONTENTS[chap.id];
+        if (chapData?.pills && chapData.pills[idx]) {
+          shortLabel = chapData.pills[idx];
+        } else {
+          shortLabel = shortLabel
+            .replace(/^ছয় সিফ[াতো]+র আলোচনা\s*\((.*?)\)/i, '$1')
+            .replace(/^দাওয়াত\s*[-—:]\s*\(([০-৯0-9]+)\)/i, 'Dawah $1')
+            .replace(/^ঈমান ও একীনের কথা\s*[-—:]\s*([০-৯0-9]+)/i, 'Topic $1')
+            .replace(/পর্ব ([১-৩0-9]+)\s*:\s*([০-৯0-9]+)\.\s*(.*)/i, 'Part $1 : $2')
+            .replace(/বাদ মাগরিব বয়ান ([১-৩0-9]+)\s*:\s*(.*)/i, 'Bayan $1')
+            .replace(/^([০-৯0-9]+)\.\s*(.*)/i, '$1. $2');
+        }
+      } else {
+        shortLabel = shortLabel
+          .replace(/^ঈমান ও একীনের কথা\s*[-—:]\s*/i, 'কথা - ')
+          .replace(/^দাওয়াত\s*[-—:]\s*\(([০-৯0-9]+)\)/i, 'দাওয়াত $1')
+          .replace(/^ছয় সিফ[াতো]+র আলোচনা\s*\((.*?)\)/i, '$1')
+          .trim();
+      }
+
+      if (shortLabel.length > 24) {
+        shortLabel = shortLabel.slice(0, 22) + '…';
       }
 
       return {
@@ -93,17 +273,6 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
         match: (_heading: string, i: number) => i === idx,
       };
     });
-  };
-
-  const formatCleanContent = (raw: string): string => {
-    if (!raw) return '';
-    return raw
-      .replace(/^\s*[-—_]{3,}\s*$/gm, '')
-      .replace(/^[ \t]*#+[ \t]*/gm, '')
-      .replace(/#/g, '')
-      .replace(/[ \t]+$/gm, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
   };
 
   return (
@@ -159,8 +328,12 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
           </span>
         </div>
 
-        {filteredChapters.map((chap) => {
+        {filteredChapters.map((chap, idx) => {
           const isExpanded = expandedChapter === chap.id;
+          const chapterNumber = isBn ? chap.numberBn : String(idx + 1).padStart(2, '0');
+          const chapterTitle = getChapterTitle(chap);
+          const chapterSubtitle = getChapterSubtitle(chap);
+
           return (
             <div
               key={chap.id}
@@ -179,15 +352,15 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <span className="w-9 h-9 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-sm font-mono shrink-0 shadow-sm">
-                    {selectedLanguage === 'bn' ? chap.numberBn : chap.id.replace('chap_', '').replace('sifats_intro', '1')}
+                    {chapterNumber}
                   </span>
                   <div className="min-w-0">
                     <h3 className={`text-sm sm:text-base font-bold truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                      {chap.title}
+                      {chapterTitle}
                     </h3>
-                    {chap.subtitle && (
+                    {chapterSubtitle && (
                       <p className="text-xs text-slate-500 dark:text-teal-300/80 truncate mt-0.5">
-                        {chap.subtitle}
+                        {chapterSubtitle}
                       </p>
                     )}
                   </div>
@@ -226,7 +399,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                         <div className="pt-2 flex flex-wrap items-center gap-1.5 sm:gap-2 border-b border-slate-200/60 dark:border-teal-900/40 pb-3">
                           <span className="text-[11px] font-semibold text-slate-500 dark:text-teal-300 mr-1 flex items-center gap-1 shrink-0">
                             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                            {selectedLanguage === 'bn' ? 'বিষয় / পর্ব নির্বাচন:' : 'Select Topic / Part:'}
+                            {isBn ? 'বিষয় / পর্ব নির্বাচন:' : 'Select Topic / Part:'}
                           </span>
                           <button
                             type="button"
@@ -242,7 +415,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                                 : 'bg-[#071d22] hover:bg-teal-900/50 text-teal-200 border border-teal-800/40'
                             }`}
                           >
-                            {selectedLanguage === 'bn' ? 'সবগুলো' : 'All'} ({chap.sections.length})
+                            {isBn ? 'সবগুলো' : 'All'} ({chap.sections.length})
                           </button>
                           {menuItems.map((item) => {
                             const isSelected = currentFilter === item.id;
@@ -276,19 +449,27 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                   })()}
 
                   {chap.sections
-                    .filter((sec, idx) => {
+                    .filter((sec, sIdx) => {
                       const currentFilter = chapterPartFilter[chap.id];
                       if (!currentFilter || currentFilter === 'all') return true;
                       const menuItems = getChapterMenuItems(chap);
                       const activeItem = menuItems.find((m) => m.id === currentFilter);
                       if (!activeItem) return true;
-                      return activeItem.match(sec.heading, idx);
+                      return activeItem.match(sec.heading, sIdx);
                     })
-                    .map((sec, idx) => {
-                      const isMunajat = sec.heading.includes('মোনাজাত') || sec.heading.includes('দোয়া');
+                    .map((sec, sIdx) => {
+                      const localizedHeading = getLocalizedSectionHeading(chap.id, sec.heading, sIdx);
+                      const localizedContent = getLocalizedSectionContent(chap.id, sec.content, sIdx);
+                      const isMunajat =
+                        sec.heading.includes('মোনাজাত') ||
+                        sec.heading.includes('দোয়া') ||
+                        localizedHeading.toLowerCase().includes('supplication') ||
+                        localizedHeading.toLowerCase().includes('dua') ||
+                        localizedHeading.toLowerCase().includes('munajat');
+
                       return (
                         <div
-                          key={idx}
+                          key={sIdx}
                           className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                             isMunajat
                               ? isDay
@@ -299,7 +480,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                               : 'bg-[#071d22] border-teal-900/40 text-teal-100'
                           }`}
                         >
-                          {sec.heading && (
+                          {localizedHeading && (
                             <h4
                               className={`font-bold text-xs sm:text-sm mb-2.5 flex items-center gap-1.5 ${
                                 isMunajat
@@ -308,11 +489,11 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                               }`}
                             >
                               <BookmarkCheck className="w-4 h-4 shrink-0" />
-                              <span>{sec.heading}</span>
+                              <span>{localizedHeading}</span>
                             </h4>
                           )}
                           <p className="leading-relaxed whitespace-pre-line text-xs sm:text-sm">
-                            {formatCleanContent(sec.content)}
+                            {localizedContent}
                           </p>
                         </div>
                       );

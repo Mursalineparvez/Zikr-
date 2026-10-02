@@ -2804,6 +2804,215 @@ export const KITAB_UI: Record<string, Record<string, string>> = createTranslatio
   },
 });
 
+export const TABLIG_CHAPTER_TRANSLATIONS: Record<
+  string,
+  {
+    title: Record<string, string>;
+    subtitle: Record<string, string>;
+  }
+> = {
+  sifats_intro: {
+    title: {
+      bn: 'দাওয়াতের মেহনতের ৬ সিফত',
+      en: '6 Essential Qualities of Dawah (The 6 Sifats)',
+      ur: 'دعوت کی چھ صفات',
+      ar: 'الصفات الست للدعوة والتبليغ',
+      hi: 'दावत की 6 सिफ़ात (मूल सिद्धांत)',
+      id: '6 Sifat Utama Dakwah & Tabligh',
+      tr: 'Tebliğin 6 Temel Sıfatı',
+    },
+    subtitle: {
+      bn: 'ভূমিকা এবং ৬টি উসূল বা মূলনীতির পূর্ণাঙ্গ বয়ান',
+      en: 'Introduction and complete discourses on the 6 foundational principles of Tabligh',
+      ur: 'چھ اصول اور بنیادی صفات کا مکمل بیان',
+      ar: 'مقدمة وبيان شامل للأصول الستة',
+      hi: 'प्रस्तावना और 6 मूल सिद्धांतों का विस्तृत बयान',
+      id: 'Pengantar dan bayan komprehensif mengenai 6 landasan utama',
+      tr: 'Giriş ve Tebliğin 6 temel esası üzerine kapsamlı sohbet',
+    },
+  },
+  tabligh_history: {
+    title: {
+      bn: 'তাবলীগ জামাতের ইতিহাস',
+      en: 'History of the Tabligh Movement',
+      ur: 'تاریخ جماعت تبلیغ',
+      ar: 'تاريخ جماعة التبليغ',
+      hi: 'तबलीग़ जमात का इतिहास',
+      id: 'Sejarah Gerakan Jamaah Tabligh',
+      tr: 'Tebliğ Cemaatinin Tarihçesi',
+    },
+    subtitle: {
+      bn: 'দ্বীনের দাওয়াত, মাওলানা ইলিয়াস (রহ.)-এর মেহনত এবং বিশ্ব ইজতেমার সংক্ষিপ্ত ইতিহাস',
+      en: 'Dawah revival, the struggle of Maulana Ilyas (RA), and concise history of Bishwa Ijtema',
+      ur: 'دعوت دین، مولانا الیاسؒ کی محنت اور عالمی اجتماع کی مختصر تاریخ',
+      ar: 'إحياء الدعوة، جهود مولانا إلياس، وتاريخ الإجتماع العالمي',
+      hi: 'दीन की दावत, मौलाना इलियास (रह.) की मेहनत और विश्व इज़्तेमा का इतिहास',
+      id: 'Kebangkitan dakwah, perjuangan Maulana Ilyas (RA), dan sejarah Bishwa Ijtema',
+      tr: 'Dinin ihyası, Mevlana İlyas\'ın (rh.a.) gayreti ve küresel içtima tarihi',
+    },
+  },
+  bisw_ijtema: {
+    title: {
+      bn: 'বিশ্ব ইজতেমার উৎপত্তি ও বিকাশ',
+      en: 'Origins & Global Evolution of Bishwa Ijtema',
+      ur: 'عالمی اجتماع کا آغاز اور ارتقاء',
+      ar: 'نشأة الإجتماع العالمي وتطوره',
+      hi: 'विश्व इज़्तेमा की उत्पत्ति और विकास',
+      id: 'Awal Mula dan Perkembangan Bishwa Ijtema Dunia',
+      tr: 'Dünya İctimasının Doğuşu ve Gelişimi',
+    },
+    subtitle: {
+      bn: 'উপমহাদেশের মুসলমানদের ইতিহাসের এক ক্রান্তিলগ্নে তাবলীগ জামাত ও বিশ্ব ইজতেমার গুরুত্ব',
+      en: 'Significance and history of the annual global spiritual gathering in Tongi',
+      ur: 'برصغیر میں مسلمانوں کے اہم موڑ پر تبلیغی جماعت اور عالمی اجتماع کی اہمیت',
+      ar: 'أهمية جماعة التبليغ والإجتماع العالمي في تاريخ شبه القارة',
+      hi: 'उपमहाद्वीप में मुसलमानों के इतिहास में तबलीग़ी जमात और विश्व इज़्तेमा का महत्व',
+      id: 'Pentingnya Jamaah Tabligh dan perkumpulan akbar tahunan umat Islam',
+      tr: 'Tarihi dönemeçte Tebliğ Cemaatinin ve Tongi dünya içtimasının önemi',
+    },
+  },
+  maulana_iliyas_bio: {
+    title: {
+      bn: 'হজরত মাওলানা ইলিয়াস (রহ.)-এর পরিচয় ও জীবন',
+      en: 'Life & Biography of Hazrat Maulana Ilyas (RA)',
+      ur: 'حضرت مولانا محمد الیاسؒ کا تعارف اور حیات',
+      ar: 'سيرة الحضرة مولانا محمد إلياس الكاندهلوي',
+      hi: 'हज़रत मौलाना इलियास (रह.) का परिचय और जीवन',
+      id: 'Biografi dan Kehidupan Maulana Muhammad Ilyas (RA)',
+      tr: 'Mevlana Muhammed İlyas Kandehlevi\'nin Hayatı',
+    },
+    subtitle: {
+      bn: 'বংশ পরিচয়, শৈশব, প্রাথমিক শিক্ষা ও মুহতারাম নানীর ভবিষ্যদ্বাণী',
+      en: 'Lineage, childhood, Islamic education, and spiritual revival in Mewat',
+      ur: 'خاندانی پس منظر، بچپن، ابتدائی تعلیم اور دادی کی پیشگوئی',
+      ar: 'النسب، الطفولة، النشأة العلمية والدعوية المباركة',
+      hi: 'वंश परिचय, बचपन, प्रारंभिक शिक्षा और दादी की भविष्यवाणी',
+      id: 'Silsilah, masa kecil, pendidikan Islam, dan awal dakwah di Mewat',
+      tr: 'Soy ağacı, çocukluğu, ilim tahsili ve Mewat\'taki manevi uyanış',
+    },
+  },
+  maulana_iliyas_bayan: {
+    title: {
+      bn: 'হজরত মাওলানা ইলিয়াস (রহ.)-এর বয়ান ও মালফুজাত',
+      en: 'Discourses & Precious Sayings of Maulana Ilyas (RA)',
+      ur: 'حضرت مولانا الیاسؒ کے ارشادات اور ملفوظات',
+      ar: 'ملفوظات وبيانات مولانا محمد إلياس',
+      hi: 'हज़रत मौलाना इलियास (रह.) के बयान और मलफ़ूज़ात',
+      id: 'Untaian Hikmah dan Malfuzhat Maulana Ilyas (RA)',
+      tr: 'Mevlana İlyas\'ın (rh.a.) Sohbetleri ve Hikmetli Sözleri',
+    },
+    subtitle: {
+      bn: 'ইসলাম এক ঐশী ধর্ম, মালফুযাতে ইলিয়াস (রহ.) থেকে সংকলিত মূল্যবান নসিহত',
+      en: 'Essential counsel, spiritual insights, and Malfoozat compiled from Maulana Ilyas',
+      ur: 'اسلام ایک الٰہی دین، ملفوظات الیاسؒ سے منتخب قیمتی نصیحتیں',
+      ar: 'مواعظ قيمة وحكم مباركة من ملفوظات الشيخ إلياس رحمه الله',
+      hi: 'इस्लाम एक ईश्वरीय धर्म, मलफ़ूज़ात से संकलित मूल्यवान नसीहतें',
+      id: 'Nasihat berharga, hikmah spiritual, dan bimbingan hati',
+      tr: 'İslam ilahi bir dindir, Malfuzat\'tan derlenmiş paha biçilmez öğütler',
+    },
+  },
+  gasht_adab: {
+    title: {
+      bn: 'গাস্তের আদব, বলার পদ্ধতি ও তরতীব',
+      en: 'Etiquettes, Procedure & Manners of Gasht (Dawah Tour)',
+      ur: 'گشت کے آداب، طریقہ اور ترتیب',
+      ar: 'آداب الجولة الدعوية وطريقتها',
+      hi: 'गश्त के आदाब, बोलने की विधि और तरतीब',
+      id: 'Adab, Tata Cara & Tertib Jaulah / Gasht',
+      tr: 'Geşt (Dolaşarak Tebliğ) Edepleri, Usulü ve Tertibi',
+    },
+    subtitle: {
+      bn: 'পর্ব ১ ও পর্ব ২: গাস্তে কথা বলার নিয়ম, রাহবার ও মুতাকাল্লিমের কাজ, ফজীলত ও পূর্ণ তরতীব',
+      en: 'Part 1 & 2: Rules of speech, roles of Rahbar and Mutakallim, virtues, and complete order',
+      ur: 'حصہ ۱ و ۲: بات کرنے کا طریقہ، رہبر و متکلم کی ذمہ داریاں اور مکمل ترتیب',
+      ar: 'الجزء الأول والثاني: آداب الكلام، واجبات الدليل والمتكلم، والترتيب الكامل',
+      hi: 'भाग 1 व 2: गश्त में बात करने के नियम, रहबर व मुतकल्लिम के कार्य और पूरी तरतीब',
+      id: 'Bagian 1 & 2: Adab berbicara, tugas Rahbar & Mutakallim, fadhilah dan tertib',
+      tr: '1. ve 2. Kısım: Konuşma adabı, rehber ve mütekellim vazifeleri ve tam tertip',
+    },
+  },
+  iman_yaqeen_chapter: {
+    title: {
+      bn: 'ঈমান ও একীনের বিস্তারিত বয়ান',
+      en: 'Comprehensive Discourses on Faith & Certainty (Iman & Yaqeen)',
+      ur: 'ایمان اور یقین کا تفصیلی بیان',
+      ar: 'بيان شامل في حقيقة الإيمان واليقين',
+      hi: 'ईमान और यक़ीन का विस्तृत बयान',
+      id: 'Bayan Mendalam tentang Iman & Keyakinan Teguh',
+      tr: 'İman ve Yakîn Üzerine Kapsamlı Sohbet',
+    },
+    subtitle: {
+      bn: 'আল্লাহর কুদরত, মহাবিশ্ব, সাত আসমান এবং আখিরাতের অনন্ত সফর ও কবরের প্রস্তুতি',
+      en: 'The Divine Omnipotence, the cosmos, heavens, eternal journey to the Hereafter, and the grave',
+      ur: 'اللہ کی قدرت، کائنات، سات آسمان اور آخرت کا ابدی سفر و قبر کی تیاری',
+      ar: 'عظمة قدرة الله، الكون، السماوات السبع، والاستعداد للآخرة والقبر',
+      hi: 'अल्लाह की क़ुदरत, ब्रह्मांड, सातों आसमान और आख़िरत की अनंत यात्रा',
+      id: 'Kebesaran Allah, alam semesta, tujuh lapis langit, dan bekal kubur serta akhirat',
+      tr: 'Allah\'ın kudreti, kâinat, yedi gökler, ahiret yolculuğu ve kabir hazırlığı',
+    },
+  },
+  bad_maghrib_bayan: {
+    title: {
+      bn: 'বাদ মাগরিব বয়ান',
+      en: 'Essential Discourses After Maghrib Prayer',
+      ur: 'بعد نماز مغرب بیانات',
+      ar: 'بيانات ما بعد صلاة المغرب',
+      hi: 'बा\'द मग़रिब अहम बयान',
+      id: 'Bayan Penting Ba\'da Maghrib',
+      tr: 'Akşam Namazı Sonrası Önemli Sohbetler',
+    },
+    subtitle: {
+      bn: 'পর্ব ১, ২ ও ৩: আল্লাহর মহব্বত, জিকিরে দিলের জিন্দেগি এবং আল্লাহর পরিচয়, ইয়াকিন ও আখিরাতের প্রস্তুতি',
+      en: 'Parts 1, 2 & 3: Love of Allah, life of heart through Dhikr, Divine Recognition, and Akhirah',
+      ur: 'حصہ ۱، ۲ اور ۳: اللہ کی محبت، ذکر سے دل کی زندگی اور آخرت کی تیاری',
+      ar: 'الأجزاء ١، ٢ و٣: محبة الله، حياة القلوب بالذكر، ومعرفة الله واليقين',
+      hi: 'भाग 1, 2 व 3: अल्लाह की मोहब्बत, ज़िक्र से दिल की ज़िंदगी और आख़िरत की तैयारी',
+      id: 'Bagian 1, 2 & 3: Cinta kepada Allah, hidupnya hati dengan dzikir, dan bekal akhirat',
+      tr: '1, 2 ve 3. Bölüm: Allah sevgisi, zikirle kalbin dirilişi ve ahiret bilinci',
+    },
+  },
+  dawat_chapter: {
+    title: {
+      bn: 'দাওয়াত',
+      en: 'Foundations of Dawah & Inviting to Allah',
+      ur: 'دعوت الی اللہ کے اصول',
+      ar: 'أصول الدعوة إلى الله تعالى',
+      hi: 'दावत-ए-दीन के मूल सिद्धांत',
+      id: 'Hakikat & Landasan Dakwah Ilallah',
+      tr: 'Allah\'a Davetin Esasları ve Fazileti',
+    },
+    subtitle: {
+      bn: 'দাওয়াতের হাকিকত, ফযিলত, আখিরাতের প্রস্তুতি ও আল্লাহর ভয়',
+      en: 'Reality of Dawah, unmatched virtues, preparation for the Hereafter, and Taqwa',
+      ur: 'دعوت کی حقیقت، فضیلت، آخرت کی تیاری اور تقویٰ',
+      ar: 'حقيقة الدعوة وفضائلها، والاستعداد للقاء الله والتقوى',
+      hi: 'दावत की हक़ीक़त, फ़ज़ीलत, आख़िरत की तैयारी और तक़वा',
+      id: 'Hakikat dakwah, keutamaan agung, persiapan akhirat, dan rasa takut kepada Allah',
+      tr: 'Davetin hakikati, fazileti, ahirete hazırlık ve takva şuuru',
+    },
+  },
+  tabligh_120_core: {
+    title: {
+      bn: 'মোজাকারা (তাবলিগী মোজাকারার ১২০টি গুরুত্বপূর্ণ পয়েন্ট ও মাসায়েল)',
+      en: 'Muzakarah: 120 Core Essential Principles of Tabligh',
+      ur: 'مذاکرہ (تبلیغی مذاکرہ کے ۱۲۰ اہم نکات و مسائل)',
+      ar: 'المذاكرة: ١٢٠ مبدأ ومسألة أساسية في التبليغ',
+      hi: 'मुज़ाकरा (तबलीग़ी मुज़ाकरा के 120 मुख्य बिंदु व मसाइल)',
+      id: 'Mudzakarah: 120 Poin Kunci & Masail Penting Tabligh',
+      tr: 'Müzakere: Tebliğin 120 Temel Esası ve Hükümleri',
+    },
+    subtitle: {
+      bn: 'তাবলিগী মুযাকারা ও দীনি তালীমের পূর্ণাঙ্গ ১২০টি গুরুত্বপূর্ণ পয়েন্ট ও মাসায়েলের সংকলন',
+      en: 'Comprehensive compendium of 120 essential principles, etiquettes, and rulings of Taleem',
+      ur: 'تبلیغی مذاکرہ اور دینی تعلیم کے ۱۲۰ اہم نکات اور مسائل کا جامع مجموعہ',
+      ar: 'الموسوعة الشاملة لمائة وعشرين نقطة أساسية في المذاكرة والتعليم الديني',
+      hi: 'तबलीग़ी मुज़ाकरा व दीनी तालीम के 120 मुख्य बिंदुओं व मसाइल का संपूर्ण संग्रह',
+      id: 'Kumpulan lengkap 120 poin mutiara mudzakarah dan bimbingan taklim',
+      tr: 'Tebliğ müzakeresi ve dini talimin 120 temel prensip ve meselesi',
+    },
+  },
+};
+
 export const TABLIG_UI: Record<string, Record<string, string>> = createTranslationProxy({
   bannerTitle: {
     bn: 'দাওয়াত ও তাবলিগ (পূর্ণাঙ্গ সিলেবাস ও বিস্তারিত বয়ান)',
