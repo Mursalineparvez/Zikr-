@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { UMRAH_STEPS, HAJJ_DAYS_GUIDE, IHRAM_PROHIBITIONS, HajjStepItem } from '../data/hajjUmrahData';
+import {
+  UMRAH_STEPS,
+  HAJJ_DAYS_GUIDE,
+  IHRAM_PROHIBITIONS,
+  IHRAM_PROHIBITIONS_EN,
+  HajjStepItem,
+} from '../data/hajjUmrahData';
 import { ThemeMode, ZikrLanguage } from '../types';
 import {
   Compass,
-  Sparkles,
   Volume2,
   CheckCircle2,
   AlertTriangle,
-  BookOpen,
   ChevronRight,
   ChevronDown,
-  Layers,
   Award,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -28,6 +31,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
   selectedLanguage = 'bn',
 }) => {
   const isDay = themeMode === 'day';
+  const isBn = selectedLanguage === 'bn';
   const [activeTab, setActiveTab] = useState<'umrah' | 'hajj' | 'prohibitions'>('umrah');
   const [expandedStep, setExpandedStep] = useState<string>('umrah_1_ihram');
 
@@ -41,6 +45,8 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
       window.speechSynthesis.speak(utterance);
     }
   };
+
+  const prohibitionsList = isBn ? IHRAM_PROHIBITIONS : IHRAM_PROHIBITIONS_EN;
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
@@ -121,8 +127,13 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
       {/* 1. Umrah Steps or 2. Hajj 5 Days */}
       {(activeTab === 'umrah' || activeTab === 'hajj') && (
         <div className="space-y-3">
-          {(activeTab === 'umrah' ? UMRAH_STEPS : HAJJ_DAYS_GUIDE).map((step) => {
+          {(activeTab === 'umrah' ? UMRAH_STEPS : HAJJ_DAYS_GUIDE).map((step: HajjStepItem) => {
             const isExpanded = expandedStep === step.id;
+            const stageLabel = isBn ? step.dayOrStageBn : (step.dayOrStageEn || step.dayOrStageBn);
+            const titleLabel = isBn ? step.titleBn : (step.titleEn || step.titleBn);
+            const summaryLabel = isBn ? step.summaryBn : (step.summaryEn || step.summaryBn);
+            const actions = (isBn ? step.actionItems : (step.actionItemsEn || step.actionItems)) || [];
+
             return (
               <div
                 key={step.id}
@@ -141,11 +152,11 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <span className="px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
-                      {step.dayOrStageBn}
+                      {stageLabel}
                     </span>
                     <div>
                       <h3 className={`text-sm sm:text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                        {step.titleBn}
+                        {titleLabel}
                       </h3>
                       {step.arabicTitle && (
                         <div className="font-arabic text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
@@ -165,14 +176,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                 {isExpanded && (
                   <div className="p-4 sm:p-5 pt-0 space-y-3.5 border-t border-slate-100 dark:border-teal-900/30 text-xs sm:text-sm">
                     <p className={`leading-relaxed ${isDay ? 'text-slate-600' : 'text-teal-200/90'}`}>
-                      {step.summaryBn}
+                      {summaryLabel}
                     </p>
 
                     <div className="space-y-2">
                       <strong className="text-emerald-600 dark:text-emerald-400 block text-xs uppercase tracking-wider font-bold">
-                        {selectedLanguage === 'bn' ? 'করণীয় আমলসমূহ:' : 'Action Items:'}
+                        {isBn ? 'করণীয় আমলসমূহ:' : 'Action Items & Duties:'}
                       </strong>
-                      {step.actionItems.map((act, aIdx) => (
+                      {actions.map((act, aIdx) => (
                         <div
                           key={aIdx}
                           className={`p-3 rounded-2xl border flex items-start gap-2.5 ${
@@ -189,38 +200,44 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
 
                     {step.essentialDuas && step.essentialDuas.length > 0 && (
                       <div className="space-y-2.5 pt-2">
-                        {step.essentialDuas.map((dua, dIdx) => (
-                          <div
-                            key={dIdx}
-                            className={`p-4 rounded-2xl border space-y-2 ${
-                              isDay
-                                ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
-                                : 'bg-[#071f23] border-emerald-500/40 text-teal-100'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs text-emerald-700 dark:text-emerald-300">
-                                🤲 {dua.titleBn}
-                              </span>
-                              <button
-                                onClick={() => handleSpeakArabic(dua.arabic)}
-                                className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 flex items-center gap-1 text-[11px] font-bold cursor-pointer"
-                              >
-                                <Volume2 className="w-3.5 h-3.5" />
-                                <span>{HAJJ_UMRAH_UI.listenArabic[selectedLanguage]}</span>
-                              </button>
+                        {step.essentialDuas.map((dua, dIdx) => {
+                          const duaTitle = isBn ? dua.titleBn : (dua.titleEn || dua.titleBn);
+                          const duaMeaning = isBn ? dua.meaningBn : (dua.meaningEn || dua.meaningBn);
+                          return (
+                            <div
+                              key={dIdx}
+                              className={`p-4 rounded-2xl border space-y-2 ${
+                                isDay
+                                  ? 'bg-emerald-50/70 border-emerald-200 text-slate-800'
+                                  : 'bg-[#071f23] border-emerald-500/40 text-teal-100'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-xs text-emerald-700 dark:text-emerald-300">
+                                  🤲 {duaTitle}
+                                </span>
+                                <button
+                                  onClick={() => handleSpeakArabic(dua.arabic)}
+                                  className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 flex items-center gap-1 text-[11px] font-bold cursor-pointer"
+                                >
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                  <span>{HAJJ_UMRAH_UI.listenArabic[selectedLanguage]}</span>
+                                </button>
+                              </div>
+                              <div className="font-arabic text-lg sm:text-xl font-bold text-emerald-700 dark:text-emerald-400 text-right leading-loose">
+                                {dua.arabic}
+                              </div>
+                              {dua.transliteration && (
+                                <div className="text-[11px] text-slate-500 dark:text-teal-300/80 italic">
+                                  {dua.transliteration}
+                                </div>
+                              )}
+                              <div className="text-xs font-medium text-slate-700 dark:text-teal-100">
+                                <strong>{isBn ? 'অর্থ:' : 'Meaning:'}</strong> {duaMeaning}
+                              </div>
                             </div>
-                            <div className="font-arabic text-lg sm:text-xl font-bold text-emerald-700 dark:text-emerald-400 text-right leading-loose">
-                              {dua.arabic}
-                            </div>
-                            <div className="text-[11px] text-slate-500 dark:text-teal-300/80 italic">
-                              {dua.transliteration}
-                            </div>
-                            <div className="text-xs font-medium text-slate-700 dark:text-teal-100">
-                              <strong>{selectedLanguage === 'bn' ? 'অর্থ:' : 'Meaning:'}</strong> {dua.meaningBn}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -242,20 +259,20 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             <AlertTriangle className="w-5 h-5 text-amber-500" />
             <div>
               <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                {selectedLanguage === 'bn'
+                {isBn
                   ? 'ইহরাম অবস্থায় নিষিদ্ধ কাজসমূহ (মহাগুরুত্বপূর্ণ সতর্কতা)'
                   : 'Prohibitions During Ihram (Crucial Precautions)'}
               </h3>
               <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                {selectedLanguage === 'bn'
+                {isBn
                   ? 'ইহরাম বাঁধার পর থেকে হালাল হওয়া পর্যন্ত নিচের কাজগুলো সম্পূর্ণ বর্জন করতে হবে:'
-                  : 'From wearing Ihram until Tahallul, completely abstain from the following actions:'}
+                  : 'From putting on Ihram until Tahallul, completely abstain from the following actions:'}
               </p>
             </div>
           </div>
 
           <div className="space-y-2">
-            {IHRAM_PROHIBITIONS.map((p, idx) => (
+            {prohibitionsList.map((p, idx) => (
               <div
                 key={idx}
                 className={`p-3.5 rounded-2xl border flex items-start gap-3 text-xs sm:text-sm ${

@@ -1,5 +1,14 @@
 import React from 'react';
-import { Volume2, VolumeX, Smartphone, Palette, Sun, ShieldAlert, FileText, Download, Upload, RotateCcw, Sparkles, Globe, Check } from 'lucide-react';
+import {
+  Smartphone,
+  Palette,
+  ShieldAlert,
+  FileText,
+  Download,
+  Upload,
+  Globe,
+  Check,
+} from 'lucide-react';
 import { AppTheme, AppSettings, ZikrLanguage } from '../types';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { SETTINGS_UI } from '../utils/appTranslations';
@@ -58,29 +67,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     };
     reader.readAsText(file);
   };
+
   const themes: Array<{ id: AppTheme; name: string; desc: string; previewClass: string }> = [
     {
       id: 'emerald',
-      name: 'Serene Emerald',
-      desc: 'Classic Islamic Emerald Green with Gold accents',
+      name: SETTINGS_UI.themeEmeraldName[selectedLanguage] || 'Serene Emerald',
+      desc: SETTINGS_UI.themeEmeraldDesc[selectedLanguage] || 'Classic Islamic Emerald Green with Gold accents',
       previewClass: 'from-emerald-900 to-emerald-950 border-emerald-500',
     },
     {
       id: 'midnight',
-      name: 'Midnight Slate',
-      desc: 'Deep obsidian night with cool slate accents',
+      name: SETTINGS_UI.themeMidnightName[selectedLanguage] || 'Midnight Slate',
+      desc: SETTINGS_UI.themeMidnightDesc[selectedLanguage] || 'Deep obsidian night with cool slate accents',
       previewClass: 'from-slate-900 to-black border-slate-600',
     },
     {
       id: 'teal',
-      name: 'Ocean Teal',
-      desc: 'Calming Mediterranean deep teal and turquoise',
+      name: SETTINGS_UI.themeTealName[selectedLanguage] || 'Ocean Teal',
+      desc: SETTINGS_UI.themeTealDesc[selectedLanguage] || 'Calming Mediterranean deep teal and turquoise',
       previewClass: 'from-teal-900 to-cyan-950 border-teal-500',
     },
     {
       id: 'gold',
-      name: 'Medina Gold',
-      desc: 'Warm sacred desert gold and amber tones',
+      name: SETTINGS_UI.themeGoldName[selectedLanguage] || 'Medina Gold',
+      desc: SETTINGS_UI.themeGoldDesc[selectedLanguage] || 'Warm sacred desert gold and amber tones',
       previewClass: 'from-amber-950 to-yellow-950 border-amber-500',
     },
   ];
@@ -111,7 +121,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
         <p className="text-xs text-slate-400">
           {SETTINGS_UI.languageDesc[selectedLanguage] ||
-            'আরবি হরফ ব্যতীত সকল মেনু, অনুবাদ ও নির্দেশিকা স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে'}
+            'All menus, translations, and guides will update instantly (Sacred Arabic remains intact)'}
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
@@ -152,7 +162,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
           <Palette className="w-4 h-4" />
-          <span>Appearance Theme</span>
+          <span>{SETTINGS_UI.themeTitle[selectedLanguage] || 'Appearance Theme'}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -185,19 +195,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
           <Smartphone className="w-4 h-4" />
-          <span>Feedback &amp; Sensory Controls</span>
+          <span>{SETTINGS_UI.audioHaptics[selectedLanguage] || 'Feedback & Sensory Controls'}</span>
         </div>
 
         <div className="divide-y divide-slate-800/80 text-sm">
           {/* Sound Toggle */}
           <div className="py-3 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-white">Bead Click Audio</div>
-              <div className="text-xs text-slate-400">Synthesized acoustic wooden bead click on every count</div>
+              <div className="font-semibold text-white">
+                {SETTINGS_UI.soundLabel[selectedLanguage] || 'Bead Click Audio'}
+              </div>
+              <div className="text-xs text-slate-400">
+                {SETTINGS_UI.soundDesc[selectedLanguage] || 'Synthesized acoustic wooden bead click on every count'}
+              </div>
             </div>
             <button
               onClick={() => onUpdateSettings({ soundEnabled: !settings.soundEnabled })}
-              className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out ${
+              className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer ${
                 settings.soundEnabled ? 'bg-emerald-600' : 'bg-slate-700'
               }`}
             >
@@ -212,12 +226,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* Vibration Toggle */}
           <div className="py-3 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-white">Tactile Vibration Haptics</div>
-              <div className="text-xs text-slate-400">Soft pulse feedback on tap, milestone chords for targets</div>
+              <div className="font-semibold text-white">
+                {SETTINGS_UI.vibrationLabel[selectedLanguage] || 'Tactile Vibration Haptics'}
+              </div>
+              <div className="text-xs text-slate-400">
+                {SETTINGS_UI.vibrationDesc[selectedLanguage] || 'Soft pulse feedback on tap, milestone chords for targets'}
+              </div>
             </div>
             <button
               onClick={() => onUpdateSettings({ vibrationEnabled: !settings.vibrationEnabled })}
-              className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out ${
+              className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer ${
                 settings.vibrationEnabled ? 'bg-emerald-600' : 'bg-slate-700'
               }`}
             >
@@ -232,12 +250,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* Screen Wake Lock */}
           <div className="py-3 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-white">Keep Screen Awake (Wake Lock)</div>
-              <div className="text-xs text-slate-400">Prevents phone display from sleeping while reciting</div>
+              <div className="font-semibold text-white">
+                {SETTINGS_UI.wakeLockLabel[selectedLanguage] || 'Keep Screen Awake (Wake Lock)'}
+              </div>
+              <div className="text-xs text-slate-400">
+                {SETTINGS_UI.wakeLockDesc[selectedLanguage] || 'Prevents phone display from sleeping while reciting'}
+              </div>
             </div>
             <button
               onClick={() => onUpdateSettings({ screenAwake: !settings.screenAwake })}
-              className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out ${
+              className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer ${
                 settings.screenAwake ? 'bg-emerald-600' : 'bg-slate-700'
               }`}
             >
@@ -255,29 +277,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
           <FileText className="w-4 h-4" />
-          <span>Export &amp; Data Backup</span>
+          <span>{SETTINGS_UI.dataBackup[selectedLanguage] || 'Export & Data Backup'}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={onExportPdf}
-            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/50 text-emerald-200 text-xs font-bold transition active:scale-95"
+            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/50 text-emerald-200 text-xs font-bold transition active:scale-95 cursor-pointer"
           >
             <FileText className="w-4 h-4 text-amber-300" />
-            <span>Export PDF Report</span>
+            <span>{SETTINGS_UI.exportPdf[selectedLanguage] || 'Export PDF Report'}</span>
           </button>
 
           <button
             onClick={onExportBackupJson || handleDefaultExportBackup}
-            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition active:scale-95"
+            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition active:scale-95 cursor-pointer"
           >
             <Download className="w-4 h-4 text-teal-400" />
-            <span>Backup JSON</span>
+            <span>{SETTINGS_UI.backupJson[selectedLanguage] || 'Backup JSON'}</span>
           </button>
 
           <label className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition active:scale-95 cursor-pointer">
             <Upload className="w-4 h-4 text-cyan-400" />
-            <span>Restore JSON</span>
+            <span>{SETTINGS_UI.restoreJson[selectedLanguage] || 'Restore JSON'}</span>
             <input
               type="file"
               accept=".json"
@@ -298,22 +320,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="bg-slate-900/80 p-5 rounded-3xl border border-red-900/40 space-y-3">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-400">
           <ShieldAlert className="w-4 h-4" />
-          <span>Data Reset Controls</span>
+          <span>{SETTINGS_UI.dangerZone[selectedLanguage] || 'Data Reset Controls'}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={onGlobalReset}
-            className="px-4 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-800/60 text-red-200 text-xs font-bold transition active:scale-95"
+            className="px-4 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-800/60 text-red-200 text-xs font-bold transition active:scale-95 cursor-pointer"
           >
-            Reset All Counters to 0
+            {SETTINGS_UI.resetCounters[selectedLanguage] || 'Reset All Counters to 0'}
           </button>
 
           <button
             onClick={onRestoreDefaults}
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition active:scale-95"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition active:scale-95 cursor-pointer"
           >
-            Restore Default Azkar
+            {SETTINGS_UI.restoreAzkar[selectedLanguage] || 'Restore Default Azkar'}
           </button>
         </div>
       </div>
