@@ -362,7 +362,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           }`}
         >
           <span>🏠</span>
-          <span>{isBn ? 'সকল দোয়া ও চেকলিস্ট এক সাথে' : 'All Duas & Checklists'}</span>
+          <span>{isBn ? 'হজ ও ওমরাহ চেকলিস্ট' : 'Hajj & Umrah Checklist'}</span>
         </button>
 
         <button

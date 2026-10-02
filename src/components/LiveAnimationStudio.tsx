@@ -271,12 +271,13 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
   // Tawaf Simulation State
   const tawafCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [tawafCircuit, setTawafCircuit] = useState<number>(1);
-  const [tawafAngle, setTawafAngle] = useState<number>(0);
+  const tawafAngleRef = useRef<number>(0);
 
   // Sa'i Simulation State
   const [saiTrip, setSaiTrip] = useState<number>(1);
   const [saiPos, setSaiPos] = useState<number>(0); // 0 (Safa) to 100 (Marwah)
   const [saiDirection, setSaiDirection] = useState<'to_marwah' | 'to_safa'>('to_marwah');
+  const saiDirRef = useRef<'to_marwah' | 'to_safa'>('to_marwah');
 
   // Hajj Route Map State
   const [hajjRouteStep, setHajjRouteStep] = useState<number>(1);
@@ -314,8 +315,6 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
         opacity: 0.5 + Math.random() * 0.5,
       });
     }
-
-    let mainAngle = tawafAngle;
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -389,11 +388,13 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
         pilgrims.forEach((p) => {
           p.angle -= p.speed * animSpeed;
         });
-        mainAngle -= 0.012 * animSpeed;
-        setTawafAngle(mainAngle);
+        tawafAngleRef.current -= 0.012 * animSpeed;
 
-        const currentLap = Math.floor(((-mainAngle) / (Math.PI * 2))) % 7 + 1;
-        setTawafCircuit(Math.max(1, Math.min(7, currentLap)));
+        const currentLap = (Math.floor((-tawafAngleRef.current) / (Math.PI * 2)) % 7) + 1;
+        setTawafCircuit((prevLap) => {
+          const nextLap = Math.max(1, Math.min(7, currentLap));
+          return prevLap !== nextLap ? nextLap : prevLap;
+        });
       }
 
       // Draw Crowd Dots
@@ -407,8 +408,8 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
       });
 
       // 6. Draw Main Pilgrim Avatar (Highlighted Gold Dot with Ring)
-      const mainX = centerX + Math.cos(mainAngle) * 115;
-      const mainY = centerY + Math.sin(mainAngle) * 115;
+      const mainX = centerX + Math.cos(tawafAngleRef.current) * 115;
+      const mainY = centerY + Math.sin(tawafAngleRef.current) * 115;
 
       ctx.shadowColor = '#fbbf24';
       ctx.shadowBlur = 15;
@@ -430,7 +431,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
     render();
 
     return () => cancelAnimationFrame(animFrameId);
-  }, [activeScene, isPlaying, animSpeed, tawafAngle]);
+  }, [activeScene, isPlaying, animSpeed]);
 
   // Sa'i Animation Loop (Safa & Marwah)
   useEffect(() => {
@@ -439,9 +440,10 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
     const interval = setInterval(() => {
       setSaiPos((prev) => {
         let step = 0.8 * animSpeed;
-        if (saiDirection === 'to_marwah') {
+        if (saiDirRef.current === 'to_marwah') {
           if (prev >= 30 && prev <= 70) step *= 1.8;
           if (prev >= 100) {
+            saiDirRef.current = 'to_safa';
             setSaiDirection('to_safa');
             setSaiTrip((t) => (t < 7 ? t + 1 : 1));
             return 100;
@@ -450,6 +452,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
         } else {
           if (prev >= 30 && prev <= 70) step *= 1.8;
           if (prev <= 0) {
+            saiDirRef.current = 'to_marwah';
             setSaiDirection('to_marwah');
             setSaiTrip((t) => (t < 7 ? t + 1 : 1));
             return 0;
@@ -460,7 +463,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
     }, 40);
 
     return () => clearInterval(interval);
-  }, [activeScene, isPlaying, animSpeed, saiDirection]);
+  }, [activeScene, isPlaying, animSpeed]);
 
   const activeRouteDetail = HAJJ_ROUTE_PHOTOS.find((r) => r.id === hajjRouteStep) || HAJJ_ROUTE_PHOTOS[0];
 
@@ -595,7 +598,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
                 {isBn ? `চক্কর নম্বর: ${tawafCircuit} / ৭` : `Circuit: ${tawafCircuit} / 7`}
               </span>
               <button
-                onClick={() => setTawafAngle((a) => a - Math.PI * 2 / 7)}
+                onClick={() => { tawafAngleRef.current -= Math.PI * 2 / 7; }}
                 className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition active:scale-95 cursor-pointer flex items-center gap-1"
               >
                 <FastForward className="w-4 h-4" />
@@ -720,7 +723,6 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
 
           {/* REAL PHOTO DISPLAY CARD FOR SELECTED HAJJ STEP */}
           <div className="p-6 rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl space-y-6 animate-in fade-in duration-300">
-            {/* Real Photo Banner Container */}
             <div className="relative w-full h-[300px] sm:h-[400px] rounded-2xl overflow-hidden border border-slate-700 shadow-2xl group">
               <img
                 src={activeRouteDetail.imageUrl}
@@ -744,12 +746,10 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
               </div>
             </div>
 
-            {/* Location Description */}
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
               {isBn ? activeRouteDetail.descBn : activeRouteDetail.descEn}
             </p>
 
-            {/* Action Items List */}
             <div className="space-y-2 pt-1">
               <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -770,7 +770,6 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
               </div>
             </div>
 
-            {/* Recommended Location Dua */}
             {activeRouteDetail.duaArabic && (
               <div className="p-4 rounded-2xl bg-slate-900 border border-amber-500/40 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-amber-400">
