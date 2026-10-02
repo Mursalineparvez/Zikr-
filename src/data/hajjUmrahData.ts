@@ -55,6 +55,115 @@ export interface PackingCategory {
   items: Array<{ id: string; nameEn: string; nameBn: string; noteEn?: string; noteBn?: string }>;
 }
 
+export interface UsefulPhraseItem {
+  id: string;
+  arabic: string;
+  transliteration: string;
+  meaningEn: string;
+  meaningBn: string;
+  category: 'Directions' | 'Emergency' | 'Shopping' | 'Transport';
+}
+
+export const USEFUL_PILGRIM_PHRASES: UsefulPhraseItem[] = [
+  {
+    id: 'ph1',
+    arabic: 'أَيْنَ الْمَسْجِدُ الْحَرَامُ؟',
+    transliteration: 'Ayna al-Masjid al-Haram?',
+    meaningEn: 'Where is the Sacred Mosque (Haram)?',
+    meaningBn: 'হারাম শরিফ / মসজিদুল হারাম কোন দিকে?',
+    category: 'Directions',
+  },
+  {
+    id: 'ph2',
+    arabic: 'أَنَا تَائِهٌ، فُنْدُقِي هُوَ...',
+    transliteration: 'Ana ta\'ih, funduqi huwa...',
+    meaningEn: 'I am lost, my hotel is...',
+    meaningBn: 'আমি পথ হারিয়ে ফেলেছি, আমার হোটেল হলো...',
+    category: 'Emergency',
+  },
+  {
+    id: 'ph3',
+    arabic: 'أَيْنَ مَوْقِفُ الْحَافِلَاتِ؟',
+    transliteration: 'Ayna mawqif al-hafilat?',
+    meaningEn: 'Where is the bus stop / station?',
+    meaningBn: 'বাস স্টপেজ বা বাস স্টেশনটি কোথায়?',
+    category: 'Transport',
+  },
+  {
+    id: 'ph4',
+    arabic: 'أُرِيدُ كُرْسِيًّا مُتَحَرِّكًا',
+    transliteration: 'Ureedu kurseeyyan mutaharrikan',
+    meaningEn: 'I need a wheelchair',
+    meaningBn: 'আমার একটি হুইলচেয়ার প্রয়োজন',
+    category: 'Emergency',
+  },
+  {
+    id: 'ph5',
+    arabic: 'أَيْنَ الصَّيْدَلِيَّةُ؟',
+    transliteration: 'Ayna as-saydaliyyah?',
+    meaningEn: 'Where is the pharmacy / chemist?',
+    meaningBn: 'ফার্মেসি বা ওষুধের দোকান কোথায়?',
+    category: 'Emergency',
+  },
+  {
+    id: 'ph6',
+    arabic: 'بِكَمْ هَٰذَا؟',
+    transliteration: 'Bikam hadha?',
+    meaningEn: 'How much is this?',
+    meaningBn: 'এটির দাম কত?',
+    category: 'Shopping',
+  },
+  {
+    id: 'ph7',
+    arabic: 'أَيْنَ أَمَاكِنُ الْوُضُوءِ وَدَوْرَاتُ الْمِيَاهِ؟',
+    transliteration: 'Ayna amakin al-wudu\' wa dawrat al-miyah?',
+    meaningEn: 'Where are the ablution (Wudu) areas and restrooms?',
+    meaningBn: 'অজু করার জায়গা এবং ওয়াশরুম কোন দিকে?',
+    category: 'Directions',
+  },
+  {
+    id: 'ph8',
+    arabic: 'سَاعِدْنِي مِنْ فَضْلِكَ',
+    transliteration: 'Sa\'idni min fadlik',
+    meaningEn: 'Please help me',
+    meaningBn: 'দয়া করে আমাকে একটু সাহায্য করুন',
+    category: 'Emergency',
+  },
+];
+
+export const HAJJ_TYPES_INFO = [
+  {
+    id: 'tamattu',
+    nameEn: 'Hajj Tamattu\' (حج التمتع)',
+    nameBn: 'হজে তামাত্তু (সর্বাধিক জনপ্রিয়)',
+    badgeEn: 'Most Recommended for Travelers',
+    badgeBn: 'আন্তর্জাতিক হাজীদের জন্য সর্বাধিক উপযোগী',
+    descEn: 'Perform Umrah first during the Hajj months (Shawwal, Dhul Qa\'dah, Dhul Hijjah), exit Ihram completely, then enter a new Ihram for Hajj on the 8th of Dhul Hijjah. Requires an animal sacrifice (Hady).',
+    descBn: 'হজের মাসসমূহে প্রথমে ওমরাহ সম্পন্ন করে হালাল হয়ে যাওয়া এবং পরবর্তীতে ৮ই জিলহজ নতুনভাবে হজের ইহরাম বেঁধে হজ সম্পন্ন করা। এতে দমে শোকর (কুরবানি) ওয়াজিব।',
+    sacrificeRequired: true,
+  },
+  {
+    id: 'qiran',
+    nameEn: 'Hajj Qiran (حج القِران)',
+    nameBn: 'হজে ক্বেরান (এক ইহরামে ওমরাহ ও হজ)',
+    badgeEn: 'Combined in One Ihram',
+    badgeBn: 'এক ইহরামে উভয় ইবাদত',
+    descEn: 'Enter Ihram with the joint intention of performing BOTH Umrah and Hajj together without exiting Ihram in between. Demands high endurance. Requires an animal sacrifice (Hady).',
+    descBn: 'একই সাথে ওমরাহ ও হজের যৌথ নিয়ত করে ইহরাম বাঁধা এবং ওমরাহ শেষে হালাল না হয়ে সেই একই ইহরামে ১২ই জিলহজ পর্যন্ত হজ সমাপ্ত করা। এতেও কুরবানি ওয়াজিব।',
+    sacrificeRequired: true,
+  },
+  {
+    id: 'ifrad',
+    nameEn: 'Hajj Ifrad (حج الإفراد)',
+    nameBn: 'হজে ইফরাদ (শুধু হজ)',
+    badgeEn: 'Hajj Only',
+    badgeBn: 'শুধুমাত্র হজের জন্য',
+    descEn: 'Enter Ihram solely for Hajj without Umrah. Primarily performed by residents of Makkah and Miqat boundaries. No animal sacrifice is obligatory.',
+    descBn: 'ওমরাহ ছাড়া শুধুমাত্র হজের নিয়তে ইহরাম বাঁধা। সাধারণত মক্কার স্থানীয় বাসিন্দা ও মিকাতবাসীদের জন্য প্রযোজ্য। এতে কুরবানি ওয়াজিব নয়।',
+    sacrificeRequired: false,
+  },
+];
+
 export const UMRAH_STEPS: HajjStepItem[] = [
   {
     id: 'umrah_1_ihram',
