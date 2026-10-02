@@ -162,10 +162,10 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                   </span>
                   <div>
                     <h3 className={`text-sm font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                      {selectedLanguage === 'en' ? name.transliteration : name.nameBn}
+                      {selectedLanguage === 'bn' ? name.nameBn : name.transliteration}
                     </h3>
                     <div className="text-[11px] text-slate-400 font-medium">
-                      {name.transliteration}
+                      {selectedLanguage === 'bn' ? name.transliteration : name.meaningEn}
                     </div>
                   </div>
                 </div>

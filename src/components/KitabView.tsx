@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { ISLAMIC_KITABS, KitabItem, KitabChapter } from '../utils/kitabData';
 import { BookMarked, Search, ArrowLeft, Check, Copy, ChevronRight, Sparkles } from 'lucide-react';
-import { ThemeMode } from '../types';
+import { ThemeMode, ZikrLanguage } from '../types';
+import { KITAB_UI } from '../utils/appTranslations';
 
 interface KitabViewProps {
   themeMode?: ThemeMode;
+  selectedLanguage?: ZikrLanguage;
 }
 
-export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
+export const KitabView: React.FC<KitabViewProps> = ({
+  themeMode = 'day',
+  selectedLanguage = 'bn',
+}) => {
   const isDay = themeMode === 'day';
   const [selectedKitab, setSelectedKitab] = useState<KitabItem | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<KitabChapter | null>(null);
@@ -32,7 +37,7 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Kitab Header Banner matching Home Page */}
+      {/* Kitab Header Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#144d52] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
@@ -40,10 +45,10 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
             <span>المكتبة الإسلامية • Classical Islamic Books</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight drop-shadow-sm">
-            Islamic Kitab Library
+            {KITAB_UI.bannerTitle[selectedLanguage]}
           </h2>
           <p className="text-xs sm:text-sm text-teal-100 mt-1 max-w-xl">
-            Read and reflect upon classical Islamic works including Hisnul Muslim, Forty Hadith Nawawi, and essential manuals of belief and jurisprudence.
+            {KITAB_UI.bannerSub[selectedLanguage]}
           </p>
         </div>
       </div>
@@ -64,7 +69,7 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
               className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#1c6469] hover:bg-[#154f53] text-white transition active:scale-95 cursor-pointer shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Chapters</span>
+              <span>{KITAB_UI.backToChapters[selectedLanguage]}</span>
             </button>
 
             <span className={`text-xs font-medium ${isDay ? 'text-[#507579]' : 'text-teal-200'}`}>
@@ -82,12 +87,12 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
               {copiedId === selectedChapter.id ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-teal-600" />
-                  <span className="text-teal-600">Copied</span>
+                  <span className="text-teal-600">{KITAB_UI.copied[selectedLanguage]}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5 text-teal-600" />
-                  <span>Copy Text</span>
+                  <span>{KITAB_UI.copyText[selectedLanguage]}</span>
                 </>
               )}
             </button>
@@ -103,7 +108,7 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
           >
             <div className={`border-b pb-4 ${isDay ? 'border-[#e8f3f1]' : 'border-[#17434b]'}`}>
               <span className="text-xs font-bold text-teal-600 dark:text-teal-300 uppercase tracking-wider">
-                Chapter {selectedChapter.chapterNumber}
+                {KITAB_UI.chapter[selectedLanguage]} {selectedChapter.chapterNumber}
               </span>
               <h3 className="text-lg sm:text-xl font-bold mt-1">
                 {selectedChapter.title}
@@ -135,7 +140,7 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
               >
                 <div className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
                   <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>Spiritual Takeaways &amp; Action Items</span>
+                  <span>{KITAB_UI.spiritualTakeaways[selectedLanguage]}</span>
                 </div>
                 <ul
                   className={`space-y-1.5 text-xs sm:text-sm ${
@@ -168,7 +173,7 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
               className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#1c6469] hover:bg-[#154f53] text-white transition active:scale-95 cursor-pointer shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Library</span>
+              <span>{KITAB_UI.backToKitabs[selectedLanguage]}</span>
             </button>
 
             <div className="text-right">
@@ -228,7 +233,7 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search books by title, author, or category..."
+              placeholder={KITAB_UI.searchPlaceholder[selectedLanguage]}
               className={`w-full rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none transition shadow-sm border ${
                 isDay
                   ? 'bg-white border-[#cde5e2] text-[#103e42] placeholder-[#7ca2a7] focus:border-[#1c6469]'
@@ -288,9 +293,9 @@ export const KitabView: React.FC<KitabViewProps> = ({ themeMode = 'day' }) => {
                     isDay ? 'border-[#e8f3f1]' : 'border-[#17434b]'
                   }`}
                 >
-                  <span>{kitab.chapters.length} Chapters Available</span>
+                  <span>{kitab.chapters.length} {KITAB_UI.chaptersCount[selectedLanguage]}</span>
                   <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    Read Book <ChevronRight className="w-3.5 h-3.5" />
+                    {KITAB_UI.openKitab[selectedLanguage]} <ChevronRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </div>

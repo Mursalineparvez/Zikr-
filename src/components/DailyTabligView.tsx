@@ -13,6 +13,7 @@ import {
   Search,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
+import { TABLIG_UI } from '../utils/appTranslations';
 
 interface DailyTabligViewProps {
   soundEnabled: boolean;
@@ -47,16 +48,14 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
     return matchTitle || matchSec;
   });
 
-  // Extract smart menu items for ANY chapter (grouped bayans, parts, or individual topics)
+  // Extract smart menu items for ANY chapter
   const getChapterMenuItems = (chap: TabligChapterDetail): ChapterMenuItem[] => {
     if (!chap.sections || chap.sections.length <= 1) return [];
 
-    // Specifically exclude chapter 10 (tabligh_120_core) so all 120 points show sequentially without filter menu
     if (chap.id === 'tabligh_120_core') {
       return [];
     }
 
-    // 1. Check for major grouped prefixes (like "বাদ মাগরিব বয়ান ১", "পর্ব ১", etc.)
     const prefixMap = new Map<string, number>();
     chap.sections.forEach((s) => {
       const matchGroup = s.heading.match(/^(বাদ মাগরিব বয়ান [১-৩]|পর্ব [১-৩])/);
@@ -75,18 +74,14 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
       }));
     }
 
-    // 2. For numbered or distinct topics (e.g. Chapter 02 "ঈমান ও একীনের কথা - ১", "দাওয়াত — (১)", 6 sifats, bio, etc.)
     return chap.sections.map((sec, idx) => {
       let shortLabel = sec.heading;
-
-      // Clean up common prefixes for cleaner pill display
       shortLabel = shortLabel
         .replace(/^ঈমান ও একীনের কথা\s*[-—:]\s*/i, 'কথা - ')
         .replace(/^দাওয়াত\s*[-—:]\s*\(([০-৯0-9]+)\)/i, 'দাওয়াত $1')
         .replace(/^ছয় সিফ[াতো]+র আলোচনা\s*\((.*?)\)/i, '$1')
         .trim();
 
-      // If still too long, truncate intelligently
       if (shortLabel.length > 22) {
         shortLabel = shortLabel.slice(0, 20) + '…';
       }
@@ -100,15 +95,14 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
     });
   };
 
-  // Sanitize and clean raw text formatting (# symbols, --- horizontal rules, and extra spaces)
   const formatCleanContent = (raw: string): string => {
     if (!raw) return '';
     return raw
-      .replace(/^\s*[-—_]{3,}\s*$/gm, '') // remove --- separator lines
-      .replace(/^[ \t]*#+[ \t]*/gm, '') // remove #, ##, ###, #### markdown heading markers
-      .replace(/#/g, '') // remove any remaining rogue # symbols
-      .replace(/[ \t]+$/gm, '') // remove trailing whitespaces on each line
-      .replace(/\n{3,}/g, '\n\n') // collapse multiple blank lines into standard spacing
+      .replace(/^\s*[-—_]{3,}\s*$/gm, '')
+      .replace(/^[ \t]*#+[ \t]*/gm, '')
+      .replace(/#/g, '')
+      .replace(/[ \t]+$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
   };
 
@@ -129,10 +123,10 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
               <span>الدَّعْوَةُ وَالتَّبْلِيغُ • Complete Authentic Tabligh Syllabus &amp; Bayan</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              দাওয়াত ও তাবলিগ (পূর্ণাঙ্গ সিলেবাস ও বিস্তারিত বয়ান)
+              {TABLIG_UI.bannerTitle[selectedLanguage]}
             </h2>
             <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-3xl">
-              ৬ সিফত, কালেমা, নামাজ, ইলম ও জিকির, ইকরাম, নিয়ত, তাবলীগের ইতিহাস, ইলিয়াস রহ.-এর মালফুজাত এবং গাস্তের আদবসহ সম্পূর্ণ প্রামাণিক ও বিস্তারিত সংকলন।
+              {TABLIG_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
         </div>
@@ -145,7 +139,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="তাবলিগের যেকোনো বিষয় বা শব্দ দিয়ে খুঁজুন (যেমন: নামাজ, ইলম, গাস্ত, ইতিহাস)..."
+          placeholder={TABLIG_UI.searchPlaceholder[selectedLanguage]}
           className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-xs sm:text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
             isDay
               ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'
@@ -158,10 +152,10 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between px-2">
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isDay ? 'text-slate-500' : 'text-teal-300'}`}>
-            📚 সম্পূর্ণ অধ্যায়সমূহ ({filteredChapters.length}টি অধ্যায়)
+            {TABLIG_UI.allChapters[selectedLanguage]} ({filteredChapters.length})
           </h3>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-            ট্যাপ করে বিস্তারিত পড়ুন
+            {TABLIG_UI.tapToRead[selectedLanguage]}
           </span>
         </div>
 
@@ -185,7 +179,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <span className="w-9 h-9 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center text-sm font-mono shrink-0 shadow-sm">
-                    {chap.numberBn}
+                    {selectedLanguage === 'bn' ? chap.numberBn : chap.id.replace('chap_', '').replace('sifats_intro', '1')}
                   </span>
                   <div className="min-w-0">
                     <h3 className={`text-sm sm:text-base font-bold truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
@@ -232,7 +226,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                         <div className="pt-2 flex flex-wrap items-center gap-1.5 sm:gap-2 border-b border-slate-200/60 dark:border-teal-900/40 pb-3">
                           <span className="text-[11px] font-semibold text-slate-500 dark:text-teal-300 mr-1 flex items-center gap-1 shrink-0">
                             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                            বিষয় / পর্ব নির্বাচন:
+                            {selectedLanguage === 'bn' ? 'বিষয় / পর্ব নির্বাচন:' : 'Select Topic / Part:'}
                           </span>
                           <button
                             type="button"
@@ -248,7 +242,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                                 : 'bg-[#071d22] hover:bg-teal-900/50 text-teal-200 border border-teal-800/40'
                             }`}
                           >
-                            সবগুলো ({chap.sections.length})
+                            {selectedLanguage === 'bn' ? 'সবগুলো' : 'All'} ({chap.sections.length})
                           </button>
                           {menuItems.map((item) => {
                             const isSelected = currentFilter === item.id;

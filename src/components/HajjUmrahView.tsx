@@ -14,6 +14,7 @@ import {
   Award,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
+import { HAJJ_UMRAH_UI } from '../utils/appTranslations';
 
 interface HajjUmrahViewProps {
   soundEnabled: boolean;
@@ -58,10 +59,10 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
               <span>الحَجُّ وَالعُمْرَةُ • Complete Interactive Hajj &amp; Umrah Guide</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              হজ ও ওমরাহ পূর্ণাঙ্গ গাইড ও নিয়মাবলী
+              {HAJJ_UMRAH_UI.bannerTitle[selectedLanguage]}
             </h2>
             <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-xl">
-              "এবং মানুষের কাছে হজের ঘোষণা দাও; তারা তোমার কাছে আসবে পায়ে হেঁটে এবং সর্বপ্রকার কৃশকায় উটের পিঠে চড়ে।" — সূরা আল-হাজ্জ (২২:২৭)
+              {HAJJ_UMRAH_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
         </div>
@@ -82,7 +83,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           }`}
         >
           <span className="text-base">🕋</span>
-          <span>ওমরাহ নির্দেশিকা</span>
+          <span>{HAJJ_UMRAH_UI.tabUmrah[selectedLanguage]}</span>
         </button>
 
         <button
@@ -98,7 +99,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           }`}
         >
           <Award className="w-4 h-4" />
-          <span>হজের ৫ দিন (৮-১২ই জিলহজ)</span>
+          <span>{HAJJ_UMRAH_UI.tabHajj[selectedLanguage]}</span>
         </button>
 
         <button
@@ -113,11 +114,11 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           }`}
         >
           <AlertTriangle className="w-4 h-4" />
-          <span>ইহরামের নিষিদ্ধ কাজ</span>
+          <span>{HAJJ_UMRAH_UI.tabProhibitions[selectedLanguage]}</span>
         </button>
       </div>
 
-      {/* 1. ওমরাহ নির্দেশিকা বা 2. হজের ৫ দিন */}
+      {/* 1. Umrah Steps or 2. Hajj 5 Days */}
       {(activeTab === 'umrah' || activeTab === 'hajj') && (
         <div className="space-y-3">
           {(activeTab === 'umrah' ? UMRAH_STEPS : HAJJ_DAYS_GUIDE).map((step) => {
@@ -169,7 +170,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
 
                     <div className="space-y-2">
                       <strong className="text-emerald-600 dark:text-emerald-400 block text-xs uppercase tracking-wider font-bold">
-                        করণীয় আমলসমূহ:
+                        {selectedLanguage === 'bn' ? 'করণীয় আমলসমূহ:' : 'Action Items:'}
                       </strong>
                       {step.actionItems.map((act, aIdx) => (
                         <div
@@ -203,10 +204,10 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                               </span>
                               <button
                                 onClick={() => handleSpeakArabic(dua.arabic)}
-                                className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 flex items-center gap-1 text-[11px] font-bold"
+                                className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 flex items-center gap-1 text-[11px] font-bold cursor-pointer"
                               >
                                 <Volume2 className="w-3.5 h-3.5" />
-                                <span>শুনুন</span>
+                                <span>{HAJJ_UMRAH_UI.listenArabic[selectedLanguage]}</span>
                               </button>
                             </div>
                             <div className="font-arabic text-lg sm:text-xl font-bold text-emerald-700 dark:text-emerald-400 text-right leading-loose">
@@ -216,7 +217,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                               {dua.transliteration}
                             </div>
                             <div className="text-xs font-medium text-slate-700 dark:text-teal-100">
-                              <strong>অর্থ:</strong> {dua.meaningBn}
+                              <strong>{selectedLanguage === 'bn' ? 'অর্থ:' : 'Meaning:'}</strong> {dua.meaningBn}
                             </div>
                           </div>
                         ))}
@@ -230,7 +231,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
         </div>
       )}
 
-      {/* 3. ইহরামের নিষিদ্ধ কাজ */}
+      {/* 3. Prohibitions of Ihram */}
       {activeTab === 'prohibitions' && (
         <div
           className={`p-5 sm:p-6 rounded-3xl border shadow-xl space-y-4 ${
@@ -241,10 +242,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             <AlertTriangle className="w-5 h-5 text-amber-500" />
             <div>
               <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                ইহরাম অবস্থায় নিষিদ্ধ কাজসমূহ (মহাগুরুত্বপূর্ণ সতর্কতা)
+                {selectedLanguage === 'bn'
+                  ? 'ইহরাম অবস্থায় নিষিদ্ধ কাজসমূহ (মহাগুরুত্বপূর্ণ সতর্কতা)'
+                  : 'Prohibitions During Ihram (Crucial Precautions)'}
               </h3>
               <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                ইহরাম বাঁধার পর থেকে হালাল হওয়া পর্যন্ত নিচের কাজগুলো সম্পূর্ণ বর্জন করতে হবে:
+                {selectedLanguage === 'bn'
+                  ? 'ইহরাম বাঁধার পর থেকে হালাল হওয়া পর্যন্ত নিচের কাজগুলো সম্পূর্ণ বর্জন করতে হবে:'
+                  : 'From wearing Ihram until Tahallul, completely abstain from the following actions:'}
               </p>
             </div>
           </div>

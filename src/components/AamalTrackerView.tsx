@@ -43,7 +43,7 @@ import {
 import confetti from 'canvas-confetti';
 import { soundHaptics } from '../utils/audioHaptics';
 import { HistoryReportModal } from './HistoryReportModal';
-import { AAMAL_ITEM_TRANSLATIONS, AAMAL_UI } from '../utils/appTranslations';
+import { AAMAL_ITEM_TRANSLATIONS, AAMAL_UI, PRAYER_NAMES } from '../utils/appTranslations';
 
 interface AamalTrackerViewProps {
   soundEnabled: boolean;
@@ -53,18 +53,29 @@ interface AamalTrackerViewProps {
   liveZikrs?: ZikrItem[];
 }
 
+const LOCALE_MAP: Record<ZikrLanguage, string> = {
+  bn: 'bn-BD',
+  en: 'en-US',
+  ur: 'ur-PK',
+  ar: 'ar-SA',
+  hi: 'hi-IN',
+  id: 'id-ID',
+  tr: 'tr-TR',
+  ms: 'ms-MY',
+  fr: 'fr-FR',
+  es: 'es-ES',
+  ru: 'ru-RU',
+  fa: 'fa-IR',
+  de: 'de-DE',
+  sw: 'sw-KE',
+};
+
 const MONTH_NAMES_BN = [
   'জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
   'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
 ];
 
-const MONTH_NAMES_EN = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
-
 const WEEKDAYS_BN = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি'];
-const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
   soundEnabled,
@@ -76,7 +87,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
   const isDay = themeMode === 'day';
   const todayKey = getTodayDateKey();
 
-  // Active view subtab: 'checklist' (লিখুন), 'calendar' (রেকর্ড), 'trends' (তুলনা)
+  // Active view subtab: 'checklist' (Daily Amal), 'calendar' (Record), 'trends' (Trends & Stats)
   const [activeSubTab, setActiveSubTab] = useState<'checklist' | 'calendar' | 'trends'>('checklist');
 
   // Selected date in the calendar / daily navigator
@@ -226,7 +237,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
     return AAMAL_ITEM_TRANSLATIONS[item.id]?.[selectedLanguage]?.details || item.details;
   };
 
-  // Formatted display date in Bengali / English
+  // Formatted display date
   const selectedDateFormatted = useMemo(() => {
     const [y, m, d] = selectedDateKey.split('-').map(Number);
     const dateObj = new Date(y, m - 1, d);
@@ -236,12 +247,42 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
         String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)]);
       return `${bnDigits(d)} ${bnMonth} ${bnDigits(y)}`;
     }
-    return dateObj.toLocaleDateString('en-US', {
+    const locale = LOCALE_MAP[selectedLanguage] || 'en-US';
+    return dateObj.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
   }, [selectedDateKey, selectedLanguage]);
+
+  // Calendar month header
+  const calendarMonthHeader = useMemo(() => {
+    const dateObj = new Date(calYear, calMonth, 1);
+    if (selectedLanguage === 'bn') {
+      const bnMonth = MONTH_NAMES_BN[calMonth];
+      const bnDigits = (n: number) =>
+        String(n).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)]);
+      return `${bnMonth} ${bnDigits(calYear)}`;
+    }
+    const locale = LOCALE_MAP[selectedLanguage] || 'en-US';
+    return dateObj.toLocaleDateString(locale, {
+      month: 'long',
+      year: 'numeric',
+    });
+  }, [calYear, calMonth, selectedLanguage]);
+
+  // Localized weekdays
+  const weekdaysList = useMemo(() => {
+    if (selectedLanguage === 'bn') return WEEKDAYS_BN;
+    const locale = LOCALE_MAP[selectedLanguage] || 'en-US';
+    const list: string[] = [];
+    // 2026-10-04 is a Sunday
+    for (let day = 4; day <= 10; day++) {
+      const d = new Date(2026, 9, day);
+      list.push(d.toLocaleDateString(locale, { weekday: 'short' }));
+    }
+    return list;
+  }, [selectedLanguage]);
 
   // Streak & all logs calculation for calendar & trends
   const allLogs = useMemo(() => getAllAamalLogs(), [selectedDateKey, dayLog]);
@@ -287,13 +328,13 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
 
   const isSelectedToday = selectedDateKey === todayKey;
 
-  // The 5 Fardh waqts array for horizontal waqt selector
+  // The 5 Fardh waqts array
   const waqtsList = [
-    { id: 'fajr', nameBn: 'ফজর', nameEn: 'Fajr', icon: '🌅' },
-    { id: 'dhuhr', nameBn: 'যোহর', nameEn: 'Dhuhr', icon: '☀️' },
-    { id: 'asr', nameBn: 'আছর', nameEn: 'Asr', icon: '🌤️' },
-    { id: 'maghrib', nameBn: 'মাগরিব', nameEn: 'Maghrib', icon: '🌇' },
-    { id: 'isha', nameBn: 'ইশা', nameEn: 'Isha', icon: '🌙' },
+    { id: 'fajr', nameEn: 'Fajr', nameBn: 'ফজর', icon: '🌅' },
+    { id: 'dhuhr', nameEn: 'Dhuhr', nameBn: 'যোহর', icon: '☀️' },
+    { id: 'asr', nameEn: 'Asr', nameBn: 'আছর', icon: '🌤️' },
+    { id: 'maghrib', nameEn: 'Maghrib', nameBn: 'মাগরিব', icon: '🌇' },
+    { id: 'isha', nameEn: 'Isha', nameBn: 'ইশা', icon: '🌙' },
   ];
 
   return (
@@ -313,13 +354,13 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
-                <span>মুহাসাবাহ</span>
+                <span>{AAMAL_UI.bannerTitle[selectedLanguage]}</span>
                 <span className="text-xs font-normal text-emerald-100 opacity-90 hidden sm:inline">
-                  (দৈনিক আত্মশুদ্ধি ও আমল ট্র্যাকার)
+                  {AAMAL_UI.bannerTag[selectedLanguage]}
                 </span>
               </h1>
               <p className="text-[11px] text-emerald-100/90 font-medium">
-                حاسبوا أنفسكم قبل أن تحاسبوا • প্রতিদিনের নেক আমলের হিসাব
+                {AAMAL_UI.bannerHadith[selectedLanguage]}
               </p>
             </div>
           </div>
@@ -333,8 +374,8 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#009b68] hover:bg-[#00ab73] text-white text-xs font-bold shadow-md transition active:scale-95 cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">পিডিএফ / রিপোর্ট ডাউনলোড</span>
-              <span className="sm:hidden">রিপোর্ট</span>
+              <span className="hidden sm:inline">{AAMAL_UI.downloadReport[selectedLanguage]}</span>
+              <span className="sm:hidden">{AAMAL_UI.reportShort[selectedLanguage]}</span>
             </button>
           </div>
         </div>
@@ -344,7 +385,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           <button
             onClick={handlePrevDay}
             className="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white transition active:scale-95 cursor-pointer"
-            title="পূর্ববর্তী দিন"
+            title={AAMAL_UI.prevDay?.[selectedLanguage] || 'Previous Day'}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -355,14 +396,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             </div>
             {isSelectedToday ? (
               <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold border border-white/25">
-                ● আজকের দিন (Today)
+                {AAMAL_UI.today[selectedLanguage]}
               </span>
             ) : (
               <button
                 onClick={handleJumpToToday}
                 className="text-[10px] text-emerald-100 underline hover:text-white"
               >
-                আজকের তারিখে ফিরুন (Go to Today)
+                {AAMAL_UI.goToToday[selectedLanguage]}
               </button>
             )}
           </div>
@@ -370,22 +411,24 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           <button
             onClick={handleNextDay}
             className="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white transition active:scale-95 cursor-pointer"
-            title="পরবর্তী দিন"
+            title={AAMAL_UI.nextDay?.[selectedLanguage] || 'Next Day'}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
-        {/* 2 Quick Summary Indicator Pills (০/৫ নামাজ ও ০/৩৯ আমল) */}
+        {/* 2 Quick Summary Indicator Pills */}
         <div className="grid grid-cols-2 gap-2.5 pt-3">
           <div className="p-2.5 rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-lg">🕌</span>
-              <span className="text-xs font-bold text-emerald-100">নামাজ</span>
+              <span className="text-xs font-bold text-emerald-100">
+                {AAMAL_UI.prayersBadge[selectedLanguage]}
+              </span>
             </div>
             <div className="text-sm sm:text-base font-black font-mono text-emerald-300">
               {selectedLanguage === 'bn'
-                ? `${fardhCompletedCount}/৫`
+                ? `${String(fardhCompletedCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}/৫`
                 : `${fardhCompletedCount}/5`}
             </div>
           </div>
@@ -393,23 +436,25 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           <div className="p-2.5 rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-lg">✅</span>
-              <span className="text-xs font-bold text-emerald-100">আমল</span>
+              <span className="text-xs font-bold text-emerald-100">
+                {AAMAL_UI.aamalBadge[selectedLanguage]}
+              </span>
             </div>
             <div className="text-sm sm:text-base font-black font-mono text-[#facc15]">
               {selectedLanguage === 'bn'
-                ? `${completedAmalCount}/${totalAmalCount}`
+                ? `${String(completedAmalCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}/${String(totalAmalCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}`
                 : `${completedAmalCount}/${totalAmalCount}`}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ===================== 3 MAIN SUBTABS: লিখুন / রেকর্ড / তুলনা ===================== */}
-      <div className={`flex items-center gap-1.5 p-1 rounded-2xl border ${
-        isDay
-          ? 'bg-[#e2edf0] border-[#d2e2e6]'
-          : 'bg-[#092226] border-[#14424a]'
-      }`}>
+      {/* ===================== 3 MAIN SUBTABS ===================== */}
+      <div
+        className={`flex items-center gap-1.5 p-1 rounded-2xl border ${
+          isDay ? 'bg-[#e2edf0] border-[#d2e2e6]' : 'bg-[#092226] border-[#14424a]'
+        }`}
+      >
         <button
           onClick={() => {
             setActiveSubTab('checklist');
@@ -426,35 +471,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>
-            {selectedLanguage === 'bn'
-              ? 'লিখুন (আমল তালিকা)'
-              : selectedLanguage === 'ur'
-              ? 'اعمال فہرست'
-              : selectedLanguage === 'ar'
-              ? 'قائمة الأعمال'
-              : selectedLanguage === 'hi'
-              ? 'आमाल सूची'
-              : selectedLanguage === 'id'
-              ? 'Daftar Amal'
-              : selectedLanguage === 'tr'
-              ? 'Amel Listesi'
-              : selectedLanguage === 'ms'
-              ? 'Senarai Amal'
-              : selectedLanguage === 'fr'
-              ? 'Liste des Actes'
-              : selectedLanguage === 'es'
-              ? 'Lista de Obras'
-              : selectedLanguage === 'ru'
-              ? 'Список Деяний'
-              : selectedLanguage === 'fa'
-              ? 'فهرست اعمال'
-              : selectedLanguage === 'de'
-              ? 'Taten-Liste'
-              : selectedLanguage === 'sw'
-              ? 'Orodha ya Matendo'
-              : 'Daily Checklist'}
-          </span>
+          <span>{AAMAL_UI.tabChecklist[selectedLanguage]}</span>
         </button>
 
         <button
@@ -473,35 +490,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }`}
         >
           <CalendarIcon className="w-4 h-4" />
-          <span>
-            {selectedLanguage === 'bn'
-              ? 'রেকর্ড (ক্যালেন্ডার)'
-              : selectedLanguage === 'ur'
-              ? 'کیلنڈر ریکارڈ'
-              : selectedLanguage === 'ar'
-              ? 'سجل التقويم'
-              : selectedLanguage === 'hi'
-              ? 'कैलेंडर रिकॉर्ड'
-              : selectedLanguage === 'id'
-              ? 'Kalender Riwayat'
-              : selectedLanguage === 'tr'
-              ? 'Takvim Geçmişi'
-              : selectedLanguage === 'ms'
-              ? 'Rekod Kalendar'
-              : selectedLanguage === 'fr'
-              ? 'Calendrier'
-              : selectedLanguage === 'es'
-              ? 'Registro del Calendario'
-              : selectedLanguage === 'ru'
-              ? 'Календарь'
-              : selectedLanguage === 'fa'
-              ? 'سیاهه تقویم'
-              : selectedLanguage === 'de'
-              ? 'Kalender-Protokoll'
-              : selectedLanguage === 'sw'
-              ? 'Kumbukumbu ya Kalenda'
-              : 'Calendar Record'}
-          </span>
+          <span>{AAMAL_UI.tabCalendar[selectedLanguage]}</span>
         </button>
 
         <button
@@ -520,42 +509,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
           }`}
         >
           <TrendingUp className="w-4 h-4" />
-          <span>
-            {selectedLanguage === 'bn'
-              ? 'তুলনা ও অগ্রগতি'
-              : selectedLanguage === 'ur'
-              ? 'پیشرفت'
-              : selectedLanguage === 'ar'
-              ? 'التقدم والإحصاءات'
-              : selectedLanguage === 'hi'
-              ? 'प्रगति'
-              : selectedLanguage === 'id'
-              ? 'Kemajuan'
-              : selectedLanguage === 'tr'
-              ? 'İlerleme'
-              : selectedLanguage === 'ms'
-              ? 'Kemajuan & Statistik'
-              : selectedLanguage === 'fr'
-              ? 'Progression'
-              : selectedLanguage === 'es'
-              ? 'Progreso y Estadísticas'
-              : selectedLanguage === 'ru'
-              ? 'Прогресс'
-              : selectedLanguage === 'fa'
-              ? 'پیشرفت و آمار'
-              : selectedLanguage === 'de'
-              ? 'Fortschritt & Trends'
-              : selectedLanguage === 'sw'
-              ? 'Maendeleo na Takwimu'
-              : 'Trends & Stats'}
-          </span>
+          <span>{AAMAL_UI.tabTrends[selectedLanguage]}</span>
         </button>
       </div>
 
-      {/* ===================== TAB 1: লিখুন (THE 8 SECTIONS CHECKLIST) ===================== */}
+      {/* ===================== TAB 1: CHECKLIST ===================== */}
       {activeSubTab === 'checklist' && (
         <div className="space-y-4">
-          {/* 1. আজকের নামাজ (The 5 Fardh Prayers) */}
+          {/* 1. Daily Fardh Prayers */}
           <div
             className={`rounded-3xl border shadow-lg overflow-hidden transition-all ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
@@ -573,10 +534,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    আজকের নামাজ
+                    {AAMAL_UI.secPrayer[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                    আজ কোন কোন ওয়াক্তের ফরজ নামাজ আদায় করেছেন, তা এখানে চিহ্নিত করুন
+                    {AAMAL_UI.secPrayerSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
@@ -600,6 +561,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   {waqtsList.map((w) => {
                     const item = dayLog.items.find((i) => i.id === w.id);
                     const isCompleted = item?.completed || false;
+                    const waqtName =
+                      PRAYER_NAMES[w.nameEn]?.[selectedLanguage] ||
+                      (selectedLanguage === 'bn' ? w.nameBn : w.nameEn);
+
                     return (
                       <button
                         key={w.id}
@@ -613,7 +578,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         }`}
                       >
                         <span className="text-xl">{w.icon}</span>
-                        <span className="text-xs font-bold">{w.nameBn}</span>
+                        <span className="text-xs font-bold truncate max-w-full">{waqtName}</span>
                         <div
                           className={`w-4 h-4 rounded-full flex items-center justify-center ${
                             isCompleted ? 'bg-white text-emerald-600' : 'border border-slate-300 dark:border-teal-700'
@@ -655,14 +620,16 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         </div>
                         <div>
                           <div className="text-xs sm:text-sm font-bold">
-                            জামাতে ফরজ নামাজ আদায় করেছি
+                            {AAMAL_UI.jamatLabel[selectedLanguage]}
                           </div>
                           <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
-                            মসজিদে জামাতের সাথে সালাত সম্পন্ন করা (২৭ গুণ সওয়াব)
+                            {AAMAL_UI.jamatSub[selectedLanguage]}
                           </div>
                         </div>
                       </div>
-                      <span className="text-xs font-bold text-emerald-500 font-mono">+25 pts</span>
+                      <span className="text-xs font-bold text-emerald-500 font-mono">
+                        +25 {AAMAL_UI.pts[selectedLanguage]}
+                      </span>
                     </div>
                   );
                 })()}
@@ -670,7 +637,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             )}
           </div>
 
-          {/* 2. সুন্নত ও নফল নামাজ (Sunnah & Nafl Prayers) */}
+          {/* 2. Sunnah & Nafl Prayers */}
           <div
             className={`rounded-3xl border shadow-lg overflow-hidden transition-all ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
@@ -688,10 +655,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    সুন্নত ও নফল নামাজ
+                    {AAMAL_UI.secSunnah[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                    ফরজ নামাজের বাইরে অতিরিক্ত যে সুন্নত ও নফল নামাজগুলো আদায় করেছেন
+                    {AAMAL_UI.secSunnahSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
@@ -754,7 +721,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             )}
           </div>
 
-          {/* 3. কুরআন ও জিকির (Quran & Dhikr) */}
+          {/* 3. Quran & Dhikr */}
           <div
             className={`rounded-3xl border shadow-lg overflow-hidden transition-all ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
@@ -772,10 +739,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    কুরআন ও জিকির
+                    {AAMAL_UI.secQuran[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                    কুরআন তিলাওয়াত, হিফজ এবং দৈনিক জিকির-ইস্তেগফারের হিসাব রাখুন
+                    {AAMAL_UI.secQuranSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
@@ -802,10 +769,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 >
                   <div>
                     <div className="text-xs sm:text-sm font-bold text-blue-800 dark:text-blue-300">
-                      📖 কুরআন তিলাওয়াত পৃষ্ঠা সংখ্যা
+                      {AAMAL_UI.quranPageCountTitle[selectedLanguage]}
                     </div>
                     <div className="text-[11px] text-blue-600 dark:text-blue-400/80">
-                      আজকের দিনে মোট কত পৃষ্ঠা তিলাওয়াত করেছেন
+                      {AAMAL_UI.quranPageCountSub[selectedLanguage]}
                     </div>
                   </div>
 
@@ -877,9 +844,9 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-teal-300">
-                      <span>📿 আজকের জিকির বিবরণ (Dhikr Count)</span>
+                      <span>{AAMAL_UI.dhikrBreakdownTitle[selectedLanguage]}</span>
                       <span className="font-mono text-emerald-500">
-                        সর্বমোট: {dayLog.dhikrCount} বার
+                        {AAMAL_UI.dhikrTotal[selectedLanguage]} {dayLog.dhikrCount} {AAMAL_UI.times[selectedLanguage]}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
@@ -896,7 +863,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           >
                             <div className="font-bold truncate text-[11px]">{z.name}</div>
                             <div className="text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs mt-0.5">
-                              {z.count} বার
+                              {z.count} {AAMAL_UI.times[selectedLanguage]}
                             </div>
                           </div>
                         ))}
@@ -907,7 +874,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             )}
           </div>
 
-          {/* 4. সকাল-সন্ধ্যা আমল (Morning & Evening Adhkar) */}
+          {/* 4. Morning & Evening Adhkar */}
           <div
             className={`rounded-3xl border shadow-lg overflow-hidden transition-all ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
@@ -925,10 +892,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    সকাল-সন্ধ্যা আমল
+                    {AAMAL_UI.secMorningEvening[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                    সকাল ও সন্ধ্যায় নিয়মিত পড়ার মতো দোয়া ও আমলগুলো সম্পন্ন হয়েছে কি না দেখুন
+                    {AAMAL_UI.secMorningEveningSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
@@ -992,7 +959,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             )}
           </div>
 
-          {/* 5. ঘুমানোর আগের আমল (Bedtime Sunnah & Adhkar) */}
+          {/* 5. Bedtime Sunnah & Adhkar */}
           <div
             className={`rounded-3xl border shadow-lg overflow-hidden transition-all ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
@@ -1010,10 +977,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    ঘুমানোর আগের আমল
+                    {AAMAL_UI.secBedtime[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                    রাতে ঘুমানোর আগে যে সূরা ও আয়াতগুলো পড়া সুন্নত, সেগুলো পড়েছেন কি না লিখুন
+                    {AAMAL_UI.secBedtimeSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
@@ -1076,7 +1043,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             )}
           </div>
 
-          {/* 6. চরিত্র ও নৈতিকতা (Character & Akhlaq) */}
+          {/* 6. Character & Akhlaq */}
           <div
             className={`rounded-3xl border shadow-lg overflow-hidden transition-all ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
@@ -1094,10 +1061,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    চরিত্র ও নৈতিকতা
+                    {AAMAL_UI.secCharacter[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                    আজকের দিনে নিজের ব্যবহার, কথা ও অভ্যাস কেমন ছিল তা সৎভাবে মূল্যায়ন করুন
+                    {AAMAL_UI.secCharacterSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
@@ -1160,7 +1127,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             )}
           </div>
 
-          {/* 7. ইলম ও দাওয়াহ (Knowledge & Dawah) */}
+          {/* 7. Knowledge & Dawah */}
           <div
             className={`rounded-3xl border shadow-lg overflow-hidden transition-all ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
@@ -1178,10 +1145,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    ইলম ও দাওয়াহ
+                    {AAMAL_UI.secKnowledge[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                    দ্বীনি জ্ঞান অর্জন এবং অন্যদের কাছে দ্বীনের দাওয়াহ পৌঁছে দেওয়ার হিসাব রাখুন
+                    {AAMAL_UI.secKnowledgeSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
@@ -1244,7 +1211,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             )}
           </div>
 
-          {/* 8. সামাজিক ও পারিবারিক (Social & Family Duties) */}
+          {/* 8. Social & Family Duties */}
           <div
             className={`rounded-3xl border shadow-lg overflow-hidden transition-all ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
@@ -1262,10 +1229,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    সামাজিক ও পারিবারিক
+                    {AAMAL_UI.secSocial[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
-                    পরিবার, আত্মীয়স্বজন ও সমাজের মানুষদের সাথে আজকের সম্পর্ক ও আচরণ কেমন ছিল
+                    {AAMAL_UI.secSocialSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
@@ -1335,13 +1302,13 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             }`}
           >
             <label className="text-xs font-bold text-slate-600 dark:text-teal-200 flex items-center gap-2">
-              <span>✍️ আজকের আত্মচিন্তা ও মুহাসাবাহ নোট (Reflection Notes)</span>
+              <span>{AAMAL_UI.reflectionTitle[selectedLanguage]}</span>
             </label>
             <textarea
               rows={2}
               value={dayLog.reflectionNotes || ''}
               onChange={(e) => updateAndSaveLog({ ...dayLog, reflectionNotes: e.target.value })}
-              placeholder="আজকের কোনো বিশেষ তওবা, নেক সংকল্প বা শিক্ষা এখানে লিখে রাখুন..."
+              placeholder={AAMAL_UI.reflectionPlaceholder[selectedLanguage]}
               className={`w-full p-3 rounded-2xl border text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none ${
                 isDay
                   ? 'bg-slate-50 border-slate-200 text-slate-800'
@@ -1352,7 +1319,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
         </div>
       )}
 
-      {/* ===================== TAB 2: রেকর্ড (CALENDAR & RECORD SNAPSHOTS) ===================== */}
+      {/* ===================== TAB 2: RECORD (CALENDAR) ===================== */}
       {activeSubTab === 'calendar' && (
         <div
           className={`p-5 sm:p-6 rounded-3xl border shadow-xl space-y-4 ${
@@ -1364,11 +1331,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               <CalendarIcon className="w-5 h-5 text-emerald-500" />
               <div>
                 <h3 className={`text-base font-bold ${isDay ? 'text-[#103e42]' : 'text-white'}`}>
-                  {selectedLanguage === 'bn' ? MONTH_NAMES_BN[calMonth] : MONTH_NAMES_EN[calMonth]}{' '}
-                  {calYear}
+                  {calendarMonthHeader}
                 </h3>
                 <p className={`text-[11px] ${isDay ? 'text-[#507579]' : 'text-teal-300/80'}`}>
-                  যেকোনো তারিখে ক্লিক করে পূর্বের আমল ও জিকির হিস্ট্রি দেখুন
+                  {AAMAL_UI.calClickInfo[selectedLanguage]}
                 </p>
               </div>
             </div>
@@ -1384,7 +1350,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                     : 'bg-[#092226] hover:bg-[#133c44] border-[#1a515c] text-teal-200'
                 }`}
               >
-                Today (আজ)
+                {AAMAL_UI.today[selectedLanguage].replace(/^●\s*/, '')}
               </button>
 
               <button
@@ -1427,7 +1393,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
 
           {/* Weekday Labels */}
           <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-bold py-1">
-            {(selectedLanguage === 'bn' ? WEEKDAYS_BN : WEEKDAYS_EN).map((w, idx) => (
+            {weekdaysList.map((w, idx) => (
               <div
                 key={idx}
                 className={idx === 5 ? 'text-emerald-500 font-extrabold' : 'text-slate-400'}
@@ -1493,7 +1459,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
         </div>
       )}
 
-      {/* ===================== TAB 3: তুলনা ও অগ্রগতি (TRENDS & STREAK) ===================== */}
+      {/* ===================== TAB 3: TRENDS & PROGRESS ===================== */}
       {activeSubTab === 'trends' && (
         <div className="space-y-4">
           <div
@@ -1506,16 +1472,20 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 <Flame className="w-5 h-5 text-amber-500 fill-amber-500" />
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-[#103e42]' : 'text-white'}`}>
-                    ধারাবাহিকতা ও নিয়মিত আমল স্কোর
+                    {AAMAL_UI.streakTitle[selectedLanguage]}
                   </h3>
                   <p className={`text-[11px] ${isDay ? 'text-[#507579]' : 'text-teal-300/80'}`}>
-                    প্রতিদিন নেক আমল চালিয়ে যাওয়ার আধ্যাত্মিক অগ্রগতি
+                    {AAMAL_UI.streakSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Current Streak</span>
-                <div className="text-xl font-black text-amber-400 font-mono">{streakDays} Days</div>
+                <span className="text-[10px] uppercase font-bold text-slate-400">
+                  {AAMAL_UI.currentStreak[selectedLanguage]}
+                </span>
+                <div className="text-xl font-black text-amber-400 font-mono">
+                  {streakDays} {AAMAL_UI.days[selectedLanguage]}
+                </div>
               </div>
             </div>
 
@@ -1525,9 +1495,11 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#081e22] border-[#133c44]'
                 }`}
               >
-                <span className="text-[10px] uppercase font-bold text-slate-400">Total Tracked</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400">
+                  {AAMAL_UI.totalTracked[selectedLanguage]}
+                </span>
                 <div className="text-xl font-black text-emerald-500 font-mono mt-0.5">
-                  {Object.keys(allLogs).length} Days
+                  {Object.keys(allLogs).length} {AAMAL_UI.days[selectedLanguage]}
                 </div>
               </div>
 
@@ -1536,7 +1508,9 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#081e22] border-[#133c44]'
                 }`}
               >
-                <span className="text-[10px] uppercase font-bold text-slate-400">Today Completion</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400">
+                  {AAMAL_UI.todayCompletion[selectedLanguage]}
+                </span>
                 <div className="text-xl font-black text-teal-500 font-mono mt-0.5">
                   {percentCompleted}%
                 </div>
@@ -1547,7 +1521,9 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#081e22] border-[#133c44]'
                 }`}
               >
-                <span className="text-[10px] uppercase font-bold text-slate-400">Fardh Salah Today</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400">
+                  {AAMAL_UI.fardhSalahToday[selectedLanguage]}
+                </span>
                 <div className="text-xl font-black text-blue-500 font-mono mt-0.5">
                   {fardhCompletedCount}/5
                 </div>
@@ -1558,7 +1534,9 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#081e22] border-[#133c44]'
                 }`}
               >
-                <span className="text-[10px] uppercase font-bold text-slate-400">Quran Pages</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400">
+                  {AAMAL_UI.quranPages[selectedLanguage]}
+                </span>
                 <div className="text-xl font-black text-amber-500 font-mono mt-0.5">
                   {dayLog.quranPagesRead || 0} p.
                 </div>

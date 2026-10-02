@@ -72,81 +72,61 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       id: 'dua' as OtherSubSection,
       title: NAV_TRANSLATIONS.dua[selectedLanguage],
       arabic: 'الأدعية المأثورة',
-      desc:
-        selectedLanguage === 'bn'
-          ? 'কুরআন ও সুন্নাহর সহিহ মাসনুন দোয়াসমূহ, অর্থ ও উচ্চারণসহ'
-          : 'Authentic Masnoon Duas from the Quran and Sunnah with translation',
+      desc: OTHER_HUB_UI.duaDesc[selectedLanguage],
       icon: <Heart className="w-6 h-6 text-rose-500" />,
       color: 'from-rose-500/15 to-pink-500/10 border-rose-500/30',
-      badge: selectedLanguage === 'bn' ? 'সহিহ দু’আ' : 'Authentic Dua',
+      badge: OTHER_HUB_UI.badgeDua[selectedLanguage],
     },
     {
       id: 'hadith' as OtherSubSection,
       title: NAV_TRANSLATIONS.hadith[selectedLanguage],
       arabic: 'الحديث النبوي',
-      desc:
-        selectedLanguage === 'bn'
-          ? 'বুখারি, মুসলিম, তিরমিজি ও রিয়াদুস সলেহীনের নির্বাচিত হাদিস'
-          : 'Selected authentic Hadiths from Bukhari, Muslim, Tirmidhi, and Riyad us-Saliheen',
+      desc: OTHER_HUB_UI.hadithDesc[selectedLanguage],
       icon: <span className="text-2xl">📜</span>,
       color: 'from-amber-500/15 to-yellow-500/10 border-amber-500/30',
-      badge: selectedLanguage === 'bn' ? 'নবীজির বাণী' : 'Prophetic Hadith',
+      badge: OTHER_HUB_UI.badgeHadith[selectedLanguage],
     },
     {
       id: 'kitab' as OtherSubSection,
       title: NAV_TRANSLATIONS.kitab[selectedLanguage],
       arabic: 'المكتبة الإسلامية',
-      desc:
-        selectedLanguage === 'bn'
-          ? 'ক্লাসিক্যাল ইসলামিক বই, তাফসির ও জরুরি ফেকাহ গ্রন্থমালা'
-          : 'Classical Islamic books, Tafsir collections, and essential Fiqh literature',
+      desc: OTHER_HUB_UI.kitabDesc[selectedLanguage],
       icon: <BookMarked className="w-6 h-6 text-blue-500" />,
       color: 'from-blue-500/15 to-cyan-500/10 border-blue-500/30',
-      badge: selectedLanguage === 'bn' ? 'অনলাইন লাইব্রেরি' : 'Digital Library',
+      badge: OTHER_HUB_UI.badgeKitab[selectedLanguage],
     },
     {
       id: 'tablig' as OtherSubSection,
       title: NAV_TRANSLATIONS.tablig[selectedLanguage],
       arabic: 'الدعوة والتبليغ',
-      desc:
-        selectedLanguage === 'bn'
-          ? 'দাওয়াতের ৬ সিফত, ফাজায়েল, মসজিদওয়ারী ৫ আমল ও গাশতের আদব'
-          : 'The 6 qualities of Dawah, virtues, daily 5 masjid deeds, and etiquette of Gasht',
+      desc: OTHER_HUB_UI.tabligDesc[selectedLanguage],
       icon: <Users className="w-6 h-6 text-emerald-500" />,
       color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
-      badge: selectedLanguage === 'bn' ? '৬ সিফত ও মেহনত' : '6 Qualities',
+      badge: OTHER_HUB_UI.badgeTablig[selectedLanguage],
     },
     {
       id: 'allah_names' as OtherSubSection,
       title: NAV_TRANSLATIONS.allah_names[selectedLanguage],
       arabic: 'أسماء الله الحسنى',
-      desc:
-        selectedLanguage === 'bn'
-          ? 'আল্লাহর ৯৯টি গুণবাচক নাম, অর্থ, ফজিলত ও অডিও উচ্চারণ'
-          : '99 Beautiful Names of Allah with meanings, virtues, and audio pronunciations',
+      desc: OTHER_HUB_UI.allahNamesDesc[selectedLanguage],
       icon: <Sparkles className="w-6 h-6 text-amber-400" />,
       color: 'from-amber-500/15 to-orange-500/10 border-amber-500/30',
-      badge: selectedLanguage === 'bn' ? '৯৯ নাম ও ফজিলত' : '99 Names',
+      badge: OTHER_HUB_UI.badgeAllahNames[selectedLanguage],
     },
     {
       id: 'hajj_umrah' as OtherSubSection,
       title: NAV_TRANSLATIONS.hajj_umrah[selectedLanguage],
       arabic: 'الحج والعمرة',
-      desc:
-        selectedLanguage === 'bn'
-          ? 'ওমরাহ ও হজের ৫ দিনের ধারাবাহিক নিয়মাবলী, তালবিয়াহ ও মাসনুন দোয়া'
-          : 'Step-by-step Umrah rituals and 5 days of Hajj guide with Talbiyah audio',
+      desc: OTHER_HUB_UI.hajjUmrahDesc[selectedLanguage],
       icon: <span className="text-2xl">🕋</span>,
       color: 'from-teal-500/15 to-emerald-500/10 border-teal-500/30',
-      badge: selectedLanguage === 'bn' ? 'সচিত্র নিয়মাবলী' : 'Complete Guide',
+      badge: OTHER_HUB_UI.badgeHajj[selectedLanguage],
     },
     {
       id: 'settings' as OtherSubSection,
-      title: SETTINGS_UI.title[selectedLanguage] || 'সেটিংস ও ভাষা (Settings & Language)',
+      title: SETTINGS_UI.title[selectedLanguage] || 'Settings & Language',
       arabic: 'الإعدادات واللغة',
-      desc:
-        SETTINGS_UI.subtitle[selectedLanguage] ||
-        'Customize language (14 languages), themes, audio, vibration, and data backups.',
+      desc: SETTINGS_UI.subtitle[selectedLanguage] || 'Customize language, themes, audio, vibration, and data backups.',
       icon: <Settings className="w-6 h-6 text-emerald-400" />,
       color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
       badge: '14 Languages',
@@ -271,7 +251,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <Settings className="w-3.5 h-3.5" />
-          <span>{SETTINGS_UI.title[selectedLanguage] || 'সেটিংস ও ভাষা'}</span>
+          <span>{SETTINGS_UI.title[selectedLanguage] || 'Settings & Language'}</span>
         </button>
       </div>
 
@@ -288,7 +268,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>ইসলামিক ফিচার সম্ভার • Comprehensive Islamic Suite</span>
+              <span>المكتبة والمعرفة الإسلامية • Comprehensive Islamic Suite</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
               {OTHER_HUB_UI.bannerTitle[selectedLanguage]}
@@ -298,7 +278,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             </p>
           </div>
 
-          {/* 6 Feature Cards Grid */}
+          {/* 7 Feature Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {hubItems.map((item) => (
               <div
@@ -362,7 +342,12 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       )}
 
       {/* Sub-view: Kitab */}
-      {activeSub === 'kitab' && <KitabView themeMode={themeMode} />}
+      {activeSub === 'kitab' && (
+        <KitabView
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+        />
+      )}
 
       {/* Sub-view: Tablig */}
       {activeSub === 'tablig' && (
@@ -391,7 +376,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         />
       )}
 
-      {/* Sub-view: Settings & Language (14 Languages) */}
+      {/* Sub-view: Settings & Language */}
       {activeSub === 'settings' && (
         <SettingsView
           settings={
