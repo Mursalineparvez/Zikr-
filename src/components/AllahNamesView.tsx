@@ -199,7 +199,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">
                   {ALLAH_NAMES_UI.benefit[selectedLanguage]}
                 </span>
-                {name.benefitBn}
+                {selectedLanguage === 'bn' ? name.benefitBn : (name.benefitEn || name.benefitBn)}
               </div>
 
               {/* Action Buttons */}

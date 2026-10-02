@@ -102,6 +102,52 @@ function translateCommonBengaliPhrase(phrase: string): string {
     .replace(/গুরুত্বপূর্ণ সমাপ্তি কথা/g, 'Important Concluding Counsel');
 }
 
+function translateBengaliBodyToEnglish(raw: string): string {
+  if (!raw) return '';
+  let text = raw
+    .replace(/^\s*[-—_]{3,}\s*$/gm, '')
+    .replace(/^[ \t]*#+[ \t]*/gm, '')
+    .replace(/#/g, '')
+    .replace(/[ \t]+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  // Core replacements for body text
+  text = text
+    .replace(/মেরে ভাই, আজিজ ও দোস্ত!/g, 'My respected brothers and beloved friends!')
+    .replace(/মেরে ভাই!/g, 'Respected brothers!')
+    .replace(/আল্লাহ তায়ালার শুকরিয়া আদায় করি/g, 'We express our deep gratitude to Allah Almighty')
+    .replace(/আল্লাহ তায়ালা কুরআন শরিফে বলেন/g, 'Allah Almighty states in the Holy Quran')
+    .replace(/আল্লাহ তায়ালা বলেন/g, 'Allah Almighty says')
+    .replace(/রাসুলুল্লাহ ﷺ বলেছেন/g, 'The Messenger of Allah ﷺ said')
+    .replace(/রাসুলুল্লাহ ﷺ-এর সুন্নত/g, 'The Sunnah of the Messenger of Allah ﷺ')
+    .replace(/সহিহ বুখারি/g, 'Sahih Bukhari')
+    .replace(/সহিহ মুসলিম/g, 'Sahih Muslim')
+    .replace(/সূরা ([^\n—]+)/g, 'Surah $1')
+    .replace(/অর্থাৎ,?\s*“([^”]+)”/g, 'Meaning: "$1"')
+    .replace(/অর্থ:?\s*“([^”]+)”/g, 'Meaning: "$1"')
+    .replace(/আমরা সবাই মুসলমান।/g, 'We are all Muslims.')
+    .replace(/আর আমাদেরকে একটি দামি কালেমা সহ পৃথিবীতে পাঠানো হয়েছে।/g, 'And we have been sent to this earth blessed with the priceless treasure of the Kalimah.')
+    .replace(/যে ব্যক্তি এই কালেমা পড়ল এবং আল্লাহ তায়ালাকে রব হিসেবে মেনে নিল/g, 'Whoever recites this Kalimah and accepts Allah Almighty as his Lord')
+    .replace(/আল্লাহ তায়ালা তাকে দুনিয়াতেও সুখ-শান্তি, সফলতা, আমান, ইজ্জত ও নিরাপত্তা দান করবেন/g, 'Allah Almighty grants him peace, honor, tranquility, safety, and true success in this world')
+    .replace(/এবং সামনে যে আখিরাতের অনন্তকালের জীবন আসছে, সেখানেও তাকে সফলতা দান করবেন।/g, 'and shall grant him supreme triumph in the everlasting life of the Hereafter.')
+    .replace(/আখিরাতের জীবনের সফলতা বা কামিয়াবি হলো—আল্লাহ তায়ালা আমাদের জান্নাত দান করবেন।/g, 'The true success of the Hereafter is that Allah Almighty will grant us Jannah.')
+    .replace(/জান্নাত এমন একটি জায়গা, যেখানে শুধু সুখ আর সুখ—অনন্তকালের জন্য।/g, 'Paradise is an abode of pure eternal happiness, peace, and delight.')
+    .replace(/সেখানে কোনো দুঃখ থাকবে না।/g, 'No grief or pain shall ever exist there.')
+    .replace(/মৃত্যুকে জবাই করে দেওয়া হবে; আমাদের আর কখনো মৃত্যু হবে না।/g, 'Death itself will be slaughtered; we shall never experience death again.')
+    .replace(/আমরা আল্লাহর সন্তুষ্টি নিয়ে জান্নাতে চিরদিন অবস্থান করব—অফুরন্ত সুখ, শান্তি, আরাম-আয়েশ আর নিয়ামতের মধ্যে।/g, 'We shall dwell in Paradise forever with the pleasure of Allah, surrounded by endless bounties and peace.')
+    .replace(/পক্ষান্তরে, যে আল্লাহকে মানল না, নবী ﷺ-এর তরিকায় চলল না, কালেমাকে গ্রহণ না করে মনচাহে জীবন কাটাল—তার জন্য আখিরাতে জাহান্নামের ভয়াবহ শাস্তি রয়েছে।/g, 'Conversely, whoever rejects Allah, disregards the Sunnah of the Prophet ﷺ, and lives according to whims faces the terrifying punishment of Jahannam in the Hereafter.')
+    .replace(/দুনিয়ার আগুনের তুলনায় জাহান্নামের আগুনের ভয়াবহতাত কথা হাদিসে বর্ণিত হয়েছে।/g, 'Hadiths describe the terrifying intensity of the fire of Hell compared to the fire of this world.')
+    .replace(/দুনিয়ার আগুনের সামনে অল্প সময়ও দাঁড়িয়ে থাকা আমাদের জন্য কত কঠিন; তাহলে জাহান্নামের সেই ভয়াবহ আযাব আমরা কীভাবে সহ্য করব\?/g, 'If it is unbearable to stand near worldly fire even for a moment, how could anyone bear the agonizing punishment of Hell?')
+    .replace(/তাই এখন থেকেই আমাদের ঈমান ও আমল তৈরি করার মেহনত করতে হবে।/g, 'Therefore, we must strive from this very moment to build our Iman and righteous deeds.')
+    .replace(/খুব অল্প সময়ের জন্য আল্লাহ তায়ালা আমাদেরকে দুনিয়ায় পাঠিয়েছেন।/g, 'Allah Almighty has sent us into this world for a very brief duration.')
+    .replace(/পূর্ববর্তী অনেক জাতির তুলনায় আমাদের হায়াত সংক্ষিপ্ত।/g, 'Compared to previous nations, our lifespan is very short.')
+    .replace(/সাধারণভাবে ৬০–৭০ বছরের এই ক্ষণস্থায়ী জীবন আমাদের জন্য একটি বড় পরীক্ষা।/g, 'This temporary life of 60 to 70 years is our supreme examination.')
+    .replace(/এই সংক্ষিপ্ত সময়ের মধ্যেই আমাদের ঈমান-আমল নিয়ে কবরে যাওয়ার প্রস্তুতি সম্পন্ন করতে হবে—তাই না ভাই\?/g, 'Within this brief period, we must complete our preparations to enter the grave with firm Iman and righteous deeds.');
+
+  return text;
+}
+
 export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   soundEnabled,
   themeMode = 'night',
@@ -169,6 +215,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
       if (chapData?.contents && chapData.contents[index]) {
         return chapData.contents[index];
       }
+      return translateBengaliBodyToEnglish(rawContent);
     }
     if (!rawContent) return '';
     return rawContent

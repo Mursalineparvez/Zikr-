@@ -2804,6 +2804,72 @@ export const KITAB_UI: Record<string, Record<string, string>> = createTranslatio
   },
 });
 
+export const SOLAR_UI: Record<string, Record<string, string>> = createTranslationProxy({
+  title: {
+    bn: 'সূর্যের গতিপথ ও পরবর্তী নামাজ',
+    en: 'Solar Trajectory & Next Prayer',
+    ur: 'سورج کا مدار اور اگلی نماز',
+    ar: 'مسار الشمس والصلاة القادمة',
+    hi: 'सूर्य का पथ और अगली नमाज़',
+    id: 'Lintasan Matahari & Sholat Berikutnya',
+    tr: 'Güneş Yörüngesi ve Sonraki Namaz',
+  },
+  nextPrayer: {
+    bn: 'পরবর্তী নামাজ:',
+    en: 'Next Prayer:',
+    ur: 'اگلی نماز:',
+    ar: 'الصلاة القادمة:',
+    hi: 'अगली नमाज़:',
+    id: 'Sholat Berikutnya:',
+    tr: 'Sonraki Namaz:',
+  },
+  remainingTime: {
+    bn: 'বাকি সময়',
+    en: 'Remaining Time',
+    ur: 'باقی وقت',
+    ar: 'الوقت المتبقي',
+    hi: 'शेष समय',
+    id: 'Waktu Tersisa',
+    tr: 'Kalan Süre',
+  },
+  prohibitedTimes: {
+    bn: 'নামাজের নিষিদ্ধ সময়',
+    en: 'Prohibited Prayer Times',
+    ur: 'مکروہ و ممنوع اوقات',
+    ar: 'أوقات الكراهة والنهي',
+    hi: 'नमाज़ के निषिद्ध समय',
+    id: 'Waktu Dilarang Sholat',
+    tr: 'Kerahat Vakitleri',
+  },
+  daylightRemaining: {
+    bn: 'দিনের অবশিষ্ট আলো',
+    en: 'Daylight Remaining',
+    ur: 'دن کی باقی روشنی',
+    ar: 'ضوء النهار المتبقي',
+    hi: 'दिन की शेष रोशनी',
+    id: 'Sisa Cahaya Siang',
+    tr: 'Kalan Gün Işığı',
+  },
+  solarAltitude: {
+    bn: 'সূর্যের উচ্চতা কোণ',
+    en: 'Solar Altitude',
+    ur: 'سورج کا زاویہ',
+    ar: 'زاوية ارتفاع الشمس',
+    hi: 'सूर्य की ऊंचाई कोण',
+    id: 'Sudut Ketinggian Matahari',
+    tr: 'Güneş Açı Yüksekliği',
+  },
+  interactiveScrubber: {
+    bn: 'ইন্টারেক্টিভ সোলার স্ক্রাবার',
+    en: 'Interactive Solar Scrubber',
+    ur: 'انٹرایکٹو سولر سکرببر',
+    ar: 'متتبع مسار الشمس التفاعلي',
+    hi: 'इंटरैक्टिव सोलर स्क्रबर',
+    id: 'Penjelajah Lintasan Matahari',
+    tr: 'İnteraktif Güneş Yörünge İnceleyici',
+  },
+});
+
 export const TABLIG_CHAPTER_TRANSLATIONS: Record<
   string,
   {

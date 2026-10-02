@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { FormattedPrayerTimes, SolarPhaseType } from '../utils/prayerTimes';
 import { ThemeMode, ZikrLanguage } from '../types';
-import { PRAYER_NAMES } from '../utils/appTranslations';
+import { PRAYER_NAMES, SOLAR_UI } from '../utils/appTranslations';
 import { soundHaptics } from '../utils/audioHaptics';
 
 interface SolarTrajectoryCardProps {
@@ -130,7 +130,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 isDay ? 'text-[#0a3328]' : 'text-teal-100'
               }`}
             >
-              Solar Trajectory &amp; Next Prayer
+              {SOLAR_UI.title[selectedLanguage] || 'Solar Trajectory & Next Prayer'}
             </h2>
           </div>
 
@@ -190,7 +190,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             <div className="space-y-1">
               <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span>Next Prayer In • الصلاة القادمة</span>
+                <span>{SOLAR_UI.nextPrayer[selectedLanguage] || 'Next Prayer:'} • الصلاة القادمة</span>
               </div>
 
               <div className="flex items-baseline gap-2.5 flex-wrap">
@@ -216,7 +216,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 }`}
               >
                 <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
-                <span>{prayerData.timeRemainingFormatted} remaining</span>
+                <span>{prayerData.timeRemainingFormatted} {SOLAR_UI.remainingTime[selectedLanguage] || 'remaining'}</span>
               </div>
               <span className="text-[10px] font-semibold text-slate-400 dark:text-teal-300/60 sm:text-right">
                 Live second countdown

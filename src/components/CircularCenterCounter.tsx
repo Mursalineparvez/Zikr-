@@ -173,7 +173,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
                 isDay ? 'text-[#4e7478]' : 'text-[#90b8be]'
               }`}
             >
-              Master Tasbeeh Count
+              {ZIKIR_UI.masterTasbeehCount[selectedLanguage] || 'Master Tasbeeh Count'}
             </span>
 
             {/* Inset Sub-metrics pill */}

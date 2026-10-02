@@ -47,7 +47,7 @@ CONSISTENCY IN DEEDS:
 The Messenger of Allah ﷺ said:
 أَحَبُّ الأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ
 "The most beloved of deeds to Allah are those that are most consistent, even if they are small." — Sahih Bukhari (6464).`,
-      1: `لَا إِلٰهَ إِلَّا اللهُ مُحَمَّدٌ رَّসُولُ اللهِ ﷺ
+      1: `لَا إِلٰهَ إِلَّا اللهُ مُحَمَّدٌ رَّسُولُ اللهِ ﷺ
 "There is no deity worthy of worship except Allah, and Muhammad ﷺ is the Messenger of Allah."
 
 THE PURPOSE OF IMAN:
@@ -138,7 +138,7 @@ HOW TO ATTAIN THIS QUALITY:
 "And who is better in speech than one who invites to Allah and does righteousness and says, 'Indeed, I am of the Muslims'?" — Surah Fussilat (41:33)
 
 كُنتُمْ خَيْرَ أُمَّةٍ أُخْرِجَتْ لِلنَّاسِ تَأْمُرُونَ بِالْمَعْرُوفِ وَتَنْهَوْنَ عَنِ الْمُنكَرِ
-"You are the best nation produced for mankind. You enjoin what is right and forbid what is wrong and believe in Allah." — Surah Ali 'Imran (3:31)
+"You are the best nation produced for mankind. You enjoin what is right and forbid what is wrong and believe in Allah." — Surah Ali 'Imran (3:110)
 
 THE PURPOSE:
 To take up the mission of the Prophets by sacrificing time, wealth, and comfort to revive Islam in our own lives, bring humanity closer to Allah, and spread the message of peace and truth across the globe.
@@ -319,6 +319,18 @@ True Yaqeen means the heart rests with complete certainty that Allah alone can b
 Allah commands us to reflect upon His majestic creation:
 إِنَّ فِي خَلْقِ السَّمَاوَاتِ وَالأَرْضِ وَاخْتِلافِ اللَّيْلِ وَالنَّهَارِ لآيَاتٍ لِّأُولِي الأَلْبَابِ
 "Indeed, in the creation of the heavens and the earth and the alternation of the night and the day are signs for those of understanding." (Surah Ali 'Imran 3:190).`,
+      2: `THE REALITY OF THE SOUL & EXISTENCE:
+We were non-existent, and Allah created us from nothing. He gave us life, vision, intellect, and the guidance of Islam. The soul's true peace is found only in the connection with its Creator.`,
+      3: `THE TRANSIENCE & DECEPTION OF THE WORLD:
+This world is merely a temporary passing station. Everything built in this world will perish. Only faith, good deeds, and sincerity will accompany us into eternity.`,
+      4: `THE JOURNEY TO THE HEREAFTER:
+Every breath brings us one step closer to our appointed time (Ajal). When the angel of death arrives, worldly wealth and status will be of no benefit; only a sound heart (Qalb Saleem) will save us.`,
+      5: `THE REALITY OF THE GRAVE (QABR):
+The grave is either a garden from the gardens of Paradise or a pit from the pits of Hellfire. When the servant is placed in the earth, his deeds become his companions of light.`,
+      6: `THE DAY OF RESURRECTION (HASHR):
+All mankind will stand before the Lord of the worlds. The Sun will be brought near, and people will seek shade under the Throne of Allah through sincere worship, charity, and fear of Allah in private.`,
+      7: `SINCERE REPENTANCE & HEARTFELT DUA:
+O Allah, forgive our shortcomings, strengthen our conviction, bless us with love for the Sunnah, and grant us a beautiful end upon Iman. Ameen!`,
     },
   },
   bad_maghrib_bayan: {
@@ -350,6 +362,14 @@ Let us ask ourselves:
 • Have we prepared for the moment our eyes close in death?
 
 Let us revive our love for Allah and make firm resolutions tonight to obey His commands.`,
+      1: `EVIDENCE OF ALLAH'S LOVE:
+When a servant loves Allah, he gives priority to Allah's commandments over all worldly desires. He finds sweetness in prayer, peace in recitation, and joy in serving others.`,
+      2: `FOLLOWING THE NOBLE MESSENGER ﷺ:
+Prophet Muhammad ﷺ endured trials, hunger, and persecution to deliver the pristine guidance of Islam to us. True love for the Prophet means living by his Sunnah in our manners, trade, speech, and character.`,
+      3: `THE POWER OF CONGREGATIONAL SALAH:
+Salah is the pillar of religion. Whoever guards his five prayers with congregation, Allah illuminates his heart, purifies his wealth, and eases his passage over the Sirat.`,
+      4: `REMEMBRANCE & HEARTFELT SUPPLICATION:
+Let us make sincere repentance (Tawbah) tonight. O Allah, rectify our hearts, bless our families, protect the Ummah, and accept our presence in Your blessed house. Ameen!`,
     },
   },
   dawat_chapter: {
@@ -376,6 +396,43 @@ Prophet Muhammad ﷺ was sent as a mercy to all worlds. By his passing, the resp
 The Prophet ﷺ said:
 بَلِّغُوا عَنِّي وَلَوْ آيَةً
 "Convey from me, even if it is a single verse." — Sahih Bukhari (3461).`,
+      1: `REALITY AND SUPREME VIRTUES OF DAWAH:
+We are all Muslims, blessed by Allah with the priceless treasure of the Kalimah (La ilaha illallah Muhammadur Rasulullah).
+
+Whoever embraces this Kalimah and accepts Allah as his Lord with true conviction, Allah blesses him with peace, tranquility, honor, protection, and true success in this world and in the eternal life of the Hereafter.
+
+THE SUCCESS OF THE HEREAFTER:
+The true success of the Hereafter is Jannah—an eternal abode filled with endless joy, peace, and divine pleasure where sorrow and pain do not exist. Death will be slaughtered, and believers will reside forever in boundless delight.
+
+Conversely, whoever rejects Allah, disregards the Sunnah of Prophet Muhammad ﷺ, and leads a life of heedlessness faces the terrifying chastisement of Jahannam (Hellfire). Hadiths describe how the fire of this world is merely a fraction of the intensity of Hellfire.
+
+Therefore, we must strive starting right now to build authentic Iman, perform righteous deeds, and invite mankind to the path of Allah!`,
+      2: `THE EXTREMELY BRIEF LIFESPAN & TEST OF THIS WORLD:
+Allah Almighty has sent us into this world for a very short duration. Compared to the previous ancient nations whose lifespans spanned centuries, our lifespan is brief—typically 60 to 70 years. This temporary life is our supreme examination.
+
+Within this brief window of time, we must prepare our Iman and righteous deeds before we enter the grave.
+
+THE THREE CRUCIAL QUESTIONS IN THE GRAVE:
+When placed in the grave, every soul is asked:
+1. Who is your Lord? (Man Rabbuka?)
+2. What is your religion? (Ma Deenuka?)
+3. Who is this Messenger who was sent to you? (Man Hadhar Rajul?)
+
+If we lived our life obeying Allah and practicing the Sunnah of Muhammad ﷺ, Allah will grant our tongue the ability to answer with ease and tranquility, and the grave will be illuminated with the breeze of Paradise.`,
+      3: `THE IMMENSE SACRIFICES OF THE PROPHETS AND SAHABAH:
+The Prophets and the Sahabah (Companions) sacrificed their wealth, physical ease, sleep, and worldly comforts solely for the revival of Dawah.
+
+Look at Prophet Noah (AS), who called his people for 950 years day and night without fatigue. Look at Prophet Ibrahim (AS) who was cast into blazing fire. Look at our beloved Prophet Muhammad ﷺ who was stoned at Ta'if until his blessed sandals were filled with blood, yet he raised his hands in supplication asking Allah to guide them.
+
+The Companions (RA) departed from their homes in Madinah and travelled across deserts, oceans, and distant continents to convey the Kalimah so that Islam could reach us today in peace.`,
+      4: `OUR SOLEMN COMMITMENT & PRACTICAL ENDEAVOR:
+Let us make a sincere, firm intention today:
+• To make Dawah our personal life mission.
+• To revive the 5 Daily Deeds (Amal) in our local Masjid.
+• To bring the Sunnah into our households, trade, and speech.
+• To dedicate time in the path of Allah (Khuruj) for our own spiritual rectification and the welfare of the Ummah.
+
+May Allah grant us steadfastness, grant us sincerity (Ikhlas), and accept us for His noble work. Ameen!`,
     },
   },
   tabligh_120_core: {
