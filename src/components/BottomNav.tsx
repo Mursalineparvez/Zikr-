@@ -67,7 +67,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     },
     {
       id: 'other',
-      label: selectedLanguage === 'bn' ? 'অন্যান্য' : 'Other',
+      label: NAV_TRANSLATIONS.other[selectedLanguage] || 'Other',
       arabic: 'أخرى',
       icon: <Layers className="w-4 h-4" />,
       isActive: isOtherActive,

@@ -43,6 +43,7 @@ import {
 import confetti from 'canvas-confetti';
 import { soundHaptics } from '../utils/audioHaptics';
 import { HistoryReportModal } from './HistoryReportModal';
+import { AAMAL_ITEM_TRANSLATIONS, AAMAL_UI } from '../utils/appTranslations';
 
 interface AamalTrackerViewProps {
   soundEnabled: boolean;
@@ -216,6 +217,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
   const totalAmalCount = dayLog.items.length;
   const completedAmalCount = dayLog.items.filter((i) => i.completed).length;
   const percentCompleted = Math.round((completedAmalCount / (totalAmalCount || 1)) * 100);
+
+  const getAamalItemLabel = (item: { id: string; label: string }) => {
+    return AAMAL_ITEM_TRANSLATIONS[item.id]?.[selectedLanguage]?.label || item.label;
+  };
+
+  const getAamalItemDetails = (item: { id: string; details?: string }) => {
+    return AAMAL_ITEM_TRANSLATIONS[item.id]?.[selectedLanguage]?.details || item.details;
+  };
 
   // Formatted display date in Bengali / English
   const selectedDateFormatted = useMemo(() => {
@@ -422,12 +431,28 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               ? 'লিখুন (আমল তালিকা)'
               : selectedLanguage === 'ur'
               ? 'اعمال فہرست'
+              : selectedLanguage === 'ar'
+              ? 'قائمة الأعمال'
               : selectedLanguage === 'hi'
               ? 'आमाल सूची'
               : selectedLanguage === 'id'
               ? 'Daftar Amal'
               : selectedLanguage === 'tr'
               ? 'Amel Listesi'
+              : selectedLanguage === 'ms'
+              ? 'Senarai Amal'
+              : selectedLanguage === 'fr'
+              ? 'Liste des Actes'
+              : selectedLanguage === 'es'
+              ? 'Lista de Obras'
+              : selectedLanguage === 'ru'
+              ? 'Список Деяний'
+              : selectedLanguage === 'fa'
+              ? 'فهرست اعمال'
+              : selectedLanguage === 'de'
+              ? 'Taten-Liste'
+              : selectedLanguage === 'sw'
+              ? 'Orodha ya Matendo'
               : 'Daily Checklist'}
           </span>
         </button>
@@ -453,12 +478,28 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               ? 'রেকর্ড (ক্যালেন্ডার)'
               : selectedLanguage === 'ur'
               ? 'کیلنڈر ریکارڈ'
+              : selectedLanguage === 'ar'
+              ? 'سجل التقويم'
               : selectedLanguage === 'hi'
               ? 'कैलेंडर रिकॉर्ड'
               : selectedLanguage === 'id'
               ? 'Kalender Riwayat'
               : selectedLanguage === 'tr'
               ? 'Takvim Geçmişi'
+              : selectedLanguage === 'ms'
+              ? 'Rekod Kalendar'
+              : selectedLanguage === 'fr'
+              ? 'Calendrier'
+              : selectedLanguage === 'es'
+              ? 'Registro del Calendario'
+              : selectedLanguage === 'ru'
+              ? 'Календарь'
+              : selectedLanguage === 'fa'
+              ? 'سیاهه تقویم'
+              : selectedLanguage === 'de'
+              ? 'Kalender-Protokoll'
+              : selectedLanguage === 'sw'
+              ? 'Kumbukumbu ya Kalenda'
               : 'Calendar Record'}
           </span>
         </button>
@@ -484,12 +525,28 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               ? 'তুলনা ও অগ্রগতি'
               : selectedLanguage === 'ur'
               ? 'پیشرفت'
+              : selectedLanguage === 'ar'
+              ? 'التقدم والإحصاءات'
               : selectedLanguage === 'hi'
               ? 'प्रगति'
               : selectedLanguage === 'id'
               ? 'Kemajuan'
               : selectedLanguage === 'tr'
               ? 'İlerleme'
+              : selectedLanguage === 'ms'
+              ? 'Kemajuan & Statistik'
+              : selectedLanguage === 'fr'
+              ? 'Progression'
+              : selectedLanguage === 'es'
+              ? 'Progreso y Estadísticas'
+              : selectedLanguage === 'ru'
+              ? 'Прогресс'
+              : selectedLanguage === 'fa'
+              ? 'پیشرفت و آمار'
+              : selectedLanguage === 'de'
+              ? 'Fortschritt & Trends'
+              : selectedLanguage === 'sw'
+              ? 'Maendeleo na Takwimu'
               : 'Trends & Stats'}
           </span>
         </button>
@@ -678,10 +735,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs sm:text-sm font-bold">{item.label}</div>
-                        {item.details && (
+                        <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
+                        {getAamalItemDetails(item) && (
                           <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
-                            {item.details}
+                            {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
@@ -796,10 +853,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs sm:text-sm font-bold">{item.label}</div>
-                        {item.details && (
+                        <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
+                        {getAamalItemDetails(item) && (
                           <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
-                            {item.details}
+                            {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
@@ -916,10 +973,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs sm:text-sm font-bold">{item.label}</div>
-                        {item.details && (
+                        <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
+                        {getAamalItemDetails(item) && (
                           <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
-                            {item.details}
+                            {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
@@ -1000,10 +1057,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs sm:text-sm font-bold">{item.label}</div>
-                        {item.details && (
+                        <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
+                        {getAamalItemDetails(item) && (
                           <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
-                            {item.details}
+                            {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
@@ -1084,10 +1141,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs sm:text-sm font-bold">{item.label}</div>
-                        {item.details && (
+                        <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
+                        {getAamalItemDetails(item) && (
                           <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
-                            {item.details}
+                            {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
@@ -1168,10 +1225,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs sm:text-sm font-bold">{item.label}</div>
-                        {item.details && (
+                        <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
+                        {getAamalItemDetails(item) && (
                           <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
-                            {item.details}
+                            {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
@@ -1252,10 +1309,10 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs sm:text-sm font-bold">{item.label}</div>
-                        {item.details && (
+                        <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
+                        {getAamalItemDetails(item) && (
                           <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
-                            {item.details}
+                            {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>

@@ -63,15 +63,111 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         return 'অর্থ: ';
       case 'ur':
         return 'ترجمہ: ';
+      case 'ar':
+        return 'المعنى: ';
       case 'hi':
         return 'अर्थ: ';
       case 'id':
         return 'Arti: ';
       case 'tr':
         return 'Anlamı: ';
+      case 'ms':
+        return 'Maksud: ';
+      case 'fr':
+        return 'Signification: ';
+      case 'es':
+        return 'Significado: ';
+      case 'ru':
+        return 'Значение: ';
+      case 'fa':
+        return 'معنی: ';
+      case 'de':
+        return 'Bedeutung: ';
+      case 'sw':
+        return 'Maana: ';
       case 'en':
       default:
         return 'Meaning: ';
+    }
+  };
+
+  const getTargetLabel = (lang: ZikrLanguage) => {
+    switch (lang) {
+      case 'bn': return 'লক্ষ্য: ';
+      case 'ur': return 'ہدف: ';
+      case 'ar': return 'الهدف: ';
+      case 'hi': return 'लक्ष्य: ';
+      case 'id': return 'Target: ';
+      case 'tr': return 'Hedef: ';
+      case 'ms': return 'Sasaran: ';
+      case 'fr': return 'Objectif: ';
+      case 'es': return 'Meta: ';
+      case 'ru': return 'Цель: ';
+      case 'fa': return 'هدف: ';
+      case 'de': return 'Ziel: ';
+      case 'sw': return 'Lengo: ';
+      case 'en':
+      default: return 'Target: ';
+    }
+  };
+
+  const getCompletedLabel = (lang: ZikrLanguage) => {
+    switch (lang) {
+      case 'bn': return 'সম্পন্ন';
+      case 'ur': return 'مکمل';
+      case 'ar': return 'مكتمل';
+      case 'hi': return 'पूर्ण';
+      case 'id': return 'Selesai';
+      case 'tr': return 'Tamamlandı';
+      case 'ms': return 'Selesai';
+      case 'fr': return 'Terminé';
+      case 'es': return 'Completado';
+      case 'ru': return 'Завершено';
+      case 'fa': return 'تکمیل شد';
+      case 'de': return 'Abgeschlossen';
+      case 'sw': return 'Imekamilika';
+      case 'en':
+      default: return 'Completed';
+    }
+  };
+
+  const getResetLabel = (lang: ZikrLanguage) => {
+    switch (lang) {
+      case 'bn': return 'রিসেট';
+      case 'ur': return 'ری سیٹ';
+      case 'ar': return 'إعادة ضبط';
+      case 'hi': return 'रीसेट';
+      case 'id': return 'Reset';
+      case 'tr': return 'Sıfırla';
+      case 'ms': return 'Set Semula';
+      case 'fr': return 'Réinit.';
+      case 'es': return 'Reiniciar';
+      case 'ru': return 'Сброс';
+      case 'fa': return 'بازنشانی';
+      case 'de': return 'Reset';
+      case 'sw': return 'Weka Upya';
+      case 'en':
+      default: return 'Reset';
+    }
+  };
+
+  const getCountLabel = (lang: ZikrLanguage) => {
+    switch (lang) {
+      case 'bn': return 'গণনা';
+      case 'ur': return 'شمار';
+      case 'ar': return 'العدد';
+      case 'hi': return 'गणना';
+      case 'id': return 'Hitungan';
+      case 'tr': return 'Sayı';
+      case 'ms': return 'Kiraan';
+      case 'fr': return 'Compte';
+      case 'es': return 'Conteo';
+      case 'ru': return 'Счёт';
+      case 'fa': return 'شمارش';
+      case 'de': return 'Zählung';
+      case 'sw': return 'Hesabu';
+      case 'en':
+      default: return 'Count';
     }
   };
 
@@ -107,7 +203,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
                 isDay ? 'text-[#507579]' : 'text-[#8ebac0]'
               }`}
             >
-              লক্ষ্য: <span className="font-bold text-amber-500 dark:text-amber-400">{target}</span>
+              {getTargetLabel(currentLang)} <span className="font-bold text-amber-500 dark:text-amber-400">{target}</span>
             </span>
           )}
         </div>
@@ -116,7 +212,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
           {isGoalMet && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-500 dark:text-amber-300 border border-amber-500/40 shrink-0 animate-pulse">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>সম্পন্ন</span>
+              <span>{getCompletedLabel(currentLang)}</span>
             </span>
           )}
 
@@ -132,10 +228,10 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
                 ? 'bg-[#f0f7f6] hover:bg-[#e2f1f0] text-[#507579] hover:text-[#1c6469] border-[#d0e6e3]'
                 : 'bg-[#092226] hover:bg-[#10343c] text-[#8ebac0] hover:text-white border-[#133c44]'
             }`}
-            title="রিসেট (Reset to 0)"
+            title={`${getResetLabel(currentLang)} (0)`}
           >
             <RotateCcw className="w-3 h-3" />
-            <span>রিসেট</span>
+            <span>{getResetLabel(currentLang)}</span>
           </button>
         </div>
       </div>
@@ -206,11 +302,11 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
       >
         <div className="flex items-center justify-between mb-1.5 text-xs font-bold">
           <span className={`uppercase tracking-wider ${isDay ? 'text-[#507579]' : 'text-[#8ebac0]'}`}>
-            গণনা
+            {getCountLabel(currentLang)}
           </span>
           {hasTarget && (
             <span className={isGoalMet ? 'text-amber-400 font-bold' : isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'}>
-              {isGoalMet ? 'সম্পন্ন (100%)' : `অগ্রগতি: ${progressPercent}%`}
+              {isGoalMet ? `${getCompletedLabel(currentLang)} (100%)` : `${progressPercent}%`}
             </span>
           )}
         </div>
@@ -267,7 +363,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         className="w-full py-3 sm:py-3.5 mt-1 rounded-2xl text-sm sm:text-base font-bold shadow-md transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-[#006747] hover:bg-[#005a3e] text-white shadow-[#006747]/20 border border-emerald-400/30"
       >
         <Plus className="w-4 h-4 stroke-[3]" />
-        <span>+1 গণনা ({displayPronunciation})</span>
+        <span>+1 {getCountLabel(currentLang)} ({displayPronunciation})</span>
       </button>
 
       {/* Secondary Controls Bar */}

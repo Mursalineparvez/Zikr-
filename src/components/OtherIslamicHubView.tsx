@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem } from '../types';
+import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem, AppSettings } from '../types';
 import {
   Heart,
   BookMarked,
@@ -7,6 +7,7 @@ import {
   Sparkles,
   Layers,
   ChevronRight,
+  Settings,
 } from 'lucide-react';
 import { DuaView } from './DuaView';
 import { HadithView } from './HadithView';
@@ -14,8 +15,9 @@ import { KitabView } from './KitabView';
 import { DailyTabligView } from './DailyTabligView';
 import { AllahNamesView } from './AllahNamesView';
 import { HajjUmrahView } from './HajjUmrahView';
+import { SettingsView } from './SettingsView';
 import { soundHaptics } from '../utils/audioHaptics';
-import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
+import { NAV_TRANSLATIONS, OTHER_HUB_UI, SETTINGS_UI } from '../utils/appTranslations';
 
 export type OtherSubSection =
   | 'hub'
@@ -24,7 +26,8 @@ export type OtherSubSection =
   | 'kitab'
   | 'tablig'
   | 'allah_names'
-  | 'hajj_umrah';
+  | 'hajj_umrah'
+  | 'settings';
 
 interface OtherIslamicHubViewProps {
   onAddDuaToCounters: (dua: DuaItem) => void;
@@ -33,6 +36,15 @@ interface OtherIslamicHubViewProps {
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
   initialSubSection?: OtherSubSection;
+  onSelectLanguage?: (lang: ZikrLanguage) => void;
+  settings?: AppSettings;
+  onUpdateSettings?: (newSettings: Partial<AppSettings>) => void;
+  onGlobalReset?: () => void;
+  onRestoreDefaults?: () => void;
+  onExportPdf?: () => void;
+  onExportBackupJson?: () => void;
+  onImportBackupJson?: (file: File) => void;
+  onOpenSettingsModal?: () => void;
 }
 
 export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
@@ -42,6 +54,15 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
   initialSubSection = 'hub',
+  onSelectLanguage,
+  settings,
+  onUpdateSettings,
+  onGlobalReset,
+  onRestoreDefaults,
+  onExportPdf,
+  onExportBackupJson,
+  onImportBackupJson,
+  onOpenSettingsModal,
 }) => {
   const isDay = themeMode === 'day';
   const [activeSub, setActiveSub] = useState<OtherSubSection>(initialSubSection);
@@ -118,6 +139,17 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       icon: <span className="text-2xl">🕋</span>,
       color: 'from-teal-500/15 to-emerald-500/10 border-teal-500/30',
       badge: selectedLanguage === 'bn' ? 'সচিত্র নিয়মাবলী' : 'Complete Guide',
+    },
+    {
+      id: 'settings' as OtherSubSection,
+      title: SETTINGS_UI.title[selectedLanguage] || 'সেটিংস ও ভাষা (Settings & Language)',
+      arabic: 'الإعدادات واللغة',
+      desc:
+        SETTINGS_UI.subtitle[selectedLanguage] ||
+        'Customize language (14 languages), themes, audio, vibration, and data backups.',
+      icon: <Settings className="w-6 h-6 text-emerald-400" />,
+      color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
+      badge: '14 Languages',
     },
   ];
 
@@ -226,6 +258,20 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <span>🕋</span>
           <span>{NAV_TRANSLATIONS.hajj_umrah[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSub('settings')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'settings'
+              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+          }`}
+        >
+          <Settings className="w-3.5 h-3.5" />
+          <span>{SETTINGS_UI.title[selectedLanguage] || 'সেটিংস ও ভাষা'}</span>
         </button>
       </div>
 
@@ -342,6 +388,29 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           soundEnabled={soundEnabled}
           themeMode={themeMode}
           selectedLanguage={selectedLanguage}
+        />
+      )}
+
+      {/* Sub-view: Settings & Language (14 Languages) */}
+      {activeSub === 'settings' && (
+        <SettingsView
+          settings={
+            settings || {
+              theme: 'emerald',
+              themeMode: themeMode,
+              soundEnabled: soundEnabled,
+              vibrationEnabled: true,
+              screenAwake: false,
+            }
+          }
+          selectedLanguage={selectedLanguage}
+          onSelectLanguage={onSelectLanguage}
+          onUpdateSettings={onUpdateSettings || (() => {})}
+          onGlobalReset={onGlobalReset || (() => {})}
+          onRestoreDefaults={onRestoreDefaults || (() => {})}
+          onExportPdf={onExportPdf || (() => {})}
+          onExportBackupJson={onExportBackupJson || (() => {})}
+          onImportBackupJson={onImportBackupJson || (() => {})}
         />
       )}
     </div>

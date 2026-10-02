@@ -473,7 +473,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   {b.arabicName}
                 </div>
                 <div className="text-xs font-medium text-teal-700 dark:text-teal-300">
-                  {b.titles[selectedLanguage]}
+                  {b.titles[selectedLanguage] || b.titles.en}
                 </div>
               </div>
             );

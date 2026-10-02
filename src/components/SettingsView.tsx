@@ -1,19 +1,25 @@
 import React from 'react';
-import { Volume2, VolumeX, Smartphone, Palette, Sun, ShieldAlert, FileText, Download, Upload, RotateCcw, Sparkles } from 'lucide-react';
-import { AppTheme, AppSettings } from '../types';
+import { Volume2, VolumeX, Smartphone, Palette, Sun, ShieldAlert, FileText, Download, Upload, RotateCcw, Sparkles, Globe, Check } from 'lucide-react';
+import { AppTheme, AppSettings, ZikrLanguage } from '../types';
+import { SUPPORTED_LANGUAGES } from '../utils/constants';
+import { SETTINGS_UI } from '../utils/appTranslations';
 
 interface SettingsViewProps {
   settings: AppSettings;
+  selectedLanguage?: ZikrLanguage;
+  onSelectLanguage?: (lang: ZikrLanguage) => void;
   onUpdateSettings: (newSettings: Partial<AppSettings>) => void;
   onGlobalReset: () => void;
   onRestoreDefaults: () => void;
-  onExportPdf: () => void;
-  onExportBackupJson: () => void;
-  onImportBackupJson: (file: File) => void;
+  onExportPdf?: () => void;
+  onExportBackupJson?: () => void;
+  onImportBackupJson?: (file: File) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   settings,
+  selectedLanguage = 'bn',
+  onSelectLanguage,
   onUpdateSettings,
   onGlobalReset,
   onRestoreDefaults,
@@ -21,6 +27,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onExportBackupJson,
   onImportBackupJson,
 }) => {
+  const handleDefaultExportBackup = () => {
+    try {
+      const backupData = {
+        settings,
+        savedAt: new Date().toISOString(),
+        version: 'v411_38.1',
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `zikrmate_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDefaultImportBackup = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target?.result as string);
+        if (parsed.settings) onUpdateSettings(parsed.settings);
+      } catch (err) {
+        console.error('Failed to import backup JSON', err);
+      }
+    };
+    reader.readAsText(file);
+  };
   const themes: Array<{ id: AppTheme; name: string; desc: string; previewClass: string }> = [
     {
       id: 'emerald',
@@ -53,11 +90,62 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Header */}
       <div className="bg-slate-900/80 p-5 rounded-3xl border border-emerald-900/40">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <span>App Settings &amp; Preferences</span>
+          <span>{SETTINGS_UI.title[selectedLanguage] || 'App Settings & Preferences'}</span>
         </h2>
         <p className="text-xs text-slate-300 mt-1">
-          Customize themes, haptics, audio, data persistence, and offline capabilities.
+          {SETTINGS_UI.subtitle[selectedLanguage] ||
+            'Customize language, themes, haptics, audio, and data backups.'}
         </p>
+      </div>
+
+      {/* 0. Language Configuration (14 Supported World Languages) */}
+      <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+            <Globe className="w-4 h-4" />
+            <span>{SETTINGS_UI.appLanguage[selectedLanguage] || 'App Language'}</span>
+          </div>
+          <span className="text-xs font-bold text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+            {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.nativeName || selectedLanguage}
+          </span>
+        </div>
+        <p className="text-xs text-slate-400">
+          {SETTINGS_UI.languageDesc[selectedLanguage] ||
+            'আরবি হরফ ব্যতীত সকল মেনু, অনুবাদ ও নির্দেশিকা স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে'}
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+          {SUPPORTED_LANGUAGES.map((langItem) => {
+            const isSelected = selectedLanguage === langItem.code;
+            return (
+              <button
+                key={langItem.code}
+                type="button"
+                onClick={() => onSelectLanguage && onSelectLanguage(langItem.code)}
+                className={`p-3 rounded-2xl border text-left transition active:scale-95 cursor-pointer flex items-center justify-between gap-2 ${
+                  isSelected
+                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50 font-bold'
+                    : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-700 text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-xl shrink-0">{langItem.flag}</span>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold truncate leading-tight">
+                      {langItem.nativeName}
+                    </div>
+                    <div className="text-[10px] opacity-75 truncate">{langItem.label}</div>
+                  </div>
+                </div>
+                {isSelected && (
+                  <div className="w-4 h-4 rounded-full bg-white text-emerald-700 flex items-center justify-center shrink-0">
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* 1. Theme Configuration */}
@@ -180,7 +268,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </button>
 
           <button
-            onClick={onExportBackupJson}
+            onClick={onExportBackupJson || handleDefaultExportBackup}
             className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition active:scale-95"
           >
             <Download className="w-4 h-4 text-teal-400" />
@@ -196,7 +284,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) onImportBackupJson(file);
+                if (file) {
+                  if (onImportBackupJson) onImportBackupJson(file);
+                  else handleDefaultImportBackup(file);
+                }
               }}
             />
           </label>

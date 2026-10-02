@@ -49,6 +49,7 @@ import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySessi
 import { soundHaptics } from '../utils/audioHaptics';
 import { findSavedAccount, saveAccountToRegistry, updateAccountPassword, normalizeIdentifier } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
+import { SETTINGS_UI } from '../utils/appTranslations';
 import { getDetectedDeviceInfo } from '../utils/deviceInfo';
 
 import { usePWAInstall } from '../hooks/usePWAInstall';
@@ -1023,6 +1024,65 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           {/* TAB 2: SETTINGS */}
           {activeTab === 'settings' && (
             <div className="space-y-4 animate-in fade-in duration-200">
+              {/* 1. Language Selection (14 World Languages) */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-emerald-500" />
+                    <span>{SETTINGS_UI.appLanguage[selectedLanguage] || 'অ্যাপের ভাষা (Language)'}</span>
+                  </span>
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+                    {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.nativeName || selectedLanguage}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-teal-300/80 leading-relaxed">
+                  {SETTINGS_UI.languageDesc[selectedLanguage] ||
+                    'আরবি হরফ ব্যতীত সকল মেনু, অনুবাদ ও নির্দেশিকা স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে'}
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 pt-1 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+                  {SUPPORTED_LANGUAGES.map((langItem) => {
+                    const isSelected = selectedLanguage === langItem.code;
+                    return (
+                      <button
+                        key={langItem.code}
+                        type="button"
+                        onClick={() => {
+                          if (onSelectLanguage) onSelectLanguage(langItem.code);
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className={`p-2.5 rounded-xl border text-left transition active:scale-95 cursor-pointer flex items-center justify-between gap-1.5 ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50 font-bold'
+                            : isDay
+                            ? 'bg-slate-50 hover:bg-emerald-50/70 border-slate-200 text-slate-700'
+                            : 'bg-[#092226] hover:bg-[#133941] border-[#184850] text-teal-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xl shrink-0">{langItem.flag}</span>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold truncate leading-tight">
+                              {langItem.nativeName}
+                            </div>
+                            <div className="text-[10px] opacity-75 truncate">{langItem.label}</div>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="w-4 h-4 rounded-full bg-white text-emerald-700 flex items-center justify-center shrink-0">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* App Install */}
               <div
                 className={`p-4 rounded-2xl border shadow-md space-y-3 ${

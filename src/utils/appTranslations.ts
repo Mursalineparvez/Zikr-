@@ -1,97 +1,218 @@
 import { ZikrLanguage, NavModule } from '../types';
 
 /**
- * Navigation module translations across the top 6 supported languages:
- * Bengali (bn), English (en), Urdu (ur), Hindi (hi), Indonesian (id), Turkish (tr)
+ * Safe translation proxy that returns requested language translation if present,
+ * or gracefully falls back to English, Bengali, or Arabic so no lookup ever fails.
+ */
+export function createTranslationProxy<T extends Record<string | number, any>>(dict: T): T {
+  const proxyDict: any = {};
+  for (const [key, val] of Object.entries(dict)) {
+    if (val && typeof val === 'object') {
+      proxyDict[key] = new Proxy(val, {
+        get(target: any, prop: string) {
+          if (typeof prop === 'string' && prop in target && target[prop] !== undefined) {
+            return target[prop];
+          }
+          return target['en'] ?? target['bn'] ?? target['ar'] ?? '';
+        },
+      });
+    } else {
+      proxyDict[key] = val;
+    }
+  }
+  return new Proxy(proxyDict, {
+    get(target: any, prop: string) {
+      if (typeof prop === 'string' && prop in target) {
+        return target[prop];
+      }
+      return new Proxy({}, {
+        get() {
+          return '';
+        },
+      });
+    },
+  }) as T;
+}
+
+/**
+ * Navigation module translations across all 14 supported languages
  */
 export const NAV_TRANSLATIONS: Record<NavModule, Record<ZikrLanguage, string>> = {
   zikir_counter: {
     bn: 'জিকির কাউন্টার',
     en: 'Zikir Counter',
     ur: 'ذکر کاؤنٹر',
+    ar: 'عداد الذكر',
     hi: 'ज़िक्र काउंटर',
     id: 'Penghitung Zikir',
     tr: 'Zikir Sayacı',
+    ms: 'Kaunter Zikir',
+    fr: 'Compteur de Dhikr',
+    es: 'Contador de Zikr',
+    ru: 'Счетчик Зикра',
+    fa: 'شمارنده ذکر',
+    de: 'Dhikr-Zähler',
+    sw: 'Kaunta ya Dhikr',
   },
   quran: {
     bn: 'আল-কোরআন',
     en: 'Quran',
     ur: 'قرآن کریم',
+    ar: 'القرآن الكريم',
     hi: 'अल-क़ुरआन',
     id: 'Al-Qur\'an',
     tr: 'Kur\'an-ı Kerim',
+    ms: 'Al-Quran',
+    fr: 'Le Saint Coran',
+    es: 'El Sagrado Corán',
+    ru: 'Священный Коран',
+    fa: 'قرآن کریم',
+    de: 'Der Heilige Koran',
+    sw: 'Kurani Tukufu',
   },
   kitab: {
     bn: 'কিতাব লাইব্রেরি',
     en: 'Kitab Library',
     ur: 'کتب اسلامی',
+    ar: 'المكتبة الإسلامية',
     hi: 'किताब लाइब्रेरी',
     id: 'Kitab Islam',
     tr: 'İslami Kitaplar',
+    ms: 'Perpustakaan Kitab',
+    fr: 'Bibliothèque Islamique',
+    es: 'Biblioteca Islámica',
+    ru: 'Исламские Книги',
+    fa: 'کتابخانه اسلامی',
+    de: 'Islamische Bibliothek',
+    sw: 'Maktaba ya Kiislamu',
   },
   hadith: {
     bn: 'হাদিস শরিফ',
     en: 'Hadith',
     ur: 'احادیث مبارکہ',
+    ar: 'الحديث النبوي',
     hi: 'हदीस शरीफ़',
     id: 'Hadis Shahih',
     tr: 'Hadis-i Şerif',
+    ms: 'Hadis Sahih',
+    fr: 'Hadiths Prophétiques',
+    es: 'Hadices Proféticos',
+    ru: 'Хадисы Пророка',
+    fa: 'احادیث نبوی',
+    de: 'Prophetische Hadithe',
+    sw: 'Hadithi za Mtume',
   },
   salat_time: {
     bn: 'নামাজের সময়',
     en: 'Salat Time',
     ur: 'اوقات نماز',
+    ar: 'مواقيت الصلاة',
     hi: 'नमाज़ का समय',
     id: 'Waktu Sholat',
     tr: 'Namaz Vakitleri',
+    ms: 'Waktu Solat',
+    fr: 'Horaires des Prières',
+    es: 'Horarios de Oración',
+    ru: 'Время Намаза',
+    fa: 'اوقات نماز',
+    de: 'Gebetszeiten',
+    sw: 'Nyakati za Swala',
   },
   dua: {
     bn: 'দোয়া সমূহ',
     en: 'Dua',
     ur: 'مسنون دعائیں',
+    ar: 'الأدعية المأثورة',
     hi: 'मसनून दुआएं',
     id: 'Doa Harian',
     tr: 'Dualar',
+    ms: 'Doa Harian',
+    fr: 'Invocations (Douaa)',
+    es: 'Súplicas (Dua)',
+    ru: 'Мольбы (Дуа)',
+    fa: 'دعاهای مأثوره',
+    de: 'Bittgebete (Dua)',
+    sw: 'Dua za Kila Siku',
   },
   aamal_tracker: {
     bn: 'আমল ট্র্যাকার',
     en: 'Aamal Tracker',
     ur: 'اعمال ٹریکر',
+    ar: 'متتبع الأعمال',
     hi: 'आमाल ट्रैकर',
     id: 'Pelacak Amal',
     tr: 'Amel Takibi',
+    ms: 'Penjejak Amal',
+    fr: 'Suivi des Actions',
+    es: 'Registro de Obras',
+    ru: 'Трекер Деяний',
+    fa: 'ردیاب اعمال',
+    de: 'Taten-Tracker',
+    sw: 'Mfuatiliaji wa Matendo',
   },
   other: {
     bn: 'অন্যান্য (Other)',
     en: 'Other',
     ur: 'دیگر فیچرز',
+    ar: 'ميزات أخرى',
     hi: 'अन्य फीचर्स',
     id: 'Lainnya',
     tr: 'Diğer',
+    ms: 'Lain-lain',
+    fr: 'Autres Fonctions',
+    es: 'Otras Funciones',
+    ru: 'Другое',
+    fa: 'سایر امکانات',
+    de: 'Weitere Funktionen',
+    sw: 'Mengineyo',
   },
   tablig: {
     bn: 'দাওয়াত ও তাবলিগ',
     en: 'Dawah & Tabligh',
     ur: 'دعوت و تبلیغ',
+    ar: 'الدعوة والتبليغ',
     hi: 'दवत व तबलीग़',
-    id: 'Dawah & Tabligh',
-    tr: 'Davas ve Tebliğ',
+    id: 'Dakwah & Tabligh',
+    tr: 'Davet ve Tebliğ',
+    ms: 'Dakwah & Tabligh',
+    fr: 'Dawah & Tabligh',
+    es: 'Dawa y Tabligh',
+    ru: 'Дауат и Таблиг',
+    fa: 'دعوت و تبلیغ',
+    de: 'Dawah & Tabligh',
+    sw: 'Da\'wah na Tabligh',
   },
   allah_names: {
     bn: 'আল্লাহর ৯৯ নাম',
     en: 'Allah 99 Names',
     ur: 'اسماء الحسنیٰ',
+    ar: 'أسماء الله الحسنى',
     hi: 'अल्लाह के ९९ नाम',
     id: 'Asmaul Husna',
     tr: 'Esmâ-ül Hüsnâ',
+    ms: 'Asmaul Husna',
+    fr: 'Les 99 Noms d\'Allah',
+    es: '99 Nombres de Alá',
+    ru: '99 Имён Аллаха',
+    fa: 'اسماء الحسنی',
+    de: 'Die 99 Namen Allahs',
+    sw: 'Majina 99 ya Allah',
   },
   hajj_umrah: {
     bn: 'হজ ও ওমরাহ',
     en: 'Hajj & Umrah',
     ur: 'حج و عمرہ',
+    ar: 'الحج والعمرة',
     hi: 'हज व उमराह',
     id: 'Haji & Umrah',
     tr: 'Hac ve Umre',
+    ms: 'Haji & Umrah',
+    fr: 'Hajj & Omra',
+    es: 'Hayy y Umrah',
+    ru: 'Хаджи и Умра',
+    fa: 'حج و عمره',
+    de: 'Hadsch & Umra',
+    sw: 'Hija na Umra',
   },
 };
 
@@ -103,69 +224,133 @@ export const PRAYER_NAMES: Record<string, Record<ZikrLanguage, string>> = {
     bn: 'ফজর',
     en: 'Fajr',
     ur: 'فجر',
+    ar: 'الفجر',
     hi: 'फ़ज्र',
     id: 'Subuh',
     tr: 'İmsak',
+    ms: 'Subuh',
+    fr: 'Fajr',
+    es: 'Fajr',
+    ru: 'Фаджр',
+    fa: 'فجر',
+    de: 'Fadschr',
+    sw: 'Alfajiri',
   },
   Sunrise: {
     bn: 'সূর্যোদয়',
     en: 'Sunrise',
     ur: 'طلوع آفتاب',
+    ar: 'الشروق',
     hi: 'सूर्योदय',
     id: 'Terbit',
     tr: 'Güneş',
+    ms: 'Syuruk',
+    fr: 'Lever du soleil',
+    es: 'Amanecer',
+    ru: 'Восход',
+    fa: 'طلوع آفتاب',
+    de: 'Sonnenaufgang',
+    sw: 'Mawio ya Jua',
   },
   Dhuhr: {
     bn: 'যোহর',
     en: 'Dhuhr',
     ur: 'ظہر',
+    ar: 'الظهر',
     hi: 'ज़ुहर',
     id: 'Dzuhur',
     tr: 'Öğle',
+    ms: 'Zohor',
+    fr: 'Dhuhr',
+    es: 'Dhuhr',
+    ru: 'Зухр',
+    fa: 'ظهر',
+    de: 'Dhuhr',
+    sw: 'Adhuhuri',
   },
   Asr: {
     bn: 'আসর',
     en: 'Asr',
     ur: 'عصر',
+    ar: 'العصر',
     hi: 'असर',
     id: 'Ashar',
     tr: 'İkindi',
+    ms: 'Asar',
+    fr: 'Asr',
+    es: 'Asr',
+    ru: 'Аср',
+    fa: 'عصر',
+    de: 'Asr',
+    sw: 'Alasiri',
   },
   Maghrib: {
     bn: 'মাগরিব',
     en: 'Maghrib',
     ur: 'مغرب',
+    ar: 'المغرب',
     hi: 'मग़रिब',
     id: 'Maghrib',
     tr: 'Akşam',
+    ms: 'Maghrib',
+    fr: 'Maghrib',
+    es: 'Magreb',
+    ru: 'Магриб',
+    fa: 'مغرب',
+    de: 'Maghrib',
+    sw: 'Magharibi',
   },
   Isha: {
     bn: 'ইশা',
     en: 'Isha',
     ur: 'عشاء',
+    ar: 'العشاء',
     hi: 'इशा',
     id: 'Isya',
     tr: 'Yatsı',
+    ms: 'Isyak',
+    fr: 'Isha',
+    es: 'Isha',
+    ru: 'Иша',
+    fa: 'عشاء',
+    de: 'Ischa',
+    sw: 'Ishaa',
   },
   Tahajjud: {
     bn: 'তাহাজ্জুদ',
     en: 'Tahajjud',
     ur: 'تہجد',
+    ar: 'التهجد',
     hi: 'तहज्जुद',
     id: 'Tahajud',
     tr: 'Teheccüd',
+    ms: 'Tahajjud',
+    fr: 'Tahajjoud',
+    es: 'Tahajjud',
+    ru: 'Тахаджуд',
+    fa: 'تهجد',
+    de: 'Tahadschud',
+    sw: 'Tahajjud',
   },
   Midnight: {
     bn: 'মধ্যরাত',
     en: 'Midnight',
     ur: 'نصف شب',
+    ar: 'منتصف الليل',
     hi: 'आधी रात',
     id: 'Tengah Malam',
     tr: 'Gece Yarısı',
+    ms: 'Tengah Malam',
+    fr: 'Minuit',
+    es: 'Medianoche',
+    ru: 'Полночь',
+    fa: 'نیمه‌شب',
+    de: 'Mitternacht',
+    sw: 'Usiku wa Manane',
   },
 };
 
-export const SALAT_UI: Record<string, Record<ZikrLanguage, string>> = {
+export const SALAT_UI: Record<string, Record<string, string>> = createTranslationProxy({
   bannerTitle: {
     bn: 'দৈনিক সালাত ও ওয়াক্ত সময়সূচি',
     en: 'Daily Salat Prayer Times',
@@ -398,7 +583,7 @@ export const SALAT_UI: Record<string, Record<ZikrLanguage, string>> = {
     id: 'Tengah Hari (Dzuhur)',
     tr: 'Öğle (Öğle Namazı)',
   },
-};
+});
 
 /**
  * Quran View UI Translations & Edition mappings
@@ -407,12 +592,20 @@ export const QURAN_EDITIONS: Record<ZikrLanguage, string> = {
   bn: 'bn.bengali',
   en: 'en.sahih',
   ur: 'ur.jalandhry',
+  ar: 'ar.muyassar',
   hi: 'hi.hindi',
   id: 'id.indonesian',
   tr: 'tr.ates',
+  ms: 'ms.basmeih',
+  fr: 'fr.hamidullah',
+  es: 'es.cortes',
+  ru: 'ru.kuliev',
+  fa: 'fa.ansarian',
+  de: 'de.bubenheim',
+  sw: 'sw.barwani',
 };
 
-export const QURAN_UI: Record<string, Record<ZikrLanguage, string>> = {
+export const QURAN_UI: Record<string, Record<string, string>> = createTranslationProxy({
   bannerTitle: {
     bn: 'পবিত্র কুরআনুল কারীম',
     en: 'The Noble Quran',
@@ -549,12 +742,12 @@ export const QURAN_UI: Record<string, Record<ZikrLanguage, string>> = {
     id: 'Kembali ke Daftar Surah',
     tr: 'Sure Listesine Dön',
   },
-};
+});
 
 /**
  * Surah name meanings in 6 languages for key surahs
  */
-export const SURAH_MEANINGS: Record<number, Record<ZikrLanguage, string>> = {
+export const SURAH_MEANINGS: Record<number, Record<string, string>> = createTranslationProxy({
   1: { bn: 'সূচনা / ভূমিকা', en: 'The Opening', ur: 'افتتاح / آغاز', hi: 'प्रारंभ / शुरुआत', id: 'Pembukaan', tr: 'Açılış' },
   2: { bn: 'গাভী', en: 'The Cow', ur: 'گائے', hi: 'गाय', id: 'Sapi Betina', tr: 'Bakara (İnek)' },
   3: { bn: 'ইমরানের পরিবার', en: 'The Family of Imran', ur: 'آل عمران', hi: 'इमरान का परिवार', id: 'Keluarga Imran', tr: 'Âl-i İmrân' },
@@ -565,14 +758,14 @@ export const SURAH_MEANINGS: Record<number, Record<ZikrLanguage, string>> = {
   56: { bn: 'অবশ্যম্ভাবী ঘটনা', en: 'The Inevitable', ur: 'واقعہ', hi: 'महाघटना', id: 'Hari Kiamat', tr: 'Vâkıa' },
   67: { bn: 'সার্বভৌম কর্তৃত্ব', en: 'The Sovereignty', ur: 'بادشاہت', hi: 'संप्रभुता', id: 'Kerajaan', tr: 'Mülk (Hükümranlık)' },
   112: { bn: 'একত্ববাদ', en: 'The Sincerity', ur: 'اخلاص', hi: 'एकेश्वरवाद', id: 'Keesaan Allah', tr: 'İhlâs' },
-  113: { bn: 'ঊষাকাল', en: 'The Daybreak', ur: 'صبح', hi: 'भोर / सवेरा', id: 'Waktu Subuh', tr: 'Felak (Şafak)' },
+  113: { bn: 'ঊষাকাল', en: 'The Daybreak', ur: 'صبح', hi: 'भোর / सवेरा', id: 'Waktu Subuh', tr: 'Felak (Şafak)' },
   114: { bn: 'মানবজাতি', en: 'Mankind', ur: 'انسان', hi: 'मानव जाति', id: 'Manusia', tr: 'Nâs (İnsanlar)' },
-};
+});
 
 /**
  * Hadith translations in all 6 languages
  */
-export const HADITH_TRANSLATIONS: Record<string, Record<ZikrLanguage, { translation: string; reflection: string }>> = {
+export const HADITH_TRANSLATIONS: Record<string, Record<string, { translation: string; reflection: string }>> = createTranslationProxy({
   bukhari_1: {
     bn: {
       translation: 'সকল কাজের প্রতিদান নিয়তের উপর নির্ভরশীল। প্রত্যেক ব্যক্তি কেবল সেটাই পাবে যার সে নিয়ত করেছে। সুতরাং যে ব্যক্তি পার্থিব কোনো সুবিধার জন্য বা কোনো নারীকে বিবাহ করার উদ্দেশ্যে হিজরত করল, তার হিজরত সেই উদ্দেশ্যের জন্যই গণ্য হবে।',
@@ -885,28 +1078,28 @@ export const HADITH_TRANSLATIONS: Record<string, Record<ZikrLanguage, { translat
       reflection: 'Sadaka yalnızca maddi infaktan ibaret değildir. Dille yapılan her zikir ve insanlara uzatılan her hayırlı el sadakadır.',
     },
   },
-};
+});
 
 /**
  * Hadith Topics translated in 6 languages
  */
-export const HADITH_TOPICS: Record<string, Record<ZikrLanguage, string>> = {
-  all: { bn: 'সব বিষয়', en: 'All Topics', ur: 'تمام موضوعات', hi: 'सभी विषय', id: 'Semua Topik', tr: 'Tüm Konular' },
-  'Faith & Tawheed': { bn: 'ঈমান ও তাওহীদ', en: 'Faith & Tawheed', ur: 'ایمان و توحید', hi: 'ईमान और तौहीद', id: 'Iman & Tauhid', tr: 'İman ve Tevhid' },
-  'Salah & Purification': { bn: 'নামাজ ও পবিত্রতা', en: 'Salah & Purification', ur: 'نماز و طہارت', hi: 'नमाज़ और पाकीज़गी', id: 'Sholat & Bersuci', tr: 'Namaz ve Temizlik' },
-  'Character & Akhlaq': { bn: 'উত্তম চরিত্র ও শিষ্টাচার', en: 'Character & Akhlaq', ur: 'اخلاق و آداب', hi: 'सदाचार व अख़लाक़', id: 'Akhlak Mulia', tr: 'Ahlak ve Nezaket' },
-  'Dhikr & Dua': { bn: 'জিকির ও দোয়া', en: 'Dhikr & Dua', ur: 'ذکر و دعا', hi: 'ज़िक्र और दुआ', id: 'Dzikir & Doa', tr: 'Zikir ve Dua' },
-  'Charity & Kindness': { bn: 'দান ও দয়া', en: 'Charity & Kindness', ur: 'صدقہ و سخاوت', hi: 'दान और दयालुता', id: 'Sedekah & Kebaikan', tr: 'Sadaka ve İyilik' },
-  'Patience & Trials': { bn: 'ধৈর্য ও পরীক্ষা', en: 'Patience & Trials', ur: 'صبر و استقامت', hi: 'धैर्य और परीक्षा', id: 'Sabar & Ujian', tr: 'Sabır ve İmtihan' },
-  'Repentance & Mercy': { bn: 'তওবা ও আল্লাহর ক্ষমা', en: 'Repentance & Mercy', ur: 'توبہ و رحمت', hi: 'तौबा और दया', id: 'Taubat & Rahmat', tr: 'Tövbe ve Merhamet' },
-  'Seeking Knowledge': { bn: 'জ্ঞান ও ইলম অর্জন', en: 'Seeking Knowledge', ur: 'حصولِ علم', hi: 'ज्ञान प्राप्ति', id: 'Menuntut Ilmu', tr: 'İlim Tahsili' },
-  'Good Manners & Relations': { bn: 'উত্তম আচরণ ও শিষ্টাচার', en: 'Good Manners', ur: 'حسن معاشرت', hi: 'अच्छा व्यवहार', id: 'Adab & Silaturahmi', tr: 'Güzel Ahlak' },
-  'Fasting & Devotion': { bn: 'রোজা ও সিয়াম', en: 'Fasting & Devotion', ur: 'روزہ و عبادت', hi: 'रोज़ा व इबादत', id: 'Puasa & Ibadah', tr: 'Oruç ve İbadet' },
-  'Family & Marriage': { bn: 'পরিবার ও বিবাহ', en: 'Family & Marriage', ur: 'خاندان و نکاح', hi: 'परिवार व विवाह', id: 'Keluarga & Pernikahan', tr: 'Aile ve Evlilik' },
-  'Truthfulness & Honesty': { bn: 'সত্যবাদিতা ও সততা', en: 'Truthfulness', ur: 'سچائی و امانت', hi: 'सच्चाई व ईमानदारी', id: 'Kejujuran', tr: 'Doğruluk ve Dürüstlük' },
-};
+export const HADITH_TOPICS: Record<string, Record<string, string>> = createTranslationProxy({
+  all: { bn: 'সব বিষয়', en: 'All Topics', ur: 'تمام موضوعات', ar: 'جميع الموضوعات', hi: 'सभी विषय', id: 'Semua Topik', tr: 'Tüm Konular', ms: 'Semua Topik', fr: 'Tous les sujets', es: 'Todos los temas', ru: 'Все темы', fa: 'همه موضوعات', de: 'Alle Themen', sw: 'Mada Zote' },
+  'Faith & Tawheed': { bn: 'ঈমান ও তাওহীদ', en: 'Faith & Tawheed', ur: 'ایمان و توحید', ar: 'الإيمان والتوحيد', hi: 'ईमान और तौहीद', id: 'Iman & Tauhid', tr: 'İman ve Tevhid', ms: 'Iman & Tauhid', fr: 'Foi & Tawhid', es: 'Fe y Monoteísmo', ru: 'Вера и Единобожие', fa: 'ایمان و توحید', de: 'Glaube & Tauhid', sw: 'Imani na Tawhid' },
+  'Salah & Purification': { bn: 'নামাজ ও পবিত্রতা', en: 'Salah & Purification', ur: 'نماز و طہارت', ar: 'الصلاة والطهارة', hi: 'नमाज़ और पाकीज़गी', id: 'Sholat & Bersuci', tr: 'Namaz ve Temizlik', ms: 'Solat & Bersuci', fr: 'Prière & Purification', es: 'Oración y Purificación', ru: 'Молитва и Очищение', fa: 'نماز و طهارت', de: 'Gebet & Reinigung', sw: 'Swala na Usafi' },
+  'Character & Akhlaq': { bn: 'উত্তম চরিত্র ও শিষ্টাচার', en: 'Character & Akhlaq', ur: 'اخلاق و آداب', ar: 'الأخلاق والآداب', hi: 'सदाचार व अख़लाक़', id: 'Akhlak Mulia', tr: 'Ahlak ve Nezaket', ms: 'Akhlak Mulia', fr: 'Caractère & Moralité', es: 'Carácter y Moral', ru: 'Нравственность и Этика', fa: 'اخلاق و آداب', de: 'Charakter & Moral', sw: 'Tabia Njema' },
+  'Dhikr & Dua': { bn: 'জিকির ও দোয়া', en: 'Dhikr & Dua', ur: 'ذکر و دعا', ar: 'الذكر والدعاء', hi: 'ज़िक्र और दुआ', id: 'Dzikir & Doa', tr: 'Zikir ve Dua', ms: 'Zikir & Doa', fr: 'Dhikr & Invocation', es: 'Recuerdo y Súplica', ru: 'Зикр и Дуа', fa: 'ذکر و دعا', de: 'Gedenken & Bittgebet', sw: 'Dhikr na Dua' },
+  'Charity & Kindness': { bn: 'দান ও দয়া', en: 'Charity & Kindness', ur: 'صدقہ و سخاوت', ar: 'الصدقة والإحسان', hi: 'दान और दयालुता', id: 'Sedekah & Kebaikan', tr: 'Sadaka ve İyilik', ms: 'Sedekah & Ihsan', fr: 'Aumône & Bienveillance', es: 'Caridad y Bondad', ru: 'Милостыня и Доброта', fa: 'صدقه و احسان', de: 'Spenden & Güte', sw: 'Sadaka na Wema' },
+  'Patience & Trials': { bn: 'ধৈর্য ও পরীক্ষা', en: 'Patience & Trials', ur: 'صبر و استقامت', ar: 'الصبر والابتلاء', hi: 'धैर्य और परीक्षा', id: 'Sabar & Ujian', tr: 'Sabır ve İmtihan', ms: 'Sabar & Ujian', fr: 'Patience & Épreuves', es: 'Paciencia y Pruebas', ru: 'Терпение и Испытания', fa: 'صبر و آزمایش', de: 'Geduld & Prüfungen', sw: 'Subira na Mitihani' },
+  'Repentance & Mercy': { bn: 'তওবা ও আল্লাহর ক্ষমা', en: 'Repentance & Mercy', ur: 'توبہ و رحمت', ar: 'التوبة والرحمة', hi: 'तौबा और दया', id: 'Taubat & Rahmat', tr: 'Tövbe ve Merhamet', ms: 'Taubat & Rahmat', fr: 'Repentir & Miséricorde', es: 'Arrepentimiento y Misericordia', ru: 'Покаяние и Милость', fa: 'توبه و رحمت', de: 'Reue & Barmherzigkeit', sw: 'Toba na Rehema' },
+  'Seeking Knowledge': { bn: 'জ্ঞান ও ইলম অর্জন', en: 'Seeking Knowledge', ur: 'حصولِ علم', ar: 'طلب العلم', hi: 'ज्ञान प्राप्ति', id: 'Menuntut Ilmu', tr: 'İlim Tahsili', ms: 'Menuntut Ilmu', fr: 'Recherche de la Science', es: 'Búsqueda del Saber', ru: 'Поиск Знаний', fa: 'طلب علم', de: 'Wissenserwerb', sw: 'Kutafuta Elimu' },
+  'Good Manners & Relations': { bn: 'উত্তম আচরণ ও শিষ্টাচার', en: 'Good Manners', ur: 'حسن معاشرت', ar: 'حسن المعاملة', hi: 'अच्छा व्यवहार', id: 'Adab & Silaturahmi', tr: 'Güzel Ahlak', ms: 'Adab & Silaturrahim', fr: 'Bonnes Manières', es: 'Buenos Modales', ru: 'Хорошие Манеры', fa: 'حسن معاشرت', de: 'Gute Umgangsformen', sw: 'Uhusiano Mwema' },
+  'Fasting & Devotion': { bn: 'রোজা ও সিয়াম', en: 'Fasting & Devotion', ur: 'روزہ و عبادت', ar: 'الصيام والعبادة', hi: 'रोज़ा व इबादत', id: 'Puasa & Ibadah', tr: 'Oruç ve İbadet', ms: 'Puasa & Ibadah', fr: 'Jeûne & Dévotion', es: 'Ayuno y Devoción', ru: 'Пост и Поклонение', fa: 'روزه و عبادت', de: 'Fasten & Andacht', sw: 'Funga na Ibada' },
+  'Family & Marriage': { bn: 'পরিবার ও বিবাহ', en: 'Family & Marriage', ur: 'خاندان و نکاح', ar: 'الأسرة والزواج', hi: 'परिवार व विवाह', id: 'Keluarga & Pernikahan', tr: 'Aile ve Evlilik', ms: 'Keluarga & Perkahwinan', fr: 'Famille & Mariage', es: 'Familia y Matrimonio', ru: 'Семья и Брак', fa: 'خانواده و ازدواج', de: 'Familie & Ehe', sw: 'Familia na Ndoa' },
+  'Truthfulness & Honesty': { bn: 'সত্যবাদিতা ও সততা', en: 'Truthfulness', ur: 'سچائی و امانت', ar: 'الصدق والأمانة', hi: 'सच्चाई व ईमानदारी', id: 'Kejujuran', tr: 'Doğruluk ve Dürüstlük', ms: 'Kejujuran & Amanah', fr: 'Vérité & Honnêteté', es: 'Verdad y Honestidad', ru: 'Правдивость и Честность', fa: 'صداقت و امانت', de: 'Wahrhaftigkeit & Ehrlichkeit', sw: 'Ukweli na Uaminifu' },
+});
 
-export const HADITH_UI: Record<string, Record<ZikrLanguage, string>> = {
+export const HADITH_UI: Record<string, Record<string, string>> = createTranslationProxy({
   bannerTitle: {
     bn: 'সহিহ হাদিস ভাণ্ডার',
     en: 'Authentic Hadith Treasury',
@@ -1067,12 +1260,12 @@ export const HADITH_UI: Record<string, Record<ZikrLanguage, string>> = {
     id: 'Renungan Spiritual',
     tr: 'Manevi İbret',
   },
-};
+});
 
 /**
  * Dua translations in all 6 languages
  */
-export const DUA_TRANSLATIONS: Record<string, Record<ZikrLanguage, { title: string; translation: string; virtue?: string; timing?: string }>> = {
+export const DUA_TRANSLATIONS: Record<string, Record<string, { title: string; translation: string; virtue?: string; timing?: string }>> = createTranslationProxy({
   post_salah_tasbeeh: {
     bn: {
       title: 'ফরজ সালাত পরবর্তী তাসবীহ (৩৩-৩৩-৩৩-১)',
@@ -1301,32 +1494,41 @@ export const DUA_TRANSLATIONS: Record<string, Record<ZikrLanguage, { title: stri
       virtue: 'Kim bunu sabah veya akşam inanarak okur da o gün vefat ederse cennet ehlinden olur.',
     },
   },
-};
+});
 
-export const DUA_CATEGORIES: Record<string, Record<ZikrLanguage, string>> = {
-  all: { bn: 'সব দোয়া', en: 'All Duas', ur: 'تمام دعائیں', hi: 'सभी दुआएं', id: 'Semua Doa', tr: 'Tüm Dualar' },
-  morning_evening: { bn: 'সকাল-সন্ধ্যার জিকির', en: 'Morning & Evening', ur: 'صبح و شام کے اذکار', hi: 'सुबह और शाम के अज़कार', id: 'Pagi & Petang', tr: 'Sabah & Akşam' },
-  salat: { bn: 'নামাজের দোয়া', en: 'Salat & Prayer', ur: 'نماز کی دعائیں', hi: 'नमाज़ की दुआएं', id: 'Doa Sholat', tr: 'Namaz Duaları' },
-  sleep_wake: { bn: 'ঘুমানো ও ওঠার দোয়া', en: 'Sleep & Wakeup', ur: 'سونے اور جاگنے کی دعائیں', hi: 'सोने व जागने की दुआएं', id: 'Tidur & Bangun', tr: 'Uyku & Uyanma' },
-  protection: { bn: 'সুরক্ষা ও নিরাপত্তা', en: 'Protection & Ruqyah', ur: 'حفاظت اور دم', hi: 'सुरक्षा और हिफ़ाज़त', id: 'Perlindungan & Ruqyah', tr: 'Korunma ve Şifa' },
-  forgiveness: { bn: 'ক্ষমা ও তওবা', en: 'Forgiveness (Istighfar)', ur: 'استغفار و توبہ', hi: 'माफ़ी और इस्तग़फ़ार', id: 'Ampunan & Istighfar', tr: 'Bağışlanma ve Tövbe' },
-  hardship: { bn: 'বিপদ ও চিন্তা মুক্তি', en: 'Anxiety & Hardship', ur: 'پریشانی سے نجات', hi: 'मुसीबत व परेशानी', id: 'Kesusahan & Cemas', tr: 'Sıkıntı ve Zorluk' },
-  daily_living: { bn: 'দৈনন্দিন জীবন', en: 'Daily Life', ur: 'روزمرہ کی دعائیں', hi: 'दैनिक जीवन', id: 'Sehari-hari', tr: 'Günlük Hayat' },
-};
+export const DUA_CATEGORIES: Record<string, Record<string, string>> = createTranslationProxy({
+  all: { bn: 'সব দোয়া', en: 'All Duas', ur: 'تمام دعائیں', ar: 'جميع الأدعية', hi: 'सभी दुआएं', id: 'Semua Doa', tr: 'Tüm Dualar', ms: 'Semua Doa', fr: 'Toutes les invocations', es: 'Todas las súplicas', ru: 'Все мольбы', fa: 'همه دعاها', de: 'Alle Bittgebete', sw: 'Dua Zote' },
+  morning_evening: { bn: 'সকাল-সন্ধ্যার জিকির', en: 'Morning & Evening', ur: 'صبح و شام کے اذکار', ar: 'أذكار الصباح والمساء', hi: 'सुबह और शाम के अज़कार', id: 'Pagi & Petang', tr: 'Sabah & Akşam', ms: 'Pagi & Petang', fr: 'Matin & Soir', es: 'Mañana y Tarde', ru: 'Утро и Вечер', fa: 'اذکار صبح و شام', de: 'Morgen & Abend', sw: 'Asubuhi na Jioni' },
+  salat: { bn: 'নামাজের দোয়া', en: 'Salat & Prayer', ur: 'نماز کی دعائیں', ar: 'أدعية الصلاة', hi: 'नमाज़ की दुआएं', id: 'Doa Sholat', tr: 'Namaz Duaları', ms: 'Doa Solat', fr: 'Prières & Salat', es: 'Oración y Salat', ru: 'Мольбы Намаза', fa: 'دعاهای نماز', de: 'Gebetsbitten', sw: 'Dua za Swala' },
+  sleep_wake: { bn: 'ঘুমানো ও ওঠার দোয়া', en: 'Sleep & Wakeup', ur: 'سونے اور جاگنے کی دعائیں', ar: 'أدعية النوم والاستيقاظ', hi: 'सोने व जागने की दुआएं', id: 'Tidur & Bangun', tr: 'Uyku & Uyanma', ms: 'Tidur & Bangun', fr: 'Sommeil & Réveil', es: 'Sueño y Despertar', ru: 'Сон и Пробуждение', fa: 'دعاهای خواب و بیداری', de: 'Schlaf & Erwachen', sw: 'Usingizi na Kuamka' },
+  protection: { bn: 'সুরক্ষা ও নিরাপত্তা', en: 'Protection & Ruqyah', ur: 'حفاظت اور دم', ar: 'الحفظ والرقية', hi: 'सुरक्षा और हिफ़ाज़त', id: 'Perlindungan & Ruqyah', tr: 'Korunma ve Şifa', ms: 'Perlindungan & Ruqyah', fr: 'Protection & Roqya', es: 'Protección y Ruqyah', ru: 'Защита и Рукья', fa: 'حفاظت و رقیه', de: 'Schutz & Ruqyah', sw: 'Ulinzi na Ruqyah' },
+  forgiveness: { bn: 'ক্ষমা ও তওবা', en: 'Forgiveness (Istighfar)', ur: 'استغفار و توبہ', ar: 'الاستغفار والتوبة', hi: 'माफ़ी और इस्तग़फ़ार', id: 'Ampunan & Istighfar', tr: 'Bağışlanma ve Tövbe', ms: 'Keampunan & Istighfar', fr: 'Pardon & Repentir', es: 'Perdón y Arrepentimiento', ru: 'Прощение и Тауба', fa: 'آمرزش و توبه', de: 'Vergebung & Reue', sw: 'Msamaha na Toba' },
+  hardship: { bn: 'বিপদ ও চিন্তা মুক্তি', en: 'Anxiety & Hardship', ur: 'پریشانی سے نجات', ar: 'تفريج الكرب والهم', hi: 'मुसीबत व परेशानी', id: 'Kesusahan & Cemas', tr: 'Sıkıntı ve Zorluk', ms: 'Kesusahan & Kebimbangan', fr: 'Épreuve & Anxiété', es: 'Dificultad y Ansiedad', ru: 'Избавление от Бед', fa: 'رفع سختی و غم', de: 'Kummer & Erleichterung', sw: 'Dhiki na Wasiwasi' },
+  daily_living: { bn: 'দৈনন্দিন জীবন', en: 'Daily Life', ur: 'روزمرہ کی دعائیں', ar: 'أدعية الحياة اليومية', hi: 'दैनिक जीवन', id: 'Sehari-hari', tr: 'Günlük Hayat', ms: 'Kehidupan Harian', fr: 'Vie Quotidienne', es: 'Vida Cotidiana', ru: 'Повседневная Жизнь', fa: 'زندگی روزمره', de: 'Tägliches Leben', sw: 'Maisha ya Kila Siku' },
+});
 
-export const DUA_UI: Record<string, Record<ZikrLanguage, string>> = {
+export const DUA_UI: Record<string, Record<string, string>> = createTranslationProxy({
   bannerTitle: {
     bn: 'মাসনুন ও কোরআনি দোয়া',
     en: 'Masnoon & Quranic Duas',
     ur: 'مسنون اور قرآنی دعائیں',
+    ar: 'الأدعية المأثورة والقرآنية',
     hi: 'मसनून व क़ुरआनी दुआएं',
     id: 'Doa Masnoon & Al-Qur\'an',
     tr: 'Kur\'an ve Sünnetten Dualar',
+    ms: 'Doa Masnun & Al-Quran',
+    fr: 'Invocations Coraniques et Prophétiques',
+    es: 'Súplicas Coránicas y Proféticas',
+    ru: 'Маснун и Коранические Дуа',
+    fa: 'دعاهای مأثوره و قرآنی',
+    de: 'Koranische & Prophetische Bittgebete',
+    sw: 'Dua za Masnoon na Kurani',
   },
   bannerSub: {
     bn: 'কুরআন ও সুন্নাহ থেকে সংকলিত বিশুদ্ধ দোয়া সমূহ, সরাসরি জিকির কাউন্টারে যুক্ত করার সুবিধা',
     en: 'Authentic supplications from the Quran and Sunnah with tap repetition counters and one-touch integration with your Zikr Tasbeeh counters',
     ur: 'قرآن و سنت سے مستند دعائیں اور ذکر کاؤنٹر میں شامل کرنے کی سہولت',
+    ar: 'أدعية صحيحة مأثورة من الكتاب والسنة مع إمكانية إضافتها مباشرة لعداد الذكر',
     hi: 'क़ुरआन और सुन्नत से प्रामाणिक दुआएं और सीधे ज़िक्र काउंटर में जोड़ने की सुविधा',
     id: 'Kumpulan doa shahih dari Al-Qur\'an & Sunnah dengan penghitung ketukan dan integrasi tasbih',
     tr: 'Kur\'an ve Sünnetten sahih dualar, sayaç ile tekrar etme ve tasbih listesine tek tıkla ekleme imkanı',
@@ -1335,48 +1537,81 @@ export const DUA_UI: Record<string, Record<ZikrLanguage, string>> = {
     bn: '+ কাউন্টার',
     en: '+ Counter',
     ur: '+ کاؤنٹر',
+    ar: '+ العداد',
     hi: '+ काउंटर',
     id: '+ Penghitung',
     tr: '+ Sayaç',
+    ms: '+ Kaunter',
+    fr: '+ Compteur',
+    es: '+ Contador',
+    ru: '+ Счетчик',
+    fa: '+ شمارنده',
+    de: '+ Zähler',
+    sw: '+ Kaunta',
   },
   inCounter: {
     bn: 'কাউন্টারে যুক্ত',
     en: 'In Counters',
     ur: 'کاؤنٹر میں شامل',
+    ar: 'مضاف للعداد',
     hi: 'काउंटर में शामिल',
     id: 'Sudah di Counter',
     tr: 'Sayaçta Var',
+    ms: 'Dalam Kaunter',
+    fr: 'Dans le compteur',
+    es: 'En el contador',
+    ru: 'В счетчике',
+    fa: 'در شمارنده',
+    de: 'Im Zähler',
+    sw: 'Kwenye Kaunta',
   },
   oneBead: {
     bn: '+১ পাঠ',
     en: '+1 Bead',
     ur: '+۱ دانہ',
+    ar: '+١ تسبيحة',
     hi: '+1 माला',
     id: '+1 Butir',
     tr: '+1 Tane',
+    ms: '+1 Butir',
+    fr: '+1 Perle',
+    es: '+1 Cuenta',
+    ru: '+1 Бусина',
+    fa: '+۱ دانه',
+    de: '+1 Perle',
+    sw: '+1 Ushanga',
   },
   recited: {
     bn: 'পড়া হয়েছে',
     en: 'Recited',
     ur: 'پڑھا گیا',
+    ar: 'تمت القراءة',
     hi: 'पढ़ा गया',
     id: 'Dibaca',
     tr: 'Okundu',
+    ms: 'Dibaca',
+    fr: 'Récité',
+    es: 'Recitado',
+    ru: 'Прочитано',
+    fa: 'خوانده شد',
+    de: 'Gelesen',
+    sw: 'Imesomwa',
   },
   searchPlaceholder: {
     bn: 'দোয়া, অর্থ বা ফজিলত দিয়ে খুঁজুন...',
     en: 'Search duas by title, meaning, Arabic, or virtue...',
     ur: 'دعا، ترجمہ یا فضیلت سے تلاش کریں...',
+    ar: 'ابحث عن دعاء بالعنوان أو المعنى أو الفضيلة...',
     hi: 'दुआ, अर्थ या फ़ज़ीलत से खोजें...',
     id: 'Cari doa berdasarkan judul, arti, atau fadhilah...',
     tr: 'Dua, anlam veya fazilet ile ara...',
   },
-};
+});
 
 /**
  * Aamal Tracker translations
  */
-export const AAMAL_ITEM_TRANSLATIONS: Record<string, Record<ZikrLanguage, { label: string; details: string }>> = {
+export const AAMAL_ITEM_TRANSLATIONS: Record<string, Record<string, { label: string; details: string }>> = createTranslationProxy({
   fajr: {
     bn: { label: 'ফজর সালাত (صلاة الفجر)', details: 'সূর্যোদয়ের পূর্বে যথাসময়ে ২ রাকাত সুন্নত ও ২ রাকাত ফরজ সালাত আদায়' },
     en: { label: 'Fajr Prayer (صلاة الفجر)', details: '2 Sunnah + 2 Fardh prayed on time before sunrise' },
@@ -1473,9 +1708,9 @@ export const AAMAL_ITEM_TRANSLATIONS: Record<string, Record<ZikrLanguage, { labe
     id: { label: 'Sedekah & Kebaikan (الصدقة والإحسان)', details: 'Sedekah harta, senyuman tulus, membantu orang yang membutuhkan' },
     tr: { label: 'Sadaka ve İyilik (الصدقة والإحسان)', details: 'Maddi infak, güler yüzle selamlaşma veya bir muhtaca yardım eli uzatma' },
   },
-};
+});
 
-export const AAMAL_UI: Record<string, Record<ZikrLanguage, string>> = {
+export const AAMAL_UI: Record<string, Record<string, string>> = createTranslationProxy({
   bannerTitle: {
     bn: 'দৈনিক আমল ট্র্যাকার',
     en: 'Daily Aamal Tracker',
@@ -1540,9 +1775,9 @@ export const AAMAL_UI: Record<string, Record<ZikrLanguage, string>> = {
     id: 'poin',
     tr: 'puan',
   },
-};
+});
 
-export const ZIKIR_UI: Record<string, Record<ZikrLanguage, string>> = {
+export const ZIKIR_UI: Record<string, Record<string, string>> = createTranslationProxy({
   centralMasterCounter: {
     bn: 'Central Master Counter • সর্বমোট তাসবীহ',
     en: 'Central Master Counter • Aggregate Tasbeeh',
@@ -1671,9 +1906,9 @@ export const ZIKIR_UI: Record<string, Record<ZikrLanguage, string>> = {
     id: 'Arti: ',
     tr: 'Anlamı: ',
   },
-};
+});
 
-export const OTHER_HUB_UI: Record<string, Record<ZikrLanguage, string>> = {
+export const OTHER_HUB_UI: Record<string, Record<string, string>> = createTranslationProxy({
   bannerTitle: {
     bn: 'অন্যান্য ইসলামিক ফিচারসমূহ',
     en: 'Other Islamic Features & Hub',
@@ -1706,9 +1941,9 @@ export const OTHER_HUB_UI: Record<string, Record<ZikrLanguage, string>> = {
     id: 'Buka',
     tr: 'Aç',
   },
-};
+});
 
-export const ALLAH_NAMES_UI: Record<string, Record<ZikrLanguage, string>> = {
+export const ALLAH_NAMES_UI: Record<string, Record<string, string>> = createTranslationProxy({
   bannerTitle: {
     bn: 'আসমাউল হুসনা (আল্লাহর ৯৯টি গুণবাচক নাম)',
     en: 'Asmaul Husna (99 Beautiful Names of Allah)',
@@ -1781,4 +2016,265 @@ export const ALLAH_NAMES_UI: Record<string, Record<ZikrLanguage, string>> = {
     id: 'Tandai Hafal',
     tr: 'Ezberle',
   },
-};
+});
+
+export const SETTINGS_UI: Record<string, Record<string, string>> = createTranslationProxy({
+  title: {
+    bn: 'অ্যাপ সেটিংস ও পছন্দসমূহ',
+    en: 'App Settings & Preferences',
+    ur: 'ایپ ترتیبات اور ترجیحات',
+    ar: 'إعدادات وتفضيلات التطبيق',
+    hi: 'ऐप सेटिंग्स और प्राथमिकताएं',
+    id: 'Pengaturan & Preferensi Aplikasi',
+    tr: 'Uygulama Ayarları ve Tercihler',
+    ms: 'Tetapan & Pilihan Aplikasi',
+    fr: 'Paramètres et Préférences',
+    es: 'Ajustes y Preferencias',
+    ru: 'Настройки и предпочтения приложения',
+    fa: 'تنظیمات و ترجیحات برنامه',
+    de: 'App-Einstellungen & Präferenzen',
+    sw: 'Mipangilio na Mapendeleo ya Programu',
+  },
+  subtitle: {
+    bn: 'ভাষা, থিম, ভাইব্রেশন, অডিও ও ডাটা ব্যাকআপ নিয়ন্ত্রণ করুন',
+    en: 'Customize language, themes, haptics, audio, and data backups',
+    ur: 'زبان، تھیمز، آواز، وائبریشن اور ڈیٹا بیک اپ کو منظم کریں',
+    ar: 'تخصيص اللغة والمظهر والاهتزاز والصوت والنسخ الاحتياطي',
+    hi: 'भाषा, थीम, हैप्टिक्स, ऑडियो और डेटा बैकअप कस्टमाइज़ करें',
+    id: 'Sesuaikan bahasa, tema, haptic, audio, dan cadangan data',
+    tr: 'Dil, tema, titreşim, ses ve veri yedekleme tercihlerini yönetin',
+    ms: 'Urus bahasa, tema, getaran, audio dan sandaran data',
+    fr: 'Personnalisez la langue, les thèmes, les vibrations et l\'audio',
+    es: 'Personaliza idioma, temas, vibración, audio y copias de seguridad',
+    ru: 'Настройте язык, тему, вибрацию, звук и резервные копии',
+    fa: 'شخصی‌سازی زبان، پوسته، لرزش، صدا و پشتیبان‌گیری داده‌ها',
+    de: 'Passen Sie Sprache, Themes, Haptik, Audio und Backups an',
+    sw: 'Badilisha lugha, mandhari, mitetemo, sauti na nakala rudufu',
+  },
+  appLanguage: {
+    bn: 'অ্যাপের ভাষা (Language)',
+    en: 'App Language',
+    ur: 'ایپ کی زبان (Language)',
+    ar: 'لغة التطبيق (Language)',
+    hi: 'ऐप की भाषा (Language)',
+    id: 'Bahasa Aplikasi',
+    tr: 'Uygulama Dili',
+    ms: 'Bahasa Aplikasi',
+    fr: 'Langue de l\'application',
+    es: 'Idioma de la aplicación',
+    ru: 'Язык приложения',
+    fa: 'زبان برنامه',
+    de: 'App-Sprache',
+    sw: 'Lugha ya Programu',
+  },
+  languageDesc: {
+    bn: 'আরবি হরফ ব্যতীত সকল মেনু, অনুবাদ ও নির্দেশিকা স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে',
+    en: 'All menus, translations, and guides will update instantly (Sacred Arabic remains intact)',
+    ur: 'عربی متن کے علاوہ تمام مینو اور ترجمہ خود بخود تبدیل ہو جائے گا',
+    ar: 'ستتغير جميع القوائم والترجمات فوراً مع الحفاظ على النص العربي الأصلي',
+    hi: 'अरबी के अलावा सभी मेनू, अनुवाद और निर्देश स्वचालित रूप से बदल जाएंगे',
+    id: 'Semua menu, panduan, dan terjemahan akan diperbarui (Teks Arab tetap asli)',
+    tr: 'Arapça kutsal metinler hariç tüm menüler ve mealler anında güncellenir',
+    ms: 'Semua menu, panduan dan terjemahan akan dikemas kini (Teks Arab kekal terpelihara)',
+    fr: 'Tous les menus et traductions seront mis à jour (le texte arabe sacré reste inchangé)',
+    es: 'Todos los menús y traductions se actualizarán (el texto sagrado en árabe permanece intacto)',
+    ru: 'Все меню и переводы обновятся автоматически (Священный арабский текст останется неизменным)',
+    fa: 'تمامی منوها و ترجمه‌ها تغییر می‌کنند (متن مقدس عربی دست‌نخورده باقی می‌ماند)',
+    de: 'Alle Menüs und Übersetzungen werden aktualisiert (arabischer Originaltext bleibt unverändert)',
+    sw: 'Menyu zote na tafsiri zitasasishwa (Maandishi matakatifu ya Kiarabu yanabaki asili)',
+  },
+  themeTitle: {
+    bn: 'থিম মোড ও ভিজ্যুয়াল রূপ',
+    en: 'Theme Mode & Appearance',
+    ur: 'تھیم موڈ اور ظاہری شکل',
+    ar: 'المظهر والسمة',
+    hi: 'थीम मोड और स्वरूप',
+    id: 'Mode Tema & Tampilan',
+    tr: 'Tema Modu ve Görünüm',
+    ms: 'Mod Tema & Rupa',
+    fr: 'Mode Thème & Apparence',
+    es: 'Modo de Tema y Apariencia',
+    ru: 'Тема и оформление',
+    fa: 'حالت پوسته و ظاهر',
+    de: 'Theme-Modus & Erscheinungsbild',
+    sw: 'Hali ya Mandhari na Mwonekano',
+  },
+  dayMode: {
+    bn: '☀️ ডে মোড (Light)',
+    en: '☀️ Day Mode (Light)',
+    ur: '☀️ ڈے موڈ (روشنی)',
+    ar: '☀️ الوضع النهاري (فاتح)',
+    hi: '☀️ डे मोड (लाइट)',
+    id: '☀️ Mode Siang (Terang)',
+    tr: '☀️ Gündüz Modu (Açık)',
+    ms: '☀️ Mod Siang (Cerah)',
+    fr: '☀️ Mode Jour (Clair)',
+    es: '☀️ Modo Día (Claro)',
+    ru: '☀️ Дневной режим (Светлый)',
+    fa: '☀️ حالت روز (روشن)',
+    de: '☀️ Tag-Modus (Hell)',
+    sw: '☀️ Hali ya Mchana (Mwangaza)',
+  },
+  nightMode: {
+    bn: '🌙 নাইট মোড (Dark)',
+    en: '🌙 Night Mode (Dark)',
+    ur: '🌙 نائٹ موڈ (ڈارک)',
+    ar: '🌙 الوضع الليلي (داكن)',
+    hi: '🌙 नाइट मोड (डार्क)',
+    id: '🌙 Mode Malam (Gelap)',
+    tr: '🌙 Gece Modu (Karanlık)',
+    ms: '🌙 Mod Malam (Gelap)',
+    fr: '🌙 Mode Nuit (Sombre)',
+    es: '🌙 Modo Noche (Oscuro)',
+    ru: '🌙 Ночной режим (Темный)',
+    fa: '🌙 حالت شب (تاریک)',
+    de: '🌙 Nacht-Modus (Dunkel)',
+    sw: '🌙 Hali ya Usiku (Giza)',
+  },
+  audioHaptics: {
+    bn: 'শব্দ ও স্পর্শ প্রতিক্রিয়া (Sensory Controls)',
+    en: 'Feedback & Sensory Controls',
+    ur: 'آواز اور وائبریشن کنٹرول',
+    ar: 'التحكم في الصوت والاهتزاز',
+    hi: 'ध्वनि और स्पर्श नियंत्रण',
+    id: 'Kontrol Suara & Getaran',
+    tr: 'Ses ve Dokunma Kontrolleri',
+    ms: 'Kawalan Bunyi & Getaran',
+    fr: 'Contrôles Audio & Tactiles',
+    es: 'Controles de Sonido y Vibración',
+    ru: 'Звук и вибрация',
+    fa: 'کنترل‌های صدا و بازخورد لمسی',
+    de: 'Feedback & Sensorik-Steuerung',
+    sw: 'Udhibiti wa Sauti na Mtetemo',
+  },
+  soundLabel: {
+    bn: 'তাসবীহ ক্লিক সাউন্ড',
+    en: 'Bead Click Audio',
+    ur: 'تسبیح کلک آواز',
+    ar: 'صوت نقرة التسبيح',
+    hi: 'तस्बीह क्लिक ध्वनि',
+    id: 'Suara Klik Tasbih',
+    tr: 'Tesbih Tıklama Sesi',
+    ms: 'Bunyi Klik Tasbih',
+    fr: 'Son de clic de perle',
+    es: 'Sonido de clic de cuentas',
+    ru: 'Звук клика чёток',
+    fa: 'صدای کلیک تسبیح',
+    de: 'Perlen-Klick-Audio',
+    sw: 'Sauti ya Bonyeza ya Tasbihi',
+  },
+  vibrationLabel: {
+    bn: 'স্পর্শ ভাইব্রেশন (Haptics)',
+    en: 'Tactile Vibration Haptics',
+    ur: 'لمسی وائبریشن فیڈبیک',
+    ar: 'الاهتزاز اللمسي',
+    hi: 'स्पर्श कंपन (हैप्टिक्स)',
+    id: 'Getaran Taktil (Haptik)',
+    tr: 'Dokunsal Titreşim',
+    ms: 'Getaran Sentuh (Haptik)',
+    fr: 'Vibration Haptique',
+    es: 'Vibración Háptica',
+    ru: 'Тактильная вибрация',
+    fa: 'لرزش لمسی (هپتیک)',
+    de: 'Taktile Vibration (Haptik)',
+    sw: 'Mtetemo wa Mguso',
+  },
+  wakeLockLabel: {
+    bn: 'স্ক্রিন অন রাখুন (Wake Lock)',
+    en: 'Keep Screen Awake (Wake Lock)',
+    ur: 'اسکرین روشن رکھیں',
+    ar: 'إبقاء الشاشة مفعّلة',
+    hi: 'स्क्रीन चालू रखें (वेक लॉक)',
+    id: 'Pertahankan Layar Tetap Menyala',
+    tr: 'Ekranı Açık Tut (Uyanık Kal)',
+    ms: 'Kekalkan Skrin Menyala',
+    fr: 'Garder l\'écran allumé',
+    es: 'Mantener la pantalla encendida',
+    ru: 'Не выключать экран',
+    fa: 'روشن نگه‌داشتن صفحه',
+    de: 'Bildschirm aktiv halten',
+    sw: 'Weka Skrini Iwake',
+  },
+  dataBackup: {
+    bn: 'ডাটা ব্যাকআপ ও এক্সপোর্ট',
+    en: 'Export & Data Backup',
+    ur: 'ڈیٹا بیک اپ اور برآمد',
+    ar: 'النسخ الاحتياطي وتصدير البيانات',
+    hi: 'डेटा बैकअप और निर्यात',
+    id: 'Cadangan & Ekspor Data',
+    tr: 'Yedekleme ve Dışa Aktarma',
+    ms: 'Sandaran & Eksport Data',
+    fr: 'Exportation et Sauvegarde',
+    es: 'Exportación y Copia de Seguridad',
+    ru: 'Экспорт и резервное копирование',
+    fa: 'پشتیبان‌گیری و صدور داده‌ها',
+    de: 'Export & Datensicherung',
+    sw: 'Nakala na Uhifadhi wa Data',
+  },
+  exportPdf: {
+    bn: 'PDF রিপোর্ট ডাউনলোড',
+    en: 'Export PDF Report',
+    ur: 'پی ڈی ایف رپورٹ ڈاؤن لوڈ',
+    ar: 'تحميل تقرير PDF',
+    hi: 'PDF रिपोर्ट डाउनलोड करें',
+    id: 'Unduh Laporan PDF',
+    tr: 'PDF Raporu İndir',
+    ms: 'Muat Turun Laporan PDF',
+    fr: 'Télécharger le rapport PDF',
+    es: 'Descargar informe PDF',
+    ru: 'Скачать отчет в PDF',
+    fa: 'دانلود گزارش PDF',
+    de: 'PDF-Bericht herunterladen',
+    sw: 'Pakua Ripoti ya PDF',
+  },
+  resetCounters: {
+    bn: 'সকল কাউন্টার ০ করুন',
+    en: 'Reset All Counters to 0',
+    ur: 'تمام کاؤنٹرز 0 پر ری سیٹ کریں',
+    ar: 'إعادة ضبط العدادات إلى الصفر',
+    hi: 'सभी काउंटर 0 पर रीसेट करें',
+    id: 'Atur Ulang Semua Penghitung ke 0',
+    tr: 'Tüm Sayaçları 0\'a Sıfırla',
+    ms: 'Tetapkan Semula Semua Kaunter ke 0',
+    fr: 'Remettre tous les compteurs à 0',
+    es: 'Restablecer todos los contadores a 0',
+    ru: 'Сбросить все счетчики на 0',
+    fa: 'تنظیم مجدد تمام شمارنده‌ها به صفر',
+    de: 'Alle Zähler auf 0 zurücksetzen',
+    sw: 'Weka upya kaunta zote ziwe 0',
+  },
+  restoreAzkar: {
+    bn: '১২টি মূল যিকির পুনরুদ্ধার',
+    en: 'Restore Default Azkar',
+    ur: 'طے شدہ ۱۲ اذکار بحال کریں',
+    ar: 'استعادة الأذكار الأساسية الاثني عشر',
+    hi: '12 मुख्य ज़िक्र पुनर्स्थापित करें',
+    id: 'Pulihkan 12 Dzikir Utama',
+    tr: '12 Temel Zikri Geri Yükle',
+    ms: 'Pulihkan 12 Zikir Asas',
+    fr: 'Restaurer les 12 dhikrs par défaut',
+    es: 'Restaurar los 12 zikrs predeterminados',
+    ru: 'Восстановить 12 основных зикров',
+    fa: 'بازیابی ۱۲ ذکر اصلی پیش‌فرض',
+    de: '12 Standard-Dhikr wiederherstellen',
+    sw: 'Rejesha adhkar 12 za asili',
+  },
+});
+
+/**
+ * Universal safe translation helper with multi-language fallback
+ */
+export function t(
+  dict: Record<string, Record<string, string>> | undefined,
+  key: string,
+  lang: ZikrLanguage,
+  fallback = ''
+): string {
+  if (!dict || !dict[key]) return fallback || key;
+  const entry = dict[key];
+  if (entry[lang]) return entry[lang];
+  if (entry['en']) return entry['en'];
+  if (entry['bn']) return entry['bn'];
+  if (entry['ar']) return entry['ar'];
+  return fallback || key;
+}

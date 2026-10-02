@@ -1,4 +1,18 @@
-export type ZikrLanguage = 'bn' | 'en' | 'ur' | 'hi' | 'id' | 'tr';
+export type ZikrLanguage =
+  | 'bn'
+  | 'en'
+  | 'ur'
+  | 'ar'
+  | 'hi'
+  | 'id'
+  | 'tr'
+  | 'ms'
+  | 'fr'
+  | 'es'
+  | 'ru'
+  | 'fa'
+  | 'de'
+  | 'sw';
 
 export type ZikrRefreshMode = 'fard' | 'maghrib' | 'manual';
 
@@ -91,7 +105,7 @@ export interface DuaItem {
 export interface HadithBookMeta {
   id: string;
   arabicName: string;
-  titles: Record<ZikrLanguage, string>;
+  titles: Partial<Record<ZikrLanguage, string>> & { en: string; bn: string };
   chaptersCount: number;
   hadithCount: number;
   author: string;

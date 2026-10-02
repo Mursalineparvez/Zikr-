@@ -216,7 +216,7 @@ export default function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<ZikrLanguage>(() => {
     try {
       const saved = localStorage.getItem('noor_zikr_selected_lang');
-      if (saved && ['bn', 'en', 'ur', 'hi', 'id', 'tr'].includes(saved)) {
+      if (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) {
         return saved as ZikrLanguage;
       }
     } catch {}
@@ -1817,7 +1817,7 @@ export default function App() {
           />
         )}
 
-        {/* 5. OTHER ISLAMIC HUB VIEW (DUA, HADITH, KITAB, DAILY TABLIG, ALLAH 99 NAMES, HAJJ & UMRAH) */}
+        {/* 5. OTHER ISLAMIC HUB VIEW (DUA, HADITH, KITAB, DAILY TABLIG, ALLAH 99 NAMES, HAJJ & UMRAH, SETTINGS) */}
         {isOtherActive && (
           <OtherIslamicHubView
             onAddDuaToCounters={handleAddDuaToCounters}
@@ -1825,6 +1825,13 @@ export default function App() {
             soundEnabled={settings.soundEnabled}
             themeMode={settings.themeMode}
             selectedLanguage={selectedLanguage}
+            onSelectLanguage={setSelectedLanguage}
+            settings={settings}
+            onUpdateSettings={(newSettings) => setSettings((prev) => ({ ...prev, ...newSettings }))}
+            onGlobalReset={handleGlobalReset}
+            onRestoreDefaults={handleRestoreDefaults}
+            onExportPdf={handleExportPdf}
+            onOpenSettingsModal={() => handleOpenProfileModal('settings')}
             initialSubSection={
               activeModule === 'dua'
                 ? 'dua'

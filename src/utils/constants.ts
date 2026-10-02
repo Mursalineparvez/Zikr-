@@ -21,13 +21,27 @@ export function getTargetForZikrMode(item: ZikrItem, mode: ZikrRefreshMode): num
   return item.target || 33;
 }
 
-export const SUPPORTED_LANGUAGES: Array<{ code: ZikrLanguage; label: string; nativeName: string; flag: string }> = [
+export const SUPPORTED_LANGUAGES: Array<{
+  code: ZikrLanguage;
+  label: string;
+  nativeName: string;
+  flag: string;
+  dir?: 'ltr' | 'rtl';
+}> = [
   { code: 'bn', label: 'বাংলা', nativeName: 'বাংলা (Bengali)', flag: '🇧🇩' },
   { code: 'en', label: 'English', nativeName: 'English', flag: '🇬🇧' },
-  { code: 'ur', label: 'اردو', nativeName: 'اردو (Urdu)', flag: '🇵🇰' },
+  { code: 'ur', label: 'اردو', nativeName: 'اردو (Urdu)', flag: '🇵🇰', dir: 'rtl' },
+  { code: 'ar', label: 'العربية', nativeName: 'العربية (Arabic)', flag: '🇸🇦', dir: 'rtl' },
   { code: 'hi', label: 'हिन्दी', nativeName: 'हिन्दी (Hindi)', flag: '🇮🇳' },
-  { code: 'id', label: 'Bahasa', nativeName: 'Bahasa Indonesia', flag: '🇮🇩' },
+  { code: 'id', label: 'Bahasa Indonesia', nativeName: 'Bahasa Indonesia', flag: '🇮🇩' },
   { code: 'tr', label: 'Türkçe', nativeName: 'Türkçe (Turkish)', flag: '🇹🇷' },
+  { code: 'ms', label: 'Bahasa Melayu', nativeName: 'Bahasa Melayu (Malay)', flag: '🇲🇾' },
+  { code: 'fr', label: 'Français', nativeName: 'Français (French)', flag: '🇫🇷' },
+  { code: 'es', label: 'Español', nativeName: 'Español (Spanish)', flag: '🇪🇸' },
+  { code: 'ru', label: 'Русский', nativeName: 'Русский (Russian)', flag: '🇷🇺' },
+  { code: 'fa', label: 'فارسی', nativeName: 'فارسی (Persian)', flag: '🇮🇷', dir: 'rtl' },
+  { code: 'de', label: 'Deutsch', nativeName: 'Deutsch (German)', flag: '🇩🇪' },
+  { code: 'sw', label: 'Kiswahili', nativeName: 'Kiswahili (Swahili)', flag: '🇹🇿' },
 ];
 
 export const DEFAULT_ZIKRS: ZikrItem[] = [

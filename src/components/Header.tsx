@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Smartphone,
   BookOpen,
@@ -7,10 +7,15 @@ import {
   User,
   X,
   Sparkles,
+  Globe,
+  Settings,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
 import { NAV_TRANSLATIONS } from '../utils/appTranslations';
+import { SUPPORTED_LANGUAGES } from '../utils/constants';
 
 interface HeaderProps {
   activeModule: NavModule;
@@ -45,6 +50,24 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showIOSModal, setShowIOSModal] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
+      }
+    };
+    if (isLangOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isLangOpen]);
+
+  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage) || SUPPORTED_LANGUAGES[0];
 
   const handleInstallClick = async () => {
     if (isInstallable) {
@@ -97,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
     },
     {
       id: 'other',
-      label: selectedLanguage === 'bn' ? 'অন্যান্য' : 'Other',
+      label: NAV_TRANSLATIONS.other[selectedLanguage] || 'Other',
       icon: <span>✨</span>,
       isActive: isOtherActive,
     },
@@ -158,9 +181,79 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Clean Top-Right Controls: Sign In & Settings */}
-        <div className="flex items-center gap-2">
-          {/* User Account / Profile / Sign In Button */}
+        {/* Clean Top-Right Controls: Quick Language, Settings & Sign In */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* 1. Quick Language Dropdown Selector (14 Languages) */}
+          <div className="relative" ref={langDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsLangOpen((prev) => !prev)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border border-white/25 bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition active:scale-95 cursor-pointer backdrop-blur-md shadow-sm"
+              title="Change Language (ভাষা নির্বাচন করুন)"
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-300" />
+              <span className="text-sm leading-none">{currentLangObj.flag}</span>
+              <span className="hidden sm:inline text-xs">{currentLangObj.label}</span>
+              <ChevronDown className={`w-3 h-3 transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isLangOpen && (
+              <div
+                className={`absolute right-0 top-full mt-2 w-64 max-h-80 overflow-y-auto rounded-2xl border shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150 scrollbar-thin ${
+                  isDay
+                    ? 'bg-white text-slate-800 border-emerald-200 shadow-emerald-950/20'
+                    : 'bg-[#0a252b] text-white border-[#1c5561] shadow-black/80'
+                }`}
+              >
+                <div className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 text-emerald-600 dark:text-emerald-400 border-b border-emerald-500/20 mb-1 flex items-center justify-between">
+                  <span>Select App Language (১৪ ভাষা)</span>
+                  <Globe className="w-3 h-3" />
+                </div>
+                <div className="space-y-1">
+                  {SUPPORTED_LANGUAGES.map((langItem) => {
+                    const isSelected = selectedLanguage === langItem.code;
+                    return (
+                      <button
+                        key={langItem.code}
+                        type="button"
+                        onClick={() => {
+                          onSelectLanguage(langItem.code);
+                          setIsLangOpen(false);
+                        }}
+                        className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-bold transition flex items-center justify-between gap-2 cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : isDay
+                            ? 'hover:bg-emerald-50 text-slate-700'
+                            : 'hover:bg-[#123940] text-teal-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-base shrink-0">{langItem.flag}</span>
+                          <span className="truncate">{langItem.nativeName}</span>
+                        </div>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0 stroke-[3]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Direct Settings Shortcut Button */}
+          {onOpenProfile && (
+            <button
+              type="button"
+              onClick={() => onOpenProfile('settings')}
+              className="p-2 rounded-2xl border border-white/25 bg-white/15 hover:bg-white/25 text-white transition active:scale-95 cursor-pointer backdrop-blur-md shadow-sm"
+              title="App Settings (সেটিংস ও ভাষা)"
+            >
+              <Settings className="w-4 h-4 text-emerald-200" />
+            </button>
+          )}
+
+          {/* 3. User Account / Profile / Sign In Button */}
           {onOpenProfile && (
             <button
               type="button"
@@ -170,7 +263,7 @@ export const Header: React.FC<HeaderProps> = ({
                   ? 'border-emerald-300/50 bg-emerald-500/25 hover:bg-emerald-500/35 text-white'
                   : 'border-white/25 bg-white/15 hover:bg-white/25 text-white'
               }`}
-              title={userProfile?.isSignedIn ? `Profile & Settings: ${userProfile.name}` : 'Sign In & Settings (লগইন ও সেটিংস)'}
+              title={userProfile?.isSignedIn ? `Profile: ${userProfile.name}` : 'Sign In (লগইন)'}
             >
               <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-300 shadow-xs flex items-center justify-center bg-emerald-700 shrink-0">
                 {userProfile?.isSignedIn && userProfile?.photoUrl ? (

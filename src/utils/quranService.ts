@@ -185,9 +185,17 @@ export async function fetchSurah(
     bn: '163,161,20', // Taqi Usmani, Muhiuddin Khan, Sahih Intl
     en: '20,85,131',  // Sahih International, Clear Quran, Noble Quran
     ur: '234,97,20',  // Jalandhry, Tahir-ul-Qadri, Sahih Intl
+    ar: '16,20',      // Muyassar, Sahih Intl
     hi: '122,20',     // Azizul Haque al-Umari, Sahih Intl
     id: '33,20',      // Kemenag, Sahih Intl
     tr: '77,52,20',   // Diyanet, Elmalili, Sahih Intl
+    ms: '39,20',      // Basmeih, Sahih Intl
+    fr: '31,20',      // Hamidullah, Sahih Intl
+    es: '83,20',      // Cortes, Sahih Intl
+    ru: '45,20',      // Kuliev, Sahih Intl
+    fa: '135,20',     // Ansarian, Sahih Intl
+    de: '27,20',      // Bubenheim, Sahih Intl
+    sw: '232,20',     // Barwani, Sahih Intl
   };
 
   const activeTranslationIds = languageTranslationIds[language] || '163,161,20';
@@ -350,9 +358,17 @@ export async function fetchAyahTafsir(
     bn: { id: 168, defaultAuthor: 'তাফসীর আহসানুল বায়ান / আবু বকর যাকারিয়া' },
     en: { id: 169, defaultAuthor: 'Tafsir Ibn Kathir (English)' },
     ur: { id: 97, defaultAuthor: 'تفسیر ابن کثیر (اردو)' },
+    ar: { id: 16, defaultAuthor: 'التفسير الميسر' },
     hi: { id: 122, defaultAuthor: 'तफ़सीर अहसनुल बयान (हिन्दी)' },
     id: { id: 33, defaultAuthor: 'Tafsir Ringkas Kemenag' },
     tr: { id: 77, defaultAuthor: 'Diyanet Meali ve Tefsiri' },
+    ms: { id: 39, defaultAuthor: 'Tafsir Pimpinan Ar-Rahman' },
+    fr: { id: 169, defaultAuthor: 'Tafsir Ibn Kathir (Français)' },
+    es: { id: 169, defaultAuthor: 'Tafsir Ibn Kathir (Español)' },
+    ru: { id: 170, defaultAuthor: 'Тафсир ас-Саади' },
+    fa: { id: 169, defaultAuthor: 'تفسیر نور' },
+    de: { id: 169, defaultAuthor: 'Tafsir Ibn Kathir (Deutsch)' },
+    sw: { id: 169, defaultAuthor: 'Tafsir Al-Muntakhab (Kiswahili)' },
   };
 
   const currentTafsirConfig = tafsirMap[language] || tafsirMap.bn;
@@ -376,9 +392,17 @@ export async function fetchAyahTafsir(
     bn: `সূরা ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} আয়াত নং ${ayahNumber} এর তাফসীর ও শানে নুযুল।`,
     en: `Tafsir & Commentary for Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Verse ${ayahNumber}.`,
     ur: `سورۃ ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} آیت نمبر ${ayahNumber} کی تفسیر۔`,
+    ar: `تفسير سورة ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} الآية ${ayahNumber}.`,
     hi: `सूरह ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} आयत नं ${ayahNumber} की तफ़सीर।`,
     id: `Tafsir dan Penjelasan Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayat ${ayahNumber}.`,
     tr: `Sure ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayet ${ayahNumber} Tefsiri.`,
+    ms: `Tafsir dan Huraian Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayat ${ayahNumber}.`,
+    fr: `Commentaire et Tafsir de la Sourate ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Verset ${ayahNumber}.`,
+    es: `Comentario y Tafsir de la Sura ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Versículo ${ayahNumber}.`,
+    ru: `Тафсир и толкование суры ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, аят ${ayahNumber}.`,
+    fa: `تفسیر سوره ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} آیه ${ayahNumber}.`,
+    de: `Tafsir & Erläuterung für Sure ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Vers ${ayahNumber}.`,
+    sw: `Tafakuri ya Sura ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Aya ${ayahNumber}.`,
   };
 
   return {
