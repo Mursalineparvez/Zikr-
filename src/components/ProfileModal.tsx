@@ -1027,19 +1027,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {/* 1. Language Selection (14 World Languages) */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
-                  isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-emerald-500" />
+                    <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>{SETTINGS_UI.appLanguage[selectedLanguage] || 'অ্যাপের ভাষা (Language)'}</span>
                   </span>
-                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                    isDay 
+                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-extrabold'
+                      : 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30'
+                  }`}>
                     {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.nativeName || selectedLanguage}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-teal-300/80 leading-relaxed">
+                <p className={`text-[11px] font-medium leading-relaxed ${
+                  isDay ? 'text-emerald-950 font-semibold' : 'text-teal-200/90'
+                }`}>
                   {SETTINGS_UI.languageDesc[selectedLanguage] ||
                     'আরবি হরফ ব্যতীত সকল মেনু, অনুবাদ ও নির্দেশিকা স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে'}
                 </p>
@@ -1059,7 +1065,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           isSelected
                             ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50 font-bold'
                             : isDay
-                            ? 'bg-slate-50 hover:bg-emerald-50/70 border-slate-200 text-slate-700'
+                            ? 'bg-slate-50 hover:bg-emerald-50/90 border-slate-300 text-slate-900 font-bold'
                             : 'bg-[#092226] hover:bg-[#133941] border-[#184850] text-teal-200'
                         }`}
                       >
@@ -1069,11 +1075,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             <div className="text-xs font-bold truncate leading-tight">
                               {langItem.nativeName}
                             </div>
-                            <div className="text-[10px] opacity-75 truncate">{langItem.label}</div>
+                            <div className={`text-[10px] truncate ${isDay ? 'text-slate-600 font-semibold' : 'opacity-75'}`}>
+                              {langItem.label}
+                            </div>
                           </div>
                         </div>
                         {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-white text-emerald-700 flex items-center justify-center shrink-0">
+                          <div className="w-4 h-4 rounded-full bg-white text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                         )}
@@ -1087,19 +1095,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div
                 className={`p-4 rounded-2xl border shadow-md space-y-3 ${
                   isDay
-                    ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/60 border-emerald-200'
-                    : 'bg-gradient-to-r from-[#07242a] via-[#0c333a] to-[#0f3d46] border-[#1f5c68]'
+                    ? 'bg-emerald-50/90 border-emerald-300 text-slate-900'
+                    : 'bg-gradient-to-r from-[#07242a] via-[#0c333a] to-[#0f3d46] border-[#1f5c68] text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
                     <Smartphone className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    <h4 className={`font-extrabold text-sm ${isDay ? 'text-slate-900' : 'text-white'}`}>
                       মোবাইলে ZikrMate অ্যাপ ইনস্টল
                     </h4>
-                    <p className="text-[11px] text-slate-600 dark:text-teal-200/80">
+                    <p className={`text-[11px] font-semibold ${isDay ? 'text-emerald-950' : 'text-teal-200/90'}`}>
                       হোম স্ক্রিনে রাখুন, অফলাইনে দ্রুত রান হবে।
                     </p>
                   </div>
@@ -1119,7 +1127,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {/* Theme Switcher */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-2.5 ${
-                  isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
+                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -1127,7 +1135,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <Sun className="w-4 h-4 text-amber-500" />
                     <span>থিম মোড</span>
                   </span>
-                  <span className="text-xs font-bold text-emerald-600">{isDay ? 'Day ☀️' : 'Night 🌙'}</span>
+                  <span className={`text-xs font-bold ${isDay ? 'text-amber-700 font-black' : 'text-emerald-400'}`}>
+                    {isDay ? 'Day ☀️' : 'Night 🌙'}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -1136,8 +1146,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onClick={() => {
                       if (!isDay && onToggleThemeMode) onToggleThemeMode();
                     }}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold border ${
-                      isDay ? 'bg-amber-500 text-white border-amber-600' : 'bg-[#092226] text-slate-300 border-[#184850]'
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      isDay ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm font-black' : 'bg-[#092226] text-slate-300 border-[#184850]'
                     }`}
                   >
                     ☀️ ডে মোড (Light)
@@ -1147,8 +1157,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onClick={() => {
                       if (isDay && onToggleThemeMode) onToggleThemeMode();
                     }}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold border ${
-                      !isDay ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-slate-100 text-slate-600 border-slate-200'
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      !isDay ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm font-black' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                     }`}
                   >
                     🌙 নাইট মোড (Dark)
@@ -1158,16 +1168,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
               {/* System Info */}
               <div
-                className={`p-4 rounded-2xl border text-xs space-y-1.5 ${
-                  isDay ? 'bg-[#f4faf9] border-[#d2ece9]' : 'bg-[#071f25] border-[#174853]'
+                className={`p-4 rounded-2xl border text-xs space-y-2 ${
+                  isDay ? 'bg-slate-100/90 border-slate-300 text-slate-900' : 'bg-[#071f25] border-[#174853] text-white'
                 }`}
               >
-                <div className="font-bold text-slate-700 dark:text-teal-200">System Information</div>
-                <div className="grid grid-cols-2 gap-1 text-[11px] text-slate-500 dark:text-teal-300/80 font-mono">
-                  <div>Model: {userProfile.deviceModel || 'Mobile Device'}</div>
-                  <div>OS: {userProfile.osVersion || 'Android'}</div>
-                  <div>App: v411_38.1</div>
-                  <div>Location: {userProfile.location || 'Bangladesh'}</div>
+                <div className={`font-black text-xs ${isDay ? 'text-slate-900' : 'text-teal-200'}`}>
+                  System Information
+                </div>
+                <div className={`grid grid-cols-2 gap-1.5 text-[11px] font-mono ${
+                  isDay ? 'text-slate-800 font-medium' : 'text-teal-200/90'
+                }`}>
+                  <div>Model: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.deviceModel || 'Android Phone'}</span></div>
+                  <div>OS: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.osVersion || 'Android 10'}</span></div>
+                  <div>App: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>v411_38.1</span></div>
+                  <div>Location: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.location || 'Asia/Dhaka'}</span></div>
                 </div>
               </div>
             </div>
