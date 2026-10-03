@@ -219,7 +219,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                             {item.name}
                           </div>
                           {item.arabic && (
-                            <div className="text-[11px] font-arabic text-emerald-600 dark:text-emerald-400 truncate">
+                            <div className="text-[11px] font-arabic text-amber-600 dark:text-amber-400 truncate">
                               {item.arabic}
                             </div>
                           )}

@@ -300,7 +300,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                 </div>
 
                 <div>
-                  <div className="font-arabic text-xs text-emerald-600 dark:text-emerald-400 font-bold mb-1">
+                  <div className="font-arabic text-xs text-amber-600 dark:text-amber-400 font-bold mb-1">
                     {item.arabic}
                   </div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>

@@ -622,7 +622,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           <div className="text-xs sm:text-sm font-bold">
                             {AAMAL_UI.jamatLabel[selectedLanguage]}
                           </div>
-                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">
                             {AAMAL_UI.jamatSub[selectedLanguage]}
                           </div>
                         </div>
@@ -704,14 +704,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
                     </div>
                     {item.arabicLabel && (
-                      <span className="text-xs font-arabic text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+                      <span className="text-xs font-arabic text-amber-600 dark:text-amber-400 font-bold shrink-0">
                         {item.arabicLabel}
                       </span>
                     )}
@@ -822,14 +822,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
                     </div>
                     {item.arabicLabel && (
-                      <span className="text-xs font-arabic text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+                      <span className="text-xs font-arabic text-amber-600 dark:text-amber-400 font-bold shrink-0">
                         {item.arabicLabel}
                       </span>
                     )}
@@ -862,7 +862,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                             }`}
                           >
                             <div className="font-bold truncate text-[11px]">{z.name}</div>
-                            <div className="text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs mt-0.5">
+                            <div className="text-amber-600 dark:text-amber-400 font-mono font-bold text-xs mt-0.5">
                               {z.count} {AAMAL_UI.times[selectedLanguage]}
                             </div>
                           </div>
@@ -942,14 +942,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
                     </div>
                     {item.arabicLabel && (
-                      <span className="text-xs font-arabic text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+                      <span className="text-xs font-arabic text-amber-600 dark:text-amber-400 font-bold shrink-0">
                         {item.arabicLabel}
                       </span>
                     )}
@@ -1026,14 +1026,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
                     </div>
                     {item.arabicLabel && (
-                      <span className="text-xs font-arabic text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+                      <span className="text-xs font-arabic text-amber-600 dark:text-amber-400 font-bold shrink-0">
                         {item.arabicLabel}
                       </span>
                     )}
@@ -1110,14 +1110,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
                     </div>
                     {item.arabicLabel && (
-                      <span className="text-xs font-arabic text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+                      <span className="text-xs font-arabic text-amber-600 dark:text-amber-400 font-bold shrink-0">
                         {item.arabicLabel}
                       </span>
                     )}
@@ -1194,14 +1194,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
                     </div>
                     {item.arabicLabel && (
-                      <span className="text-xs font-arabic text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+                      <span className="text-xs font-arabic text-amber-600 dark:text-amber-400 font-bold shrink-0">
                         {item.arabicLabel}
                       </span>
                     )}
@@ -1278,14 +1278,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
+                          <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
                       </div>
                     </div>
                     {item.arabicLabel && (
-                      <span className="text-xs font-arabic text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
+                      <span className="text-xs font-arabic text-amber-600 dark:text-amber-400 font-bold shrink-0">
                         {item.arabicLabel}
                       </span>
                     )}

@@ -317,7 +317,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="font-bold text-xs truncate">{z.name}</div>
                     {z.arabic && (
-                      <div className="text-[11px] font-arabic text-emerald-600 dark:text-emerald-400 truncate">
+                      <div className="text-[11px] font-arabic text-amber-600 dark:text-amber-400 truncate">
                         {z.arabic}
                       </div>
                     )}
