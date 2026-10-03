@@ -1,12 +1,12 @@
-# 🌙 ZikrMate
+# 🌙 Zikr+
 
 ### **A Modern Islamic Companion for Zikir, Quran, Hadith, Salat, Dua & Daily Aamal**
 
 > **Remember. Reflect. Pray. Track. Grow.**
 
-**ZikrMate** is a modern Islamic companion platform designed to bring essential daily worship and Islamic resources together in one calm, intelligent, and beautifully structured digital experience.
+**Zikr+** is a modern Islamic companion platform designed to bring essential daily worship and Islamic resources together in one calm, intelligent, and beautifully structured digital experience.
 
-Rather than functioning as only a Tasbeeh counter, ZikrMate combines **Zikir, Quran, Kitab Library, Hadith, Salat Times, Dua, and Aamal Tracking** within a unified application architecture.
+Rather than functioning as only a Tasbeeh counter, Zikr+ combines **Zikir, Quran, Kitab Library, Hadith, Salat Times, Dua, and Aamal Tracking** within a unified application architecture.
 
 The application is designed around a simple philosophy:
 
@@ -14,14 +14,14 @@ The application is designed around a simple philosophy:
 
 ---
 
-## ✨ The Idea Behind ZikrMate
+## ✨ The Idea Behind Zikr+
 
 Modern users often depend on multiple applications for different Islamic activities—one for prayer times, another for Quran, another for Zikir, and another for Islamic books.
 
-**ZikrMate brings these experiences together.**
+**Zikr+ brings these experiences together.**
 
 ```text
-                         🌙 ZIKRMATE
+                           🌙 ZIKR+
                               │
               ┌───────────────┼───────────────┐
               │               │               │
@@ -38,7 +38,7 @@ The result is a single ecosystem where users can **remember, read, learn, pray, 
 
 # 🕌 Core Experience
 
-ZikrMate is organized around seven primary experiences:
+Zikr+ is organized around seven primary experiences:
 
 | Section              | Purpose                             |
 | -------------------- | ----------------------------------- |
@@ -46,17 +46,17 @@ ZikrMate is organized around seven primary experiences:
 | 📖 **Quran**         | Quran reading and reflection        |
 | 📚 **Kitab Library** | Islamic books and reading resources |
 | 📜 **Hadith**        | Hadith collections and references   |
-| 🕌 **Salat Time**    | Daily prayer schedule               |
-| 🤲 **Dua**           | Daily and situational Duas          |
-| 📋 **Aamal Tracker** | Daily worship and activity tracking |
+| 🕌 **Salat Time**    | Daily prayer schedule & Solar trajectory |
+| 🤲 **Dua**           | Daily and situational authentic Duas |
+| 📋 **Aamal Tracker** | Daily worship, Sunnah & deeds tracking |
 
 ---
 
-# 📿 Zikir — The Heart of ZikrMate
+# 📿 Zikir — The Heart of Zikr+
 
 The Zikir system is designed as an **independent multi-counter engine**, rather than a single shared counter.
 
-Every Zikir maintains its own state.
+Every Zikir maintains its own state, sound, haptic feedback, and configurable target.
 
 ```text
 ┌──────────────────────────────────────┐
@@ -89,11 +89,11 @@ Each counter remains completely independent.
 
 # 🌅 Morning & 🌇 Evening Zikir
 
-ZikrMate organizes Zikir into meaningful daily categories.
+Zikr+ organizes Zikir into meaningful daily categories with authentic prophetic morning and evening Adhkar.
 
-### সকালের যিকির
+### সকালের যিকির (Morning Adhkar)
 
-The default morning collection contains six Zikir:
+The default morning collection contains authentic Zikir items:
 
 ```text
 سُبْحَانَ اللَّهِ
@@ -119,7 +119,7 @@ Default target:
 
 **600 total repetitions**
 
-### সন্ধ্যার যিকির
+### সন্ধ্যার যিকির (Evening Adhkar)
 
 The evening collection includes configurable targets.
 
@@ -143,9 +143,9 @@ The target system is configurable instead of being permanently locked to one val
 
 # 🔵 Central Intelligence — Total Counter
 
-One of ZikrMate's key UX concepts is the **central total counter**.
+One of Zikr+'s key UX concepts is the **central total counter**.
 
-Instead of storing a separate total that can become inconsistent, the application derives the total from individual Zikir states.
+Instead of storing a separate total that can become inconsistent, the application derives the total dynamically from individual Zikir states with satisfying bead animations and micro-interactions.
 
 ```text
               Individual Counters
@@ -218,10 +218,10 @@ No hard-coded percentage is required.
 
 # 🧠 Product Architecture
 
-ZikrMate is designed using a **modular architecture** so that each Islamic feature can evolve independently without breaking the rest of the application.
+Zikr+ is designed using a **modular architecture** so that each Islamic feature can evolve independently without breaking the rest of the application.
 
 ```text
-                         ZIKRMATE
+                          ZIKR+
                             │
                     Application Shell
                             │
@@ -246,7 +246,7 @@ ZikrMate is designed using a **modular architecture** so that each Islamic featu
                          │
              ┌───────────┴───────────┐
              ↓                       ↓
-         Local Data              APIs/Data
+     Local / Offline Data      Firebase Cloud Sync
 ```
 
 This architecture allows new features to be added without rewriting the entire application.
@@ -255,54 +255,43 @@ This architecture allows new features to be added without rewriting the entire a
 
 # 🧩 Feature-Based Architecture
 
-Instead of building the application as one large component, ZikrMate can follow a feature-oriented structure.
+Instead of building the application as one large component, Zikr+ follows a clean, feature-oriented structure.
 
 ```text
 src/
 │
-├── app/
-│   ├── router
-│   ├── layout
-│   └── providers
+├── App.tsx                     # Core application orchestrator & module router
 │
-├── features/
-│   │
-│   ├── zikir/
-│   │   ├── components/
-│   │   ├── data/
-│   │   ├── hooks/
-│   │   ├── services/
-│   │   └── utils/
-│   │
-│   ├── quran/
-│   ├── hadith/
-│   ├── kitab/
-│   ├── salat/
-│   ├── dua/
-│   └── aamal/
+├── components/
+│   ├── ZikirCounterView.tsx    # Multi-counter engine & central total
+│   ├── CircularCenterCounter.tsx # Interactive primary Tasbeeh ring
+│   ├── ZikrCard.tsx            # Independent Zikir card component
+│   ├── QuranView.tsx           # Complete 114 Surahs reader with audio & Juz filter
+│   ├── HadithView.tsx          # 8 Major collections with searchable chapters
+│   ├── KitabView.tsx           # Curated Islamic classical PDF & book library
+│   ├── SalatTimeView.tsx       # Live prayer times, prohibited zones & trajectory
+│   ├── SolarTrajectoryCard.tsx # Real-time sun/moon physics & twilight curve
+│   ├── DuaView.tsx             # Authentic Hisnul Muslim collection with audio
+│   ├── AamalTrackerView.tsx    # Daily Muhasabah, Sunnah & deed tracking
+│   ├── ProfileModal.tsx        # Profile, Google & OTP authentication & cloud sync
+│   └── Header.tsx & BottomNav.tsx # Responsive navigation shell
 │
-├── shared/
-│   ├── components/
-│   ├── typography/
-│   ├── icons/
-│   ├── theme/
-│   └── utilities/
+├── utils/
+│   ├── soundHaptics.ts         # Audio synthesis & tactile vibration feedback
+│   ├── exportPdf.ts            # High-fidelity A4 progress report generator
+│   └── aamalTrackerData.ts     # Muhasabah presets, CSV & JSON backup handlers
 │
-├── services/
-│   ├── storage/
-│   ├── api/
-│   └── notifications/
-│
-└── assets/
+└── services/
+    └── firebase.ts             # Firestore sync, OTP verification & guest management
 ```
 
-This makes the project easier to maintain and extend.
+This makes the project easy to maintain, test, and extend.
 
 ---
 
 # 🔄 Zikir Data Flow
 
-The Zikir system follows a predictable data flow:
+The Zikir system follows a predictable, unidirectional data flow:
 
 ```text
              User taps counter
@@ -324,18 +313,18 @@ The Zikir system follows a predictable data flow:
             │         Overall Total
             │
             ↓
-       Persistent Storage
+       Persistent Storage (IndexedDB / LocalStorage / Cloud)
 ```
 
-This makes the counter behavior predictable and easy to test.
+This makes counter behavior instantaneous, resilient against network failures, and 100% offline-ready.
 
 ---
 
 # 💾 Persistence Architecture
 
-ZikrMate is designed around **persistent user data**.
+Zikr+ is designed around **persistent user data**.
 
-The application can preserve:
+The application preserves:
 
 ```text
 Zikir Counts
@@ -343,24 +332,24 @@ Zikir Targets
 Daily Progress
 Zikir History
 Bookmarks
-Reading Progress
-Aamal Progress
-Theme
-Language
-Settings
+Quran Reading Position
+Aamal Progress & Streaks
+Theme (Day ☀️ / Night 🌙)
+Language (English, বাংলা, اردو, हिन्दी)
+Sound & Haptics Settings
 ```
 
-If the existing project already has a database or storage layer, the new Zikir system should integrate with that system instead of introducing an unnecessary second storage mechanism.
+User data is cached locally first (`IndexedDB` & `LocalStorage`), with automatic background synchronization to Firebase Firestore when signed in.
 
 ---
 
 # 📅 Daily Data Model
 
-A daily Zikir record can conceptually look like:
+A daily Zikir record conceptually looks like:
 
 ```json
 {
-  "date": "2026-09-26",
+  "date": "2026-10-03",
   "morning": {
     "morning-subhanallah": 37,
     "morning-alhamdulillah": 50
@@ -405,33 +394,28 @@ Variable target:
 }
 ```
 
-This makes adding new Zikir simple.
-
 ---
 
 # 📖 Quran Experience
 
 The Quran section is designed as a focused reading environment.
 
-Potential capabilities include:
+* Surah navigation (114 Surahs complete)
+* Arabic Uthmani text with proper font rendering
+* Verified Bengali, English, Urdu & Hindi translations
+* Ayah-by-ayah navigation & audio recitations
+* Real-time search by Surah name, number, or revelation type
+* 30 Juz filtering
+* Bookmarks & Favorites
+* Automatic "Continue Reading" resume card
 
-* Surah navigation
-* Arabic Quran
-* Translation
-* Ayah navigation
-* Search
-* Bookmarks
-* Favorites
-* Last-read position
-* Reading progress
-
-Arabic content is displayed using proper **RTL rendering**.
+Arabic content is displayed using proper **RTL rendering** with large, elegant calligraphy.
 
 ---
 
 # 📚 Kitab Library
 
-The Kitab Library transforms ZikrMate into a broader Islamic knowledge platform.
+The Kitab Library transforms Zikr+ into a broader Islamic knowledge platform.
 
 Users can browse:
 
@@ -445,7 +429,7 @@ Users can browse:
 📚 Dua & Zikir
 ```
 
-The library can support digital books and PDF resources where licensing permits.
+Integrated with in-app reading, table of contents navigation, and offline reading capability.
 
 ---
 
@@ -453,395 +437,280 @@ The library can support digital books and PDF resources where licensing permits.
 
 The Hadith module provides an organized reading and discovery experience.
 
-Potential functionality:
-
 ```text
-Collections
-Categories
-Search
-Arabic
-Translation
-References
-Bookmarks
-Favorites
-Sharing
+Sahih al-Bukhari
+Sahih Muslim
+Sunan Abi Dawud
+Jami` at-Tirmidhi
+Sunan an-Nasa'i
+Sunan Ibn Majah
+Muwatta Malik
+Riyad as-Salihin
 ```
 
-References should remain clearly associated with each Hadith.
+Features:
+* Chapter-by-chapter categorization
+* Arabic text, pronunciation, and full translation
+* Grade verification (Sahih / Hasan / Da'if)
+* One-click copying & sharing
 
 ---
 
-# 🕌 Salat Time
+# 🕌 Salat Time & Solar Science
 
-The Salat module provides a daily prayer dashboard.
+The Salat module provides an accurate daily prayer schedule with astronomical solar trajectory.
 
 ```text
-Fajr
-Sunrise
-Dhuhr
-Asr
-Maghrib
-Isha
+Fajr        (Dawn twilight)
+Sunrise     (Shuruk)
+Dhuhr       (Solar noon peak)
+Asr         (Shadow elongation)
+Maghrib     (Sunset twilight)
+Isha        (Nightfall)
+Tahajjud    (Last third of night)
 ```
 
-The experience can include:
-
-* Current prayer
-* Next prayer
-* Countdown
-* Daily schedule
-* Hijri date
-* Location
-* Calculation method
-* Notifications
+Experience includes:
+* Current active prayer & next prayer countdown (live seconds)
+* Macro solar trajectory chart with altitude/azimuth angles
+* Prohibited prayer times alerts (Sunrise, Noon Zenith, Sunset)
+* GPS geolocation & offline worldwide city selection
+* Dynamic Hijri calendar date synchronization
 
 ---
 
 # 🤲 Dua
 
-ZikrMate organizes Duas into practical categories.
+Zikr+ organizes authentic Duas from **Hisnul Muslim** into practical categories:
 
 ```text
-Morning
-Evening
-Travel
-Food
-Protection
-Forgiveness
-Before Sleep
-After Waking
+Morning & Evening
+Before Sleep & After Waking
+During Salat & After Prayer
+Protection & Istikhara
+Illness & Forgiveness
+Food & Travel
 Daily Life
 ```
 
-Each entry can contain:
-
-```text
-Arabic
-Bengali
-Transliteration
-Translation
-Reference
-```
+Each entry contains Arabic, transliteration, full translation, and hadith source references.
 
 ---
 
-# 📋 Aamal Tracker
+# 📋 Aamal Tracker (Muhasabah)
 
-The Aamal Tracker provides a lightweight daily activity system.
+The Aamal Tracker provides a daily spiritual evaluation system:
 
 ```text
         TODAY'S AAMAL
 
-✓ Fajr
-✓ Quran
-✓ Zikir
-✓ Morning Adhkar
-✓ Hadith
-○ Charity
-○ Personal Aamal
+✓ 5 Fard Prayers on time
+✓ Quran Tilawat
+✓ Morning & Evening Adhkar
+✓ Tahajjud / Ishraq
+✓ Reading Hadith
+✓ Sadaqah (Charity)
+✓ Istighfar & Darood
 ```
 
-Users can see their daily completion and build longer-term statistics.
+Users can evaluate their daily completion, view weekly/monthly streaks, and export reports in PDF or CSV formats.
 
 ---
 
 # 🎨 Design System
 
-ZikrMate follows a **calm Islamic modernism** design direction.
+Zikr+ follows a **calm Islamic modernism** design direction.
 
 ### Visual principles
 
-* Minimal
-* Elegant
-* Peaceful
-* Accessible
-* Spacious
-* Responsive
-* Content-focused
+* Minimal & distraction-free
+* Deep Emerald Green (`#006747`, `#00875a`) & Medina Gold (`#f59e0b`)
+* Warm Porcelain White in Day Mode & Deep Pine Slate in Night Mode
+* Zero eye-strain dark mode
+* Accessible touch targets (minimum 44px)
+* Fluid micro-animations
 
 ### UI language
 
-The interface combines:
+The interface harmoniously combines:
 
-**Arabic + Bengali + English**
+**Arabic + Bengali + English + Urdu + Hindi**
 
-without allowing one language to visually interfere with another.
-
-Arabic receives larger typography and proper RTL treatment.
-
-Bengali uses Unicode-compatible typography.
+Arabic receives dedicated calligraphic typography and strict RTL layout handling.
 
 ---
 
 # 🌐 Internationalization
 
-The application is designed for multilingual expansion.
+The application supports seamless one-click language switching:
 
 ```text
 English
-বাংলা
-العربية
+বাংলা (Bengali)
+العربية (Arabic)
+اردو (Urdu)
+हिन्दी (Hindi)
 ```
 
-The architecture should allow additional languages without rewriting UI components.
-
-Translation strings should remain separate from application logic.
+All translation keys are centrally maintained in `appTranslations.ts`.
 
 ---
 
 # 📱 Responsive Architecture
 
-ZikrMate uses a responsive-first philosophy.
+Zikr+ uses a responsive-first philosophy.
 
 ```text
-             ZIKRMATE
-                 │
-       ┌─────────┼─────────┐
-       ↓         ↓         ↓
-     Mobile    Tablet    Desktop
-       │         │         │
-       ↓         ↓         ↓
-    Compact   Adaptive   Expanded
-     Cards      Grid       Grid
+                             ZIKR+
+                               │
+       ┌───────────────────────┼───────────────────────┐
+       ↓                       ↓                       ↓
+     Mobile                 Tablet                  Desktop
+       │                       │                       │
+       ↓                       ↓                       ↓
+ Single-column          Adaptive 2-column       Expanded multi-column
+ Touch thumb cards       Balanced grid          Spacious reader layout
 ```
-
-### Mobile
-
-Large touch controls and single-column content.
-
-### Tablet
-
-Adaptive two-column layouts.
-
-### Desktop
-
-Expanded grids and wider reading environments.
 
 ---
 
 # 🌙 Theme System
 
-ZikrMate supports a unified theme system.
+Zikr+ supports a synchronized, instant theme toggle:
 
 ```text
-             Theme Provider
-                  │
-        ┌─────────┴─────────┐
-        ↓                   ↓
-     ☀️ Light             🌙 Dark
-        │                   │
-        └─────────┬─────────┘
-                  ↓
-          All Feature Modules
+                  Theme Provider
+                        │
+        ┌───────────────┴───────────────┐
+        ↓                               ↓
+   ☀️ Day Mode                     🌙 Night Mode
+(Porcelain Mint & Emerald)       (Deep Pine Slate & Gold)
 ```
 
-Theme changes should affect the entire application consistently.
+Theme changes persist across page reloads and device sessions.
 
 ---
 
-# 📲 PWA Architecture
+# 📲 PWA & Offline Support
 
-ZikrMate can operate as a Progressive Web App.
+Zikr+ is a certified Progressive Web App.
 
-```text
-Browser
-   │
-   ↓
-Service Worker
-   │
-   ├── Cache
-   ├── Offline Support
-   └── App Shell
-          │
-          ↓
-       ZikrMate
-```
-
-This provides an app-like experience while retaining the flexibility of a web application.
+* Service Worker caching for 100% offline availability
+* Installable directly on Android, iOS, Windows, and macOS
+* Maskable SVG icons and splash themes
+* Standalone window display mode without browser address bars
 
 ---
 
 # 🤖 Android Architecture
 
-The responsive web/PWA experience can be packaged for Android.
+The responsive web/PWA experience can be packaged for Android directly:
 
 ```text
-             ZikrMate Web
-                  │
-                  ↓
-                 PWA
-                  │
-                  ↓
-          Android Wrapper
-                  │
-                  ↓
-           Android Studio
-             /        \
-            ↓          ↓
-          APK         AAB
+                  Zikr+ Web / PWA
+                         │
+                         ↓
+                 Standalone PWA
+                         │
+                         ↓
+            TWA / Bubblewrap / Capacitor
+                         │
+                         ↓
+                   Android Studio
+                   /            \
+                  ↓              ↓
+              Debug APK      Release AAB
 ```
 
-The goal is to avoid maintaining two completely separate applications.
+A built-in standalone export guide is provided inside the application.
 
 ---
 
-# 🔐 Data Integrity
-
-ZikrMate prioritizes safe handling of user-generated data.
-
-When extending the existing application:
-
-* Existing data must remain intact.
-* Existing authentication must remain intact.
-* Existing navigation must remain intact.
-* Existing features must remain functional.
-* Existing storage should be reused.
-* Unrelated pages should not be modified unnecessarily.
-
-The Zikir feature should be integrated rather than replacing the existing application.
-
----
-
-# 🧪 Quality & Testing
-
-Important Zikr test cases include:
+# 🧪 Quality & Testing Checklist
 
 ```text
-✓ Individual counter increments correctly
-✓ Counters remain independent
-✓ Target changes correctly
-✓ 33/100 target selection works
-✓ Reset affects only selected Zikir
-✓ Total updates immediately
-✓ Progress updates immediately
-✓ Data survives page refresh
-✓ Data survives app restart
-✓ New day creates correct daily state
-✓ History remains intact
-✓ Arabic RTL works correctly
-✓ Bengali renders correctly
-✓ Mobile layout works
-✓ Tablet layout works
-✓ Desktop layout works
+✓ Individual counter increments instantaneously
+✓ Counters remain strictly isolated
+✓ Target changes smoothly (33 / 100 / custom)
+✓ Sound synthesis & vibration haptics trigger reliably
+✓ Reset affects only the active target
+✓ Central total sums all counts accurately
+✓ Progress bar reflects accurate daily achievement
+✓ State persists across page reload & browser close
+✓ Daily reset handles date rollover gracefully
+✓ Firebase Firestore real-time cloud sync functions correctly
+✓ 114 Surahs load cleanly with RTL font support
+✓ PDF report compiles with table summaries
+✓ Responsive across mobile, foldables, tablets & desktops
 ```
 
 ---
 
-# 🚀 Extensibility
+# 🛠️ Technology Stack
 
-ZikrMate is designed so future features can be introduced without restructuring the entire application.
-
-Possible future modules:
-
-```text
-🧭 Qibla
-📅 Hijri Calendar
-🔔 Prayer Notifications
-🎧 Quran Audio
-🎙️ Hadith Audio
-☁️ Cloud Sync
-👤 User Accounts
-📊 Advanced Analytics
-🏆 Personal Goals
-🔎 Islamic Search
-```
-
-The modular architecture makes these additions possible without coupling them tightly to the Zikir system.
+* **Frontend:** React 19, TypeScript, Vite
+* **Styling:** Tailwind CSS, Lucide Icons, Canvas Confetti
+* **State & Persistence:** React Hooks, LocalStorage, IndexedDB
+* **Backend & Cloud:** Firebase Firestore, Firebase Authentication
+* **Document Engine:** html2pdf.js, html2canvas, jsPDF
+* **PWA:** Service Worker Cache API, Web App Manifest
 
 ---
 
-# 🛠️ Technology
-
-The exact technology stack should follow the existing ZikrMate project, but the application is suitable for modern technologies such as:
-
-* **React**
-* **TypeScript**
-* **JavaScript**
-* **HTML5**
-* **CSS3**
-* **IndexedDB**
-* **LocalStorage**
-* **PWA**
-* **Service Workers**
-* **REST APIs**
-* **Android Studio**
-* **APK / AAB**
-
-The guiding principle is:
-
-> **Extend the existing architecture before introducing a new architecture.**
-
----
-
-# 📂 High-Level Project Architecture
+# 📂 Project Structure
 
 ```text
-ZIKRMATE
+ZIKR+
 │
 ├── Application Shell
-│   ├── Header
-│   ├── Navigation
-│   ├── Theme
-│   └── Language
+│   ├── Header.tsx (Branding, Language & Quick Actions)
+│   ├── BottomNav.tsx (Mobile Thumb Navigation)
+│   ├── Theme Toggle (Day ☀️ / Night 🌙)
+│   └── ProfileModal.tsx (Accounts, Security & Cloud Sync)
 │
-├── Worship
-│   ├── Zikir
-│   ├── Salat
-│   ├── Dua
-│   └── Aamal
+├── Worship Features
+│   ├── Zikir (Multi-counter & Master Dial)
+│   ├── Salat (Timetable & Solar Curve)
+│   ├── Dua (Categorized Supplications)
+│   └── Aamal Tracker (Muhasabah & Deeds Log)
 │
-├── Knowledge
-│   ├── Quran
-│   ├── Hadith
-│   └── Kitab Library
+├── Knowledge Features
+│   ├── Quran (114 Surahs, Juz & Audio)
+│   ├── Hadith (8 Canonical Collections)
+│   └── Kitab Library (Classics & Study Guides)
 │
-├── Shared Services
-│   ├── Storage
-│   ├── API
-│   ├── Notifications
-│   └── Date / Time
-│
-└── Platform
-    ├── Web
-    ├── PWA
-    └── Android
+└── Shared Services
+    ├── Sound & Haptics Engine
+    ├── PDF & CSV Export Utilities
+    ├── Firebase Firestore Cloud Sync
+    └── Standalone APK Packager
 ```
 
 ---
 
 # 🎯 Product Vision
 
-ZikrMate is not intended to be just another counter application.
+Zikr+ is not just another counter app.
 
-It is designed as a **digital Islamic companion** where technology stays in the background and the user's worship, learning, and reflection remain at the center.
+It is designed as a **digital Islamic sanctuary** where technology stays quiet in the background and the user's worship, learning, and remembrance remain at the center.
 
-The application brings together:
-
-**Zikir → Remember**
-
-**Quran → Read**
-
-**Hadith → Learn**
-
-**Salat → Pray**
-
-**Dua → Ask**
-
-**Aamal → Track**
-
-**Kitab → Explore**
+> **Zikir → Remember**  
+> **Quran → Read**  
+> **Hadith → Learn**  
+> **Salat → Pray**  
+> **Dua → Ask**  
+> **Aamal → Track**  
+> **Kitab → Explore**
 
 ---
 
-# 🌙 The ZikrMate Philosophy
+# 🌙 The Zikr+ Philosophy
 
 > ### **Less distraction. More remembrance.**
 
-The interface is intentionally calm.
+The interface is intentionally peaceful.
 
-The application should never feel like a complicated productivity dashboard.
-
-Instead, it should feel like a peaceful digital space that users can return to every day.
+It will never contain distracting ads, intrusive notifications, or clutter. Instead, it offers a serene, spiritually uplifting space for believers to return to every day.
 
 ---
 
@@ -851,95 +720,50 @@ Instead, it should feel like a peaceful digital space that users can return to e
 🌙 Modern Islamic UI
 📿 Multi-Zikir Counter
 🔵 Central Total Counter
-🌅 Morning Zikir
-🌇 Evening Zikir
-📊 Daily Progress
-📅 Zikir History
-📖 Quran
-📚 Kitab Library
-📜 Hadith
-🕌 Salat Time
-🤲 Dua
-📋 Aamal Tracker
-🌐 Bengali + Arabic + English
-↔️ Proper RTL Support
-💾 Persistent Data
-📱 Responsive Design
-💻 Desktop Support
-📲 PWA
-🤖 Android Ready
+🌅 Morning & Evening Adhkar
+📊 Dynamic Daily Progress
+📅 Persistent History & Streaks
+📖 Complete 114 Surahs Quran
+📚 Islamic Kitab Library
+📜 8 Hadith Collections
+🕌 Salat Times & Solar Trajectory
+🤲 Authentic Hisnul Muslim Duas
+📋 Daily Aamal Muhasabah
+🌐 Multilingual (BN, AR, EN, UR, HI)
+↔️ Proper Arabic RTL Calligraphy
+💾 Offline-First + Firebase Cloud Sync
+📱 Mobile, Tablet & Desktop Responsive
+📲 PWA (Installable on iOS & Android)
+🤖 Android APK Export Ready
 ```
-
----
-
-# 🏗️ Engineering Principles
-
-ZikrMate follows several core engineering principles:
-
-### 1. Modular
-
-Each major feature should remain independently maintainable.
-
-### 2. Reusable
-
-Common UI and logic should be shared rather than duplicated.
-
-### 3. Data-driven
-
-Content such as Zikir should come from structured data.
-
-### 4. Persistent
-
-Important user progress should survive application restarts.
-
-### 5. Responsive
-
-The same experience should adapt across devices.
-
-### 6. Accessible
-
-Large controls, readable typography, keyboard accessibility, and clear states should be prioritized.
-
-### 7. Extensible
-
-Future Islamic features should be possible without rebuilding the application.
 
 ---
 
 # 🤝 Contributing
 
-Contributions are welcome.
+Contributions, feedback, and suggestions are welcome.
 
 You can contribute through:
-
-* Bug fixes
-* UI improvements
-* Accessibility improvements
-* New features
-* Translation
-* Testing
-* Documentation
-* Performance improvements
-
-Before submitting major changes, maintain compatibility with the existing application architecture.
+* Bug reports & feature suggestions
+* Additional authentic Hadith or Dua collections
+* Language translations
+* UI/UX refinements
 
 ---
 
 # ⭐ Support
 
-If ZikrMate is useful to you, consider giving the repository a ⭐ on GitHub.
-
-Suggestions, feedback, issues, and contributions are welcome.
+If **Zikr+** brings peace to your daily worship and remembrance, consider giving the repository a ⭐ on GitHub.
 
 ---
 
 # 📜 License
 
-Choose an appropriate open-source license based on the project's intended distribution and the licensing of included Islamic content and datasets.
+Released under the **MIT License**. Free and open for the Ummah.
 
 ---
 
-# 🌙 ZikrMate
+# 🌙 Zikr+
 
 ### **Islamic Companion & Daily Worship Platform**
 
@@ -949,20 +773,20 @@ Choose an appropriate open-source license based on the project's intended distri
 
 ---
 
-## GitHub About
+## 📌 GitHub About
 
 **Description:**
 
-> 🌙 ZikrMate — A modern Islamic Companion & Daily Worship platform featuring Zikir, Quran, Kitab Library, Hadith, Salat Times, Dua, Aamal Tracking, daily progress, history, multilingual Arabic/Bengali support, responsive PWA design, and Android compatibility.
+> 🌙 Zikr+ — A modern Islamic Companion & Daily Worship platform featuring Zikir, Quran, Kitab Library, Hadith, Salat Times, Dua, Aamal Tracking, daily progress, history, multilingual Arabic/Bengali support, responsive PWA design, and Android compatibility.
 
 **Topics:**
 
 ```text
-zikrmate
+zikrplus
+zikr
 islamic-app
 islamic-companion
 islamic
-zikr
 dhikr
 tasbeeh
 quran
@@ -984,4 +808,4 @@ typescript
 
 **Tagline:**
 
-> 🌙 **ZikrMate — A peaceful digital companion for remembrance, worship, learning, and daily Aamal.**
+> 🌙 **Zikr+ — A peaceful digital companion for remembrance, worship, learning, and daily Aamal.**
