@@ -3,6 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <script>
+      // Gracefully prevent Vite HMR websocket proxy close from surfacing as unhandled rejection
+      window.addEventListener('unhandledrejection', function (e) {
+        var errStr = (e.reason && (e.reason.message || e.reason.stack || '' + e.reason)) || '';
+        if (errStr.indexOf('WebSocket') !== -1 || errStr.indexOf('websocket') !== -1) {
+          e.preventDefault();
+        }
+      });
+      window.addEventListener('error', function (e) {
+        var errStr = (e.message || '') + '';
+        if (errStr.indexOf('WebSocket') !== -1 || errStr.indexOf('websocket') !== -1) {
+          e.preventDefault();
+        }
+      });
+    </script>
     <title>Zikr+ - Digital Zikr PWA</title>
     <meta name="description" content="Serene Digital Zikr and Tasbeeh Progressive Web App with individual counters, master circular total, local persistence, haptic touch, and PDF export." />
     <meta property="og:title" content="Zikr+ - Digital Zikr PWA" />
