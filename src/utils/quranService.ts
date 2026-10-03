@@ -83,14 +83,27 @@ export const QURAN_RECITERS: Reciter[] = [
   },
 ];
 
+export interface TafsirOption {
+  id: number;
+  nameBn: string;
+  nameEn: string;
+  language: ZikrLanguage;
+  author: string;
+}
+
+export const AVAILABLE_TAFSIRS: TafsirOption[] = [
+  { id: 165, nameBn: 'তাফসীর ইবনে কাছীর (বাংলা - ইফাবা)', nameEn: 'Tafsir Ibn Kathir (Bengali)', language: 'bn', author: 'হাফেয ইবনে কাছীর (রঃ)' },
+  { id: 168, nameBn: 'তাফসীর আহসানুল বায়ান (আবু বকর যাকারিয়া)', nameEn: 'Tafsir Ahsanul Bayaan (Abu Bakr Zakaria)', language: 'bn', author: 'ড. আবু বকর যাকারিয়া' },
+  { id: 169, nameBn: 'Tafsir Ibn Kathir (English)', nameEn: 'Tafsir Ibn Kathir (English)', language: 'en', author: 'Hafiz Ibn Kathir' },
+  { id: 14, nameBn: 'تفسير ابن كثير (العربية)', nameEn: 'Tafsir Ibn Kathir (Arabic)', language: 'ar', author: 'الإمام ابن كثير' },
+  { id: 16, nameBn: 'التفسير الميسر (العربية)', nameEn: 'Al-Tafsir Al-Muyassar (Arabic)', language: 'ar', author: 'مجمع الملك فهد' },
+  { id: 160, nameBn: 'تفسیر ابن کثیر (اردو)', nameEn: 'Tafsir Ibn Kathir (Urdu)', language: 'ur', author: 'حافظ ابن کثیر' },
+];
+
 export const POPULAR_SURAHS_NUMBERS = [1, 2, 18, 19, 36, 55, 56, 67, 112, 113, 114];
 
-// Local storage prefix
 const CACHE_PREFIX = 'zikrmate_quran_cache_v3_';
 
-/**
- * Remove prefixed Bismillah from verse 1 for surahs 2..114 (except 9 which has no Bismillah)
- */
 function cleanVerse1Arabic(surahNumber: number, verseNumber: number, text: string): string {
   if (surahNumber !== 1 && surahNumber !== 9 && verseNumber === 1) {
     return text.replace(/^(?:﻿)?بِسْمِ\s*ٱللَّهِ\s*ٱلرَّحْمَٰنِ\s*ٱلرَّحِيمِ\s*/u, '').trim();
@@ -98,17 +111,13 @@ function cleanVerse1Arabic(surahNumber: number, verseNumber: number, text: strin
   return text.trim();
 }
 
-/**
- * Get Surah from cache if available
- */
 export function getCachedSurah(surahNumber: number, language: ZikrLanguage = 'bn'): QuranSurahDetail | null {
   const cacheKey = `${language}_${surahNumber}`;
   const rawKey = `${CACHE_PREFIX}${cacheKey}`;
   try {
     const raw = localStorage.getItem(rawKey);
     if (raw) {
-      const parsed = JSON.parse(raw) as QuranSurahDetail;
-      return parsed;
+      return JSON.parse(raw) as QuranSurahDetail;
     }
   } catch (err) {
     console.warn('Failed to read surah cache', err);
@@ -116,9 +125,6 @@ export function getCachedSurah(surahNumber: number, language: ZikrLanguage = 'bn
   return null;
 }
 
-/**
- * Save surah to cache
- */
 export function saveCachedSurah(surah: QuranSurahDetail, language: ZikrLanguage = 'bn'): void {
   const cacheKey = `${language}_${surah.number}`;
   const rawKey = `${CACHE_PREFIX}${cacheKey}`;
@@ -137,9 +143,6 @@ export function saveCachedSurah(surah: QuranSurahDetail, language: ZikrLanguage 
   }
 }
 
-/**
- * Fallback word-by-word builder from arabic string
- */
 function generateFallbackWords(arabicText: string, englishText: string): QuranWord[] {
   const arTokens = arabicText.trim().split(/\s+/).filter(Boolean);
   const enTokens = englishText.trim().split(/\s+/).filter(Boolean);
@@ -152,9 +155,6 @@ function generateFallbackWords(arabicText: string, englishText: string): QuranWo
   });
 }
 
-/**
- * Fetch full Surah with all Ayahs (Word-by-word + Multiple Translations + Transliteration)
- */
 export async function fetchSurah(
   surahNumber: number,
   reciterId: string = 'ar.alafasy',
@@ -165,7 +165,6 @@ export async function fetchSurah(
     throw new Error(`Surah ${surahNumber} not found in Quran index.`);
   }
 
-  // Check cache first
   const cached = getCachedSurah(surahNumber, language);
   if (cached && cached.ayahs && cached.ayahs.length === meta.numberOfAyahs) {
     const updatedAyahs = cached.ayahs.map((ayah) => ({
@@ -180,27 +179,25 @@ export async function fetchSurah(
     };
   }
 
-  // Multi-language translation IDs mapping for Quran.com v4 API
   const languageTranslationIds: Record<ZikrLanguage, string> = {
-    bn: '163,161,20', // Taqi Usmani, Muhiuddin Khan, Sahih Intl
-    en: '20,85,131',  // Sahih International, Clear Quran, Noble Quran
-    ur: '234,97,20',  // Jalandhry, Tahir-ul-Qadri, Sahih Intl
-    ar: '16,20',      // Muyassar, Sahih Intl
-    hi: '122,20',     // Azizul Haque al-Umari, Sahih Intl
-    id: '33,20',      // Kemenag, Sahih Intl
-    tr: '77,52,20',   // Diyanet, Elmalili, Sahih Intl
-    ms: '39,20',      // Basmeih, Sahih Intl
-    fr: '31,20',      // Hamidullah, Sahih Intl
-    es: '83,20',      // Cortes, Sahih Intl
-    ru: '45,20',      // Kuliev, Sahih Intl
-    fa: '135,20',     // Ansarian, Sahih Intl
-    de: '27,20',      // Bubenheim, Sahih Intl
-    sw: '232,20',     // Barwani, Sahih Intl
+    bn: '163,161,20',
+    en: '20,85,131',
+    ur: '234,97,20',
+    ar: '16,20',
+    hi: '122,20',
+    id: '33,20',
+    tr: '77,52,20',
+    ms: '39,20',
+    fr: '31,20',
+    es: '83,20',
+    ru: '45,20',
+    fa: '135,20',
+    de: '27,20',
+    sw: '232,20',
   };
 
   const activeTranslationIds = languageTranslationIds[language] || '163,161,20';
 
-  // Try fetching from Quran.com v4 API (provides word-by-word data + selected language translations)
   try {
     const quranDotComUrl = `https://api.quran.com/api/v4/verses/by_chapter/${surahNumber}?language=${language}&words=true&word_fields=text_uthmani,text_indopak&translations=${activeTranslationIds}&per_page=300`;
     const qcRes = await fetch(quranDotComUrl);
@@ -211,7 +208,6 @@ export async function fetchSurah(
           const verseNum = v.verse_number || index + 1;
           const globalNum = v.id || verseNum;
           
-          // Words mapping in selected language
           const words: QuranWord[] = (v.words || [])
             .filter((w: any) => w.char_type_name !== 'end')
             .map((w: any) => ({
@@ -222,7 +218,6 @@ export async function fetchSurah(
               transliteration: w.transliteration?.text || '',
             }));
 
-          // Translations mapping
           const translationsList: QuranAyahTranslation[] = [];
           if (v.translations && Array.isArray(v.translations)) {
             v.translations.forEach((t: any) => {
@@ -234,10 +229,7 @@ export async function fetchSurah(
               else if (resId === 85) translatorName = 'Dr. Mustafa Khattab (The Clear Quran)';
               else if (resId === 234) translatorName = 'فتح محمد جالندھری (Jalandhry)';
               else if (resId === 122) translatorName = 'मौलाना अज़ीज़ुल हक़ (Hindi)';
-              else if (resId === 33) translatorName = 'Kementerian Agama RI (Indonesian)';
-              else if (resId === 77) translatorName = 'Diyanet İşleri (Turkish)';
 
-              // Strip html tags if present
               const cleanText = (t.text || '').replace(/<[^>]*>?/gm, '').trim();
               translationsList.push({
                 translator: translatorName,
@@ -247,10 +239,7 @@ export async function fetchSurah(
             });
           }
 
-          // Primary translation
           const primaryTrans = translationsList[0]?.text || '';
-
-          // Raw arabic
           const rawArabic = v.text_uthmani || words.map(w => w.arabic).join(' ');
           const cleanArabic = cleanVerse1Arabic(surahNumber, verseNum, rawArabic);
 
@@ -284,7 +273,6 @@ export async function fetchSurah(
     console.warn('Quran.com API fetch fallback to AlQuran Cloud', err);
   }
 
-  // Fallback to Al-Quran Cloud API
   const editionCode = QURAN_EDITIONS[language] || 'bn.bengali';
   const apiUrl = `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,${editionCode},en.transliteration,en.sahih`;
   const response = await fetch(apiUrl);
@@ -293,10 +281,6 @@ export async function fetchSurah(
   }
 
   const result = await response.json();
-  if (result.code !== 200 || !Array.isArray(result.data) || result.data.length < 2) {
-    throw new Error('Received unexpected Quran API response format');
-  }
-
   const arabicData = result.data[0];
   const translationData = result.data[1];
   const transliterationData = result.data[2] || { ayahs: [] };
@@ -347,33 +331,38 @@ export async function fetchSurah(
 }
 
 /**
- * Fetch Tafsir for a specific Ayah (e.g. Tafsir Ibn Kathir / Abu Bakr Zakaria)
+ * Fetch Tafsir for a specific Ayah (Includes Tafsir Ibn Kathir priority)
  */
 export async function fetchAyahTafsir(
   surahNumber: number,
   ayahNumber: number,
-  language: ZikrLanguage = 'bn'
-): Promise<{ author: string; text: string }> {
+  language: ZikrLanguage = 'bn',
+  preferredTafsirId?: number
+): Promise<{ author: string; text: string; id?: number }> {
+  // Ordered Tafsir IDs by language (Defaulting to Tafsir Ibn Kathir: 165 for BN, 169 for EN, 14 for AR, 160 for UR)
   const tafsirMap: Record<ZikrLanguage, { ids: number[]; defaultAuthor: string }> = {
-    bn: { ids: [168, 164, 165, 166], defaultAuthor: 'তাফসীর আহসানুল বায়ান / আবু বকর যাকারিয়া' },
+    bn: { ids: [165, 168, 164, 166], defaultAuthor: 'তাফসীর ইবনে কাছীর (ইফাবা)' },
     en: { ids: [169, 171, 168], defaultAuthor: 'Tafsir Ibn Kathir (English)' },
     ur: { ids: [160, 97, 169], defaultAuthor: 'تفسیر ابن کثیر (اردو)' },
-    ar: { ids: [16, 14, 15], defaultAuthor: 'التفسير الميسر' },
+    ar: { ids: [14, 16, 15], defaultAuthor: 'تفسير ابن كثير (العربية)' },
     hi: { ids: [122, 169], defaultAuthor: 'तफ़सीर अहसनुल बयान (हिन्दी)' },
-    id: { ids: [33, 169], defaultAuthor: 'Tafsir Ringkas Kemenag' },
-    tr: { ids: [77, 169], defaultAuthor: 'Diyanet Meali ve Tefsiri' },
-    ms: { ids: [39, 169], defaultAuthor: 'Tafsir Pimpinan Ar-Rahman' },
+    id: { ids: [169, 33], defaultAuthor: 'Tafsir Ibn Kathir' },
+    tr: { ids: [169, 77], defaultAuthor: 'Tafsir Ibn Kathir' },
+    ms: { ids: [169, 39], defaultAuthor: 'Tafsir Ibn Kathir' },
     fr: { ids: [169, 31], defaultAuthor: 'Tafsir Ibn Kathir (Français)' },
     es: { ids: [169, 83], defaultAuthor: 'Tafsir Ibn Kathir (Español)' },
     ru: { ids: [170, 169], defaultAuthor: 'Тафсир ас-Саади' },
     fa: { ids: [169, 135], defaultAuthor: 'تفسیر نور' },
     de: { ids: [169, 27], defaultAuthor: 'Tafsir Ibn Kathir (Deutsch)' },
-    sw: { ids: [169, 232], defaultAuthor: 'Tafsir Al-Muntakhab (Kiswahili)' },
+    sw: { ids: [169, 232], defaultAuthor: 'Tafsir Al-Muntakhab' },
   };
 
   const currentTafsirConfig = tafsirMap[language] || tafsirMap.bn;
+  const targetIds = preferredTafsirId
+    ? [preferredTafsirId, ...currentTafsirConfig.ids.filter((i) => i !== preferredTafsirId)]
+    : currentTafsirConfig.ids;
 
-  for (const tafsirId of currentTafsirConfig.ids) {
+  for (const tafsirId of targetIds) {
     try {
       const url = `https://api.quran.com/api/v4/tafsirs/${tafsirId}/by_ayah/${surahNumber}:${ayahNumber}`;
       const res = await fetch(url);
@@ -382,9 +371,16 @@ export async function fetchAyahTafsir(
         if (data.tafsir?.text) {
           const clean = data.tafsir.text.replace(/<[^>]*>?/gm, '').trim();
           if (clean.length > 5) {
+            let authorName = data.tafsir.resource_name || currentTafsirConfig.defaultAuthor;
+            if (tafsirId === 165 || tafsirId === 169 || tafsirId === 14 || tafsirId === 160) {
+              authorName = language === 'bn' ? 'তাফসীর ইবনে কাছীর (Tafsir Ibn Kathir)' : 'Tafsir Ibn Kathir';
+            } else if (tafsirId === 168) {
+              authorName = language === 'bn' ? 'তাফসীর আহসানুল বায়ান (আবু বকর যাকারিয়া)' : 'Tafsir Ahsanul Bayaan';
+            }
             return {
-              author: data.tafsir.resource_name || currentTafsirConfig.defaultAuthor,
+              author: authorName,
               text: clean,
+              id: tafsirId,
             };
           }
         }
@@ -392,33 +388,30 @@ export async function fetchAyahTafsir(
     } catch {}
   }
 
-  // Fallback default response
   const defaultTitles: Record<ZikrLanguage, string> = {
-    bn: `সূরা ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} আয়াত নং ${ayahNumber} এর তাফসীর ও ব্যাখ্যা।`,
-    en: `Tafsir & Commentary for Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Verse ${ayahNumber}.`,
-    ur: `سورۃ ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} آیت نمبر ${ayahNumber} کی تفسیر۔`,
-    ar: `تفسير سورة ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} الآية ${ayahNumber}.`,
-    hi: `सूरह ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} आयत नं ${ayahNumber} की तफ़सीर।`,
-    id: `Tafsir dan Penjelasan Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayat ${ayahNumber}.`,
-    tr: `Sure ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayet ${ayahNumber} Tefsiri.`,
-    ms: `Tafsir dan Huraian Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayat ${ayahNumber}.`,
-    fr: `Commentaire et Tafsir de la Sourate ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Verset ${ayahNumber}.`,
-    es: `Comentario y Tafsir de la Sura ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Versículo ${ayahNumber}.`,
-    ru: `Тафсир и толкование суры ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, аят ${ayahNumber}.`,
-    fa: `تفسیر سوره ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} آیه ${ayahNumber}.`,
-    de: `Tafsir & Erläuterung für Sure ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Vers ${ayahNumber}.`,
-    sw: `Tafakuri ya Sura ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Aya ${ayahNumber}.`,
+    bn: `সূরা ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} আয়াত নং ${ayahNumber} এর তাফসীর ইবনে কাছীর।`,
+    en: `Tafsir Ibn Kathir for Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Verse ${ayahNumber}.`,
+    ur: `تفسیر ابن کثیر - سورۃ ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} آیت ${ayahNumber}।`,
+    ar: `تفسير ابن كثير - سورة ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} الآية ${ayahNumber}.`,
+    hi: `तफ़सीर इब्न कसीर - सूरह ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} आयत ${ayahNumber}।`,
+    id: `Tafsir Ibn Kathir Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayat ${ayahNumber}.`,
+    tr: `Tefsir İbn Kesir - Sure ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayet ${ayahNumber}.`,
+    ms: `Tafsir Ibn Kathir Surah ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''} Ayat ${ayahNumber}.`,
+    fr: `Tafsir Ibn Kathir - Sourate ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Verset ${ayahNumber}.`,
+    es: `Tafsir Ibn Kathir - Sura ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Versículo ${ayahNumber}.`,
+    ru: `Тафсир Ибн Касир - сура ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, аят ${ayahNumber}.`,
+    fa: `تفسیر ابن کثیر سوره ${ALL_114_SURAHS[surahNumber - 1]?.name || ''} آیه ${ayahNumber}.`,
+    de: `Tafsir Ibn Kathir - Sure ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Vers ${ayahNumber}.`,
+    sw: `Tafakuri ya Ibn Kathir Sura ${ALL_114_SURAHS[surahNumber - 1]?.englishName || ''}, Aya ${ayahNumber}.`,
   };
 
   return {
-    author: currentTafsirConfig.defaultAuthor,
+    author: 'Tafsir Ibn Kathir',
     text: defaultTitles[language] || defaultTitles.bn,
+    id: 165,
   };
 }
 
-/**
- * Preload a surah in background
- */
 export async function preloadSurah(
   surahNumber: number,
   reciterId: string = 'ar.alafasy',

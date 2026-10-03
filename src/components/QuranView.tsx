@@ -11,6 +11,7 @@ import {
   QuranWord,
   QURAN_RECITERS,
   fetchAyahTafsir,
+  AVAILABLE_TAFSIRS,
 } from '../utils/quranService';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -135,6 +136,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [activeTafsirAyah, setActiveTafsirAyah] = useState<QuranAyah | null>(null);
   const [tafsirContent, setTafsirContent] = useState<{ author: string; text: string } | null>(null);
   const [isLoadingTafsir, setIsLoadingTafsir] = useState(false);
+  const [selectedTafsirId, setSelectedTafsirId] = useState<number>(165); // Default: Tafsir Ibn Kathir
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [activeAyahActionMenu, setActiveAyahActionMenu] = useState<number | null>(null);
@@ -262,17 +264,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
     }
   }, [surahDetail]);
 
-  // Re-fetch Tafsir whenever selectedLanguage or activeTafsirAyah changes while modal is open
+  // Re-fetch Tafsir whenever selectedLanguage, selectedTafsirId, or activeTafsirAyah changes while modal is open
   useEffect(() => {
     if (showTafsirModal && activeTafsirAyah && selectedSurahNumber !== null) {
       const refreshTafsir = async () => {
         setIsLoadingTafsir(true);
         try {
-          const data = await fetchAyahTafsir(selectedSurahNumber, activeTafsirAyah.number, selectedLanguage);
+          const data = await fetchAyahTafsir(selectedSurahNumber, activeTafsirAyah.number, selectedLanguage, selectedTafsirId);
           setTafsirContent(data);
         } catch {
           setTafsirContent({
-            author: selectedLanguage === 'bn' ? 'তাফসীর' : 'Tafsir',
+            author: selectedLanguage === 'bn' ? 'তাফসীর ইবনে কাছীর' : 'Tafsir Ibn Kathir',
             text: selectedLanguage === 'bn' ? 'তাফসীর লোড করা সম্ভব হয়নি।' : 'Could not load Tafsir.',
           });
         } finally {
@@ -281,7 +283,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       };
       refreshTafsir();
     }
-  }, [selectedLanguage, showTafsirModal, activeTafsirAyah?.number, selectedSurahNumber]);
+  }, [selectedLanguage, selectedTafsirId, showTafsirModal, activeTafsirAyah?.number, selectedSurahNumber]);
 
   // Scroll to Ayah
   const scrollToAyah = (ayahNum: number) => {
@@ -393,11 +395,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
     setActiveAyahActionMenu(null);
 
     try {
-      const data = await fetchAyahTafsir(surahDetail.number, ayah.number, selectedLanguage);
+      const data = await fetchAyahTafsir(surahDetail.number, ayah.number, selectedLanguage, selectedTafsirId);
       setTafsirContent(data);
     } catch {
       setTafsirContent({
-        author: selectedLanguage === 'bn' ? 'তাফসীর' : 'Tafsir',
+        author: selectedLanguage === 'bn' ? 'তাফসীর ইবনে কাছীর' : 'Tafsir Ibn Kathir',
         text: selectedLanguage === 'bn' ? 'তাফসীর লোড করা সম্ভব হয়নি।' : 'Could not load Tafsir.',
       });
     } finally {
@@ -1493,6 +1495,33 @@ export const QuranView: React.FC<QuranViewProps> = ({
               <div className={`text-xs italic ${isDay ? 'text-slate-700' : 'text-[#e2e8f0]'}`}>
                 "{activeTafsirAyah.translation}"
               </div>
+            </div>
+
+            {/* Tafsir Edition Selector Bar */}
+            <div
+              className={`p-3 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                isDay ? 'bg-[#e8f3f1] border-[#c5e3df]' : 'bg-[#07131b] border-[#162c3a]'
+              }`}
+            >
+              <span className="text-xs font-bold text-[#2dd4bf] flex items-center gap-1.5">
+                <Book className="w-4 h-4 text-[#2dd4bf]" />
+                <span>{selectedLanguage === 'bn' ? 'তাফসীর গ্রন্থ নির্বাচন করুন:' : 'Select Tafsir Edition:'}</span>
+              </span>
+              <select
+                value={selectedTafsirId}
+                onChange={(e) => setSelectedTafsirId(Number(e.target.value))}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border focus:outline-none cursor-pointer ${
+                  isDay
+                    ? 'bg-white border-[#c5e3df] text-[#006747]'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-[#2dd4bf]'
+                }`}
+              >
+                {AVAILABLE_TAFSIRS.map((t) => (
+                  <option key={t.id} value={t.id} className="bg-slate-900 text-white">
+                    {selectedLanguage === 'bn' ? t.nameBn : t.nameEn}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Tafsir Body */}
