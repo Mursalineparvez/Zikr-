@@ -119,7 +119,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.nativeName || selectedLanguage}
           </span>
         </div>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs font-bold text-[#005e3f] dark:text-emerald-300">
           {SETTINGS_UI.languageDesc[selectedLanguage] ||
             'All menus, translations, and guides will update instantly (Sacred Arabic remains intact)'}
         </p>

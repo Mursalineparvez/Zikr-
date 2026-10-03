@@ -1043,8 +1043,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.nativeName || selectedLanguage}
                   </span>
                 </div>
-                <p className={`text-[11px] font-medium leading-relaxed ${
-                  isDay ? 'text-emerald-950 font-semibold' : 'text-teal-200/90'
+                <p className={`text-xs font-bold leading-relaxed ${
+                  isDay ? 'text-[#005e3f]' : 'text-teal-200/90'
                 }`}>
                   {SETTINGS_UI.languageDesc[selectedLanguage] ||
                     'আরবি হরফ ব্যতীত সকল মেনু, অনুবাদ ও নির্দেশিকা স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে'}
