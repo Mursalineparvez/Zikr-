@@ -1418,10 +1418,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       <span
                         className={`text-[9px] font-bold px-2 py-0.5 rounded-md mt-1 border ${
                           surah.revelationType === 'Meccan'
-                            ? 'bg-[#2b1906] border-[#4e2f0a] text-[#f59e0b]'
+                            ? isDay
+                              ? 'bg-amber-100/80 border-amber-300 text-amber-950 font-extrabold'
+                              : 'bg-amber-950/60 border-amber-800/60 text-amber-300'
                             : isDay
-                            ? 'bg-[#e6f7f2] border-[#c3edd9] text-[#00875a]'
-                            : 'bg-[#07131b] border-[#162c3a] text-[#2dd4bf]'
+                            ? 'bg-emerald-100/80 border-emerald-300 text-emerald-950 font-extrabold'
+                            : 'bg-emerald-950/60 border-emerald-800/60 text-emerald-300'
                         }`}
                       >
                         {surah.revelationType}
