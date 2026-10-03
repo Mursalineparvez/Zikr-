@@ -217,7 +217,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                   <span>{completedCount}/5 Prayed</span>
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 dark:text-teal-300/70 font-medium">
+              <p className={`text-[11px] font-bold ${isDay ? 'text-slate-800' : 'text-teal-300/70'}`}>
                 5 Prescribed Daily Prayers • الصلوات الخمس المفروضة
               </p>
             </div>

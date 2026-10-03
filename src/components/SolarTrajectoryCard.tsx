@@ -188,7 +188,9 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
             {/* Left: Next Prayer Label & Big Prayer Name */}
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">
+              <div className={`flex items-center gap-1.5 text-[11px] sm:text-xs font-extrabold tracking-wide uppercase ${
+                isDay ? 'text-[#005a3e]' : 'text-emerald-400'
+              }`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 <span>{SOLAR_UI.nextPrayer[selectedLanguage] || 'Next Prayer:'} • الصلاة القادمة</span>
               </div>
@@ -197,10 +199,14 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 <span className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[#103e42]' : 'text-white'}`}>
                   {nextPrayerNameLocalized}
                 </span>
-                <span className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-300 font-arabic">
+                <span className={`text-base sm:text-lg font-bold font-arabic ${
+                  isDay ? 'text-[#005a3e]' : 'text-emerald-300'
+                }`}>
                   ({prayerData.nextPrayerArabic})
                 </span>
-                <span className="font-mono text-base sm:text-lg font-black text-emerald-700 dark:text-teal-200">
+                <span className={`font-mono text-base sm:text-lg font-black ${
+                  isDay ? 'text-[#005a3e]' : 'text-teal-200'
+                }`}>
                   {prayerData.nextPrayerFormattedTime}
                 </span>
               </div>
@@ -211,14 +217,14 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
               <div
                 className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border shadow-sm font-mono font-black text-xs sm:text-sm tracking-tight ${
                   isDay
-                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-800'
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-950 font-black'
                     : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
                 }`}
               >
                 <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
                 <span>{prayerData.timeRemainingFormatted} {SOLAR_UI.remainingTime[selectedLanguage] || 'remaining'}</span>
               </div>
-              <span className="text-[10px] font-semibold text-slate-400 dark:text-teal-300/60 sm:text-right">
+              <span className={`text-[10px] font-bold ${isDay ? 'text-slate-700' : 'text-teal-300/60'} sm:text-right`}>
                 Live second countdown
               </span>
             </div>
@@ -429,33 +435,41 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
           <div className="grid grid-cols-3 text-center gap-1 -mt-3 sm:-mt-2 relative z-10 select-none">
             {/* 1. Sunrise Info */}
             <div className="text-left pl-2 sm:pl-4">
-              <div className="flex items-center gap-1 text-xs sm:text-sm font-extrabold text-amber-500">
+              <div className="flex items-center gap-1 text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-500">
                 <SunriseIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>Sunrise</span>
               </div>
-              <div className="text-[11px] sm:text-xs font-mono font-bold text-slate-500 dark:text-teal-200/80 mt-0.5">
+              <div className={`text-[11px] sm:text-xs font-mono font-extrabold mt-0.5 ${
+                isDay ? 'text-slate-800' : 'text-teal-200/80'
+              }`}>
                 {solar.sunriseTime}
               </div>
             </div>
 
             {/* 2. Solar Noon Info (Apex) */}
             <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+              <div className={`flex items-center justify-center gap-1 text-xs sm:text-sm font-extrabold ${
+                isDay ? 'text-[#005a3e]' : 'text-emerald-400'
+              }`}>
                 <Sun className="w-3.5 h-3.5 shrink-0 text-emerald-500" />
                 <span>Solar Noon (Dhuhr)</span>
               </div>
-              <div className="text-[11px] sm:text-xs font-mono font-bold text-slate-500 dark:text-teal-200/80 mt-0.5">
+              <div className={`text-[11px] sm:text-xs font-mono font-extrabold mt-0.5 ${
+                isDay ? 'text-slate-800' : 'text-teal-200/80'
+              }`}>
                 {solar.solarNoonTime}
               </div>
             </div>
 
             {/* 3. Sunset Info */}
             <div className="text-right pr-2 sm:pr-4">
-              <div className="flex items-center justify-end gap-1 text-xs sm:text-sm font-extrabold text-rose-500">
+              <div className="flex items-center justify-end gap-1 text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-500">
                 <SunsetIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>Sunset</span>
               </div>
-              <div className="text-[10px] sm:text-xs font-mono font-bold text-slate-500 dark:text-teal-200/80 mt-0.5">
+              <div className={`text-[10px] sm:text-xs font-mono font-extrabold mt-0.5 ${
+                isDay ? 'text-slate-800' : 'text-teal-200/80'
+              }`}>
                 {solar.sunsetRange}
               </div>
             </div>
@@ -463,34 +477,44 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
         </div>
 
         {/* 5. BOTTOM METRICS BAR (Total Daylight, Remaining Daylight, Current Salat Phase) */}
-        <div className="pt-3 border-t border-slate-100 dark:border-teal-900/40">
-          <div className="grid grid-cols-3 gap-2 text-center divide-x divide-slate-100 dark:divide-teal-900/40">
+        <div className={`pt-3 border-t ${isDay ? 'border-slate-200' : 'border-teal-900/40'}`}>
+          <div className={`grid grid-cols-3 gap-2 text-center divide-x ${isDay ? 'divide-slate-200' : 'divide-teal-900/40'}`}>
             {/* Metric 1: Total Daylight */}
             <div className="space-y-1">
-              <div className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-teal-300/70">
+              <div className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider ${
+                isDay ? 'text-slate-700' : 'text-teal-300/70'
+              }`}>
                 Total Daylight
               </div>
-              <div className="text-sm sm:text-base font-mono font-black text-amber-500 dark:text-amber-400">
+              <div className="text-sm sm:text-base font-mono font-black text-amber-600 dark:text-amber-400">
                 {solar.daylightTotalFormatted}
               </div>
             </div>
 
             {/* Metric 2: Remaining Daylight */}
             <div className="space-y-1">
-              <div className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-teal-300/70">
+              <div className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider ${
+                isDay ? 'text-slate-700' : 'text-teal-300/70'
+              }`}>
                 Remaining Daylight
               </div>
-              <div className="text-sm sm:text-base font-mono font-black text-emerald-600 dark:text-emerald-400">
+              <div className={`text-sm sm:text-base font-mono font-black ${
+                isDay ? 'text-[#005a3e]' : 'text-emerald-400'
+              }`}>
                 {solar.isDaytime ? solar.daylightRemainingFormatted : '0m (Night)'}
               </div>
             </div>
 
             {/* Metric 3: Current Salat Phase */}
             <div className="space-y-1">
-              <div className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-teal-300/70">
+              <div className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider ${
+                isDay ? 'text-slate-700' : 'text-teal-300/70'
+              }`}>
                 Current Salat Phase
               </div>
-              <div className="text-xs sm:text-sm font-bold text-slate-700 dark:text-teal-100 truncate px-1">
+              <div className={`text-xs sm:text-sm font-extrabold truncate px-1 ${
+                isDay ? 'text-slate-900' : 'text-teal-100'
+              }`}>
                 {solar.solarPhaseLabel}
               </div>
             </div>
@@ -498,15 +522,17 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
         </div>
 
         {/* 6. EXPANDABLE SOLAR ANGLE & PRAYER WINDOWS STRIP */}
-        <div className="flex items-center justify-between pt-1 text-[11px] text-slate-400 dark:text-teal-300/70">
+        <div className={`flex items-center justify-between pt-1 text-[11px] ${
+          isDay ? 'text-slate-800 font-bold' : 'text-teal-300/70'
+        }`}>
           <div className="flex items-center gap-1.5 font-mono">
-            <Compass className="w-3.5 h-3.5 text-emerald-500" />
+            <Compass className="w-3.5 h-3.5 text-emerald-600" />
             <span>
-              Altitude: <strong className="text-emerald-600 dark:text-emerald-300">{calculatedAltitude > 0 ? `+${calculatedAltitude}°` : `${calculatedAltitude}°`}</strong>
+              Altitude: <strong className={isDay ? 'text-[#005a3e] font-extrabold' : 'text-emerald-300'}>{calculatedAltitude > 0 ? `+${calculatedAltitude}°` : `${calculatedAltitude}°`}</strong>
             </span>
             <span>•</span>
             <span>
-              Azimuth: <strong className="text-emerald-600 dark:text-emerald-300">{solar.solarAzimuthDeg}°</strong>
+              Azimuth: <strong className={isDay ? 'text-[#005a3e] font-extrabold' : 'text-emerald-300'}>{solar.solarAzimuthDeg}°</strong>
             </span>
           </div>
 
@@ -515,7 +541,9 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
               setShowAngleInfo((prev) => !prev);
               if (soundEnabled) soundHaptics.playTap();
             }}
-            className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+            className={`font-bold hover:underline flex items-center gap-1 cursor-pointer ${
+              isDay ? 'text-[#005a3e] font-black' : 'text-emerald-400'
+            }`}
           >
             <span>{showAngleInfo ? 'Hide Details' : 'Solar Science'}</span>
             <ChevronRight className={`w-3 h-3 transition-transform ${showAngleInfo ? 'rotate-90' : ''}`} />
