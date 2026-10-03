@@ -12,6 +12,7 @@ import {
   QURAN_RECITERS,
   fetchAyahTafsir,
   AVAILABLE_TAFSIRS,
+  DEFAULT_TAFSIR_BY_LANG,
 } from '../utils/quranService';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -249,6 +250,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
   // Re-fetch Surah when selectedLanguage or selectedReciterId changes
   useEffect(() => {
+    setSelectedTafsirId(DEFAULT_TAFSIR_BY_LANG[selectedLanguage] || 164);
     if (selectedSurahNumber !== null) {
       loadSurah(selectedSurahNumber);
     }
@@ -1493,7 +1495,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 {activeTafsirAyah.arabic}
               </div>
               <div className={`text-xs italic ${isDay ? 'text-slate-700' : 'text-[#e2e8f0]'}`}>
-                "{activeTafsirAyah.translation}"
+                "{surahDetail?.ayahs.find((a) => a.number === activeTafsirAyah.number)?.translation || activeTafsirAyah.translation}"
               </div>
             </div>
 

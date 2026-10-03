@@ -92,17 +92,53 @@ export interface TafsirOption {
 }
 
 export const AVAILABLE_TAFSIRS: TafsirOption[] = [
-  { id: 165, nameBn: 'তাফসীর ইবনে কাছীর (বাংলা - ইফাবা)', nameEn: 'Tafsir Ibn Kathir (Bengali)', language: 'bn', author: 'হাফেয ইবনে কাছীর (রঃ)' },
-  { id: 168, nameBn: 'তাফসীর আহসানুল বায়ান (আবু বকর যাকারিয়া)', nameEn: 'Tafsir Ahsanul Bayaan (Abu Bakr Zakaria)', language: 'bn', author: 'ড. আবু বকর যাকারিয়া' },
+  // Bengali Options
+  { id: 164, nameBn: 'তাফসীর ইবনে কাছীর (তাওহীদ পাবলিকেশন্স)', nameEn: 'Tafsir Ibn Kathir (Bengali)', language: 'bn', author: 'হাফেয ইবনে কাছীর (রঃ)' },
+  { id: 165, nameBn: 'তাফসীর আহসানুল বায়ান (বয়ান ফাউন্ডেশন)', nameEn: 'Tafsir Ahsanul Bayaan (Bengali)', language: 'bn', author: 'বয়ান ফাউন্ডেশন' },
+  { id: 166, nameBn: 'তাফসীর আবু বকর যাকারিয়া (কিং ফাহাদ প্রেস)', nameEn: 'Tafsir Abu Bakr Zakaria (Bengali)', language: 'bn', author: 'ড. আবু বকর যাকারিয়া' },
+  { id: 381, nameBn: 'তাফসীর ফাতহুল মাজীদ', nameEn: 'Tafsir Fathul Majid (Bengali)', language: 'bn', author: 'আব্দুর রহমান বিন হাসান' },
+
+  // English Options
   { id: 169, nameBn: 'Tafsir Ibn Kathir (English)', nameEn: 'Tafsir Ibn Kathir (English)', language: 'en', author: 'Hafiz Ibn Kathir' },
-  { id: 14, nameBn: 'تفسير ابن كثير (العربية)', nameEn: 'Tafsir Ibn Kathir (Arabic)', language: 'ar', author: 'الإمام ابن كثير' },
-  { id: 16, nameBn: 'التفسير الميسر (العربية)', nameEn: 'Al-Tafsir Al-Muyassar (Arabic)', language: 'ar', author: 'مجمع الملك فهد' },
+  { id: 168, nameBn: 'Ma\'arif al-Qur\'an (English)', nameEn: 'Ma\'arif al-Qur\'an (English)', language: 'en', author: 'Mufti Muhammad Shafi' },
+  { id: 817, nameBn: 'Tazkirul Quran (English)', nameEn: 'Tazkirul Quran (English)', language: 'en', author: 'Maulana Wahiduddin Khan' },
+
+  // Arabic Options
+  { id: 14, nameBn: 'تفسير ابن كثير (العربية)', nameEn: 'Tafsir Ibn Kathir (Arabic)', language: 'ar', author: 'الحافظ ابن كثير' },
+  { id: 16, nameBn: 'التفسير الميسر (مجمع الملك فهد)', nameEn: 'Al-Tafsir Al-Muyassar (Arabic)', language: 'ar', author: 'مجمع الملك فهد' },
+  { id: 15, nameBn: 'تفسير الطبري (الإمام الطبري)', nameEn: 'Tafsir al-Tabari (Arabic)', language: 'ar', author: 'الإمام الطبري' },
+  { id: 90, nameBn: 'تفسير القرطبي (الإمام القرطبي)', nameEn: 'Al-Qurtubi (Arabic)', language: 'ar', author: 'الإمام القرطبي' },
+  { id: 91, nameBn: 'تفسير السعدي (الشيخ السعدي)', nameEn: 'Tafsir As-Sa\'di (Arabic)', language: 'ar', author: 'الشيخ عبدالرحمن السعدي' },
+
+  // Urdu Options
   { id: 160, nameBn: 'تفسیر ابن کثیر (اردو)', nameEn: 'Tafsir Ibn Kathir (Urdu)', language: 'ur', author: 'حافظ ابن کثیر' },
+  { id: 159, nameBn: 'بیان القرآن (ڈاکٹر اسرار احمد)', nameEn: 'Bayan ul Quran (Urdu)', language: 'ur', author: 'ڈاکٹر اسرار احمد' },
+  { id: 818, nameBn: 'تذکیر القرآن (مولانا وحید الدین خان)', nameEn: 'Tazkir ul Quran (Urdu)', language: 'ur', author: 'مولانا وحید الدین خان' },
+
+  // Russian
+  { id: 170, nameBn: 'Тафсир ас-Саади (Русский)', nameEn: 'Al-Sa\'di (Russian)', language: 'ru', author: 'Шейх ас-Саади' },
 ];
+
+export const DEFAULT_TAFSIR_BY_LANG: Record<ZikrLanguage, number> = {
+  bn: 164, // Tafseer ibn Kathir Bengali
+  en: 169, // Tafsir Ibn Kathir English
+  ar: 14,  // Tafsir Ibn Kathir Arabic
+  ur: 160, // Tafsir Ibn Kathir Urdu
+  ru: 170, // Al-Sa'di Russian
+  hi: 169,
+  id: 169,
+  tr: 169,
+  ms: 169,
+  fr: 169,
+  es: 169,
+  fa: 160,
+  de: 169,
+  sw: 169,
+};
 
 export const POPULAR_SURAHS_NUMBERS = [1, 2, 18, 19, 36, 55, 56, 67, 112, 113, 114];
 
-const CACHE_PREFIX = 'zikrmate_quran_cache_v3_';
+const CACHE_PREFIX = 'zikrmate_quran_cache_v4_';
 
 function cleanVerse1Arabic(surahNumber: number, verseNumber: number, text: string): string {
   if (surahNumber !== 1 && surahNumber !== 9 && verseNumber === 1) {
@@ -228,7 +264,6 @@ export async function fetchSurah(
               else if (resId === 20) translatorName = 'Sahih International (English)';
               else if (resId === 85) translatorName = 'Dr. Mustafa Khattab (The Clear Quran)';
               else if (resId === 234) translatorName = 'فتح محمد جالندھری (Jalandhry)';
-              else if (resId === 122) translatorName = 'मौलाना अज़ीज़ुल हक़ (Hindi)';
 
               const cleanText = (t.text || '').replace(/<[^>]*>?/gm, '').trim();
               translationsList.push({
@@ -339,28 +374,10 @@ export async function fetchAyahTafsir(
   language: ZikrLanguage = 'bn',
   preferredTafsirId?: number
 ): Promise<{ author: string; text: string; id?: number }> {
-  // Ordered Tafsir IDs by language (Defaulting to Tafsir Ibn Kathir: 165 for BN, 169 for EN, 14 for AR, 160 for UR)
-  const tafsirMap: Record<ZikrLanguage, { ids: number[]; defaultAuthor: string }> = {
-    bn: { ids: [165, 168, 164, 166], defaultAuthor: 'তাফসীর ইবনে কাছীর (ইফাবা)' },
-    en: { ids: [169, 171, 168], defaultAuthor: 'Tafsir Ibn Kathir (English)' },
-    ur: { ids: [160, 97, 169], defaultAuthor: 'تفسیر ابن کثیر (اردو)' },
-    ar: { ids: [14, 16, 15], defaultAuthor: 'تفسير ابن كثير (العربية)' },
-    hi: { ids: [122, 169], defaultAuthor: 'तफ़सीर अहसनुल बयान (हिन्दी)' },
-    id: { ids: [169, 33], defaultAuthor: 'Tafsir Ibn Kathir' },
-    tr: { ids: [169, 77], defaultAuthor: 'Tafsir Ibn Kathir' },
-    ms: { ids: [169, 39], defaultAuthor: 'Tafsir Ibn Kathir' },
-    fr: { ids: [169, 31], defaultAuthor: 'Tafsir Ibn Kathir (Français)' },
-    es: { ids: [169, 83], defaultAuthor: 'Tafsir Ibn Kathir (Español)' },
-    ru: { ids: [170, 169], defaultAuthor: 'Тафсир ас-Саади' },
-    fa: { ids: [169, 135], defaultAuthor: 'تفسیر نور' },
-    de: { ids: [169, 27], defaultAuthor: 'Tafsir Ibn Kathir (Deutsch)' },
-    sw: { ids: [169, 232], defaultAuthor: 'Tafsir Al-Muntakhab' },
-  };
+  const defaultId = DEFAULT_TAFSIR_BY_LANG[language] || 164;
+  const targetId = preferredTafsirId || defaultId;
 
-  const currentTafsirConfig = tafsirMap[language] || tafsirMap.bn;
-  const targetIds = preferredTafsirId
-    ? [preferredTafsirId, ...currentTafsirConfig.ids.filter((i) => i !== preferredTafsirId)]
-    : currentTafsirConfig.ids;
+  const targetIds = [targetId, 164, 165, 166, 169, 14, 160, 16];
 
   for (const tafsirId of targetIds) {
     try {
@@ -371,11 +388,19 @@ export async function fetchAyahTafsir(
         if (data.tafsir?.text) {
           const clean = data.tafsir.text.replace(/<[^>]*>?/gm, '').trim();
           if (clean.length > 5) {
-            let authorName = data.tafsir.resource_name || currentTafsirConfig.defaultAuthor;
-            if (tafsirId === 165 || tafsirId === 169 || tafsirId === 14 || tafsirId === 160) {
-              authorName = language === 'bn' ? 'তাফসীর ইবনে কাছীর (Tafsir Ibn Kathir)' : 'Tafsir Ibn Kathir';
-            } else if (tafsirId === 168) {
-              authorName = language === 'bn' ? 'তাফসীর আহসানুল বায়ান (আবু বকর যাকারিয়া)' : 'Tafsir Ahsanul Bayaan';
+            let authorName = data.tafsir.resource_name || 'তাফসীর ইবনে কাছীর';
+            if (tafsirId === 164) {
+              authorName = language === 'bn' ? 'তাফসীর ইবনে কাছীর (তাওহীদ পাবলিকেশন্স)' : 'Tafsir Ibn Kathir (Bengali)';
+            } else if (tafsirId === 165) {
+              authorName = language === 'bn' ? 'তাফসীর আহসানুল বায়ান (বয়ান ফাউন্ডেশন)' : 'Tafsir Ahsanul Bayaan';
+            } else if (tafsirId === 166) {
+              authorName = language === 'bn' ? 'তাফসীর আবু বকর যাকারিয়া (কিং ফাহাদ প্রেস)' : 'Tafsir Abu Bakr Zakaria';
+            } else if (tafsirId === 169) {
+              authorName = 'Tafsir Ibn Kathir (English)';
+            } else if (tafsirId === 14) {
+              authorName = 'تفسير ابن كثير (العربية)';
+            } else if (tafsirId === 160) {
+              authorName = 'تفسیر ابن کثیر (اردو)';
             }
             return {
               author: authorName,
@@ -408,7 +433,7 @@ export async function fetchAyahTafsir(
   return {
     author: 'Tafsir Ibn Kathir',
     text: defaultTitles[language] || defaultTitles.bn,
-    id: 165,
+    id: 164,
   };
 }
 
