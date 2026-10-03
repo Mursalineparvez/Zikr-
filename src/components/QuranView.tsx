@@ -212,7 +212,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     stopAudio();
 
     try {
-      const detail = await fetchSurah(surahNumber, selectedLanguage);
+      const detail = await fetchSurah(surahNumber, selectedReciterId, selectedLanguage);
       setSurahDetail(detail);
 
       const targetAyah = targetAyahNumber || 1;
@@ -243,10 +243,45 @@ export const QuranView: React.FC<QuranViewProps> = ({
       onSelectLanguage(lang);
     }
     setShowLanguagePicker(false);
+  };
+
+  // Re-fetch Surah when selectedLanguage or selectedReciterId changes
+  useEffect(() => {
     if (selectedSurahNumber !== null) {
       loadSurah(selectedSurahNumber);
     }
-  };
+  }, [selectedLanguage, selectedReciterId]);
+
+  // Keep activeTafsirAyah updated with fresh translation when surahDetail updates
+  useEffect(() => {
+    if (activeTafsirAyah && surahDetail) {
+      const updatedAyah = surahDetail.ayahs.find((a) => a.number === activeTafsirAyah.number);
+      if (updatedAyah) {
+        setActiveTafsirAyah(updatedAyah);
+      }
+    }
+  }, [surahDetail]);
+
+  // Re-fetch Tafsir whenever selectedLanguage or activeTafsirAyah changes while modal is open
+  useEffect(() => {
+    if (showTafsirModal && activeTafsirAyah && selectedSurahNumber !== null) {
+      const refreshTafsir = async () => {
+        setIsLoadingTafsir(true);
+        try {
+          const data = await fetchAyahTafsir(selectedSurahNumber, activeTafsirAyah.number, selectedLanguage);
+          setTafsirContent(data);
+        } catch {
+          setTafsirContent({
+            author: selectedLanguage === 'bn' ? 'তাফসীর' : 'Tafsir',
+            text: selectedLanguage === 'bn' ? 'তাফসীর লোড করা সম্ভব হয়নি।' : 'Could not load Tafsir.',
+          });
+        } finally {
+          setIsLoadingTafsir(false);
+        }
+      };
+      refreshTafsir();
+    }
+  }, [selectedLanguage, showTafsirModal, activeTafsirAyah?.number, selectedSurahNumber]);
 
   // Scroll to Ayah
   const scrollToAyah = (ayahNum: number) => {
@@ -1414,7 +1449,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <BookOpen className="w-5 h-5 text-[#2dd4bf]" />
                 <h3 className="font-bold text-base">
                   {selectedLanguage === 'bn'
@@ -1422,12 +1457,28 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     : `Surah ${surahDetail?.englishName} • Ayah ${activeTafsirAyah.number} Tafsir`}
                 </h3>
               </div>
-              <button
-                onClick={() => setShowTafsirModal(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border bg-black/10 border-white/10 text-xs font-semibold">
+                  <Globe className="w-3.5 h-3.5 text-[#2dd4bf]" />
+                  <select
+                    value={selectedLanguage}
+                    onChange={(e) => handleLanguageChange(e.target.value as ZikrLanguage)}
+                    className="bg-transparent text-xs font-bold focus:outline-none cursor-pointer"
+                  >
+                    {SUPPORTED_LANGUAGES.map((l) => (
+                      <option key={l.code} value={l.code} className="bg-slate-900 text-white">
+                        {l.flag} {l.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={() => setShowTafsirModal(false)}
+                  className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Arabic & Translation Summary */}
