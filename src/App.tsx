@@ -1311,7 +1311,7 @@ export default function App() {
         particleCount: 50,
         spread: 60,
         origin: { y: 0.7 },
-        colors: ['#1c6469', '#2dd4bf', '#f59e0b', '#10b981'],
+        colors: ['#006747', '#10b981', '#f59e0b', '#10b981'],
       });
       showToast(`Mabrook! Goal completed for ${targetZikr.name}!`);
     }
@@ -1672,10 +1672,10 @@ export default function App() {
           className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 border ${
             isDay
               ? 'bg-[#006747] text-white border-emerald-300 shadow-[#006747]/30'
-              : 'bg-[#0e242d] text-[#2dd4bf] border-[#20525d] shadow-black/80'
+              : 'bg-[#061f24] text-emerald-300 border-emerald-800/60 shadow-black/80'
           }`}
         >
-          <BookmarkCheck className="w-4 h-4 text-[#2dd4bf]" />
+          <BookmarkCheck className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -1692,18 +1692,18 @@ export default function App() {
         >
           <div
             className={`flex items-center justify-between pb-2.5 mb-2.5 border-b flex-wrap gap-2 text-xs ${
-              isDay ? 'border-[#e2edf0]' : 'border-[#152936]'
+              isDay ? 'border-slate-200' : 'border-[#152936]'
             }`}
           >
             <div
               className={`flex items-center gap-2 font-bold ${
-                isDay ? 'text-[#006747]' : 'text-[#2dd4bf]'
+                isDay ? 'text-[#006747]' : 'text-emerald-400'
               }`}
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span className="font-arabic text-sm">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
             </div>
-            <div className={`text-[11px] font-medium ${isDay ? 'text-[#4a6b72]' : 'text-[#7ba3a9]'}`}>
+            <div className={`text-[11px] font-medium ${isDay ? 'text-slate-700' : 'text-slate-400'}`}>
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
@@ -1725,10 +1725,10 @@ export default function App() {
                     isActive
                       ? isDay
                         ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
-                        : 'bg-[#1c6469] text-white border-[#288a91] shadow-lg shadow-black/40'
+                        : 'bg-[#006747] text-white border-[#288a91] shadow-lg shadow-black/40'
                       : isDay
-                      ? 'bg-[#e2edf0] hover:bg-[#d5e7eb] text-[#2c535a] border-[#cce0e5]'
-                      : 'bg-[#0a1620] hover:bg-[#102330] text-[#7ba3a9] hover:text-white border-[#162c3a]'
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                      : 'bg-[#0a1620] hover:bg-[#102330] text-slate-400 hover:text-white border-[#162c3a]'
                   }`}
                 >
                   <span className="text-sm">{tab.icon}</span>
@@ -1739,8 +1739,8 @@ export default function App() {
                         isActive
                           ? 'bg-white/20 text-white'
                           : isDay
-                          ? 'bg-white text-[#006747] border border-[#cbe4e1]'
-                          : 'bg-[#050e14] text-[#2dd4bf] border border-[#142834]'
+                          ? 'bg-white text-[#006747] border border-slate-300'
+                          : 'bg-[#050e14] text-emerald-400 border border-[#142834]'
                       }`}
                     >
                       {tab.badge}
@@ -1862,23 +1862,23 @@ export default function App() {
         <div className="max-w-4xl mx-auto space-y-2">
           <div
             className={`font-arabic text-lg sm:text-xl font-bold ${
-              isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+              isDay ? 'text-[#006747]' : 'text-emerald-400'
             }`}
           >
             أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ
           </div>
-          <p className={`text-xs italic ${isDay ? 'text-[#507579]' : 'text-[#8daab0]'}`}>
+          <p className={`text-xs italic ${isDay ? 'text-slate-700' : 'text-slate-400'}`}>
             "Verily, in the remembrance of Allah do hearts find rest." — Surah Ar-Ra'd (13:28)
           </p>
           <div className="text-[11px] pt-1 flex items-center justify-center gap-2 flex-wrap opacity-80">
-            <span>ZikrMate PWA</span>
+            <span>Zikr+ PWA</span>
             <span>•</span>
             <span>100% Offline &amp; Privacy-First</span>
             <span>•</span>
             <button
               onClick={() => setIsStandaloneModalOpen(true)}
               className={`hover:underline font-bold cursor-pointer ${
-                isDay ? 'text-[#1c6469]' : 'text-[#2dd4bf]'
+                isDay ? 'text-[#006747]' : 'text-emerald-400'
               }`}
             >
               Export Standalone APK Guide

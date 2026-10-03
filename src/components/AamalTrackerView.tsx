@@ -452,7 +452,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
       {/* ===================== 3 MAIN SUBTABS ===================== */}
       <div
         className={`flex items-center gap-1.5 p-1 rounded-2xl border ${
-          isDay ? 'bg-[#e2edf0] border-[#d2e2e6]' : 'bg-[#092226] border-[#14424a]'
+          isDay ? 'bg-[#f1f5f9] border-[#d2e2e6]' : 'bg-[#092226] border-[#14424a]'
         }`}
       >
         <button
@@ -467,7 +467,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 : 'bg-emerald-600 text-white shadow-md'
               : isDay
               ? 'text-[#3b6269] hover:text-[#006747]'
-              : 'text-teal-200 hover:text-white'
+              : 'text-emerald-300 hover:text-white'
           }`}
         >
           <BookOpen className="w-4 h-4" />
@@ -486,7 +486,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 : 'bg-emerald-600 text-white shadow-md'
               : isDay
               ? 'text-[#3b6269] hover:text-[#006747]'
-              : 'text-teal-200 hover:text-white'
+              : 'text-emerald-300 hover:text-white'
           }`}
         >
           <CalendarIcon className="w-4 h-4" />
@@ -505,7 +505,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 : 'bg-emerald-600 text-white shadow-md'
               : isDay
               ? 'text-[#3b6269] hover:text-[#006747]'
-              : 'text-teal-200 hover:text-white'
+              : 'text-emerald-300 hover:text-white'
           }`}
         >
           <TrendingUp className="w-4 h-4" />
@@ -536,7 +536,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {AAMAL_UI.secPrayer[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.secPrayerSub[selectedLanguage]}
                   </p>
                 </div>
@@ -574,7 +574,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                             ? 'bg-[#00875a] text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/40'
                             : isDay
                             ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                            : 'bg-[#081e22] hover:bg-[#123940] border-[#17464f] text-teal-200'
+                            : 'bg-[#081e22] hover:bg-[#123940] border-[#17464f] text-emerald-300'
                         }`}
                       >
                         <span className="text-xl">{w.icon}</span>
@@ -605,7 +605,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                             : 'bg-[#092b30] border-emerald-500/50 text-emerald-100'
                           : isDay
                           ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                          : 'bg-[#081e22] border-[#16444d] text-teal-200 hover:bg-[#0f343c]'
+                          : 'bg-[#081e22] border-[#16444d] text-emerald-300 hover:bg-[#0f343c]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -622,7 +622,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           <div className="text-xs sm:text-sm font-bold">
                             {AAMAL_UI.jamatLabel[selectedLanguage]}
                           </div>
-                          <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
                             {AAMAL_UI.jamatSub[selectedLanguage]}
                           </div>
                         </div>
@@ -657,7 +657,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {AAMAL_UI.secSunnah[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.secSunnahSub[selectedLanguage]}
                   </p>
                 </div>
@@ -688,7 +688,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           : 'bg-[#092b30] border-emerald-500/50 text-emerald-100'
                         : isDay
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#081e22] border-[#16444d] text-teal-200 hover:bg-[#0f343c]'
+                        : 'bg-[#081e22] border-[#16444d] text-emerald-300 hover:bg-[#0f343c]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -704,7 +704,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
@@ -741,14 +741,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {AAMAL_UI.secQuran[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.secQuranSub[selectedLanguage]}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="px-2.5 py-1 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-300 text-xs font-black font-mono">
+                <span className="px-2.5 py-1 rounded-full bg-teal-500/15 text-teal-600 dark:text-emerald-300 text-xs font-black font-mono">
                   {quranItems.filter((i) => i.completed).length}/{quranItems.length}
                 </span>
                 {collapsedSections.quran ? (
@@ -806,7 +806,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           : 'bg-[#092b30] border-emerald-500/50 text-emerald-100'
                         : isDay
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#081e22] border-[#16444d] text-teal-200 hover:bg-[#0f343c]'
+                        : 'bg-[#081e22] border-[#16444d] text-emerald-300 hover:bg-[#0f343c]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -822,7 +822,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
@@ -843,7 +843,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#071d21] border-[#123a41]'
                     }`}
                   >
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-teal-300">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-emerald-300">
                       <span>{AAMAL_UI.dhikrBreakdownTitle[selectedLanguage]}</span>
                       <span className="font-mono text-emerald-500">
                         {AAMAL_UI.dhikrTotal[selectedLanguage]} {dayLog.dhikrCount} {AAMAL_UI.times[selectedLanguage]}
@@ -894,7 +894,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {AAMAL_UI.secMorningEvening[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.secMorningEveningSub[selectedLanguage]}
                   </p>
                 </div>
@@ -926,7 +926,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           : 'bg-[#092b30] border-emerald-500/50 text-emerald-100'
                         : isDay
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#081e22] border-[#16444d] text-teal-200 hover:bg-[#0f343c]'
+                        : 'bg-[#081e22] border-[#16444d] text-emerald-300 hover:bg-[#0f343c]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -942,7 +942,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
@@ -979,7 +979,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {AAMAL_UI.secBedtime[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.secBedtimeSub[selectedLanguage]}
                   </p>
                 </div>
@@ -1010,7 +1010,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           : 'bg-[#092b30] border-emerald-500/50 text-emerald-100'
                         : isDay
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#081e22] border-[#16444d] text-teal-200 hover:bg-[#0f343c]'
+                        : 'bg-[#081e22] border-[#16444d] text-emerald-300 hover:bg-[#0f343c]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -1026,7 +1026,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
@@ -1063,7 +1063,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {AAMAL_UI.secCharacter[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.secCharacterSub[selectedLanguage]}
                   </p>
                 </div>
@@ -1094,7 +1094,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           : 'bg-[#092b30] border-emerald-500/50 text-emerald-100'
                         : isDay
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#081e22] border-[#16444d] text-teal-200 hover:bg-[#0f343c]'
+                        : 'bg-[#081e22] border-[#16444d] text-emerald-300 hover:bg-[#0f343c]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -1110,7 +1110,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
@@ -1140,14 +1140,14 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-2xl bg-cyan-500/15 text-cyan-600 dark:text-emerald-400 flex items-center justify-center">
                   <Compass className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {AAMAL_UI.secKnowledge[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.secKnowledgeSub[selectedLanguage]}
                   </p>
                 </div>
@@ -1178,7 +1178,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           : 'bg-[#092b30] border-emerald-500/50 text-emerald-100'
                         : isDay
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#081e22] border-[#16444d] text-teal-200 hover:bg-[#0f343c]'
+                        : 'bg-[#081e22] border-[#16444d] text-emerald-300 hover:bg-[#0f343c]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -1194,7 +1194,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
@@ -1231,7 +1231,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {AAMAL_UI.secSocial[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.secSocialSub[selectedLanguage]}
                   </p>
                 </div>
@@ -1262,7 +1262,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                           : 'bg-[#092b30] border-emerald-500/50 text-emerald-100'
                         : isDay
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                        : 'bg-[#081e22] border-[#16444d] text-teal-200 hover:bg-[#0f343c]'
+                        : 'bg-[#081e22] border-[#16444d] text-emerald-300 hover:bg-[#0f343c]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -1278,7 +1278,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <div>
                         <div className="text-xs sm:text-sm font-bold">{getAamalItemLabel(item)}</div>
                         {getAamalItemDetails(item) && (
-                          <div className="text-[11px] text-slate-400 dark:text-teal-300/70">
+                          <div className="text-[11px] text-slate-400 dark:text-emerald-300/70">
                             {getAamalItemDetails(item)}
                           </div>
                         )}
@@ -1301,7 +1301,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               isDay ? 'bg-white border-slate-200' : 'bg-[#0c2a30] border-[#184a54]'
             }`}
           >
-            <label className="text-xs font-bold text-slate-600 dark:text-teal-200 flex items-center gap-2">
+            <label className="text-xs font-bold text-slate-600 dark:text-emerald-300 flex items-center gap-2">
               <span>{AAMAL_UI.reflectionTitle[selectedLanguage]}</span>
             </label>
             <textarea
@@ -1333,7 +1333,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 <h3 className={`text-base font-bold ${isDay ? 'text-[#103e42]' : 'text-white'}`}>
                   {calendarMonthHeader}
                 </h3>
-                <p className={`text-[11px] ${isDay ? 'text-[#507579]' : 'text-teal-300/80'}`}>
+                <p className={`text-[11px] ${isDay ? 'text-[#507579]' : 'text-emerald-300/80'}`}>
                   {AAMAL_UI.calClickInfo[selectedLanguage]}
                 </p>
               </div>
@@ -1347,7 +1347,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                     ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
                     : isDay
                     ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-                    : 'bg-[#092226] hover:bg-[#133c44] border-[#1a515c] text-teal-200'
+                    : 'bg-[#092226] hover:bg-[#133c44] border-[#1a515c] text-emerald-300'
                 }`}
               >
                 {AAMAL_UI.today[selectedLanguage].replace(/^●\s*/, '')}
@@ -1365,7 +1365,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 className={`p-1.5 rounded-xl border transition active:scale-95 cursor-pointer ${
                   isDay
                     ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-                    : 'bg-[#092226] hover:bg-[#133c44] border-[#1a515c] text-teal-200'
+                    : 'bg-[#092226] hover:bg-[#133c44] border-[#1a515c] text-emerald-300'
                 }`}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -1383,7 +1383,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 className={`p-1.5 rounded-xl border transition active:scale-95 cursor-pointer ${
                   isDay
                     ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-                    : 'bg-[#092226] hover:bg-[#133c44] border-[#1a515c] text-teal-200'
+                    : 'bg-[#092226] hover:bg-[#133c44] border-[#1a515c] text-emerald-300'
                 }`}
               >
                 <ChevronRight className="w-4 h-4" />
@@ -1474,7 +1474,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-[#103e42]' : 'text-white'}`}>
                     {AAMAL_UI.streakTitle[selectedLanguage]}
                   </h3>
-                  <p className={`text-[11px] ${isDay ? 'text-[#507579]' : 'text-teal-300/80'}`}>
+                  <p className={`text-[11px] ${isDay ? 'text-[#507579]' : 'text-emerald-300/80'}`}>
                     {AAMAL_UI.streakSub[selectedLanguage]}
                   </p>
                 </div>

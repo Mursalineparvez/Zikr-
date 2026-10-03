@@ -14,11 +14,11 @@
   font-family: 'Amiri', 'Traditional Arabic', serif;
 }
 
-/* Day Mode (Default - Serene Porcelain Mint & White Cards matching Home Page) */
+/* Day Mode (Default - Clean Warm Porcelain & White Cards) */
 body.theme-day,
 body {
-  background-color: #edf5f4;
-  color: #133e42;
+  background-color: #f6f8f7;
+  color: #0f2e24;
 }
 
 /* Night Mode (Deep Atmospheric Pine Teal - Rich & Harmonized, Never Pitch Black) */
@@ -29,16 +29,16 @@ body.theme-night {
 
 /* Subtle Geometric Pattern */
 .islamic-pattern-day {
-  background-color: #edf5f4;
-  background-image: radial-gradient(rgba(28, 100, 105, 0.08) 1.5px, transparent 1.5px),
-                    radial-gradient(rgba(245, 158, 11, 0.05) 1.5px, #edf5f4 1.5px);
+  background-color: #f6f8f7;
+  background-image: radial-gradient(rgba(0, 103, 71, 0.06) 1.5px, transparent 1.5px),
+                    radial-gradient(rgba(245, 158, 11, 0.04) 1.5px, #f6f8f7 1.5px);
   background-size: 36px 36px;
   background-position: 0 0, 18px 18px;
 }
 
 .islamic-pattern-night {
   background-color: #082024;
-  background-image: radial-gradient(rgba(45, 212, 191, 0.09) 1.5px, transparent 1.5px),
+  background-image: radial-gradient(rgba(16, 185, 129, 0.09) 1.5px, transparent 1.5px),
                     radial-gradient(rgba(245, 158, 11, 0.04) 1.5px, #082024 1.5px);
   background-size: 36px 36px;
   background-position: 0 0, 18px 18px;
@@ -50,14 +50,14 @@ body.theme-night {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(28, 100, 105, 0.08);
+  background: rgba(0, 103, 71, 0.06);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(28, 100, 105, 0.4);
+  background: rgba(0, 103, 71, 0.35);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(28, 100, 105, 0.7);
+  background: rgba(0, 103, 71, 0.65);
 }
 
 /* Smooth Touch Active Press */
@@ -69,10 +69,10 @@ body.theme-night {
 /* Glow animation */
 @keyframes tealGlow {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(45, 212, 191, 0.25), inset 0 0 15px rgba(28, 100, 105, 0.2);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.25), inset 0 0 15px rgba(0, 103, 71, 0.2);
   }
   50% {
-    box-shadow: 0 0 25px rgba(45, 212, 191, 0.45), inset 0 0 25px rgba(28, 100, 105, 0.35);
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.45), inset 0 0 25px rgba(0, 103, 71, 0.35);
   }
 }
 

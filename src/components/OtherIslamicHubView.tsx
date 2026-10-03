@@ -149,7 +149,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
               : isDay
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -163,7 +163,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               ? 'bg-rose-600 text-white border-rose-500 shadow-md'
               : isDay
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
           <Heart className="w-3.5 h-3.5" />
@@ -177,7 +177,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               ? 'bg-amber-600 text-white border-amber-500 shadow-md'
               : isDay
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
           <span>📜</span>
@@ -191,7 +191,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               ? 'bg-blue-600 text-white border-blue-500 shadow-md'
               : isDay
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
           <BookMarked className="w-3.5 h-3.5" />
@@ -205,7 +205,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
               : isDay
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
           <Users className="w-3.5 h-3.5" />
@@ -219,7 +219,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               ? 'bg-amber-600 text-white border-amber-500 shadow-md'
               : isDay
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -233,7 +233,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               ? 'bg-teal-600 text-white border-teal-500 shadow-md'
               : isDay
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
           <span>🕋</span>
@@ -247,7 +247,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
               : isDay
               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-teal-200'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
           <Settings className="w-3.5 h-3.5" />
@@ -306,7 +306,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {item.title}
                   </h3>
-                  <p className={`text-xs mt-1 leading-relaxed ${isDay ? 'text-slate-500' : 'text-teal-200/80'}`}>
+                  <p className={`text-xs mt-1 leading-relaxed ${isDay ? 'text-slate-500' : 'text-emerald-200/80'}`}>
                     {item.desc}
                   </p>
                 </div>

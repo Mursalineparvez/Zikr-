@@ -123,7 +123,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                   ? 'হিস্ট্রি রিপোর্ট ও পূর্ণাঙ্গ পিডিএফ এক্সপোর্ট'
                   : 'History Report & Full PDF Export'}
               </h2>
-              <p className="text-[11px] text-slate-500 dark:text-teal-300/80">
+              <p className="text-[11px] text-slate-500 dark:text-emerald-300/80">
                 {selectedLanguage === 'bn'
                   ? '১ দিন, ১ মাস, ৪ মাস, ১ বছর বা ১০ বছরের সুবিন্যস্ত হিসাব ও যোগফল'
                   : 'Custom periods with aggregated sums, prayers, and dhikr counts'}
@@ -151,7 +151,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
 
           {/* Time Range Selector Tabs */}
           <div>
-            <label className="text-[11px] font-bold text-slate-400 dark:text-teal-300/80 uppercase tracking-wider block mb-2">
+            <label className="text-[11px] font-bold text-slate-400 dark:text-emerald-300/80 uppercase tracking-wider block mb-2">
               {selectedLanguage === 'bn' ? '১. সময়কাল নির্বাচন করুন (Select Period):' : '1. Select Time Range:'}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -171,7 +171,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                           : 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md ring-2 ring-emerald-400/40'
                         : isDay
                         ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                        : 'bg-[#081b1f] hover:bg-[#113138] border-[#153e46] text-teal-200'
+                        : 'bg-[#081b1f] hover:bg-[#113138] border-[#153e46] text-emerald-300'
                     }`}
                   >
                     <span className="text-base">{btn.icon}</span>
@@ -236,10 +236,10 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                   : 'bg-[#082025] border-teal-500/30'
               }`}
             >
-              <span className="text-[10px] uppercase font-bold text-teal-700 dark:text-teal-300 tracking-wider">
+              <span className="text-[10px] uppercase font-bold text-teal-700 dark:text-emerald-300 tracking-wider">
                 {selectedLanguage === 'bn' ? 'ফরজ নামাজ (Salah)' : 'Fardh Prayers'}
               </span>
-              <div className="text-2xl sm:text-3xl font-black text-teal-700 dark:text-teal-200 font-mono mt-1">
+              <div className="text-2xl sm:text-3xl font-black text-teal-700 dark:text-emerald-300 font-mono mt-1">
                 {reportData.prayerStats.fardhTotal}
               </div>
               <span className="text-[10px] text-teal-600 dark:text-teal-400/80 font-semibold">
@@ -357,7 +357,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                 <thead>
                   <tr
                     className={`border-b text-[10px] font-bold uppercase ${
-                      isDay ? 'bg-slate-200/70 text-slate-600' : 'bg-[#0d343c] text-teal-300'
+                      isDay ? 'bg-slate-200/70 text-slate-600' : 'bg-[#0d343c] text-emerald-300'
                     }`}
                   >
                     <th className="p-2">Date</th>
@@ -384,7 +384,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                       <td className="p-2 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                         {d.dhikrCount.toLocaleString()}
                       </td>
-                      <td className="p-2 text-right font-bold text-teal-600 dark:text-teal-300">
+                      <td className="p-2 text-right font-bold text-teal-600 dark:text-emerald-300">
                         {Math.round(d.completedRatio * 100)}%
                       </td>
                     </tr>
@@ -397,7 +397,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
 
         {/* Modal Bottom Action Footer */}
         <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-teal-900/40 bg-slate-50 dark:bg-[#071a1d] flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-[11px] text-slate-500 dark:text-teal-300/70 text-center sm:text-left">
+          <div className="text-[11px] text-slate-500 dark:text-emerald-300/70 text-center sm:text-left">
             {selectedLanguage === 'bn'
               ? 'নির্বাচিত সময়কালের সকল যোগফল ও চার্টসহ সাজানো ডকুমেন্ট ডাউনলোড হবে।'
               : 'All sums, tables, and statistics will be compiled into the export.'}

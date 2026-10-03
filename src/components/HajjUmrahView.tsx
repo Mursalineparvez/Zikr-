@@ -328,7 +328,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === 'umrah_hub'
               ? 'bg-amber-500 text-slate-950 shadow-lg scale-[1.02]'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
+              : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <span>🕋</span>
@@ -343,7 +343,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === 'hajj_hub'
               ? 'bg-emerald-600 text-white shadow-lg scale-[1.02]'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
+              : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <span>⛺</span>
@@ -358,7 +358,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === 'home_journey_hub'
               ? 'bg-teal-600 text-white shadow-lg scale-[1.02]'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
+              : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <span>🏠</span>
@@ -373,7 +373,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === 'essentials_hub'
               ? 'bg-teal-700 text-white shadow-lg scale-[1.02]'
-              : 'text-slate-600 dark:text-teal-200 hover:text-slate-900 dark:hover:text-white'
+              : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <span>🎒</span>
@@ -459,7 +459,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                       ? 'bg-emerald-600 text-white border-emerald-500 shadow-xl font-bold ring-2 ring-emerald-400'
                       : isDay
                       ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                      : 'bg-[#07191d] hover:bg-teal-950/40 text-teal-200 border-teal-900/40'
+                      : 'bg-[#07191d] hover:bg-teal-950/40 text-emerald-300 border-teal-900/40'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -569,7 +569,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
               className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
                 journeySubTab === 'umrah_journey'
                   ? 'bg-amber-500 text-slate-950 shadow-lg'
-                  : 'text-slate-600 dark:text-teal-200 hover:text-white'
+                  : 'text-slate-600 dark:text-emerald-300 hover:text-white'
               }`}
             >
               <span>🕋</span>
@@ -584,7 +584,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
               className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
                 journeySubTab === 'hajj_journey'
                   ? 'bg-emerald-600 text-white shadow-lg'
-                  : 'text-slate-600 dark:text-teal-200 hover:text-white'
+                  : 'text-slate-600 dark:text-emerald-300 hover:text-white'
               }`}
             >
               <span>⛺</span>
@@ -623,13 +623,13 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-teal-200 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-emerald-300 leading-relaxed">
                       {isBn ? step.descriptionBn : step.descriptionEn}
                     </p>
 
                     {/* INDIVIDUAL ACTION CHECKLIST ITEMS */}
                     <div className="space-y-2.5 pt-1">
-                      <div className="text-xs font-bold text-slate-500 dark:text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <div className="text-xs font-bold text-slate-500 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-amber-500" />
                         <span>{isBn ? 'করণীয় চেকলিস্ট (প্রতিটি আলাদা টিক দিন):' : 'Action Checklist (Tick Individually):'}</span>
                       </div>
@@ -688,7 +688,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                             <p dir="rtl" className="font-arabic text-xl sm:text-2xl text-right text-amber-900 dark:text-amber-100 leading-loose font-bold">
                               {dua.arabic}
                             </p>
-                            <p className="text-xs font-mono italic text-slate-600 dark:text-teal-200/90">
+                            <p className="text-xs font-mono italic text-slate-600 dark:text-emerald-200/90">
                               {dua.transliteration}
                             </p>
                             <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -736,13 +736,13 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                       )}
                     </div>
 
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-teal-200 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-emerald-300 leading-relaxed">
                       {isBn ? step.descriptionBn : step.descriptionEn}
                     </p>
 
                     {/* INDIVIDUAL ACTION CHECKLIST ITEMS */}
                     <div className="space-y-2.5 pt-1">
-                      <div className="text-xs font-bold text-slate-500 dark:text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <div className="text-xs font-bold text-slate-500 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                         <span>{isBn ? 'করণীয় চেকলিস্ট (প্রতিটি আলাদা টিক দিন):' : 'Action Checklist (Tick Individually):'}</span>
                       </div>
@@ -801,7 +801,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                             <p dir="rtl" className="font-arabic text-xl sm:text-2xl text-right text-emerald-900 dark:text-emerald-100 leading-loose font-bold">
                               {dua.arabic}
                             </p>
-                            <p className="text-xs font-mono italic text-slate-600 dark:text-teal-200/90">
+                            <p className="text-xs font-mono italic text-slate-600 dark:text-emerald-200/90">
                               {dua.transliteration}
                             </p>
                             <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100">

@@ -298,7 +298,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </button>
 
           <label className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition active:scale-95 cursor-pointer">
-            <Upload className="w-4 h-4 text-cyan-400" />
+            <Upload className="w-4 h-4 text-emerald-400" />
             <span>{SETTINGS_UI.restoreJson[selectedLanguage] || 'Restore JSON'}</span>
             <input
               type="file"

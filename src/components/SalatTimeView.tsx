@@ -323,7 +323,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
       >
         {/* Left: Avatar / Islamic icon */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#144d52] to-[#257277] flex items-center justify-center text-white text-xs font-bold shadow-sm border border-teal-300/40 shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#005a3e] to-[#257277] flex items-center justify-center text-white text-xs font-bold shadow-sm border border-teal-300/40 shrink-0">
             <span>🕌</span>
           </div>
 
@@ -333,7 +333,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               onClick={() => shiftDate(-1)}
               title="Previous Day"
               className={`p-1 rounded-lg text-xs transition active:scale-95 cursor-pointer ${
-                isDay ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-teal-900/40 text-teal-300'
+                isDay ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-teal-900/40 text-emerald-300'
               }`}
             >
               <ChevronLeft className="w-3.5 h-3.5" />
@@ -344,7 +344,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition active:scale-95 cursor-pointer ${
                 isDay
                   ? 'bg-[#eefbf6] hover:bg-[#e2f7ef] text-[#006747] border-[#c3edd9]'
-                  : 'bg-[#0a262c] hover:bg-[#123e47] text-teal-200 border-[#184850]'
+                  : 'bg-[#0a262c] hover:bg-[#123e47] text-emerald-300 border-[#184850]'
               }`}
               title="Click to reset to Today"
             >
@@ -356,7 +356,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               onClick={() => shiftDate(1)}
               title="Next Day"
               className={`p-1 rounded-lg text-xs transition active:scale-95 cursor-pointer ${
-                isDay ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-teal-900/40 text-teal-300'
+                isDay ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-teal-900/40 text-emerald-300'
               }`}
             >
               <ChevronRight className="w-3.5 h-3.5" />
@@ -372,7 +372,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border transition cursor-pointer active:scale-95 max-w-[130px] sm:max-w-[170px] truncate ${
               isDay
                 ? 'bg-[#eefbf6] hover:bg-[#e2f7ef] text-[#006747] border-[#c3edd9]'
-                : 'bg-[#0a262c] hover:bg-[#123e47] text-teal-200 border-[#184850]'
+                : 'bg-[#0a262c] hover:bg-[#123e47] text-emerald-300 border-[#184850]'
             }`}
             title="Change City or Detect GPS"
           >
@@ -391,7 +391,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
             className={`relative p-2 rounded-xl border transition active:scale-95 cursor-pointer ${
               isDay
                 ? 'bg-[#eefbf6] hover:bg-[#e2f7ef] text-[#006747] border-[#c3edd9]'
-                : 'bg-[#0a262c] hover:bg-[#123e47] text-teal-200 border-[#184850]'
+                : 'bg-[#0a262c] hover:bg-[#123e47] text-emerald-300 border-[#184850]'
             }`}
             title={`${activeAlertsCount} active prayer alerts`}
           >
@@ -446,7 +446,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
 
           <button
             onClick={() => setShowNafalModal(true)}
-            className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-teal-300 hover:text-emerald-600 dark:hover:text-emerald-300 transition cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-emerald-300 hover:text-emerald-600 dark:hover:text-emerald-300 transition cursor-pointer"
           >
             <span>{SALAT_UI.seeMore[selectedLanguage]}</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -494,7 +494,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                 </div>
 
                 {/* Center Icon */}
-                <div className="flex items-center justify-center my-2 text-emerald-600 dark:text-teal-300">
+                <div className="flex items-center justify-center my-2 text-emerald-600 dark:text-emerald-300">
                   {nafal.iconType === 'tahajjud' && <Moon className="w-6 h-6 text-indigo-400" />}
                   {nafal.iconType === 'ishraq' && <SunriseIcon className="w-6 h-6 text-amber-500" />}
                   {nafal.iconType === 'chast' && <CloudSun className="w-6 h-6 text-orange-400" />}
@@ -508,7 +508,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                 </div>
 
                 {/* Times Row with Green Dots */}
-                <div className="space-y-1 text-[11px] font-mono font-semibold text-slate-700 dark:text-teal-200">
+                <div className="space-y-1 text-[11px] font-mono font-semibold text-slate-700 dark:text-emerald-300">
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     <span>{nafal.startTime}</span>
@@ -541,7 +541,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
 
           <button
             onClick={() => setShowProhibitedModal(true)}
-            className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-teal-300 hover:text-rose-600 transition cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-emerald-300 hover:text-rose-600 transition cursor-pointer"
           >
             <span>{SALAT_UI.seeMore[selectedLanguage]}</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -620,7 +620,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                   <span className="text-xs font-black text-emerald-700 dark:text-emerald-300 leading-none">
                     {prayerData.qiblaBearing}°
                   </span>
-                  <span className="text-[9px] font-bold text-slate-500 dark:text-teal-200 leading-none mt-0.5">
+                  <span className="text-[9px] font-bold text-slate-500 dark:text-emerald-300 leading-none mt-0.5">
                     {prayerData.qiblaCardinal}
                   </span>
                 </div>
@@ -640,7 +640,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                 <MapPin className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-xs font-medium text-slate-500 dark:text-teal-200/80">
+                <div className="text-xs font-medium text-slate-500 dark:text-emerald-200/80">
                   {SALAT_UI.kaabaDistance[selectedLanguage]}
                 </div>
                 <div className="text-lg font-black text-emerald-700 dark:text-emerald-300">
@@ -662,7 +662,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                 />
               </div>
               <div>
-                <div className="text-xs font-medium text-slate-500 dark:text-teal-200/80">
+                <div className="text-xs font-medium text-slate-500 dark:text-emerald-200/80">
                   {SALAT_UI.qiblaDirection[selectedLanguage]}
                 </div>
                 <div className="text-lg font-black text-emerald-700 dark:text-emerald-300">
@@ -729,7 +729,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                       {item.rakats}
                     </span>
                   </div>
-                  <p className="text-slate-600 dark:text-teal-200/90 leading-relaxed mb-2">
+                  <p className="text-slate-600 dark:text-emerald-200/90 leading-relaxed mb-2">
                     {item.description}. {item.info}
                   </p>
                   <div className="flex items-center gap-3 font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -888,7 +888,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                   <span className="text-sm font-black text-emerald-700 dark:text-emerald-300 leading-none">
                     {prayerData.qiblaBearing}°
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 dark:text-teal-200 leading-none mt-0.5">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-emerald-300 leading-none mt-0.5">
                     {prayerData.qiblaCardinal}
                   </span>
                 </div>
@@ -902,7 +902,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                   ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 animate-pulse'
                   : isDay
                   ? 'bg-[#f4faf9] text-slate-600 border border-[#d2ece9]'
-                  : 'bg-[#092226] text-teal-200 border border-[#184850]'
+                  : 'bg-[#092226] text-emerald-300 border border-[#184850]'
               }`}
             >
               {isFacingKaaba
@@ -946,7 +946,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
 
             {/* Search City */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-teal-200">
+              <label className="text-xs font-semibold text-slate-500 dark:text-emerald-300">
                 Choose Location
               </label>
               <div className="relative">
@@ -988,7 +988,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
 
             {/* Asr Juristic Method */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-teal-200">
+              <label className="text-xs font-semibold text-slate-500 dark:text-emerald-300">
                 Asr Juristic Calculation
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -1019,7 +1019,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
 
             {/* Calculation Method */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-500 dark:text-teal-200">
+              <label className="text-xs font-semibold text-slate-500 dark:text-emerald-300">
                 Calculation Method
               </label>
               <select
@@ -1063,7 +1063,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-teal-200/90">
+            <p className="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-emerald-200/90">
               {infoModalItem.content}
             </p>
             {infoModalItem.reference && (

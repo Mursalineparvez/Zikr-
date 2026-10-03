@@ -373,7 +373,7 @@ export async function saveUserDataToCloud(
     const userDocRef = doc(db, 'users', userKey);
     const userDocPayload: Record<string, any> = {
       uid: userKey,
-      name: profile.name || (emailOrPhone.includes('@') ? emailOrPhone.split('@')[0] : 'ZikrMate User'),
+      name: profile.name || (emailOrPhone.includes('@') ? emailOrPhone.split('@')[0] : 'Zikr+ User'),
       email: emailOrPhone.includes('@') ? emailOrPhone.toLowerCase().trim() : '',
       phone: !emailOrPhone.includes('@') ? emailOrPhone.trim() : '',
       isVerified: profile.isVerified ?? true,
@@ -821,15 +821,15 @@ export async function sendRealVerificationEmail(
   purpose: 'signup' | 'login' | 'reset'
 ): Promise<boolean> {
   const normalized = email.toLowerCase().trim();
-  let subject = `[ZikrMate] আপনার নতুন অ্যাকাউন্ট ভেরিফিকেশন কোড: ${code}`;
-  let messageText = `আসসালামু আলাইকুম। ZikrMate-এ নতুন অ্যাকাউন্ট খোলার জন্য আপনার ৬-সংখ্যার ভেরিফিকেশন কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট।`;
+  let subject = `[Zikr+] আপনার নতুন অ্যাকাউন্ট ভেরিফিকেশন কোড: ${code}`;
+  let messageText = `আসসালামু আলাইকুম। Zikr+-এ নতুন অ্যাকাউন্ট খোলার জন্য আপনার ৬-সংখ্যার ভেরিফিকেশন কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট।`;
 
   if (purpose === 'reset') {
-    subject = `[ZikrMate] আপনার পাসওয়ার্ড রিসেট ভেরিফিকেশন কোড: ${code}`;
-    messageText = `আসসালামু আলাইকুম। ZikrMate অ্যাকাউন্টের পাসওয়ার্ড পরিবর্তনের জন্য আপনার ৬-সংখ্যার রিসেট কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট। আপনি এই অনুরোধ না করে থাকলে অবিলম্বে সতর্ক হোন।`;
+    subject = `[Zikr+] আপনার পাসওয়ার্ড রিসেট ভেরিফিকেশন কোড: ${code}`;
+    messageText = `আসসালামু আলাইকুম। Zikr+ অ্যাকাউন্টের পাসওয়ার্ড পরিবর্তনের জন্য আপনার ৬-সংখ্যার রিসেট কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট। আপনি এই অনুরোধ না করে থাকলে অবিলম্বে সতর্ক হোন।`;
   } else if (purpose === 'login') {
-    subject = `[ZikrMate] আপনার অ্যাকাউন্ট লগইন কোড: ${code}`;
-    messageText = `আসসালামু আলাইকুম। ZikrMate অ্যাকাউন্টে নিরাপদ লগইনের জন্য আপনার ৬-সংখ্যার ওটিপি কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট।`;
+    subject = `[Zikr+] আপনার অ্যাকাউন্ট লগইন কোড: ${code}`;
+    messageText = `আসসালামু আলাইকুম। Zikr+ অ্যাকাউন্টে নিরাপদ লগইনের জন্য আপনার ৬-সংখ্যার ওটিপি কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট।`;
   }
 
   try {
@@ -841,7 +841,7 @@ export async function sendRealVerificationEmail(
       },
       body: JSON.stringify({
         _subject: subject,
-        appName: 'ZikrMate Islamic App',
+        appName: 'Zikr+ Islamic App',
         recipient: normalized,
         security_code: code,
         action_type: purpose,
@@ -1319,8 +1319,8 @@ export async function fetchAllUsersForAdmin(): Promise<AdminUserRecord[]> {
         : (rawEmail || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
 
       const displayName = isGuestDevice
-        ? (data.name && !data.name.includes('ZikrMate User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
-        : (data.name || prof.name || (rawEmail ? rawEmail.split('@')[0] : 'ZikrMate User'));
+        ? (data.name && !data.name.includes('ZikrMate User') && !data.name.includes('Zikr+ User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
+        : (data.name || prof.name || (rawEmail ? rawEmail.split('@')[0] : 'Zikr+ User'));
 
       let method = isGuestDevice
         ? 'Guest Device'
@@ -1442,8 +1442,8 @@ export function subscribeToAllUsersForAdmin(
           : (rawEmail || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
 
         const displayName = isGuestDevice
-          ? (data.name && !data.name.includes('ZikrMate User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
-          : (data.name || prof.name || (rawEmail ? rawEmail.split('@')[0] : 'ZikrMate User'));
+          ? (data.name && !data.name.includes('ZikrMate User') && !data.name.includes('Zikr+ User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
+          : (data.name || prof.name || (rawEmail ? rawEmail.split('@')[0] : 'Zikr+ User'));
 
         let method = isGuestDevice
           ? 'Guest Device'

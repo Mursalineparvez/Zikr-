@@ -12,7 +12,7 @@ export function getDetectedDeviceInfo(): DeviceInfo {
       model: 'Android Mobile Device',
       osVersion: 'Android 13 / 14',
       location: 'Asia/Dhaka (Network Timezone)',
-      appVersion: 'ZikrMate v411_38.1',
+      appVersion: 'Zikr+ v411_38.1',
       deviceLanguage: 'bn',
     };
   }
@@ -97,7 +97,7 @@ export function getDetectedDeviceInfo(): DeviceInfo {
     model,
     osVersion,
     location,
-    appVersion: 'ZikrMate v411_38.1',
+    appVersion: 'Zikr+ v411_38.1',
     deviceLanguage,
   };
 }

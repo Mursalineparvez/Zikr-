@@ -40,7 +40,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-teal-300 uppercase tracking-wider mb-1">
+            <div className="flex items-center gap-2 text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1">
               <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
               <span>{selectedLanguage === 'bn' ? 'আজকের লাইভ রানিং কাউন্টার' : 'Today\'s Active Live Counter'}</span>
             </div>
@@ -53,7 +53,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
           </div>
 
           <div className="sm:text-right border-t sm:border-t-0 sm:border-l border-emerald-500/30 pt-3 sm:pt-0 sm:pl-4">
-            <div className="text-xs text-teal-300 font-medium">
+            <div className="text-xs text-emerald-300 font-medium">
               {selectedLanguage === 'bn' ? 'সর্বমোট গ্র্যান্ড টোটাল (লাইফটাইম)' : 'Lifetime Grand Total'}
             </div>
             <div className="text-xl font-extrabold text-amber-300 mt-0.5">
@@ -191,7 +191,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
               {/* Breakdown List: Showing which zikr was recited how many times */}
               <div className="space-y-1.5">
-                <div className="text-[11px] font-bold text-slate-400 dark:text-teal-300/70 uppercase tracking-wider mb-2">
+                <div className="text-[11px] font-bold text-slate-400 dark:text-emerald-300/70 uppercase tracking-wider mb-2">
                   {selectedLanguage === 'bn'
                     ? 'কোন জিকির কত বার পাঠ করা হয়েছে:'
                     : 'Detailed Dhikr Breakdown:'}

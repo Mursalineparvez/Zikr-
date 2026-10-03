@@ -379,8 +379,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
             disabled={zikr.count <= 0}
             className={`px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 disabled:opacity-40 cursor-pointer border ${
               isDay
-                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#1c6469] border-[#d0e6e3]'
-                : 'bg-[#0a262c] hover:bg-[#10343c] text-[#8ebac0] border-[#184850]'
+                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#006747] border-[#d0e6e3]'
+                : 'bg-[#0a262c] hover:bg-[#10343c] text-[#94a3b8] border-[#184850]'
             }`}
             title="১ কমান (-1)"
           >
@@ -396,8 +396,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
             }}
             className={`p-1.5 rounded-xl transition active:scale-95 cursor-pointer border ${
               isDay
-                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] hover:text-[#1c6469] border-[#d0e6e3]'
-                : 'bg-[#0a262c] hover:bg-[#10343c] text-[#8ebac0] hover:text-white border-[#184850]'
+                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] hover:text-[#006747] border-[#d0e6e3]'
+                : 'bg-[#0a262c] hover:bg-[#10343c] text-[#94a3b8] hover:text-white border-[#184850]'
             }`}
             title="রিসেট (Reset to 0)"
           >
@@ -417,7 +417,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
             className={`p-1.5 rounded-xl transition active:scale-95 disabled:opacity-30 cursor-pointer border ${
               isDay
                 ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] border-[#d0e6e3]'
-                : 'bg-[#0a262c] text-[#8ebac0] border-[#184850]'
+                : 'bg-[#0a262c] text-[#94a3b8] border-[#184850]'
             }`}
             title="উপরে নিন (Move Up)"
           >
@@ -435,7 +435,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
             className={`p-1.5 rounded-xl transition active:scale-95 disabled:opacity-30 cursor-pointer border ${
               isDay
                 ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] border-[#d0e6e3]'
-                : 'bg-[#0a262c] text-[#8ebac0] border-[#184850]'
+                : 'bg-[#0a262c] text-[#94a3b8] border-[#184850]'
             }`}
             title="নিচে নিন (Move Down)"
           >
@@ -451,8 +451,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
             }}
             className={`p-1.5 rounded-xl transition active:scale-95 cursor-pointer border ${
               isDay
-                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] hover:text-[#1c6469] border-[#d0e6e3]'
-                : 'bg-[#0a262c] hover:bg-[#10343c] text-[#8ebac0] hover:text-white border-[#184850]'
+                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] hover:text-[#006747] border-[#d0e6e3]'
+                : 'bg-[#0a262c] hover:bg-[#10343c] text-[#94a3b8] hover:text-white border-[#184850]'
             }`}
             title="সম্পাদনা (Edit)"
           >

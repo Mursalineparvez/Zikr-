@@ -1,4 +1,4 @@
-// Service Worker for ZikrMate PWA
+// Service Worker for Zikr+ PWA
 const CACHE_NAME = 'zikrmate-v1';
 const ASSETS_TO_CACHE = [
   '/',

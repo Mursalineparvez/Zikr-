@@ -110,7 +110,7 @@ export const StandaloneExportModal: React.FC<StandaloneExportModalProps> = ({
                 3
               </span>
               <div>
-                <strong className="text-white">Generate &amp; Download APK:</strong> Enter App Name <em>"ZikrMate"</em>, package name (e.g. <code className="text-amber-200 bg-slate-900 px-1 py-0.5 rounded">com.zikrmate.app</code>), click <strong className="text-white">"Build App"</strong>, and download the ready-to-install Android <code className="text-emerald-400 font-bold">.apk</code> file directly onto your phone!
+                <strong className="text-white">Generate &amp; Download APK:</strong> Enter App Name <em>"Zikr+"</em>, package name (e.g. <code className="text-amber-200 bg-slate-900 px-1 py-0.5 rounded">com.zikrplus.app</code>), click <strong className="text-white">"Build App"</strong>, and download the ready-to-install Android <code className="text-emerald-400 font-bold">.apk</code> file directly onto your phone!
               </div>
             </div>
           </div>

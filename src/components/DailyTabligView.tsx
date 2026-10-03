@@ -367,7 +367,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
       {/* Chapters Accordion List */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-2">
-          <h3 className={`text-xs font-bold uppercase tracking-wider ${isDay ? 'text-slate-500' : 'text-teal-300'}`}>
+          <h3 className={`text-xs font-bold uppercase tracking-wider ${isDay ? 'text-slate-500' : 'text-emerald-300'}`}>
             {TABLIG_UI.allChapters[selectedLanguage]} ({filteredChapters.length})
           </h3>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -406,7 +406,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                       {chapterTitle}
                     </h3>
                     {chapterSubtitle && (
-                      <p className="text-xs text-slate-500 dark:text-teal-300/80 truncate mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-emerald-300/80 truncate mt-0.5">
                         {chapterSubtitle}
                       </p>
                     )}
@@ -444,7 +444,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                       const currentFilter = chapterPartFilter[chap.id] || 'all';
                       return (
                         <div className="pt-2 flex flex-wrap items-center gap-1.5 sm:gap-2 border-b border-slate-200/60 dark:border-teal-900/40 pb-3">
-                          <span className="text-[11px] font-semibold text-slate-500 dark:text-teal-300 mr-1 flex items-center gap-1 shrink-0">
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-emerald-300 mr-1 flex items-center gap-1 shrink-0">
                             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                             {isBn ? 'বিষয় / পর্ব নির্বাচন:' : 'Select Topic / Part:'}
                           </span>
@@ -459,7 +459,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                                 ? 'bg-emerald-600 text-white shadow-md'
                                 : isDay
                                 ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                                : 'bg-[#071d22] hover:bg-teal-900/50 text-teal-200 border border-teal-800/40'
+                                : 'bg-[#071d22] hover:bg-teal-900/50 text-emerald-300 border border-teal-800/40'
                             }`}
                           >
                             {isBn ? 'সবগুলো' : 'All'} ({chap.sections.length})
@@ -479,7 +479,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                                     ? 'bg-emerald-600 text-white shadow-md'
                                     : isDay
                                     ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                                    : 'bg-[#071d22] hover:bg-teal-900/50 text-teal-200 border border-teal-800/40'
+                                    : 'bg-[#071d22] hover:bg-teal-900/50 text-emerald-300 border border-teal-800/40'
                                 }`}
                               >
                                 <span>{item.label}</span>

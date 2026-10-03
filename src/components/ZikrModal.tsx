@@ -190,7 +190,7 @@ export const ZikrModal: React.FC<ZikrModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#1c6469] hover:bg-[#154f53] text-white font-bold text-sm shadow-lg shadow-[#135d66]/40 transition active:scale-95 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-[#006747] hover:bg-[#154f53] text-white font-bold text-sm shadow-lg shadow-[#135d66]/40 transition active:scale-95 cursor-pointer"
             >
               {zikrToEdit ? 'Update Zikr' : 'Add Zikr'}
             </button>

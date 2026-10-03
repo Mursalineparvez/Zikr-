@@ -118,7 +118,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
 
         {/* Search Input */}
         <div className="mt-4 relative">
-          <Search className="w-4 h-4 text-teal-300 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-emerald-300 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
@@ -129,7 +129,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-teal-200 hover:text-white"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-emerald-300 hover:text-white"
             >
               {ALLAH_NAMES_UI.clear[selectedLanguage]}
             </button>
@@ -193,7 +193,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
               {/* Benefit / Fazilat Box */}
               <div
                 className={`p-2.5 rounded-2xl text-[11px] ${
-                  isDay ? 'bg-slate-50 text-slate-600' : 'bg-[#07191d] text-teal-200/90'
+                  isDay ? 'bg-slate-50 text-slate-600' : 'bg-[#07191d] text-emerald-200/90'
                 }`}
               >
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">
@@ -209,7 +209,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                   className={`p-2 rounded-xl border text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
                     isDay
                       ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-                      : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-teal-200'
+                      : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-emerald-300'
                   }`}
                   title="Arabic Audio"
                 >
@@ -224,7 +224,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                       ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
                       : isDay
                       ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600'
-                      : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-teal-300'
+                      : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-emerald-300'
                   }`}
                 >
                   <Check className={`w-3.5 h-3.5 ${isMemorized ? 'stroke-[3]' : ''}`} />

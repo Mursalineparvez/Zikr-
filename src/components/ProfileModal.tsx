@@ -190,7 +190,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       const res = await install();
       setIsInstalling(false);
       if (res) {
-        setInstallFeedback('✓ অভিনন্দন! ZikrMate অ্যাপটি হোম স্ক্রিনে ইনস্টল হয়েছে!');
+        setInstallFeedback('✓ অভিনন্দন! Zikr+ অ্যাপটি হোম স্ক্রিনে ইনস্টল হয়েছে!');
         confetti({ particleCount: 65, spread: 65, origin: { y: 0.6 } });
       }
       setTimeout(() => setInstallFeedback(null), 4000);
@@ -652,14 +652,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   const handleSendFeedback = () => {
     const msg = feedbackMessage.trim() || '[আপনার ফিডব্যাক বা প্রশ্ন]';
-    const emailVal = feedbackUserEmail.trim() || userProfile.emailOrPhone || 'user@zikrmate.app';
-    const formattedText = `ZikrMate Feedback\nEmail: ${emailVal}\nLocation: ${feedbackLocation}\nModel: ${feedbackModel}\n\n${msg}`;
+    const emailVal = feedbackUserEmail.trim() || userProfile.emailOrPhone || 'user@zikrplus.app';
+    const formattedText = `Zikr+ Feedback\nEmail: ${emailVal}\nLocation: ${feedbackLocation}\nModel: ${feedbackModel}\n\n${msg}`;
 
     if (feedbackChannel === 'whatsapp') {
       const url = `https://wa.me/8801567963471?text=${encodeURIComponent(formattedText)}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     } else {
-      window.location.href = `mailto:mdmursalineparvez@gmail.com?subject=ZikrMate Feedback&body=${encodeURIComponent(formattedText)}`;
+      window.location.href = `mailto:mdmursalineparvez@gmail.com?subject=Zikr+ Feedback&body=${encodeURIComponent(formattedText)}`;
     }
 
     if (soundEnabled) soundHaptics.playMilestone();
@@ -789,8 +789,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             <Check className="w-3 h-3 stroke-[3]" />
                           </span>
                         </div>
-                        <p className={`text-xs truncate font-mono ${isDay ? 'text-slate-800 font-bold' : 'text-teal-200'}`}>
-                          {userProfile.emailOrPhone || 'Verified ZikrMate User'}
+                        <p className={`text-xs truncate font-mono ${isDay ? 'text-slate-800 font-bold' : 'text-emerald-300'}`}>
+                          {userProfile.emailOrPhone || 'Verified Zikr+ User'}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
@@ -813,7 +813,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer shrink-0 ${
                         isDay
                           ? 'bg-slate-100 hover:bg-emerald-100 border-slate-300 text-slate-800 hover:text-emerald-800'
-                          : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850] text-teal-200'
+                          : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850] text-emerald-300'
                       }`}
                       title="Edit Profile"
                     >
@@ -870,9 +870,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
                     <div>
                       <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight">
-                        ZikrMate Account Login
+                        Zikr+ Account Login
                       </h3>
-                      <p className={`text-xs mt-0.5 ${isDay ? 'text-slate-700 font-semibold' : 'text-teal-200/80'}`}>
+                      <p className={`text-xs mt-0.5 ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
                         ১-ক্লিকে সরাসরি লগইন করুন বা ভেরিফিকেশন কোড নিন।
                       </p>
                     </div>
@@ -913,7 +913,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
                     <div>
                       <div className="font-bold text-sm">Bookmarks</div>
-                      <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-teal-200/80'}`}>
+                      <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
                         সংরক্ষিত সূরা, আয়াত, হাদিস ও দোয়া
                       </div>
                     </div>
@@ -937,7 +937,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
                     <div>
                       <div className="font-bold text-sm">Downloaded Books</div>
-                      <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-teal-200/80'}`}>
+                      <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
                         অফলাইন কিতাব ও লাইব্রেরি PDF
                       </div>
                     </div>
@@ -961,7 +961,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
                     <div>
                       <div className="font-bold text-sm">Feedback</div>
-                      <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-teal-200/80'}`}>
+                      <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
                         WhatsApp (01567963471) বা ইমেইলে মতামত জানান
                       </div>
                     </div>
@@ -992,7 +992,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             Super Admin
                           </span>
                         </div>
-                        <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-teal-200/80'}`}>
+                        <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
                           লাইভ ডিভাইস, ইউজার ও জিকির রিপোর্ট
                         </div>
                       </div>
@@ -1018,7 +1018,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </div>
                       <div>
                         <div className="font-bold text-sm text-rose-600 dark:text-rose-400">Logout</div>
-                        <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-teal-200/80'}`}>
+                        <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
                           অ্যাকাউন্ট থেকে লগআউট করুন
                         </div>
                       </div>
@@ -1052,7 +1052,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </span>
                 </div>
                 <p className={`text-xs font-bold leading-relaxed ${
-                  isDay ? 'text-[#005e3f]' : 'text-teal-200/90'
+                  isDay ? 'text-[#005e3f]' : 'text-emerald-200/90'
                 }`}>
                   {SETTINGS_UI.languageDesc[selectedLanguage] ||
                     'আরবি হরফ ব্যতীত সকল মেনু, অনুবাদ ও নির্দেশিকা স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে'}
@@ -1074,7 +1074,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50 font-bold'
                             : isDay
                             ? 'bg-slate-50 hover:bg-emerald-50/90 border-slate-300 text-slate-900 font-bold'
-                            : 'bg-[#092226] hover:bg-[#133941] border-[#184850] text-teal-200'
+                            : 'bg-[#092226] hover:bg-[#133941] border-[#184850] text-emerald-300'
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
@@ -1113,9 +1113,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </div>
                   <div>
                     <h4 className={`font-extrabold text-sm ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                      মোবাইলে ZikrMate অ্যাপ ইনস্টল
+                      মোবাইলে Zikr+ অ্যাপ ইনস্টল
                     </h4>
-                    <p className={`text-[11px] font-semibold ${isDay ? 'text-emerald-950' : 'text-teal-200/90'}`}>
+                    <p className={`text-[11px] font-semibold ${isDay ? 'text-emerald-950' : 'text-emerald-200/90'}`}>
                       হোম স্ক্রিনে রাখুন, অফলাইনে দ্রুত রান হবে।
                     </p>
                   </div>
@@ -1180,11 +1180,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   isDay ? 'bg-slate-100/90 border-slate-300 text-slate-900' : 'bg-[#071f25] border-[#174853] text-white'
                 }`}
               >
-                <div className={`font-black text-xs ${isDay ? 'text-slate-900' : 'text-teal-200'}`}>
+                <div className={`font-black text-xs ${isDay ? 'text-slate-900' : 'text-emerald-300'}`}>
                   System Information
                 </div>
                 <div className={`grid grid-cols-2 gap-1.5 text-[11px] font-mono ${
-                  isDay ? 'text-slate-800 font-medium' : 'text-teal-200/90'
+                  isDay ? 'text-slate-800 font-medium' : 'text-emerald-200/90'
                 }`}>
                   <div>Model: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.deviceModel || 'Android Phone'}</span></div>
                   <div>OS: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.osVersion || 'Android 10'}</span></div>
@@ -1214,9 +1214,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </div>
                   <div>
                     <h3 className="font-black text-base text-slate-900 dark:text-white">
-                      ZikrMate Login / Sign Up
+                      Zikr+ Login / Sign Up
                     </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-teal-300/80">
+                    <p className="text-[11px] text-slate-500 dark:text-emerald-300/80">
                       সহজ ও নিরাপদ ১-ক্লিক অ্যাকাউন্ট সাইন-ইন
                     </p>
                   </div>
@@ -1249,7 +1249,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <GoogleIcon />
                       <div className="text-left">
                         <div className="text-xs sm:text-sm font-extrabold">Continue with Google</div>
-                        <div className="text-[10px] text-slate-500 dark:text-teal-300/70">
+                        <div className="text-[10px] text-slate-500 dark:text-emerald-300/70">
                           ১-ক্লিকে সরাসরি গুগল সাইন-ইন
                         </div>
                       </div>
@@ -1267,7 +1267,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Gmail Input (Required) */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-teal-200 mb-1 flex items-center gap-1.5">
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>জিমেইল / ইমেইল অ্যাড্রেস (Gmail) *</span>
                     </label>
@@ -1288,7 +1288,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   {/* Optional Phone Number */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] font-bold text-slate-600 dark:text-teal-200 flex items-center gap-1.5">
+                      <label className="text-[11px] font-bold text-slate-600 dark:text-emerald-300 flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         <span>মোবাইল নম্বর (Phone Number - Optional)</span>
                       </label>
@@ -1326,7 +1326,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Full Name (Optional) */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-teal-200 mb-1 flex items-center gap-1.5">
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>আপনার নাম (Name - Optional)</span>
                     </label>
@@ -1345,7 +1345,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Password Input */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-teal-200 mb-1 flex items-center gap-1.5">
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
                       <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>পাসওয়ার্ড (Password) *</span>
                     </label>
@@ -1367,7 +1367,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-teal-200 cursor-pointer"
+                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-emerald-300 cursor-pointer"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -1402,7 +1402,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       type="button"
                       disabled={isSendingCode}
                       onClick={handleSendOtp}
-                      className="w-full py-2.5 px-4 rounded-2xl bg-white dark:bg-[#092226] hover:bg-slate-50 text-slate-700 dark:text-teal-200 font-bold text-xs border border-slate-300 dark:border-teal-800 shadow-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                      className="w-full py-2.5 px-4 rounded-2xl bg-white dark:bg-[#092226] hover:bg-slate-50 text-slate-700 dark:text-emerald-300 font-bold text-xs border border-slate-300 dark:border-teal-800 shadow-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
                     >
                       {isSendingCode ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1422,7 +1422,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <h4 className="font-extrabold text-sm text-emerald-800 dark:text-emerald-300">
                       ভেরিফিকেশন কোড পাঠানো হয়েছে
                     </h4>
-                    <p className="text-[11px] text-slate-600 dark:text-teal-200/90">
+                    <p className="text-[11px] text-slate-600 dark:text-emerald-200/90">
                       আপনার ইমেইলে ({maskedTargetDisplay || inputEmail}) ৬-সংখ্যার সিকিউরিটি কোড পাঠানো হয়েছে।
                     </p>
                   </div>
@@ -1463,7 +1463,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* 6-DIGIT OTP BOXES */}
                   <div className="space-y-2">
-                    <label className="block text-center text-xs font-bold text-slate-600 dark:text-teal-200">
+                    <label className="block text-center text-xs font-bold text-slate-600 dark:text-emerald-300">
                       ৬-সংখ্যার সিকিউরিটি কোড দিন:
                     </label>
                     <div className="flex justify-between gap-1.5">
@@ -1536,7 +1536,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <h4 className="font-black text-base text-emerald-600 dark:text-emerald-400">
                       ✓ সফলভাবে লগইন হয়েছে!
                     </h4>
-                    <p className="text-xs text-slate-500 dark:text-teal-200 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-emerald-300 mt-1">
                       {cloudSyncMessage || 'ক্লাউড সিঙ্ক চালু হয়েছে...'}
                     </p>
                   </div>
@@ -1569,7 +1569,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
               <form onSubmit={handleSaveProfile} className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold block mb-1 text-slate-500 dark:text-teal-200">Full Name</label>
+                  <label className="font-bold block mb-1 text-slate-500 dark:text-emerald-300">Full Name</label>
                   <input
                     type="text"
                     required
@@ -1584,7 +1584,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1 text-slate-500 dark:text-teal-200">Email / Phone</label>
+                  <label className="font-bold block mb-1 text-slate-500 dark:text-emerald-300">Email / Phone</label>
                   <input
                     type="text"
                     required
@@ -1641,7 +1641,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold block text-slate-500 dark:text-teal-200 mb-1">
+                  <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">
                     Channel:
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -1668,7 +1668,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-bold block text-slate-500 dark:text-teal-200 mb-1">Your Email / Phone:</label>
+                  <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">Your Email / Phone:</label>
                   <input
                     type="text"
                     value={feedbackUserEmail}
@@ -1680,7 +1680,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-bold block text-slate-500 dark:text-teal-200 mb-1">Your Message:</label>
+                  <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">Your Message:</label>
                   <textarea
                     rows={3}
                     value={feedbackMessage}
@@ -1815,7 +1815,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <LogOut className="w-6 h-6" />
               </div>
               <h4 className="font-black text-base">Confirm Logout</h4>
-              <p className="text-xs text-slate-500 dark:text-teal-200/80">
+              <p className="text-xs text-slate-500 dark:text-emerald-200/80">
                 লগআউট করলে আপনার ক্লাউড একাউন্ট থেকে ডিসকানেক্ট হবেন। পুনরায় একই জিমেইল দিয়ে সাইন-ইন করলেই সব ডাটা ফিরে আসবে।
               </p>
               <div className="flex gap-2 pt-2">

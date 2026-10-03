@@ -38,7 +38,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Kitab Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#144d52] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#005a3e] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
             <BookMarked className="w-3.5 h-3.5" />
@@ -66,13 +66,13 @@ export const KitabView: React.FC<KitabViewProps> = ({
           >
             <button
               onClick={() => setSelectedChapter(null)}
-              className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#1c6469] hover:bg-[#154f53] text-white transition active:scale-95 cursor-pointer shadow-sm"
+              className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#006747] hover:bg-[#154f53] text-white transition active:scale-95 cursor-pointer shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{KITAB_UI.backToChapters[selectedLanguage]}</span>
             </button>
 
-            <span className={`text-xs font-medium ${isDay ? 'text-[#507579]' : 'text-teal-200'}`}>
+            <span className={`text-xs font-medium ${isDay ? 'text-[#507579]' : 'text-emerald-300'}`}>
               {selectedKitab.title}
             </span>
 
@@ -80,8 +80,8 @@ export const KitabView: React.FC<KitabViewProps> = ({
               onClick={() => handleCopyChapter(selectedChapter)}
               className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer ${
                 isDay
-                  ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#1c6469] border-[#d2ece9]'
-                  : 'bg-[#0a262c] text-teal-200 border-[#184850]'
+                  ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#006747] border-[#d2ece9]'
+                  : 'bg-[#0a262c] text-emerald-300 border-[#184850]'
               }`}
             >
               {copiedId === selectedChapter.id ? (
@@ -107,14 +107,14 @@ export const KitabView: React.FC<KitabViewProps> = ({
             }`}
           >
             <div className={`border-b pb-4 ${isDay ? 'border-[#e8f3f1]' : 'border-[#17434b]'}`}>
-              <span className="text-xs font-bold text-teal-600 dark:text-teal-300 uppercase tracking-wider">
+              <span className="text-xs font-bold text-teal-600 dark:text-emerald-300 uppercase tracking-wider">
                 {KITAB_UI.chapter[selectedLanguage]} {selectedChapter.chapterNumber}
               </span>
               <h3 className="text-lg sm:text-xl font-bold mt-1">
                 {selectedChapter.title}
               </h3>
               {selectedChapter.arabicTitle && (
-                <div className="font-arabic text-teal-700 dark:text-teal-300 text-xl font-bold mt-2">
+                <div className="font-arabic text-teal-700 dark:text-emerald-300 text-xl font-bold mt-2">
                   {selectedChapter.arabicTitle}
                 </div>
               )}
@@ -138,7 +138,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
                     : 'bg-[#0a262c] border-[#184850]'
                 }`}
               >
-                <div className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
+                <div className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-emerald-300 uppercase tracking-wider">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span>{KITAB_UI.spiritualTakeaways[selectedLanguage]}</span>
                 </div>
@@ -170,7 +170,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
           >
             <button
               onClick={() => setSelectedKitab(null)}
-              className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#1c6469] hover:bg-[#154f53] text-white transition active:scale-95 cursor-pointer shadow-sm"
+              className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#006747] hover:bg-[#154f53] text-white transition active:scale-95 cursor-pointer shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{KITAB_UI.backToKitabs[selectedLanguage]}</span>
@@ -178,7 +178,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
 
             <div className="text-right">
               <h3 className="text-sm font-bold">{selectedKitab.title}</h3>
-              <p className={`text-[11px] ${isDay ? 'text-[#507579]' : 'text-teal-200'}`}>
+              <p className={`text-[11px] ${isDay ? 'text-[#507579]' : 'text-emerald-300'}`}>
                 {selectedKitab.author}
               </p>
             </div>
@@ -199,8 +199,8 @@ export const KitabView: React.FC<KitabViewProps> = ({
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs group-hover:scale-105 transition border ${
                       isDay
-                        ? 'bg-[#e6f3f2] text-[#1c6469] border-[#cbe4e1]'
-                        : 'bg-[#0a262c] text-[#2dd4bf] border-[#184850]'
+                        ? 'bg-[#e6f3f2] text-[#006747] border-[#cbe4e1]'
+                        : 'bg-[#0a262c] text-[#10b981] border-[#184850]'
                     }`}
                   >
                     {chapter.chapterNumber}
@@ -227,7 +227,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
         <div className="space-y-4">
           <div className="relative">
             <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${
-              isDay ? 'text-[#7ca2a7]' : 'text-teal-400'
+              isDay ? 'text-[#94a3b8]' : 'text-teal-400'
             }`} />
             <input
               type="text"
@@ -236,7 +236,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
               placeholder={KITAB_UI.searchPlaceholder[selectedLanguage]}
               className={`w-full rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none transition shadow-sm border ${
                 isDay
-                  ? 'bg-white border-[#cde5e2] text-[#103e42] placeholder-[#7ca2a7] focus:border-[#1c6469]'
+                  ? 'bg-white border-[#cde5e2] text-[#103e42] placeholder-[#94a3b8] focus:border-[#006747]'
                   : 'bg-[#0e2f36] border-[#1a515c] text-white placeholder-teal-600 focus:border-teal-400'
               }`}
             />
@@ -267,8 +267,8 @@ export const KitabView: React.FC<KitabViewProps> = ({
                     <span
                       className={`text-[11px] px-2.5 py-1 rounded-full font-semibold border ${
                         isDay
-                          ? 'bg-[#e6f3f2] text-[#1c6469] border-[#cbe4e1]'
-                          : 'bg-[#0a262c] text-[#2dd4bf] border-[#184850]'
+                          ? 'bg-[#e6f3f2] text-[#006747] border-[#cbe4e1]'
+                          : 'bg-[#0a262c] text-[#10b981] border-[#184850]'
                       }`}
                     >
                       {kitab.category}
@@ -282,7 +282,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
                     {kitab.author}
                   </p>
                   <p className={`text-xs mt-2 line-clamp-2 leading-relaxed ${
-                    isDay ? 'text-[#507579]' : 'text-teal-200/80'
+                    isDay ? 'text-[#507579]' : 'text-emerald-200/80'
                   }`}>
                     {kitab.description}
                   </p>

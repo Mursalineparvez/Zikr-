@@ -103,7 +103,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         if (localTime > existing.lastSyncedAt) {
           existing.lastSyncedAt = localTime;
         }
-        if (p.name && (!existing.name || existing.name.includes('ZikrMate User'))) {
+        if (p.name && (!existing.name || existing.name.includes('ZikrMate User') || existing.name.includes('Zikr+ User'))) {
           existing.name = p.name;
         }
         if (p.photoUrl && !existing.photoUrl) {
@@ -298,7 +298,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
-                <span>ZikrMate Admin Dashboard</span>
+                <span>Zikr+ Admin Dashboard</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 font-extrabold uppercase">
                   Super Admin
                 </span>
@@ -350,7 +350,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
                   অ্যাডমিন প্যানেল সিকিউরিটি
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-teal-300/80 mt-1 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-emerald-300/80 mt-1 leading-relaxed">
                   অ্যাডমিন ড্যাশবোর্ড ব্যবহারের জন্য গোপন অ্যাডমিন পিন কোডটি দিন।
                 </p>
               </div>
@@ -411,7 +411,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 <div className="text-lg sm:text-2xl font-black font-mono tracking-tight">
                   {isLoading ? '...' : totalUsers}
                 </div>
-                <div className="text-[10px] text-slate-500 dark:text-teal-300/70 truncate">
+                <div className="text-[10px] text-slate-500 dark:text-emerald-300/70 truncate">
                   ক্লাউড রেজিস্টার্ড ইউজার
                 </div>
               </div>
@@ -431,7 +431,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 <div className="text-lg sm:text-2xl font-black font-mono tracking-tight text-amber-600 dark:text-amber-300">
                   {isLoading ? '...' : activeTodayCount}
                 </div>
-                <div className="text-[10px] text-slate-500 dark:text-teal-300/70 truncate">
+                <div className="text-[10px] text-slate-500 dark:text-emerald-300/70 truncate">
                   গত ২৪ ঘণ্টায় ব্যবহৃত
                 </div>
               </div>
@@ -440,7 +440,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
               <div
                 className={`p-3 rounded-2xl border shadow-sm space-y-1 ${
                   isDayTheme
-                    ? 'bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-200 text-slate-800'
+                    ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 text-slate-800'
                     : 'bg-gradient-to-br from-[#092b33] to-[#0e3740] border-teal-900/60 text-white'
                 }`}
               >
@@ -448,10 +448,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   <span className="text-[11px] font-bold">মোবাইল ডিভাইস</span>
                   <Smartphone className="w-4 h-4" />
                 </div>
-                <div className="text-lg sm:text-2xl font-black font-mono tracking-tight text-teal-600 dark:text-teal-300">
+                <div className="text-lg sm:text-2xl font-black font-mono tracking-tight text-teal-600 dark:text-emerald-300">
                   {isLoading ? '...' : mobileDeviceUsersCount}
                 </div>
-                <div className="text-[10px] text-slate-500 dark:text-teal-300/70 truncate">
+                <div className="text-[10px] text-slate-500 dark:text-emerald-300/70 truncate">
                   Vivo, Samsung, iPhone ইত্যাদি
                 </div>
               </div>
@@ -471,7 +471,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 <div className="text-lg sm:text-2xl font-black font-mono tracking-tight text-purple-600 dark:text-purple-300">
                   {isLoading ? '...' : grandTotalZikrsCount.toLocaleString()}
                 </div>
-                <div className="text-[10px] text-slate-500 dark:text-teal-300/70 truncate">
+                <div className="text-[10px] text-slate-500 dark:text-emerald-300/70 truncate">
                   সব ইউজারের সম্মিলিত গণনা
                 </div>
               </div>
@@ -511,7 +511,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
                     filterType === 'all'
                       ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-teal-300'
+                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
                   }`}
                 >
                   সব ইউজার ({totalUsers})
@@ -522,7 +522,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
                     filterType === 'today'
                       ? 'bg-amber-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-teal-300'
+                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
                   }`}
                 >
                   আজকের সক্রিয় ({activeTodayCount})
@@ -533,7 +533,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
                     filterType === 'google'
                       ? 'bg-teal-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-teal-300'
+                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
                   }`}
                 >
                   Google Sign-In ({users.filter((u) => u.verificationMethod.toLowerCase().includes('google') || u.email.toLowerCase().includes('@gmail.com') || u.emailOrPhone.toLowerCase().includes('@gmail.com')).length})
@@ -546,7 +546,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
               {isLoading ? (
                 <div className="p-12 text-center space-y-3">
                   <RefreshCw className="w-8 h-8 text-emerald-500 animate-spin mx-auto" />
-                  <p className="text-xs font-bold text-slate-500 dark:text-teal-300/80">
+                  <p className="text-xs font-bold text-slate-500 dark:text-emerald-300/80">
                     ফায়ারস্টোর থেকে সকল ইউজার ডাটা ও ডিভাইস মেট্রিক্স লোড হচ্ছে...
                   </p>
                 </div>
@@ -557,7 +557,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   }`}
                 >
                   <Users className="w-8 h-8 text-slate-400 mx-auto" />
-                  <p className="text-xs font-bold text-slate-600 dark:text-teal-200">
+                  <p className="text-xs font-bold text-slate-600 dark:text-emerald-300">
                     কোনো ইউজার রেকর্ড পাওয়া যায়নি!
                   </p>
                   <p className="text-[11px] text-slate-400 dark:text-teal-400/60">
@@ -612,12 +612,12 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                               </span>
                             </div>
 
-                            <div className="text-xs font-mono font-semibold text-slate-600 dark:text-teal-200">
+                            <div className="text-xs font-mono font-semibold text-slate-600 dark:text-emerald-300">
                               {user.emailOrPhone}
                             </div>
 
                             {/* Device & Location Info */}
-                            <div className="flex items-center gap-3 flex-wrap text-[11px] text-slate-500 dark:text-teal-300/80 pt-0.5 font-medium">
+                            <div className="flex items-center gap-3 flex-wrap text-[11px] text-slate-500 dark:text-emerald-300/80 pt-0.5 font-medium">
                               <span className="flex items-center gap-1 font-mono">
                                 <Smartphone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                 <span>{user.deviceModel}</span>
@@ -696,7 +696,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-tight">
                       {selectedUser.name} - আমল ও জিকির রিপোর্ট
                     </h3>
-                    <p className="text-[11px] font-mono text-slate-500 dark:text-teal-300/80">
+                    <p className="text-[11px] font-mono text-slate-500 dark:text-emerald-300/80">
                       {selectedUser.emailOrPhone}
                     </p>
                   </div>
@@ -721,7 +721,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   <Smartphone className="w-4 h-4" />
                   <span>ডিভাইস ও সিস্টেম ডাটা (Device Telemetry)</span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-[11px] text-slate-600 dark:text-teal-200">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-[11px] text-slate-600 dark:text-emerald-300">
                   <div>Model: {selectedUser.deviceModel}</div>
                   <div>OS: {selectedUser.osVersion}</div>
                   <div>Location: {selectedUser.location}</div>
@@ -741,7 +741,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
               {/* ACTIVE ZIKR BREAKDOWN */}
               <div className="space-y-2">
-                <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 dark:text-teal-300 flex items-center gap-1.5">
+                <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 dark:text-emerald-300 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>বর্তমান জিকির কাউন্ট (Active Zikr Breakdown)</span>
                 </h4>
@@ -769,7 +769,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
               {isLoadingUserDetail ? (
                 <div className="p-8 text-center space-y-2">
                   <RefreshCw className="w-6 h-6 text-emerald-500 animate-spin mx-auto" />
-                  <p className="text-xs font-bold text-slate-500 dark:text-teal-300">
+                  <p className="text-xs font-bold text-slate-500 dark:text-emerald-300">
                     ইউজারের আর্কাইভ ইতিহাস লোড হচ্ছে...
                   </p>
                 </div>
@@ -777,7 +777,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 <div className="space-y-4 pt-2">
                   {/* History Sessions List */}
                   <div className="space-y-2">
-                    <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 dark:text-teal-300 flex items-center gap-1.5">
+                    <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 dark:text-emerald-300 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-teal-500" />
                       <span>সংরক্ষিত হিস্ট্রি সেশন ({selectedUserDetail?.historySessions.length || 0})</span>
                     </h4>
@@ -796,7 +796,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                                 {s.dateStr || new Date(s.timestamp).toLocaleDateString()}
                               </div>
                               {s.note && (
-                                <div className="text-[10px] text-slate-500 dark:text-teal-300">
+                                <div className="text-[10px] text-slate-500 dark:text-emerald-300">
                                   {s.note}
                                 </div>
                               )}
@@ -816,7 +816,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
                   {/* Daily Aamal Logs Summary */}
                   <div className="space-y-2">
-                    <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 dark:text-teal-300 flex items-center gap-1.5">
+                    <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 dark:text-emerald-300 flex items-center gap-1.5">
                       <BookOpen className="w-3.5 h-3.5 text-amber-500" />
                       <span>দৈনিক আমল ট্র্যাকার ইতিহাস</span>
                     </h4>
@@ -838,7 +838,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                                   Score: {log.scorePercentage || 0}%
                                 </span>
                               </div>
-                              <div className="text-[11px] text-slate-500 dark:text-teal-300/80 font-mono">
+                              <div className="text-[11px] text-slate-500 dark:text-emerald-300/80 font-mono">
                                 পাঁচ ওয়াক্ত নামাজ: {log.prayers ? Object.values(log.prayers).filter((v: any) => v && v.offered).length : 0} / ৫ | সূরা মুলক: {log.surahMulk ? 'হ্যাঁ ✓' : 'না'} | আয়াতুল কুরসি: {log.ayatulKursi ? 'হ্যাঁ ✓' : 'না'}
                               </div>
                             </div>
@@ -873,7 +873,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
                   ইউজার ডিলিট নিশ্চিতকরণ
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-teal-200">
+                <p className="text-xs text-slate-500 dark:text-emerald-300">
                   আপনি কি নিশ্চিত <strong>"{userToDelete.name}"</strong>-এর ক্লাউড রেকর্ড স্থায়ীভাবে মুছে ফেলতে চান?
                 </p>
               </div>

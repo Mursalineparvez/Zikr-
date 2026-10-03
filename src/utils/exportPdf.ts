@@ -336,7 +336,7 @@ export async function generateComprehensiveHistoryPdfReport(
           بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </div>
         <h1 style="margin: 0; font-size: 20px; font-weight: 900; color: #064e3b; text-transform: uppercase; letter-spacing: 0.5px;">
-          ZikrMate — Islamic Deeds & Tasbeeh History Report
+          Zikr+ — Islamic Deeds &amp; Tasbeeh History Report
         </h1>
         <div style="display: flex; justify-content: center; gap: 16px; margin-top: 6px; font-size: 11px; color: #64748b;">
           <span><strong>Report Period:</strong> ${reportData.rangeLabel}</span>
@@ -442,7 +442,7 @@ export async function generateComprehensiveHistoryPdfReport(
           "Verily, in the remembrance of Allah do hearts find rest." — Surah Ar-Ra'd (13:28)
         </div>
         <div style="font-size: 9px; color: #94a3b8; margin-top: 6px;">
-          ZikrMate Digital Islamic Companion • 100% Offline & Private Archive
+          Zikr+ Digital Islamic Companion • 100% Offline &amp; Private Archive
         </div>
       </div>
     </div>
@@ -455,7 +455,7 @@ export async function generateComprehensiveHistoryPdfReport(
   if (html2pdf) {
     const opt = {
       margin: [6, 6, 6, 6],
-      filename: `ZikrMate-History-${reportData.rangeType}-${now.toISOString().slice(0, 10)}.pdf`,
+      filename: `Zikr+-History-${reportData.rangeType}-${now.toISOString().slice(0, 10)}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         scale: 2,
@@ -489,7 +489,7 @@ export async function generateComprehensiveHistoryPdfReport(
       <!DOCTYPE html>
       <html>
         <head>
-          <title>ZikrMate Report - ${reportData.rangeLabel}</title>
+          <title>Zikr+ Report - ${reportData.rangeLabel}</title>
           <style>
             body { margin: 0; padding: 20px; font-family: system-ui, sans-serif; }
             @media print {

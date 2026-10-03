@@ -260,8 +260,8 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
             : 'scale-100 ring-2 ring-emerald-500/30 hover:scale-105'
         } ${
           isDay
-            ? 'bg-gradient-to-tr from-[#164e52] via-[#247b82] to-[#3aa2aa] border-white shadow-teal-900/40'
-            : 'bg-gradient-to-tr from-[#062024] via-[#103d45] to-[#2dd4bf] border-[#2dd4bf]/60 shadow-black/90'
+            ? 'bg-gradient-to-tr from-[#005a3e] via-[#247b82] to-[#3aa2aa] border-white shadow-teal-900/40'
+            : 'bg-gradient-to-tr from-[#062024] via-[#103d45] to-[#10b981] border-[#10b981]/60 shadow-black/90'
         }`}
       >
         {/* Inner Circle Dial */}
@@ -302,7 +302,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
 
           {/* Expanded extra details */}
           {isExpanded ? (
-            <div className="flex flex-col items-center gap-0.5 text-[9px] font-semibold text-teal-600 dark:text-teal-300 z-10">
+            <div className="flex flex-col items-center gap-0.5 text-[9px] font-semibold text-teal-600 dark:text-emerald-300 z-10">
               <span className="font-mono text-emerald-500 font-bold">
                 আজকের: {dailyTotal.toLocaleString()}
               </span>
@@ -311,7 +311,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
               </span>
             </div>
           ) : (
-            <div className="text-[8px] sm:text-[9px] font-semibold flex items-center gap-0.5 text-teal-600 dark:text-teal-300/80 z-10">
+            <div className="text-[8px] sm:text-[9px] font-semibold flex items-center gap-0.5 text-teal-600 dark:text-emerald-300/80 z-10">
               <ChevronUp className="w-2.5 h-2.5" />
               <span>Top</span>
             </div>

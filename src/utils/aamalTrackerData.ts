@@ -717,13 +717,13 @@ export function exportAamalHistoryToCsv(monthFilter?: string): void {
   });
 
   const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
-  const fileName = `ZikrMate_Muhasabah_Amal_History_${monthFilter || 'Full'}.csv`;
+  const fileName = `Zikr+_Muhasabah_Amal_History_${monthFilter || 'Full'}.csv`;
   downloadFile(csvContent, fileName, 'text/csv;charset=utf-8;');
 }
 
 export function exportAamalHistoryToJson(): void {
   const allLogs = getAllAamalLogs();
   const jsonStr = JSON.stringify(allLogs, null, 2);
-  downloadFile(jsonStr, `ZikrMate_Muhasabah_Backup_${getTodayDateKey()}.json`, 'application/json');
+  downloadFile(jsonStr, `Zikr+_Muhasabah_Backup_${getTodayDateKey()}.json`, 'application/json');
 }
 

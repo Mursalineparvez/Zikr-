@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>ZikrMate - Digital Zikr PWA</title>
+  <title>Zikr+ - Digital Zikr PWA</title>
   <meta name="description" content="Serene Digital Zikr and Tasbeeh Progressive Web App with individual counters, master circular total, local persistence, haptic touch, and PDF export." />
   <meta name="theme-color" content="#064e3b" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="ZikrMate" />
+  <meta name="apple-mobile-web-app-title" content="Zikr+" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -84,8 +84,8 @@
   <script>
     (function injectManifest() {
       const manifestObj = {
-        name: "ZikrMate - Digital Zikr PWA",
-        short_name: "ZikrMate",
+        name: "Zikr+ - Digital Zikr PWA",
+        short_name: "Zikr+",
         description: "Serene Digital Zikr and Tasbeeh Progressive Web Application",
         start_url: window.location.href,
         scope: "./",
@@ -120,7 +120,7 @@
         </div>
         <div>
           <h1 class="text-base sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            ZikrMate
+            Zikr+
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/70 text-emerald-300 font-semibold border border-emerald-700/50">PWA</span>
           </h1>
           <p class="text-[11px] text-emerald-400/80 font-medium">Digital Zikir &amp; Counter Companion</p>
@@ -731,7 +731,7 @@
               بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
             </div>
             <h1 style="font-size: 20px; font-weight: 800; color: #064e3b; margin: 0; text-transform: uppercase;">
-              ZikrMate — Zikr Record & Progress Report
+              Zikr+ — Zikr Record &amp; Progress Report
             </h1>
             <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
               Generated on ${dateStr} at ${timeStr}
@@ -783,7 +783,7 @@
 
       const opt = {
         margin: [10, 10, 10, 10],
-        filename: `ZikrMate-Report-${now.toISOString().slice(0, 10)}.pdf`,
+        filename: `Zikr+-Report-${now.toISOString().slice(0, 10)}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }

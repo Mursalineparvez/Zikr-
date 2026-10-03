@@ -147,8 +147,9 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white drop-shadow-sm">
-                ZikrMate
+              <h1 className="text-base sm:text-lg font-black tracking-tight text-white drop-shadow-sm flex items-center">
+                <span>Zikr</span>
+                <span className="text-amber-300 font-black text-lg sm:text-xl ml-0.5">+</span>
               </h1>
               <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-white/20 text-emerald-100 font-bold border border-white/30">
                 PWA
@@ -290,7 +291,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={handleInstallClick}
               className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer"
-              title="Install ZikrMate App"
+              title="Install Zikr+ App"
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span>Install</span>
@@ -304,8 +305,8 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="fixed inset-0 z-50 bg-[#082024]/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#12454a] border border-teal-500/50 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-white">
             <h3 className="text-base font-bold flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-teal-300" />
-              <span>Install ZikrMate on iOS</span>
+              <Smartphone className="w-5 h-5 text-emerald-300" />
+              <span>Install Zikr+ on iOS</span>
             </h3>
             <p className="text-xs text-teal-100 leading-relaxed">
               1. Tap the <strong className="text-white">Share</strong> button at the bottom of Safari.<br />
@@ -314,7 +315,7 @@ export const Header: React.FC<HeaderProps> = ({
             </p>
             <button
               onClick={() => setShowIOSModal(false)}
-              className="w-full py-2.5 rounded-xl bg-white text-[#165a60] text-xs font-bold transition active:scale-95 cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-white text-[#006747] text-xs font-bold transition active:scale-95 cursor-pointer"
             >
               Got it
             </button>

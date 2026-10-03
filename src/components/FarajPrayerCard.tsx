@@ -217,7 +217,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                   <span>{completedCount}/5 Prayed</span>
                 </span>
               </div>
-              <p className={`text-[11px] font-bold ${isDay ? 'text-slate-800' : 'text-teal-300/70'}`}>
+              <p className={`text-[11px] font-bold ${isDay ? 'text-slate-800' : 'text-emerald-300/70'}`}>
                 5 Prescribed Daily Prayers • الصلوات الخمس المفروضة
               </p>
             </div>
@@ -230,8 +230,8 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer active:scale-95 shadow-sm ${
                 withCaution
                   ? isDay
-                    ? 'bg-[#e8f5f3] hover:bg-[#d8efe9] text-[#165a60] border-[#c0e4de]'
-                    : 'bg-[#092226] hover:bg-[#123e47] text-teal-300 border-[#184850]'
+                    ? 'bg-[#e8f5f3] hover:bg-[#d8efe9] text-[#006747] border-[#c0e4de]'
+                    : 'bg-[#092226] hover:bg-[#123e47] text-emerald-300 border-[#184850]'
                   : isDay
                   ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
@@ -290,7 +290,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                     </span>
                     {!withCaution && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                   </button>
-                  <div className="p-2 text-[10px] text-slate-400 dark:text-teal-300/70 border-t border-slate-100 dark:border-teal-900/40 mt-1">
+                  <div className="p-2 text-[10px] text-slate-400 dark:text-emerald-300/70 border-t border-slate-100 dark:border-teal-900/40 mt-1">
                     Adds safety buffer (+/- 2 min) around prayer boundaries.
                   </div>
                 </div>
@@ -513,7 +513,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                     className={`mt-2 p-3 rounded-2xl border text-xs leading-relaxed space-y-2 animate-in fade-in zoom-in-95 duration-200 ${
                       isDay
                         ? 'bg-gradient-to-b from-[#f4faf9] to-[#edf7f5] border-[#cbe6e2] text-slate-700'
-                        : 'bg-gradient-to-b from-[#092226] to-[#071d21] border-[#184850] text-teal-200'
+                        : 'bg-gradient-to-b from-[#092226] to-[#071d21] border-[#184850] text-emerald-300'
                     }`}
                   >
                     {/* Rak'ats Breakdown Badge */}
@@ -528,7 +528,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                     </div>
 
                     {/* Sun Position Rule */}
-                    <div className="text-[11px] text-slate-600 dark:text-teal-200/90 flex items-start gap-1.5">
+                    <div className="text-[11px] text-slate-600 dark:text-emerald-200/90 flex items-start gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
                       <span><strong>Waqt Condition:</strong> {meta.sunCondition}</span>
                     </div>
@@ -566,7 +566,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                           e.stopPropagation();
                           togglePlayAdhan(`${prayer.name} Adhan`);
                         }}
-                        className="inline-flex items-center gap-1 text-emerald-600 dark:text-teal-300 font-bold hover:underline cursor-pointer"
+                        className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-300 font-bold hover:underline cursor-pointer"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                         <span>Play Adhan</span>

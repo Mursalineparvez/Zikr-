@@ -87,7 +87,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Dua Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#144d52] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#005a3e] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
@@ -113,8 +113,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
             placeholder={DUA_UI.searchPlaceholder[selectedLanguage]}
             className={`w-full rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none transition shadow-sm border ${
               isDay
-                ? 'bg-white border-[#d2ece9] text-[#103e42] placeholder-[#709598] focus:border-[#1c6469]'
-                : 'bg-[#0e2f36] border-[#1a515c] text-white placeholder-slate-400 focus:border-[#2dd4bf]'
+                ? 'bg-white border-[#d2ece9] text-[#103e42] placeholder-[#709598] focus:border-[#006747]'
+                : 'bg-[#0e2f36] border-[#1a515c] text-white placeholder-slate-400 focus:border-[#10b981]'
             }`}
           />
         </div>
@@ -130,11 +130,11 @@ export const DuaView: React.FC<DuaViewProps> = ({
                 className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer border ${
                   isActive
                     ? isDay
-                      ? 'bg-[#1c6469] text-white border-[#1c6469] shadow-md shadow-[#135d66]/20'
-                      : 'bg-[#1c6469] text-white border-teal-400/50 shadow-md'
+                      ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#135d66]/20'
+                      : 'bg-[#006747] text-white border-teal-400/50 shadow-md'
                     : isDay
                     ? 'bg-[#e6f3f2] hover:bg-[#d8ece9] text-[#2d6a70] border-[#d2ece9]'
-                    : 'bg-[#0a262c] hover:bg-[#10343c] text-[#8ebac0] border-[#184850]'
+                    : 'bg-[#0a262c] hover:bg-[#10343c] text-[#94a3b8] border-[#184850]'
                 }`}
               >
                 {cat.label}
@@ -181,7 +181,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
                     {currentTitle}
                   </h3>
                   {currentTiming && (
-                    <span className={`text-xs font-semibold mt-0.5 block ${isDay ? 'text-[#1c6469]' : 'text-[#2dd4bf]'}`}>
+                    <span className={`text-xs font-semibold mt-0.5 block ${isDay ? 'text-[#006747]' : 'text-[#10b981]'}`}>
                       {currentTiming}
                     </span>
                   )}
@@ -194,7 +194,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
                     className={`p-2 rounded-xl transition active:scale-90 cursor-pointer border ${
                       isDay
                         ? 'bg-[#f0f7f6] hover:bg-[#e2f1f0] text-[#507579] border-[#d0e6e3]'
-                        : 'bg-[#092226] hover:bg-[#10343c] text-[#8ebac0] border-[#133c44]'
+                        : 'bg-[#092226] hover:bg-[#10343c] text-[#94a3b8] border-[#133c44]'
                     }`}
                     title="Copy Dua"
                   >
@@ -212,9 +212,9 @@ export const DuaView: React.FC<DuaViewProps> = ({
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer ${
                       isAdded
                         ? isDay
-                          ? 'bg-[#e2edea] text-[#1c6469] border border-[#cbe0dc]'
-                          : 'bg-[#092226] text-[#2dd4bf] border border-[#133c44]'
-                        : 'bg-[#1c6469] hover:bg-[#154f53] text-white shadow-md shadow-[#135d66]/20'
+                          ? 'bg-[#e2edea] text-[#006747] border border-[#cbe0dc]'
+                          : 'bg-[#092226] text-[#10b981] border border-[#133c44]'
+                        : 'bg-[#006747] hover:bg-[#154f53] text-white shadow-md shadow-[#135d66]/20'
                     }`}
                   >
                     {isAdded ? (
@@ -236,7 +236,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
               <div
                 dir="rtl"
                 className={`text-right font-arabic font-bold text-xl sm:text-2xl leading-loose my-3 select-none ${
-                  isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+                  isDay ? 'text-[#006747]' : 'text-[#10b981]'
                 }`}
               >
                 {dua.arabic}
@@ -256,9 +256,9 @@ export const DuaView: React.FC<DuaViewProps> = ({
 
               {/* Virtue & Reference */}
               <div className={`pt-3 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
-                isDay ? 'border-[#e8f3f1] text-[#507579]' : 'border-[#17434b] text-[#8ebac0]'
+                isDay ? 'border-[#e8f3f1] text-[#507579]' : 'border-[#17434b] text-[#94a3b8]'
               }`}>
-                <span className={`font-semibold ${isDay ? 'text-[#1c6469]' : 'text-[#2dd4bf]'}`}>
+                <span className={`font-semibold ${isDay ? 'text-[#006747]' : 'text-[#10b981]'}`}>
                   {dua.reference}
                 </span>
 
@@ -269,7 +269,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
                   </span>
                   <button
                     onClick={() => handleInlineIncrement(dua.id, target)}
-                    className="px-3 py-1 rounded-xl bg-[#1c6469] hover:bg-[#154f53] text-white font-bold text-xs active:scale-95 transition cursor-pointer flex items-center gap-1 shadow-sm"
+                    className="px-3 py-1 rounded-xl bg-[#006747] hover:bg-[#154f53] text-white font-bold text-xs active:scale-95 transition cursor-pointer flex items-center gap-1 shadow-sm"
                   >
                     <span>{DUA_UI.oneBead[selectedLanguage]}</span>
                   </button>
@@ -279,8 +279,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
               {currentVirtue && (
                 <div className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2 ${
                   isDay
-                    ? 'bg-[#eef7f6] border-[#d0e6e3] text-[#1c6469]'
-                    : 'bg-[#092226] border-[#133c44] text-[#8ebac0]'
+                    ? 'bg-[#eef7f6] border-[#d0e6e3] text-[#006747]'
+                    : 'bg-[#092226] border-[#133c44] text-[#94a3b8]'
                 }`}>
                   <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                   <span>{currentVirtue}</span>

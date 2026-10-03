@@ -83,7 +83,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           className={`fixed bottom-20 sm:bottom-6 right-5 sm:right-8 z-40 w-14 h-14 rounded-2xl active:scale-95 text-white shadow-2xl flex items-center justify-center transition-transform cursor-pointer border ${
             isDay
               ? 'bg-[#006747] hover:bg-[#005a3e] border-emerald-400/50 shadow-[#006747]/30'
-              : 'bg-[#1c6469] hover:bg-[#154f53] text-white border-teal-400/50 shadow-[#082024]/80'
+              : 'bg-[#006747] hover:bg-[#154f53] text-white border-teal-400/50 shadow-[#082024]/80'
           }`}
           aria-label="Add New Zikr"
           title="Add New Custom Zikr"
@@ -110,10 +110,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   item.isActive
                     ? isDay
                       ? 'text-white font-bold bg-[#006747] shadow-md shadow-[#006747]/20'
-                      : 'text-white font-bold bg-[#1c6469] border border-[#247b82] shadow-md'
+                      : 'text-white font-bold bg-[#006747] border border-[#247b82] shadow-md'
                     : isDay
                     ? 'text-[#456c72] hover:text-[#006747]'
-                    : 'text-[#60878e] hover:text-[#2dd4bf]'
+                    : 'text-[#60878e] hover:text-[#10b981]'
                 }`}
               >
                 <div className="flex items-center justify-center">

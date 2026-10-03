@@ -106,7 +106,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
     if (solar.sunProgressPercent > 80) {
       return 'from-rose-500/15 via-orange-500/10 to-transparent'; // Golden hour / Sunset
     }
-    return 'from-cyan-500/15 via-emerald-500/5 to-transparent'; // Midday
+    return 'from-emerald-500/15 via-emerald-500/5 to-transparent'; // Midday
   }, [solar.isDaytime, solar.sunProgressPercent, isDay]);
 
   return (
@@ -165,7 +165,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                   ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                   : isDay
                   ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
-                  : 'bg-[#092226] hover:bg-[#133c44] text-teal-300 border-[#184850]'
+                  : 'bg-[#092226] hover:bg-[#133c44] text-emerald-300 border-[#184850]'
               }`}
               title={isScrubbing ? 'Exit Solar Scrubbing' : 'Explore Sun Path'}
             >
@@ -205,7 +205,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                   ({prayerData.nextPrayerArabic})
                 </span>
                 <span className={`font-mono text-base sm:text-lg font-black ${
-                  isDay ? 'text-[#005a3e]' : 'text-teal-200'
+                  isDay ? 'text-[#005a3e]' : 'text-emerald-300'
                 }`}>
                   {prayerData.nextPrayerFormattedTime}
                 </span>
@@ -224,7 +224,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 animate-pulse" />
                 <span>{prayerData.timeRemainingFormatted} {SOLAR_UI.remainingTime[selectedLanguage] || 'remaining'}</span>
               </div>
-              <span className={`text-[10px] font-bold ${isDay ? 'text-slate-700' : 'text-teal-300/60'} sm:text-right`}>
+              <span className={`text-[10px] font-bold ${isDay ? 'text-slate-700' : 'text-emerald-300/60'} sm:text-right`}>
                 Live second countdown
               </span>
             </div>
@@ -290,8 +290,8 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 {/* Daylight Sky fill glow underneath arc */}
                 <linearGradient id="daylightAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
-                  <stop offset="60%" stopColor="#06b6d4" stopOpacity="0.08" />
-                  <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
+                  <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
                 </linearGradient>
 
                 {/* Sun Glow Radial Gradient */}
@@ -440,7 +440,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 <span>Sunrise</span>
               </div>
               <div className={`text-[11px] sm:text-xs font-mono font-extrabold mt-0.5 ${
-                isDay ? 'text-slate-800' : 'text-teal-200/80'
+                isDay ? 'text-slate-800' : 'text-emerald-200/80'
               }`}>
                 {solar.sunriseTime}
               </div>
@@ -455,7 +455,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 <span>Solar Noon (Dhuhr)</span>
               </div>
               <div className={`text-[11px] sm:text-xs font-mono font-extrabold mt-0.5 ${
-                isDay ? 'text-slate-800' : 'text-teal-200/80'
+                isDay ? 'text-slate-800' : 'text-emerald-200/80'
               }`}>
                 {solar.solarNoonTime}
               </div>
@@ -468,7 +468,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 <span>Sunset</span>
               </div>
               <div className={`text-[10px] sm:text-xs font-mono font-extrabold mt-0.5 ${
-                isDay ? 'text-slate-800' : 'text-teal-200/80'
+                isDay ? 'text-slate-800' : 'text-emerald-200/80'
               }`}>
                 {solar.sunsetRange}
               </div>
@@ -482,7 +482,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             {/* Metric 1: Total Daylight */}
             <div className="space-y-1">
               <div className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider ${
-                isDay ? 'text-slate-700' : 'text-teal-300/70'
+                isDay ? 'text-slate-700' : 'text-emerald-300/70'
               }`}>
                 Total Daylight
               </div>
@@ -494,7 +494,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             {/* Metric 2: Remaining Daylight */}
             <div className="space-y-1">
               <div className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider ${
-                isDay ? 'text-slate-700' : 'text-teal-300/70'
+                isDay ? 'text-slate-700' : 'text-emerald-300/70'
               }`}>
                 Remaining Daylight
               </div>
@@ -508,7 +508,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             {/* Metric 3: Current Salat Phase */}
             <div className="space-y-1">
               <div className={`text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider ${
-                isDay ? 'text-slate-700' : 'text-teal-300/70'
+                isDay ? 'text-slate-700' : 'text-emerald-300/70'
               }`}>
                 Current Salat Phase
               </div>
@@ -523,7 +523,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
 
         {/* 6. EXPANDABLE SOLAR ANGLE & PRAYER WINDOWS STRIP */}
         <div className={`flex items-center justify-between pt-1 text-[11px] ${
-          isDay ? 'text-slate-800 font-bold' : 'text-teal-300/70'
+          isDay ? 'text-slate-800 font-bold' : 'text-emerald-300/70'
         }`}>
           <div className="flex items-center gap-1.5 font-mono">
             <Compass className="w-3.5 h-3.5 text-emerald-600" />
@@ -554,7 +554,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
         {showAngleInfo && (
           <div
             className={`p-3 rounded-2xl border text-xs leading-relaxed space-y-2 animate-in fade-in duration-200 ${
-              isDay ? 'bg-[#f4faf9] border-[#d2ece9] text-slate-700' : 'bg-[#092226] border-[#184850] text-teal-200'
+              isDay ? 'bg-[#f4faf9] border-[#d2ece9] text-slate-700' : 'bg-[#092226] border-[#184850] text-emerald-300'
             }`}
           >
             <div className="font-bold flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
@@ -564,11 +564,11 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             <p className="text-[11px]">
               Every Islamic prayer corresponds to a distinct phase of the sun’s journey across the celestial dome:
             </p>
-            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-600 dark:text-teal-200/90 pl-1 font-sans">
+            <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-600 dark:text-emerald-200/90 pl-1 font-sans">
               <li><strong className="text-amber-600 dark:text-amber-400">Fajr:</strong> True dawn twilight when the sun is 18° below the eastern horizon.</li>
               <li><strong className="text-amber-500">Sunrise:</strong> Upper limb of the sun touches the horizon (prayer prohibited for ~15m).</li>
               <li><strong className="text-emerald-600 dark:text-emerald-400">Solar Noon (Zawal / Dhuhr):</strong> The sun reaches its highest meridian altitude and starts declining.</li>
-              <li><strong className="text-teal-600 dark:text-teal-300">Asr:</strong> When object shadows equal 1x or 2x (Hanafi) of their height plus midday shadow.</li>
+              <li><strong className="text-teal-600 dark:text-emerald-300">Asr:</strong> When object shadows equal 1x or 2x (Hanafi) of their height plus midday shadow.</li>
               <li><strong className="text-rose-500">Sunset / Maghrib:</strong> The solar disc completely dips beneath the horizon.</li>
               <li><strong className="text-indigo-400">Isha &amp; Tahajjud:</strong> Red twilight disappears into deep celestial night.</li>
             </ul>

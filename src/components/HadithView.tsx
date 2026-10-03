@@ -161,7 +161,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#144d52] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#005a3e] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
             <BookOpen className="w-3.5 h-3.5" />
@@ -190,10 +190,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
           }}
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             activeTab === 'recent'
-              ? 'bg-[#1c6469] text-white shadow-sm'
+              ? 'bg-[#006747] text-white shadow-sm'
               : isDay
               ? 'text-[#2d6a70] hover:bg-[#eef7f6]'
-              : 'text-teal-200 hover:bg-[#123e47]'
+              : 'text-emerald-300 hover:bg-[#123e47]'
           }`}
         >
           <History className="w-4 h-4" />
@@ -213,10 +213,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
           }}
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             activeTab === 'saved'
-              ? 'bg-[#1c6469] text-white shadow-sm'
+              ? 'bg-[#006747] text-white shadow-sm'
               : isDay
               ? 'text-[#2d6a70] hover:bg-[#eef7f6]'
-              : 'text-teal-200 hover:bg-[#123e47]'
+              : 'text-emerald-300 hover:bg-[#123e47]'
           }`}
         >
           <Heart className="w-4 h-4 text-rose-400" />
@@ -236,10 +236,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
           }}
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             activeTab === 'topics'
-              ? 'bg-[#1c6469] text-white shadow-sm'
+              ? 'bg-[#006747] text-white shadow-sm'
               : isDay
               ? 'text-[#2d6a70] hover:bg-[#eef7f6]'
-              : 'text-teal-200 hover:bg-[#123e47]'
+              : 'text-emerald-300 hover:bg-[#123e47]'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -253,10 +253,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
           }}
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             activeTab === 'books'
-              ? 'bg-[#1c6469] text-white shadow-sm'
+              ? 'bg-[#006747] text-white shadow-sm'
               : isDay
               ? 'text-[#2d6a70] hover:bg-[#eef7f6]'
-              : 'text-teal-200 hover:bg-[#123e47]'
+              : 'text-emerald-300 hover:bg-[#123e47]'
           }`}
         >
           <Library className="w-4 h-4" />
@@ -271,10 +271,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
           }}
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             activeTab === 'all'
-              ? 'bg-[#1c6469] text-white shadow-sm'
+              ? 'bg-[#006747] text-white shadow-sm'
               : isDay
               ? 'text-[#2d6a70] hover:bg-[#eef7f6]'
-              : 'text-teal-200 hover:bg-[#123e47]'
+              : 'text-emerald-300 hover:bg-[#123e47]'
           }`}
         >
           <BookMarked className="w-4 h-4" />
@@ -286,7 +286,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
       {activeTab !== 'books' && !selectedBookId && (
         <div
           onClick={() => addToRecents(dailyHadith.id)}
-          className={`p-6 rounded-3xl border shadow-sm relative overflow-hidden transition hover:border-[#1c6469] cursor-pointer ${
+          className={`p-6 rounded-3xl border shadow-sm relative overflow-hidden transition hover:border-[#006747] cursor-pointer ${
             isDay
               ? 'bg-white border-[#dcebe8] text-[#103e42]'
               : 'bg-[#0e2f36] border-[#1a515c] text-white'
@@ -297,15 +297,15 @@ export const HadithView: React.FC<HadithViewProps> = ({
               isDay ? 'border-[#e8f3f1]' : 'border-[#17434b]'
             }`}
           >
-            <span className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
+            <span className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-emerald-300 uppercase tracking-wider">
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span>{HADITH_UI.dailyHadith[selectedLanguage]}</span>
             </span>
             <span
               className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${
                 isDay
-                  ? 'bg-[#e6f3f2] text-[#1c6469] border-[#cbe4e1]'
-                  : 'bg-[#0a262c] text-[#2dd4bf] border-[#184850]'
+                  ? 'bg-[#e6f3f2] text-[#006747] border-[#cbe4e1]'
+                  : 'bg-[#0a262c] text-[#10b981] border-[#184850]'
               }`}
             >
               {dailyHadith.book} #{dailyHadith.hadithNumber}
@@ -315,7 +315,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
           <div
             dir="rtl"
             className={`font-arabic text-xl sm:text-2xl leading-relaxed font-bold my-3 ${
-              isDay ? 'text-[#0d4f54]' : 'text-teal-200'
+              isDay ? 'text-[#0d4f54]' : 'text-emerald-300'
             }`}
           >
             {dailyHadith.arabicText}
@@ -331,10 +331,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
 
           <div
             className={`flex items-center justify-between pt-3 border-t text-xs ${
-              isDay ? 'border-[#e8f3f1] text-[#507579]' : 'border-[#17434b] text-teal-200/80'
+              isDay ? 'border-[#e8f3f1] text-[#507579]' : 'border-[#17434b] text-emerald-200/80'
             }`}
           >
-            <span className="font-semibold text-teal-700 dark:text-teal-300">
+            <span className="font-semibold text-teal-700 dark:text-emerald-300">
               {HADITH_UI.narrator[selectedLanguage]}: {dailyHadith.narrator}
             </span>
             <div className="flex items-center gap-2">
@@ -344,7 +344,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   favoriteHadiths.includes(dailyHadith.id)
                     ? 'text-rose-500 bg-rose-50 border-rose-200'
                     : isDay
-                    ? 'text-[#7ca2a7] bg-[#f0f7f6] border-[#d2ece9]'
+                    ? 'text-[#94a3b8] bg-[#f0f7f6] border-[#d2ece9]'
                     : 'text-teal-400 bg-[#0a262c] border-[#184850]'
                 }`}
               >
@@ -354,8 +354,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
                 onClick={(e) => handleCopyHadith(dailyHadith, e)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer ${
                   isDay
-                    ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#1c6469] border-[#d2ece9]'
-                    : 'bg-[#0a262c] hover:bg-[#123e47] text-teal-200 border-[#184850]'
+                    ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#006747] border-[#d2ece9]'
+                    : 'bg-[#0a262c] hover:bg-[#123e47] text-emerald-300 border-[#184850]'
                 }`}
               >
                 {copiedId === dailyHadith.id ? (
@@ -400,7 +400,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   }}
                   className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer group flex items-start justify-between gap-3 ${
                     isDay
-                      ? 'bg-white hover:bg-[#f3f9f8] border-[#dcebe8] hover:border-[#1c6469] shadow-sm'
+                      ? 'bg-white hover:bg-[#f3f9f8] border-[#dcebe8] hover:border-[#006747] shadow-sm'
                       : 'bg-[#0e2f36] hover:bg-[#133e47] border-[#1a515c] hover:border-teal-400'
                   }`}
                 >
@@ -408,8 +408,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
                     <div
                       className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center font-bold text-xs border ${
                         isDay
-                          ? 'bg-[#e6f3f2] text-[#1c6469] border-[#cbe4e1]'
-                          : 'bg-[#0a262c] text-[#2dd4bf] border-[#184850]'
+                          ? 'bg-[#e6f3f2] text-[#006747] border-[#cbe4e1]'
+                          : 'bg-[#0a262c] text-[#10b981] border-[#184850]'
                       }`}
                     >
                       {idx + 1}
@@ -417,7 +417,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
 
                     <div className="space-y-1 min-w-0 flex-1">
                       {/* Arabic Title (Always Arabic!) */}
-                      <div dir="rtl" className="font-arabic text-base sm:text-lg font-bold text-teal-700 dark:text-teal-300 leading-snug">
+                      <div dir="rtl" className="font-arabic text-base sm:text-lg font-bold text-teal-700 dark:text-emerald-300 leading-snug">
                         {book.arabicName}
                       </div>
 
@@ -436,8 +436,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   <div
                     className={`p-1.5 rounded-full border shrink-0 transition group-hover:scale-110 ${
                       isDay
-                        ? 'bg-[#f0f7f6] text-[#1c6469] border-[#d2ece9]'
-                        : 'bg-[#0a262c] text-teal-300 border-[#184850]'
+                        ? 'bg-[#f0f7f6] text-[#006747] border-[#d2ece9]'
+                        : 'bg-[#0a262c] text-emerald-300 border-[#184850]'
                     }`}
                   >
                     <Info className="w-4 h-4" />
@@ -458,7 +458,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
         >
           <button
             onClick={() => setSelectedBookId(null)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/40 text-teal-800 dark:text-teal-200 text-xs font-bold transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/40 text-teal-800 dark:text-emerald-300 text-xs font-bold transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>{HADITH_UI.hadithBooks[selectedLanguage]}</span>
@@ -469,10 +469,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
             if (!b) return null;
             return (
               <div className="text-right">
-                <div dir="rtl" className="font-arabic font-bold text-sm text-teal-800 dark:text-teal-200">
+                <div dir="rtl" className="font-arabic font-bold text-sm text-teal-800 dark:text-emerald-300">
                   {b.arabicName}
                 </div>
-                <div className="text-xs font-medium text-teal-700 dark:text-teal-300">
+                <div className="text-xs font-medium text-teal-700 dark:text-emerald-300">
                   {b.titles[selectedLanguage] || b.titles.en}
                 </div>
               </div>
@@ -487,7 +487,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
           <div className="relative">
             <Search
               className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${
-                isDay ? 'text-[#7ca2a7]' : 'text-teal-400'
+                isDay ? 'text-[#94a3b8]' : 'text-teal-400'
               }`}
             />
             <input
@@ -497,7 +497,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
               placeholder={HADITH_UI.searchPlaceholder[selectedLanguage]}
               className={`w-full rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none transition shadow-sm border ${
                 isDay
-                  ? 'bg-white border-[#cde5e2] text-[#103e42] placeholder-[#7ca2a7] focus:border-[#1c6469]'
+                  ? 'bg-white border-[#cde5e2] text-[#103e42] placeholder-[#94a3b8] focus:border-[#006747]'
                   : 'bg-[#0e2f36] border-[#1a515c] text-white placeholder-teal-600 focus:border-teal-400'
               }`}
             />
@@ -516,10 +516,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   }}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition active:scale-95 cursor-pointer border ${
                     selectedTopic === topic
-                      ? 'bg-[#1c6469] text-white border-[#1c6469] shadow-md shadow-[#135d66]/20'
+                      ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#135d66]/20'
                       : isDay
                       ? 'bg-white hover:bg-[#eef7f6] text-[#2d6a70] border-[#d2ece9]'
-                      : 'bg-[#0e2f36] text-[#8ebac0] hover:text-white border-[#1a515c]'
+                      : 'bg-[#0e2f36] text-[#94a3b8] hover:text-white border-[#1a515c]'
                   }`}
                 >
                   {label}
@@ -533,7 +533,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
       {/* TOPIC-WISE ACCORDION / CARDS VIEW (When activeTab === 'topics' and no topic is filtered) */}
       {activeTab === 'topics' && selectedTopic === 'all' && !selectedBookId && (
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-bold text-teal-700 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-2">
             <Layers className="w-4 h-4" />
             <span>{HADITH_UI.topicWise[selectedLanguage]}</span>
           </h3>
@@ -554,7 +554,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                     }}
                     className={`p-4 rounded-2xl border transition cursor-pointer flex items-center justify-between gap-3 ${
                       isDay
-                        ? 'bg-white hover:bg-[#f0f7f6] border-[#dcebe8] hover:border-[#1c6469]'
+                        ? 'bg-white hover:bg-[#f0f7f6] border-[#dcebe8] hover:border-[#006747]'
                         : 'bg-[#0e2f36] hover:bg-[#133e47] border-[#1a515c] hover:border-teal-400'
                     }`}
                   >
@@ -562,8 +562,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
                       <div
                         className={`p-2.5 rounded-xl border ${
                           isDay
-                            ? 'bg-[#e6f3f2] text-[#1c6469] border-[#cbe4e1]'
-                            : 'bg-[#0a262c] text-[#2dd4bf] border-[#184850]'
+                            ? 'bg-[#e6f3f2] text-[#006747] border-[#cbe4e1]'
+                            : 'bg-[#0a262c] text-[#10b981] border-[#184850]'
                         }`}
                       >
                         <Layers className="w-4 h-4" />
@@ -596,7 +596,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
               }`}
             >
               <BookOpen className="w-10 h-10 mx-auto text-teal-500/60" />
-              <p className="text-sm font-medium text-teal-800 dark:text-teal-200">
+              <p className="text-sm font-medium text-teal-800 dark:text-emerald-300">
                 {activeTab === 'saved'
                   ? HADITH_UI.noSavedHadiths[selectedLanguage]
                   : activeTab === 'recent'
@@ -636,8 +636,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
                       <span
                         className={`px-2.5 py-1 rounded-full font-semibold border ${
                           isDay
-                            ? 'bg-[#e6f3f2] text-[#1c6469] border-[#cbe4e1]'
-                            : 'bg-[#0a262c] text-[#2dd4bf] border-[#184850]'
+                            ? 'bg-[#e6f3f2] text-[#006747] border-[#cbe4e1]'
+                            : 'bg-[#0a262c] text-[#10b981] border-[#184850]'
                         }`}
                       >
                         {hadith.book} #{hadith.hadithNumber}
@@ -646,7 +646,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                         className={`px-2 py-0.5 rounded-lg font-medium text-[11px] border ${
                           isDay
                             ? 'bg-[#f0f7f6] text-[#2d6a70] border-[#d2ece9]'
-                            : 'bg-[#0a262c] text-teal-300 border-[#184850]'
+                            : 'bg-[#0a262c] text-emerald-300 border-[#184850]'
                         }`}
                       >
                         {hadith.grade}
@@ -660,7 +660,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                           isFavorite
                             ? 'text-rose-500 bg-rose-50 border-rose-200'
                             : isDay
-                            ? 'text-[#7ca2a7] hover:text-rose-500 bg-[#f0f7f6] border-[#d2ece9]'
+                            ? 'text-[#94a3b8] hover:text-rose-500 bg-[#f0f7f6] border-[#d2ece9]'
                             : 'text-teal-400 hover:text-white bg-[#0a262c] border-[#184850]'
                         }`}
                         title={isFavorite ? 'Remove Favorite' : 'Save to Favorites'}
@@ -672,8 +672,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
                         onClick={(e) => handleCopyHadith(hadith, e)}
                         className={`p-1.5 rounded-lg transition active:scale-90 cursor-pointer border ${
                           isDay
-                            ? 'text-[#507579] hover:text-[#1c6469] bg-[#f0f7f6] border-[#d2ece9]'
-                            : 'text-teal-300 hover:text-white bg-[#0a262c] border-[#184850]'
+                            ? 'text-[#507579] hover:text-[#006747] bg-[#f0f7f6] border-[#d2ece9]'
+                            : 'text-emerald-300 hover:text-white bg-[#0a262c] border-[#184850]'
                         }`}
                         title={isCopied ? HADITH_UI.copied[selectedLanguage] : HADITH_UI.copy[selectedLanguage]}
                       >
@@ -690,7 +690,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   <div
                     dir="rtl"
                     className={`font-arabic text-lg sm:text-xl font-bold leading-relaxed mb-3 ${
-                      isDay ? 'text-[#0d4f54]' : 'text-teal-200'
+                      isDay ? 'text-[#0d4f54]' : 'text-emerald-300'
                     }`}
                   >
                     {hadith.arabicText}
@@ -710,8 +710,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
                     <div
                       className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2 ${
                         isDay
-                          ? 'bg-[#eef7f6] border-[#d0e6e3] text-[#1c6469]'
-                          : 'bg-[#092226] border-[#133c44] text-[#8ebac0]'
+                          ? 'bg-[#eef7f6] border-[#d0e6e3] text-[#006747]'
+                          : 'bg-[#092226] border-[#133c44] text-[#94a3b8]'
                       }`}
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -724,7 +724,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   {/* NARRATOR & TOPIC FOOTER */}
                   <div
                     className={`flex items-center justify-between pt-3 mt-3 border-t text-[11px] ${
-                      isDay ? 'border-[#e8f3f1] text-[#507579]' : 'border-[#17434b] text-teal-200/80'
+                      isDay ? 'border-[#e8f3f1] text-[#507579]' : 'border-[#17434b] text-emerald-200/80'
                     }`}
                   >
                     <span>
@@ -737,7 +737,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                       className={`px-2.5 py-0.5 rounded-full border ${
                         isDay
                           ? 'bg-[#f0f7f6] text-[#2d6a70] border-[#d2ece9]'
-                          : 'bg-[#0a262c] text-teal-300 border-[#184850]'
+                          : 'bg-[#0a262c] text-emerald-300 border-[#184850]'
                       }`}
                     >
                       {topicLabel}
