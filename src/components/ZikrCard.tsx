@@ -191,7 +191,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
             className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
               isDay
                 ? 'bg-[#e6f7f2] text-[#00875a] border-[#c3edd9]'
-                : 'bg-[#092226] text-[#2dd4bf] border-[#133c44]'
+                : 'bg-[#061f24] text-emerald-300 border-[#144349]'
             }`}
           >
             #{String(index + 1).padStart(2, '0')}
@@ -199,18 +199,18 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
 
           {hasTarget && (
             <span
-              className={`text-[11px] font-medium ${
-                isDay ? 'text-[#507579]' : 'text-[#8ebac0]'
+              className={`text-[11px] font-semibold ${
+                isDay ? 'text-slate-700' : 'text-slate-300'
               }`}
             >
-              {getTargetLabel(currentLang)} <span className="font-bold text-amber-500 dark:text-amber-400">{target}</span>
+              {getTargetLabel(currentLang)} <span className="font-bold text-amber-600 dark:text-amber-400">{target}</span>
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
           {isGoalMet && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-500 dark:text-amber-300 border border-amber-500/40 shrink-0 animate-pulse">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shrink-0 animate-pulse">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{getCompletedLabel(currentLang)}</span>
             </span>
@@ -225,8 +225,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
             }}
             className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium transition active:scale-95 cursor-pointer border ${
               isDay
-                ? 'bg-[#f0f7f6] hover:bg-[#e2f1f0] text-[#507579] hover:text-[#1c6469] border-[#d0e6e3]'
-                : 'bg-[#092226] hover:bg-[#10343c] text-[#8ebac0] hover:text-white border-[#133c44]'
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-emerald-800 border-slate-300'
+                : 'bg-[#061f24] hover:bg-[#0a2e36] text-emerald-300 hover:text-white border-[#144349]'
             }`}
             title={`${getResetLabel(currentLang)} (0)`}
           >
@@ -256,7 +256,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
                 ? 'text-lg sm:text-xl'
                 : 'text-xl sm:text-2xl'
             } ${
-              isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'
+              isDay ? 'text-[#0a382c]' : 'text-emerald-300'
             }`}
           >
             {displayArabic}
@@ -266,7 +266,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         {/* 2. Pronunciation in selected language */}
         <div
           dir={isUrdu ? 'rtl' : 'ltr'}
-          className={`text-center font-bold text-sm sm:text-base text-amber-400 tracking-wide ${
+          className={`text-center font-bold text-sm sm:text-base text-amber-500 dark:text-amber-400 tracking-wide ${
             isUrdu ? 'font-arabic' : ''
           }`}
         >
@@ -278,10 +278,10 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
           <div
             dir={isUrdu ? 'rtl' : 'ltr'}
             className={`text-xs leading-relaxed px-1 break-words whitespace-normal opacity-90 ${
-              isDay ? 'text-[#395c60]' : 'text-[#a2c5cb]'
+              isDay ? 'text-slate-800 font-medium' : 'text-slate-200'
             }`}
           >
-            <span className="font-semibold text-teal-600 dark:text-teal-400">
+            <span className="font-bold text-emerald-700 dark:text-emerald-400">
               {getMeaningLabel(currentLang)}
             </span>
             <span>{displayMeaning}</span>
@@ -289,23 +289,20 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         )}
       </div>
 
-      {/* Counter Inset Box:
-          Current Count / Target: e.g. 37 / 100
-          Progress bar and percentage
-      */}
+      {/* Counter Inset Box: */}
       <div
         className={`my-2 p-3 sm:p-4 rounded-2xl border transition-colors ${
           isDay
             ? 'bg-[#f0f7f6] border-[#d2ece9]'
-            : 'bg-[#092226] border-[#133c44]'
+            : 'bg-[#061f24] border-[#144349]'
         }`}
       >
         <div className="flex items-center justify-between mb-1.5 text-xs font-bold">
-          <span className={`uppercase tracking-wider ${isDay ? 'text-[#507579]' : 'text-[#8ebac0]'}`}>
+          <span className={`uppercase tracking-wider ${isDay ? 'text-slate-700 font-extrabold' : 'text-slate-300'}`}>
             {getCountLabel(currentLang)}
           </span>
           {hasTarget && (
-            <span className={isGoalMet ? 'text-amber-400 font-bold' : isDay ? 'text-[#165a60]' : 'text-[#2dd4bf]'}>
+            <span className={isGoalMet ? 'text-amber-500 font-bold' : isDay ? 'text-[#005a3e] font-extrabold' : 'text-emerald-300'}>
               {isGoalMet ? `${getCompletedLabel(currentLang)} (100%)` : `${progressPercent}%`}
             </span>
           )}
@@ -315,7 +312,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         <div className="flex items-baseline justify-between gap-2">
           <div
             className={`text-3xl sm:text-4xl font-black tracking-tight font-sans select-none drop-shadow-sm ${
-              isDay ? 'text-[#103e42]' : 'text-white'
+              isDay ? 'text-[#0a382c]' : 'text-white'
             }`}
           >
             {zikr.count.toLocaleString()}
@@ -324,8 +321,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
           <div
             className={`text-xs font-bold px-2.5 py-1 rounded-xl border ${
               isDay
-                ? 'bg-white border-[#cde5e2] text-[#1c6469]'
-                : 'bg-[#0a262c] border-[#184850] text-[#2dd4bf]'
+                ? 'bg-white border-[#cde5e2] text-[#006747]'
+                : 'bg-[#092226] border-[#144349] text-emerald-300'
             }`}
           >
             {hasTarget ? `${zikr.count} / ${target}` : `${zikr.count}`}
@@ -336,16 +333,14 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         {hasTarget && (
           <div
             className={`w-full h-2 rounded-full overflow-hidden mt-2.5 ${
-              isDay ? 'bg-[#d8ece9]' : 'bg-[#0e2f36]'
+              isDay ? 'bg-[#d8ece9]' : 'bg-[#092226]'
             }`}
           >
             <div
               className={`h-full transition-all duration-300 ${
                 isGoalMet
                   ? 'bg-gradient-to-r from-amber-500 to-amber-300'
-                  : isDay
-                  ? 'bg-[#1c6469]'
-                  : 'bg-gradient-to-r from-teal-500 to-teal-300'
+                  : 'bg-emerald-600'
               }`}
               style={{ width: `${progressPercent}%` }}
             />

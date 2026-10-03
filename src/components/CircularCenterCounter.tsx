@@ -83,13 +83,13 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
             isPopping ? 'scale-105' : 'scale-100'
           } ${
             isDay
-              ? 'bg-[#e6f3f2] text-[#1c6469] border border-[#cbe4e1]'
-              : 'bg-[#0a262c] text-[#2dd4bf] border-[#184850]'
+              ? 'bg-emerald-100 text-emerald-950 border border-emerald-300'
+              : 'bg-[#061f24] text-emerald-300 border-emerald-800/80'
           }`}
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              isPopping ? 'bg-emerald-400 animate-ping' : isDay ? 'bg-[#1c6469]' : 'bg-[#2dd4bf]'
+              isPopping ? 'bg-emerald-400 animate-ping' : 'bg-emerald-500'
             }`}
           />
           <span>{ZIKIR_UI.centralMasterCounter[selectedLanguage]}</span>
@@ -99,12 +99,12 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
         <div
           dir="rtl"
           className={`font-arabic text-2xl sm:text-3xl font-bold tracking-wide select-none ${
-            isDay ? 'text-[#164e52]' : 'text-[#2dd4bf]'
+            isDay ? 'text-[#0a382c]' : 'text-emerald-300'
           }`}
         >
           بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </div>
-        <p className={`text-xs ${isDay ? 'text-[#4e7478]' : 'text-[#90b8be]'}`}>
+        <p className={`text-xs ${isDay ? 'text-slate-700 font-semibold' : 'text-slate-300'}`}>
           {ZIKIR_UI.realtimeSubtitle[selectedLanguage]}
         </p>
       </div>
@@ -130,7 +130,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
           } ${
             isDay
               ? 'bg-gradient-to-tr from-[#005a3e] via-[#006747] to-[#00875a] shadow-[#006747]/25'
-              : 'bg-gradient-to-tr from-[#144d52] via-[#1c6469] to-[#2dd4bf] shadow-[#082024]/80'
+              : 'bg-gradient-to-tr from-[#072528] via-[#005a3e] to-[#00875a] shadow-black/80'
           }`}
         >
           {/* Inner Circular Face */}
@@ -140,19 +140,19 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
             } ${
               isDay
                 ? 'bg-[#f4faf8] border-2 border-white'
-                : 'bg-gradient-to-b from-[#092226] via-[#0d2d33] to-[#092226] border border-[#1a4a52]'
+                : 'bg-gradient-to-b from-[#061d22] via-[#092c30] to-[#061d22] border border-[#144349]'
             }`}
           >
             {/* Decorative dashed bead orbit */}
             <div
               className={`absolute inset-2 border border-dashed rounded-full pointer-events-none ${
-                isDay ? 'border-emerald-400/50' : 'border-[#2dd4bf]/30'
+                isDay ? 'border-emerald-400/50' : 'border-emerald-500/30'
               }`}
             />
 
             <span
               className={`text-[11px] font-bold uppercase tracking-widest mb-1 flex items-center gap-1 ${
-                isDay ? 'text-[#006747]' : 'text-[#2dd4bf]'
+                isDay ? 'text-[#006747]' : 'text-emerald-300'
               }`}
             >
               <Sparkles className="w-3 h-3 text-amber-400" />
