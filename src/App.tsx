@@ -1721,21 +1721,21 @@ export default function App() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveModule(tab.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer shrink-0 border ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all duration-200 active:scale-95 cursor-pointer shrink-0 border ${
                     isActive
                       ? isDay
-                        ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
-                        : 'bg-[#006747] text-white border-[#288a91] shadow-lg shadow-black/40'
+                        ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20 scale-[1.02]'
+                        : 'bg-[#006747] text-white border-[#288a91] shadow-lg shadow-black/40 scale-[1.02]'
                       : isDay
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                      : 'bg-[#0a1620] hover:bg-[#102330] text-slate-400 hover:text-white border-[#162c3a]'
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300 hover:scale-[1.01]'
+                      : 'bg-[#0a1620] hover:bg-[#102330] text-slate-400 hover:text-white border-[#162c3a] hover:scale-[1.01]'
                   }`}
                 >
                   <span className="text-sm">{tab.icon}</span>
                   <span>{tab.label}</span>
                   {tab.badge !== undefined && (
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold transition-transform ${
                         isActive
                           ? 'bg-white/20 text-white'
                           : isDay
@@ -1754,100 +1754,110 @@ export default function App() {
 
         {/* 1. ZIKIR COUNTER VIEW (HOME PAGE) */}
         {activeModule === 'zikir_counter' && (
-          <ZikirCounterView
-            masterTotal={masterGrandTotal}
-            dailyTotal={dailyTotal}
-            zikrs={zikrs}
-            completedGoals={completedGoals}
-            refreshMode={refreshMode}
-            currentPrayerSegment={currentPrayerSegment}
-            onRefreshModeChange={handleRefreshModeChange}
-            onManualCounterRefresh={handleManualCounterRefresh}
-            onIncrement={handleIncrement}
-            onDecrement={handleDecrement}
-            onReset={handleConfirmResetIndividual}
-            onDelete={handleConfirmDelete}
-            onEdit={(item) => {
-              setZikrToEdit(item);
-              setIsZikrModalOpen(true);
-            }}
-            onMoveUp={handleMoveUp}
-            onMoveDown={handleMoveDown}
-            onGlobalReset={handleGlobalReset}
-            onSaveSession={handleSaveSession}
-            onOpenAddModal={() => {
-              setZikrToEdit(null);
-              setIsZikrModalOpen(true);
-            }}
-            onRestoreDefaults={handleRestoreDefaults}
-            onExportPdf={handleExportPdf}
-            isExportingPdf={isExportingPdf}
-            themeMode={settings.themeMode}
-            selectedLanguage={selectedLanguage}
-          />
+          <div key="zikir_counter" className="animate-view-entrance">
+            <ZikirCounterView
+              masterTotal={masterGrandTotal}
+              dailyTotal={dailyTotal}
+              zikrs={zikrs}
+              completedGoals={completedGoals}
+              refreshMode={refreshMode}
+              currentPrayerSegment={currentPrayerSegment}
+              onRefreshModeChange={handleRefreshModeChange}
+              onManualCounterRefresh={handleManualCounterRefresh}
+              onIncrement={handleIncrement}
+              onDecrement={handleDecrement}
+              onReset={handleConfirmResetIndividual}
+              onDelete={handleConfirmDelete}
+              onEdit={(item) => {
+                setZikrToEdit(item);
+                setIsZikrModalOpen(true);
+              }}
+              onMoveUp={handleMoveUp}
+              onMoveDown={handleMoveDown}
+              onGlobalReset={handleGlobalReset}
+              onSaveSession={handleSaveSession}
+              onOpenAddModal={() => {
+                setZikrToEdit(null);
+                setIsZikrModalOpen(true);
+              }}
+              onRestoreDefaults={handleRestoreDefaults}
+              onExportPdf={handleExportPdf}
+              isExportingPdf={isExportingPdf}
+              themeMode={settings.themeMode}
+              selectedLanguage={selectedLanguage}
+            />
+          </div>
         )}
 
         {/* 2. QURAN VIEW */}
         {activeModule === 'quran' && (
-          <QuranView
-            soundEnabled={settings.soundEnabled}
-            themeMode={settings.themeMode}
-            selectedLanguage={selectedLanguage}
-            onSelectLanguage={setSelectedLanguage}
-          />
+          <div key="quran" className="animate-view-entrance">
+            <QuranView
+              soundEnabled={settings.soundEnabled}
+              themeMode={settings.themeMode}
+              selectedLanguage={selectedLanguage}
+              onSelectLanguage={setSelectedLanguage}
+            />
+          </div>
         )}
 
         {/* 3. SALAT TIME VIEW */}
         {activeModule === 'salat_time' && (
-          <SalatTimeView
-            soundEnabled={settings.soundEnabled}
-            themeMode={settings.themeMode}
-            selectedLanguage={selectedLanguage}
-          />
+          <div key="salat_time" className="animate-view-entrance">
+            <SalatTimeView
+              soundEnabled={settings.soundEnabled}
+              themeMode={settings.themeMode}
+              selectedLanguage={selectedLanguage}
+            />
+          </div>
         )}
 
         {/* 4. AAMAL TRACKER VIEW */}
         {activeModule === 'aamal_tracker' && (
-          <AamalTrackerView
-            soundEnabled={settings.soundEnabled}
-            themeMode={settings.themeMode}
-            selectedLanguage={selectedLanguage}
-            userProfile={userProfile}
-            liveZikrs={zikrs}
-          />
+          <div key="aamal_tracker" className="animate-view-entrance">
+            <AamalTrackerView
+              soundEnabled={settings.soundEnabled}
+              themeMode={settings.themeMode}
+              selectedLanguage={selectedLanguage}
+              userProfile={userProfile}
+              liveZikrs={zikrs}
+            />
+          </div>
         )}
 
         {/* 5. OTHER ISLAMIC HUB VIEW (DUA, HADITH, KITAB, DAILY TABLIG, ALLAH 99 NAMES, HAJJ & UMRAH, SETTINGS) */}
         {isOtherActive && (
-          <OtherIslamicHubView
-            onAddDuaToCounters={handleAddDuaToCounters}
-            activeCounters={zikrs}
-            soundEnabled={settings.soundEnabled}
-            themeMode={settings.themeMode}
-            selectedLanguage={selectedLanguage}
-            onSelectLanguage={setSelectedLanguage}
-            settings={settings}
-            onUpdateSettings={(newSettings) => setSettings((prev) => ({ ...prev, ...newSettings }))}
-            onGlobalReset={handleGlobalReset}
-            onRestoreDefaults={handleRestoreDefaults}
-            onExportPdf={handleExportPdf}
-            onOpenSettingsModal={() => handleOpenProfileModal('settings')}
-            initialSubSection={
-              activeModule === 'dua'
-                ? 'dua'
-                : activeModule === 'hadith'
-                ? 'hadith'
-                : activeModule === 'kitab'
-                ? 'kitab'
-                : activeModule === 'tablig'
-                ? 'tablig'
-                : activeModule === 'allah_names'
-                ? 'allah_names'
-                : activeModule === 'hajj_umrah'
-                ? 'hajj_umrah'
-                : 'hub'
-            }
-          />
+          <div key="other_hub" className="animate-view-entrance">
+            <OtherIslamicHubView
+              onAddDuaToCounters={handleAddDuaToCounters}
+              activeCounters={zikrs}
+              soundEnabled={settings.soundEnabled}
+              themeMode={settings.themeMode}
+              selectedLanguage={selectedLanguage}
+              onSelectLanguage={setSelectedLanguage}
+              settings={settings}
+              onUpdateSettings={(newSettings) => setSettings((prev) => ({ ...prev, ...newSettings }))}
+              onGlobalReset={handleGlobalReset}
+              onRestoreDefaults={handleRestoreDefaults}
+              onExportPdf={handleExportPdf}
+              onOpenSettingsModal={() => handleOpenProfileModal('settings')}
+              initialSubSection={
+                activeModule === 'dua'
+                  ? 'dua'
+                  : activeModule === 'hadith'
+                  ? 'hadith'
+                  : activeModule === 'kitab'
+                  ? 'kitab'
+                  : activeModule === 'tablig'
+                  ? 'tablig'
+                  : activeModule === 'allah_names'
+                  ? 'allah_names'
+                  : activeModule === 'hajj_umrah'
+                  ? 'hajj_umrah'
+                  : 'hub'
+              }
+            />
+          </div>
         )}
       </main>
 

@@ -401,16 +401,14 @@ export async function saveUserDataToCloud(
     // Wrap setDoc in race with timeout so write stream backoff never blocks UI
     try {
       const setDocPromise = setDoc(userDocRef, userDocPayload, { merge: true });
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Write timeout')), 3500));
+      // If Firestore network latency takes more than 6s, proceed without blocking the user
+      const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 6000));
       await Promise.race([setDocPromise, timeoutPromise]);
     } catch (writeErr: any) {
       if (writeErr?.code === 'resource-exhausted' || writeErr?.message?.includes('Quota limit exceeded')) {
-        console.warn('Firestore write quota limit reached. Falling back to local offline vault.');
         try {
           localStorage.setItem('zikrmate_firestore_quota_exhausted', 'true');
         } catch {}
-      } else {
-        console.warn('Firestore user doc write notice:', writeErr?.message || writeErr);
       }
     }
 

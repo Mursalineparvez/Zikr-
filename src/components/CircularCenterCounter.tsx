@@ -64,15 +64,20 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
           : 'bg-[#0e2f36] border border-[#1a515c] shadow-[#082024]/60'
       }`}
     >
-      {/* Decorative ambient flares */}
+      {/* Decorative ambient breathing Noor flares */}
+      <div
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full pointer-events-none animate-nur-breathe ${
+          isDay ? 'bg-emerald-500/15' : 'bg-emerald-400/20'
+        }`}
+      />
       <div
         className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none transition-opacity duration-300 ${
           isPopping ? 'opacity-100 scale-110' : 'opacity-70'
-        } ${isDay ? 'bg-teal-500/20' : 'bg-teal-400/25'}`}
+        } ${isDay ? 'bg-emerald-500/15' : 'bg-emerald-400/20'}`}
       />
       <div
         className={`absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
-          isDay ? 'bg-amber-400/10' : 'bg-amber-400/10'
+          isDay ? 'bg-amber-400/15' : 'bg-amber-400/10'
         }`}
       />
 
@@ -143,12 +148,51 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
                 : 'bg-gradient-to-b from-[#061d22] via-[#092c30] to-[#061d22] border border-[#144349]'
             }`}
           >
-            {/* Decorative dashed bead orbit */}
-            <div
-              className={`absolute inset-2 border border-dashed rounded-full pointer-events-none ${
-                isDay ? 'border-emerald-400/50' : 'border-emerald-500/30'
-              }`}
-            />
+            {/* 33 Animated Dynamic Tasbeeh Beads around Orbit */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              viewBox="0 0 200 200"
+            >
+              {/* Outer track circle */}
+              <circle
+                cx="100"
+                cy="100"
+                r="86"
+                fill="none"
+                stroke={isDay ? 'rgba(0, 103, 71, 0.12)' : 'rgba(16, 185, 129, 0.15)'}
+                strokeWidth="1.5"
+                strokeDasharray="2 3"
+              />
+              {/* 33 Individual Beads */}
+              {Array.from({ length: 33 }).map((_, i) => {
+                const angle = (i * 360) / 33 - 90;
+                const rad = (angle * Math.PI) / 180;
+                const r = 86;
+                const cx = 100 + r * Math.cos(rad);
+                const cy = 100 + r * Math.sin(rad);
+                const currentBead = totalCount > 0 ? (totalCount - 1) % 33 : -1;
+                const isCurrent = i === currentBead;
+                const isPassed = totalCount > 0 && i <= currentBead;
+                return (
+                  <circle
+                    key={i}
+                    cx={cx}
+                    cy={cy}
+                    r={isCurrent ? 4.5 : isPassed ? 2.8 : 2}
+                    className="transition-all duration-200"
+                    fill={
+                      isCurrent
+                        ? '#f59e0b'
+                        : isPassed
+                        ? isDay ? '#006747' : '#10b981'
+                        : isDay ? 'rgba(0, 103, 71, 0.25)' : 'rgba(16, 185, 129, 0.2)'
+                    }
+                    stroke={isCurrent ? '#ffffff' : 'none'}
+                    strokeWidth={isCurrent ? '1.5' : '0'}
+                  />
+                );
+              })}
+            </svg>
 
             <span
               className={`text-[11px] font-bold uppercase tracking-widest mb-1 flex items-center gap-1 ${

@@ -171,19 +171,76 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
     }
   };
 
+  const [ripples, setRipples] = React.useState<{ id: number; x: number; y: number }[]>([]);
+  const [particles, setParticles] = React.useState<{ id: number; x: number; y: number }[]>([]);
+  const [isBumping, setIsBumping] = React.useState(false);
+  const prevCount = React.useRef(zikr.count);
+
+  React.useEffect(() => {
+    if (zikr.count > prevCount.current) {
+      setIsBumping(true);
+      const timer = setTimeout(() => setIsBumping(false), 240);
+      prevCount.current = zikr.count;
+      return () => clearTimeout(timer);
+    }
+    prevCount.current = zikr.count;
+  }, [zikr.count]);
+
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const newId = Date.now();
+    setRipples((prev) => [...prev.slice(-2), { id: newId, x, y }]);
+    setParticles((prev) => [...prev.slice(-2), { id: newId, x, y }]);
+
+    setTimeout(() => {
+      setRipples((prev) => prev.filter((r) => r.id !== newId));
+    }, 550);
+    setTimeout(() => {
+      setParticles((prev) => prev.filter((p) => p.id !== newId));
+    }, 650);
+
+    onIncrement(zikr.id);
+  };
+
   return (
     <div
-      onClick={() => onIncrement(zikr.id)}
+      onClick={handleCardClick}
       className={`relative rounded-[26px] border transition-all duration-200 p-4 sm:p-5 shadow-md flex flex-col justify-between overflow-hidden cursor-pointer select-none active:scale-[0.99] group ${
         isDay
           ? isGoalMet
-            ? 'bg-white border-amber-400/80 shadow-amber-500/10'
+            ? 'bg-white border-amber-400/80 shadow-amber-500/10 ring-2 ring-amber-400/20'
             : 'bg-white border-[#dcebe8] hover:border-[#b5dcd6] shadow-[#135d66]/5'
           : isGoalMet
-          ? 'bg-[#0e2f36] border-amber-500/80 shadow-amber-950/20'
+          ? 'bg-[#0e2f36] border-amber-500/80 shadow-amber-950/20 ring-2 ring-amber-500/20'
           : 'bg-[#0e2f36] border-[#1a515c] hover:border-[#266e7c] shadow-[#082024]/60'
       }`}
     >
+      {/* Tap Ripple Effect Layers */}
+      {ripples.map((ripple) => (
+        <span
+          key={ripple.id}
+          style={{ left: ripple.x, top: ripple.y }}
+          className="absolute -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full bg-emerald-500/20 dark:bg-emerald-400/25 animate-ripple pointer-events-none"
+        />
+      ))}
+
+      {/* Floating "+1" Micro-Particle on Card Tap */}
+      {particles.map((p) => (
+        <span
+          key={p.id}
+          style={{ left: p.x, top: p.y - 12 }}
+          className="absolute font-black text-sm text-emerald-600 dark:text-emerald-300 drop-shadow-sm pointer-events-none z-20 animate-out fade-out slide-out-to-top duration-500 select-none"
+        >
+          +1
+        </span>
+      ))}
+
+      {/* Goal Completion Subtle Shimmer Banner */}
+      {isGoalMet && (
+        <div className="absolute inset-0 pointer-events-none animate-goal-shimmer opacity-30" />
+      )}
       {/* Top Header Row: Index & Completed status / quick reset */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -311,8 +368,12 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
         {/* Big Count Display */}
         <div className="flex items-baseline justify-between gap-2">
           <div
-            className={`text-3xl sm:text-4xl font-black tracking-tight font-sans select-none drop-shadow-sm ${
-              isDay ? 'text-[#0a382c]' : 'text-white'
+            className={`text-3xl sm:text-4xl font-black tracking-tight font-sans select-none drop-shadow-sm transition-all duration-150 ${
+              isBumping
+                ? 'scale-115 text-amber-500'
+                : isDay
+                ? 'text-[#0a382c]'
+                : 'text-white'
             }`}
           >
             {zikr.count.toLocaleString()}

@@ -4,19 +4,41 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <script>
-      // Gracefully prevent Vite HMR websocket proxy close from surfacing as unhandled rejection
-      window.addEventListener('unhandledrejection', function (e) {
-        var errStr = (e.reason && (e.reason.message || e.reason.stack || '' + e.reason)) || '';
-        if (errStr.indexOf('WebSocket') !== -1 || errStr.indexOf('websocket') !== -1) {
-          e.preventDefault();
+      (function() {
+        // Intercept Vite HMR proxy WebSocket errors & unhandled rejections
+        function isWsError(msg) {
+          if (!msg) return false;
+          var s = String(msg).toLowerCase();
+          return s.indexOf('websocket') !== -1 || s.indexOf('[vite]') !== -1;
         }
-      });
-      window.addEventListener('error', function (e) {
-        var errStr = (e.message || '') + '';
-        if (errStr.indexOf('WebSocket') !== -1 || errStr.indexOf('websocket') !== -1) {
-          e.preventDefault();
-        }
-      });
+
+        window.addEventListener('unhandledrejection', function (e) {
+          var errStr = (e.reason && (e.reason.message || e.reason.stack || '' + e.reason)) || '';
+          if (isWsError(errStr)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return false;
+          }
+        }, true);
+
+        window.addEventListener('error', function (e) {
+          var errStr = (e.message || (e.error && (e.error.message || e.error.stack)) || '') + '';
+          if (isWsError(errStr)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return false;
+          }
+        }, true);
+
+        var origError = console.error;
+        console.error = function() {
+          var firstArg = arguments[0] ? String(arguments[0]) : '';
+          if (isWsError(firstArg)) {
+            return;
+          }
+          return origError.apply(console, arguments);
+        };
+      })();
     </script>
     <title>Zikr+ - Digital Zikr PWA</title>
     <meta name="description" content="Serene Digital Zikr and Tasbeeh Progressive Web App with individual counters, master circular total, local persistence, haptic touch, and PDF export." />

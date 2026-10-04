@@ -79,3 +79,98 @@ body.theme-night {
 .glow-teal {
   animation: tealGlow 3s infinite ease-in-out;
 }
+
+/* Celestial Noor Breathing Glow */
+@keyframes nurBreathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.65;
+    filter: blur(28px);
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.95;
+    filter: blur(34px);
+  }
+}
+
+.animate-nur-breathe {
+  animation: nurBreathe 4.5s infinite ease-in-out;
+  will-change: transform, opacity;
+}
+
+/* Tab & View Fluid Entrance */
+@keyframes viewEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-view-entrance {
+  animation: viewEntrance 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Bead Pulse & Tap Spring */
+@keyframes springPop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.18);
+  }
+  75% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-spring-pop {
+  animation: springPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Celebratory Goal Achieved Shimmer */
+@keyframes goalShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-goal-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(245, 158, 11, 0.1) 0%,
+    rgba(245, 158, 11, 0.35) 50%,
+    rgba(245, 158, 11, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: goalShimmer 2.5s infinite linear;
+}
+
+/* Ripple ring expanding on click */
+@keyframes rippleWave {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.animate-ripple {
+  animation: rippleWave 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
