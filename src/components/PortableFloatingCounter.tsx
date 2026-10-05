@@ -80,8 +80,9 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
     };
   };
 
-  // Adjust on screen resize
+  // Adjust on screen resize and initial mount
   useEffect(() => {
+    setPosition((prev) => clampPosition(prev.x, prev.y, isExpanded));
     const handleResize = () => {
       setPosition((prev) => clampPosition(prev.x, prev.y, isExpanded));
     };
@@ -219,7 +220,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
-      className={`fixed z-50 touch-none select-none transition-shadow duration-200 cursor-grab active:cursor-grabbing ${
+      className={`fixed z-[60] touch-none select-none transition-shadow duration-200 cursor-grab active:cursor-grabbing animate-in fade-in zoom-in-95 ${
         isDragging ? 'scale-105 opacity-95 shadow-2xl' : 'opacity-100'
       }`}
     >

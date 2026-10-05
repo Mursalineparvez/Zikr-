@@ -66,18 +66,40 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   useEffect(() => {
     const handleScroll = () => {
       const topDial = document.getElementById('main-circular-center-counter');
+      const scrollY =
+        window.scrollY ||
+        window.pageYOffset ||
+        document.documentElement.scrollTop ||
+        document.body.scrollTop ||
+        0;
+
       if (topDial) {
         const rect = topDial.getBoundingClientRect();
-        // Show portable counter whenever user scrolls past top circular counter
-        setShowFloatingCounter(rect.bottom < 140);
+        // Show portable counter as soon as user scrolls down past the main top dial
+        // (i.e. top dial starts leaving upper viewport or user has scrolled down > 70px)
+        const isPastTop = rect.bottom < 380 || rect.top < 60 || scrollY > 70;
+        setShowFloatingCounter(isPastTop);
       } else {
-        setShowFloatingCounter(window.scrollY > 200);
+        setShowFloatingCounter(scrollY > 70);
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+
+    // Initial check
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Check periodically during the first few seconds for layout stabilization
+    const interval = setInterval(handleScroll, 400);
+    const timeout = setTimeout(() => clearInterval(interval), 2500);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      document.removeEventListener('scroll', handleScroll, true);
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, []);
 
   const scrollToTopDial = () => {

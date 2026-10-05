@@ -5,8 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <script>
       (function() {
-        // Intercept Vite HMR proxy WebSocket errors & unhandled rejections
-        function isWsError(msg) {
+        // 1. Intercept Vite HMR WebSocket connection to prevent "WebSocket closed without opened" in Cloud Run proxy
+        var NativeWebSocket = window.WebSocket;
+        if (typeof NativeWebSocket !== 'undefined') {
+          function MockViteHmrSocket(url, protocols) {
+            var isHmr = false;
+            if (protocols === 'vite-hmr' || (Array.isArray(protocols) && protocols.indexOf('vite-hmr') !== -1)) {
+              isHmr = true;
+            } else if (typeof url === 'string' && (url.indexOf('token=') !== -1 || url.indexOf('vite-hmr') !== -1)) {
+              isHmr = true;
+            }
+
+            if (!isHmr) {
+              return new NativeWebSocket(url, protocols);
+            }
+
+            var emitter = new EventTarget();
+            emitter.OPEN = 1;
+            emitter.CLOSED = 3;
+            emitter.CONNECTING = 0;
+            emitter.CLOSING = 2;
+            emitter.readyState = 1; // Mark as OPEN so Vite connects immediately
+            emitter.binaryType = 'blob';
+            emitter.protocol = 'vite-hmr';
+            emitter.url = String(url);
+
+            emitter.send = function() {};
+            emitter.close = function() {
+              emitter.readyState = 3;
+              emitter.dispatchEvent(new Event('close'));
+            };
+
+            setTimeout(function() {
+              if (typeof emitter.onopen === 'function') emitter.onopen(new Event('open'));
+              emitter.dispatchEvent(new Event('open'));
+            }, 0);
+
+            return emitter;
+          }
+
+          MockViteHmrSocket.OPEN = 1;
+          MockViteHmrSocket.CLOSED = 3;
+          MockViteHmrSocket.CONNECTING = 0;
+          MockViteHmrSocket.CLOSING = 2;
+          MockViteHmrSocket.prototype = NativeWebSocket.prototype;
+          window.WebSocket = MockViteHmrSocket;
+        }
+
+        // 2. Intercept console messages and unhandled errors from Vite dev runner
+        function isWsNotice(msg) {
           if (!msg) return false;
           var s = String(msg).toLowerCase();
           return s.indexOf('websocket') !== -1 || s.indexOf('[vite]') !== -1;
@@ -14,7 +61,7 @@
 
         window.addEventListener('unhandledrejection', function (e) {
           var errStr = (e.reason && (e.reason.message || e.reason.stack || '' + e.reason)) || '';
-          if (isWsError(errStr)) {
+          if (isWsNotice(errStr)) {
             e.preventDefault();
             e.stopImmediatePropagation();
             return false;
@@ -23,7 +70,7 @@
 
         window.addEventListener('error', function (e) {
           var errStr = (e.message || (e.error && (e.error.message || e.error.stack)) || '') + '';
-          if (isWsError(errStr)) {
+          if (isWsNotice(errStr)) {
             e.preventDefault();
             e.stopImmediatePropagation();
             return false;
@@ -32,11 +79,14 @@
 
         var origError = console.error;
         console.error = function() {
-          var firstArg = arguments[0] ? String(arguments[0]) : '';
-          if (isWsError(firstArg)) {
-            return;
-          }
+          if (isWsNotice(arguments[0])) return;
           return origError.apply(console, arguments);
+        };
+
+        var origDebug = console.debug;
+        console.debug = function() {
+          if (isWsNotice(arguments[0])) return;
+          return origDebug.apply(console, arguments);
         };
       })();
     </script>
