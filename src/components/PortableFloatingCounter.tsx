@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Sparkles, ChevronUp, Move, Maximize2, Minimize2 } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { ZIKIR_UI } from '../utils/appTranslations';
@@ -72,11 +73,13 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
     if (typeof window === 'undefined') return { x, y };
     const width = expanded ? 160 : 96;
     const height = expanded ? 160 : 96;
-    const maxX = window.innerWidth - width - 8;
-    const maxY = window.innerHeight - height - 70; // Avoid overlapping bottom nav
+    const maxX = Math.max(8, window.innerWidth - width - 12);
+    const maxY = Math.max(60, window.innerHeight - height - 75); // Avoid overlapping bottom nav
+    const safeX = typeof x === 'number' && Number.isFinite(x) ? x : maxX;
+    const safeY = typeof y === 'number' && Number.isFinite(y) ? y : maxY;
     return {
-      x: Math.min(Math.max(8, x), Math.max(8, maxX)),
-      y: Math.min(Math.max(60, y), Math.max(60, maxY)),
+      x: Math.min(Math.max(8, safeX), maxX),
+      y: Math.min(Math.max(60, safeY), maxY),
     };
   };
 
@@ -209,8 +212,9 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
   };
 
   if (!isVisible) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
       style={{
         left: `${position.x}px`,
@@ -335,6 +339,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

@@ -75,12 +75,15 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
 
       if (topDial) {
         const rect = topDial.getBoundingClientRect();
-        // Show portable counter as soon as user scrolls down past the main top dial
-        // (i.e. top dial starts leaving upper viewport or user has scrolled down > 70px)
-        const isPastTop = rect.bottom < 380 || rect.top < 60 || scrollY > 70;
-        setShowFloatingCounter(isPastTop);
+        // Show as soon as user scrolls down even slightly (> 40px or top dial moves up)
+        if (rect.top < 120 || rect.bottom < 450 || scrollY > 40) {
+          setShowFloatingCounter(true);
+        } else if (scrollY < 15 && rect.top >= 130) {
+          // Only hide when user scrolls all the way back to the very top
+          setShowFloatingCounter(false);
+        }
       } else {
-        setShowFloatingCounter(scrollY > 70);
+        setShowFloatingCounter(scrollY > 40);
       }
     };
 
@@ -92,7 +95,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
 
     // Check periodically during the first few seconds for layout stabilization
     const interval = setInterval(handleScroll, 400);
-    const timeout = setTimeout(() => clearInterval(interval), 2500);
+    const timeout = setTimeout(() => clearInterval(interval), 3000);
 
     return () => {
       window.removeEventListener('scroll', handleScroll, true);
