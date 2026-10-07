@@ -54,6 +54,13 @@ export const QURAN_RECITERS: Reciter[] = [
     surahAudioBase: 'https://server8.mp3quran.net/afs',
   },
   {
+    id: 'ar.yasserdussary',
+    name: 'Yasser Al-Dosari (Yasir Al-Doshori)',
+    arabicName: 'ياسر بن راشد الدوسري',
+    subtext: 'Imam of Masjid al-Haram, Makkah',
+    surahAudioBase: 'https://server11.mp3quran.net/yasser',
+  },
+  {
     id: 'ar.abdurrahmaansudais',
     name: 'Abdul Rahman Al-Sudais',
     arabicName: 'عبد الرحمن السديس',
