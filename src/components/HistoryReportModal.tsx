@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   HistoryPeriodRange,
   AggregatedReportData,
@@ -55,6 +56,23 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
+  // Lock body scroll and handle escape key when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   const allLogs = useMemo(() => getAllAamalLogs(), [isOpen]);
 
   const reportData: AggregatedReportData = useMemo(() => {
@@ -104,15 +122,19 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
     (z) => z.totalCount > 0 || reportData.totalDays <= 1
   );
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+  const modalNode = (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
+      onClick={onClose}
+    >
       <div
-        className={`w-full max-w-3xl rounded-3xl border shadow-2xl flex flex-col max-h-[92vh] overflow-hidden ${
+        className={`w-full max-w-3xl rounded-3xl border shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto ${
           isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0a2328] text-white border-[#194c56]'
         }`}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-teal-900/40 flex items-center justify-between gap-3 bg-gradient-to-r from-emerald-600/10 via-teal-600/5 to-transparent">
+        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-teal-900/40 flex items-center justify-between gap-3 bg-gradient-to-r from-emerald-600/10 via-teal-600/5 to-transparent shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
               <FileText className="w-5 h-5" />
@@ -396,7 +418,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
         </div>
 
         {/* Modal Bottom Action Footer */}
-        <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-teal-900/40 bg-slate-50 dark:bg-[#071a1d] flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-teal-900/40 bg-slate-50 dark:bg-[#071a1d] flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <div className="text-[11px] text-slate-500 dark:text-emerald-300/70 text-center sm:text-left">
             {selectedLanguage === 'bn'
               ? 'নির্বাচিত সময়কালের সকল যোগফল ও চার্টসহ সাজানো ডকুমেন্ট ডাউনলোড হবে।'
@@ -431,4 +453,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(modalNode, document.body);
 };

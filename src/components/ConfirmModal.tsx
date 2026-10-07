@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 
 interface ConfirmModalProps {
@@ -20,14 +21,34 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-700 p-6 shadow-2xl relative text-center">
+  const node = (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-700 p-6 shadow-2xl relative text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onCancel}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg transition"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg transition cursor-pointer"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -48,7 +69,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition cursor-pointer"
           >
             Cancel
           </button>
@@ -58,7 +79,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
               onConfirm();
               onCancel();
             }}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-white text-sm font-bold shadow-lg transition ${
+            className={`flex-1 py-2.5 px-4 rounded-xl text-white text-sm font-bold shadow-lg transition cursor-pointer active:scale-95 ${
               isDanger
                 ? 'bg-red-600 hover:bg-red-500 shadow-red-950/50'
                 : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/50'
@@ -70,4 +91,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(node, document.body);
 };

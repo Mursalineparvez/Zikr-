@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles } from 'lucide-react';
 import { ZikrItem } from '../types';
 import { PRESET_ZIKR_SUGGESTIONS } from '../utils/constants';
@@ -38,6 +39,20 @@ export const ZikrModal: React.FC<ZikrModalProps> = ({
     }
   }, [zikrToEdit, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -65,12 +80,18 @@ export const ZikrModal: React.FC<ZikrModalProps> = ({
     setTarget(preset.target);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-lg rounded-3xl bg-[#0a2528] border border-[#1e6065] p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+  const node = (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-3xl bg-[#0a2528] border border-[#1e6065] p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-lg transition"
+          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-lg transition cursor-pointer"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -100,7 +121,7 @@ export const ZikrModal: React.FC<ZikrModalProps> = ({
                   key={idx}
                   type="button"
                   onClick={() => handleApplyPreset(preset)}
-                  className="text-xs px-2.5 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/90 text-emerald-200 border border-emerald-800/40 transition active:scale-95 text-left"
+                  className="text-xs px-2.5 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/90 text-emerald-200 border border-emerald-800/40 transition active:scale-95 text-left cursor-pointer"
                 >
                   <span className="font-semibold">{preset.name}</span>
                   <span className="text-[10px] text-amber-300 ml-1.5 font-bold">({preset.target})</span>
@@ -184,7 +205,7 @@ export const ZikrModal: React.FC<ZikrModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition"
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition cursor-pointer"
             >
               Cancel
             </button>
@@ -199,4 +220,7 @@ export const ZikrModal: React.FC<ZikrModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(node, document.body);
 };

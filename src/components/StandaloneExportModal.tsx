@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Download, Copy, Check, ExternalLink, Smartphone, FileCode } from 'lucide-react';
 
 interface StandaloneExportModalProps {
@@ -11,6 +12,20 @@ export const StandaloneExportModal: React.FC<StandaloneExportModalProps> = ({
   onClose,
 }) => {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -34,12 +49,18 @@ export const StandaloneExportModal: React.FC<StandaloneExportModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-xl rounded-3xl bg-slate-900 border border-emerald-700/50 p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+  const node = (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-xl rounded-3xl bg-slate-900 border border-emerald-700/50 p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-lg transition"
+          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-lg transition cursor-pointer"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -62,7 +83,7 @@ export const StandaloneExportModal: React.FC<StandaloneExportModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
           <button
             onClick={handleDownloadHtml}
-            className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-950/50 transition active:scale-95"
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-950/50 transition active:scale-95 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Download .HTML File</span>
@@ -72,7 +93,7 @@ export const StandaloneExportModal: React.FC<StandaloneExportModalProps> = ({
             href="/zikr-tasbeeh-standalone.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-sm transition active:scale-95"
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-sm transition active:scale-95 cursor-pointer"
           >
             <ExternalLink className="w-4 h-4 text-emerald-400" />
             <span>Preview in New Tab</span>
@@ -119,7 +140,7 @@ export const StandaloneExportModal: React.FC<StandaloneExportModalProps> = ({
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition cursor-pointer"
           >
             Close
           </button>
@@ -127,4 +148,7 @@ export const StandaloneExportModal: React.FC<StandaloneExportModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(node, document.body);
 };
