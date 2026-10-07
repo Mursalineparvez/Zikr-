@@ -1,229 +1,294 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Gradient: Rich Emerald Forest -->
-    <radialGradient id="bgGlow" cx="50%" cy="35%" r="65%" fx="50%" fy="30%">
-      <stop offset="0%" stop-color="#0a4b3c" />
-      <stop offset="45%" stop-color="#06382c" />
-      <stop offset="85%" stop-color="#03211a" />
-      <stop offset="100%" stop-color="#021712" />
+    <!-- Richer, slightly lighter vibrant Islamic Emerald Gradient -->
+    <radialGradient id="bgLighter" cx="50%" cy="32%" r="80%" fx="50%" fy="24%">
+      <stop offset="0%" stop-color="#157a63" />
+      <stop offset="35%" stop-color="#0d614e" />
+      <stop offset="70%" stop-color="#074537" />
+      <stop offset="100%" stop-color="#043026" />
     </radialGradient>
 
-    <!-- Arch & Plus Lime Green Gradient -->
-    <linearGradient id="limeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#bef264" />
-      <stop offset="40%" stop-color="#86efac" />
-      <stop offset="100%" stop-color="#4ade80" />
+    <!-- Top Gloss Highlight -->
+    <linearGradient id="topGlass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
     </linearGradient>
 
-    <!-- Darker Green Accent for Book Base -->
-    <linearGradient id="bookGreenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#4ade80" />
-      <stop offset="100%" stop-color="#16a34a" />
+    <!-- Vibrant Neon Lime Gradient for Arch & Plus -->
+    <linearGradient id="limeNeon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d9f99d" />
+      <stop offset="30%" stop-color="#a3e635" />
+      <stop offset="75%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#22c55e" />
     </linearGradient>
 
-    <!-- Cream White Gradient for Dome and Book Pages -->
-    <linearGradient id="creamGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <!-- Inner Arch Soft Ambient Fill -->
+    <radialGradient id="archBackdrop" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#15803d" stop-opacity="0.45" />
+      <stop offset="65%" stop-color="#064e3b" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#022c22" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- 3D Mosque Dome Gradient -->
+    <radialGradient id="domeShade" cx="44%" cy="36%" r="65%">
       <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#f1f5f3" />
+      <stop offset="60%" stop-color="#f8fafc" />
+      <stop offset="85%" stop-color="#e2e8f0" />
+      <stop offset="100%" stop-color="#cbd5e1" />
+    </radialGradient>
+
+    <!-- Open Book Pages Gradients -->
+    <linearGradient id="pageLeft" x1="100%" y1="50%" x2="0%" y2="50%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="65%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f1f5f9" />
+    </linearGradient>
+    <linearGradient id="pageRight" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="65%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f1f5f9" />
     </linearGradient>
 
-    <!-- Soft Drop Shadow for Elements -->
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#01140e" flood-opacity="0.45" />
+    <!-- Book Underlay Ribbon Base -->
+    <linearGradient id="bookCover" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#86efac" />
+      <stop offset="50%" stop-color="#22c55e" />
+      <stop offset="100%" stop-color="#15803d" />
+    </linearGradient>
+
+    <!-- Plus (+) Button Glossy Gradient -->
+    <linearGradient id="plusGloss" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#bef264" />
+      <stop offset="45%" stop-color="#86efac" />
+      <stop offset="100%" stop-color="#22c55e" />
+    </linearGradient>
+
+    <!-- Master Drop Shadow Filter -->
+    <filter id="mainDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#021c16" flood-opacity="0.55" />
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.35" />
     </filter>
 
-    <!-- Text Shadow -->
-    <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.35" />
+    <!-- Text Typography Drop Shadow Filter -->
+    <filter id="fontShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#021a14" flood-opacity="0.65" />
     </filter>
 
-    <!-- Glow for Plus and Accents -->
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="4" result="blur" />
+    <!-- Soft Ambient Glow Filter -->
+    <filter id="softLimeGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <!-- 1. Squircle App Icon Background -->
-  <rect width="512" height="512" rx="116" fill="url(#bgGlow)" />
+  <!-- ==================== 1. SQUIRCLE ICON BACKGROUND ==================== -->
+  <rect width="512" height="512" rx="118" fill="url(#bgLighter)" />
 
-  <!-- Subtle Inner Border Highlight -->
-  <rect x="3" y="3" width="506" height="506" rx="113" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.08" />
+  <!-- Top Glass Sheen -->
+  <rect width="512" height="512" rx="118" fill="url(#topGlass)" />
 
-  <!-- ==================== ICON ARTWORK (DOME, ARCH, BOOK) ==================== -->
-  <g filter="url(#shadow)">
-    <!-- 2. Islamic Arch Outline -->
-    <!-- Pointed Arch with rounded apex and straight bottom legs -->
+  <!-- Crisp 1.5px Outer Border Rim -->
+  <rect x="2.5" y="2.5" width="507" height="507" rx="115.5" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.16" />
+
+  <!-- Soft Ambient Lime Glow in Center -->
+  <ellipse cx="256" cy="175" rx="135" ry="105" fill="#4ade80" opacity="0.16" filter="url(#softLimeGlow)" />
+
+  <!-- ==================== 2. SACRED EMBLEM (ARCH, DOME & BOOK) ==================== -->
+  <g filter="url(#mainDropShadow)">
+
+    <!-- Arch Inner Shadow Backdrop -->
     <path
-      d="M 164 246
-         V 186
-         C 164 140, 196 96, 256 82
-         C 316 96, 348 140, 348 186
-         V 246"
+      d="M 166 242
+         V 182
+         C 166 136, 198 94, 256 78
+         C 314 94, 346 136, 346 182
+         V 242
+         Z"
+      fill="url(#archBackdrop)"
+    />
+
+    <!-- Islamic Arch Outline (Thick 3D Beveled Stroke) -->
+    <path
+      d="M 166 242
+         V 182
+         C 166 136, 198 94, 256 78
+         C 314 94, 346 136, 346 182
+         V 242"
       fill="none"
-      stroke="url(#limeGrad)"
-      stroke-width="17"
+      stroke="url(#limeNeon)"
+      stroke-width="18"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
 
-    <!-- 3. Top-Right Plus (+) Badge -->
-    <g transform="translate(356, 142)">
-      <!-- Vertical Bar -->
-      <rect x="-6" y="-20" width="12" height="40" rx="6" fill="url(#limeGrad)" />
-      <!-- Horizontal Bar -->
-      <rect x="-20" y="-6" width="40" height="12" rx="6" fill="url(#limeGrad)" />
+    <!-- Top-Right Floating Plus (+) Badge -->
+    <g transform="translate(358, 138)">
+      <!-- Soft ambient glow -->
+      <circle cx="0" cy="0" r="22" fill="#4ade80" opacity="0.28" />
+      <!-- Vertical bar of + -->
+      <rect x="-6.5" y="-21" width="13" height="42" rx="6.5" fill="url(#plusGloss)" />
+      <!-- Horizontal bar of + -->
+      <rect x="-21" y="-6.5" width="42" height="13" rx="6.5" fill="url(#plusGloss)" />
+      <!-- Specular Center Highlight -->
+      <circle cx="0" cy="0" r="4" fill="#ffffff" opacity="0.45" />
     </g>
 
-    <!-- 4. Mosque Dome & Spire with Crescent -->
-    <!-- Dome Body -->
+    <!-- Mosque Dome with 3D Shading -->
     <path
-      d="M 212 238
-         C 212 188, 238 174, 256 170
-         C 274 174, 300 188, 300 238
+      d="M 210 238
+         C 210 184, 238 170, 256 166
+         C 274 170, 302 184, 302 238
          Z"
-      fill="url(#creamGrad)"
+      fill="url(#domeShade)"
     />
 
-    <!-- Spire & Finial -->
-    <rect x="254" y="162" width="4" height="10" rx="2" fill="#f8fafc" />
-    <circle cx="256" cy="160" r="3.5" fill="#f8fafc" />
+    <!-- Dome Finial Base & Spire -->
+    <path d="M 253 166 H 259 V 156 H 253 Z" fill="#ffffff" />
+    <circle cx="256" cy="156" r="3.5" fill="#f8fafc" />
 
-    <!-- Crescent Finial on Top of Dome -->
+    <!-- Crescent Finial on Spire (Upward Facing) -->
     <path
-      d="M 256 138
-         A 10 10 0 0 0 256 158
-         A 8 8 0 0 1 256 142
+      d="M 256 134
+         A 11 11 0 0 0 256 156
+         A 8.5 8.5 0 0 1 256 139
          Z"
-      fill="#f8fafc"
+      fill="#ffffff"
     />
 
-    <!-- 5. Open Quran Book Foundation -->
-    <!-- Book Base / Under Layer (Green Page Edges) -->
+    <!-- Open Quran Multi-Layer Structure -->
+    <!-- Layer 1: Green Binding Base -->
     <path
-      d="M 256 298
-         C 220 286, 178 288, 148 266
-         L 164 286
-         C 192 304, 228 302, 256 312
-         C 284 302, 320 304, 348 286
-         L 364 266
-         C 334 288, 292 286, 256 298
+      d="M 256 302
+         C 220 288, 172 290, 142 266
+         L 156 286
+         C 188 306, 226 304, 256 314
+         C 286 304, 324 306, 356 286
+         L 370 266
+         C 340 290, 292 288, 256 302
          Z"
-      fill="url(#bookGreenGrad)"
+      fill="url(#bookCover)"
     />
 
-    <!-- Open Book Left Page (Cream White) -->
+    <!-- Layer 2: Second Page Trim Highlight (Lime Green) -->
     <path
-      d="M 256 288
-         C 220 274, 180 276, 150 252
-         C 178 240, 222 242, 256 254
+      d="M 256 293
+         C 224 280, 178 282, 146 260
+         L 152 270
+         C 184 290, 226 290, 256 300
+         C 286 290, 328 290, 360 270
+         L 366 260
+         C 334 282, 288 280, 256 293
          Z"
-      fill="url(#creamGrad)"
+      fill="#86efac"
     />
 
-    <!-- Open Book Right Page (Cream White) -->
+    <!-- Layer 3: Left Page (Crisp 3D Cream White) -->
     <path
-      d="M 256 288
-         C 292 274, 332 276, 362 252
-         C 334 240, 290 242, 256 254
+      d="M 256 290
+         C 218 274, 174 276, 144 252
+         C 174 238, 220 240, 256 254
          Z"
-      fill="url(#creamGrad)"
+      fill="url(#pageLeft)"
     />
 
-    <!-- Book Spine Center Fold Accent -->
+    <!-- Layer 4: Right Page (Crisp 3D Cream White) -->
+    <path
+      d="M 256 290
+         C 294 274, 338 276, 368 252
+         C 338 238, 292 240, 256 254
+         Z"
+      fill="url(#pageRight)"
+    />
+
+    <!-- Center Fold Spine -->
     <path
       d="M 256 254
-         L 256 310"
-      stroke="#cbd5e1"
+         L 256 312"
+      stroke="#94a3b8"
       stroke-width="2.5"
       stroke-linecap="round"
-      opacity="0.6"
+      opacity="0.5"
     />
   </g>
 
-  <!-- ==================== 6. WORDMARK "Zikr+" ==================== -->
-  <g filter="url(#textShadow)">
-    <!-- Custom hand-crafted geometric vectors for "Zikr" + "+" matching Pic 2 -->
-    <!-- Z -->
+  <!-- ==================== 3. ULTRA-ATTRACTIVE MODERN "Zikr+" TYPOGRAPHY ==================== -->
+  <g filter="url(#fontShadow)">
+    <!-- High-end Custom Crafted Modern Rounded Geometric Vectors -->
+
+    <!-- Letter 'Z' (Fluid, bold, beautifully beveled) -->
     <path
-      d="M 115 328
-         H 178
-         C 183 328, 186 331, 186 336
-         C 186 340, 183 344, 178 347
-         L 137 386
+      d="M 112 334
+         H 176
+         C 183 334, 187 338, 187 344
+         C 187 348, 184 353, 178 357
+         L 137 392
          H 180
-         C 186 386, 190 390, 190 396
-         C 190 402, 186 406, 180 406
-         H 116
-         C 111 406, 108 403, 108 398
-         C 108 394, 111 390, 116 387
-         L 157 348
-         H 115
-         C 109 348, 105 344, 105 338
-         C 105 332, 109 328, 115 328
+         C 186 392, 191 396, 191 402
+         C 191 408, 186 412, 180 412
+         H 114
+         C 107 412, 103 408, 103 402
+         C 103 397, 106 392, 112 388
+         L 154 352
+         H 112
+         C 106 352, 101 348, 101 343
+         C 101 338, 106 334, 112 334
          Z"
-      fill="#f8fafc"
+      fill="#ffffff"
     />
 
-    <!-- i -->
-    <!-- Dot of i -->
-    <circle cx="211" cy="336" r="8.5" fill="#f8fafc" />
-    <!-- Stem of i -->
+    <!-- Letter 'i' (Bold upright pill with playful glowing circular dot) -->
+    <!-- Dot of 'i' -->
+    <circle cx="210" cy="340" r="9.5" fill="#ffffff" />
+    <!-- Stem of 'i' -->
+    <rect x="200.5" y="356" width="19" height="56" rx="9.5" fill="#ffffff" />
+
+    <!-- Letter 'k' (Modern, friendly, perfectly proportioned) -->
     <path
-      d="M 203 358
-         C 203 352, 207 348, 212 348
-         C 217 348, 221 352, 221 358
-         V 396
-         C 221 402, 217 406, 212 406
-         C 207 406, 203 402, 203 396
+      d="M 238 326
+         C 238 320, 242 316, 247.5 316
+         C 253 316, 257 320, 257 326
+         V 370
+         L 286 352
+         C 291 349, 297 351, 300 356
+         C 303 361, 301 367, 296 371
+         L 272 386
+         L 298 402
+         C 303 405, 304 411, 301 416
+         C 298 421, 292 422, 287 419
+         L 257 400
+         V 402.5
+         C 257 408, 253 412, 247.5 412
+         C 242 412, 238 408, 238 402.5
          Z"
-      fill="#f8fafc"
+      fill="#ffffff"
     />
 
-    <!-- k -->
+    <!-- Letter 'r' (Smooth, expressive rounded arched terminal) -->
     <path
-      d="M 238 330
-         C 238 324, 242 320, 247 320
-         C 252 320, 256 324, 256 330
+      d="M 318 356
+         C 318 350, 322 346, 327.5 346
+         C 333 346, 337 350, 337 356
          V 368
-         L 282 352
-         C 287 349, 293 351, 296 356
-         C 299 361, 297 367, 292 370
-         L 270 383
-         L 294 397
-         C 299 400, 300 406, 297 411
-         C 294 416, 288 417, 283 414
-         L 256 397
-         V 398
-         C 256 403, 252 407, 247 407
-         C 242 407, 238 403, 238 398
+         C 343 355, 354 348, 367 350
+         C 372 351, 376 355, 375 361
+         C 374 366, 370 370, 364 369
+         C 351 368, 339 375, 337 388
+         V 402.5
+         C 337 408, 333 412, 327.5 412
+         C 322 412, 318 408, 318 402.5
          Z"
-      fill="#f8fafc"
+      fill="#ffffff"
     />
 
-    <!-- r -->
-    <path
-      d="M 314 358
-         C 314 352, 318 348, 323 348
-         C 328 348, 332 352, 332 358
-         V 368
-         C 338 356, 348 350, 360 351
-         C 365 352, 369 356, 368 362
-         C 367 367, 363 371, 357 370
-         C 345 369, 334 376, 332 388
-         V 396
-         C 332 402, 328 406, 323 406
-         C 318 406, 314 402, 314 396
-         Z"
-      fill="#f8fafc"
-    />
-
-    <!-- Plus (+) in Lime Green beside Zikr -->
-    <g transform="translate(394, 376)">
+    <!-- Symbol '+' (Bright, vibrant Lime-Green Pill Plus beside Zikr) -->
+    <g transform="translate(402, 381)">
       <!-- Vertical bar of + -->
-      <rect x="-6.5" y="-23" width="13" height="46" rx="6.5" fill="url(#limeGrad)" />
+      <rect x="-7.5" y="-25" width="15" height="50" rx="7.5" fill="url(#plusGloss)" />
       <!-- Horizontal bar of + -->
-      <rect x="-23" y="-6.5" width="46" height="13" rx="6.5" fill="url(#limeGrad)" />
+      <rect x="-25" y="-7.5" width="50" height="15" rx="7.5" fill="url(#plusGloss)" />
+      <!-- Specular center bevel glow -->
+      <circle cx="0" cy="0" r="5" fill="#ffffff" opacity="0.4" />
     </g>
   </g>
 </svg>
