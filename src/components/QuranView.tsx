@@ -22,6 +22,7 @@ import {
   SURAH_MEANINGS,
 } from '../utils/appTranslations';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
+import { getSurahInsight } from '../utils/surahInsights';
 
 const POPULAR_SURAHS = [1, 18, 36, 55, 56, 67, 78, 112, 113, 114];
 import {
@@ -791,6 +792,180 @@ export const QuranView: React.FC<QuranViewProps> = ({
             </div>
           )}
 
+          {/* TOP OPTIONS BAR (Tafsir, Word-by-word, Play Audio, AutoScroll, Details - beautifully positioned at top as requested) */}
+          <div
+            className={`p-3 rounded-2xl border shadow-xl flex items-center justify-between gap-1 overflow-x-auto scrollbar-none ${
+              isDay
+                ? 'bg-white border-[#dcebe8] text-slate-800'
+                : 'bg-[#0e1c26] border-[#1a3342] text-slate-200'
+            }`}
+          >
+            {/* 1. Tafsir Button */}
+            <button
+              onClick={() => {
+                const firstAyah = displayedAyahs[0] || surahDetail?.ayahs[0];
+                if (firstAyah) handleOpenTafsir(firstAyah);
+              }}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
+                isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDay ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/15 text-amber-400'}`}>
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-bold">Tafsir</span>
+            </button>
+
+            {/* 2. Word-by-Word Toggle */}
+            <button
+              onClick={() => {
+                setWordByWordMode(!wordByWordMode);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
+                !wordByWordMode
+                  ? isDay ? 'text-[#006747] font-extrabold' : 'text-[#10b981] font-extrabold'
+                  : isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDay ? 'bg-[#edf5f4] text-[#006747]' : 'bg-[#152e3c] text-[#10b981]'}`}>
+                <Book className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                {wordByWordMode ? 'Without word' : 'Word by word'}
+              </span>
+            </button>
+
+            {/* 3. Prominent Circular Play Audio Button */}
+            <button
+              onClick={playSurahAudio}
+              className="flex flex-col items-center justify-center transition active:scale-95 cursor-pointer shrink-0 px-2"
+            >
+              <div
+                className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg border-2 cursor-pointer ${
+                  isDay
+                    ? 'bg-[#006747] hover:bg-[#154f53] text-white border-white'
+                    : 'bg-[#006747] hover:bg-[#154f53] text-white border-[#10b981]/40'
+                }`}
+              >
+                {isPlaying && playingMode === 'surah' ? (
+                  <Pause className="w-4 h-4 fill-current" />
+                ) : (
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                )}
+              </div>
+              <span className={`text-[10px] font-bold mt-0.5 ${isDay ? 'text-[#006747]' : 'text-[#10b981]'}`}>
+                {isPlaying && playingMode === 'surah' ? 'Pause' : 'Play Audio'}
+              </span>
+            </button>
+
+            {/* 4. AutoScroll Toggle */}
+            <button
+              onClick={() => {
+                setAutoScroll(!autoScroll);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
+                autoScroll
+                  ? isDay ? 'text-[#006747]' : 'text-[#10b981]'
+                  : 'text-slate-400'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDay ? 'bg-[#edf5f4] text-[#006747]' : 'bg-[#152e3c] text-[#10b981]'}`}>
+                <RotateCcw className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                AutoScroll: {autoScroll ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
+            {/* 5. Details Button */}
+            <button
+              onClick={() => setShowDetailsModal(true)}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
+                isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDay ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/15 text-indigo-400'}`}>
+                <LayoutGrid className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-bold">Details</span>
+            </button>
+          </div>
+
+          {/* Surah Insight, Fojilot & Sabun Nuzul Card */}
+          {selectedSurahNumber !== null && (() => {
+            const insight = getSurahInsight(
+              selectedSurahNumber,
+              surahDetail ? surahDetail.name : (ALL_114_SURAHS[selectedSurahNumber - 1]?.name || 'Surah'),
+              surahDetail ? surahDetail.englishName : (ALL_114_SURAHS[selectedSurahNumber - 1]?.englishName || 'Surah')
+            );
+            return (
+              <div
+                className={`p-5 rounded-[26px] border shadow-xl space-y-4 transition-colors ${
+                  isDay
+                    ? 'bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/50 border-emerald-200 text-slate-900'
+                    : 'bg-gradient-to-br from-[#0c262d] via-[#091e24] to-[#07171c] border-[#16424b] text-white shadow-black/60'
+                }`}
+              >
+                <div className="flex items-center justify-between pb-3 border-b border-emerald-500/20">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-sm">
+                      ✨
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                        {selectedLanguage === 'bn' ? 'সূরা পরিচিতি, ফজিলাত ও পটভূমি' : 'Surah Virtues, Context & Topics'}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-teal-300/80">
+                        {selectedLanguage === 'bn' ? 'এই সূরার অবতীর্ণ হওয়ার ইতিহাস ও বিশেষ গুরুত্ব' : 'Significance and revelation context'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold font-mono">
+                    {ALL_114_SURAHS[selectedSurahNumber - 1]?.revelationType || 'Meccan'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs leading-relaxed">
+                  <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-white/80 border-emerald-100' : 'bg-[#081a20] border-teal-900/40'}`}>
+                    <strong className="text-emerald-600 dark:text-emerald-400 block mb-1 font-bold">
+                      {selectedLanguage === 'bn' ? '🌟 ফজিলাত ও বরকত:' : '🌟 Virtues & Benefits:'}
+                    </strong>
+                    <p className="opacity-90">{selectedLanguage === 'bn' ? insight.fojilotBn : insight.fojilotEn}</p>
+                  </div>
+
+                  <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-white/80 border-emerald-100' : 'bg-[#081a20] border-teal-900/40'}`}>
+                    <strong className="text-amber-600 dark:text-amber-400 block mb-1 font-bold">
+                      {selectedLanguage === 'bn' ? '📜 নাজিল হওয়ার পটভূমি (শানে নুযুল):' : '📜 Context of Revelation (Sabun Nuzul):'}
+                    </strong>
+                    <p className="opacity-90">{selectedLanguage === 'bn' ? insight.sabunNuzulBn : insight.sabunNuzulEn}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] font-bold text-slate-500 dark:text-teal-300 uppercase tracking-wider mb-2">
+                    {selectedLanguage === 'bn' ? '📌 গুরুত্বপূর্ণ আলোচ্য বিষয়সমূহ:' : '📌 Important Topics Covered:'}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(selectedLanguage === 'bn' ? insight.importantTopicsBn : insight.importantTopicsEn).map((topic, tIdx) => (
+                      <span
+                        key={tIdx}
+                        className={`px-3 py-1 rounded-xl text-xs font-semibold border ${
+                          isDay
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : 'bg-teal-950/40 text-emerald-300 border-teal-800/40'
+                        }`}
+                      >
+                        ✓ {topic}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Bismillah Calligraphy Card (Matching Home Page Theme) */}
           {surahDetail && surahDetail.number !== 9 && surahDetail.number !== 1 && (
             <div
@@ -1190,137 +1365,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
               })}
             </div>
           )}
-
-          {/* ======================================================== */}
-          {/* BOTTOM FIXED ACTION BAR (MATCHING HOME PAGE THEME)     */}
-          {/* ======================================================== */}
-          <div
-            className={`fixed bottom-0 left-0 right-0 z-40 border-t shadow-2xl py-2 px-3 sm:px-6 backdrop-blur-xl transition-colors ${
-              isDay
-                ? 'bg-white/95 border-[#d6e8e5] text-[#133e42]'
-                : 'bg-[#0a1620]/95 border-[#162c3a] text-[#64748b]'
-            }`}
-          >
-            <div className="max-w-xl mx-auto flex items-center justify-between gap-1">
-              {/* 1. Tafsir Button */}
-              <button
-                onClick={() => {
-                  const firstAyah = displayedAyahs[0] || surahDetail?.ayahs[0];
-                  if (firstAyah) handleOpenTafsir(firstAyah);
-                }}
-                className={`flex flex-col items-center justify-center gap-1 p-1 transition cursor-pointer flex-1 ${
-                  isDay ? 'hover:text-[#006747]' : 'hover:text-[#10b981]'
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                    isDay ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/15 text-amber-400'
-                  }`}
-                >
-                  <BookOpen className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-bold">Tafsir</span>
-              </button>
-
-              {/* 2. Without Word / Word-by-Word Toggle */}
-              <button
-                onClick={() => {
-                  setWordByWordMode(!wordByWordMode);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`flex flex-col items-center justify-center gap-1 p-1 transition cursor-pointer flex-1 ${
-                  !wordByWordMode
-                    ? isDay
-                      ? 'text-[#006747]'
-                      : 'text-[#10b981]'
-                    : isDay
-                    ? 'hover:text-[#006747]'
-                    : 'hover:text-[#10b981]'
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                    isDay ? 'bg-[#edf5f4] text-[#006747]' : 'bg-[#152e3c] text-[#10b981]'
-                  }`}
-                >
-                  <Book className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-bold whitespace-nowrap">
-                  {wordByWordMode ? 'Without word' : 'Word by word'}
-                </span>
-              </button>
-
-              {/* 3. Prominent Circular Play Audio Button */}
-              <button
-                onClick={playSurahAudio}
-                className="flex flex-col items-center justify-center -mt-3 transition active:scale-95 cursor-pointer"
-              >
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl border-2 cursor-pointer ${
-                    isDay
-                      ? 'bg-[#006747] hover:bg-[#154f53] text-white border-white shadow-[#135d66]/30'
-                      : 'bg-[#006747] hover:bg-[#154f53] text-white border-[#10b981]/40 shadow-black/80'
-                  }`}
-                >
-                  {isPlaying && playingMode === 'surah' ? (
-                    <Pause className="w-5 h-5 fill-current" />
-                  ) : (
-                    <Play className="w-5 h-5 fill-current ml-0.5" />
-                  )}
-                </div>
-                <span
-                  className={`text-[10px] font-bold mt-1 ${
-                    isDay ? 'text-[#006747]' : 'text-[#10b981]'
-                  }`}
-                >
-                  {isPlaying && playingMode === 'surah' ? 'Pause' : 'Play Audio'}
-                </span>
-              </button>
-
-              {/* 4. AutoScroll Toggle */}
-              <button
-                onClick={() => {
-                  setAutoScroll(!autoScroll);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`flex flex-col items-center justify-center gap-1 p-1 transition cursor-pointer flex-1 ${
-                  autoScroll
-                    ? isDay
-                      ? 'text-[#006747]'
-                      : 'text-[#10b981]'
-                    : 'text-slate-400'
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                    isDay ? 'bg-[#edf5f4] text-[#006747]' : 'bg-[#152e3c] text-[#10b981]'
-                  }`}
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-bold whitespace-nowrap">
-                  AutoScroll: {autoScroll ? 'ON' : 'OFF'}
-                </span>
-              </button>
-
-              {/* 5. Details / Surah Info Button */}
-              <button
-                onClick={() => setShowDetailsModal(true)}
-                className={`flex flex-col items-center justify-center gap-1 p-1 transition cursor-pointer flex-1 ${
-                  isDay ? 'hover:text-[#006747]' : 'hover:text-[#10b981]'
-                }`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                    isDay ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/15 text-indigo-400'
-                  }`}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-bold">Details</span>
-              </button>
-            </div>
-          </div>
         </div>
       ) : (
         /* ======================================================== */

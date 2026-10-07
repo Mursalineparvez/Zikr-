@@ -340,6 +340,48 @@ export const UMRAH_STEPS: HajjStepItem[] = [
       'Violating Ihram prohibitions before the hair is actually cut.',
     ],
   },
+  {
+    id: 'umrah_5_madinah',
+    dayOrStageBn: 'ধাপ ৫',
+    dayOrStageEn: 'Step 5',
+    titleBn: 'মদিনা মুনাওয়ারা যিয়ারত ও রওজা মোবারক জিয়ারত',
+    titleEn: 'Madinah Ziyarah & Rawdah Mubarak',
+    arabicTitle: 'زيارة المسجد النبوي الشريف',
+    summaryBn: 'মসজিদে নববীতে নামাজ আদায়, রওজা মোবারকে রাসুলুল্লাহ ﷺ-কে সালাম পেশ এবং রিয়াজুল জান্নাতে নফল ইবাদত করা।',
+    summaryEn: 'Visit Masjid an-Nabawi in Madinah, present Salam at the Prophet\'s Rawdah, pray in Rawdah al-Jannah, and visit historical sites.',
+    actionItems: [
+      'মদিনায় পৌঁছে গোসল করে সুগন্ধি লাগিয়ে মসজিদে নববীতে প্রবেশ করা।',
+      'রাসুলুল্লাহ ﷺ এবং দুই সাহাবি হযরত আবু বকর (রা.) ও হযরত উমর (রা.)-এর রওজা মোবারকে আদবের সাথে সালাম পেশ করা।',
+      'রিয়াজুল জান্নাতে (জান্নাতের একটি বাগান) দুই রাকাত নফল সালাত আদায় ও দোয়া করা।',
+      'মসজিদে কুবাতে গিয়ে ২ রাকাত নফল নামাজ পড়া (ওমরাহর সমান সওয়াব)।',
+      'জান্নাতুল বাকী কবরস্থান এবং উহুদ যুদ্ধক্ষেত্র জিয়ারত করা।'
+    ],
+    actionItemsEn: [
+      'Perform Ghusl, apply perfume, and enter Masjid an-Nabawi in Madinah.',
+      'Present respectful Salams to Prophet Muhammad ﷺ, Abu Bakr (RA), and Umar (RA) at the Rawdah.',
+      'Pray 2 Rak\'ahs nafl in Rawdah al-Jannah (a garden from the gardens of Paradise).',
+      'Visit Masjid Quba and offer 2 Rak\'ahs (equal to an Umrah reward).',
+      'Visit Jannat al-Baqi cemetery and Uhud battlefield.'
+    ],
+    mistakesToAvoidBn: [
+      'রওজা মোবারকের সামনে অতিরিক্ত আওয়াজ করা বা বেয়াদবি করা।',
+      'কবর বা ব্যক্তির কাছে সিজদা বা অন্যায় প্রার্থনা করা (দোয়া কেবল আল্লাহর কাছেই)।'
+    ],
+    mistakesToAvoidEn: [
+      'Raising voices or showing disrespect near the Blessed Rawdah.',
+      'Making prostrations or un-Islamic invocations to graves (supplication is strictly to Allah alone).'
+    ],
+    essentialDuas: [
+      {
+        titleBn: 'রওজা মোবারকে সালাম পেশ',
+        titleEn: 'Salam at the Rawdah',
+        arabic: 'السَّلَامُ عَلَيْكَ يَا رَسُولَ اللَّهِ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ',
+        transliteration: 'As-salamu \'alayka ya Rasoolallahi wa rahmatullahi wa barakatuh',
+        meaningBn: 'আপনার ওপর শান্তি বর্ষিত হোক হে আল্লাহর রাসুল, এবং আল্লাহর রহমত ও বরকত নাজিল হোক।',
+        meaningEn: 'Peace be upon you, O Messenger of Allah, and the mercy of Allah and His blessings.',
+      }
+    ]
+  },
 ];
 
 export const HAJJ_DAYS_GUIDE: HajjStepItem[] = [
