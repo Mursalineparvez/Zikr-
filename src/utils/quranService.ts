@@ -386,10 +386,24 @@ export async function fetchAyahTafsir(
       if (res.ok) {
         const data = await res.json();
         if (data.tafsir?.text) {
-          const clean = data.tafsir.text.replace(/<[^>]*>?/gm, '').trim();
+          // Preserve linebreaks and paragraphs from HTML
+          let clean = data.tafsir.text
+            .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|blockquote|li)>/gi, '\n\n')
+            .replace(/<br\s*[\/]?>/gi, '\n')
+            .replace(/<[^>]*>?/gm, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+
           if (clean.length > 5) {
             let authorName = data.tafsir.resource_name || 'তাফসীর ইবনে কাছীর';
-            if (tafsirId === 164) {
+            const matchedTafsir = AVAILABLE_TAFSIRS.find(t => t.id === tafsirId);
+            if (matchedTafsir) {
+              authorName = language === 'bn' ? matchedTafsir.nameBn : matchedTafsir.nameEn;
+            } else if (tafsirId === 164) {
               authorName = language === 'bn' ? 'তাফসীর ইবনে কাছীর (তাওহীদ পাবলিকেশন্স)' : 'Tafsir Ibn Kathir (Bengali)';
             } else if (tafsirId === 165) {
               authorName = language === 'bn' ? 'তাফসীর আহসানুল বায়ান (বয়ান ফাউন্ডেশন)' : 'Tafsir Ahsanul Bayaan';

@@ -116,7 +116,6 @@ body.theme-night {
 
 .animate-view-entrance {
   animation: viewEntrance 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity;
 }
 
 /* Bead Pulse & Tap Spring */

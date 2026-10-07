@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ALL_114_SURAHS,
   SurahMeta,
@@ -45,6 +46,12 @@ import {
   Book,
   Globe,
   Copy,
+  ArrowLeft,
+  Layers,
+  Type,
+  Maximize2,
+  Minimize2,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface QuranViewProps {
@@ -262,7 +269,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   }, [lastRead]);
 
   // Load a Surah by number
-  const loadSurah = async (surahNumber: number, targetAyahNumber?: number) => {
+  const loadSurah = async (surahNumber: number, targetAyahNumber?: number, openTafsirImmediately?: boolean) => {
     setSelectedSurahNumber(surahNumber);
     setIsLoadingSurah(true);
     setSurahLoadError(null);
@@ -273,6 +280,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
       setSurahDetail(detail);
 
       const targetAyah = targetAyahNumber || 1;
+      const matchedAyah = detail.ayahs.find((a) => a.number === targetAyah) || detail.ayahs[0];
+      if (matchedAyah) {
+        setActiveTafsirAyah(matchedAyah);
+      }
+
       setLastRead({
         surahNumber,
         ayahNumber: targetAyah,
@@ -280,7 +292,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
         surahEnglishName: detail.englishName,
       });
 
-      if (targetAyahNumber) {
+      if (openTafsirImmediately) {
+        setShowTafsirModal(true);
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } else if (targetAyahNumber) {
         setTimeout(() => {
           scrollToAyah(targetAyahNumber);
         }, 300);
@@ -456,19 +471,25 @@ export const QuranView: React.FC<QuranViewProps> = ({
     return bookmarks.some((b) => b.surahNumber === surahNum && b.ayahNumber === ayahNum);
   };
 
-  // Open Tafsir Reader
+  // Open Tafsir Reader Studio
   const handleOpenTafsir = (ayah: QuranAyah) => {
     if (!surahDetail) return;
     setActiveTafsirAyah(ayah);
     setShowTafsirModal(true);
     setActiveAyahActionMenu(null);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     if (soundEnabled) soundHaptics.playTap();
   };
 
-  // Close Tafsir Reader
+  // Close Tafsir Reader and return to Quran Reader
   const handleCloseTafsir = () => {
     setShowTafsirModal(false);
     if (soundEnabled) soundHaptics.playTap();
+    if (activeTafsirAyah) {
+      setTimeout(() => {
+        scrollToAyah(activeTafsirAyah.number);
+      }, 100);
+    }
   };
 
   // Go to Next Ayah in Tafsir
@@ -478,6 +499,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     if (currentIndex >= 0 && currentIndex < surahDetail.ayahs.length - 1) {
       const nextAyah = surahDetail.ayahs[currentIndex + 1];
       setActiveTafsirAyah(nextAyah);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       if (soundEnabled) soundHaptics.playTap();
     }
   };
@@ -489,6 +511,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     if (currentIndex > 0) {
       const prevAyah = surahDetail.ayahs[currentIndex - 1];
       setActiveTafsirAyah(prevAyah);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       if (soundEnabled) soundHaptics.playTap();
     }
   };
@@ -499,6 +522,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     const target = surahDetail.ayahs.find((a) => a.number === ayahNum);
     if (target) {
       setActiveTafsirAyah(target);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       if (soundEnabled) soundHaptics.playTap();
     }
   };
@@ -506,7 +530,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   // Copy Tafsir Text to Clipboard
   const handleCopyTafsirText = () => {
     if (!tafsirContent || !activeTafsirAyah || !surahDetail) return;
-    const textToCopy = `【${tafsirContent.author}】\nসূরা ${surahDetail.englishName} : আয়াত ${activeTafsirAyah.number}\n\n${activeTafsirAyah.arabic}\n"${activeTafsirAyah.translation}"\n\nতাফসীর:\n${tafsirContent.text}`;
+    const textToCopy = `【${tafsirContent.author}】\nসূরা ${surahDetail.englishName} (${surahDetail.name}) : আয়াত ${activeTafsirAyah.number}\n\n${activeTafsirAyah.arabic}\n\n"${activeTafsirAyah.translation}"\n\nতাফসীর ও ব্যাখ্যা:\n${tafsirContent.text}`;
     navigator.clipboard.writeText(textToCopy);
     setIsTafsirCopied(true);
     if (soundEnabled) soundHaptics.playMilestone();
@@ -872,44 +896,88 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     )}
 
                     <div className="p-4 sm:p-6 space-y-4">
-                      {/* Ayah Card Top Row: Ornate Number Badge (Left) & 3-Dots Menu (Right) */}
+                      {/* Ayah Card Top Row: Ornate Number Badge (Left) & Actions (Right) */}
                       <div className="flex items-center justify-between">
                         {/* Left: Ornate Circular Ayah Number Badge */}
-                        <div className="relative flex items-center justify-center">
-                          <div
-                            className={`w-9 h-9 rounded-full border-2 border-dashed flex items-center justify-center p-0.5 shadow-inner ${
-                              isDay
-                                ? 'border-[#006747]/70 bg-[#edf5f4]'
-                                : 'border-[#10b981]/70 bg-[#071922]'
-                            }`}
-                          >
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex items-center justify-center">
                             <div
-                              className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold ${
+                              className={`w-9 h-9 rounded-full border-2 border-dashed flex items-center justify-center p-0.5 shadow-inner ${
                                 isDay
-                                  ? 'border-[#006747]/40 text-[#005a3e]'
-                                  : 'border-[#10b981]/40 text-[#10b981]'
+                                  ? 'border-[#006747]/70 bg-[#edf5f4]'
+                                  : 'border-[#10b981]/70 bg-[#071922]'
                               }`}
                             >
-                              {ayah.number}
+                              <div
+                                className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold ${
+                                  isDay
+                                    ? 'border-[#006747]/40 text-[#005a3e]'
+                                    : 'border-[#10b981]/40 text-[#10b981]'
+                                }`}
+                              >
+                                {ayah.number}
+                              </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Right: 3-Dots Options Menu */}
-                        <div className="relative">
+                        {/* Right: Quick Action Buttons & 3-Dots Menu */}
+                        <div className="flex items-center gap-1.5">
+                          {/* Quick Direct Tafsir Button */}
                           <button
-                            onClick={() => setActiveAyahActionMenu(isMenuOpen ? null : ayah.number)}
-                            className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 border ${
+                            onClick={() => handleOpenTafsir(ayah)}
+                            className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-sm ${
                               isDay
-                                ? 'bg-slate-50 hover:bg-slate-100 border-slate-200'
-                                : 'bg-[#08151e] hover:bg-[#122836] border-[#1a3342]'
+                                ? 'bg-amber-50 border-amber-200 text-amber-900 hover:bg-amber-100'
+                                : 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25'
                             }`}
-                            title="More Options"
+                            title={selectedLanguage === 'bn' ? 'এই আয়াতের তাফসীর পড়ুন' : 'Read Ayah Tafsir'}
                           >
-                            <span className="w-2 h-2 rounded-full bg-amber-400" />
-                            <span className="w-2 h-2 rounded-full bg-[#10b981]" />
-                            <span className="w-2 h-2 rounded-full bg-rose-400" />
+                            <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <span>{selectedLanguage === 'bn' ? 'তাফসীর' : 'Tafsir'}</span>
                           </button>
+
+                          {/* Quick Audio Play Button */}
+                          <button
+                            onClick={() => playAyahAudio(ayah)}
+                            className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-sm ${
+                              isThisAyahPlaying
+                                ? isDay
+                                  ? 'bg-[#006747] text-white border-[#006747]'
+                                  : 'bg-[#10b981] text-black border-[#10b981]'
+                                : isDay
+                                ? 'bg-[#edf5f4] border-[#d2ece9] text-[#006747] hover:bg-[#d8ece9]'
+                                : 'bg-[#0a1620] border-[#162c3a] text-[#10b981] hover:bg-[#102330]'
+                            }`}
+                            title={isThisAyahPlaying ? 'Pause' : 'Play Ayah Audio'}
+                          >
+                            {isThisAyahPlaying ? (
+                              <Pause className="w-3.5 h-3.5 fill-current" />
+                            ) : (
+                              <Play className="w-3.5 h-3.5 fill-current" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {isThisAyahPlaying
+                                ? selectedLanguage === 'bn' ? 'থামান' : 'Pause'
+                                : selectedLanguage === 'bn' ? 'শুনুন' : 'Play'}
+                            </span>
+                          </button>
+
+                          {/* 3-Dots Options Menu */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setActiveAyahActionMenu(isMenuOpen ? null : ayah.number)}
+                              className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1 border ${
+                                isDay
+                                  ? 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+                                  : 'bg-[#08151e] hover:bg-[#122836] border-[#1a3342]'
+                              }`}
+                              title="More Options"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                            </button>
 
                           {/* Ayah Popup Menu */}
                           {isMenuOpen && (
@@ -999,6 +1067,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           )}
                         </div>
                       </div>
+                    </div>
 
                       {/* ARABIC WORD-BY-WORD (HIGH-CONTRAST & BRILLIANT IN NIGHT MODE) */}
                       {wordByWordMode && ayah.words && ayah.words.length > 0 ? (
@@ -1512,26 +1581,43 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Right: Arabic Calligraphy Name & Revelation Pill */}
-                    <div className="flex flex-col items-end shrink-0">
+                    {/* Right: Arabic Calligraphy Name, Tafsir & Revelation Pill */}
+                    <div className="flex flex-col items-end shrink-0 gap-1">
                       <div className={`font-arabic text-xl font-bold leading-tight drop-shadow-sm ${
                         isDay ? 'text-[#006747]' : 'text-[#10b981]'
                       }`}>
                         {surah.name}
                       </div>
-                      <span
-                        className={`text-[9px] font-bold px-2 py-0.5 rounded-md mt-1 border ${
-                          surah.revelationType === 'Meccan'
-                            ? isDay
-                              ? 'bg-amber-100/80 border-amber-300 text-amber-950 font-extrabold'
-                              : 'bg-amber-950/60 border-amber-800/60 text-amber-300'
-                            : isDay
-                            ? 'bg-emerald-100/80 border-emerald-300 text-emerald-950 font-extrabold'
-                            : 'bg-emerald-950/60 border-emerald-800/60 text-emerald-300'
-                        }`}
-                      >
-                        {surah.revelationType}
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            loadSurah(surah.number, 1, true);
+                          }}
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1 transition active:scale-95 cursor-pointer ${
+                            isDay
+                              ? 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100'
+                              : 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25'
+                          }`}
+                          title="Read Surah Tafsir"
+                        >
+                          <BookOpen className="w-2.5 h-2.5 text-amber-500" />
+                          <span>{selectedLanguage === 'bn' ? 'তাফসীর' : 'Tafsir'}</span>
+                        </button>
+                        <span
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded-md border ${
+                            surah.revelationType === 'Meccan'
+                              ? isDay
+                                ? 'bg-amber-100/80 border-amber-300 text-amber-950 font-extrabold'
+                                : 'bg-amber-950/60 border-amber-800/60 text-amber-300'
+                              : isDay
+                              ? 'bg-emerald-100/80 border-emerald-300 text-emerald-950 font-extrabold'
+                              : 'bg-emerald-950/60 border-emerald-800/60 text-emerald-300'
+                          }`}
+                        >
+                          {surah.revelationType}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1542,132 +1628,362 @@ export const QuranView: React.FC<QuranViewProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* TAFSIR MODAL                                             */}
+      {/* TAFSIR MODAL (PORTALED DIRECTLY TO BODY)                */}
       {/* ======================================================== */}
-      {showTafsirModal && activeTafsirAyah && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      {showTafsirModal && activeTafsirAyah && surahDetail && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-start justify-center p-2 sm:p-4 pt-2 sm:pt-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
+          onClick={handleCloseTafsir}
+        >
           <div
-            className={`w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-[28px] border shadow-2xl p-6 space-y-4 ${
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col rounded-[26px] sm:rounded-[28px] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ${
               isDay
-                ? 'bg-white border-[#dcebe8] text-slate-900 shadow-xl'
-                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-black'
+                ? 'bg-white border-[#dcebe8] text-slate-900 shadow-2xl shadow-emerald-950/20'
+                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-2xl shadow-black'
             }`}
           >
-            {/* Header */}
+
+            {/* STICKY MODAL HEADER (Always visible, never scrolls away) */}
             <div
-              className={`flex items-center justify-between pb-3 border-b ${
-                isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
+              className={`p-4 border-b flex items-center justify-between gap-2.5 shrink-0 ${
+                isDay ? 'bg-[#f8fafc] border-[#e8f3f1]' : 'bg-[#0a1620] border-[#152936]'
               }`}
             >
-              <div className="flex items-center gap-2 flex-wrap">
-                <BookOpen className="w-5 h-5 text-[#10b981]" />
-                <h3 className="font-bold text-base">
-                  {selectedLanguage === 'bn'
-                    ? `সূরা ${surahDetail?.englishName} • আয়াত ${activeTafsirAyah.number} এর তাফসীর`
-                    : `Surah ${surahDetail?.englishName} • Ayah ${activeTafsirAyah.number} Tafsir`}
-                </h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border bg-black/10 border-white/10 text-xs font-semibold">
-                  <Globe className="w-3.5 h-3.5 text-[#10b981]" />
-                  <select
-                    value={selectedLanguage}
-                    onChange={(e) => handleLanguageChange(e.target.value as ZikrLanguage)}
-                    className="bg-transparent text-xs font-bold focus:outline-none cursor-pointer"
-                  >
-                    {SUPPORTED_LANGUAGES.map((l) => (
-                      <option key={l.code} value={l.code} className="bg-slate-900 text-white">
-                        {l.flag} {l.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Left: Back/Close Arrow & Surah Info */}
+              <div className="flex items-center gap-2.5 min-w-0">
                 <button
-                  onClick={() => setShowTafsirModal(false)}
-                  className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-white"
+                  onClick={handleCloseTafsir}
+                  className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 border text-xs font-bold shrink-0 active:scale-95 ${
+                    isDay
+                      ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                      : 'bg-[#0e1c26] border-[#1a3342] text-white hover:bg-[#152e3c]'
+                  }`}
+                  title={selectedLanguage === 'bn' ? 'তাফসীর বন্ধ করে কুরআনে ফিরুন' : 'Close and Back to Quran'}
                 >
-                  <X className="w-5 h-5" />
+                  <ArrowLeft className="w-4 h-4 text-[#10b981] stroke-[2.5]" />
+                  <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'ফিরে যান' : 'Back'}</span>
+                </button>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-400 text-black uppercase shrink-0">
+                      তাফসীর
+                    </span>
+                    <h3 className="font-extrabold text-xs sm:text-sm truncate">
+                      সূরা {surahDetail.englishName}
+                    </h3>
+                  </div>
+                  <p className="text-[11px] text-[#10b981] font-bold truncate mt-0.5">
+                    আয়াত {activeTafsirAyah.number} / {surahDetail.numberOfAyahs} ({surahDetail.name})
+                  </p>
+                </div>
+              </div>
+
+              {/* Center: Fast Ayah Switcher Dropdown */}
+              <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={handlePrevTafsirAyah}
+                  disabled={activeTafsirAyah.number <= 1}
+                  className="p-1.5 rounded-xl border border-white/10 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  title="Previous Ayah"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <select
+                  value={activeTafsirAyah.number}
+                  onChange={(e) => handleSelectTafsirAyahNumber(Number(e.target.value))}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-bold border focus:outline-none cursor-pointer ${
+                    isDay ? 'bg-white border-slate-200 text-[#006747]' : 'bg-[#0e1c26] border-[#1a3342] text-[#10b981]'
+                  }`}
+                >
+                  {surahDetail.ayahs.map((a) => (
+                    <option key={a.number} value={a.number} className="bg-slate-900 text-white">
+                      আয়াত {a.number}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleNextTafsirAyah}
+                  disabled={activeTafsirAyah.number >= surahDetail.numberOfAyahs}
+                  className="p-1.5 rounded-xl border border-white/10 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  title="Next Ayah"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Right: Font Size & Close X */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => {
+                    const sizes: ('sm' | 'base' | 'lg' | 'xl')[] = ['sm', 'base', 'lg', 'xl'];
+                    const curIdx = sizes.indexOf(tafsirFontSize);
+                    const nextSize = sizes[(curIdx + 1) % sizes.length];
+                    setTafsirFontSize(nextSize);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`px-2 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer ${
+                    isDay ? 'bg-white border-slate-200 text-slate-700' : 'bg-[#0e1c26] border-[#1a3342] text-slate-200'
+                  }`}
+                  title="Font Size"
+                >
+                  <Type className="w-3.5 h-3.5" />
+                  <span className="text-[10px] uppercase font-mono">{tafsirFontSize}</span>
+                </button>
+
+                <button
+                  onClick={handleCloseTafsir}
+                  className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 active:scale-95 transition cursor-pointer"
+                  title="Close (বন্ধ করুন)"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Arabic & Translation Summary */}
-            <div
-              className={`p-4 rounded-2xl border space-y-2 ${
-                isDay ? 'bg-[#edf5f4] border-[#d2ece9]' : 'bg-[#07131b] border-[#162c3a]'
-              }`}
-            >
-              <div className="font-arabic text-xl text-right font-bold text-[#10b981]">
-                {activeTafsirAyah.arabic}
+            {/* SCROLLABLE MODAL CONTENT BODY (Smoothly resets to top) */}
+            <div ref={tafsirScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              {/* Tafsir Book & Language Selector Ribbon */}
+              <div
+                className={`p-3 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                  isDay ? 'bg-[#edf5f4] border-[#d2ece9]' : 'bg-[#07131b] border-[#162c3a]'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#10b981]">
+                  <BookOpen className="w-4 h-4" />
+                  <span>{selectedLanguage === 'bn' ? 'তাফসীর গ্রন্থ:' : 'Tafsir Edition:'}</span>
+                </div>
+                <select
+                  value={selectedTafsirId}
+                  onChange={(e) => {
+                    setSelectedTafsirId(Number(e.target.value));
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border focus:outline-none cursor-pointer ${
+                    isDay ? 'bg-white border-[#c5e3df] text-[#006747]' : 'bg-[#0e1c26] border-[#1a3342] text-[#10b981]'
+                  }`}
+                >
+                  {AVAILABLE_TAFSIRS.map((t) => (
+                    <option key={t.id} value={t.id} className="bg-slate-900 text-white">
+                      {selectedLanguage === 'bn' ? t.nameBn : t.nameEn}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className={`text-xs italic ${isDay ? 'text-slate-700' : 'text-[#e2e8f0]'}`}>
-                "{surahDetail?.ayahs.find((a) => a.number === activeTafsirAyah.number)?.translation || activeTafsirAyah.translation}"
+
+              {/* Arabic Ayah Preview Card */}
+              <div
+                className={`p-4 sm:p-5 rounded-2xl border space-y-2.5 ${
+                  isDay ? 'bg-[#f8fafc] border-slate-200' : 'bg-[#07131b] border-[#162c3a]'
+                }`}
+              >
+                <div className="flex items-center justify-between border-b pb-2 border-slate-200 dark:border-[#162c3a]">
+                  <span
+                    className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold ${
+                      isDay
+                        ? 'border-[#006747] bg-[#edf5f4] text-[#005a3e]'
+                        : 'border-[#10b981] bg-[#071922] text-[#10b981]'
+                    }`}
+                  >
+                    {activeTafsirAyah.number}
+                  </span>
+                  <button
+                    onClick={() => playAyahAudio(activeTafsirAyah)}
+                    className={`px-2.5 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                      isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === activeTafsirAyah.number
+                        ? 'bg-[#10b981] text-black border-[#10b981]'
+                        : isDay
+                        ? 'bg-white border-slate-200 text-[#006747]'
+                        : 'bg-[#0e1c26] border-[#1a3342] text-[#10b981]'
+                    }`}
+                  >
+                    {isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === activeTafsirAyah.number ? (
+                      <Pause className="w-3 h-3 fill-current" />
+                    ) : (
+                      <Play className="w-3 h-3 fill-current" />
+                    )}
+                    <span>{isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === activeTafsirAyah.number ? 'থামান' : 'তিলাওয়াত'}</span>
+                  </button>
+                </div>
+
+                <div
+                  dir="rtl"
+                  className={`font-arabic text-xl sm:text-2xl font-bold text-right leading-[2.2] py-1 ${
+                    isDay ? 'text-[#0f172a]' : 'text-[#f8fafc]'
+                  }`}
+                >
+                  {activeTafsirAyah.arabic}
+                </div>
+
+                <div className={`text-xs sm:text-sm italic font-sans leading-relaxed ${isDay ? 'text-slate-700' : 'text-[#e2e8f0]'}`}>
+                  "{surahDetail?.ayahs.find((a) => a.number === activeTafsirAyah.number)?.translation || activeTafsirAyah.translation}"
+                </div>
+              </div>
+
+              {/* Detailed Tafsir Text Content */}
+              <div
+                className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
+                  isDay ? 'bg-white border-[#dcebe8]' : 'bg-[#0a1620] border-[#162c3a]'
+                }`}
+              >
+                {/* Author Badge & Actions */}
+                <div className="flex items-center justify-between gap-2 flex-wrap border-b pb-2.5 border-slate-200 dark:border-[#162c3a]">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold">
+                    <Book className="w-3.5 h-3.5" />
+                    <span>{tafsirContent?.author || 'তাফসীর ইবনে কাছীর'}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleCopyTafsirText}
+                      className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                        isTafsirCopied
+                          ? 'bg-[#10b981] text-black border-[#10b981]'
+                          : isDay
+                          ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                          : 'bg-[#07131b] hover:bg-[#152e3c] border-[#162c3a] text-slate-200'
+                      }`}
+                    >
+                      {isTafsirCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{isTafsirCopied ? 'কপি হয়েছে' : 'কপি'}</span>
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        toggleBookmark(surahDetail.number, activeTafsirAyah.number, activeTafsirAyah.arabic, activeTafsirAyah.translation)
+                      }
+                      className={`p-1.5 rounded-lg border cursor-pointer active:scale-95 ${
+                        isAyahBookmarked(surahDetail.number, activeTafsirAyah.number)
+                          ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
+                          : isDay
+                          ? 'bg-slate-100 border-slate-200 text-slate-500'
+                          : 'bg-[#07131b] border-[#162c3a] text-slate-400'
+                      }`}
+                      title="Bookmark"
+                    >
+                      <Bookmark
+                        className={`w-3.5 h-3.5 ${
+                          isAyahBookmarked(surahDetail.number, activeTafsirAyah.number) ? 'fill-current' : ''
+                        }`}
+                      />
+                    </button>
+
+                    <button
+                      onClick={() => handleShareAyah(activeTafsirAyah)}
+                      className={`p-1.5 rounded-lg border cursor-pointer active:scale-95 ${
+                        isDay ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-[#07131b] border-[#162c3a] text-slate-400'
+                      }`}
+                      title="Share"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tafsir Body text */}
+                {isLoadingTafsir ? (
+                  <div className="py-10 text-center space-y-3">
+                    <div className="w-8 h-8 mx-auto border-3 border-[#10b981] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-xs text-[#64748b]">
+                      {selectedLanguage === 'bn' ? 'তাফসীর লোড হচ্ছে...' : 'Loading Tafsir...'}
+                    </p>
+                  </div>
+                ) : tafsirContent?.text ? (
+                  <div className="space-y-3">
+                    {tafsirContent.text
+                      .split(/\n{2,}|\n(?=[১-৯0-9]+\.|\([১-৯0-9]+\)|\[[১-৯0-9]+\])/g)
+                      .map((paragraph, pIdx) => {
+                        const cleanP = paragraph.trim();
+                        if (!cleanP) return null;
+                        return (
+                          <div
+                            key={pIdx}
+                            className={`leading-relaxed font-sans text-justify ${
+                              tafsirFontSize === 'sm'
+                                ? 'text-xs leading-relaxed'
+                                : tafsirFontSize === 'base'
+                                ? 'text-xs sm:text-sm leading-relaxed'
+                                : tafsirFontSize === 'lg'
+                                ? 'text-sm sm:text-base leading-relaxed'
+                                : 'text-base sm:text-lg leading-relaxed'
+                            } ${isDay ? 'text-slate-800' : 'text-[#e2e8f0]'}`}
+                          >
+                            {cleanP}
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center text-xs text-slate-400">
+                    তাফসীর তথ্য পাওয়া যায়নি।
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Tafsir Edition Selector Bar */}
+            {/* STICKY BOTTOM ACTION BAR (Always accessible) */}
             <div
-              className={`p-3 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
-                isDay ? 'bg-[#e8f3f1] border-[#c5e3df]' : 'bg-[#07131b] border-[#162c3a]'
+              className={`p-3 border-t flex items-center justify-between gap-2 shrink-0 ${
+                isDay ? 'bg-[#f8fafc] border-[#e8f3f1]' : 'bg-[#0a1620] border-[#152936]'
               }`}
             >
-              <span className="text-xs font-bold text-[#10b981] flex items-center gap-1.5">
-                <Book className="w-4 h-4 text-[#10b981]" />
-                <span>{selectedLanguage === 'bn' ? 'তাফসীর গ্রন্থ নির্বাচন করুন:' : 'Select Tafsir Edition:'}</span>
-              </span>
-              <select
-                value={selectedTafsirId}
-                onChange={(e) => setSelectedTafsirId(Number(e.target.value))}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold border focus:outline-none cursor-pointer ${
-                  isDay
-                    ? 'bg-white border-[#c5e3df] text-[#006747]'
+              <button
+                onClick={handlePrevTafsirAyah}
+                disabled={activeTafsirAyah.number <= 1}
+                className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer border ${
+                  activeTafsirAyah.number <= 1
+                    ? 'opacity-30 cursor-not-allowed border-transparent'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-[#006747]'
                     : 'bg-[#0e1c26] border-[#1a3342] text-[#10b981]'
                 }`}
               >
-                {AVAILABLE_TAFSIRS.map((t) => (
-                  <option key={t.id} value={t.id} className="bg-slate-900 text-white">
-                    {selectedLanguage === 'bn' ? t.nameBn : t.nameEn}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <ChevronLeft className="w-4 h-4" />
+                <span>{selectedLanguage === 'bn' ? 'পূর্ববর্তী' : 'Prev'}</span>
+              </button>
 
-            {/* Tafsir Body */}
-            {isLoadingTafsir ? (
-              <div className="py-8 text-center space-y-3">
-                <div className="w-8 h-8 mx-auto border-3 border-[#10b981] border-t-transparent rounded-full animate-spin" />
-                <p className="text-xs text-[#64748b]">
-                  {selectedLanguage === 'bn' ? 'তাফসীর লোড হচ্ছে...' : 'Loading Tafsir...'}
-                </p>
-              </div>
-            ) : tafsirContent ? (
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] text-xs font-bold">
-                  <span>{tafsirContent.author}</span>
-                </div>
-                <div
-                  className={`text-sm leading-relaxed whitespace-pre-line font-sans ${
-                    isDay ? 'text-slate-800' : 'text-[#e2e8f0]'
-                  }`}
-                  dangerouslySetInnerHTML={{ __html: tafsirContent.text }}
-                />
-              </div>
-            ) : (
-              <div className="py-6 text-center text-xs text-slate-400">
-                তাফসীর তথ্য পাওয়া যায়নি।
-              </div>
-            )}
+              <button
+                onClick={handleCloseTafsir}
+                className={`px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md text-white ${
+                  isDay ? 'bg-[#006747] hover:bg-[#007a52]' : 'bg-[#006747] hover:bg-[#008f5d]'
+                }`}
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>{selectedLanguage === 'bn' ? 'পড়া সম্পন্ন (বন্ধ করুন)' : 'Close'}</span>
+              </button>
+
+              <button
+                onClick={handleNextTafsirAyah}
+                disabled={activeTafsirAyah.number >= surahDetail.numberOfAyahs}
+                className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer border ${
+                  activeTafsirAyah.number >= surahDetail.numberOfAyahs
+                    ? 'opacity-30 cursor-not-allowed border-transparent'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-[#006747]'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-[#10b981]'
+                }`}
+              >
+                <span>{selectedLanguage === 'bn' ? 'পরবর্তী' : 'Next'}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ======================================================== */}
       {/* SURAH DETAILS MODAL                                      */}
       {/* ======================================================== */}
-      {showDetailsModal && surahDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      {showDetailsModal && surahDetail && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setShowDetailsModal(false)}
+        >
           <div
-            className={`w-full max-w-md rounded-[28px] border shadow-2xl p-6 space-y-4 ${
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-md rounded-[28px] border shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200 ${
               isDay
                 ? 'bg-white border-[#dcebe8] text-slate-900'
                 : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-black'
@@ -1767,7 +2083,8 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </select>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
