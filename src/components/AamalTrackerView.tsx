@@ -2,6 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { AamalCheckItem, AamalDayLog, ThemeMode, ZikrLanguage, UserProfile, ZikrItem } from '../types';
 import {
   DEFAULT_AAMAL_ITEMS,
+  WAQT_SALAH_PLANS,
+  WaqtSalahPlan,
+  WaqtRakatDetail,
   getTodayDateKey,
   createInitialDayLog,
   getAamalLogForDate,
@@ -112,6 +115,40 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
     social: false,
   });
 
+  // Selected date Friday check (5 = Friday)
+  const isSelectedDayFriday = useMemo(() => {
+    try {
+      const [y, m, d] = selectedDateKey.split('-').map(Number);
+      return new Date(y, m - 1, d).getDay() === 5;
+    } catch {
+      return false;
+    }
+  }, [selectedDateKey]);
+
+  // Friday Jummah vs Dhuhr mode (defaults to true if Friday)
+  const [showJummahMode, setShowJummahMode] = useState<boolean>(() => {
+    try {
+      const [y, m, d] = todayKey.split('-').map(Number);
+      return new Date(y, m - 1, d).getDay() === 5;
+    } catch {
+      return false;
+    }
+  });
+
+  // Keep Jummah mode in sync with selected date
+  useEffect(() => {
+    try {
+      const [y, m, d] = selectedDateKey.split('-').map(Number);
+      const isFri = new Date(y, m - 1, d).getDay() === 5;
+      setShowJummahMode(isFri);
+    } catch {
+      setShowJummahMode(false);
+    }
+  }, [selectedDateKey]);
+
+  // Active Waqt tab: 'all' | 'fajr' | 'dhuhr' | 'jummah' | 'asr' | 'maghrib' | 'isha'
+  const [selectedWaqtTab, setSelectedWaqtTab] = useState<string>('all');
+
   // Report Modal state
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -159,6 +196,40 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
       completedRatio,
     };
     updateAndSaveLog(updated);
+  };
+
+  // Toggle all rakats of a specific waqt (e.g. mark all Fajr or all Jummah items)
+  const handleToggleAllWaqtItems = (plan: WaqtSalahPlan) => {
+    const planItemIds = plan.items.map((i) => i.id);
+    const allCompleted = planItemIds.every((id) =>
+      dayLog.items.find((item) => item.id === id)?.completed
+    );
+    const nextTarget = !allCompleted;
+
+    const nextItems = dayLog.items.map((item) =>
+      planItemIds.includes(item.id) ? { ...item, completed: nextTarget } : item
+    );
+
+    const completedCount = nextItems.filter((i) => i.completed).length;
+    const completedRatio = nextItems.length > 0 ? completedCount / nextItems.length : 0;
+
+    if (nextTarget) {
+      if (soundEnabled) soundHaptics.playMilestone();
+      confetti({
+        particleCount: 50,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#059669', '#10b981', '#34d399', '#f59e0b'],
+      });
+    } else {
+      if (soundEnabled) soundHaptics.playTap();
+    }
+
+    updateAndSaveLog({
+      ...dayLog,
+      items: nextItems,
+      completedRatio,
+    });
   };
 
   // Update Quran pages read
@@ -219,11 +290,26 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
   const knowledgeItems = dayLog.items.filter((i) => i.category === 'knowledge');
   const socialItems = dayLog.items.filter((i) => i.category === 'social');
 
-  // 5 Fardh Prayers specific count
-  const fardh5 = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  // 5 Fardh Prayers specific count (incorporating Friday Jumu'ah)
   const fardhCompletedCount = dayLog.items.filter(
-    (i) => fardh5.includes(i.id) && i.completed
+    (i) => (['fajr', 'asr', 'maghrib', 'isha'].includes(i.id) || i.id === 'dhuhr' || i.id === 'jummah_fardh') && i.completed
   ).length;
+
+  // Visible Waqt plans based on Friday and user tab selection
+  const visibleWaqtPlans = useMemo(() => {
+    return WAQT_SALAH_PLANS.filter((plan) => {
+      if (selectedWaqtTab !== 'all') {
+        return plan.waqtId === selectedWaqtTab;
+      }
+      if (isSelectedDayFriday || showJummahMode) {
+        if (plan.isRegularDayOnly) return false;
+        return true;
+      } else {
+        if (plan.isFridayOnly) return false;
+        return true;
+      }
+    });
+  }, [isSelectedDayFriday, showJummahMode, selectedWaqtTab]);
 
   const totalAmalCount = dayLog.items.length;
   const completedAmalCount = dayLog.items.filter((i) => i.completed).length;
@@ -328,14 +414,18 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
 
   const isSelectedToday = selectedDateKey === todayKey;
 
-  // The 5 Fardh waqts array
-  const waqtsList = [
-    { id: 'fajr', nameEn: 'Fajr', nameBn: 'ফজর', icon: '🌅' },
-    { id: 'dhuhr', nameEn: 'Dhuhr', nameBn: 'যোহর', icon: '☀️' },
-    { id: 'asr', nameEn: 'Asr', nameBn: 'আছর', icon: '🌤️' },
-    { id: 'maghrib', nameEn: 'Maghrib', nameBn: 'মাগরিব', icon: '🌇' },
-    { id: 'isha', nameEn: 'Isha', nameBn: 'ইশা', icon: '🌙' },
-  ];
+  // The Fardh waqts array (with Friday Jumu'ah dynamic display)
+  const waqtsList = useMemo(() => {
+    return [
+      { id: 'fajr', nameEn: 'Fajr', nameBn: 'ফজর', icon: '🌅' },
+      isSelectedDayFriday || showJummahMode
+        ? { id: 'jummah_fardh', nameEn: "Jumu'ah", nameBn: 'জুমুআহ', icon: '🕌' }
+        : { id: 'dhuhr', nameEn: 'Dhuhr', nameBn: 'যোহর', icon: '☀️' },
+      { id: 'asr', nameEn: 'Asr', nameBn: 'আছর', icon: '🌤️' },
+      { id: 'maghrib', nameEn: 'Maghrib', nameBn: 'মাগরিব', icon: '🌇' },
+      { id: 'isha', nameEn: 'Isha', nameBn: 'ইশা', icon: '🌙' },
+    ];
+  }, [isSelectedDayFriday, showJummahMode]);
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
@@ -555,43 +645,359 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             </button>
 
             {!collapsedSections.prayer && (
-              <div className="p-4 sm:p-5 pt-0 space-y-3 border-t border-slate-100 dark:border-teal-900/30">
-                {/* 5 Circular Waqt Buttons */}
-                <div className="grid grid-cols-5 gap-2 pt-2">
-                  {waqtsList.map((w) => {
-                    const item = dayLog.items.find((i) => i.id === w.id);
-                    const isCompleted = item?.completed || false;
-                    const waqtName =
-                      PRAYER_NAMES[w.nameEn]?.[selectedLanguage] ||
-                      (selectedLanguage === 'bn' ? w.nameBn : w.nameEn);
+              <div className="p-4 sm:p-5 pt-0 space-y-4 border-t border-slate-100 dark:border-teal-900/30">
+                {/* 1. Waqt Quick Filter / Selection Bar */}
+                <div className="pt-2">
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                    <button
+                      onClick={() => {
+                        setSelectedWaqtTab('all');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`px-3 py-2 rounded-2xl text-xs font-bold shrink-0 transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                        selectedWaqtTab === 'all'
+                          ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-400/40'
+                          : isDay
+                          ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          : 'bg-[#081e22] text-emerald-300 hover:bg-[#123940] border border-[#17464f]'
+                      }`}
+                    >
+                      <span>🌟</span>
+                      <span>{selectedLanguage === 'bn' ? 'সব নামাজ' : 'All Prayers'}</span>
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20 font-mono">
+                        {prayerItems.filter((i) => i.completed).length}/{prayerItems.length}
+                      </span>
+                    </button>
 
-                    return (
-                      <button
-                        key={w.id}
-                        onClick={() => handleToggleItem(w.id)}
-                        className={`p-2.5 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer ${
-                          isCompleted
-                            ? 'bg-[#00875a] text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/40'
-                            : isDay
-                            ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                            : 'bg-[#081e22] hover:bg-[#123940] border-[#17464f] text-emerald-300'
-                        }`}
-                      >
-                        <span className="text-xl">{w.icon}</span>
-                        <span className="text-xs font-bold truncate max-w-full">{waqtName}</span>
-                        <div
-                          className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                            isCompleted ? 'bg-white text-emerald-600' : 'border border-slate-300 dark:border-teal-700'
+                    {WAQT_SALAH_PLANS.map((plan) => {
+                      // Filter regular dhuhr / jummah according to mode
+                      if (plan.isFridayOnly && !(isSelectedDayFriday || showJummahMode)) return null;
+                      if (plan.isRegularDayOnly && (isSelectedDayFriday || showJummahMode)) return null;
+
+                      const planCompleted = plan.items.filter((i) =>
+                        dayLog.items.find((item) => item.id === i.id)?.completed
+                      ).length;
+                      const isAllPlanDone = planCompleted === plan.items.length;
+                      const isTabActive = selectedWaqtTab === plan.waqtId;
+
+                      return (
+                        <button
+                          key={plan.waqtId}
+                          onClick={() => {
+                            setSelectedWaqtTab(plan.waqtId);
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                          className={`px-3 py-2 rounded-2xl text-xs font-bold shrink-0 transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                            isTabActive
+                              ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-400/40'
+                              : isDay
+                              ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              : 'bg-[#081e22] text-emerald-300 hover:bg-[#123940] border border-[#17464f]'
                           }`}
                         >
-                          {isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
+                          <span>{plan.icon}</span>
+                          <span>
+                            {plan.waqtId === 'jummah'
+                              ? selectedLanguage === 'bn'
+                                ? 'জুমুআহ'
+                                : "Jumu'ah"
+                              : selectedLanguage === 'bn'
+                              ? plan.nameBn.replace(' নামাজ', '')
+                              : plan.nameEn.replace(' Prayer', '')}
+                          </span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                              isAllPlanDone
+                                ? 'bg-emerald-500 text-white'
+                                : 'bg-slate-200 dark:bg-teal-900/50 text-slate-700 dark:text-emerald-300'
+                            }`}
+                          >
+                            {planCompleted}/{plan.items.length}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Friday (জুমুআহ বার) Special Announcement & Toggle */}
+                {isSelectedDayFriday ? (
+                  <div
+                    className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      isDay
+                        ? 'bg-amber-50/80 border-amber-300/80 text-amber-950'
+                        : 'bg-[#183626] border-emerald-500/40 text-emerald-100 shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-2xl">🕌</span>
+                      <div>
+                        <div className="text-xs sm:text-sm font-black flex items-center gap-1.5">
+                          <span>
+                            {selectedLanguage === 'bn'
+                              ? 'আজ পবিত্র জুমুআহর দিন (জুমুআহ বার)'
+                              : "Today is Blessed Friday (Jumu'ah Day)"}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold">
+                            {selectedLanguage === 'bn' ? 'বিশেষ খাস সালাত' : 'Special Salah'}
+                          </span>
                         </div>
+                        <p className="text-[11px] opacity-85">
+                          {selectedLanguage === 'bn'
+                            ? 'খুতবা শ্রবণ, তাহিয়্যাতুল অজু ও মসজিদ, কাবলাল জুমুআহ, ফরজ ও বাদাল জুমুআহ আদায় করুন'
+                            : "Attend early for Khutbah, Tahiyyatul Wudu/Masjid, Qablal & Ba'dal Jumu'ah"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 bg-black/10 dark:bg-black/30 p-1 rounded-xl self-start sm:self-auto">
+                      <button
+                        onClick={() => {
+                          setShowJummahMode(true);
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          showJummahMode
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'text-stone-600 dark:text-stone-300 hover:text-emerald-500'
+                        }`}
+                      >
+                        {selectedLanguage === 'bn' ? '🕌 পবিত্র জুমুআহ' : "🕌 Jumu'ah"}
                       </button>
+                      <button
+                        onClick={() => {
+                          setShowJummahMode(false);
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          !showJummahMode
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'text-stone-600 dark:text-stone-300 hover:text-emerald-500'
+                        }`}
+                      >
+                        {selectedLanguage === 'bn' ? '☀️ সাধারণ যোহর' : '☀️ Regular Dhuhr'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[11px] text-slate-500 dark:text-emerald-400/70 font-medium">
+                      {selectedLanguage === 'bn'
+                        ? 'ওয়াক্তভিত্তিক তাহিয়্যাতুল অজু, তাহিয়্যাতুল মসজিদ, সুন্নত, ফরজ ও নফল ট্র্যাকিং'
+                        : 'Waqt-wise Tahiyyatul Wudu, Tahiyyatul Masjid, Sunnah, Fardh & Nafl'}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setShowJummahMode((prev) => !prev);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>🕌</span>
+                      <span>
+                        {showJummahMode
+                          ? selectedLanguage === 'bn'
+                            ? 'যোহরে ফিরুন'
+                            : 'Switch to Dhuhr'
+                          : selectedLanguage === 'bn'
+                          ? 'জুমুআহর আমল দেখুন'
+                          : "View Jumu'ah Plan"}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 3. Render Each Waqt Salah Plan with all rakats */}
+                <div className="space-y-4">
+                  {visibleWaqtPlans.map((plan) => {
+                    const planItems = plan.items;
+                    const completedInPlan = planItems.filter((i) =>
+                      dayLog.items.find((item) => item.id === i.id)?.completed
+                    ).length;
+                    const isAllDone = completedInPlan === planItems.length;
+
+                    return (
+                      <div
+                        key={plan.waqtId}
+                        className={`rounded-2xl border p-3.5 sm:p-4 transition shadow-sm ${
+                          isDay
+                            ? 'bg-slate-50/70 border-slate-200'
+                            : 'bg-[#081e22]/90 border-[#15464f]'
+                        }`}
+                      >
+                        {/* Waqt Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-200 dark:border-teal-900/40">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-2xl">{plan.icon}</span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4
+                                  className={`text-sm sm:text-base font-bold ${
+                                    isDay ? 'text-slate-900' : 'text-white'
+                                  }`}
+                                >
+                                  {selectedLanguage === 'bn' ? plan.nameBn : plan.nameEn}
+                                </h4>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  {plan.totalRakats}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-emerald-300/70 font-medium">
+                                {selectedLanguage === 'bn'
+                                  ? `${completedInPlan}/${planItems.length} টি আমল সম্পন্ন হয়েছে`
+                                  : `${completedInPlan}/${planItems.length} rakats completed`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Quick Toggle All Button */}
+                          <button
+                            onClick={() => handleToggleAllWaqtItems(plan)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95 self-start sm:self-auto ${
+                              isAllDone
+                                ? 'bg-emerald-600 text-white shadow-sm'
+                                : isDay
+                                ? 'bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-300'
+                                : 'bg-[#0f343c] text-emerald-300 hover:bg-[#15444e] border border-[#1d5b67]'
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span>
+                              {isAllDone
+                                ? selectedLanguage === 'bn'
+                                  ? 'সব আদায় সম্পন্ন'
+                                  : 'All Completed'
+                                : selectedLanguage === 'bn'
+                                ? 'ওয়াক্তের সব টিক দিন'
+                                : 'Mark All Waqt'}
+                            </span>
+                          </button>
+                        </div>
+
+                        {/* Rakat Items List for this Salah */}
+                        <div className="pt-2.5 space-y-2">
+                          {planItems.map((rakat) => {
+                            const isChecked =
+                              dayLog.items.find((item) => item.id === rakat.id)?.completed || false;
+
+                            // Badge type coloring
+                            const typeBadge = (() => {
+                              switch (rakat.type) {
+                                case 'fardh':
+                                  return {
+                                    bg: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40',
+                                    label: selectedLanguage === 'bn' ? 'ফরজ' : 'Fardh',
+                                  };
+                                case 'sunnah':
+                                  return {
+                                    bg: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40',
+                                    label: selectedLanguage === 'bn' ? 'সুন্নত' : 'Sunnah',
+                                  };
+                                case 'wajib':
+                                  return {
+                                    bg: 'bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-500/40',
+                                    label: selectedLanguage === 'bn' ? 'ওয়াজিব' : 'Wajib',
+                                  };
+                                case 'nafl':
+                                default:
+                                  return {
+                                    bg: 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/40',
+                                    label: selectedLanguage === 'bn' ? 'নফল' : 'Nafl',
+                                  };
+                              }
+                            })();
+
+                            const itemTitle =
+                              getAamalItemLabel({ id: rakat.id, label: rakat.labelBn }) ||
+                              (selectedLanguage === 'bn' ? rakat.labelBn : rakat.labelEn);
+
+                            const itemDetails =
+                              getAamalItemDetails({ id: rakat.id, details: rakat.detailsBn }) ||
+                              (selectedLanguage === 'bn' ? rakat.detailsBn : rakat.detailsEn);
+
+                            return (
+                              <div
+                                key={rakat.id}
+                                onClick={() => handleToggleItem(rakat.id)}
+                                className={`p-3 rounded-xl border transition flex items-center justify-between gap-3 cursor-pointer select-none active:scale-[0.99] ${
+                                  isChecked
+                                    ? isDay
+                                      ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950 shadow-sm'
+                                      : 'bg-[#092b30] border-emerald-500/60 text-emerald-50 shadow-sm'
+                                    : isDay
+                                    ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50'
+                                    : 'bg-[#0a2327] border-[#153e46] text-emerald-200 hover:bg-[#0f3037]'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  {/* Checkbox */}
+                                  <div
+                                    className={`w-5 h-5 rounded-full border shrink-0 flex items-center justify-center transition-all ${
+                                      isChecked
+                                        ? 'bg-emerald-600 border-emerald-600 text-white scale-105'
+                                        : 'border-slate-400 dark:border-teal-700'
+                                    }`}
+                                  >
+                                    {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                  </div>
+
+                                  {/* Info */}
+                                  <div className="min-w-0">
+                                    <div className="flex items-center flex-wrap gap-1.5">
+                                      <span
+                                        className={`text-xs sm:text-sm font-bold truncate ${
+                                          isChecked
+                                            ? 'text-emerald-900 dark:text-emerald-100'
+                                            : isDay
+                                            ? 'text-slate-900'
+                                            : 'text-white'
+                                        }`}
+                                      >
+                                        {itemTitle}
+                                      </span>
+
+                                      {/* Rakat count badge */}
+                                      <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-200 dark:bg-teal-900/60 text-slate-700 dark:text-emerald-300">
+                                        {rakat.rakats}
+                                      </span>
+
+                                      {/* Type badge (Fardh, Sunnah, Nafl, Wajib) */}
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${typeBadge.bg}`}
+                                      >
+                                        {typeBadge.label}
+                                      </span>
+                                    </div>
+
+                                    {itemDetails && (
+                                      <div className="text-[11px] text-stone-600 dark:text-stone-300 font-medium truncate pt-0.5">
+                                        {itemDetails}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Right: Arabic Calligraphy & Points */}
+                                <div className="flex flex-col items-end shrink-0 pl-2">
+                                  {rakat.arabicLabel && (
+                                    <span className="text-xs sm:text-sm font-arabic font-bold text-amber-600 dark:text-amber-300">
+                                      {rakat.arabicLabel}
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                    +{rakat.points} {AAMAL_UI.pts[selectedLanguage]}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
 
-                {/* Jamat / Congregation Card */}
+                {/* 4. Jamat / Congregation Card */}
                 {(() => {
                   const jamatItem = dayLog.items.find((i) => i.id === 'jamat_fardh');
                   if (!jamatItem) return null;
