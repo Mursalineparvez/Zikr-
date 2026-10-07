@@ -211,8 +211,8 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               }`}
             >
               {selectedLanguage === 'bn'
-                ? 'প্রত্যেক ফরজ নামাজের পর কাউন্টার ০ হবে • টার্গেট ১-৩৩ বার'
-                : 'Resets to 0 after every Fard prayer • Target 1-33'}
+                ? 'প্রত্যেক ফরজ নামাজের পর কাউন্টার ০ হবে • টার্গেট: ১-১০ নং ১০০ বার, ১১-১২ নং ২০ বার'
+                : 'Resets after every Fard prayer • Target: 1-10 (100x), 11-12 (20x)'}
             </p>
           </button>
 
@@ -245,8 +245,8 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               }`}
             >
               {selectedLanguage === 'bn'
-                ? 'মাগরিবের ওয়াক্ত শুরু হওয়ার সঙ্গে সঙ্গে প্রতিদিন ০ হবে • টার্গেট ৫-১৬৫ বার'
-                : 'Resets daily at Maghrib prayer • Daily target 5-165'}
+                ? 'প্রতিদিন মাগরিবের ওয়াক্তে কাউন্টার ০ হবে • টার্গেট: ১-১০ নং ৫০০ বার, ১১-১২ নং ১০০ বার'
+                : 'Resets daily after Maghrib • Target: 1-10 (500x), 11-12 (100x)'}
             </p>
           </button>
 
@@ -279,8 +279,8 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               }`}
             >
               {selectedLanguage === 'bn'
-                ? 'ব্যবহারকারী নিজে যখন Refresh করবেন তখন ০ হবে • টার্গেট ৫০-২০০ বার'
-                : 'User resets manually • Manual target 50-200'}
+                ? 'ব্যবহারকারী নিজে যখন Refresh করবেন তখন ০ হবে • টার্গেট: ১-১০ নং ১০০০ বার, ১১-১২ নং ২০০ বার'
+                : 'User resets manually • Target: 1-10 (1000x), 11-12 (200x)'}
             </p>
           </button>
         </div>

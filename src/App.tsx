@@ -131,10 +131,10 @@ export default function App() {
         );
 
         // Populate all Common Zikrs, restoring counts and syncing target to current refresh mode
-        const mergedList: ZikrItem[] = DEFAULT_ZIKRS.map((defaultItem) => {
+        const mergedList: ZikrItem[] = DEFAULT_ZIKRS.map((defaultItem, defaultIdx) => {
           const normalizedName = defaultItem.name.toLowerCase().replace(/[^a-z0-9]/g, '');
           const existing = parsedMap.get(defaultItem.id) || nameMap.get(normalizedName);
-          const targetForMode = getTargetForZikrMode(defaultItem, activeRefreshMode);
+          const targetForMode = getTargetForZikrMode(defaultItem, activeRefreshMode, defaultIdx);
           if (existing) {
             const rawCount = typeof existing.count === 'number' ? Math.max(0, existing.count) : 0;
             return {
@@ -176,9 +176,9 @@ export default function App() {
     localStorage.setItem('zikrmate_last_maghrib_day', currentSegment.islamicDayKey);
     localStorage.setItem('zikrmate_last_active_date_key', currentSegment.calendarDateKey);
 
-    return DEFAULT_ZIKRS.map((item) => ({
+    return DEFAULT_ZIKRS.map((item, idx) => ({
       ...item,
-      target: getTargetForZikrMode(item, activeRefreshMode),
+      target: getTargetForZikrMode(item, activeRefreshMode, idx),
     }));
   });
 
@@ -1101,15 +1101,17 @@ export default function App() {
       localStorage.setItem('zikrmate_refresh_mode', newMode);
     } catch {}
 
-    setZikrs((prev) =>
-      prev.map((item) => {
-        const matchedDefault = DEFAULT_ZIKRS.find(
-          (d) => d.id === item.id || (item.name && d.name.toLowerCase() === item.name.toLowerCase())
-        );
+    setZikrs((prev) => {
+      const updatedList = prev.map((item, idx) => {
+        const is11or12 =
+          item.id === 'dua_yunus' ||
+          item.id === 'lailaha_illallahu_wahdahu' ||
+          idx === 10 ||
+          idx === 11;
 
-        const fardTarget = item.fardTarget ?? matchedDefault?.fardTarget;
-        const maghribTarget = item.maghribTarget ?? matchedDefault?.maghribTarget;
-        const manualTarget = item.manualTarget ?? matchedDefault?.manualTarget;
+        const fardTarget = is11or12 ? 20 : 100;
+        const maghribTarget = is11or12 ? 100 : 500;
+        const manualTarget = is11or12 ? 200 : 1000;
 
         const updatedItem = {
           ...item,
@@ -1118,28 +1120,34 @@ export default function App() {
           manualTarget,
         };
 
-        const newTarget = getTargetForZikrMode(updatedItem, newMode);
+        const newTarget = getTargetForZikrMode(updatedItem, newMode, idx);
 
         return {
           ...updatedItem,
           target: newTarget,
           updatedAt: Date.now(),
         };
-      })
-    );
+      });
+
+      try {
+        localStorage.setItem('noor_zikr_items', JSON.stringify(updatedList));
+      } catch {}
+
+      return updatedList;
+    });
 
     const modeLabels: Record<ZikrRefreshMode, { bn: string; en: string }> = {
       fard: {
-        bn: 'রিফ্রেশ মোড: প্রত্যেক ফরজ নামাজের পর কাউন্টার ০ হবে (টার্গেট: ১-৩৩)',
-        en: 'Refresh Mode: Reset after Every Fard Salah',
+        bn: 'রিফ্রেশ মোড: প্রত্যেক ফরজ নামাজ (টার্গেট: ১-১০ নং ১০০ বার, ১১-১২ নং ২০ বার)',
+        en: 'Refresh Mode: Every Fard Salah (Target 1-10: 100x, 11-12: 20x)',
       },
       maghrib: {
-        bn: 'রিফ্রেশ মোড: প্রতিদিন মাগরিবের পর কাউন্টার ০ হবে (টার্গেট: ৫-১৬৫)',
-        en: 'Refresh Mode: Reset Daily After Maghrib',
+        bn: 'রিফ্রেশ মোড: প্রতিদিন মাগরিবের পর (টার্গেট: ১-১০ নং ৫০০ বার, ১১-১২ নং ১০০ বার)',
+        en: 'Refresh Mode: Daily After Maghrib (Target 1-10: 500x, 11-12: 100x)',
       },
       manual: {
-        bn: 'রিফ্রেশ মোড: ম্যানুয়ালি রিফ্রেশ (টার্গেট: ৫০-২০০)',
-        en: 'Refresh Mode: Manual Reset Only',
+        bn: 'রিফ্রেশ মোড: ম্যানুয়ালি (টার্গেট: ১-১০ নং ১০০০ বার, ১১-১২ নং ২০০ বার)',
+        en: 'Refresh Mode: Manually (Target 1-10: 1000x, 11-12: 200x)',
       },
     };
     showToast(modeLabels[newMode][selectedLanguage === 'bn' ? 'bn' : 'en']);
@@ -1543,7 +1551,14 @@ export default function App() {
       confirmLabel: 'Restore Defaults',
       isDanger: false,
       onConfirm: () => {
-        setZikrs(DEFAULT_ZIKRS);
+        const restored = DEFAULT_ZIKRS.map((d, idx) => ({
+          ...d,
+          target: getTargetForZikrMode(d, refreshMode, idx),
+        }));
+        setZikrs(restored);
+        try {
+          localStorage.setItem('noor_zikr_items', JSON.stringify(restored));
+        } catch {}
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         showToast('Restored default zikrs');
       },

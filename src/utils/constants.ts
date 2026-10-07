@@ -1,24 +1,24 @@
 import { ZikrItem, ZikrLanguage, ZikrRefreshMode } from '../types';
 
-export function getTargetForZikrMode(item: ZikrItem, mode: ZikrRefreshMode): number {
-  const matchedDefault = DEFAULT_ZIKRS.find(
-    (d) => d.id === item.id || (item.name && d.name.toLowerCase() === item.name.toLowerCase())
-  );
-
-  const fard = item.fardTarget ?? matchedDefault?.fardTarget;
-  const maghrib = item.maghribTarget ?? matchedDefault?.maghribTarget;
-  const manual = item.manualTarget ?? matchedDefault?.manualTarget;
+export function getTargetForZikrMode(item: ZikrItem, mode: ZikrRefreshMode, index?: number): number {
+  const is11or12 =
+    item.id === 'dua_yunus' ||
+    item.id === 'lailaha_illallahu_wahdahu' ||
+    (typeof index === 'number' && (index === 10 || index === 11));
 
   if (mode === 'fard') {
-    return typeof fard === 'number' ? fard : (matchedDefault?.target || item.target || 33);
+    if (typeof item.fardTarget === 'number') return item.fardTarget;
+    return is11or12 ? 20 : 100;
   }
   if (mode === 'maghrib') {
-    return typeof maghrib === 'number' ? maghrib : (matchedDefault?.target || item.target || 165);
+    if (typeof item.maghribTarget === 'number') return item.maghribTarget;
+    return is11or12 ? 100 : 500;
   }
   if (mode === 'manual') {
-    return typeof manual === 'number' ? manual : (matchedDefault?.target || item.target || 200);
+    if (typeof item.manualTarget === 'number') return item.manualTarget;
+    return is11or12 ? 200 : 1000;
   }
-  return item.target || 33;
+  return item.target || (is11or12 ? 20 : 100);
 }
 
 export const SUPPORTED_LANGUAGES: Array<{
@@ -54,10 +54,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আল্লাহ পবিত্র ও সকল ত্রুটি থেকে মুক্ত।",
     "transliteration": "SubhanAllah",
     "count": 0,
-    "target": 33,
-    "fardTarget": 33,
-    "maghribTarget": 165,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000001,
     "updatedAt": 1700000000001,
     "color": "emerald",
@@ -97,10 +97,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "সমস্ত প্রশংসা আল্লাহর জন্য।",
     "transliteration": "Alhamdulillah",
     "count": 0,
-    "target": 33,
-    "fardTarget": 33,
-    "maghribTarget": 165,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000002,
     "updatedAt": 1700000000002,
     "color": "teal",
@@ -140,10 +140,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আল্লাহ সর্বশ্রেষ্ঠ।",
     "transliteration": "Allahu Akbar",
     "count": 0,
-    "target": 33,
-    "fardTarget": 33,
-    "maghribTarget": 165,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000003,
     "updatedAt": 1700000000003,
     "color": "amber",
@@ -183,10 +183,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আল্লাহ ছাড়া কোনো সত্য উপাস্য নেই।",
     "transliteration": "La Ilaha Illallah",
     "count": 0,
-    "target": 1,
-    "fardTarget": 1,
-    "maghribTarget": 5,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000004,
     "updatedAt": 1700000000004,
     "color": "cyan",
@@ -226,10 +226,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আমি আল্লাহর কাছে ক্ষমা প্রার্থনা করছি।",
     "transliteration": "Astaghfirullah",
     "count": 0,
-    "target": 3,
-    "fardTarget": 3,
-    "maghribTarget": 15,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000005,
     "updatedAt": 1700000000005,
     "color": "emerald",
@@ -269,10 +269,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আল্লাহ পবিত্র; তাঁরই প্রশংসা।",
     "transliteration": "Subhanallahi Wa Bihamdihi",
     "count": 0,
-    "target": 20,
-    "fardTarget": 20,
-    "maghribTarget": 100,
-    "manualTarget": 50,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000006,
     "updatedAt": 1700000000006,
     "color": "teal",
@@ -312,10 +312,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আল্লাহর ছাড়া কোন ক্ষমতা ও শক্তি নেই।",
     "transliteration": "La Hawla Wala Quwwata Illa Billah",
     "count": 0,
-    "target": 10,
-    "fardTarget": 10,
-    "maghribTarget": 50,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000007,
     "updatedAt": 1700000000007,
     "color": "amber",
@@ -355,10 +355,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "হে আল্লাহ, মুহাম্মাদ (সা.)-এর ওপর রহমত ও শান্তি বর্ষণ করুন।",
     "transliteration": "Allahumma Salli Ala Muhammad",
     "count": 0,
-    "target": 10,
-    "fardTarget": 10,
-    "maghribTarget": 50,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000008,
     "updatedAt": 1700000000008,
     "color": "emerald",
@@ -398,10 +398,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "মহান আল্লাহ পবিত্র ও সকল ত্রুটি থেকে মুক্ত।",
     "transliteration": "Subhanallahil Azeem",
     "count": 0,
-    "target": 10,
-    "fardTarget": 10,
-    "maghribTarget": 50,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000009,
     "updatedAt": 1700000000009,
     "color": "teal",
@@ -441,10 +441,10 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আল্লাহই আমার জন্য যথেষ্ট; তিনি ছাড়া কোনো সত্য উপাস্য নেই।",
     "transliteration": "Hasbiyallahu La Ilaha Illa Hu",
     "count": 0,
-    "target": 10,
-    "fardTarget": 10,
-    "maghribTarget": 50,
-    "manualTarget": 200,
+    "target": 100,
+    "fardTarget": 100,
+    "maghribTarget": 500,
+    "manualTarget": 1000,
     "createdAt": 1700000000010,
     "updatedAt": 1700000000010,
     "color": "amber",
@@ -484,9 +484,9 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আপনি ছাড়া কোনো সত্য উপাস্য নেই। আপনি পবিত্র ও মহিমান্বিত। নিশ্চয়ই আমি জালিমদের অন্তর্ভুক্ত ছিলাম।",
     "transliteration": "La Ilaha Illa Anta Subhanaka",
     "count": 0,
-    "target": 10,
-    "fardTarget": 10,
-    "maghribTarget": 50,
+    "target": 20,
+    "fardTarget": 20,
+    "maghribTarget": 100,
     "manualTarget": 200,
     "createdAt": 1700000000011,
     "updatedAt": 1700000000011,
@@ -527,9 +527,9 @@ export const DEFAULT_ZIKRS: ZikrItem[] = [
     "meaning": "আল্লাহ ব্যতিত (সত্য) কোন মা'বূদ নেই; তিনি একক ও তাঁর কোনই অংশীদার নেই। তাঁরই জন্য সকল রাজত্ব এবং তাঁরই জন্য সকল প্রশংসা। আর তিনিই সব কিছুর ওপর ক্ষমতাবান।",
     "transliteration": "La Ilaha Illallahu Wahdahu La Sharika Lahu",
     "count": 0,
-    "target": 1,
-    "fardTarget": 1,
-    "maghribTarget": 5,
+    "target": 20,
+    "fardTarget": 20,
+    "maghribTarget": 100,
     "manualTarget": 200,
     "createdAt": 1700000000012,
     "updatedAt": 1700000000012,
