@@ -3,7 +3,7 @@ import { AUTHENTIC_DUAS } from '../utils/duasData';
 import { DuaCategory, DuaItem, ZikrItem, ThemeMode, ZikrLanguage } from '../types';
 import { DUA_TRANSLATIONS, DUA_CATEGORIES, DUA_UI } from '../utils/appTranslations';
 import { Search, Plus, Copy, Check, Sparkles, BookOpen, Volume2, Bookmark, CheckCircle2 } from 'lucide-react';
-import { soundHaptics, speakArabicMaleVoice } from '../utils/audioHaptics';
+import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 
 interface DuaViewProps {
   onAddDuaToCounters: (dua: DuaItem) => void;
@@ -11,6 +11,7 @@ interface DuaViewProps {
   soundEnabled: boolean;
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
+  voiceGender?: VoiceGender;
 }
 
 export const DuaView: React.FC<DuaViewProps> = ({
@@ -19,6 +20,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
   soundEnabled,
   themeMode = 'night',
   selectedLanguage = 'bn',
+  voiceGender = 'male',
 }) => {
   const isDay = themeMode === 'day';
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -193,21 +195,20 @@ export const DuaView: React.FC<DuaViewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  {/* Male Audio Recitation Button */}
+                  {/* Audio Recitation Voice Button (Icon only with voice sign) */}
                   <button
                     onClick={() => {
                       if (soundEnabled) soundHaptics.playTap();
-                      speakArabicMaleVoice(dua.arabic);
+                      playArabicVoice(dua.arabic, voiceGender);
                     }}
-                    className={`px-2.5 py-1.5 sm:px-3 rounded-xl text-xs font-bold transition active:scale-90 cursor-pointer flex items-center gap-1 border ${
+                    className={`p-2 rounded-xl transition active:scale-90 cursor-pointer flex items-center justify-center border ${
                       isDay
                         ? 'bg-[#006747] hover:bg-[#00553a] text-white border-[#006747]'
                         : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 border-emerald-400'
                     }`}
-                    title="Play Audio (পুরুষ কণ্ঠে শুনুন)"
+                    title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
                   >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'অডিও' : 'Audio'}</span>
+                    <Volume2 className="w-4 h-4" />
                   </button>
 
                   {/* Copy Button */}

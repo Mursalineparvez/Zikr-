@@ -18,13 +18,14 @@ import {
   ShieldCheck,
   Camera,
 } from 'lucide-react';
-import { soundHaptics, speakArabicMaleVoice } from '../utils/audioHaptics';
+import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 
 interface LiveAnimationStudioProps {
   onBack: () => void;
   soundEnabled: boolean;
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
+  voiceGender?: VoiceGender;
 }
 
 type StudioScene = 'infographic_scene' | 'kaaba_scene' | 'sai_scene' | 'hajj_map_scene';
@@ -259,6 +260,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
   soundEnabled,
   themeMode = 'night',
   selectedLanguage = 'bn',
+  voiceGender = 'male',
 }) => {
   const isDay = themeMode === 'day';
   const isBn = selectedLanguage === 'bn';
@@ -282,10 +284,10 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
   // Hajj Route Map State
   const [hajjRouteStep, setHajjRouteStep] = useState<number>(1);
 
-  // Speech Helper (Male Arabic Voice)
+  // Speech Helper (Arabic Voice Recitation)
   const handleSpeakArabic = (text: string) => {
     if (soundEnabled) soundHaptics.playTap();
-    speakArabicMaleVoice(text);
+    playArabicVoice(text, voiceGender);
   };
 
   // Canvas Tawaf Animation Loop
@@ -770,10 +772,10 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
                   <span>{isBn ? 'পবিত্র দোয়া:' : 'Recommended Dua:'}</span>
                   <button
                     onClick={() => handleSpeakArabic(activeRouteDetail.duaArabic!)}
-                    className="px-3 py-1 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 cursor-pointer flex items-center gap-1 shadow-md"
+                    className="p-2 rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 cursor-pointer flex items-center justify-center shadow-md"
+                    title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
                   >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>Audio</span>
+                    <Volume2 className="w-4 h-4" />
                   </button>
                 </div>
                 <p dir="rtl" className="font-arabic text-lg text-right text-amber-200 leading-loose">

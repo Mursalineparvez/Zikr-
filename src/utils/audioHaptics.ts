@@ -197,8 +197,10 @@ function isMaleVoice(v: SpeechSynthesisVoice): boolean {
   );
 }
 
-// High-fidelity Male Voice (পুরুষ কণ্ঠ) Arabic Recitation Utility
-export function speakArabicMaleVoice(text: string, onEnd?: () => void) {
+// High-fidelity Arabic Recitation Utility supporting Male (পুরুষ কণ্ঠ) and Female (নারী কণ্ঠ)
+export type VoiceGender = 'male' | 'female';
+
+export function playArabicVoice(text: string, gender: VoiceGender = 'male', onEnd?: () => void) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
   try {
@@ -208,10 +210,6 @@ export function speakArabicMaleVoice(text: string, onEnd?: () => void) {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'ar-SA';
-    // Reverent, steady Qur'anic & Du'a recitation pacing
-    utterance.rate = 0.78;
-    // Deep, resonant, masculine baritone pitch (পুরুষ কণ্ঠ)
-    utterance.pitch = 0.58;
 
     // Refresh voice list if empty
     let voices = cachedSystemVoices;
@@ -220,35 +218,53 @@ export function speakArabicMaleVoice(text: string, onEnd?: () => void) {
       cachedSystemVoices = voices;
     }
 
-    if (voices && voices.length > 0) {
-      // 1. Primary: Arabic Male Voice (specifically male, never female)
-      const explicitArabicMale = voices.find(
-        (v) => (v.lang.startsWith('ar') || v.lang.includes('ar')) && isMaleVoice(v) && !isFemaleVoice(v)
-      );
+    if (gender === 'female') {
+      utterance.rate = 0.82;
+      utterance.pitch = 1.22; // Clear, melodious feminine tone
+      if (voices && voices.length > 0) {
+        const explicitFemale = voices.find(
+          (v) => (v.lang.startsWith('ar') || v.lang.includes('ar')) && isFemaleVoice(v)
+        );
+        const anyFemale = voices.find((v) => isFemaleVoice(v));
+        const anyArabic = voices.find((v) => v.lang.startsWith('ar') || v.lang.includes('ar'));
 
-      // 2. Secondary: Any Arabic Voice that is NOT female
-      const neutralArabic = voices.find(
-        (v) => (v.lang.startsWith('ar') || v.lang.includes('ar')) && !isFemaleVoice(v)
-      );
+        if (explicitFemale) {
+          utterance.voice = explicitFemale;
+        } else if (anyFemale) {
+          utterance.voice = anyFemale;
+        } else if (anyArabic) {
+          utterance.voice = anyArabic;
+        }
+      }
+    } else {
+      // Male voice (পুরুষ কণ্ঠ) - Deep, resonant baritone
+      utterance.rate = 0.78;
+      utterance.pitch = 0.58;
 
-      // 3. Tertiary: Any other Arabic voice
-      const anyArabic = voices.find((v) => v.lang.startsWith('ar') || v.lang.includes('ar'));
+      if (voices && voices.length > 0) {
+        const explicitArabicMale = voices.find(
+          (v) => (v.lang.startsWith('ar') || v.lang.includes('ar')) && isMaleVoice(v) && !isFemaleVoice(v)
+        );
+        const neutralArabic = voices.find(
+          (v) => (v.lang.startsWith('ar') || v.lang.includes('ar')) && !isFemaleVoice(v)
+        );
+        const anyArabic = voices.find((v) => v.lang.startsWith('ar') || v.lang.includes('ar'));
 
-      if (explicitArabicMale) {
-        utterance.voice = explicitArabicMale;
-        utterance.pitch = 0.68;
-      } else if (neutralArabic) {
-        utterance.voice = neutralArabic;
-        utterance.pitch = 0.55; // Lower pitch to enforce male baritone tone
-      } else if (anyArabic) {
-        utterance.voice = anyArabic;
-        utterance.pitch = 0.50; // Extra deep pitch to transform any default female synthesis into male voice
-      } else {
-        // Fallback generic male voice on device
-        const anyMale = voices.find((v) => isMaleVoice(v) && !isFemaleVoice(v));
-        if (anyMale) {
-          utterance.voice = anyMale;
-          utterance.pitch = 0.60;
+        if (explicitArabicMale) {
+          utterance.voice = explicitArabicMale;
+          utterance.pitch = 0.68;
+        } else if (neutralArabic) {
+          utterance.voice = neutralArabic;
+          utterance.pitch = 0.55;
+        } else if (anyArabic) {
+          utterance.voice = anyArabic;
+          utterance.pitch = 0.50;
+        } else {
+          const anyMale = voices.find((v) => isMaleVoice(v) && !isFemaleVoice(v));
+          if (anyMale) {
+            utterance.voice = anyMale;
+            utterance.pitch = 0.60;
+          }
         }
       }
     }
@@ -262,4 +278,8 @@ export function speakArabicMaleVoice(text: string, onEnd?: () => void) {
   } catch (e) {
     console.error('Speech synthesis error:', e);
   }
+}
+
+export function speakArabicMaleVoice(text: string, onEnd?: () => void) {
+  playArabicVoice(text, 'male', onEnd);
 }

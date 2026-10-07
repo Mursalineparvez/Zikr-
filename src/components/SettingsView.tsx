@@ -270,6 +270,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               />
             </button>
           </div>
+
+          {/* Voice Recitation Gender Selection (নারী / পুরুষ কণ্ঠ) */}
+          <div className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-800">
+            <div>
+              <div className="font-semibold text-white flex items-center gap-1.5">
+                <span>{selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন' : 'Voice Recitation Gender'}</span>
+              </div>
+              <div className="text-xs text-slate-400">
+                {selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ (গভীর ও গম্ভীর) বা নারী কণ্ঠ (সুমধুর) নির্বাচন করুন' : 'Choose between Male (baritone) and Female (melodious) voice'}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-800 p-1 rounded-2xl border border-slate-700 shrink-0">
+              <button
+                type="button"
+                onClick={() => onUpdateSettings({ voiceGender: 'male' })}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  settings.voiceGender !== 'female'
+                    ? 'bg-emerald-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>👨</span>
+                <span>{selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ' : 'Male'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onUpdateSettings({ voiceGender: 'female' })}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  settings.voiceGender === 'female'
+                    ? 'bg-teal-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>👩</span>
+                <span>{selectedLanguage === 'bn' ? 'নারী কণ্ঠ' : 'Female'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

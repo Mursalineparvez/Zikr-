@@ -8,19 +8,21 @@ import {
   Check,
   Award,
 } from 'lucide-react';
-import { soundHaptics, speakArabicMaleVoice } from '../utils/audioHaptics';
+import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { ALLAH_NAMES_UI } from '../utils/appTranslations';
 
 interface AllahNamesViewProps {
   soundEnabled: boolean;
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
+  voiceGender?: VoiceGender;
 }
 
 export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
   soundEnabled,
   themeMode = 'night',
   selectedLanguage = 'bn',
+  voiceGender = 'male',
 }) => {
   const isDay = themeMode === 'day';
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,7 +64,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
 
   const handleSpeakName = (name: AllahNameItem) => {
     if (soundEnabled) soundHaptics.playTap();
-    speakArabicMaleVoice(name.arabic);
+    playArabicVoice(name.arabic, voiceGender);
   };
 
   return (
@@ -200,15 +202,14 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
               <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-teal-900/30">
                 <button
                   onClick={() => handleSpeakName(name)}
-                  className={`p-2 rounded-xl border text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                  className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer flex items-center justify-center ${
                     isDay
                       ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
                       : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-emerald-300'
                   }`}
-                  title="Arabic Audio"
+                  title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
                 >
-                  <Volume2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>{ALLAH_NAMES_UI.pronunciation[selectedLanguage]}</span>
+                  <Volume2 className="w-4 h-4 text-emerald-500" />
                 </button>
 
                 <button

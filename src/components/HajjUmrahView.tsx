@@ -40,7 +40,7 @@ import {
   BookOpen,
   Camera,
 } from 'lucide-react';
-import { soundHaptics, speakArabicMaleVoice } from '../utils/audioHaptics';
+import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { HAJJ_UMRAH_UI } from '../utils/appTranslations';
 import { LiveAnimationStudio } from './LiveAnimationStudio';
 
@@ -48,6 +48,7 @@ interface HajjUmrahViewProps {
   soundEnabled: boolean;
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
+  voiceGender?: VoiceGender;
 }
 
 type HajjTab = 'umrah_hub' | 'hajj_hub' | 'home_journey_hub' | 'essentials_hub';
@@ -201,6 +202,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
   soundEnabled,
   themeMode = 'night',
   selectedLanguage = 'bn',
+  voiceGender = 'male',
 }) => {
   const isDay = themeMode === 'day';
   const isBn = selectedLanguage === 'bn';
@@ -254,7 +256,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
 
   const handleSpeakArabic = (text: string) => {
     if (soundEnabled) soundHaptics.playTap();
-    speakArabicMaleVoice(text);
+    playArabicVoice(text, voiceGender);
   };
 
   // Selected Hajj Route Photo Item
@@ -268,6 +270,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
         soundEnabled={soundEnabled}
         themeMode={themeMode}
         selectedLanguage={selectedLanguage}
+        voiceGender={voiceGender}
       />
     );
   }
@@ -304,10 +307,10 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لَا شَرِيكَ لَكَ لَبَّيْكَ، إِنَّ الْحَمْدَ وَالنِّعْمَةَ لَكَ وَالْمُلْكَ، لَا شَرِيكَ لَكَ'
               )
             }
-            className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg transition active:scale-95 flex items-center gap-2 cursor-pointer shrink-0"
+            className="p-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg transition active:scale-95 flex items-center justify-center cursor-pointer shrink-0"
+            title={voiceGender === 'female' ? 'Play Talbiyah Audio (নারী কণ্ঠে)' : 'Play Talbiyah Audio (পুরুষ কণ্ঠে)'}
           >
-            <Volume2 className="w-4 h-4" />
-            <span>{isBn ? 'তালবিয়াহ অডিও শুনুন' : 'Play Talbiyah Audio'}</span>
+            <Volume2 className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -531,12 +534,12 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                     </span>
                     <button
                       onClick={() => handleSpeakArabic(activeRouteDetail.duaArabic!)}
-                      className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer flex items-center gap-1.5 transition active:scale-95 shadow-md ${
+                      className={`p-2 rounded-xl cursor-pointer flex items-center justify-center transition active:scale-95 shadow-md ${
                         isDay ? 'bg-[#006747] hover:bg-[#00553a] text-white' : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
                       }`}
+                      title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
                     >
-                      <Volume2 className="w-3.5 h-3.5" />
-                      <span>{isBn ? 'পুরুষ কণ্ঠে শুনুন' : 'Audio (Male Voice)'}</span>
+                      <Volume2 className="w-4 h-4" />
                     </button>
                   </div>
                   <p dir="rtl" className={`font-arabic text-xl sm:text-2xl text-right leading-loose font-bold ${isDay ? 'text-[#063327]' : 'text-amber-100'}`}>
@@ -678,14 +681,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                               </span>
                               <button
                                 onClick={() => handleSpeakArabic(dua.arabic)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md ${
+                                className={`p-2 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer shadow-md ${
                                   isDay
                                     ? 'bg-[#006747] hover:bg-[#00553a] text-white shadow-emerald-950/20'
                                     : 'bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-black/40'
                                 }`}
+                                title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
                               >
                                 <Volume2 className="w-4 h-4" />
-                                <span>{isBn ? 'পুরুষ কণ্ঠে শুনুন' : 'Audio (Male Voice)'}</span>
                               </button>
                             </div>
                             <p dir="rtl" className={`font-arabic text-xl sm:text-2xl text-right leading-loose font-bold ${isDay ? 'text-[#042f2e]' : 'text-amber-100'}`}>
@@ -797,14 +800,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                               </span>
                               <button
                                 onClick={() => handleSpeakArabic(dua.arabic)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md ${
+                                className={`p-2 rounded-xl flex items-center justify-center transition active:scale-95 cursor-pointer shadow-md ${
                                   isDay
                                     ? 'bg-[#006747] hover:bg-[#00553a] text-white shadow-emerald-950/20'
                                     : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-black/40'
                                 }`}
+                                title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
                               >
                                 <Volume2 className="w-4 h-4" />
-                                <span>{isBn ? 'পুরুষ কণ্ঠে শুনুন' : 'Audio (Male Voice)'}</span>
                               </button>
                             </div>
                             <p dir="rtl" className={`font-arabic text-xl sm:text-2xl text-right leading-loose font-bold ${isDay ? 'text-[#042f2e]' : 'text-emerald-100'}`}>

@@ -177,6 +177,7 @@ export interface AppSettings {
   screenAwake: boolean;
   theme: AppTheme;
   themeMode: ThemeMode;
+  voiceGender: 'male' | 'female';
 }
 
 export interface UserProfile {

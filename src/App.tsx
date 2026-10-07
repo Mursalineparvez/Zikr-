@@ -201,7 +201,10 @@ export default function App() {
       const saved = localStorage.getItem('noor_zikr_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return parsed;
+        return {
+          ...parsed,
+          voiceGender: parsed.voiceGender || 'male',
+        };
       }
     } catch {}
     return {
@@ -210,6 +213,7 @@ export default function App() {
       screenAwake: false,
       theme: 'emerald',
       themeMode: 'night', // Black type requested by user
+      voiceGender: 'male',
     };
   });
 

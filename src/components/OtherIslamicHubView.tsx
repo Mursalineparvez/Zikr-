@@ -334,6 +334,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           soundEnabled={soundEnabled}
           themeMode={themeMode}
           selectedLanguage={selectedLanguage}
+          voiceGender={settings?.voiceGender || 'male'}
         />
       )}
 
@@ -369,6 +370,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           soundEnabled={soundEnabled}
           themeMode={themeMode}
           selectedLanguage={selectedLanguage}
+          voiceGender={settings?.voiceGender || 'male'}
         />
       )}
 
@@ -378,6 +380,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           soundEnabled={soundEnabled}
           themeMode={themeMode}
           selectedLanguage={selectedLanguage}
+          voiceGender={settings?.voiceGender || 'male'}
         />
       )}
 
@@ -391,6 +394,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               soundEnabled: soundEnabled,
               vibrationEnabled: true,
               screenAwake: false,
+              voiceGender: 'male',
             }
           }
           selectedLanguage={selectedLanguage}
