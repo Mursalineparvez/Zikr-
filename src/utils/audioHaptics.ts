@@ -135,3 +135,58 @@ class SoundAndHapticEngine {
 }
 
 export const soundHaptics = new SoundAndHapticEngine();
+
+// High-fidelity Male Voice (পুরুষ কণ্ঠ) Arabic Recitation Utility
+export function speakArabicMaleVoice(text: string, onEnd?: () => void) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+  try {
+    window.speechSynthesis.cancel();
+    const cleanText = text.replace(/[\n\r\t]+/g, ' ').trim();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ar-SA';
+    // Reverent, steady Qur'anic & Du'a recitation pacing
+    utterance.rate = 0.82;
+    // Deep, resonant, masculine pitch (পুরুষ কণ্ঠ)
+    utterance.pitch = 0.78;
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      // 1. Search for specifically designated Arabic Male voices
+      const maleArVoice = voices.find(
+        (v) =>
+          v.lang.startsWith('ar') &&
+          (v.name.toLowerCase().includes('male') ||
+            v.name.toLowerCase().includes('maged') ||
+            v.name.toLowerCase().includes('tarik') ||
+            v.name.toLowerCase().includes('naif') ||
+            v.name.toLowerCase().includes('youssef') ||
+            v.name.toLowerCase().includes('hamza') ||
+            v.name.toLowerCase().includes('majed') ||
+            v.name.toLowerCase().includes('standard-b') ||
+            v.name.toLowerCase().includes('standard-c') ||
+            v.name.toLowerCase().includes('natural') ||
+            v.name.includes('#male'))
+      );
+
+      // 2. Or fallback to any available Arabic voice with deepened male pitch
+      const anyArVoice = voices.find((v) => v.lang.startsWith('ar') || v.lang.includes('ar'));
+
+      if (maleArVoice) {
+        utterance.voice = maleArVoice;
+      } else if (anyArVoice) {
+        utterance.voice = anyArVoice;
+        utterance.pitch = 0.75; // deeper pitch to guarantee authentic masculine tone
+      }
+    }
+
+    if (onEnd) {
+      utterance.onend = onEnd;
+      utterance.onerror = onEnd;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.error('Speech synthesis error:', e);
+  }
+}

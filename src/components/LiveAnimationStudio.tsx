@@ -18,7 +18,7 @@ import {
   ShieldCheck,
   Camera,
 } from 'lucide-react';
-import { soundHaptics } from '../utils/audioHaptics';
+import { soundHaptics, speakArabicMaleVoice } from '../utils/audioHaptics';
 
 interface LiveAnimationStudioProps {
   onBack: () => void;
@@ -282,16 +282,10 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
   // Hajj Route Map State
   const [hajjRouteStep, setHajjRouteStep] = useState<number>(1);
 
-  // Speech Helper
+  // Speech Helper (Male Arabic Voice)
   const handleSpeakArabic = (text: string) => {
     if (soundEnabled) soundHaptics.playTap();
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ar-SA';
-      utterance.rate = 0.85;
-      window.speechSynthesis.speak(utterance);
-    }
+    speakArabicMaleVoice(text);
   };
 
   // Canvas Tawaf Animation Loop

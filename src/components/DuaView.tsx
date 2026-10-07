@@ -3,7 +3,7 @@ import { AUTHENTIC_DUAS } from '../utils/duasData';
 import { DuaCategory, DuaItem, ZikrItem, ThemeMode, ZikrLanguage } from '../types';
 import { DUA_TRANSLATIONS, DUA_CATEGORIES, DUA_UI } from '../utils/appTranslations';
 import { Search, Plus, Copy, Check, Sparkles, BookOpen, Volume2, Bookmark, CheckCircle2 } from 'lucide-react';
-import { soundHaptics } from '../utils/audioHaptics';
+import { soundHaptics, speakArabicMaleVoice } from '../utils/audioHaptics';
 
 interface DuaViewProps {
   onAddDuaToCounters: (dua: DuaItem) => void;
@@ -192,7 +192,24 @@ export const DuaView: React.FC<DuaViewProps> = ({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  {/* Male Audio Recitation Button */}
+                  <button
+                    onClick={() => {
+                      if (soundEnabled) soundHaptics.playTap();
+                      speakArabicMaleVoice(dua.arabic);
+                    }}
+                    className={`px-2.5 py-1.5 sm:px-3 rounded-xl text-xs font-bold transition active:scale-90 cursor-pointer flex items-center gap-1 border ${
+                      isDay
+                        ? 'bg-[#006747] hover:bg-[#00553a] text-white border-[#006747]'
+                        : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 border-emerald-400'
+                    }`}
+                    title="Play Audio (পুরুষ কণ্ঠে শুনুন)"
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'অডিও' : 'Audio'}</span>
+                  </button>
+
                   {/* Copy Button */}
                   <button
                     onClick={() => handleCopyDua(dua)}
@@ -241,20 +258,22 @@ export const DuaView: React.FC<DuaViewProps> = ({
               <div
                 dir="rtl"
                 className={`text-right font-arabic font-bold text-xl sm:text-2xl leading-loose my-3 select-none ${
-                  isDay ? 'text-[#006747]' : 'text-[#10b981]'
+                  isDay ? 'text-[#063327]' : 'text-emerald-100'
                 }`}
               >
                 {dua.arabic}
               </div>
 
               {/* Transliteration */}
-              <div className="text-xs sm:text-sm text-amber-400 font-bold mb-2">
+              <div className={`text-xs sm:text-sm font-semibold mb-2 ${
+                isDay ? 'text-[#15803d]' : 'text-emerald-300'
+              }`}>
                 {dua.transliteration}
               </div>
 
               {/* Translation */}
-              <p className={`text-xs sm:text-sm leading-relaxed font-sans mb-3 ${
-                isDay ? 'text-[#34595d]' : 'text-[#c0dbde]'
+              <p className={`text-xs sm:text-sm leading-relaxed font-sans mb-3 font-medium ${
+                isDay ? 'text-[#1e293b]' : 'text-[#c0dbde]'
               }`}>
                 "{currentTranslation}"
               </p>

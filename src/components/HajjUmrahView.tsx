@@ -40,7 +40,7 @@ import {
   BookOpen,
   Camera,
 } from 'lucide-react';
-import { soundHaptics } from '../utils/audioHaptics';
+import { soundHaptics, speakArabicMaleVoice } from '../utils/audioHaptics';
 import { HAJJ_UMRAH_UI } from '../utils/appTranslations';
 import { LiveAnimationStudio } from './LiveAnimationStudio';
 
@@ -254,13 +254,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
 
   const handleSpeakArabic = (text: string) => {
     if (soundEnabled) soundHaptics.playTap();
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ar-SA';
-      utterance.rate = 0.85;
-      window.speechSynthesis.speak(utterance);
-    }
+    speakArabicMaleVoice(text);
   };
 
   // Selected Hajj Route Photo Item
@@ -530,22 +524,25 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
 
               {/* Recommended Location Dua */}
               {activeRouteDetail.duaArabic && (
-                <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-amber-50 border-amber-200' : 'bg-[#0f292d] border-amber-500/30'}`}>
-                  <div className="flex items-center justify-between text-xs font-bold text-amber-700 dark:text-amber-300">
-                    <span>{isBn ? 'পবিত্র দোয়া:' : 'Recommended Dua:'}</span>
+                <div className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${isDay ? 'bg-white border-[#dcebe8] shadow-md ring-1 ring-slate-100 text-slate-800' : 'bg-[#0f292d] border-amber-500/30 text-white shadow-md'}`}>
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+                    <span className={`text-xs font-bold ${isDay ? 'text-[#006747]' : 'text-amber-300'}`}>
+                      {isBn ? 'পবিত্র দোয়া:' : 'Recommended Dua:'}
+                    </span>
                     <button
                       onClick={() => handleSpeakArabic(activeRouteDetail.duaArabic!)}
-                      className="px-3 py-1 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 cursor-pointer flex items-center gap-1 shadow-md"
+                      className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer flex items-center gap-1.5 transition active:scale-95 shadow-md ${
+                        isDay ? 'bg-[#006747] hover:bg-[#00553a] text-white' : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                      }`}
                     >
                       <Volume2 className="w-3.5 h-3.5" />
-                      <span>Audio</span>
+                      <span>{isBn ? 'পুরুষ কণ্ঠে শুনুন' : 'Audio (Male Voice)'}</span>
                     </button>
                   </div>
-                  <p dir="rtl" className="font-arabic text-lg text-right text-amber-900 dark:text-amber-100 leading-loose">
+                  <p dir="rtl" className={`font-arabic text-xl sm:text-2xl text-right leading-loose font-bold ${isDay ? 'text-[#063327]' : 'text-amber-100'}`}>
                     {activeRouteDetail.duaArabic}
                   </p>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    <strong className="text-amber-600">{isBn ? 'অর্থ: ' : 'Meaning: '}</strong>
+                  <p className={`text-xs sm:text-sm font-medium italic ${isDay ? 'text-[#166534]' : 'text-emerald-300'}`}>
                     {activeRouteDetail.duaMeaningBn}
                   </p>
                 </div>
@@ -662,37 +659,43 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                     {/* ESSENTIAL DUAS INCLUDED AT THE SAME TIME */}
                     {step.essentialDuas && step.essentialDuas.length > 0 && (
                       <div className="space-y-3 pt-2">
-                        <div className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <BookOpen className="w-4 h-4 text-amber-500" />
+                        <div className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isDay ? 'text-[#065f46]' : 'text-amber-400'}`}>
+                          <BookOpen className="w-4 h-4 text-emerald-500" />
                           <span>{isBn ? 'এই ধাপের প্রয়োজনীয় সকল দোয়া:' : 'Essential Duas for this Step:'}</span>
                         </div>
                         {step.essentialDuas.map((dua, dIdx) => (
                           <div
                             key={dIdx}
-                            className={`p-4 sm:p-5 rounded-2xl border space-y-3 shadow-md ${
-                              isDay ? 'bg-amber-50/80 border-amber-200' : 'bg-[#082328] border-amber-500/30'
+                            className={`p-4 sm:p-5 rounded-2xl border space-y-3.5 shadow-md ${
+                              isDay
+                                ? 'bg-white border-[#dcebe8] text-slate-800 ring-1 ring-slate-100 shadow-slate-200/50'
+                                : 'bg-[#082328] border-amber-500/30 text-white'
                             }`}
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs sm:text-sm text-amber-700 dark:text-amber-300">
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+                              <span className={`font-bold text-xs sm:text-sm ${isDay ? 'text-[#006747]' : 'text-amber-300'}`}>
                                 {isBn ? dua.titleBn : dua.titleEn}
                               </span>
                               <button
                                 onClick={() => handleSpeakArabic(dua.arabic)}
-                                className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-amber-500 text-slate-950 hover:bg-amber-400 transition active:scale-95 cursor-pointer shadow-md"
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md ${
+                                  isDay
+                                    ? 'bg-[#006747] hover:bg-[#00553a] text-white shadow-emerald-950/20'
+                                    : 'bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-black/40'
+                                }`}
                               >
                                 <Volume2 className="w-4 h-4" />
-                                <span>{isBn ? 'অডিও' : 'Audio'}</span>
+                                <span>{isBn ? 'পুরুষ কণ্ঠে শুনুন' : 'Audio (Male Voice)'}</span>
                               </button>
                             </div>
-                            <p dir="rtl" className="font-arabic text-xl sm:text-2xl text-right text-amber-900 dark:text-amber-100 leading-loose font-bold">
+                            <p dir="rtl" className={`font-arabic text-xl sm:text-2xl text-right leading-loose font-bold ${isDay ? 'text-[#042f2e]' : 'text-amber-100'}`}>
                               {dua.arabic}
                             </p>
-                            <p className="text-xs font-mono italic text-slate-600 dark:text-emerald-200/90">
+                            <p className={`text-xs sm:text-sm font-medium italic ${isDay ? 'text-[#166534]' : 'text-emerald-300'}`}>
                               {dua.transliteration}
                             </p>
-                            <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100">
-                              <strong className="text-amber-600">{isBn ? 'অর্থ: ' : 'Meaning: '}</strong>
+                            <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDay ? 'text-[#1e293b]' : 'text-slate-100'}`}>
+                              <strong className={isDay ? 'text-[#006747] font-bold' : 'text-amber-400 font-bold'}>{isBn ? 'অর্থ: ' : 'Meaning: '}</strong>
                               {isBn ? dua.meaningBn : dua.meaningEn}
                             </p>
                           </div>
@@ -775,37 +778,43 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                     {/* ESSENTIAL DUAS INCLUDED AT THE SAME TIME */}
                     {step.essentialDuas && step.essentialDuas.length > 0 && (
                       <div className="space-y-3 pt-2">
-                        <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <div className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isDay ? 'text-[#065f46]' : 'text-emerald-400'}`}>
                           <BookOpen className="w-4 h-4 text-emerald-500" />
                           <span>{isBn ? 'এই ধাপের প্রয়োজনীয় সকল দোয়া:' : 'Essential Duas for this Step:'}</span>
                         </div>
                         {step.essentialDuas.map((dua, dIdx) => (
                           <div
                             key={dIdx}
-                            className={`p-4 sm:p-5 rounded-2xl border space-y-3 shadow-md ${
-                              isDay ? 'bg-emerald-50/80 border-emerald-200' : 'bg-[#082328] border-teal-500/30'
+                            className={`p-4 sm:p-5 rounded-2xl border space-y-3.5 shadow-md ${
+                              isDay
+                                ? 'bg-white border-[#dcebe8] text-slate-800 ring-1 ring-slate-100 shadow-slate-200/50'
+                                : 'bg-[#082328] border-teal-500/30 text-white'
                             }`}
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
+                            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+                              <span className={`font-bold text-xs sm:text-sm ${isDay ? 'text-[#006747]' : 'text-emerald-300'}`}>
                                 {isBn ? dua.titleBn : dua.titleEn}
                               </span>
                               <button
                                 onClick={() => handleSpeakArabic(dua.arabic)}
-                                className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-600 text-white hover:bg-emerald-500 transition active:scale-95 cursor-pointer shadow-md"
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md ${
+                                  isDay
+                                    ? 'bg-[#006747] hover:bg-[#00553a] text-white shadow-emerald-950/20'
+                                    : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-black/40'
+                                }`}
                               >
                                 <Volume2 className="w-4 h-4" />
-                                <span>{isBn ? 'অডিও' : 'Audio'}</span>
+                                <span>{isBn ? 'পুরুষ কণ্ঠে শুনুন' : 'Audio (Male Voice)'}</span>
                               </button>
                             </div>
-                            <p dir="rtl" className="font-arabic text-xl sm:text-2xl text-right text-emerald-900 dark:text-emerald-100 leading-loose font-bold">
+                            <p dir="rtl" className={`font-arabic text-xl sm:text-2xl text-right leading-loose font-bold ${isDay ? 'text-[#042f2e]' : 'text-emerald-100'}`}>
                               {dua.arabic}
                             </p>
-                            <p className="text-xs font-mono italic text-slate-600 dark:text-emerald-200/90">
+                            <p className={`text-xs sm:text-sm font-medium italic ${isDay ? 'text-[#166534]' : 'text-emerald-300'}`}>
                               {dua.transliteration}
                             </p>
-                            <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100">
-                              <strong className="text-emerald-600">{isBn ? 'অর্থ: ' : 'Meaning: '}</strong>
+                            <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDay ? 'text-[#1e293b]' : 'text-slate-100'}`}>
+                              <strong className={isDay ? 'text-[#006747] font-bold' : 'text-emerald-400 font-bold'}>{isBn ? 'অর্থ: ' : 'Meaning: '}</strong>
                               {isBn ? dua.meaningBn : dua.meaningEn}
                             </p>
                           </div>

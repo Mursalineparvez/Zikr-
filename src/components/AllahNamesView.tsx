@@ -8,7 +8,7 @@ import {
   Check,
   Award,
 } from 'lucide-react';
-import { soundHaptics } from '../utils/audioHaptics';
+import { soundHaptics, speakArabicMaleVoice } from '../utils/audioHaptics';
 import { ALLAH_NAMES_UI } from '../utils/appTranslations';
 
 interface AllahNamesViewProps {
@@ -62,13 +62,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
 
   const handleSpeakName = (name: AllahNameItem) => {
     if (soundEnabled) soundHaptics.playTap();
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(name.arabic);
-      utterance.lang = 'ar-SA';
-      utterance.rate = 0.85;
-      window.speechSynthesis.speak(utterance);
-    }
+    speakArabicMaleVoice(name.arabic);
   };
 
   return (
