@@ -279,24 +279,30 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
     <div className="space-y-5 animate-in fade-in duration-200">
       {/* Top Banner with Rich Spiritual Glow */}
       <div
-        className={`p-5 sm:p-6 rounded-3xl border shadow-xl relative overflow-hidden ${
+        className={`p-5 sm:p-7 rounded-[28px] border shadow-2xl relative overflow-hidden transition-all duration-300 ${
           isDay
-            ? 'bg-gradient-to-r from-teal-800 via-emerald-800 to-teal-900 text-white border-teal-600/40'
-            : 'bg-gradient-to-r from-[#09252a] via-[#0f3b43] to-[#154d57] text-white border-[#1a535e]'
+            ? 'bg-gradient-to-r from-[#004d35] via-[#006747] to-[#004d35] text-white border-emerald-500/40 shadow-emerald-950/20'
+            : 'bg-gradient-to-r from-[#051a1e] via-[#0b2f36] to-[#051a1e] text-white border-[#1a535e] shadow-black/70'
         }`}
       >
-        <div className="absolute right-0 top-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Subtle Gold Geometric Glow */}
+        <div className="absolute right-0 top-0 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-0 bottom-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
-              <Compass className="w-3.5 h-3.5 text-amber-300" />
-              <span>الحَجُّ وَالعُمْرَةُ • All Duas, Ayats &amp; Real Location Photos</span>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-amber-400/30 text-amber-200 text-xs font-bold backdrop-blur-md shadow-inner">
+              <Compass className="w-3.5 h-3.5 text-amber-400" />
+              <span className="font-arabic text-sm">الحَجُّ وَالعُمْرَةُ</span>
+              <span className="opacity-40">•</span>
+              <span>All Duas, Ayats &amp; Real Location Photos</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+
+            <h2 className="text-xl sm:text-3xl font-black tracking-tight drop-shadow-md text-white">
               {HAJJ_UMRAH_UI.bannerTitle[selectedLanguage]}
             </h2>
-            <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-2xl leading-relaxed">
+
+            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl leading-relaxed italic border-l-2 border-amber-400/80 pl-3 py-0.5">
               {HAJJ_UMRAH_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
@@ -307,29 +313,35 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لَا شَرِيكَ لَكَ لَبَّيْكَ، إِنَّ الْحَمْدَ وَالنِّعْمَةَ لَكَ وَالْمُلْكَ، لَا شَرِيكَ لَكَ'
               )
             }
-            className="p-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg transition active:scale-95 flex items-center justify-center cursor-pointer shrink-0"
+            className="px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer shrink-0 border border-amber-200"
             title={voiceGender === 'female' ? 'Play Talbiyah Audio (নারী কণ্ঠে)' : 'Play Talbiyah Audio (পুরুষ কণ্ঠে)'}
           >
-            <Volume2 className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-slate-950/15 flex items-center justify-center">
+              <Volume2 className="w-4 h-4 text-slate-950" />
+            </div>
+            <div className="text-left">
+              <div className="text-[10px] uppercase font-bold text-slate-900 tracking-wider">তালবিয়া শোনেন</div>
+              <div className="text-xs font-black">Play Talbiyah Audio</div>
+            </div>
           </button>
         </div>
       </div>
 
       {/* 4 MASTER TABS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 p-1.5 rounded-2xl bg-slate-200 dark:bg-[#092226] border border-slate-300 dark:border-[#14424a]">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 p-1.5 rounded-2xl bg-slate-200 dark:bg-[#081f24] border border-slate-300 dark:border-[#14424a] shadow-inner">
         <button
           onClick={() => {
             setActiveTab('umrah_hub');
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === 'umrah_hub'
-              ? 'bg-amber-500 text-slate-950 shadow-lg scale-[1.02]'
-              : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 scale-[1.02] border border-amber-300'
+              : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
           }`}
         >
-          <span>🕋</span>
-          <span>{isBn ? 'ওমরাহ গাইড ও অ্যানিমেশন' : 'Umrah Hub'}</span>
+          <span className="text-base">🕋</span>
+          <span className="truncate">{isBn ? 'ওমরাহ গাইড ও অ্যানিমেশন' : 'Umrah Hub'}</span>
         </button>
 
         <button
@@ -337,14 +349,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             setActiveTab('hajj_hub');
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === 'hajj_hub'
-              ? 'bg-emerald-600 text-white shadow-lg scale-[1.02]'
-              : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-950/30 scale-[1.02] border border-emerald-400/50'
+              : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
           }`}
         >
-          <span>⛺</span>
-          <span>{isBn ? 'হজের ৫ দিনের রুট ম্যাপ' : '5 Days Hajj'}</span>
+          <span className="text-base">⛺</span>
+          <span className="truncate">{isBn ? 'হজের ৫ দিনের রুট ম্যাপ' : '5 Days Hajj'}</span>
         </button>
 
         <button
@@ -352,14 +364,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             setActiveTab('home_journey_hub');
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === 'home_journey_hub'
-              ? 'bg-teal-600 text-white shadow-lg scale-[1.02]'
-              : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-950/30 scale-[1.02] border border-teal-400/50'
+              : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
           }`}
         >
-          <span>🏠</span>
-          <span>{isBn ? 'হজ ও ওমরাহ চেকলিস্ট' : 'Hajj & Umrah Checklist'}</span>
+          <span className="text-base">🏠</span>
+          <span className="truncate">{isBn ? 'হজ ও ওমরাহ চেকলিস্ট' : 'Hajj & Umrah Checklist'}</span>
         </button>
 
         <button
@@ -367,14 +379,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             setActiveTab('essentials_hub');
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === 'essentials_hub'
-              ? 'bg-teal-700 text-white shadow-lg scale-[1.02]'
-              : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
+              ? 'bg-gradient-to-r from-teal-700 to-emerald-800 text-white shadow-lg shadow-teal-950/30 scale-[1.02] border border-teal-400/50'
+              : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
           }`}
         >
-          <span>🎒</span>
-          <span>{isBn ? 'মিকাত, মদিনা ও চেকলিস্ট' : 'Essentials'}</span>
+          <span className="text-base">🎒</span>
+          <span className="truncate">{isBn ? 'মিকাত, মদিনা ও ব্যাগ গাইড' : 'Essentials'}</span>
         </button>
       </div>
 
@@ -384,28 +396,33 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
       {activeTab === 'umrah_hub' && (
         <div className="space-y-6 animate-in fade-in duration-200">
           <div
-            className={`p-6 sm:p-8 rounded-3xl border shadow-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 ${
+            className={`p-6 sm:p-8 rounded-[28px] border shadow-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-300 ${
               isDay
-                ? 'bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white border-slate-800'
-                : 'bg-gradient-to-r from-[#06181b] via-[#0b292e] to-[#06181b] text-white border-[#123942]'
+                ? 'bg-gradient-to-r from-slate-950 via-[#071f24] to-slate-950 text-white border-amber-500/30 shadow-2xl'
+                : 'bg-gradient-to-r from-[#031317] via-[#07242a] to-[#031317] text-white border-amber-500/30 shadow-2xl shadow-black/80'
             }`}
           >
             <div
-              className="absolute inset-0 bg-cover bg-center opacity-30 pointer-events-none mix-blend-luminosity filter brightness-75"
+              className="absolute inset-0 bg-cover bg-center opacity-35 pointer-events-none mix-blend-luminosity filter brightness-90 transition-transform duration-700 hover:scale-105"
               style={{
                 backgroundImage: `url('https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1200&q=80')`,
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/60 pointer-events-none" />
 
-            <div className="relative z-10 space-y-2 text-center sm:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-black">
+            <div className="relative z-10 space-y-2.5 text-center sm:text-left max-w-xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-black border border-amber-400/40 backdrop-blur-md">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>{isBn ? 'থ্রিডি রিয়ালিস্টিক সিমুলেটর' : '3D Realistic Studio'}</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-black tracking-tight">
-                {isBn ? '🎬 লাইভ রিয়ালিস্টিক অ্যানিমেশন স্টুডিও ওপেন করুন' : 'Open Live 3D Simulation Studio'}
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white drop-shadow-md">
+                {isBn ? '🎬 লাইভ রিয়ালিস্টিক অ্যানিমেশন স্টুдио ওপেন করুন' : 'Open Live 3D Simulation Studio'}
               </h3>
+              <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed font-medium">
+                {isBn
+                  ? 'তাওয়াফ, সাঈ, মাকামে ইব্রাহিম ও কাবা শরিফের পূর্ণাঙ্গ ৩ডি অ্যানিমেটেড দৃশ্য ও স্টেপ-বাই-স্টেপ প্র্যাকটিক্যাল অ্যানিমেশন সিমুলেশন'
+                  : 'Interactive 3D animated visual simulation for Tawaf, Sa\'i, Maqam Ibrahim and sacred rituals.'}
+              </p>
             </div>
 
             <button
@@ -413,10 +430,12 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                 setShowStudioModal(true);
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className="px-6 py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm shadow-xl transition active:scale-95 flex items-center gap-2.5 cursor-pointer shrink-0 relative z-10"
+              className="px-6 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-sm sm:text-base shadow-xl transition-all duration-200 active:scale-95 flex items-center gap-3 cursor-pointer shrink-0 relative z-10 border border-amber-200"
             >
-              <Tv className="w-5 h-5" />
-              <span>{isBn ? 'অ্যানিমেশন স্টুডিও চালু করুন ➔' : 'Launch Studio ➔'}</span>
+              <div className="w-8 h-8 rounded-xl bg-slate-950/15 flex items-center justify-center">
+                <Tv className="w-5 h-5 text-slate-950" />
+              </div>
+              <span>{isBn ? 'অ্যানিমেশন স্টুдио চালু করুন ➔' : 'Launch Studio ➔'}</span>
             </button>
           </div>
         </div>

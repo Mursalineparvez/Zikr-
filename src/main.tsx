@@ -20,6 +20,15 @@ if (typeof window !== 'undefined') {
       event.stopPropagation();
     }
   });
+
+  // Register Offline Service Worker for Audio & App Caching
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        console.log('Offline Audio ServiceWorker registered:', reg.scope);
+      }).catch(() => {});
+    });
+  }
 }
 
 createRoot(document.getElementById('root')!).render(

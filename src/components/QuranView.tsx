@@ -54,6 +54,8 @@ import {
   Maximize2,
   Minimize2,
   CheckCircle2,
+  Download,
+  WifiOff,
 } from 'lucide-react';
 
 interface QuranViewProps {
@@ -122,6 +124,8 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [audioProgress, setAudioProgress] = useState<number>(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
   const [audioDuration, setAudioDuration] = useState<number>(0);
+  const [isCachingAudio, setIsCachingAudio] = useState<boolean>(false);
+  const [isAudioCached, setIsAudioCached] = useState<boolean>(false);
 
   // Bookmarks & Last Read persistence
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(() => {
@@ -382,11 +386,41 @@ export const QuranView: React.FC<QuranViewProps> = ({
     return Math.min(numWords - 1, idx);
   }, [isPlaying, currentPlayingAyahNum, audioCurrentTime, audioDuration, surahDetail]);
 
+  // Explicitly Cache Surah Audio for Offline Listening
+  const handleDownloadSurahAudioOffline = async () => {
+    if (!surahDetail || !surahDetail.ayahs.length) return;
+    setIsCachingAudio(true);
+    try {
+      if ('caches' in window) {
+        const cache = await caches.open('zikrmate-audio-v2');
+        const urls = surahDetail.ayahs.map(
+          (a) => a.audioUrl || `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${a.globalNumber}.mp3`
+        );
+        await Promise.all(
+          urls.map(async (url) => {
+            try {
+              await cache.add(url);
+            } catch {}
+          })
+        );
+        setIsAudioCached(true);
+      }
+    } catch {}
+    setIsCachingAudio(false);
+  };
+
   // Play audio for an individual Ayah
   const playAyahAudio = (ayah: QuranAyah) => {
     const audio = audioRef.current;
     if (!audio) return;
     const audioUrl = ayah.audioUrl || `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber}.mp3`;
+
+    // Auto-cache audio for offline listening via CacheStorage
+    if ('caches' in window) {
+      caches.open('zikrmate-audio-v2').then((cache) => {
+        cache.add(audioUrl).catch(() => {});
+      }).catch(() => {});
+    }
 
     if (isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === ayah.number) {
       try {
@@ -1002,6 +1036,39 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </div>
               <span className={`text-[10px] font-bold mt-0.5 ${isDay ? 'text-[#006747]' : 'text-[#10b981]'}`}>
                 {isPlaying && playingMode === 'surah' ? 'Pause' : 'Play Audio'}
+              </span>
+            </button>
+
+            {/* 3.5 Offline Audio Cache Button */}
+            <button
+              onClick={handleDownloadSurahAudioOffline}
+              disabled={isCachingAudio || isAudioCached}
+              title={selectedLanguage === 'bn' ? 'অফলাইনে শোনার জন্য অডিও সেভ করুন' : 'Cache Surah audio for offline listening'}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
+                isAudioCached
+                  ? 'text-emerald-500 font-bold'
+                  : isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                isAudioCached
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                  : isDay ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/15 text-amber-400'
+              }`}>
+                {isCachingAudio ? (
+                  <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
+                ) : isAudioCached ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </div>
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                {isCachingAudio
+                  ? (selectedLanguage === 'bn' ? 'সেভ হচ্ছে...' : 'Saving...')
+                  : isAudioCached
+                  ? (selectedLanguage === 'bn' ? 'অফলাইন রেডি' : 'Offline Ready')
+                  : (selectedLanguage === 'bn' ? 'অফলাইন অডিও' : 'Offline Audio')}
               </span>
             </button>
 

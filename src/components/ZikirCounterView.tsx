@@ -32,6 +32,7 @@ interface ZikirCounterViewProps {
   isExportingPdf: boolean;
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
+  soundEnabled?: boolean;
 }
 
 export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
@@ -58,6 +59,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   isExportingPdf,
   themeMode = 'night',
   selectedLanguage = 'bn',
+  soundEnabled = true,
 }) => {
   const isDay = themeMode === 'day';
   const [filterMode, setFilterMode] = useState<'all' | 'targets' | 'completed'>('all');

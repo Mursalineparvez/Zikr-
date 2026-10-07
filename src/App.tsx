@@ -1810,6 +1810,7 @@ export default function App() {
               isExportingPdf={isExportingPdf}
               themeMode={settings.themeMode}
               selectedLanguage={selectedLanguage}
+              soundEnabled={settings.soundEnabled}
             />
           </div>
         )}
