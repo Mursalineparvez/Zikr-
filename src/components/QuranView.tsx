@@ -102,6 +102,8 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [isSurahSearchOpen, setIsSurahSearchOpen] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [showReciterPicker, setShowReciterPicker] = useState(false);
+  const [reciterSearchQuery, setReciterSearchQuery] = useState('');
+  const [reciterCategoryFilter, setReciterCategoryFilter] = useState<'all' | 'makkah' | 'egypt' | 'melodic' | 'slow'>('all');
 
   // Reader Customization & Display Settings
   const [wordByWordMode, setWordByWordMode] = useState<boolean>(true);
@@ -721,24 +723,81 @@ export const QuranView: React.FC<QuranViewProps> = ({
           {/* Quick Reciter Switcher Dropdown */}
           {showReciterPicker && (
             <div
-              className={`p-3.5 rounded-2xl border shadow-xl space-y-2.5 animate-in fade-in slide-in-from-top-2 ${
+              className={`p-4 rounded-2xl border shadow-xl space-y-3 animate-in fade-in slide-in-from-top-2 max-h-[80vh] overflow-y-auto ${
                 isDay
                   ? 'bg-white border-[#dcebe8] text-slate-800'
                   : 'bg-[#0e1c26] border-[#1a3342] text-white'
               }`}
             >
               <div
-                className={`text-[11px] font-bold flex items-center justify-between ${
+                className={`text-xs font-bold flex items-center justify-between ${
                   isDay ? 'text-[#005a3e]' : 'text-[#10b981]'
                 }`}
               >
-                <span>{selectedLanguage === 'bn' ? 'ক্বারী (তিলাওয়াতকারী) বেছে নিন' : 'Select Quran Reciter'}</span>
+                <div className="flex items-center gap-1.5">
+                  <Volume2 className="w-4 h-4 text-[#10b981]" />
+                  <span>{selectedLanguage === 'bn' ? 'বিশ্বখ্যাত ক্বারী (তিলাওয়াতকারী) নির্বাচন' : 'Select World-Renowned Reciter'} ({QURAN_RECITERS.length})</span>
+                </div>
                 <button onClick={() => setShowReciterPicker(false)} className="text-slate-400 hover:text-white p-1">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {QURAN_RECITERS.map((reciter) => {
+
+              {/* Reciter Search Bar */}
+              <div className={`p-2 rounded-xl border flex items-center gap-2 ${isDay ? 'bg-[#f1f8f6] border-[#d0ece7]' : 'bg-[#07131b] border-[#162c3a]'}`}>
+                <Search className="w-3.5 h-3.5 text-[#10b981] shrink-0" />
+                <input
+                  type="text"
+                  placeholder={selectedLanguage === 'bn' ? 'ক্বারীর নাম খুঁজুন (যেমন: Sudais, Minshawi, Dosari...)' : 'Search reciter name (e.g. Sudais, Minshawi, Dosari...)'}
+                  value={reciterSearchQuery}
+                  onChange={(e) => setReciterSearchQuery(e.target.value)}
+                  className={`w-full bg-transparent text-xs font-semibold focus:outline-none ${isDay ? 'text-slate-800 placeholder-slate-400' : 'text-white placeholder-slate-500'}`}
+                />
+                {reciterSearchQuery && (
+                  <button onClick={() => setReciterSearchQuery('')} className="p-1 text-slate-400 hover:text-white">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[10px]">
+                {[
+                  { id: 'all', label: selectedLanguage === 'bn' ? 'সকল ক্বারী' : 'All Reciters' },
+                  { id: 'makkah', label: selectedLanguage === 'bn' ? '🕋 হারামাইন ক্বারীগণ' : '🕋 Haramain Imams' },
+                  { id: 'egypt', label: selectedLanguage === 'bn' ? '🇪🇬 মিশরীয় তাজবীদ' : '🇪🇬 Egypt Masters' },
+                  { id: 'melodic', label: selectedLanguage === 'bn' ? '🎵 সুমধুর ও সুরেল' : '🎵 Melodic & Soothing' },
+                  { id: 'slow', label: selectedLanguage === 'bn' ? '📖 ধীরগতির তাজবীদ' : '📖 Slow / Memorization' },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setReciterCategoryFilter(cat.id as any)}
+                    className={`px-2.5 py-1 rounded-xl font-bold whitespace-nowrap border transition active:scale-95 cursor-pointer ${
+                      reciterCategoryFilter === cat.id
+                        ? 'bg-[#006747] text-white border-[#006747] shadow-sm'
+                        : isDay
+                        ? 'bg-[#edf5f4] text-[#133e42] border-[#d2ece9] hover:bg-[#d8ece9]'
+                        : 'bg-[#07131b] text-slate-400 border-[#162c3a] hover:text-white'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Reciters List Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                {QURAN_RECITERS.filter((reciter) => {
+                  const q = reciterSearchQuery.toLowerCase().trim();
+                  const matchesSearch =
+                    !q ||
+                    reciter.name.toLowerCase().includes(q) ||
+                    reciter.arabicName.includes(q) ||
+                    reciter.subtext.toLowerCase().includes(q);
+                  const matchesCat =
+                    reciterCategoryFilter === 'all' || reciter.category === reciterCategoryFilter;
+                  return matchesSearch && matchesCat;
+                }).map((reciter) => {
                   const isSelected = selectedReciterId === reciter.id;
                   return (
                     <button
