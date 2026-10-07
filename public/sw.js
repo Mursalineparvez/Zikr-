@@ -1,5 +1,5 @@
 // Service Worker for Zikr+ PWA
-const CACHE_NAME = 'zikrmate-v1';
+const CACHE_NAME = 'zikrmate-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
