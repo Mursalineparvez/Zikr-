@@ -142,14 +142,16 @@ export const Header: React.FC<HeaderProps> = ({
           className="flex items-center gap-2.5 cursor-pointer shrink-0"
           onClick={() => onModuleChange('zikir_counter')}
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-md border border-white/25">
-            <span className="text-lg sm:text-xl">📿</span>
-          </div>
+          <img
+            src="/icon.svg"
+            alt="Zikr+"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl shadow-md border border-white/25 object-cover"
+          />
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="text-base sm:text-lg font-black tracking-tight text-white drop-shadow-sm flex items-center">
                 <span>Zikr</span>
-                <span className="text-amber-300 font-black text-lg sm:text-xl ml-0.5">+</span>
+                <span className="text-[#86efac] font-black text-lg sm:text-xl ml-0.5">+</span>
               </h1>
               <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-white/20 text-emerald-100 font-bold border border-white/30">
                 PWA
