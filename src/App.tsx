@@ -23,6 +23,7 @@ import { OtherIslamicHubView, OtherSubSection } from './components/OtherIslamicH
 import { ZikrModal } from './components/ZikrModal';
 import { ConfirmModal } from './components/ConfirmModal';
 import { StandaloneExportModal } from './components/StandaloneExportModal';
+import { QuickScrollNavigator } from './components/QuickScrollNavigator';
 import { ProfileModal } from './components/ProfileModal';
 import { HistoryReportModal } from './components/HistoryReportModal';
 import { AdminPanelModal } from './components/AdminPanelModal';
@@ -232,6 +233,11 @@ export default function App() {
 
   // Active module navigation
   const [activeModule, setActiveModule] = useState<NavModule>('zikir_counter');
+
+  // Auto-scroll to top whenever entering or switching any page/module
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [activeModule]);
 
   // Lifetime Cumulative Grand Total Count (Persists across sessions until manual Reset All)
   const [lifetimeTotalCount, setLifetimeTotalCount] = useState<number>(() => {
@@ -1911,6 +1917,14 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Universal Floating Scroll Navigator (Scroll To Top, Scroll To Bottom & Live Progress) */}
+      <QuickScrollNavigator
+        themeMode={settings.themeMode}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={settings.soundEnabled}
+        activeModule={activeModule}
+      />
 
       {/* Bottom Sticky Navigation for Mobile & Thumb Floating Add Button */}
       <BottomNav

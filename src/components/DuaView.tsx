@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AUTHENTIC_DUAS } from '../utils/duasData';
 import { DuaCategory, DuaItem, ZikrItem, ThemeMode, ZikrLanguage } from '../types';
 import { DUA_TRANSLATIONS, DUA_CATEGORIES, DUA_UI } from '../utils/appTranslations';
@@ -22,6 +22,11 @@ export const DuaView: React.FC<DuaViewProps> = ({
 }) => {
   const isDay = themeMode === 'day';
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Auto-scroll to top when category changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [selectedCategory]);
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [inlineCounts, setInlineCounts] = useState<{ [key: string]: number }>({});

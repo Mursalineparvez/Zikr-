@@ -52,16 +52,22 @@
           window.WebSocket = MockViteHmrSocket;
         }
 
-        // 2. Intercept console messages and unhandled errors from Vite dev runner
-        function isWsNotice(msg) {
+        // 2. Intercept benign browser notifications (WS close, audio interruption on pause/switch)
+        function isIgnorableNotice(msg) {
           if (!msg) return false;
           var s = String(msg).toLowerCase();
-          return s.indexOf('websocket') !== -1 || s.indexOf('[vite]') !== -1;
+          return (
+            s.indexOf('websocket') !== -1 ||
+            s.indexOf('[vite]') !== -1 ||
+            s.indexOf('the play() request was interrupted') !== -1 ||
+            s.indexOf('interrupted by a call to pause') !== -1 ||
+            s.indexOf('interrupted by a new load request') !== -1
+          );
         }
 
         window.addEventListener('unhandledrejection', function (e) {
           var errStr = (e.reason && (e.reason.message || e.reason.stack || '' + e.reason)) || '';
-          if (isWsNotice(errStr)) {
+          if (isIgnorableNotice(errStr)) {
             e.preventDefault();
             e.stopImmediatePropagation();
             return false;
@@ -70,7 +76,7 @@
 
         window.addEventListener('error', function (e) {
           var errStr = (e.message || (e.error && (e.error.message || e.error.stack)) || '') + '';
-          if (isWsNotice(errStr)) {
+          if (isIgnorableNotice(errStr)) {
             e.preventDefault();
             e.stopImmediatePropagation();
             return false;
@@ -79,13 +85,13 @@
 
         var origError = console.error;
         console.error = function() {
-          if (isWsNotice(arguments[0])) return;
+          if (isIgnorableNotice(arguments[0])) return;
           return origError.apply(console, arguments);
         };
 
         var origDebug = console.debug;
         console.debug = function() {
-          if (isWsNotice(arguments[0])) return;
+          if (isIgnorableNotice(arguments[0])) return;
           return origDebug.apply(console, arguments);
         };
       })();

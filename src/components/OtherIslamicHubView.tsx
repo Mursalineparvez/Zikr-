@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem, AppSettings } from '../types';
 import {
   Heart,
@@ -66,6 +66,11 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 }) => {
   const isDay = themeMode === 'day';
   const [activeSub, setActiveSub] = useState<OtherSubSection>(initialSubSection);
+
+  // Auto-scroll to top whenever switching sub-module (Dua, Hadith, Kitab, etc.)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [activeSub]);
 
   const hubItems = [
     {

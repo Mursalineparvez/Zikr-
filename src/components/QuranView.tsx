@@ -44,6 +44,7 @@ import {
   ChevronDown,
   Book,
   Globe,
+  Copy,
 } from 'lucide-react';
 
 interface QuranViewProps {
@@ -83,6 +84,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
+
+  // Auto-scroll to top when selecting a surah or returning to surah list / tab
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [selectedSurahNumber, activeTab]);
   const [selectedJuz, setSelectedJuz] = useState<number | 'all'>('all');
   const [surahSearchText, setSurahSearchText] = useState('');
   const [isSurahSearchOpen, setIsSurahSearchOpen] = useState(false);
@@ -138,9 +144,37 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [tafsirContent, setTafsirContent] = useState<{ author: string; text: string } | null>(null);
   const [isLoadingTafsir, setIsLoadingTafsir] = useState(false);
   const [selectedTafsirId, setSelectedTafsirId] = useState<number>(165); // Default: Tafsir Ibn Kathir
+  const [tafsirFontSize, setTafsirFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
+  const [isTafsirCopied, setIsTafsirCopied] = useState(false);
+  const tafsirScrollRef = useRef<HTMLDivElement | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [activeAyahActionMenu, setActiveAyahActionMenu] = useState<number | null>(null);
+
+  // Lock body scroll and handle Escape key for Tafsir Reader
+  useEffect(() => {
+    if (showTafsirModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setShowTafsirModal(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [showTafsirModal]);
+
+  // Always reset Tafsir scroll position to top when switching Ayahs or opening
+  useEffect(() => {
+    if (showTafsirModal && tafsirScrollRef.current) {
+      tafsirScrollRef.current.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [activeTafsirAyah?.number, showTafsirModal]);
 
   // UI Interactive States
   const [copiedAyah, setCopiedAyah] = useState<number | null>(null);
@@ -149,13 +183,28 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  // Audio setup
+  // Track latest playback state in ref so audio event listeners don't recreate Audio element
+  const playStateRef = useRef({
+    playingMode,
+    surahDetail,
+    currentPlayingAyahNum,
+  });
+
+  useEffect(() => {
+    playStateRef.current = {
+      playingMode,
+      surahDetail,
+      currentPlayingAyahNum,
+    };
+  }, [playingMode, surahDetail, currentPlayingAyahNum]);
+
+  // Audio setup - instantiate ONCE on component mount
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
 
     const handleTimeUpdate = () => {
-      if (audio.duration) {
+      if (audio.duration && !isNaN(audio.duration)) {
         setAudioCurrentTime(audio.currentTime);
         setAudioDuration(audio.duration);
         setAudioProgress((audio.currentTime / audio.duration) * 100);
@@ -163,9 +212,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
     };
 
     const handleEnded = () => {
-      if (playingMode === 'ayah' && surahDetail && currentPlayingAyahNum) {
-        if (currentPlayingAyahNum < surahDetail.numberOfAyahs) {
-          const nextAyah = surahDetail.ayahs[currentPlayingAyahNum];
+      const { playingMode: mode, surahDetail: detail, currentPlayingAyahNum: ayahNum } = playStateRef.current;
+      if (mode === 'ayah' && detail && ayahNum) {
+        if (ayahNum < detail.numberOfAyahs) {
+          const nextAyah = detail.ayahs[ayahNum];
           if (nextAyah) {
             playAyahAudio(nextAyah);
             return;
@@ -184,12 +234,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
     audio.addEventListener('error', handleError);
 
     return () => {
+      try {
+        audio.pause();
+        audio.src = '';
+      } catch {}
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
-      audio.pause();
+      audioRef.current = null;
     };
-  }, [surahDetail, currentPlayingAyahNum, playingMode]);
+  }, []);
 
   // Save Bookmarks
   useEffect(() => {
@@ -297,38 +351,51 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
   // Play audio for an individual Ayah
   const playAyahAudio = (ayah: QuranAyah) => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
     const audioUrl = ayah.audioUrl || `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber}.mp3`;
 
     if (isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === ayah.number) {
-      audioRef.current.pause();
+      try {
+        audio.pause();
+      } catch {}
       setIsPlaying(false);
       return;
     }
 
-    audioRef.current.src = audioUrl;
-    audioRef.current
-      .play()
-      .then(() => {
-        setIsPlaying(true);
-        setPlayingMode('ayah');
-        setCurrentPlayingAyahNum(ayah.number);
-        if (autoScroll) {
-          scrollToAyah(ayah.number);
-        }
-      })
-      .catch((err) => {
-        console.error('Audio play error:', err);
-        setIsPlaying(false);
-      });
+    try {
+      audio.pause();
+    } catch {}
+
+    audio.src = audioUrl;
+    setPlayingMode('ayah');
+    setCurrentPlayingAyahNum(ayah.number);
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          setIsPlaying(true);
+          if (autoScroll) {
+            scrollToAyah(ayah.number);
+          }
+        })
+        .catch(() => {
+          // Gracefully handle browser play interruption or abort
+          setIsPlaying(false);
+        });
+    }
   };
 
   // Play audio for entire Surah
   const playSurahAudio = () => {
-    if (!audioRef.current || !surahDetail) return;
+    const audio = audioRef.current;
+    if (!audio || !surahDetail) return;
 
-    if (isPlaying && playingMode === 'surah') {
-      audioRef.current.pause();
+    if (isPlaying) {
+      try {
+        audio.pause();
+      } catch {}
       setIsPlaying(false);
       return;
     }
@@ -336,15 +403,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
     const firstAyah = surahDetail.ayahs[0];
     if (firstAyah) {
       playAyahAudio(firstAyah);
-      setPlayingMode('ayah');
     }
   };
 
   // Stop audio
   const stopAudio = () => {
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      } catch {}
     }
     setIsPlaying(false);
     setPlayingMode(null);
@@ -388,25 +456,61 @@ export const QuranView: React.FC<QuranViewProps> = ({
     return bookmarks.some((b) => b.surahNumber === surahNum && b.ayahNumber === ayahNum);
   };
 
-  // Open Tafsir Modal
-  const handleOpenTafsir = async (ayah: QuranAyah) => {
+  // Open Tafsir Reader
+  const handleOpenTafsir = (ayah: QuranAyah) => {
     if (!surahDetail) return;
     setActiveTafsirAyah(ayah);
     setShowTafsirModal(true);
-    setIsLoadingTafsir(true);
     setActiveAyahActionMenu(null);
+    if (soundEnabled) soundHaptics.playTap();
+  };
 
-    try {
-      const data = await fetchAyahTafsir(surahDetail.number, ayah.number, selectedLanguage, selectedTafsirId);
-      setTafsirContent(data);
-    } catch {
-      setTafsirContent({
-        author: selectedLanguage === 'bn' ? 'তাফসীর ইবনে কাছীর' : 'Tafsir Ibn Kathir',
-        text: selectedLanguage === 'bn' ? 'তাফসীর লোড করা সম্ভব হয়নি।' : 'Could not load Tafsir.',
-      });
-    } finally {
-      setIsLoadingTafsir(false);
+  // Close Tafsir Reader
+  const handleCloseTafsir = () => {
+    setShowTafsirModal(false);
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  // Go to Next Ayah in Tafsir
+  const handleNextTafsirAyah = () => {
+    if (!surahDetail || !activeTafsirAyah) return;
+    const currentIndex = surahDetail.ayahs.findIndex((a) => a.number === activeTafsirAyah.number);
+    if (currentIndex >= 0 && currentIndex < surahDetail.ayahs.length - 1) {
+      const nextAyah = surahDetail.ayahs[currentIndex + 1];
+      setActiveTafsirAyah(nextAyah);
+      if (soundEnabled) soundHaptics.playTap();
     }
+  };
+
+  // Go to Previous Ayah in Tafsir
+  const handlePrevTafsirAyah = () => {
+    if (!surahDetail || !activeTafsirAyah) return;
+    const currentIndex = surahDetail.ayahs.findIndex((a) => a.number === activeTafsirAyah.number);
+    if (currentIndex > 0) {
+      const prevAyah = surahDetail.ayahs[currentIndex - 1];
+      setActiveTafsirAyah(prevAyah);
+      if (soundEnabled) soundHaptics.playTap();
+    }
+  };
+
+  // Select Ayah by Number in Tafsir
+  const handleSelectTafsirAyahNumber = (ayahNum: number) => {
+    if (!surahDetail) return;
+    const target = surahDetail.ayahs.find((a) => a.number === ayahNum);
+    if (target) {
+      setActiveTafsirAyah(target);
+      if (soundEnabled) soundHaptics.playTap();
+    }
+  };
+
+  // Copy Tafsir Text to Clipboard
+  const handleCopyTafsirText = () => {
+    if (!tafsirContent || !activeTafsirAyah || !surahDetail) return;
+    const textToCopy = `【${tafsirContent.author}】\nসূরা ${surahDetail.englishName} : আয়াত ${activeTafsirAyah.number}\n\n${activeTafsirAyah.arabic}\n"${activeTafsirAyah.translation}"\n\nতাফসীর:\n${tafsirContent.text}`;
+    navigator.clipboard.writeText(textToCopy);
+    setIsTafsirCopied(true);
+    if (soundEnabled) soundHaptics.playMilestone();
+    setTimeout(() => setIsTafsirCopied(false), 2200);
   };
 
   // Copy Ayah

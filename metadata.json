@@ -1,5 +1,5 @@
 {
-  "name": "ZikrMate - Digital Zikr PWA",
+  "name": "Zikr+ - Digital Zikr PWA",
   "description": "Serene Digital Zikr and Tasbeeh Progressive Web App with individual counters, master circular total, local persistence, haptic touch, and PDF export.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

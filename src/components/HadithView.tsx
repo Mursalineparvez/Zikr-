@@ -39,6 +39,11 @@ export const HadithView: React.FC<HadithViewProps> = ({
   const [activeTab, setActiveTab] = useState<HadithTab>('topics');
   const [selectedTopic, setSelectedTopic] = useState<string>('all');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+
+  // Auto-scroll to top when tab, topic, or book selection changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [activeTab, selectedTopic, selectedBookId]);
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ISLAMIC_KITABS, KitabItem, KitabChapter } from '../utils/kitabData';
 import { BookMarked, Search, ArrowLeft, Check, Copy, ChevronRight, Sparkles } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
@@ -16,6 +16,11 @@ export const KitabView: React.FC<KitabViewProps> = ({
   const isDay = themeMode === 'day';
   const [selectedKitab, setSelectedKitab] = useState<KitabItem | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<KitabChapter | null>(null);
+
+  // Auto-scroll to top when selecting a kitab, chapter, or navigating back
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [selectedKitab, selectedChapter]);
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
