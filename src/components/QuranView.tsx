@@ -365,6 +365,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
     }
   };
 
+  // Compute active word index during audio playback for real-time karaoke word highlighting
+  const activeWordIndex = useMemo(() => {
+    if (!isPlaying || currentPlayingAyahNum === null || !audioDuration || audioDuration === 0) return -1;
+    const currentAyah = surahDetail?.ayahs.find((a) => a.number === currentPlayingAyahNum);
+    if (!currentAyah || !currentAyah.words || currentAyah.words.length === 0) return -1;
+    const numWords = currentAyah.words.length;
+    const progressRatio = Math.min(1, Math.max(0, audioCurrentTime / audioDuration));
+    const idx = Math.floor(progressRatio * numWords);
+    return Math.min(numWords - 1, idx);
+  }, [isPlaying, currentPlayingAyahNum, audioCurrentTime, audioDuration, surahDetail]);
+
   // Play audio for an individual Ayah
   const playAyahAudio = (ayah: QuranAyah) => {
     const audio = audioRef.current;
@@ -1250,36 +1261,47 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           dir="rtl"
                           className="flex flex-wrap items-start justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-5 py-2.5"
                         >
-                          {ayah.words.map((word, wIdx) => (
-                            <div
-                              key={wIdx}
-                              className={`flex flex-col items-center text-center group cursor-pointer p-2 rounded-2xl transition-all ${
-                                isDay
-                                  ? 'hover:bg-[#edf5f4] border border-transparent hover:border-[#cbe4e1]'
-                                  : 'hover:bg-[#152e3c] border border-transparent hover:border-[#1e4456]'
-                              }`}
-                            >
-                              {/* Arabic Word Script (Pure High Contrast) */}
-                              <span
-                                className={`font-arabic text-2xl sm:text-3xl font-bold leading-relaxed transition drop-shadow-sm ${
-                                  isDay
-                                    ? 'text-[#0f172a] group-hover:text-[#006747]'
-                                    : 'text-[#f8fafc] group-hover:text-[#10b981]'
+                          {ayah.words.map((word, wIdx) => {
+                            const isWordActive = isPlaying && currentPlayingAyahNum === ayah.number && wIdx === activeWordIndex;
+                            return (
+                              <div
+                                key={wIdx}
+                                className={`flex flex-col items-center text-center group cursor-pointer p-2 rounded-2xl transition-all ${
+                                  isWordActive
+                                    ? isDay
+                                      ? 'bg-emerald-100 border-2 border-emerald-600 shadow-lg scale-105 ring-2 ring-emerald-400/50'
+                                      : 'bg-emerald-950/80 border-2 border-emerald-500 shadow-xl scale-105 ring-2 ring-emerald-400/40'
+                                    : isDay
+                                    ? 'hover:bg-[#edf5f4] border border-transparent hover:border-[#cbe4e1]'
+                                    : 'hover:bg-[#152e3c] border border-transparent hover:border-[#1e4456]'
                                 }`}
                               >
-                                {word.arabic}
-                              </span>
-                              {/* Word Meaning Translation */}
-                              <span
-                                dir="ltr"
-                                className={`text-[11px] sm:text-xs font-sans mt-1 px-1 text-center max-w-[95px] leading-tight font-semibold ${
-                                  isDay ? 'text-[#006747]' : 'text-[#10b981]'
-                                }`}
-                              >
-                                {word.translation}
-                              </span>
-                            </div>
-                          ))}
+                                {/* Arabic Word Script (Pure High Contrast) */}
+                                <span
+                                  className={`font-arabic text-2xl sm:text-3xl font-bold leading-relaxed transition drop-shadow-sm ${
+                                    isWordActive
+                                      ? isDay ? 'text-emerald-700 font-black' : 'text-emerald-300 font-black animate-pulse'
+                                      : isDay
+                                      ? 'text-[#0f172a] group-hover:text-[#006747]'
+                                      : 'text-[#f8fafc] group-hover:text-[#10b981]'
+                                  }`}
+                                >
+                                  {word.arabic}
+                                </span>
+                                {/* Word Meaning Translation */}
+                                <span
+                                  dir="ltr"
+                                  className={`text-[11px] sm:text-xs font-sans mt-1 px-1 text-center max-w-[95px] leading-tight font-semibold ${
+                                    isWordActive
+                                      ? isDay ? 'text-emerald-800 font-extrabold' : 'text-emerald-200 font-extrabold'
+                                      : isDay ? 'text-[#006747]' : 'text-[#10b981]'
+                                  }`}
+                                >
+                                  {word.translation}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
                         /* CONTINUOUS FLOWING ARABIC CALLIGRAPHY (When 'Without word' is toggled) */
