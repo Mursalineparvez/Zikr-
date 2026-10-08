@@ -176,3 +176,77 @@ body.theme-night {
   pointer-events: none;
 }
 
+/* --- Leaflet Map Premium Custom Styling Override --- */
+.leaflet-container {
+  background: transparent !important;
+  font-family: inherit !important;
+}
+
+/* Custom Tooltips */
+.leaflet-tooltip {
+  background: rgba(10, 36, 42, 0.9) !important;
+  border: 1px solid rgba(20, 184, 166, 0.3) !important;
+  color: #f1f5f9 !important;
+  border-radius: 12px !important;
+  padding: 4px 10px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  font-weight: 700 !important;
+  font-family: inherit !important;
+}
+body.theme-day .leaflet-tooltip {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 103, 71, 0.25) !important;
+  color: #0f2e24 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 103, 71, 0.1) !important;
+}
+.leaflet-tooltip-top:before {
+  border-top-color: rgba(10, 36, 42, 0.9) !important;
+}
+body.theme-day .leaflet-tooltip-top:before {
+  border-top-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Custom Div Icon Markers */
+.custom-leaflet-marker {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Clean up attribution styling */
+.leaflet-control-attribution {
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 8px !important;
+  border-top-left-radius: 8px;
+  padding: 1px 6px !important;
+  border: none !important;
+}
+body.theme-day .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.8) !important;
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Fade in animation for tile layers */
+.leaflet-tile-container {
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Era Theme Color CSS Variables matching falyafrahu.com */
+:root {
+  --era1: #d97706; /* Makkah - Warm Amber */
+  --era2: #059669; /* Madinah - Serene Emerald */
+  --era3: #0284c7; /* Rashidun - Sky Blue */
+  --era4: #2563eb; /* Umayyad - Royal Blue */
+  --era5: #7c3aed; /* Abbasid - Golden Violet */
+  --era6: #c026d3; /* Sultanates - Deep Fuchsia */
+  --era7: #db2777; /* Empires - Imperial Pink */
+  --era8: #0d9488; /* Modern - Global Teal */
+}
+

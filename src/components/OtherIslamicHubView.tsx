@@ -74,6 +74,13 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   const isDay = themeMode === 'day';
   const [activeSub, setActiveSub] = useState<OtherSubSection>(initialSubSection);
 
+  // Sync activeSub state with initialSubSection prop changes
+  useEffect(() => {
+    if (initialSubSection) {
+      setActiveSub(initialSubSection);
+    }
+  }, [initialSubSection]);
+
   // Auto-scroll to top whenever switching sub-module (Dua, Hadith, Kitab, etc.)
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
