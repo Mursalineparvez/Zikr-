@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Smartphone,
   Palette,
@@ -8,10 +8,14 @@ import {
   Upload,
   Globe,
   Check,
+  Volume2,
+  Play,
+  Square,
 } from 'lucide-react';
 import { AppTheme, AppSettings, ZikrLanguage } from '../types';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { SETTINGS_UI } from '../utils/appTranslations';
+import { playArabicVoice, soundHaptics } from '../utils/audioHaptics';
 
 interface SettingsViewProps {
   settings: AppSettings;
@@ -36,6 +40,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onExportBackupJson,
   onImportBackupJson,
 }) => {
+  const [isPlayingSample, setIsPlayingSample] = useState(false);
+
+  const handlePlayVoiceSample = () => {
+    if (isPlayingSample) {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsPlayingSample(false);
+      return;
+    }
+    setIsPlayingSample(true);
+    playArabicVoice(
+      'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّهِ الْعَظِيمِ',
+      settings.voiceGender || 'male',
+      () => {
+        setIsPlayingSample(false);
+      }
+    );
+  };
+
   const handleDefaultExportBackup = () => {
     try {
       const backupData = {
@@ -191,7 +215,104 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Audio & Haptics Toggles */}
+      {/* 2. Audio Reciter Voice Selection (ভয়েস তেলাওয়াত নির্বাচন) */}
+      <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+            <Volume2 className="w-4 h-4" />
+            <span>{selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ সেটিংস' : 'Voice Recitation Settings'}</span>
+          </div>
+          <span className="text-xs font-bold text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+            {settings.voiceGender === 'female' ? '👩 নারী কণ্ঠ' : '👨 পুরুষ কণ্ঠ'}
+          </span>
+        </div>
+
+        {/* The Exact User Requested Voice Reciter Card */}
+        <div className="p-4 sm:p-5 rounded-3xl border border-emerald-500/30 bg-[#092226] text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+              <Volume2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">
+                {selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন (Voice Reciter)' : 'Voice Recitation Gender'}
+              </h3>
+              <p className="text-xs text-emerald-300/80">
+                {selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ (গভীর) বা নারী কণ্ঠ (সুমধুর) তেলাওয়াত নির্বাচন করুন' : 'Choose Male baritone or Female melodious voice'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-700 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                onUpdateSettings({ voiceGender: 'male' });
+                if (settings.soundEnabled) soundHaptics.playTap();
+              }}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                (settings?.voiceGender || 'male') === 'male'
+                  ? 'bg-emerald-600 text-white shadow ring-1 ring-emerald-400'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>👨</span>
+              <span>{selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ' : 'Male'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onUpdateSettings({ voiceGender: 'female' });
+                if (settings.soundEnabled) soundHaptics.playTap();
+              }}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                settings?.voiceGender === 'female'
+                  ? 'bg-teal-600 text-white shadow ring-1 ring-teal-400'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>👩</span>
+              <span>{selectedLanguage === 'bn' ? 'নারী কণ্ঠ' : 'Female'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Audio Test Sample Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 bg-slate-800/40 p-3.5 rounded-2xl border border-slate-800">
+          <div>
+            <div className="text-xs font-bold text-slate-200">
+              {selectedLanguage === 'bn' ? 'কণ্ঠের নমুনা অডিও পরীক্ষা করুন' : 'Listen to Voice Sample'}
+            </div>
+            <div className="text-[11px] text-slate-400">
+              {selectedLanguage === 'bn' ? 'দোআ ও আজকার তেলাওয়াতের অডিও উচ্চারণ যাচাই করুন' : 'Preview how the selected voice sounds during recitation'}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handlePlayVoiceSample}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-md ${
+              isPlayingSample
+                ? 'bg-amber-600 text-white animate-pulse'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+            }`}
+          >
+            {isPlayingSample ? (
+              <>
+                <Square className="w-3.5 h-3.5 fill-current" />
+                <span>{selectedLanguage === 'bn' ? 'থামুন (Stop)' : 'Stop Sample'}</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন (Test Voice)' : 'Play Sample Voice'}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Audio & Haptics Toggles */}
       <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
           <Smartphone className="w-4 h-4" />
@@ -270,48 +391,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               />
             </button>
           </div>
-
-          {/* Voice Recitation Gender Selection (নারী / পুরুষ কণ্ঠ) */}
-          <div className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-800">
-            <div>
-              <div className="font-semibold text-white flex items-center gap-1.5">
-                <span>{selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন' : 'Voice Recitation Gender'}</span>
-              </div>
-              <div className="text-xs text-slate-400">
-                {selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ (গভীর ও গম্ভীর) বা নারী কণ্ঠ (সুমধুর) নির্বাচন করুন' : 'Choose between Male (baritone) and Female (melodious) voice'}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 bg-slate-800 p-1 rounded-2xl border border-slate-700 shrink-0">
-              <button
-                type="button"
-                onClick={() => onUpdateSettings({ voiceGender: 'male' })}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                  settings.voiceGender !== 'female'
-                    ? 'bg-emerald-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>👨</span>
-                <span>{selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ' : 'Male'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onUpdateSettings({ voiceGender: 'female' })}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                  settings.voiceGender === 'female'
-                    ? 'bg-teal-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>👩</span>
-                <span>{selectedLanguage === 'bn' ? 'নারী কণ্ঠ' : 'Female'}</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* 3. Data Backup & PDF Report */}
+      {/* 4. Data Backup & PDF Report */}
       <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
           <FileText className="w-4 h-4" />

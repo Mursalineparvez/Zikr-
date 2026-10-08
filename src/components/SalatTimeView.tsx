@@ -37,12 +37,19 @@ import {
   CloudSun,
   X,
   Radio,
+  BookOpen,
+  Scroll,
+  Copy,
+  Check,
+  Layers,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { PRAYER_NAMES, SALAT_UI } from '../utils/appTranslations';
 import { SolarTrajectoryCard } from './SolarTrajectoryCard';
 import { FarajPrayerCard } from './FarajPrayerCard';
+import { ALL_PRAYER_DETAILS } from '../data/prayerDetailsData';
+import { PrayerAnimatedHeader } from './PrayerAnimatedHeader';
 
 interface SalatTimeViewProps {
   soundEnabled: boolean;
@@ -128,6 +135,9 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
   const [showCautionDropdown, setShowCautionDropdown] = useState<boolean>(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState<boolean>(false);
   const [showNafalModal, setShowNafalModal] = useState<boolean>(false);
+  const [selectedNafalId, setSelectedNafalId] = useState<string>('Tahajjud');
+  const [nafalTab, setNafalTab] = useState<'ayat' | 'hadith' | 'virtues' | 'rules'>('ayat');
+  const [copiedNafalText, setCopiedNafalText] = useState<string | null>(null);
   const [showProhibitedModal, setShowProhibitedModal] = useState<boolean>(false);
   const [showQiblaModal, setShowQiblaModal] = useState<boolean>(false);
   const [infoModalItem, setInfoModalItem] = useState<{ title: string; content: string; reference?: string } | null>(null);
@@ -457,29 +467,42 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
         <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
           {prayerData.nafalPrayers.map((nafal) => {
             const isAlertOn = !!activeAlerts[nafal.id];
+            const targetDetailId =
+              nafal.id === 'tahajjud'
+                ? 'Tahajjud'
+                : nafal.id === 'ishraq'
+                ? 'Ishraq'
+                : nafal.id === 'chast'
+                ? 'Chast'
+                : 'Tahajjud';
 
             return (
               <div
                 key={nafal.id}
-                className={`min-w-[130px] sm:min-w-[145px] p-3 rounded-2xl border transition-all shadow-sm flex flex-col justify-between shrink-0 ${
+                onClick={() => {
+                  setSelectedNafalId(targetDetailId);
+                  setShowNafalModal(true);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`min-w-[130px] sm:min-w-[145px] p-3 rounded-2xl border transition-all shadow-sm flex flex-col justify-between shrink-0 cursor-pointer active:scale-95 ${
                   isDay
-                    ? 'bg-[#fcfdfd] border-[#dcebe8] hover:border-teal-300'
-                    : 'bg-[#092226] border-[#184850] hover:border-teal-600'
+                    ? 'bg-[#fcfdfd] border-[#dcebe8] hover:border-emerald-400 hover:shadow-md'
+                    : 'bg-[#092226] border-[#184850] hover:border-emerald-500 hover:shadow-md'
                 }`}
               >
                 {/* Top card utility icons */}
-                <div className="flex items-center justify-between text-slate-400 mb-1">
+                <div className="flex items-center justify-between text-slate-400 mb-1" onClick={(e) => e.stopPropagation()}>
                   {nafal.id === 'tahajjud' ? (
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   ) : (
                     <button
-                      onClick={() =>
-                        setInfoModalItem({
-                          title: `${nafal.name} (${nafal.arabic})`,
-                          content: `${nafal.description}. Rakats: ${nafal.rakats}. ${nafal.info}`,
-                        })
-                      }
-                      className="text-amber-500 hover:text-amber-600"
+                      onClick={() => {
+                        setSelectedNafalId(targetDetailId);
+                        setShowNafalModal(true);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className="text-amber-500 hover:text-amber-600 cursor-pointer"
+                      title="বিস্তারিত ও হাদিস দেখুন"
                     >
                       <Info className="w-3.5 h-3.5" />
                     </button>
@@ -553,10 +576,14 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
           {prayerData.prohibitedPrayers.map((item) => (
             <div
               key={item.id}
-              className={`p-3 rounded-2xl border transition-all text-center flex flex-col justify-between ${
+              onClick={() => {
+                setShowProhibitedModal(true);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`p-3 rounded-2xl border transition-all text-center flex flex-col justify-between cursor-pointer active:scale-95 shadow-xs ${
                 isDay
-                  ? 'bg-[#fffbfb] border-rose-100 hover:border-rose-200'
-                  : 'bg-[#1e141a]/60 border-rose-900/40 hover:border-rose-800'
+                  ? 'bg-[#fffbfb] border-rose-100 hover:border-rose-300 hover:shadow-md'
+                  : 'bg-[#1e141a]/60 border-rose-900/40 hover:border-rose-700 hover:shadow-md'
               }`}
             >
               {/* Top Icons */}
@@ -692,111 +719,348 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
 
       {/* 6. MODALS & DRAWERS */}
 
-      {/* A. Nafal Prayers "See More" Modal */}
-      {showNafalModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div
-            className={`w-full max-w-lg border rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto ${
-              isDay ? 'bg-white border-[#dcebe8] text-[#103e42]' : 'bg-[#0e2f36] border-[#1a515c] text-white'
-            }`}
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-teal-900/40">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-5 rounded-full bg-blue-500" />
-                <h3 className="font-bold text-lg">Nafal Prayers Guide (নফল নামাজ)</h3>
-              </div>
-              <button
-                onClick={() => setShowNafalModal(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-teal-900/40"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {/* A. Nafal Prayers "See More" Modal with Animated Header & Full References */}
+      {showNafalModal && (() => {
+        const currentDetail =
+          ALL_PRAYER_DETAILS[selectedNafalId] || ALL_PRAYER_DETAILS.Tahajjud;
+        const matchingNafal = prayerData.nafalPrayers.find(
+          (p) => p.id.toLowerCase() === selectedNafalId.toLowerCase()
+        ) || prayerData.nafalPrayers[0];
 
-            <div className="space-y-3 text-xs sm:text-sm">
-              {prayerData.nafalPrayers.map((item) => (
+        return (
+          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
+            <div
+              className={`w-full max-w-xl border rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col ${
+                isDay ? 'bg-white border-[#dcebe8] text-slate-800' : 'bg-[#092226] border-[#1a515c] text-white'
+              }`}
+            >
+              {/* Modal Top Close Bar */}
+              <div className="p-3.5 pb-2 border-b border-slate-100 dark:border-teal-900/40 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-5 rounded-full bg-blue-500 shadow-sm" />
+                  <h3 className="font-black text-sm sm:text-base">
+                    নফল সালাত গাইড • Nafal Prayers Guide
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowNafalModal(false)}
+                  className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-teal-900/40 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Scrollable Modal Body */}
+              <div className="overflow-y-auto p-4 space-y-4">
+                {/* 1. Selector Chips for Nafal Prayers */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {['Tahajjud', 'Ishraq', 'Chast'].map((nId) => {
+                    const d = ALL_PRAYER_DETAILS[nId];
+                    if (!d) return null;
+                    const isSelected = selectedNafalId === nId;
+                    return (
+                      <button
+                        key={nId}
+                        onClick={() => {
+                          setSelectedNafalId(nId);
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer shrink-0 border ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md font-black'
+                            : isDay
+                            ? 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                            : 'bg-[#06181b] text-emerald-300 border-teal-900/60 hover:bg-teal-900/40'
+                        }`}
+                      >
+                        {d.nameBn} ({d.nameAr})
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 2. UPPER ANIMATED PICTURE HEADER */}
+                <PrayerAnimatedHeader
+                  prayerId={selectedNafalId}
+                  nameBn={currentDetail.nameBn}
+                  nameEn={currentDetail.nameEn}
+                  nameAr={currentDetail.nameAr}
+                  timeRange={matchingNafal ? `${matchingNafal.startTime} - ${matchingNafal.endTime}` : currentDetail.celestialSignEn}
+                  celestialSignBn={currentDetail.celestialSignBn}
+                  isActive={false}
+                  isPrayed={false}
+                  isDay={isDay}
+                />
+
+                {/* 3. Sub-tabs (Ayat, Hadith, Virtues, Rules) */}
                 <div
-                  key={item.id}
-                  className={`p-3.5 rounded-2xl border ${
-                    isDay ? 'bg-[#f8fcfa] border-[#dcebe8]' : 'bg-[#092226] border-[#184850]'
+                  className={`flex items-center gap-1.5 p-1 rounded-2xl border overflow-x-auto scrollbar-none text-xs font-bold ${
+                    isDay ? 'bg-slate-100/90 border-slate-200' : 'bg-[#05171a] border-teal-900/50'
                   }`}
                 >
-                  <div className="flex items-center justify-between font-bold mb-1">
-                    <span className="text-base text-emerald-700 dark:text-emerald-300">
-                      {item.name} ({item.arabic})
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
-                      {item.rakats}
-                    </span>
-                  </div>
-                  <p className="text-slate-600 dark:text-emerald-200/90 leading-relaxed mb-2">
-                    {item.description}. {item.info}
-                  </p>
-                  <div className="flex items-center gap-3 font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                    <span>Start: {item.startTime}</span>
-                    <span>•</span>
-                    <span>End: {item.endTime}</span>
-                  </div>
+                  <button
+                    onClick={() => setNafalTab('ayat')}
+                    className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1 shrink-0 ${
+                      nafalTab === 'ayat'
+                        ? 'bg-emerald-600 text-white shadow-xs font-black'
+                        : 'text-slate-600 dark:text-emerald-200/80'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>কুরআনের আয়াত ({currentDetail.ayats.length})</span>
+                  </button>
+
+                  <button
+                    onClick={() => setNafalTab('hadith')}
+                    className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1 shrink-0 ${
+                      nafalTab === 'hadith'
+                        ? 'bg-emerald-600 text-white shadow-xs font-black'
+                        : 'text-slate-600 dark:text-emerald-200/80'
+                    }`}
+                  >
+                    <Scroll className="w-3.5 h-3.5" />
+                    <span>সহীহ হাদিস ({currentDetail.hadiths.length})</span>
+                  </button>
+
+                  <button
+                    onClick={() => setNafalTab('virtues')}
+                    className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1 shrink-0 ${
+                      nafalTab === 'virtues'
+                        ? 'bg-emerald-600 text-white shadow-xs font-black'
+                        : 'text-slate-600 dark:text-emerald-200/80'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>ফযিলত</span>
+                  </button>
+
+                  <button
+                    onClick={() => setNafalTab('rules')}
+                    className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1 shrink-0 ${
+                      nafalTab === 'rules'
+                        ? 'bg-emerald-600 text-white shadow-xs font-black'
+                        : 'text-slate-600 dark:text-emerald-200/80'
+                    }`}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>ওয়াক্ত ও নিয়ম</span>
+                  </button>
                 </div>
-              ))}
+
+                {/* 4. Tab Panels */}
+                {nafalTab === 'ayat' && (
+                  <div className="space-y-3">
+                    {currentDetail.ayats.map((ayat, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-2xl border ${
+                          isDay ? 'bg-slate-50/80 border-slate-200' : 'bg-[#071c20] border-[#184850]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-200/60 dark:border-teal-900/40 text-xs">
+                          <span className="font-black text-emerald-700 dark:text-emerald-300">
+                            {ayat.surahNameBn} ({ayat.surahNameEn}) • আয়াত: {ayat.ayatNumber}
+                          </span>
+                        </div>
+                        <p className="font-arabic text-right text-lg font-bold leading-loose text-emerald-950 dark:text-emerald-200 mb-2">
+                          {ayat.arabic}
+                        </p>
+                        <p className="text-xs font-medium leading-relaxed text-slate-800 dark:text-emerald-100 mb-1">
+                          <strong className="text-emerald-700 dark:text-emerald-400">অনুবাদ: </strong>
+                          {ayat.translationBn}
+                        </p>
+                        <p className="text-[11px] text-slate-500 dark:text-emerald-300/70 italic">
+                          {ayat.translationEn}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {nafalTab === 'hadith' && (
+                  <div className="space-y-3">
+                    {currentDetail.hadiths.map((h, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-2xl border ${
+                          isDay ? 'bg-slate-50/80 border-slate-200' : 'bg-[#071c20] border-[#184850]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-slate-200/60 dark:border-teal-900/40 text-xs">
+                          <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                            বর্ণনাকারী: {h.narratorBn}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                            {h.gradeBn}
+                          </span>
+                        </div>
+                        {h.arabicText && (
+                          <p className="font-arabic text-right text-base font-bold leading-relaxed text-amber-950 dark:text-amber-200 mb-2">
+                            {h.arabicText}
+                          </p>
+                        )}
+                        <p className="text-xs leading-relaxed text-slate-800 dark:text-teal-100 mb-2">
+                          “{h.textBn}”
+                        </p>
+                        <div className="text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-400 pt-1 border-t border-slate-200/40 dark:border-teal-900/30">
+                          সূত্র: {h.bookBn} (হাদিস নং: {h.hadithNumber})
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {nafalTab === 'virtues' && (
+                  <div className="space-y-2.5">
+                    <div
+                      className={`p-4 rounded-2xl border ${
+                        isDay ? 'bg-emerald-50/50 border-emerald-200' : 'bg-[#071c20] border-[#184850]'
+                      }`}
+                    >
+                      <h4 className="text-sm font-black text-emerald-800 dark:text-emerald-200 mb-1">
+                        {currentDetail.virtues.titleBn}
+                      </h4>
+                      <p className="text-xs text-slate-600 dark:text-emerald-300/80 mb-3">
+                        {currentDetail.virtues.descriptionBn}
+                      </p>
+                      <div className="space-y-2">
+                        {currentDetail.virtues.pointsBn.map((point, idx) => (
+                          <div
+                            key={idx}
+                            className="p-2.5 rounded-xl border bg-white dark:bg-[#0a272e] border-slate-200 dark:border-teal-900/60 flex items-start gap-2 text-xs"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                            <span>{point}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {nafalTab === 'rules' && (
+                  <div className="space-y-3 text-xs leading-relaxed">
+                    <div
+                      className={`p-4 rounded-2xl border space-y-2 ${
+                        isDay ? 'bg-white border-slate-200' : 'bg-[#071c20] border-[#184850]'
+                      }`}
+                    >
+                      <div>
+                        <strong className="text-emerald-700 dark:text-emerald-400">শুরুর শর্ত: </strong>
+                        <span>{currentDetail.timingConditions.startConditionBn}</span>
+                      </div>
+                      <div>
+                        <strong className="text-rose-600 dark:text-rose-400">শেষের শর্ত: </strong>
+                        <span>{currentDetail.timingConditions.endConditionBn}</span>
+                      </div>
+                      <div>
+                        <strong className="text-amber-600 dark:text-amber-400">মুস্তাহাব সময়: </strong>
+                        <span>{currentDetail.timingConditions.mustahabTimeBn}</span>
+                      </div>
+                      <div>
+                        <strong className="text-purple-600 dark:text-purple-400">রাকাত ও নিয়ম: </strong>
+                        <span>{currentDetail.timingConditions.fiqhDetailsBn}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
-      {/* B. Prohibited Prayers "See More" Modal */}
+      {/* B. Prohibited Prayers "See More" Modal with Animated Caution Scene & Hadith References */}
       {showProhibitedModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
           <div
-            className={`w-full max-w-lg border rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto ${
-              isDay ? 'bg-white border-[#dcebe8] text-[#103e42]' : 'bg-[#0e2f36] border-[#1a515c] text-white'
+            className={`w-full max-w-lg border rounded-3xl overflow-hidden shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto ${
+              isDay ? 'bg-white border-rose-200 text-slate-800' : 'bg-[#180e14] border-rose-900/60 text-white'
             }`}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-rose-100 dark:border-rose-900/40">
+            {/* Header Top Bar */}
+            <div className="p-4 pb-0 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-5 rounded-full bg-rose-500" />
-                <h3 className="font-bold text-lg text-rose-600 dark:text-rose-400">
-                  Prohibited Times (নিষিদ্ধ ও মাকরূহ নামাজের সময়)
+                <div className="w-2 h-5 rounded-full bg-rose-500 shadow-sm" />
+                <h3 className="font-black text-base text-rose-600 dark:text-rose-400">
+                  নিষিদ্ধ ও মাকরূহ নামাজের সময় • Prohibited Times
                 </h3>
               </div>
               <button
                 onClick={() => setShowProhibitedModal(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-teal-900/40"
+                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs sm:text-sm">
+            {/* UPPER ANIMATED CAUTION PICTURE */}
+            <div className="px-4">
+              <PrayerAnimatedHeader
+                prayerId="Maghrib"
+                nameBn="নিষিদ্ধ ও মাকরূহ সালাত"
+                nameEn="Prohibited Waqt"
+                nameAr="الأوقات المكروهة"
+                timeRange="৩টি নিষিদ্ধ সময়"
+                celestialSignBn="সূর্যোদয়, দ্বিপ্রহর ও সূর্যাস্তের নির্দিষ্ট নিষিদ্ধ ক্ষণ"
+                isActive={false}
+                isPrayed={false}
+                isDay={isDay}
+              />
+            </div>
+
+            <div className="px-4 pb-4 space-y-3.5 text-xs sm:text-sm">
+              {/* Authentic Hadith Banner */}
               <div
-                className={`p-3 rounded-2xl border text-xs leading-relaxed ${
-                  isDay ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-rose-950/40 border-rose-800 text-rose-200'
+                className={`p-4 rounded-2xl border text-xs leading-relaxed space-y-2 ${
+                  isDay ? 'bg-rose-50 border-rose-200 text-rose-950' : 'bg-rose-950/40 border-rose-800 text-rose-100'
                 }`}
               >
-                <p className="font-bold mb-1">হাদিস শরিফের নির্দেশ:</p>
-                <p>
-                  উকবা ইবনে আমির (রা.) থেকে বর্ণিত: "রাসূলুল্লাহ (সা.) আমাদের তিন সময়ে নামাজ পড়তে ও মৃত ব্যক্তিদের দাফন
-                  করতে নিষেধ করেছেন: ১. সূর্যোদয়ের সময় যতক্ষণ না তা পুরোপুরি ওপরে ওঠে, ২. ঠিক দুপুরবেলা সূর্য মধ্যাকাশে
-                  থাকার সময় এবং ৩. সূর্যাস্তের উপক্রমকালে যতক্ষণ না তা সম্পূর্ণ অস্ত যায়।" [সহিহ মুসলিম: ৮৩১]
+                <div className="flex items-center justify-between font-bold border-b pb-1.5 border-rose-200 dark:border-rose-800">
+                  <span className="flex items-center gap-1.5 text-rose-700 dark:text-rose-300 font-black">
+                    <Scroll className="w-3.5 h-3.5" />
+                    <span>সহীহ হাদিস শরিফের অলঙ্ঘনীয় নির্দেশ</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-700 dark:text-rose-300 text-[10px] font-black">
+                    সহীহ মুসলিম: ৮৩১
+                  </span>
+                </div>
+                <p className="italic">
+                  উকবা ইবনে আমির (রা.) বর্ণনা করেছেন: "রাসূলুল্লাহ ﷺ আমাদের ৩টি সময়ে নামাজ পড়তে এবং মৃত ব্যক্তিদের দাফন
+                  করতে কঠোরভাবে নিষেধ করেছেন:
                 </p>
+                <ol className="list-decimal list-inside space-y-1 font-medium pl-1">
+                  <li>সূর্যোদয়ের সময় যতক্ষণ না তা কিছুটা উপরে ওঠে (১৫-২০ মিনিট)।</li>
+                  <li>ঠিক দুপুরবেলা সূর্য ঠিক মাথার ওপর মধ্যাকাশে থাকার সময় (যাওয়ালের পূর্বে)।</li>
+                  <li>সূর্যাস্তের উপক্রমকালে যতক্ষণ না তা সম্পূর্ণ অস্তমিত হয়।</li>
+                </ol>
+                <div className="text-right font-mono text-[10px] opacity-75 font-bold">
+                  — সহীহ মুসলিম (হাদিস নং ৮৩১), সুনান আবু দাউদ (৩১৯২)
+                </div>
               </div>
 
-              {prayerData.prohibitedPrayers.map((item) => (
-                <div
-                  key={item.id}
-                  className={`p-3.5 rounded-2xl border ${
-                    isDay ? 'bg-[#fffbfb] border-rose-100' : 'bg-[#1e141a]/60 border-rose-900/40'
-                  }`}
-                >
-                  <div className="flex items-center justify-between font-bold mb-1">
-                    <span className="text-base text-rose-600 dark:text-rose-300">{item.name}</span>
-                    <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-300">
-                      {item.timeRange}
-                    </span>
+              {/* Prohibited Times List Cards */}
+              <div className="space-y-2.5">
+                {prayerData.prohibitedPrayers.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`p-3.5 rounded-2xl border ${
+                      isDay ? 'bg-[#fffbfb] border-rose-200/80 shadow-xs' : 'bg-[#221017] border-rose-900/60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-bold mb-1">
+                      <span className="text-sm font-black text-rose-600 dark:text-rose-300 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                        {item.name}
+                      </span>
+                      <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-300 font-black">
+                        {item.timeRange}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">{item.reason}</p>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{item.reason}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>

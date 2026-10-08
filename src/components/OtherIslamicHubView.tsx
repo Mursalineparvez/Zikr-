@@ -8,7 +8,6 @@ import {
   Layers,
   ChevronRight,
   Settings,
-  Volume2,
   Compass,
 } from 'lucide-react';
 import { DuaView } from './DuaView';
@@ -152,12 +151,12 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     },
     {
       id: 'settings' as OtherSubSection,
-      title: SETTINGS_UI.title[selectedLanguage] || 'Settings & Language',
+      title: selectedLanguage === 'bn' ? 'সেটিংস ও ভয়েস' : (SETTINGS_UI.title[selectedLanguage] || 'Settings & Voice'),
       arabic: 'الإعدادات واللغة',
-      desc: SETTINGS_UI.subtitle[selectedLanguage] || 'Customize language, themes, audio, vibration, and data backups.',
+      desc: selectedLanguage === 'bn' ? 'তেলাওয়াত কণ্ঠ (পুরুষ/নারী), অ্যাপের ভাষা, থিম এবং ব্যাকআপ' : 'Voice recitation (Male/Female), app language, themes, and backups.',
       icon: <Settings className="w-6 h-6 text-emerald-400" />,
       color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
-      badge: '14 Languages',
+      badge: selectedLanguage === 'bn' ? 'ভয়েস ও সেটিংস' : 'Voice & Settings',
     },
   ];
 
@@ -293,7 +292,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <Settings className="w-3.5 h-3.5" />
-          <span>{SETTINGS_UI.title[selectedLanguage] || 'Settings & Language'}</span>
+          <span>{selectedLanguage === 'bn' ? 'সেটিংস ও ভয়েস' : (SETTINGS_UI.title[selectedLanguage] || 'Settings & Voice')}</span>
         </button>
       </div>
 
@@ -318,58 +317,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-xl">
               {OTHER_HUB_UI.bannerSub[selectedLanguage]}
             </p>
-          </div>
-
-          {/* Quick Voice Reciter Gender Selector Card */}
-          <div className={`p-4 sm:p-5 rounded-3xl border shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 ${
-            isDay ? 'bg-emerald-50/90 border-emerald-200 text-slate-900' : 'bg-[#092226] border-emerald-500/40 text-white'
-          }`}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-                <Volume2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold">
-                  {selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন (Voice Reciter)' : 'Voice Recitation Gender'}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-emerald-300/80">
-                  {selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ (গভীর) বা নারী কণ্ঠ (সুমধুর) তেলাওয়াত নির্বাচন করুন' : 'Choose Male baritone or Female melodious voice'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-700 shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  if (onUpdateSettings) onUpdateSettings({ voiceGender: 'male' });
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                  (settings?.voiceGender || 'male') === 'male'
-                    ? 'bg-emerald-600 text-white shadow ring-1 ring-emerald-400'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>👨</span>
-                <span>{selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ' : 'Male'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onUpdateSettings) onUpdateSettings({ voiceGender: 'female' });
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                  settings?.voiceGender === 'female'
-                    ? 'bg-teal-600 text-white shadow ring-1 ring-teal-400'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <span>👩</span>
-                <span>{selectedLanguage === 'bn' ? 'নারী কণ্ঠ' : 'Female'}</span>
-              </button>
-            </div>
           </div>
 
           {/* 7 Feature Cards Grid */}

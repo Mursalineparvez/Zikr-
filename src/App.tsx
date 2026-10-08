@@ -109,18 +109,29 @@ export default function App() {
           (lastMaghribDay && lastMaghribDay !== currentSegment.islamicDayKey)
         );
         const isDayExpired = Boolean(lastActiveDate && lastActiveDate !== currentSegment.calendarDateKey);
-        const shouldZeroLiveCounters = isFardExpired || isMaghribExpired || isDayExpired;
+        
+        const shouldZeroLiveCounters =
+          activeRefreshMode === 'fard'
+            ? isFardExpired
+            : activeRefreshMode === 'maghrib'
+            ? isMaghribExpired
+            : false;
+
+        if (isFardExpired || activeRefreshMode === 'fard') {
+          localStorage.setItem('zikrmate_last_active_fard_segment', currentSegment.segmentKey);
+        }
+        if (isMaghribExpired || activeRefreshMode === 'maghrib') {
+          localStorage.setItem('zikrmate_last_maghrib_day', currentSegment.islamicDayKey);
+        }
+        if (isDayExpired) {
+          localStorage.setItem('zikrmate_last_active_date_key', currentSegment.calendarDateKey);
+          resetTodayDhikrTotal(currentSegment.calendarDateKey);
+        }
 
         if (shouldZeroLiveCounters) {
-          localStorage.setItem('zikrmate_last_active_fard_segment', currentSegment.segmentKey);
-          localStorage.setItem('zikrmate_last_maghrib_day', currentSegment.islamicDayKey);
-          localStorage.setItem('zikrmate_last_active_date_key', currentSegment.calendarDateKey);
           try {
             localStorage.removeItem('zikrmate_active_zikrs_backup');
           } catch {}
-          if (isDayExpired) {
-            resetTodayDhikrTotal(currentSegment.calendarDateKey);
-          }
         }
 
         const parsedMap = new Map<string, any>(parsed.map((item: any) => [item.id, item]));
@@ -405,8 +416,39 @@ export default function App() {
     const cloudUpdatedAtMs = cloudData.updatedAtMs || 0;
     const currentSegment = getCurrentPrayerSegmentDetails();
 
+    let currentIslamicDayStartMs = 0;
+    try {
+      const now = new Date();
+      let lat = 23.8103;
+      let lng = 90.4125;
+      let method = 'Karachi';
+      let madhab = 'Hanafi';
+      const sLat = localStorage.getItem('salat_city_lat');
+      const sLng = localStorage.getItem('salat_city_lng');
+      const sMethod = localStorage.getItem('salat_method');
+      const sMadhab = localStorage.getItem('salat_madhab');
+      if (sLat && sLng) {
+        lat = parseFloat(sLat);
+        lng = parseFloat(sLng);
+      }
+      if (sMethod) method = sMethod;
+      if (sMadhab) madhab = sMadhab;
+
+      const times = calculatePrayerTimes(lat, lng, 'Dhaka', method as any, madhab !== 'Shafi', 0, true, now);
+      const todayMaghrib = times.maghribDate.getTime();
+      if (now.getTime() >= todayMaghrib) {
+        currentIslamicDayStartMs = todayMaghrib;
+      } else {
+        currentIslamicDayStartMs = todayMaghrib - 24 * 60 * 60 * 1000;
+      }
+    } catch {
+      currentIslamicDayStartMs = Date.now() - 12 * 60 * 60 * 1000; 
+    }
+
     const isCloudResetStale = lastLocalResetTimestamp > 0 && cloudUpdatedAtMs <= lastLocalResetTimestamp;
-    const isCloudSegmentExpired = refreshMode === 'fard' && cloudUpdatedAtMs > 0 && cloudUpdatedAtMs < currentSegment.segmentStart.getTime();
+    const isCloudSegmentExpired =
+      (refreshMode === 'fard' && cloudUpdatedAtMs > 0 && cloudUpdatedAtMs < currentSegment.segmentStart.getTime()) ||
+      (refreshMode === 'maghrib' && cloudUpdatedAtMs > 0 && cloudUpdatedAtMs < currentIslamicDayStartMs);
 
     const cloudZikrSum = Array.isArray(cloudData.zikrs)
       ? cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0)
@@ -955,6 +997,8 @@ export default function App() {
     const isDay = settings.themeMode === 'day';
     document.body.classList.toggle('theme-day', isDay);
     document.body.classList.toggle('theme-night', !isDay);
+    document.documentElement.classList.toggle('dark', !isDay);
+    document.body.classList.toggle('dark', !isDay);
   }, [settings]);
 
   // Dedicated State for Today's Dhikr Count (Resets to 0 on a new day or when reset)
@@ -984,26 +1028,6 @@ export default function App() {
           localStorage.setItem('zikrmate_last_active_date_key', todayKey);
           setDailyTotalState(0);
           resetTodayDhikrTotal(todayKey);
-
-          // If mode is fard or maghrib, active card counters also start clean at 0
-          if (refreshMode !== 'manual') {
-            const hasCounts = zikrsRef.current.some((z) => z.count > 0);
-            if (hasCounts) {
-              const resetZikrs = zikrsRef.current.map((z) => ({ ...z, count: 0, updatedAt: now }));
-              setZikrs(resetZikrs);
-              lastLocalActionTimestampRef.current = now;
-              localStorage.setItem('zikrmate_last_reset_timestamp', String(now));
-              try {
-                localStorage.setItem('noor_zikr_items', JSON.stringify(resetZikrs));
-                localStorage.removeItem('zikrmate_active_zikrs_backup');
-              } catch {}
-              const curDevId = getDeviceId();
-              const targetKey = userProfile.isSignedIn && userProfile.emailOrPhone
-                ? userProfile.emailOrPhone.trim().toLowerCase()
-                : `guest_${curDevId}`;
-              saveUserDataToCloud(targetKey, userProfile, resetZikrs, historySessions, lifetimeTotalCountRef.current, settings, getAllAamalLogs()).catch(() => {});
-            }
-          }
         } else if (!lastActiveDate) {
           localStorage.setItem('zikrmate_last_active_date_key', todayKey);
         }
@@ -2046,6 +2070,8 @@ export default function App() {
         zikrs={zikrs}
         historySessions={historySessions}
         lifetimeTotalCount={lifetimeTotalCount}
+        voiceGender={settings.voiceGender || 'male'}
+        onUpdateVoiceGender={(gender) => setSettings((prev) => ({ ...prev, voiceGender: gender }))}
       />
 
       {/* Super Admin Dashboard Modal (Strictly only for mdmursalineparvez@gmail.com) */}

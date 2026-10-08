@@ -46,7 +46,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings } from '../types';
-import { soundHaptics } from '../utils/audioHaptics';
+import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { findSavedAccount, saveAccountToRegistry, updateAccountPassword, normalizeIdentifier } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { SETTINGS_UI } from '../utils/appTranslations';
@@ -130,6 +130,8 @@ interface ProfileModalProps {
   zikrs?: ZikrItem[];
   historySessions?: HistorySession[];
   lifetimeTotalCount?: number;
+  voiceGender?: VoiceGender;
+  onUpdateVoiceGender?: (gender: VoiceGender) => void;
 }
 
 const DEFAULT_AVATARS = [
@@ -167,6 +169,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   zikrs = [],
   historySessions = [],
   lifetimeTotalCount = 0,
+  voiceGender = 'male',
+  onUpdateVoiceGender,
 }) => {
   const isDay = themeMode === 'day';
   const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
@@ -1170,6 +1174,82 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     }`}
                   >
                     🌙 নাইট মোড (Dark)
+                  </button>
+                </div>
+              </div>
+
+              {/* Voice Reciter Selection (ভয়েস তেলাওয়াত নির্বাচন) */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
+                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>{selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন' : 'Voice Recitation Gender'}</span>
+                  </span>
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                    isDay
+                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                      : 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30'
+                  }`}>
+                    {voiceGender === 'female' ? '👩 নারী কণ্ঠ' : '👨 পুরুষ কণ্ঠ'}
+                  </span>
+                </div>
+                <p className={`text-xs ${isDay ? 'text-slate-600' : 'text-emerald-200/80'}`}>
+                  {selectedLanguage === 'bn'
+                    ? 'দোআ, হজ ও ওমরাহ তেলাওয়াতের জন্য পুরুষ কণ্ঠ (গভীর) বা নারী কণ্ঠ (সুমধুর) নির্বাচন করুন'
+                    : 'Choose Male baritone or Female melodious voice for prayer recitation'}
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-700 w-full sm:w-auto justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onUpdateVoiceGender) onUpdateVoiceGender('male');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        voiceGender !== 'female'
+                          ? 'bg-emerald-600 text-white shadow ring-1 ring-emerald-400'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <span>👨</span>
+                      <span>{selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ' : 'Male'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onUpdateVoiceGender) onUpdateVoiceGender('female');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                        voiceGender === 'female'
+                          ? 'bg-teal-600 text-white shadow ring-1 ring-teal-400'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <span>👩</span>
+                      <span>{selectedLanguage === 'bn' ? 'নারী কণ্ঠ' : 'Female'}</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playArabicVoice('سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', voiceGender || 'male');
+                    }}
+                    className={`w-full sm:w-auto px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 transition active:scale-95 cursor-pointer ${
+                      isDay
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                        : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/60'
+                    }`}
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন' : 'Test Voice'}</span>
                   </button>
                 </div>
               </div>
