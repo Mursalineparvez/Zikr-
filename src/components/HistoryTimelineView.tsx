@@ -1008,7 +1008,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           {getBannerGraphics(activeEvent.sc, formattedTitle)}
 
           {/* Metadata Row */}
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 pb-2.5">
+          <div className={`flex items-center justify-between border-b pb-2.5 ${isDay ? 'border-slate-100' : 'border-teal-900/40'}`}>
             <span
               className="px-3 py-1 rounded-xl text-xs font-black text-white shadow-md flex items-center gap-1.5"
               style={{ backgroundColor: CATEGORY_INFO[activeEvent.cat].color }}
@@ -1018,10 +1018,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             </span>
 
             <div className="text-right flex flex-col items-end">
-              <span className="text-sm font-black text-amber-500 dark:text-amber-400">
+              <span className={`text-sm font-black ${isDay ? 'text-amber-600' : 'text-amber-400'}`}>
                 {toBengaliDigits(activeEvent.y)} {selectedLanguage === 'bn' ? 'খ্রি.' : 'CE'}
               </span>
-              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-0.5">
+              <span className={`text-[10px] font-semibold uppercase tracking-wider flex items-center gap-0.5 ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                 <span>{getEraYearText(activeEvent, selectedLanguage)}</span>
               </span>
             </div>
@@ -1077,10 +1077,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_50%,rgba(16,185,129,0.03),transparent)] pointer-events-none" />
                 
                 <div className="space-y-1 flex-1 min-w-0">
-                  <span className="text-[9px] text-slate-400 dark:text-emerald-300/60 font-black uppercase tracking-widest block">
+                  <span className={`text-[9px] font-black uppercase tracking-widest block ${isDay ? 'text-slate-500' : 'text-emerald-300/60'}`}>
                     {selectedLanguage === 'bn' ? 'তৎকালীন স্থান' : 'Location Then'}
                   </span>
-                  <span className="font-bold text-amber-600 dark:text-amber-400 block truncate flex items-center gap-1">
+                  <span className={`font-bold block truncate flex items-center gap-1 ${isDay ? 'text-amber-700' : 'text-amber-400'}`}>
                     <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                     <span>{getLangText(activeEvent.p, selectedLanguage)}</span>
                   </span>
@@ -1089,10 +1089,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                 <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0 animate-pulse mx-1" />
                 
                 <div className="text-right space-y-1 flex-1 min-w-0">
-                  <span className="text-[9px] text-slate-400 dark:text-emerald-300/60 font-black uppercase tracking-widest block">
+                  <span className={`text-[9px] font-black uppercase tracking-widest block ${isDay ? 'text-slate-500' : 'text-emerald-300/60'}`}>
                     {selectedLanguage === 'bn' ? 'বর্তমান ভূখণ্ড' : 'Location Now'}
                   </span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-300 block truncate">
+                  <span className={`font-bold block truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
                     {getLangText(activeEvent.n, selectedLanguage)}
                   </span>
                 </div>
@@ -1100,16 +1100,22 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
               {/* Story narrative text */}
               <div className="space-y-3 flex-1 overflow-y-auto max-h-[165px] pr-1 scrollbar-thin relative">
-                <p className="text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-emerald-100/90 font-medium whitespace-pre-line">
+                <p className={`text-xs sm:text-sm leading-relaxed font-bold whitespace-pre-line ${
+                  isDay ? 'text-slate-800' : 'text-emerald-100/90'
+                }`}>
                   {formattedDesc}
                 </p>
 
                 {activeEra.who && (
-                  <div className="pt-3 border-t border-slate-100 dark:border-teal-900/40">
-                    <span className="text-[10px] font-black text-slate-400 dark:text-emerald-400/80 block mb-1 uppercase tracking-wide">
+                  <div className={`pt-3 border-t ${isDay ? 'border-slate-100' : 'border-teal-900/40'}`}>
+                    <span className={`text-[10px] font-black block mb-1 uppercase tracking-wide ${
+                      isDay ? 'text-slate-500' : 'text-emerald-400/80'
+                    }`}>
                       {selectedLanguage === 'bn' ? 'এই যুগের সম্মানিত ব্যক্তিত্বগণ:' : 'Key Personalities of this Era:'}
                     </span>
-                    <p className="text-[11px] leading-relaxed font-bold text-slate-600 dark:text-emerald-300">
+                    <p className={`text-[11px] leading-relaxed font-black ${
+                      isDay ? 'text-slate-700' : 'text-emerald-300'
+                    }`}>
                       {formattedEraWho}
                     </p>
                   </div>
@@ -1125,18 +1131,18 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                     : 'bg-[#0f323a]/60 border-emerald-500 text-emerald-100'
                 }`}>
                   <div className="absolute top-1 right-2 opacity-5 pointer-events-none text-6xl font-serif">”</div>
-                  <div className="font-black text-sm flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <div className={`font-black text-sm flex items-center gap-1.5 ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`}>
                     <Sparkles className="w-4 h-4 text-amber-400" />
                     <span>{selectedLanguage === 'bn' ? 'শিক্ষা ও আধ্যাত্মিক দিকনির্দেশনা:' : 'Key Lessons & Wisdom:'}</span>
                   </div>
-                  <p className="leading-relaxed font-medium text-xs text-slate-700 dark:text-emerald-100">
+                  <p className={`leading-relaxed font-bold text-xs ${isDay ? 'text-slate-800' : 'text-emerald-100'}`}>
                     {formattedLesson}
                   </p>
                 </div>
               ) : (
                 <div className="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-center py-10">
                   <span className="text-2xl block animate-pulse mb-2">🕊️</span>
-                  <p className="text-xs text-slate-400">
+                  <p className={`text-xs ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                     {selectedLanguage === 'bn' 
                       ? 'এই ঘটনার জন্য কোনো বিশেষ রেফারেন্স নোট যুক্ত নেই। ঈমান ও আমল সুন্দর করুন।' 
                       : 'No specific reference notes added for this event. Strengthen faith and piety.'}
@@ -1147,7 +1153,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           )}
 
           {/* Bottom navigation trigger buttons */}
-          <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-teal-900/40">
+          <div className={`flex items-center gap-2 pt-2 border-t ${isDay ? 'border-slate-100' : 'border-teal-900/40'}`}>
             <button
               type="button"
               onClick={handlePrev}
