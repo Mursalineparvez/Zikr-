@@ -8,25 +8,37 @@ import confetti from 'canvas-confetti';
 import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage, UserProfile, ZikrRefreshMode } from './types';
 import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES, getTargetForZikrMode } from './utils/constants';
 import { soundHaptics } from './utils/audioHaptics';
-import { generateZikrPdfReport } from './utils/exportPdf';
 import { NAV_TRANSLATIONS } from './utils/appTranslations';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { ZikirCounterView } from './components/ZikirCounterView';
-import { QuranView } from './components/QuranView';
-import { KitabView } from './components/KitabView';
-import { HadithView } from './components/HadithView';
-import { SalatTimeView } from './components/SalatTimeView';
-import { DuaView } from './components/DuaView';
-import { AamalTrackerView } from './components/AamalTrackerView';
-import { OtherIslamicHubView, OtherSubSection } from './components/OtherIslamicHubView';
-import { ZikrModal } from './components/ZikrModal';
 import { ConfirmModal } from './components/ConfirmModal';
-import { StandaloneExportModal } from './components/StandaloneExportModal';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
-import { ProfileModal } from './components/ProfileModal';
-import { HistoryReportModal } from './components/HistoryReportModal';
-import { AdminPanelModal } from './components/AdminPanelModal';
+import type { OtherSubSection } from './components/OtherIslamicHubView';
+
+// Code-split heavy non-initial views and modals to make initial app launch instantaneous
+const QuranView = React.lazy(() => import('./components/QuranView').then((m) => ({ default: m.QuranView })));
+const SalatTimeView = React.lazy(() => import('./components/SalatTimeView').then((m) => ({ default: m.SalatTimeView })));
+const AamalTrackerView = React.lazy(() => import('./components/AamalTrackerView').then((m) => ({ default: m.AamalTrackerView })));
+const OtherIslamicHubView = React.lazy(() => import('./components/OtherIslamicHubView').then((m) => ({ default: m.OtherIslamicHubView })));
+const ZikrModal = React.lazy(() => import('./components/ZikrModal').then((m) => ({ default: m.ZikrModal })));
+const StandaloneExportModal = React.lazy(() => import('./components/StandaloneExportModal').then((m) => ({ default: m.StandaloneExportModal })));
+const HistoryReportModal = React.lazy(() => import('./components/HistoryReportModal').then((m) => ({ default: m.HistoryReportModal })));
+const ProfileModal = React.lazy(() => import('./components/ProfileModal').then((m) => ({ default: m.ProfileModal })));
+const AdminPanelModal = React.lazy(() => import('./components/AdminPanelModal').then((m) => ({ default: m.AdminPanelModal })));
+
+const AppViewLoadingFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
+  <div className="flex flex-col items-center justify-center min-h-[350px] py-20 space-y-3">
+    <div className={`w-9 h-9 border-3 rounded-full animate-spin ${
+      isDay ? 'border-teal-600/30 border-t-teal-600' : 'border-emerald-500/30 border-t-emerald-400'
+    }`} />
+    <span className={`text-xs font-bold animate-pulse ${
+      isDay ? 'text-teal-800' : 'text-emerald-400'
+    }`}>
+      লোড হচ্ছে...
+    </span>
+  </div>
+);
 import { saveAccountToRegistry } from './utils/accountRegistry';
 import {
   createInitialDayLog,
@@ -692,6 +704,16 @@ export default function App() {
     return () => {
       unsubAuth();
     };
+  }, []);
+
+  // Idle background prefetch for non-initial tabs to make subsequent navigation instant
+  useEffect(() => {
+    const prefetchTimer = setTimeout(() => {
+      import('./components/QuranView');
+      import('./components/SalatTimeView');
+      import('./components/OtherIslamicHubView');
+    }, 1500);
+    return () => clearTimeout(prefetchTimer);
   }, []);
 
   // 1. Real-time Multi-Device Cloud Subscription & Telemetry Auto-Registration
@@ -1862,79 +1884,87 @@ export default function App() {
         {/* 2. QURAN VIEW */}
         {activeModule === 'quran' && (
           <div key="quran" className="animate-view-entrance">
-            <QuranView
-              soundEnabled={settings.soundEnabled}
-              themeMode={settings.themeMode}
-              selectedLanguage={selectedLanguage}
-              onSelectLanguage={setSelectedLanguage}
-            />
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+              <QuranView
+                soundEnabled={settings.soundEnabled}
+                themeMode={settings.themeMode}
+                selectedLanguage={selectedLanguage}
+                onSelectLanguage={setSelectedLanguage}
+              />
+            </React.Suspense>
           </div>
         )}
 
         {/* 3. SALAT TIME VIEW */}
         {activeModule === 'salat_time' && (
           <div key="salat_time" className="animate-view-entrance">
-            <SalatTimeView
-              soundEnabled={settings.soundEnabled}
-              themeMode={settings.themeMode}
-              selectedLanguage={selectedLanguage}
-            />
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+              <SalatTimeView
+                soundEnabled={settings.soundEnabled}
+                themeMode={settings.themeMode}
+                selectedLanguage={selectedLanguage}
+              />
+            </React.Suspense>
           </div>
         )}
 
         {/* 4. AAMAL TRACKER VIEW */}
         {activeModule === 'aamal_tracker' && (
           <div key="aamal_tracker" className="animate-view-entrance">
-            <AamalTrackerView
-              soundEnabled={settings.soundEnabled}
-              themeMode={settings.themeMode}
-              selectedLanguage={selectedLanguage}
-              userProfile={userProfile}
-              liveZikrs={zikrs}
-            />
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+              <AamalTrackerView
+                soundEnabled={settings.soundEnabled}
+                themeMode={settings.themeMode}
+                selectedLanguage={selectedLanguage}
+                userProfile={userProfile}
+                liveZikrs={zikrs}
+              />
+            </React.Suspense>
           </div>
         )}
 
         {/* 5. OTHER ISLAMIC HUB VIEW (DUA, HADITH, KITAB, DAILY TABLIG, ALLAH 99 NAMES, HAJJ & UMRAH, SETTINGS) */}
         {isOtherActive && (
           <div key="other_hub" className="animate-view-entrance">
-            <OtherIslamicHubView
-              onAddDuaToCounters={handleAddDuaToCounters}
-              activeCounters={zikrs}
-              soundEnabled={settings.soundEnabled}
-              themeMode={settings.themeMode}
-              selectedLanguage={selectedLanguage}
-              onSelectLanguage={setSelectedLanguage}
-              settings={settings}
-              onUpdateSettings={(newSettings) => setSettings((prev) => ({ ...prev, ...newSettings }))}
-              onGlobalReset={handleGlobalReset}
-              onRestoreDefaults={handleRestoreDefaults}
-              onExportPdf={handleExportPdf}
-              onOpenSettingsModal={() => handleOpenProfileModal('settings')}
-              initialSubSection={
-                activeModule === 'dua'
-                  ? 'dua'
-                  : activeModule === 'hadith'
-                  ? 'hadith'
-                  : activeModule === 'kitab'
-                  ? 'kitab'
-                  : activeModule === 'hajj_checklist'
-                  ? 'hajj_checklist'
-                  : activeModule === 'umrah_guide'
-                  ? 'umrah_guide'
-                  : activeModule === 'hajj_route_map'
-                  ? 'hajj_route_map'
-                  : activeModule === 'hajj_essentials'
-                  ? 'hajj_essentials'
-                  : activeModule === 'tablig'
-                  ? 'tablig'
-                  : activeModule === 'allah_names'
-                  ? 'allah_names'
-                  : activeModule === 'history_timeline'
-                  ? 'history_timeline'
-                  : 'hub'
-              }
-            />
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+              <OtherIslamicHubView
+                onAddDuaToCounters={handleAddDuaToCounters}
+                activeCounters={zikrs}
+                soundEnabled={settings.soundEnabled}
+                themeMode={settings.themeMode}
+                selectedLanguage={selectedLanguage}
+                onSelectLanguage={setSelectedLanguage}
+                settings={settings}
+                onUpdateSettings={(newSettings) => setSettings((prev) => ({ ...prev, ...newSettings }))}
+                onGlobalReset={handleGlobalReset}
+                onRestoreDefaults={handleRestoreDefaults}
+                onExportPdf={handleExportPdf}
+                onOpenSettingsModal={() => handleOpenProfileModal('settings')}
+                initialSubSection={
+                  activeModule === 'dua'
+                    ? 'dua'
+                    : activeModule === 'hadith'
+                    ? 'hadith'
+                    : activeModule === 'kitab'
+                    ? 'kitab'
+                    : activeModule === 'hajj_checklist'
+                    ? 'hajj_checklist'
+                    : activeModule === 'umrah_guide'
+                    ? 'umrah_guide'
+                    : activeModule === 'hajj_route_map'
+                    ? 'hajj_route_map'
+                    : activeModule === 'hajj_essentials'
+                    ? 'hajj_essentials'
+                    : activeModule === 'tablig'
+                    ? 'tablig'
+                    : activeModule === 'allah_names'
+                    ? 'allah_names'
+                    : activeModule === 'history_timeline'
+                    ? 'history_timeline'
+                    : 'hub'
+                }
+              />
+            </React.Suspense>
           </div>
         )}
       </main>
@@ -1995,95 +2025,105 @@ export default function App() {
         selectedLanguage={selectedLanguage}
       />
 
-      {/* Add / Edit Zikr Modal */}
-      <ZikrModal
-        isOpen={isZikrModalOpen}
-        zikrToEdit={zikrToEdit}
-        onSave={handleSaveZikr}
-        onClose={() => {
-          setIsZikrModalOpen(false);
-          setZikrToEdit(null);
-        }}
-      />
+      <React.Suspense fallback={null}>
+        {/* Add / Edit Zikr Modal */}
+        {isZikrModalOpen && (
+          <ZikrModal
+            isOpen={isZikrModalOpen}
+            zikrToEdit={zikrToEdit}
+            onSave={handleSaveZikr}
+            onClose={() => {
+              setIsZikrModalOpen(false);
+              setZikrToEdit(null);
+            }}
+          />
+        )}
 
-      {/* Confirmation Prompt Modal */}
-      <ConfirmModal
-        isOpen={confirmDialog.isOpen}
-        title={confirmDialog.title}
-        message={confirmDialog.message}
-        confirmLabel={confirmDialog.confirmLabel}
-        isDanger={confirmDialog.isDanger}
-        onConfirm={confirmDialog.onConfirm}
-        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
-      />
-
-      {/* Standalone HTML & APK Guide Modal */}
-      <StandaloneExportModal
-        isOpen={isStandaloneModalOpen}
-        onClose={() => setIsStandaloneModalOpen(false)}
-      />
-
-      {/* Multi-Period History & PDF Report Generator Modal (1 Day, 1 Month, 4 Months, 1 Year, 10 Years) */}
-      <HistoryReportModal
-        isOpen={isHistoryReportModalOpen}
-        onClose={() => setIsHistoryReportModalOpen(false)}
-        soundEnabled={settings.soundEnabled}
-        themeMode={settings.themeMode}
-        selectedLanguage={selectedLanguage}
-        userProfile={userProfile}
-        liveZikrs={zikrs}
-        masterTotal={masterGrandTotal}
-      />
-
-      {/* User Profile Account Modal (With Embedded Settings & Firebase Cloud Sync) */}
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-        userProfile={userProfile}
-        onUpdateProfile={handleUpdateProfile}
-        onNavigateModule={setActiveModule}
-        themeMode={settings.themeMode}
-        onToggleThemeMode={handleToggleThemeMode}
-        selectedLanguage={selectedLanguage}
-        onSelectLanguage={(lang) => {
-          setSelectedLanguage(lang);
-          const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
-          showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
-        }}
-        soundEnabled={settings.soundEnabled}
-        onToggleSound={handleToggleSound}
-        vibrationEnabled={settings.vibrationEnabled}
-        onToggleVibration={handleToggleVibration}
-        onExportPdf={handleExportPdf}
-        onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
-        onResetAllCounters={handleGlobalReset}
-        initialTab={profileModalTab}
-        onCloudDataLoaded={handleCloudDataLoaded}
-        onTriggerCloudSync={handleTriggerCloudSync}
-        isSyncingCloud={isSyncingCloud}
-        lastCloudSyncTimestamp={lastCloudSyncTimestamp}
-        onOpenAdminPanel={
-          (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com'
-            ? () => setIsAdminPanelOpen(true)
-            : undefined
-        }
-        zikrs={zikrs}
-        historySessions={historySessions}
-        lifetimeTotalCount={lifetimeTotalCount}
-        voiceGender={settings.voiceGender || 'male'}
-        onUpdateVoiceGender={(gender) => setSettings((prev) => ({ ...prev, voiceGender: gender }))}
-      />
-
-      {/* Super Admin Dashboard Modal (Strictly only for mdmursalineparvez@gmail.com) */}
-      {(userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com' && (
-        <AdminPanelModal
-          isOpen={isAdminPanelOpen}
-          onClose={() => setIsAdminPanelOpen(false)}
-          currentUserProfile={userProfile}
-          soundEnabled={settings.soundEnabled}
-          isDayTheme={settings.themeMode === 'day'}
+        {/* Confirmation Prompt Modal */}
+        <ConfirmModal
+          isOpen={confirmDialog.isOpen}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmLabel={confirmDialog.confirmLabel}
+          isDanger={confirmDialog.isDanger}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
         />
-      )}
+
+        {/* Standalone HTML & APK Guide Modal */}
+        {isStandaloneModalOpen && (
+          <StandaloneExportModal
+            isOpen={isStandaloneModalOpen}
+            onClose={() => setIsStandaloneModalOpen(false)}
+          />
+        )}
+
+        {/* Multi-Period History & PDF Report Generator Modal (1 Day, 1 Month, 4 Months, 1 Year, 10 Years) */}
+        {isHistoryReportModalOpen && (
+          <HistoryReportModal
+            isOpen={isHistoryReportModalOpen}
+            onClose={() => setIsHistoryReportModalOpen(false)}
+            soundEnabled={settings.soundEnabled}
+            themeMode={settings.themeMode}
+            selectedLanguage={selectedLanguage}
+            userProfile={userProfile}
+            liveZikrs={zikrs}
+            masterTotal={masterGrandTotal}
+          />
+        )}
+
+        {/* User Profile Account Modal (With Embedded Settings & Firebase Cloud Sync) */}
+        {isProfileModalOpen && (
+          <ProfileModal
+            isOpen={isProfileModalOpen}
+            onClose={() => setIsProfileModalOpen(false)}
+            userProfile={userProfile}
+            onUpdateProfile={handleUpdateProfile}
+            onNavigateModule={setActiveModule}
+            themeMode={settings.themeMode}
+            onToggleThemeMode={handleToggleThemeMode}
+            selectedLanguage={selectedLanguage}
+            onSelectLanguage={(lang) => {
+              setSelectedLanguage(lang);
+              const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+              showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
+            }}
+            soundEnabled={settings.soundEnabled}
+            onToggleSound={handleToggleSound}
+            vibrationEnabled={settings.vibrationEnabled}
+            onToggleVibration={handleToggleVibration}
+            onExportPdf={handleExportPdf}
+            onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
+            onResetAllCounters={handleGlobalReset}
+            initialTab={profileModalTab}
+            onCloudDataLoaded={handleCloudDataLoaded}
+            onTriggerCloudSync={handleTriggerCloudSync}
+            isSyncingCloud={isSyncingCloud}
+            lastCloudSyncTimestamp={lastCloudSyncTimestamp}
+            onOpenAdminPanel={
+              (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com'
+                ? () => setIsAdminPanelOpen(true)
+                : undefined
+            }
+            zikrs={zikrs}
+            historySessions={historySessions}
+            lifetimeTotalCount={lifetimeTotalCount}
+            voiceGender={settings.voiceGender || 'male'}
+            onUpdateVoiceGender={(gender) => setSettings((prev) => ({ ...prev, voiceGender: gender }))}
+          />
+        )}
+
+        {/* Super Admin Dashboard Modal (Strictly only for mdmursalineparvez@gmail.com) */}
+        {isAdminPanelOpen && (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com' && (
+          <AdminPanelModal
+            isOpen={isAdminPanelOpen}
+            onClose={() => setIsAdminPanelOpen(false)}
+            currentUserProfile={userProfile}
+            soundEnabled={settings.soundEnabled}
+            isDayTheme={settings.themeMode === 'day'}
+          />
+        )}
+      </React.Suspense>
     </div>
   );
 }

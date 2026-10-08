@@ -7,6 +7,7 @@ interface AnimatedHistoryBannerProps {
   category: string;
   year: number;
   locationName: string;
+  className?: string;
 }
 
 export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
@@ -15,6 +16,7 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
   category,
   year,
   locationName,
+  className = '',
 }) => {
   // Determine color scheme & theme based on scene
   const getSceneConfig = () => {
@@ -120,7 +122,7 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
 
   return (
     <div
-      className={`relative w-full h-36 sm:h-40 rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-gradient-to-br ${config.gradient} transition-all duration-700 flex flex-col justify-between p-4 sm:p-5 select-none`}
+      className={`relative w-full ${className || 'h-32 sm:h-36'} rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-gradient-to-br ${config.gradient} transition-all duration-700 flex flex-col justify-between p-3.5 sm:p-4 select-none`}
     >
       {/* 1. Animated Canvas Background using Pure SVG Graphics & Keyframes */}
       <svg

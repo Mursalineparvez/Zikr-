@@ -10,16 +10,31 @@ import {
   Settings,
   Compass,
 } from 'lucide-react';
-import { DuaView } from './DuaView';
-import { HadithView } from './HadithView';
-import { KitabView } from './KitabView';
-import { DailyTabligView } from './DailyTabligView';
-import { AllahNamesView } from './AllahNamesView';
-import { HajjUmrahView } from './HajjUmrahView';
-import { HistoryTimelineView } from './HistoryTimelineView';
-import { SettingsView } from './SettingsView';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI, SETTINGS_UI } from '../utils/appTranslations';
+
+// Code-split sub-views to keep initial app bundle small and startup instantaneous
+const DuaView = React.lazy(() => import('./DuaView').then((m) => ({ default: m.DuaView })));
+const HadithView = React.lazy(() => import('./HadithView').then((m) => ({ default: m.HadithView })));
+const KitabView = React.lazy(() => import('./KitabView').then((m) => ({ default: m.KitabView })));
+const DailyTabligView = React.lazy(() => import('./DailyTabligView').then((m) => ({ default: m.DailyTabligView })));
+const AllahNamesView = React.lazy(() => import('./AllahNamesView').then((m) => ({ default: m.AllahNamesView })));
+const HajjUmrahView = React.lazy(() => import('./HajjUmrahView').then((m) => ({ default: m.HajjUmrahView })));
+const HistoryTimelineView = React.lazy(() => import('./HistoryTimelineView').then((m) => ({ default: m.HistoryTimelineView })));
+const SettingsView = React.lazy(() => import('./SettingsView').then((m) => ({ default: m.SettingsView })));
+
+const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
+  <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
+    <div className={`w-8 h-8 border-3 rounded-full animate-spin ${
+      isDay ? 'border-teal-600/30 border-t-teal-600' : 'border-emerald-500/30 border-t-emerald-400'
+    }`} />
+    <span className={`text-xs font-bold animate-pulse ${
+      isDay ? 'text-teal-800' : 'text-emerald-400'
+    }`}>
+      লোড হচ্ছে...
+    </span>
+  </div>
+);
 
 export type OtherSubSection =
   | 'hub'
@@ -362,130 +377,132 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </div>
       )}
 
-      {/* Sub-view: History Timeline & Interactive Map */}
-      {activeSub === 'history_timeline' && (
-        <HistoryTimelineView
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-        />
-      )}
+      <React.Suspense fallback={<SubViewFallback isDay={isDay} />}>
+        {/* Sub-view: History Timeline & Interactive Map */}
+        {activeSub === 'history_timeline' && (
+          <HistoryTimelineView
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+          />
+        )}
 
-      {/* Sub-view: Dua */}
-      {activeSub === 'dua' && (
-        <DuaView
-          onAddDuaToCounters={onAddDuaToCounters}
-          activeCounters={activeCounters}
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-          voiceGender={settings?.voiceGender || 'male'}
-        />
-      )}
+        {/* Sub-view: Dua */}
+        {activeSub === 'dua' && (
+          <DuaView
+            onAddDuaToCounters={onAddDuaToCounters}
+            activeCounters={activeCounters}
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            voiceGender={settings?.voiceGender || 'male'}
+          />
+        )}
 
-      {/* Sub-view: Hadith */}
-      {activeSub === 'hadith' && (
-        <HadithView
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-        />
-      )}
+        {/* Sub-view: Hadith */}
+        {activeSub === 'hadith' && (
+          <HadithView
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+          />
+        )}
 
-      {/* Sub-view: Kitab */}
-      {activeSub === 'kitab' && (
-        <KitabView
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-        />
-      )}
+        {/* Sub-view: Kitab */}
+        {activeSub === 'kitab' && (
+          <KitabView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+          />
+        )}
 
-      {/* Sub-view: Tablig */}
-      {activeSub === 'tablig' && (
-        <DailyTabligView
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-        />
-      )}
+        {/* Sub-view: Tablig */}
+        {activeSub === 'tablig' && (
+          <DailyTabligView
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+          />
+        )}
 
-      {/* Sub-view: Allah Names */}
-      {activeSub === 'allah_names' && (
-        <AllahNamesView
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-          voiceGender={settings?.voiceGender || 'male'}
-        />
-      )}
+        {/* Sub-view: Allah Names */}
+        {activeSub === 'allah_names' && (
+          <AllahNamesView
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            voiceGender={settings?.voiceGender || 'male'}
+          />
+        )}
 
-      {/* Sub-view: Hajj & Umrah Checklist */}
-      {activeSub === 'hajj_checklist' && (
-        <HajjUmrahView
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-          voiceGender={settings?.voiceGender || 'male'}
-          initialTab="home_journey_hub"
-        />
-      )}
+        {/* Sub-view: Hajj & Umrah Checklist */}
+        {activeSub === 'hajj_checklist' && (
+          <HajjUmrahView
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            voiceGender={settings?.voiceGender || 'male'}
+            initialTab="home_journey_hub"
+          />
+        )}
 
-      {/* Sub-view: Umrah Guide & 3D Studio */}
-      {activeSub === 'umrah_guide' && (
-        <HajjUmrahView
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-          voiceGender={settings?.voiceGender || 'male'}
-          initialTab="umrah_hub"
-        />
-      )}
+        {/* Sub-view: Umrah Guide & 3D Studio */}
+        {activeSub === 'umrah_guide' && (
+          <HajjUmrahView
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            voiceGender={settings?.voiceGender || 'male'}
+            initialTab="umrah_hub"
+          />
+        )}
 
-      {/* Sub-view: 5 Days Hajj Route Map */}
-      {activeSub === 'hajj_route_map' && (
-        <HajjUmrahView
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-          voiceGender={settings?.voiceGender || 'male'}
-          initialTab="hajj_hub"
-        />
-      )}
+        {/* Sub-view: 5 Days Hajj Route Map */}
+        {activeSub === 'hajj_route_map' && (
+          <HajjUmrahView
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            voiceGender={settings?.voiceGender || 'male'}
+            initialTab="hajj_hub"
+          />
+        )}
 
-      {/* Sub-view: Miqat, Madinah & Essentials */}
-      {activeSub === 'hajj_essentials' && (
-        <HajjUmrahView
-          soundEnabled={soundEnabled}
-          themeMode={themeMode}
-          selectedLanguage={selectedLanguage}
-          voiceGender={settings?.voiceGender || 'male'}
-          initialTab="essentials_hub"
-        />
-      )}
+        {/* Sub-view: Miqat, Madinah & Essentials */}
+        {activeSub === 'hajj_essentials' && (
+          <HajjUmrahView
+            soundEnabled={soundEnabled}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            voiceGender={settings?.voiceGender || 'male'}
+            initialTab="essentials_hub"
+          />
+        )}
 
-      {/* Sub-view: Settings & Language */}
-      {activeSub === 'settings' && (
-        <SettingsView
-          settings={
-            settings || {
-              theme: 'emerald',
-              themeMode: themeMode,
-              soundEnabled: soundEnabled,
-              vibrationEnabled: true,
-              screenAwake: false,
-              voiceGender: 'male',
+        {/* Sub-view: Settings & Language */}
+        {activeSub === 'settings' && (
+          <SettingsView
+            settings={
+              settings || {
+                theme: 'emerald',
+                themeMode: themeMode,
+                soundEnabled: soundEnabled,
+                vibrationEnabled: true,
+                screenAwake: false,
+                voiceGender: 'male',
+              }
             }
-          }
-          selectedLanguage={selectedLanguage}
-          onSelectLanguage={onSelectLanguage}
-          onUpdateSettings={onUpdateSettings || (() => {})}
-          onGlobalReset={onGlobalReset || (() => {})}
-          onRestoreDefaults={onRestoreDefaults || (() => {})}
-          onExportPdf={onExportPdf || (() => {})}
-          onExportBackupJson={onExportBackupJson || (() => {})}
-          onImportBackupJson={onImportBackupJson || (() => {})}
-        />
-      )}
+            selectedLanguage={selectedLanguage}
+            onSelectLanguage={onSelectLanguage}
+            onUpdateSettings={onUpdateSettings || (() => {})}
+            onGlobalReset={onGlobalReset || (() => {})}
+            onRestoreDefaults={onRestoreDefaults || (() => {})}
+            onExportPdf={onExportPdf || (() => {})}
+            onExportBackupJson={onExportBackupJson || (() => {})}
+            onImportBackupJson={onImportBackupJson || (() => {})}
+          />
+        )}
+      </React.Suspense>
     </div>
   );
 };

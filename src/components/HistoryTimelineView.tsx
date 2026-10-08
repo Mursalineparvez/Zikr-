@@ -40,6 +40,8 @@ import {
   Scroll,
   Lightbulb,
   Share2,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 
 interface HistoryTimelineViewProps {
@@ -112,6 +114,26 @@ function getEraYearText(evt: HistoryEvent, lang: ZikrLanguage): string {
   }
 }
 
+// Helper to render honorific expressions in golden/amber text (as shown in Pic 2)
+function renderHonorificText(text: string | undefined, isDay: boolean): React.ReactNode {
+  if (!text) return '';
+  const regex = /(সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম|আলাইহিস সালাম|আলাইহাস সালাম|রাদিয়াল্লাহু আনহু|রাদিয়াল্লাহু আনহা|রাদিয়াল্লাহু আনহুম|রহমতুল্লাহি আলাইহি|রহমতুল্লাহি আলাইহিম|\(Sallallahu Alaihi Wa Sallam\)|\(Alayhis Salam\)|\(Radi Allahu Anhu\)|\(Radi Allahu Anha\)|\(Rahmatullahi Alayhi\))/g;
+  const parts = text.split(regex);
+  return parts.map((part, index) => {
+    if (regex.test(part)) {
+      return (
+        <span
+          key={index}
+          className={`font-bold ${isDay ? 'text-amber-800' : 'text-amber-400'}`}
+        >
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+}
+
 export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
@@ -139,6 +161,57 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
     } catch {}
   };
   const [nowMapStyle, setNowMapStyle] = useState<'satellite' | 'street' | 'dark'>('satellite');
+  const [showBanner, setShowBanner] = useState<boolean>(false);
+
+  // Dedicated Content Scroll & Stepper State (Matches Pic 2)
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollUp, setCanScrollUp] = useState<boolean>(false);
+  const [canScrollDown, setCanScrollDown] = useState<boolean>(true);
+  const [scrollThumbTopPct, setScrollThumbTopPct] = useState<number>(0);
+  const [scrollThumbHeightPct, setScrollThumbHeightPct] = useState<number>(30);
+
+  const updateScrollState = () => {
+    if (!contentScrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = contentScrollRef.current;
+    const maxScroll = scrollHeight - clientHeight;
+    const thumbH = Math.max(15, Math.min(80, (clientHeight / (scrollHeight || 1)) * 100));
+    setScrollThumbHeightPct(thumbH);
+    if (maxScroll > 0) {
+      const topPct = (scrollTop / maxScroll) * (100 - thumbH);
+      setScrollThumbTopPct(topPct);
+      setCanScrollUp(scrollTop > 5);
+      setCanScrollDown(scrollTop < maxScroll - 5);
+    } else {
+      setScrollThumbTopPct(0);
+      setCanScrollUp(false);
+      setCanScrollDown(false);
+    }
+  };
+
+  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!contentScrollRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickRatio = (e.clientY - rect.top) / rect.height;
+    const { scrollHeight, clientHeight } = contentScrollRef.current;
+    contentScrollRef.current.scrollTo({
+      top: clickRatio * (scrollHeight - clientHeight),
+      behavior: 'smooth',
+    });
+  };
+
+  const scrollUp = () => {
+    if (contentScrollRef.current) {
+      contentScrollRef.current.scrollBy({ top: -160, behavior: 'smooth' });
+      if (soundEnabled) soundHaptics.playTap();
+    }
+  };
+
+  const scrollDown = () => {
+    if (contentScrollRef.current) {
+      contentScrollRef.current.scrollBy({ top: 160, behavior: 'smooth' });
+      if (soundEnabled) soundHaptics.playTap();
+    }
+  };
 
   // Leaflet Refs
   const thenMapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -626,6 +699,16 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
     setIsPlayingAyatAudio(false);
   }, [currentIndex]);
 
+  useEffect(() => {
+    if (contentScrollRef.current) {
+      contentScrollRef.current.scrollTop = 0;
+    }
+    const timer = setTimeout(() => {
+      updateScrollState();
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [currentIndex, activeTab, activeRefSection, showBanner]);
+
   const isNameDifferent = getLangText(activeEvent.p, selectedLanguage).trim().toLowerCase() !== getLangText(activeEvent.n, selectedLanguage).trim().toLowerCase();
 
   return (
@@ -728,30 +811,29 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
       </div>
 
       {/* 3. MIDDLE GRID: CRISP COMPARATIVE ATLAS & EVENT DETAIL CARDS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
         {/* LEFT COLUMN: CRISP GEOGRAPHIC MAP SECTION - DUAL ATLAS */}
         <div
-          className={`lg:col-span-7 rounded-[26px] border shadow-2xl overflow-hidden relative flex flex-col justify-between ${
+          className={`lg:col-span-7 rounded-[26px] border shadow-2xl overflow-hidden relative flex flex-col justify-between h-[580px] sm:h-[620px] ${
             isDay ? 'bg-[#d8edd9] border-teal-200 shadow-teal-900/5' : 'bg-[#0f2427] border-[#184852] shadow-black/70'
           }`}
-          style={{ minHeight: '580px' }}
         >
           {/* Top Floating Glassmorphic Control Islands */}
           <div className="absolute top-4 left-4 right-4 z-[1010] flex flex-wrap gap-2 items-center justify-between pointer-events-none">
             
             {/* Split Screen Side-by-Side Control Layout */}
-            <div className="flex items-center gap-1 pointer-events-auto bg-[#07191e]/95 backdrop-blur-md p-1 rounded-xl border border-teal-500/20 shadow-lg">
+            <div className="flex items-center gap-1.5 pointer-events-auto bg-transparent">
               <button
                 type="button"
                 onClick={() => {
                   setMapViewMode('compare');
                   if (soundEnabled) soundHaptics.playTap();
                 }}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] ${
                   mapViewMode === 'compare'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'text-white border border-emerald-400/80 bg-emerald-600/70 shadow'
+                    : 'text-slate-200 hover:text-white border border-transparent'
                 }`}
               >
                 <span>🗺️</span>
@@ -763,10 +845,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   setMapViewMode('then');
                   if (soundEnabled) soundHaptics.playTap();
                 }}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] ${
                   mapViewMode === 'then'
-                    ? 'bg-amber-600 text-white shadow'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'text-white border border-amber-400/80 bg-amber-600/70 shadow'
+                    : 'text-slate-200 hover:text-white border border-transparent'
                 }`}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
@@ -778,10 +860,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   setMapViewMode('now');
                   if (soundEnabled) soundHaptics.playTap();
                 }}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] ${
                   mapViewMode === 'now'
-                    ? 'bg-emerald-600 text-white shadow'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'text-white border border-emerald-400/80 bg-emerald-600/70 shadow'
+                    : 'text-slate-200 hover:text-white border border-transparent'
                 }`}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
@@ -790,20 +872,20 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             </div>
 
             {/* Map Navigation Helpers */}
-            <div className="flex items-center gap-1 pointer-events-auto bg-[#07191e]/95 backdrop-blur-md p-1 rounded-xl border border-teal-500/20 shadow-lg flex-wrap">
+            <div className="flex items-center gap-1 pointer-events-auto bg-transparent flex-wrap">
               <button
                 type="button"
                 onClick={() => setShowRoutes(!showRoutes)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] ${
                   showRoutes
-                    ? 'bg-teal-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'text-white border border-teal-400/80 bg-teal-600/70 shadow'
+                    : 'text-slate-200 hover:text-white border border-transparent'
                 }`}
               >
                 {selectedLanguage === 'bn' ? 'রুট' : 'Routes'}
               </button>
               
-              <div className="h-4 w-[1px] bg-teal-500/20 mx-1 hidden sm:block" />
+              <div className="h-4 w-[1px] bg-white/20 mx-1 hidden sm:block" />
 
               {/* Unified Map Style Options */}
               <button
@@ -812,10 +894,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   setNowMapStyle('satellite');
                   if (soundEnabled) soundHaptics.playTap();
                 }}
-                className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 ${
+                className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] ${
                   nowMapStyle === 'satellite'
-                    ? 'bg-emerald-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'text-white border border-emerald-400/80 bg-emerald-600/70 shadow'
+                    : 'text-slate-200 hover:text-white border border-transparent'
                 }`}
               >
                 <span>🛰️</span>
@@ -827,10 +909,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   setNowMapStyle('street');
                   if (soundEnabled) soundHaptics.playTap();
                 }}
-                className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 ${
+                className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] ${
                   nowMapStyle === 'street'
-                    ? 'bg-emerald-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'text-white border border-emerald-400/80 bg-emerald-600/70 shadow'
+                    : 'text-slate-200 hover:text-white border border-transparent'
                 }`}
               >
                 <span>🗺️</span>
@@ -842,10 +924,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   setNowMapStyle('dark');
                   if (soundEnabled) soundHaptics.playTap();
                 }}
-                className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 ${
+                className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-wider transition cursor-pointer uppercase flex items-center gap-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] ${
                   nowMapStyle === 'dark'
-                    ? 'bg-emerald-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'text-white border border-emerald-400/80 bg-emerald-600/70 shadow'
+                    : 'text-slate-200 hover:text-white border border-transparent'
                 }`}
               >
                 <span>🌑</span>
@@ -891,7 +973,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           </div>
 
           {/* Premium Comparative Map Canvas Grid with Side-by-Side Synced Displays */}
-          <div className={`w-full h-[470px] sm:h-[500px] grid divide-x divide-teal-500/10 relative ${
+          <div className={`w-full flex-1 min-h-0 grid divide-x divide-teal-500/10 relative ${
             mapViewMode === 'compare' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
           }`}>
             {/* 3A. THEN MAP (HISTORICAL DIGITAL SATELLITE MAP) */}
@@ -928,15 +1010,15 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
                 {/* Then Era Title Badge */}
                 <div className="absolute top-16 left-4 z-[1010] pointer-events-none">
-                  <span className="px-3 py-1 text-[10px] font-black text-amber-300 flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-xl border border-amber-500/30 shadow-md">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]" />
+                  <span className="px-1 py-0.5 text-[10px] font-black text-amber-300 flex items-center gap-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
                     <span>{selectedLanguage === 'bn' ? 'তৎকালীন ম্যাপ' : 'Then (Historical Map)'}</span>
                   </span>
                 </div>
 
                 {/* Top-Right Historical location tag */}
                 <div className="absolute top-16 right-4 z-[1010] flex flex-col items-end pointer-events-none">
-                  <div className="bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-amber-500/30 shadow-lg text-right">
+                  <div className="text-right drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
                     <span className="text-[9px] text-amber-400 font-black uppercase tracking-wider block">
                       {selectedLanguage === 'bn' ? 'তৎকালীন ঐতিহাসিক নাম' : 'Historical Name'}
                     </span>
@@ -964,15 +1046,15 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
                 {/* Modern Title Badge */}
                 <div className="absolute top-16 left-4 z-[1010] pointer-events-none">
-                  <span className="px-3 py-1 text-[10px] font-black text-emerald-300 flex items-center gap-1.5 bg-black/70 backdrop-blur-md rounded-xl border border-emerald-500/30 shadow-md">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
+                  <span className="px-1 py-0.5 text-[10px] font-black text-emerald-300 flex items-center gap-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
                     <span>{selectedLanguage === 'bn' ? 'বর্তমান ম্যাপ' : 'Now (Present Map)'}</span>
                   </span>
                 </div>
 
                 {/* Top-Right Modern country name tag */}
                 <div className="absolute top-16 right-4 z-[1010] flex flex-col items-end pointer-events-none">
-                  <div className="bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-emerald-500/30 shadow-lg text-right">
+                  <div className="text-right drop-shadow-[0_1px_4px_rgba(0,0,0,0.95)]">
                     <span className="text-[9px] text-emerald-400 font-black uppercase tracking-wider block">
                       {selectedLanguage === 'bn' ? 'বর্তমান আধুনিক ভূখণ্ড' : 'Modern Territory'}
                     </span>
@@ -986,20 +1068,20 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
             {/* FLOATING INTERACTIVE CENTER ERA-NAME COMPARISON HUDBOX */}
             {mapViewMode === 'compare' && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1010] flex items-center gap-2.5 max-w-[92%] sm:max-w-md pointer-events-none transition-all duration-300 bg-black/85 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-teal-500/30 shadow-xl">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1010] flex items-center gap-2 max-w-[92%] sm:max-w-md pointer-events-none transition-all duration-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                 <div className="flex flex-col text-left min-w-0">
                   <span className="text-[8.5px] font-black text-amber-400 uppercase tracking-widest">{selectedLanguage === 'bn' ? 'তৎকালীন (Then)' : 'Then'}</span>
                   <span className="text-xs font-black text-amber-100 truncate">{getLangText(activeEvent.p, selectedLanguage)}</span>
                 </div>
-                <div className="flex items-center justify-center bg-teal-900/60 p-1 rounded-full border border-teal-500/40 shrink-0">
-                  <ArrowRight className="w-3 h-3 text-emerald-300 animate-pulse" />
+                <div className="flex items-center justify-center p-0.5 shrink-0">
+                  <ArrowRight className="w-3.5 h-3.5 text-emerald-300 drop-shadow" />
                 </div>
                 <div className="flex flex-col text-left min-w-0">
                   <span className="text-[8.5px] font-black text-emerald-400 uppercase tracking-widest">{selectedLanguage === 'bn' ? 'বর্তমান (Now)' : 'Now'}</span>
                   <span className="text-xs font-black text-emerald-100 truncate">{getLangText(activeEvent.n, selectedLanguage)}</span>
                 </div>
                 {isNameDifferent && (
-                  <span className="ml-1 bg-gradient-to-r from-amber-500 to-orange-500 text-black text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-400/50 shadow-md shrink-0">
+                  <span className="ml-1 text-amber-300 text-[8.5px] font-black uppercase tracking-wider px-1 py-0.2 border border-amber-400/60 rounded shrink-0 drop-shadow">
                     {selectedLanguage === 'bn' ? 'ভিন্ন' : 'Diff'}
                   </span>
                 )}
@@ -1008,7 +1090,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           </div>
 
           {/* Large Gold-plated Vintage Chronometer displays year at Bottom-Left with clean background */}
-          <div className="absolute bottom-14 left-4 z-[1010] pointer-events-none bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-amber-500/30 shadow-lg space-y-0.5 flex flex-col items-start">
+          <div className="absolute bottom-14 left-4 z-[1010] pointer-events-none space-y-0.5 flex flex-col items-start drop-shadow-[0_2px_5px_rgba(0,0,0,0.95)]">
             <div className="flex items-baseline gap-1">
               <span className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tighter leading-none font-mono tabular-nums">
                 {toBengaliDigits(activeEvent.y)}
@@ -1024,7 +1106,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           </div>
 
           {/* PALESTINE DECLARATION - AS IN REFERENCE IMAGE */}
-          <div className="p-3 bg-red-950/60 border-t border-red-500/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs z-20 relative">
+          <div className="shrink-0 p-3 bg-red-950/60 border-t border-red-500/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs z-20 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-red-600/5 to-transparent pointer-events-none" />
             <div className="flex items-center gap-2 text-red-200 font-black text-left">
               <span className="text-base shrink-0">🇵🇸</span>
@@ -1043,788 +1125,745 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
         {/* RIGHT COLUMN: EVENT DETAIL CARD INFO-PANEL */}
         <div
-          className={`lg:col-span-5 rounded-[26px] border shadow-2xl p-4 sm:p-5 space-y-4 flex flex-col justify-between ${
-            isDay ? 'bg-white border-slate-200 text-slate-900 shadow-slate-200/50' : 'bg-[#061e24]/90 border-[#123e47] text-white shadow-black/85'
+          className={`lg:col-span-5 rounded-[26px] border shadow-2xl overflow-hidden flex flex-col h-[580px] sm:h-[620px] relative ${
+            isDay ? 'bg-[#f4f8f5] border-slate-200/80 text-slate-900 shadow-slate-200/50' : 'bg-[#061e24] border-[#123e47] text-white shadow-black/85'
           }`}
-          style={{ minHeight: '620px' }}
         >
-          {/* 1. TOP ANIMATED SCENE GRAPHIC BANNER */}
-          <AnimatedHistoryBanner
-            scene={activeEvent.sc}
-            title={formattedTitle}
-            category={activeEvent.cat}
-            year={activeEvent.y}
-            locationName={getLangText(activeEvent.p, selectedLanguage)}
-          />
+          {/* 1. FIXED TOP ANIMATED SCENE GRAPHIC BANNER (STAYS FIXED AT TOP AS REQUESTED) */}
+          <div className="shrink-0 p-3 sm:p-3.5 pb-2 select-none border-b border-black/5 dark:border-teal-900/40 relative z-20 shadow-sm">
+            <AnimatedHistoryBanner
+              scene={activeEvent.sc}
+              title={formattedTitle}
+              category={activeEvent.cat}
+              year={activeEvent.y}
+              locationName={getLangText(activeEvent.p, selectedLanguage)}
+            />
+          </div>
 
-          {/* 1.5. Clear, Bold Event Title & Location Card */}
-          <div className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
-            isDay 
-              ? 'bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-white border-emerald-200 shadow-sm' 
-              : 'bg-gradient-to-r from-[#07252c] via-[#09323c] to-[#051c22] border-teal-700/40 shadow-sm'
-          }`}>
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span
-                className="px-2.5 py-1 rounded-lg text-xs font-black text-white shadow-sm flex items-center gap-1.5"
-                style={{ backgroundColor: CATEGORY_INFO[activeEvent.cat].color }}
-              >
-                <span>{CATEGORY_INFO[activeEvent.cat].icon}</span>
-                <span>{selectedLanguage === 'bn' ? CATEGORY_INFO[activeEvent.cat].labelBn : CATEGORY_INFO[activeEvent.cat].labelEn}</span>
-              </span>
-
-              <div className="flex items-center gap-1.5">
-                <span className={`text-xs sm:text-sm font-black ${isDay ? 'text-amber-700' : 'text-amber-400'}`}>
-                  {toBengaliDigits(activeEvent.y)} {selectedLanguage === 'bn' ? 'খ্রি.' : 'CE'}
-                </span>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${
-                  isDay ? 'bg-slate-200/80 text-slate-800 border-slate-300' : 'bg-teal-900/60 text-emerald-200 border-teal-700/50'
-                }`}>
-                  {getEraYearText(activeEvent, selectedLanguage)}
+          {/* 2. SCROLLABLE CONTENT AREA (ALL TEXT SCROLLS UNDERNEATH THE FIXED BANNER) */}
+          <div className="flex-1 min-h-0 flex flex-row overflow-hidden">
+            {/* Scrollable event content container */}
+            <div
+              ref={contentScrollRef}
+              onScroll={updateScrollState}
+              className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-2 space-y-3 scrollbar-none select-text"
+            >
+              {/* Category pill with dot */}
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
+                    isDay ? 'bg-emerald-100/90 text-emerald-950 border border-emerald-200' : 'bg-emerald-950/80 text-emerald-200 border border-emerald-800/60'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_INFO[activeEvent.cat].color }} />
+                  <span>{selectedLanguage === 'bn' ? CATEGORY_INFO[activeEvent.cat].labelBn : CATEGORY_INFO[activeEvent.cat].labelEn}</span>
                 </span>
               </div>
-            </div>
 
-            <h2 className={`text-base sm:text-lg md:text-xl font-black leading-snug tracking-tight ${
-              isDay ? 'text-slate-900' : 'text-white'
-            }`}>
-              {formattedTitle}
-            </h2>
-
-            <div className={`mt-2 pt-2 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
-              isDay ? 'border-emerald-100 text-slate-700' : 'border-teal-800/40 text-emerald-200/90'
-            }`}>
-              <span className="flex items-center gap-1 font-bold">
-                <MapPin className={`w-3.5 h-3.5 shrink-0 ${isDay ? 'text-amber-600' : 'text-amber-400'}`} />
-                <span>{getLangText(activeEvent.p, selectedLanguage)}</span>
-              </span>
-              <span className={`text-[11px] font-medium ${isDay ? 'text-slate-600' : 'text-emerald-300/80'}`}>
-                {selectedLanguage === 'bn' ? 'বর্তমান ভূখণ্ড:' : 'Current Territory:'} <strong className={`font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>{getLangText(activeEvent.n, selectedLanguage)}</strong>
-              </span>
-            </div>
-          </div>
-
-          {/* 3. Segmented 2-Tab Selector with Sliding Indicator */}
-          <div className={`p-1.5 rounded-2xl flex relative shadow-sm ${isDay ? 'bg-slate-100 border border-slate-300' : 'bg-slate-950/80 border border-teal-500/30'}`}>
-            <div 
-              className="absolute top-1.5 bottom-1.5 transition-all duration-300 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg"
-              style={{
-                width: 'calc(50% - 6px)',
-                left: activeTab === 'story' ? '6px' : 'calc(50%)',
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('story');
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className={`flex-1 py-2.5 sm:py-3 z-10 text-xs sm:text-sm font-black transition-all text-center cursor-pointer flex items-center justify-center gap-2 ${
-                activeTab === 'story'
-                  ? 'text-white drop-shadow-md'
-                  : isDay ? 'text-slate-700 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
-              }`}
-            >
-              <span className="text-base sm:text-lg">📖</span>
-              <span>{selectedLanguage === 'bn' ? '১. ইতিহাস' : '1. History'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('reference');
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className={`flex-1 py-2.5 sm:py-3 z-10 text-xs sm:text-sm font-black transition-all text-center cursor-pointer flex items-center justify-center gap-2 ${
-                activeTab === 'reference'
-                  ? 'text-white drop-shadow-md'
-                  : isDay ? 'text-slate-700 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
-              }`}
-            >
-              <span className="text-base sm:text-lg">📚</span>
-              <span>{selectedLanguage === 'bn' ? '২. রেফারেন্স ও শিক্ষা' : '2. References & Lessons'}</span>
-            </button>
-          </div>
-
-          {/* 4. ACTIVE TAB CONTENTS */}
-
-          {/* TAB 1: HISTORY & DETAILED STORY */}
-          {activeTab === 'story' && (
-            <div className="space-y-3.5 flex-1 flex flex-col justify-between text-left animate-in fade-in duration-200">
-              {/* Route Travel Map indicator Card */}
-              <div className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs shadow-sm relative overflow-hidden ${
-                isDay ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#08242a] border-teal-700/40 text-white'
+              {/* Event Title with Golden Honorifics Highlighting (as in Pic 2) */}
+              <h2 className={`text-base sm:text-lg font-bold leading-snug tracking-tight select-text ${
+                isDay ? 'text-slate-900' : 'text-white'
               }`}>
-                <div className="space-y-1 flex-1 min-w-0">
-                  <span className={`text-[11px] font-black uppercase tracking-wider block ${isDay ? 'text-slate-500' : 'text-emerald-300'}`}>
-                    {selectedLanguage === 'bn' ? 'তৎকালীন ঐতিহাসিক স্থান' : 'Location Then'}
+                {renderHonorificText(formattedTitle, isDay)}
+              </h2>
+
+              {/* Year & Hijri Era in Golden Amber Text (as in Pic 2) */}
+              <div className={`text-xs font-bold flex items-center gap-1.5 ${
+                isDay ? 'text-amber-800' : 'text-amber-400'
+              }`}>
+                <span>{toBengaliDigits(activeEvent.y)} {selectedLanguage === 'bn' ? 'খ্রি.' : 'CE'}</span>
+                <span>-</span>
+                <span>{getEraYearText(activeEvent, selectedLanguage)}</span>
+              </div>
+
+              {/* Clean Compact Location Pill: তখন -> বর্তমানে (as in Pic 2) */}
+              <div className={`p-2.5 sm:p-3 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                isDay ? 'bg-[#e5ede6]/80 border-emerald-200/70 text-slate-800' : 'bg-[#0b282e]/80 border-teal-700/40 text-emerald-100'
+              }`}>
+                <div className="flex flex-col text-left min-w-0">
+                  <span className={`text-[10px] font-medium ${isDay ? 'text-slate-500' : 'text-emerald-400/80'}`}>
+                    {selectedLanguage === 'bn' ? 'তখন' : 'Then'}
                   </span>
-                  <span className={`text-xs sm:text-sm font-bold block flex items-center gap-1.5 ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
-                    <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span>{getLangText(activeEvent.p, selectedLanguage)}</span>
+                  <span className={`text-xs sm:text-sm font-bold truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                    {getLangText(activeEvent.p, selectedLanguage)}
                   </span>
                 </div>
-                
-                <ArrowRight className="w-4 h-4 text-emerald-500 shrink-0 animate-pulse mx-1" />
-                
-                <div className="text-right space-y-1 flex-1 min-w-0">
-                  <span className={`text-[11px] font-black uppercase tracking-wider block ${isDay ? 'text-slate-500' : 'text-emerald-300'}`}>
-                    {selectedLanguage === 'bn' ? 'বর্তমান ভূখণ্ড / দেশ' : 'Location Now'}
+
+                <ArrowRight className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mx-2" />
+
+                <div className="flex flex-col text-right min-w-0">
+                  <span className={`text-[10px] font-medium ${isDay ? 'text-slate-500' : 'text-emerald-400/80'}`}>
+                    {selectedLanguage === 'bn' ? 'বর্তমানে' : 'Now'}
                   </span>
-                  <span className={`text-xs sm:text-sm font-bold block ${isDay ? 'text-emerald-800' : 'text-emerald-300'}`}>
+                  <span className={`text-xs sm:text-sm font-bold truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
                     {getLangText(activeEvent.n, selectedLanguage)}
                   </span>
                 </div>
               </div>
 
-              {/* Story narrative text - High Readability, No Cramping, Crystal Clear Contrast */}
-              <div className="space-y-3 flex-1 overflow-y-auto max-h-[520px] sm:max-h-[620px] pr-2 scrollbar-thin relative">
-                <div className={`p-4 sm:p-5 rounded-2xl border text-xs sm:text-sm leading-relaxed font-normal whitespace-pre-line shadow-sm select-text ${
-                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#04191d] border-teal-800/50 text-slate-100'
-                }`}>
-                  <div className={`text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 pb-2 border-b ${
-                    isDay ? 'text-emerald-800 border-slate-100' : 'text-emerald-400 border-teal-800/40'
-                  }`}>
-                    <span>📖</span>
-                    <span>{selectedLanguage === 'bn' ? 'ঘটনার বিস্তারিত ঐতিহাসিক বিবরণ:' : 'Detailed Historical Narrative:'}</span>
-                  </div>
-                  {formattedDesc}
-                </div>
-
-                {activeEra.who && (
-                  <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-sm ${
-                    isDay ? 'bg-emerald-50/80 border-emerald-200' : 'bg-[#06242a] border-teal-700/50'
-                  }`}>
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <Star className="w-3.5 h-3.5 text-amber-500 fill-current shrink-0" />
-                      <span className={`text-[11px] font-bold uppercase tracking-wide ${
-                        isDay ? 'text-emerald-900' : 'text-emerald-300'
-                      }`}>
-                        {selectedLanguage === 'bn' ? 'এই যুগের সম্মানিত ব্যক্তিত্বগণ:' : 'Key Personalities of this Era:'}
-                      </span>
-                    </div>
-                    <p className={`text-xs leading-relaxed font-medium select-text ${
-                      isDay ? 'text-slate-800' : 'text-emerald-100'
-                    }`}>
-                      {formattedEraWho}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Switch to Tab 2 CTA */}
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('reference');
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className="w-full py-3 px-4 rounded-xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition active:scale-98 shadow-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-emerald-500"
-              >
-                <span>📚</span>
-                <span>{selectedLanguage === 'bn' ? '২. রেফারেন্স ও শিক্ষা দেখুন (কুরআন, হাদিস, কিতাব ও হিকমত) →' : 'View 2. References & Lessons (Quran, Hadith, Books) →'}</span>
-              </button>
-            </div>
-          )}
-
-          {/* TAB 2: REFERENCES & LESSONS (কুরআন, হাদিস, কিতাব ও শিক্ষা সম্পূর্ণ প্রামাণ্য ও আকর্ষণীয় রূপ) */}
-          {activeTab === 'reference' && (
-            <div className="flex-1 flex flex-col min-h-0 space-y-3.5 text-left animate-in fade-in duration-200">
-              
-              {/* 1. Sub-Navigator Filter Pills (Docked above scrollable content so it NEVER overlaps any text!) */}
-              <div className={`p-1.5 rounded-2xl border flex items-center gap-1.5 overflow-x-auto scrollbar-none shadow-sm shrink-0 ${
-                isDay ? 'bg-white border-emerald-200' : 'bg-[#041a1f] border-teal-700/50'
+              {/* Segmented 2-Tab Selector */}
+              <div className={`p-1 rounded-xl flex relative shadow-sm border ${
+                isDay ? 'bg-slate-100/90 border-slate-200' : 'bg-slate-950/80 border-teal-700/40'
               }`}>
+                <div 
+                  className="absolute top-1 bottom-1 transition-all duration-300 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md"
+                  style={{
+                    width: 'calc(50% - 4px)',
+                    left: activeTab === 'story' ? '4px' : 'calc(50%)',
+                  }}
+                />
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveRefSection('all');
+                    setActiveTab('story');
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                    activeRefSection === 'all'
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm scale-[1.02]'
-                      : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-emerald-200/80 hover:bg-white/5'
+                  className={`flex-1 py-1.5 sm:py-2 z-10 text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 ${
+                    activeTab === 'story'
+                      ? 'text-white drop-shadow-sm'
+                      : isDay ? 'text-slate-700 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
                   }`}
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                  <span>{selectedLanguage === 'bn' ? 'সবগুলো দলিল' : 'All Docs'}</span>
+                  <span>📖</span>
+                  <span>{selectedLanguage === 'bn' ? '১. ইতিহাস' : '1. History'}</span>
                 </button>
-
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveRefSection('quran');
+                    setActiveTab('reference');
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                    activeRefSection === 'quran'
-                      ? 'bg-emerald-600 text-white shadow-sm scale-[1.02]'
-                      : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-emerald-200/80 hover:bg-white/5'
+                  className={`flex-1 py-1.5 sm:py-2 z-10 text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5 ${
+                    activeTab === 'reference'
+                      ? 'text-white drop-shadow-sm'
+                      : isDay ? 'text-slate-700 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
                   }`}
                 >
-                  <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                  <span>{selectedLanguage === 'bn' ? '📖 কুরআন' : 'Quran'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveRefSection('hadith');
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                    activeRefSection === 'hadith'
-                      ? 'bg-amber-600 text-white shadow-sm scale-[1.02]'
-                      : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-amber-200/80 hover:bg-white/5'
-                  }`}
-                >
-                  <Scroll className="w-3.5 h-3.5 shrink-0" />
-                  <span>{selectedLanguage === 'bn' ? '📜 হাদিস' : 'Hadith'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveRefSection('books');
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                    activeRefSection === 'books'
-                      ? 'bg-teal-600 text-white shadow-sm scale-[1.02]'
-                      : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-teal-200/80 hover:bg-white/5'
-                  }`}
-                >
-                  <Bookmark className="w-3.5 h-3.5 shrink-0" />
-                  <span>{selectedLanguage === 'bn' ? `📚 কিতাবসমূহ (${religiousDetails.classicalBooks.length})` : `Books (${religiousDetails.classicalBooks.length})`}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveRefSection('lessons');
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                    activeRefSection === 'lessons'
-                      ? 'bg-indigo-600 text-white shadow-sm scale-[1.02]'
-                      : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-indigo-200/80 hover:bg-white/5'
-                  }`}
-                >
-                  <Lightbulb className="w-3.5 h-3.5 shrink-0" />
-                  <span>{selectedLanguage === 'bn' ? `✨ শিক্ষা (${religiousDetails.keyLessons.length})` : `Wisdom (${religiousDetails.keyLessons.length})`}</span>
+                  <span>📚</span>
+                  <span>{selectedLanguage === 'bn' ? '২. রেফারেন্স ও শিক্ষা' : '2. References & Lessons'}</span>
                 </button>
               </div>
 
-              {/* 2. Scrollable Documents Container - Smooth scroll with clear space, zero overlapping */}
-              <div className="space-y-3.5 flex-1 overflow-y-auto max-h-[580px] sm:max-h-[680px] pr-1.5 scrollbar-thin">
-                
-                {/* Highlight Header Banner */}
-                <div className={`p-3 sm:p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-md relative ${
-                  isDay
-                    ? 'bg-gradient-to-r from-emerald-100/90 via-teal-50 to-emerald-100/90 border-emerald-300 text-emerald-950'
-                    : 'bg-gradient-to-r from-emerald-950/95 via-teal-950/85 to-[#041a1f] border-emerald-500/40 text-emerald-50'
-                }`}>
-                  <div className="space-y-0.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="p-1 rounded-lg bg-emerald-600 text-white text-xs shrink-0">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                      </span>
-                      <h3 className="text-[11px] sm:text-xs font-bold tracking-tight">
-                        {selectedLanguage === 'bn' 
-                          ? 'কুরআন, হাদিস, ঐতিহাসিক কিতাব ও জীবন দর্শন' 
-                          : 'Quran, Hadith, Primary Books & Lessons'}
-                      </h3>
+              {/* TAB 1: HISTORY & DETAILED STORY */}
+              {activeTab === 'story' && (
+                <div className="space-y-3 animate-in fade-in duration-200 text-left">
+                  {/* Detailed narrative with honorific highlights */}
+                  <div className={`p-3.5 sm:p-4 rounded-xl border text-xs sm:text-sm leading-relaxed font-normal whitespace-pre-line shadow-sm select-text ${
+                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#04191d] border-teal-800/50 text-slate-100'
+                  }`}>
+                    <div className={`text-[11px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 pb-2 border-b ${
+                      isDay ? 'text-emerald-800 border-slate-100' : 'text-emerald-400 border-teal-800/40'
+                    }`}>
+                      <span>📖</span>
+                      <span>{selectedLanguage === 'bn' ? 'ঘটনার বিস্তারিত ঐতিহাসিক বিবরণ:' : 'Detailed Historical Narrative:'}</span>
                     </div>
-                    <p className={`text-[10px] sm:text-[11px] font-normal leading-relaxed ${isDay ? 'text-emerald-800' : 'text-emerald-300/80'}`}>
-                      {selectedLanguage === 'bn'
-                        ? 'প্রতিটি ঐতিহাসিক ঘটনার পেছনে থাকা নির্ভরযোগ্য ইসলামী রেফারেন্সের পূর্ণাঙ্গ সংগ্রহ'
-                        : 'Authentic Islamic references, classical historiographical sources & timeless wisdom'}
-                    </p>
+                    {renderHonorificText(formattedDesc, isDay)}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-0">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-bold shrink-0 shadow-sm">
-                      {religiousDetails.classicalBooks.length + 2} টি দলিল
-                    </span>
-                  </div>
-                </div>
-
-                {/* SECTION 1: পবিত্র কুরআনের প্রাসঙ্গিক আয়াত (Relevant Quranic Ayah) */}
-                {(activeRefSection === 'all' || activeRefSection === 'quran') && (
-                  <div
-                    className={`p-3.5 sm:p-4 rounded-2xl border-2 space-y-3 relative shadow-lg transition-all ${
-                      isDay
-                        ? 'bg-gradient-to-br from-emerald-50/95 via-teal-50/50 to-white border-emerald-300 text-slate-900'
-                        : 'bg-gradient-to-br from-[#041d22] via-[#072a31] to-[#021418] border-emerald-500/40 text-white'
-                    }`}
-                  >
-                    {/* Section Header */}
-                    <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-2 ${isDay ? 'border-emerald-200' : 'border-emerald-500/25'}`}>
-                      <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
-                        <div className="p-1 rounded-lg bg-emerald-600 text-white shadow-sm shrink-0">
-                          <BookOpen className="w-3.5 h-3.5" />
-                        </div>
-                        <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-200 font-bold'}>
-                          {selectedLanguage === 'bn' ? '১. পবিত্র কুরআনের প্রাসঙ্গিক আয়াত' : '1. Relevant Quranic Ayah'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {/* Audio Recitation button with Sound Wave Effect */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isPlayingAyatAudio) {
-                              if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                                window.speechSynthesis.cancel();
-                              }
-                              setIsPlayingAyatAudio(false);
-                            } else {
-                              setIsPlayingAyatAudio(true);
-                              playArabicVoice(religiousDetails.quranAyat.arabic, 'male', () => {
-                                setIsPlayingAyatAudio(false);
-                              });
-                            }
-                            if (soundEnabled) soundHaptics.playTap();
-                          }}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-md ${
-                            isPlayingAyatAudio
-                              ? 'bg-amber-600 text-white ring-2 ring-amber-400'
-                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                          }`}
-                        >
-                          {isPlayingAyatAudio ? (
-                            <>
-                              <Square className="w-3 h-3 fill-current" />
-                              <span>{selectedLanguage === 'bn' ? 'থামুন' : 'Stop'}</span>
-                              <div className="flex items-center gap-0.5 h-2.5 ml-0.5">
-                                <span className="w-0.5 h-full bg-white animate-pulse" />
-                                <span className="w-0.5 h-2 bg-white animate-pulse delay-75" />
-                                <span className="w-0.5 h-2.5 bg-white animate-pulse delay-150" />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <Volume2 className="w-3 h-3" />
-                              <span>{selectedLanguage === 'bn' ? 'আয়াত শুনুন' : 'Listen'}</span>
-                            </>
-                          )}
-                        </button>
-
-                        {/* Copy Ayah Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopyText(`${religiousDetails.quranAyat.arabic}\n\n${religiousDetails.quranAyat.translationBn}\n(${religiousDetails.quranAyat.surah})`, 'quran_ref', e)}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition flex items-center gap-1 cursor-pointer ${
-                            copiedTextId === 'quran_ref'
-                              ? 'bg-emerald-600 text-white border-emerald-600'
-                              : isDay
-                              ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
-                              : 'bg-[#0b333a] hover:bg-[#10434c] text-emerald-200 border-teal-700'
-                          }`}
-                          title="আয়াত ও অর্থ কপি করুন"
-                        >
-                          {copiedTextId === 'quran_ref' ? (
-                            <>
-                              <Check className="w-3 h-3 text-white" />
-                              <span>কপি হয়েছে</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" />
-                              <span>কপি</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Arabic Calligraphy Plaque */}
-                    <div className={`p-3.5 sm:p-4 rounded-xl border relative ${
-                      isDay 
-                        ? 'bg-white border-emerald-200 shadow-sm' 
-                        : 'bg-[#011215] border-teal-600/40 shadow-inner'
+                  {activeEra.who && (
+                    <div className={`p-3 rounded-xl border shadow-sm ${
+                      isDay ? 'bg-emerald-50/80 border-emerald-200' : 'bg-[#06242a] border-teal-700/50'
                     }`}>
-                      {/* Subtle ornamental bismillah header */}
-                      <div className="text-center pb-1.5 select-none">
-                        <span className={`text-[10px] font-arabic tracking-wider opacity-75 ${
-                          isDay ? 'text-emerald-800' : 'text-emerald-400'
-                        }`}>
-                          بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-                        </span>
-                      </div>
-
-                      <p dir="rtl" className={`font-arabic text-base sm:text-lg md:text-xl font-bold leading-[2.0] py-0.5 text-right select-text ${
-                        isDay ? 'text-emerald-950 font-bold' : 'text-emerald-200 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'
-                      }`}>
-                        {religiousDetails.quranAyat.arabic} ۝
-                      </p>
-                    </div>
-
-                    {/* Bengali Translation & Meaning Plaque */}
-                    <div className={`p-3 sm:p-3.5 rounded-xl border-l-4 border ${
-                      isDay 
-                        ? 'bg-emerald-50 border-emerald-200 border-l-emerald-600 shadow-sm' 
-                        : 'bg-[#06242a] border-teal-700/50 border-l-emerald-400 shadow-sm'
-                    }`}>
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-                        <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-current shrink-0" />
+                        <span className={`text-[11px] font-bold uppercase tracking-wide ${
                           isDay ? 'text-emerald-900' : 'text-emerald-300'
                         }`}>
-                          <span>📖</span>
-                          <span>{selectedLanguage === 'bn' ? 'পবিত্র আয়াতের ভাবানুবাদ ও অর্থ:' : 'Meaning & Translation:'}</span>
-                        </span>
-                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 ${
-                          isDay 
-                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300' 
-                            : 'bg-emerald-900/60 text-emerald-200 border-emerald-500/40'
-                        }`}>
-                          {religiousDetails.quranAyat.surah}
+                          {selectedLanguage === 'bn' ? 'এই যুগের সম্মানিত ব্যক্তিত্বগণ:' : 'Key Personalities of this Era:'}
                         </span>
                       </div>
-                      <p className={`text-xs sm:text-[13px] leading-relaxed font-medium select-text ${
-                        isDay ? 'text-slate-950' : 'text-emerald-50'
+                      <p className={`text-xs leading-relaxed font-medium select-text ${
+                        isDay ? 'text-slate-800' : 'text-emerald-100'
                       }`}>
-                        {religiousDetails.quranAyat.translationBn}
+                        {renderHonorificText(formattedEraWho, isDay)}
                       </p>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* SECTION 2: সহীহ হাদিসের প্রামাণ্য দলিল (Authentic Sahih Hadith) */}
-                {(activeRefSection === 'all' || activeRefSection === 'hadith') && (
-                  <div
-                    className={`p-3.5 sm:p-4 rounded-2xl border-2 space-y-3 relative shadow-lg transition-all ${
-                      isDay
-                        ? 'bg-gradient-to-br from-amber-50/95 via-orange-50/40 to-white border-amber-300 text-slate-900'
-                        : 'bg-gradient-to-br from-[#1d1506] via-[#291e0a] to-[#140e04] border-amber-500/40 text-white'
-                    }`}
+                  {/* Switch to Tab 2 CTA */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('reference');
+                      if (soundEnabled) soundHaptics.playTap();
+                    }}
+                    className="w-full py-2.5 px-3.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-98 shadow-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-emerald-500"
                   >
-                    {/* Section Header */}
-                    <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-2 ${isDay ? 'border-amber-200' : 'border-amber-500/25'}`}>
-                      <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
-                        <div className="p-1 rounded-lg bg-amber-600 text-white shadow-sm shrink-0">
-                          <Scroll className="w-3.5 h-3.5" />
-                        </div>
-                        <span className={isDay ? 'text-amber-950 font-bold' : 'text-amber-200 font-bold'}>
-                          {selectedLanguage === 'bn' ? '২. সহীহ হাদিসের প্রামাণ্য দলিল' : '2. Authentic Sahih Hadith'}
-                        </span>
-                      </div>
+                    <span>📚</span>
+                    <span>{selectedLanguage === 'bn' ? '২. রেফারেন্স ও শিক্ষা দেখুন (কুরআন, হাদিস, কিতাব) →' : 'View References & Lessons →'}</span>
+                  </button>
+                </div>
+              )}
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white shadow-sm">
-                          ✓ সহীহ দলিল
-                        </span>
-
-                        {/* Copy Hadith Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopyText(`${religiousDetails.hadith.arabicSnippet ? `«${religiousDetails.hadith.arabicSnippet}»\n` : ''}${religiousDetails.hadith.textBn}\nসূত্র: ${religiousDetails.hadith.source}`, 'hadith_ref', e)}
-                          className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition flex items-center gap-1 cursor-pointer ${
-                            copiedTextId === 'hadith_ref'
-                              ? 'bg-amber-600 text-white border-amber-600'
-                              : isDay
-                              ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
-                              : 'bg-[#2b210e] hover:bg-[#382b13] text-amber-200 border-amber-700'
-                          }`}
-                          title="হাদিস কপি করুন"
-                        >
-                          {copiedTextId === 'hadith_ref' ? (
-                            <>
-                              <Check className="w-3 h-3 text-white" />
-                              <span>কপি হয়েছে</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" />
-                              <span>কপি</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Arabic Hadith Snippet Plaque */}
-                    {religiousDetails.hadith.arabicSnippet && (
-                      <div className={`p-3 sm:p-3.5 rounded-xl border relative ${
-                        isDay ? 'bg-white border-amber-200 shadow-sm' : 'bg-black/45 border-amber-700/50 shadow-inner'
-                      }`}>
-                        <p dir="rtl" className={`font-arabic text-sm sm:text-base font-bold text-right leading-relaxed select-text ${
-                          isDay ? 'text-amber-950 font-bold' : 'text-amber-200'
-                        }`}>
-                          «{religiousDetails.hadith.arabicSnippet}»
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Bengali Hadith Translation & Source */}
-                    <div className={`p-3 sm:p-3.5 rounded-xl border-l-4 border ${
-                      isDay 
-                        ? 'bg-amber-50 border-amber-200 border-l-amber-600 shadow-sm' 
-                        : 'bg-[#251e0e]/90 border-amber-800/40 border-l-amber-400 shadow-sm'
-                    }`}>
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-                        <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
-                          isDay ? 'text-amber-900' : 'text-amber-300'
-                        }`}>
-                          <span>📜</span>
-                          <span>{selectedLanguage === 'bn' ? 'হাদিসের বিশুদ্ধ বাংলা মর্মার্থ:' : 'Hadith Meaning & Narrative:'}</span>
-                        </span>
-                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 ${
-                          isDay 
-                            ? 'bg-amber-100 text-amber-950 border-amber-300' 
-                            : 'bg-amber-900/60 text-amber-200 border-amber-500/40'
-                        }`}>
-                          {religiousDetails.hadith.source}
-                        </span>
-                      </div>
-                      <p className={`text-xs sm:text-[13px] leading-relaxed font-medium select-text ${
-                        isDay ? 'text-slate-950' : 'text-amber-50'
-                      }`}>
-                        {religiousDetails.hadith.textBn}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* SECTION 3: মূল ঐতিহাসিক কিতাবসমূহ (Classical Primary Sources) */}
-                {(activeRefSection === 'all' || activeRefSection === 'books') && (
-                  <div
-                    className={`p-3.5 sm:p-4 rounded-2xl border-2 space-y-3 shadow-lg transition-all ${
-                      isDay 
-                        ? 'bg-gradient-to-br from-teal-50/95 via-sky-50/40 to-white border-teal-300 text-slate-900' 
-                        : 'bg-gradient-to-br from-[#061d22] via-[#092b33] to-[#041418] border-teal-500/40 text-white'
-                    }`}
-                  >
-                    <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-2 ${isDay ? 'border-teal-200' : 'border-teal-700/40'}`}>
-                      <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
-                        <div className="p-1 rounded-lg bg-teal-600 text-white shadow-sm shrink-0">
-                          <Bookmark className="w-3.5 h-3.5" />
-                        </div>
-                        <span className={isDay ? 'text-teal-950 font-bold' : 'text-teal-200 font-bold'}>
-                          {selectedLanguage === 'bn' ? '৩. মূল ঐতিহাসিক কিতাব ও প্রামাণ্য গ্রন্থাবলি' : '3. Classical Primary Historical Sources'}
-                        </span>
-                      </div>
-
-                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shadow-sm shrink-0 ${
-                        isDay ? 'bg-teal-100 text-teal-950 border-teal-300' : 'bg-teal-900/60 text-teal-200 border-teal-500/40'
-                      }`}>
-                        {religiousDetails.classicalBooks.length} টি ঐতিহাসিক মূল কিতাব
-                      </span>
-                    </div>
-
-                    <p className={`text-[11px] font-medium ${isDay ? 'text-teal-900' : 'text-teal-200/80'}`}>
-                      {selectedLanguage === 'bn' 
-                        ? 'এই ঐতিহাসিক ঘটনাটির বিশুদ্ধ তথ্য যে সকল প্রাচীন ঐতিহাসিক গ্রন্থে লিপিবদ্ধ রয়েছে:' 
-                        : 'Primary classical historiographical works preserving this historical event:'}
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-2 pt-0.5">
-                      {religiousDetails.classicalBooks.map((book, bIdx) => (
-                        <div
-                          key={bIdx}
-                          className={`p-3 rounded-xl border flex flex-col gap-2 shadow-sm transition-all hover:scale-[1.005] ${
-                            isDay ? 'bg-white border-slate-200' : 'bg-[#02181d] border-teal-700/50 text-slate-100'
-                          }`}
-                        >
-                          {/* Top row: Serial + Book Title */}
-                          <div className="flex items-start gap-2">
-                            <span className="w-5 h-5 rounded-md bg-teal-600/15 text-teal-700 dark:text-teal-300 font-bold text-[11px] flex items-center justify-center shrink-0 border border-teal-500/20 mt-0.5">
-                              {toBengaliDigits(bIdx + 1)}
-                            </span>
-                            <h4 className={`font-bold text-xs sm:text-[13px] select-text leading-snug flex-1 ${
-                              isDay ? 'text-slate-950' : 'text-emerald-200'
-                            }`}>
-                              {book.titleBn}
-                            </h4>
-                          </div>
-
-                          {/* Bottom row: Author and Era tag + Copy Button */}
-                          <div className={`pt-1.5 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] pl-7 ${
-                            isDay ? 'border-slate-100 text-slate-700' : 'border-teal-800/40 text-emerald-300/90'
-                          }`}>
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="shrink-0 text-slate-500">🖋️ লেখক:</span>
-                              <strong className={`font-semibold select-text ${isDay ? 'text-slate-950' : 'text-white'}`}>{book.authorBn}</strong>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0 ml-auto">
-                              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
-                                isDay ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-teal-900/60 text-emerald-300 border-teal-700/50'
-                              }`}>
-                                ⏳ {book.era}
-                              </span>
-
-                              <button
-                                type="button"
-                                onClick={(e) => handleCopyText(`কিতাব: ${book.titleBn}\nলেখক: ${book.authorBn}\nযুগ: ${book.era}`, `book_${bIdx}`, e)}
-                                className={`p-1 rounded-md border transition cursor-pointer text-[11px] ${
-                                  copiedTextId === `book_${bIdx}`
-                                    ? 'bg-emerald-600 text-white border-emerald-600'
-                                    : isDay ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/5 hover:bg-white/10 text-teal-200 border-teal-800'
-                                }`}
-                                title="এই কিতাবের তথ্য কপি করুন"
-                              >
-                                {copiedTextId === `book_${bIdx}` ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* SECTION 4: শিক্ষণীয় বিষয় ও জীবন দর্শন (Key Lessons & Spiritual Wisdom) */}
-                {(activeRefSection === 'all' || activeRefSection === 'lessons') && (
-                  <div
-                    className={`p-3.5 sm:p-4 rounded-2xl border-2 space-y-3 relative shadow-lg transition-all ${
-                      isDay 
-                        ? 'bg-gradient-to-br from-emerald-50/95 via-teal-50/50 to-white border-emerald-300 text-slate-900' 
-                        : 'bg-gradient-to-br from-[#07242a] via-[#0b333c] to-[#051a1e] border-emerald-400/40 text-emerald-50'
-                    }`}
-                  >
-                    <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-2 ${isDay ? 'border-emerald-200' : 'border-teal-700/40'}`}>
-                      <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
-                        <div className="p-1 rounded-lg bg-amber-500 text-white shadow-sm shrink-0">
-                          <Sparkles className="w-3.5 h-3.5" />
-                        </div>
-                        <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-200 font-bold'}>
-                          {selectedLanguage === 'bn' ? '৪. মূল শিক্ষণীয় বিষয় ও আধ্যাত্মিক হিকমত' : '4. Key Lessons & Spiritual Wisdom'}
-                        </span>
-                      </div>
-
-                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shadow-sm shrink-0 ${
-                        isDay ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-900/60 text-emerald-200 border-emerald-500/40'
-                      }`}>
-                        {religiousDetails.keyLessons.length} টি মূল শিক্ষা
-                      </span>
-                    </div>
-
-                    <p className={`text-[11px] font-medium ${isDay ? 'text-emerald-900' : 'text-emerald-300/80'}`}>
-                      {selectedLanguage === 'bn'
-                        ? 'এই ঐতিহাসিক ঘটনা থেকে আমাদের সমসাময়িক ব্যক্তি ও সমাজ জীবনের শিক্ষা:'
-                        : 'Timeless principles for individual character and communal progress:'}
-                    </p>
-
-                    <div className="space-y-2 pt-0.5">
-                      {religiousDetails.keyLessons.map((lesson, lIdx) => (
-                        <div
-                          key={lIdx}
-                          className={`p-3 rounded-xl border flex items-start gap-2.5 shadow-sm ${
-                            isDay ? 'bg-white border-slate-200' : 'bg-[#031d22] border-teal-700/40 text-emerald-100'
-                          }`}
-                        >
-                          <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[11px] flex items-center justify-center shrink-0 border border-amber-500/30 mt-0.5">
-                            {toBengaliDigits(lIdx + 1)}
-                          </span>
-                          <p className={`text-xs sm:text-[13px] font-medium leading-relaxed select-text flex-1 ${
-                            isDay ? 'text-slate-950' : 'text-emerald-50'
-                          }`}>
-                            {lesson}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Royal Illuminated Quote Card (চিরন্তন জীবন দর্শন ও হিকমত) */}
-                    <div className={`mt-2.5 p-3.5 sm:p-4 rounded-xl border relative overflow-hidden shadow-md ${
-                      isDay 
-                        ? 'border-amber-400/70 bg-gradient-to-r from-amber-50/90 via-yellow-50/50 to-amber-50/90 text-amber-950' 
-                        : 'border-amber-400/50 bg-gradient-to-r from-[#1e1606] via-[#2a1e08] to-[#150f03] text-amber-100'
-                    }`}>
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-                        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                          <Quote className="w-3.5 h-3.5 fill-current shrink-0" />
-                          <span>চিরন্তন জীবন দর্শন ও হিকমত:</span>
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={(e) => handleCopyText(`“${religiousDetails.spiritualTakeaway}”`, 'quote_ref', e)}
-                          className={`p-1 rounded-md border transition cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
-                            copiedTextId === 'quote_ref'
-                              ? 'bg-amber-600 text-white border-amber-600'
-                              : isDay ? 'bg-white text-slate-800 border-amber-300' : 'bg-black/30 text-amber-200 border-amber-700/50'
-                          }`}
-                          title="জীবন দর্শন কপি করুন"
-                        >
-                          {copiedTextId === 'quote_ref' ? <Check className="w-3 h-3 text-white" /> : <Copy className="w-3 h-3" />}
-                          <span className="text-[10px] font-medium">{copiedTextId === 'quote_ref' ? 'কপি হয়েছে' : 'কপি'}</span>
-                        </button>
-                      </div>
-
-                      <p className={`italic leading-relaxed select-text font-bold text-xs sm:text-[13px] ${
-                        isDay ? 'text-slate-950' : 'text-amber-100'
-                      }`}>
-                        “{religiousDetails.spiritualTakeaway}”
-                      </p>
-
-                      <div className={`mt-2 pt-1.5 border-t text-[10px] sm:text-[11px] font-normal flex items-center gap-1.5 ${
-                        isDay ? 'border-amber-200 text-amber-900' : 'border-amber-800/40 text-amber-300/80'
-                      }`}>
-                        <span>💡</span>
-                        <span>{selectedLanguage === 'bn' ? 'আমল ও চিন্তা: অতীত ইতিহাস কেবল স্মরণের বিষয় নয়, বরং বর্তমান ও ভবিষ্যতের পথপ্রদর্শক।' : 'Reflection: History is not merely for remembrance, but a compass for the present and future.'}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. Navigation Action Buttons */}
-                <div className="pt-2 flex flex-col sm:flex-row items-center gap-2">
-                  {activeRefSection !== 'all' && (
+              {/* TAB 2: REFERENCES & LESSONS */}
+              {activeTab === 'reference' && (
+                <div className="space-y-3 animate-in fade-in duration-200 text-left">
+                  {/* Sub-Navigator Filter Pills */}
+                  <div className={`p-1.5 rounded-xl border flex items-center gap-1.5 overflow-x-auto scrollbar-none shadow-sm shrink-0 ${
+                    isDay ? 'bg-white border-emerald-200' : 'bg-[#041a1f] border-teal-700/50'
+                  }`}>
                     <button
                       type="button"
                       onClick={() => {
                         setActiveRefSection('all');
                         if (soundEnabled) soundHaptics.playTap();
                       }}
-                      className={`w-full sm:flex-1 py-2.5 px-3.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition active:scale-98 shadow-sm ${
-                        isDay
-                          ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
-                          : 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border-emerald-700'
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                        activeRefSection === 'all'
+                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm scale-[1.02]'
+                          : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-emerald-200/80 hover:bg-white/5'
                       }`}
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>{selectedLanguage === 'bn' ? 'সব দলিল একসাথে দেখুন' : 'Show All Documents'}</span>
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                      <span>{selectedLanguage === 'bn' ? 'সবগুলো দলিল' : 'All Docs'}</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveRefSection('quran');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                        activeRefSection === 'quran'
+                          ? 'bg-emerald-600 text-white shadow-sm scale-[1.02]'
+                          : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-emerald-200/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                      <span>{selectedLanguage === 'bn' ? '📖 কুরআন' : 'Quran'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveRefSection('hadith');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                        activeRefSection === 'hadith'
+                          ? 'bg-amber-600 text-white shadow-sm scale-[1.02]'
+                          : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-amber-200/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <Scroll className="w-3.5 h-3.5 shrink-0" />
+                      <span>{selectedLanguage === 'bn' ? '📜 হাদিস' : 'Hadith'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveRefSection('books');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                        activeRefSection === 'books'
+                          ? 'bg-teal-600 text-white shadow-sm scale-[1.02]'
+                          : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-teal-200/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <Bookmark className="w-3.5 h-3.5 shrink-0" />
+                      <span>{selectedLanguage === 'bn' ? `📚 কিতাবসমূহ (${religiousDetails.classicalBooks.length})` : `Books (${religiousDetails.classicalBooks.length})`}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveRefSection('lessons');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                        activeRefSection === 'lessons'
+                          ? 'bg-indigo-600 text-white shadow-sm scale-[1.02]'
+                          : isDay ? 'text-slate-700 hover:bg-slate-100' : 'text-indigo-200/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <Lightbulb className="w-3.5 h-3.5 shrink-0" />
+                      <span>{selectedLanguage === 'bn' ? `✨ শিক্ষা (${religiousDetails.keyLessons.length})` : `Wisdom (${religiousDetails.keyLessons.length})`}</span>
+                    </button>
+                  </div>
+
+                  {/* Highlight Header Banner */}
+                  <div className={`p-2.5 sm:p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm ${
+                    isDay
+                      ? 'bg-gradient-to-r from-emerald-100/90 via-teal-50 to-emerald-100/90 border-emerald-300 text-emerald-950'
+                      : 'bg-gradient-to-r from-emerald-950/95 via-teal-950/85 to-[#041a1f] border-emerald-500/40 text-emerald-50'
+                  }`}>
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="p-1 rounded-lg bg-emerald-600 text-white text-xs shrink-0">
+                          <Sparkles className="w-3 h-3 text-amber-300" />
+                        </span>
+                        <h3 className="text-[11px] sm:text-xs font-bold tracking-tight">
+                          {selectedLanguage === 'bn' 
+                            ? 'কুরআন, হাদিস, ঐতিহাসিক কিতাব ও জীবন দর্শন' 
+                            : 'Quran, Hadith, Primary Books & Lessons'}
+                        </h3>
+                      </div>
+                      <p className={`text-[10px] sm:text-[11px] font-normal leading-relaxed ${isDay ? 'text-emerald-800' : 'text-emerald-300/80'}`}>
+                        {selectedLanguage === 'bn'
+                          ? 'প্রতিটি ঐতিহাসিক ঘটনার পেছনে থাকা নির্ভরযোগ্য ইসলামী রেফারেন্সের পূর্ণাঙ্গ সংগ্রহ'
+                          : 'Authentic Islamic references, classical historiographical sources & timeless wisdom'}
+                      </p>
+                    </div>
+
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-bold shrink-0 shadow-sm self-start sm:self-center">
+                      {religiousDetails.classicalBooks.length + 2} টি দলিল
+                    </span>
+                  </div>
+
+                  {/* SECTION 1: কুরআন */}
+                  {(activeRefSection === 'all' || activeRefSection === 'quran') && (
+                    <div
+                      className={`p-3 sm:p-3.5 rounded-xl border-2 space-y-2.5 relative shadow-sm ${
+                        isDay
+                          ? 'bg-gradient-to-br from-emerald-50/95 via-teal-50/50 to-white border-emerald-300 text-slate-900'
+                          : 'bg-gradient-to-br from-[#041d22] via-[#072a31] to-[#021418] border-emerald-500/40 text-white'
+                      }`}
+                    >
+                      <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-1.5 ${isDay ? 'border-emerald-200' : 'border-emerald-500/25'}`}>
+                        <div className="flex items-center gap-1.5 text-xs font-bold">
+                          <div className="p-1 rounded-md bg-emerald-600 text-white shadow-sm shrink-0">
+                            <BookOpen className="w-3 h-3" />
+                          </div>
+                          <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-200 font-bold'}>
+                            {selectedLanguage === 'bn' ? '১. পবিত্র কুরআনের প্রাসঙ্গিক আয়াত' : '1. Relevant Quranic Ayah'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isPlayingAyatAudio) {
+                                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                                  window.speechSynthesis.cancel();
+                                }
+                                setIsPlayingAyatAudio(false);
+                              } else {
+                                setIsPlayingAyatAudio(true);
+                                playArabicVoice(religiousDetails.quranAyat.arabic, 'male', () => {
+                                  setIsPlayingAyatAudio(false);
+                                });
+                              }
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1 cursor-pointer transition active:scale-95 shadow-sm ${
+                              isPlayingAyatAudio
+                                ? 'bg-amber-600 text-white ring-1 ring-amber-400'
+                                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                            }`}
+                          >
+                            {isPlayingAyatAudio ? (
+                              <>
+                                <Square className="w-2.5 h-2.5 fill-current" />
+                                <span>{selectedLanguage === 'bn' ? 'থামুন' : 'Stop'}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 className="w-2.5 h-2.5" />
+                                <span>{selectedLanguage === 'bn' ? 'আয়াত শুনুন' : 'Listen'}</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyText(`${religiousDetails.quranAyat.arabic}\n\n${religiousDetails.quranAyat.translationBn}\n(${religiousDetails.quranAyat.surah})`, 'quran_ref', e)}
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition flex items-center gap-1 cursor-pointer ${
+                              copiedTextId === 'quran_ref'
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : isDay
+                                ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
+                                : 'bg-[#0b333a] hover:bg-[#10434c] text-emerald-200 border-teal-700'
+                            }`}
+                          >
+                            {copiedTextId === 'quran_ref' ? <Check className="w-2.5 h-2.5 text-white" /> : <Copy className="w-2.5 h-2.5" />}
+                            <span>{copiedTextId === 'quran_ref' ? 'কপি হয়েছে' : 'কপি'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className={`p-3 rounded-lg border relative ${
+                        isDay ? 'bg-white border-emerald-200 shadow-sm' : 'bg-[#011215] border-teal-600/40 shadow-inner'
+                      }`}>
+                        <div className="text-center pb-1 select-none">
+                          <span className={`text-[9px] font-arabic tracking-wider opacity-75 ${
+                            isDay ? 'text-emerald-800' : 'text-emerald-400'
+                          }`}>
+                            بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                          </span>
+                        </div>
+                        <p dir="rtl" className={`font-arabic text-base sm:text-lg font-bold leading-[2.0] text-right select-text ${
+                          isDay ? 'text-emerald-950 font-bold' : 'text-emerald-200'
+                        }`}>
+                          {religiousDetails.quranAyat.arabic} ۝
+                        </p>
+                      </div>
+
+                      <div className={`p-2.5 rounded-lg border-l-4 border ${
+                        isDay 
+                          ? 'bg-emerald-50 border-emerald-200 border-l-emerald-600 shadow-sm' 
+                          : 'bg-[#06242a] border-teal-700/50 border-l-emerald-400 shadow-sm'
+                      }`}>
+                        <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                            isDay ? 'text-emerald-900' : 'text-emerald-300'
+                          }`}>
+                            <span>📖</span>
+                            <span>{selectedLanguage === 'bn' ? 'পবিত্র আয়াতের ভাবানুবাদ:' : 'Meaning:'}</span>
+                          </span>
+                          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border shrink-0 ${
+                            isDay 
+                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300' 
+                              : 'bg-emerald-900/60 text-emerald-200 border-emerald-500/40'
+                          }`}>
+                            {religiousDetails.quranAyat.surah}
+                          </span>
+                        </div>
+                        <p className={`text-xs sm:text-[13px] leading-relaxed font-medium select-text ${
+                          isDay ? 'text-slate-950' : 'text-emerald-50'
+                        }`}>
+                          {religiousDetails.quranAyat.translationBn}
+                        </p>
+                      </div>
+                    </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveTab('story');
-                      if (soundEnabled) soundHaptics.playTap();
-                    }}
-                    className={`w-full sm:flex-1 py-2.5 px-3.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition active:scale-98 shadow-sm ${
-                      isDay
-                        ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                        : 'bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-200 border-emerald-700'
-                    }`}
-                  >
-                    <span>←</span>
-                    <span>{selectedLanguage === 'bn' ? '১. ইতিহাস ও মূল বিবরণে ফিরে যান' : 'Back to 1. History & Story'}</span>
-                  </button>
+                  {/* SECTION 2: হাদিস */}
+                  {(activeRefSection === 'all' || activeRefSection === 'hadith') && (
+                    <div
+                      className={`p-3 sm:p-3.5 rounded-xl border-2 space-y-2.5 relative shadow-sm ${
+                        isDay
+                          ? 'bg-gradient-to-br from-amber-50/95 via-orange-50/40 to-white border-amber-300 text-slate-900'
+                          : 'bg-gradient-to-br from-[#1d1506] via-[#291e0a] to-[#140e04] border-amber-500/40 text-white'
+                      }`}
+                    >
+                      <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-1.5 ${isDay ? 'border-amber-200' : 'border-amber-500/25'}`}>
+                        <div className="flex items-center gap-1.5 text-xs font-bold">
+                          <div className="p-1 rounded-md bg-amber-600 text-white shadow-sm shrink-0">
+                            <Scroll className="w-3 h-3" />
+                          </div>
+                          <span className={isDay ? 'text-amber-950 font-bold' : 'text-amber-200 font-bold'}>
+                            {selectedLanguage === 'bn' ? '২. সহীহ হাদিসের প্রামাণ্য দলিল' : '2. Authentic Sahih Hadith'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white shadow-sm">
+                            ✓ সহীহ
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyText(`${religiousDetails.hadith.arabicSnippet ? `«${religiousDetails.hadith.arabicSnippet}»\n` : ''}${religiousDetails.hadith.textBn}\nসূত্র: ${religiousDetails.hadith.source}`, 'hadith_ref', e)}
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition flex items-center gap-1 cursor-pointer ${
+                              copiedTextId === 'hadith_ref'
+                                ? 'bg-amber-600 text-white border-amber-600'
+                                : isDay
+                                ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
+                                : 'bg-[#2b210e] hover:bg-[#382b13] text-amber-200 border-amber-700'
+                            }`}
+                          >
+                            {copiedTextId === 'hadith_ref' ? <Check className="w-2.5 h-2.5 text-white" /> : <Copy className="w-2.5 h-2.5" />}
+                            <span>{copiedTextId === 'hadith_ref' ? 'কপি হয়েছে' : 'কপি'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {religiousDetails.hadith.arabicSnippet && (
+                        <div className={`p-2.5 rounded-lg border relative ${
+                          isDay ? 'bg-white border-amber-200 shadow-sm' : 'bg-black/45 border-amber-700/50 shadow-inner'
+                        }`}>
+                          <p dir="rtl" className={`font-arabic text-sm sm:text-base font-bold text-right leading-relaxed select-text ${
+                            isDay ? 'text-amber-950 font-bold' : 'text-amber-200'
+                          }`}>
+                            «{religiousDetails.hadith.arabicSnippet}»
+                          </p>
+                        </div>
+                      )}
+
+                      <div className={`p-2.5 rounded-lg border-l-4 border ${
+                        isDay 
+                          ? 'bg-amber-50 border-amber-200 border-l-amber-600 shadow-sm' 
+                          : 'bg-[#251e0e]/90 border-amber-800/40 border-l-amber-400 shadow-sm'
+                      }`}>
+                        <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                            isDay ? 'text-amber-900' : 'text-amber-300'
+                          }`}>
+                            <span>📜</span>
+                            <span>{selectedLanguage === 'bn' ? 'হাদিসের মর্মার্থ:' : 'Meaning:'}</span>
+                          </span>
+                          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border shrink-0 ${
+                            isDay 
+                              ? 'bg-amber-100 text-amber-950 border-amber-300' 
+                              : 'bg-amber-900/60 text-amber-200 border-amber-500/40'
+                          }`}>
+                            {religiousDetails.hadith.source}
+                          </span>
+                        </div>
+                        <p className={`text-xs sm:text-[13px] leading-relaxed font-medium select-text ${
+                          isDay ? 'text-slate-950' : 'text-amber-50'
+                        }`}>
+                          {religiousDetails.hadith.textBn}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SECTION 3: কিতাবসমূহ */}
+                  {(activeRefSection === 'all' || activeRefSection === 'books') && (
+                    <div
+                      className={`p-3 sm:p-3.5 rounded-xl border-2 space-y-2.5 shadow-sm ${
+                        isDay 
+                          ? 'bg-gradient-to-br from-teal-50/95 via-sky-50/40 to-white border-teal-300 text-slate-900' 
+                          : 'bg-gradient-to-br from-[#061d22] via-[#092b33] to-[#041418] border-teal-500/40 text-white'
+                      }`}
+                    >
+                      <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-1.5 ${isDay ? 'border-teal-200' : 'border-teal-700/40'}`}>
+                        <div className="flex items-center gap-1.5 text-xs font-bold">
+                          <div className="p-1 rounded-md bg-teal-600 text-white shadow-sm shrink-0">
+                            <Bookmark className="w-3 h-3" />
+                          </div>
+                          <span className={isDay ? 'text-teal-950 font-bold' : 'text-teal-200 font-bold'}>
+                            {selectedLanguage === 'bn' ? '৩. মূল ঐতিহাসিক কিতাবসমূহ' : '3. Classical Historical Sources'}
+                          </span>
+                        </div>
+
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm shrink-0 ${
+                          isDay ? 'bg-teal-100 text-teal-950 border-teal-300' : 'bg-teal-900/60 text-teal-200 border-teal-500/40'
+                        }`}>
+                          {religiousDetails.classicalBooks.length} টি কিতাব
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 pt-0.5">
+                        {religiousDetails.classicalBooks.map((book, bIdx) => (
+                          <div
+                            key={bIdx}
+                            className={`p-2.5 rounded-lg border flex flex-col gap-1.5 shadow-sm ${
+                              isDay ? 'bg-white border-slate-200' : 'bg-[#02181d] border-teal-700/50 text-slate-100'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <span className="w-4 h-4 rounded bg-teal-600/15 text-teal-700 dark:text-teal-300 font-bold text-[10px] flex items-center justify-center shrink-0 border border-teal-500/20 mt-0.5">
+                                {toBengaliDigits(bIdx + 1)}
+                              </span>
+                              <h4 className={`font-bold text-xs sm:text-[13px] select-text leading-snug flex-1 ${
+                                isDay ? 'text-slate-950' : 'text-emerald-200'
+                              }`}>
+                                {book.titleBn}
+                              </h4>
+                            </div>
+
+                            <div className={`pt-1 border-t flex flex-wrap items-center justify-between gap-2 text-[10px] pl-6 ${
+                              isDay ? 'border-slate-100 text-slate-700' : 'border-teal-800/40 text-emerald-300/90'
+                            }`}>
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className="shrink-0 text-slate-500">🖋️ লেখক:</span>
+                                <strong className={`font-semibold select-text ${isDay ? 'text-slate-950' : 'text-white'}`}>{book.authorBn}</strong>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                                <span className={`font-mono px-1.5 py-0.5 rounded border ${
+                                  isDay ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-teal-900/60 text-emerald-300 border-teal-700/50'
+                                }`}>
+                                  ⏳ {book.era}
+                                </span>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCopyText(`কিতাব: ${book.titleBn}\nলেখক: ${book.authorBn}\nযুগ: ${book.era}`, `book_${bIdx}`, e)}
+                                  className={`p-1 rounded border transition cursor-pointer ${
+                                    copiedTextId === `book_${bIdx}`
+                                      ? 'bg-emerald-600 text-white border-emerald-600'
+                                      : isDay ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/5 hover:bg-white/10 text-teal-200 border-teal-800'
+                                  }`}
+                                >
+                                  {copiedTextId === `book_${bIdx}` ? <Check className="w-2.5 h-2.5 text-white" /> : <Copy className="w-2.5 h-2.5" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SECTION 4: শিক্ষা ও হিকমত */}
+                  {(activeRefSection === 'all' || activeRefSection === 'lessons') && (
+                    <div
+                      className={`p-3 sm:p-3.5 rounded-xl border-2 space-y-2.5 relative shadow-sm ${
+                        isDay 
+                          ? 'bg-gradient-to-br from-emerald-50/95 via-teal-50/50 to-white border-emerald-300 text-slate-900' 
+                          : 'bg-gradient-to-br from-[#07242a] via-[#0b333c] to-[#051a1e] border-emerald-400/40 text-emerald-50'
+                      }`}
+                    >
+                      <div className={`flex flex-wrap items-center justify-between gap-2 border-b pb-1.5 ${isDay ? 'border-emerald-200' : 'border-teal-700/40'}`}>
+                        <div className="flex items-center gap-1.5 text-xs font-bold">
+                          <div className="p-1 rounded-md bg-amber-500 text-white shadow-sm shrink-0">
+                            <Sparkles className="w-3 h-3" />
+                          </div>
+                          <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-200 font-bold'}>
+                            {selectedLanguage === 'bn' ? '৪. মূল শিক্ষণীয় বিষয় ও হিকমত' : '4. Key Lessons & Wisdom'}
+                          </span>
+                        </div>
+
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm shrink-0 ${
+                          isDay ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-900/60 text-emerald-200 border-emerald-500/40'
+                        }`}>
+                          {religiousDetails.keyLessons.length} টি শিক্ষা
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5 pt-0.5">
+                        {religiousDetails.keyLessons.map((lesson, lIdx) => (
+                          <div
+                            key={lIdx}
+                            className={`p-2.5 rounded-lg border flex items-start gap-2 shadow-sm ${
+                              isDay ? 'bg-white border-slate-200' : 'bg-[#031d22] border-teal-700/40 text-emerald-100'
+                            }`}
+                          >
+                            <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[10px] flex items-center justify-center shrink-0 border border-amber-500/30 mt-0.5">
+                              {toBengaliDigits(lIdx + 1)}
+                            </span>
+                            <p className={`text-xs sm:text-[13px] font-medium leading-relaxed select-text flex-1 ${
+                              isDay ? 'text-slate-950' : 'text-emerald-50'
+                            }`}>
+                              {lesson}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Quote Card */}
+                      <div className={`mt-2 p-3 rounded-lg border relative overflow-hidden shadow-sm ${
+                        isDay 
+                          ? 'border-amber-400/70 bg-gradient-to-r from-amber-50/90 via-yellow-50/50 to-amber-50/90 text-amber-950' 
+                          : 'border-amber-400/50 bg-gradient-to-r from-[#1e1606] via-[#2a1e08] to-[#150f03] text-amber-100'
+                      }`}>
+                        <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                            <Quote className="w-3 h-3 fill-current shrink-0" />
+                            <span>চিরন্তন জীবন দর্শন ও হিকমত:</span>
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyText(`“${religiousDetails.spiritualTakeaway}”`, 'quote_ref', e)}
+                            className={`p-1 rounded border transition cursor-pointer text-[10px] flex items-center gap-1 shrink-0 ${
+                              copiedTextId === 'quote_ref'
+                                ? 'bg-amber-600 text-white border-amber-600'
+                                : isDay ? 'bg-white text-slate-800 border-amber-300' : 'bg-black/30 text-amber-200 border-amber-700/50'
+                            }`}
+                          >
+                            {copiedTextId === 'quote_ref' ? <Check className="w-2.5 h-2.5 text-white" /> : <Copy className="w-2.5 h-2.5" />}
+                            <span>{copiedTextId === 'quote_ref' ? 'কপি হয়েছে' : 'কপি'}</span>
+                          </button>
+                        </div>
+
+                        <p className={`italic leading-relaxed select-text font-bold text-xs sm:text-[13px] ${
+                          isDay ? 'text-slate-950' : 'text-amber-100'
+                        }`}>
+                          “{religiousDetails.spiritualTakeaway}”
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Switch back to Tab 1 CTA */}
+                  <div className="pt-1 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('story');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`w-full py-2.5 px-3.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition active:scale-98 shadow-sm ${
+                        isDay
+                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                          : 'bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-200 border-emerald-700'
+                      }`}
+                    >
+                      <span>←</span>
+                      <span>{selectedLanguage === 'bn' ? '১. ইতিহাস ও মূল বিবরণে ফিরে যান' : 'Back to 1. History & Story'}</span>
+                    </button>
+                  </div>
                 </div>
-
-              </div>
+              )}
             </div>
-          )}
 
-          {/* 5. Bottom Navigation Bar with Active Event Counter */}
-          <div className={`flex items-center justify-between gap-2 pt-2.5 border-t ${isDay ? 'border-slate-100' : 'border-teal-900/40'}`}>
+            {/* VERTICAL STEPPER SCROLLBAR (AS IN PIC 2) */}
+            <div className={`w-4 sm:w-5 shrink-0 flex flex-col items-center justify-between py-1 border-l select-none ${
+              isDay ? 'border-slate-200 bg-slate-100/70' : 'border-teal-900/60 bg-black/40'
+            }`}>
+              {/* Up Arrow Button */}
+              <button
+                type="button"
+                onClick={scrollUp}
+                className={`w-full py-1.5 flex items-center justify-center cursor-pointer transition active:scale-90 ${
+                  canScrollUp
+                    ? isDay ? 'text-slate-700 hover:bg-slate-200/70' : 'text-emerald-300 hover:bg-white/10'
+                    : 'opacity-25 cursor-default text-slate-400'
+                }`}
+                title={selectedLanguage === 'bn' ? 'উপরে স্ক্রল করুন' : 'Scroll Up'}
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Visual Track & Draggable Thumb */}
+              <div
+                onClick={handleTrackClick}
+                className={`w-2 flex-1 rounded-full my-1 cursor-pointer relative overflow-hidden ${
+                  isDay ? 'bg-slate-300/80 hover:bg-slate-300' : 'bg-teal-950/80 hover:bg-teal-900'
+                }`}
+                title={selectedLanguage === 'bn' ? 'স্ক্রল বার' : 'Scroll bar'}
+              >
+                <div
+                  className={`w-full rounded-full absolute left-0 right-0 transition-all duration-75 ${
+                    isDay ? 'bg-slate-600 hover:bg-slate-700' : 'bg-emerald-500 hover:bg-emerald-400'
+                  }`}
+                  style={{
+                    height: `${scrollThumbHeightPct}%`,
+                    top: `${scrollThumbTopPct}%`,
+                  }}
+                />
+              </div>
+
+              {/* Down Arrow Button */}
+              <button
+                type="button"
+                onClick={scrollDown}
+                className={`w-full py-1.5 flex items-center justify-center cursor-pointer transition active:scale-90 ${
+                  canScrollDown
+                    ? isDay ? 'text-slate-700 hover:bg-slate-200/70' : 'text-emerald-300 hover:bg-white/10'
+                    : 'opacity-25 cursor-default text-slate-400'
+                }`}
+                title={selectedLanguage === 'bn' ? 'নিচে স্ক্রল করুন' : 'Scroll Down'}
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* DOCKED BOTTOM EVENT NAVIGATION BAR */}
+          <div className={`shrink-0 px-3.5 py-2 border-t flex items-center justify-between gap-2 ${
+            isDay ? 'border-slate-100 bg-slate-50/80' : 'border-teal-900/40 bg-[#04171c]/90'
+          }`}>
             <button
               type="button"
               onClick={handlePrev}
               disabled={!hasPrev}
-              className={`py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer border ${
+              className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer border ${
                 !hasPrev
                   ? 'opacity-35 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400'
                   : isDay
-                  ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 active:scale-95'
+                  ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-800 active:scale-95'
                   : 'bg-[#0d343c] hover:bg-[#12444e] border-[#154d58] text-emerald-200 active:scale-95'
               }`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
               <span>{selectedLanguage === 'bn' ? 'পূর্ববর্তী' : 'Prev'}</span>
             </button>
 
@@ -1841,14 +1880,14 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
               type="button"
               onClick={handleNext}
               disabled={!hasNext}
-              className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 cursor-pointer shadow-md border ${
+              className={`py-2 px-3.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 cursor-pointer shadow-md border ${
                 !hasNext
                   ? 'opacity-35 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400'
                   : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white border-transparent active:scale-95 shadow-emerald-500/20'
               }`}
             >
               <span>{selectedLanguage === 'bn' ? 'পরবর্তী ঘটনা' : 'Next'}</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
