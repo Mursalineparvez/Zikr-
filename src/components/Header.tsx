@@ -88,6 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
     'hajj_essentials',
     'tablig',
     'allah_names',
+    'history_timeline',
   ];
   const isOtherActive = otherModules.includes(activeModule);
 

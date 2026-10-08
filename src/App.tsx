@@ -1665,12 +1665,20 @@ export default function App() {
       isActive: activeModule === 'aamal_tracker',
     },
     {
+      id: 'history_timeline',
+      label: NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা',
+      arabic: 'التاريخ',
+      icon: '🗺️',
+      badge: '৫৭০-২০২৬',
+      isActive: activeModule === 'history_timeline',
+    },
+    {
       id: 'other',
       label: selectedLanguage === 'bn' ? 'অন্যান্য (Other)' : 'Other',
       arabic: 'أخرى',
       icon: '✨',
       badge: '10 Tools',
-      isActive: isOtherActive,
+      isActive: isOtherActive && activeModule !== 'history_timeline',
     },
   ];
 
