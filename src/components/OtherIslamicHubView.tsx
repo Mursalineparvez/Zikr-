@@ -126,38 +126,11 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     {
       id: 'hajj_checklist' as OtherSubSection,
       title: NAV_TRANSLATIONS.hajj_checklist[selectedLanguage],
-      arabic: 'قائمة الحج والعمرة',
-      desc: selectedLanguage === 'bn' ? 'ঘর থেকে ঘর পর্যন্ত হজ ও ওমরাহের ধাপভিত্তিক প্রস্তুতকারী নির্দেশিকা ও অ্যাকশন চেকলিস্ট' : 'Step-by-step preparation guide & action checklist from home to holy sites.',
-      icon: <span className="text-2xl">🏠</span>,
-      color: 'from-teal-500/15 to-cyan-500/10 border-teal-500/30',
-      badge: selectedLanguage === 'bn' ? 'স্মার্ট চেকলিস্ট' : 'Checklist',
-    },
-    {
-      id: 'umrah_guide' as OtherSubSection,
-      title: NAV_TRANSLATIONS.umrah_guide[selectedLanguage],
-      arabic: 'دليل العمرة والرسوم المتحركة',
-      desc: selectedLanguage === 'bn' ? 'তাওয়াফ, সাঈ ও কাবার ৩ডি লাইভ অ্যানিমেটেড সিমুলেটেড থ্রিডি ভার্চুয়াল স্টুডিও' : 'Interactive 3D animated studio simulation for Tawaf, Sa\'i & sacred rituals.',
+      arabic: 'دليل الحج والعمرة',
+      desc: selectedLanguage === 'bn' ? '৩ডি লাইভ অ্যানিমেটেড তাওয়াফ/সাঈ সিমুলেশন, প্রস্তুতকারী চেকলিস্ট, ৫ দিনের হজ ম্যাপ ও মিকাত গাইড' : '3D live animated Tawaf/Sa\'i simulation, preparation checklist, 5 days route map & Miqat guide.',
       icon: <span className="text-2xl">🕋</span>,
-      color: 'from-amber-500/15 to-yellow-500/10 border-amber-500/30',
-      badge: selectedLanguage === 'bn' ? '৩ডি অ্যানিমেশন' : '3D Studio',
-    },
-    {
-      id: 'hajj_route_map' as OtherSubSection,
-      title: NAV_TRANSLATIONS.hajj_route_map[selectedLanguage],
-      arabic: 'خريطة أيام الحج الخمسة',
-      desc: selectedLanguage === 'bn' ? 'মিনা, আরাফাত, মুজদালিফা ও কঙ্কর নিক্ষেপের আসল লোকেশন ছবি ও রুট ম্যাপ' : 'Mina, Arafat, Muzdalifah real location photos & 5-day route map.',
-      icon: <span className="text-2xl">⛺</span>,
-      color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
-      badge: selectedLanguage === 'bn' ? '৫ দিনের হজ' : '5 Days Hajj',
-    },
-    {
-      id: 'hajj_essentials' as OtherSubSection,
-      title: NAV_TRANSLATIONS.hajj_essentials[selectedLanguage],
-      arabic: 'المواقيت والمدينة والحقائب',
-      desc: selectedLanguage === 'bn' ? 'মিকাত সীমা, ইহরামের নিষেধ, মদিনা যিয়ারত স্থান ও ট্রাভেল প্যাকিং লিস্ট' : 'Miqat boundaries, Ihram rules, Madinah ziyarah & packing guide.',
-      icon: <span className="text-2xl">🎒</span>,
-      color: 'from-blue-500/15 to-indigo-500/10 border-blue-500/30',
-      badge: selectedLanguage === 'bn' ? 'মিকাত ও ব্যাগ' : 'Essentials',
+      color: 'from-teal-500/15 to-amber-500/10 border-teal-500/30',
+      badge: selectedLanguage === 'bn' ? 'কমপ্লিট গাইড' : 'Full Guide',
     },
     {
       id: 'tablig' as OtherSubSection,
@@ -277,50 +250,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
           }`}
         >
-          <span>🏠</span>
-          <span>{NAV_TRANSLATIONS.hajj_checklist[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onClick={() => handleSelectSub('umrah_guide')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'umrah_guide'
-              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
           <span>🕋</span>
-          <span>{NAV_TRANSLATIONS.umrah_guide[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onClick={() => handleSelectSub('hajj_route_map')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'hajj_route_map'
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>⛺</span>
-          <span>{NAV_TRANSLATIONS.hajj_route_map[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onClick={() => handleSelectSub('hajj_essentials')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'hajj_essentials'
-              ? 'bg-cyan-600 text-white border-cyan-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>🎒</span>
-          <span>{NAV_TRANSLATIONS.hajj_essentials[selectedLanguage]}</span>
+          <span>{NAV_TRANSLATIONS.hajj_checklist[selectedLanguage]}</span>
         </button>
 
         <button
