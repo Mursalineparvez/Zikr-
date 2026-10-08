@@ -1,5 +1,5 @@
 // Service Worker for Zikr+ PWA (Offline Audio & App Caching)
-const CACHE_NAME = 'zikrmate-v5';
+const CACHE_NAME = 'zikrmate-v6';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v2';
 
 const ASSETS_TO_CACHE = [
@@ -93,26 +93,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Standard App Assets - CacheFirst with Network Fallback
+  // 2. Standard App Assets - NetworkFirst Strategy with Offline Fallback
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request)
-        .then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
-          }
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
-          return networkResponse;
-        })
-        .catch(() => {
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
           return caches.match('/');
         });
-    })
+      })
   );
 });
