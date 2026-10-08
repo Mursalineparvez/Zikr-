@@ -888,16 +888,20 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
                 {/* Then Era Title Badge */}
                 <div className="absolute top-16 left-4 z-[1010] pointer-events-none">
-                  <span className="px-3 py-1 text-[10px] font-black bg-amber-950/95 text-amber-300 rounded-full shadow-lg border border-amber-500/45 flex items-center gap-1.5 backdrop-blur-md">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="px-3 py-1 text-[10px] font-black text-amber-300 flex items-center gap-1.5" style={{ textShadow: '-1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0,0,0,0.95)' }}>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]" />
                     <span>{selectedLanguage === 'bn' ? 'তৎকালীন ম্যাপ' : 'Then (Historical Map)'}</span>
                   </span>
                 </div>
 
                 {/* Left side display tag showing historical name */}
-                <div className="absolute bottom-16 right-4 z-[1010] bg-amber-950/95 border border-amber-500/40 px-3.5 py-1.5 rounded-xl shadow-2xl flex flex-col items-start pointer-events-none backdrop-blur-md">
-                  <span className="text-[9px] text-amber-400 font-bold uppercase tracking-wider">{selectedLanguage === 'bn' ? 'তৎকালীন ঐতিহাসিক নাম' : 'Historical Name'}</span>
-                  <span className="text-xs sm:text-sm font-black text-white">{getLangText(activeEvent.p, selectedLanguage)}</span>
+                <div className="absolute bottom-16 right-4 z-[1010] flex flex-col items-start pointer-events-none">
+                  <span className="text-[10px] text-amber-400 font-black uppercase tracking-wider" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 1px 3px rgba(0,0,0,0.95)' }}>
+                    {selectedLanguage === 'bn' ? 'তৎকালীন ঐতিহাসিক নাম' : 'Historical Name'}
+                  </span>
+                  <span className="text-sm sm:text-base font-black text-white" style={{ textShadow: '-1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 5px rgba(0,0,0,0.95)' }}>
+                    {getLangText(activeEvent.p, selectedLanguage)}
+                  </span>
                 </div>
               </div>
             )}
@@ -918,36 +922,40 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
                 {/* Modern Title Badge */}
                 <div className="absolute top-16 left-4 z-[1010] pointer-events-none">
-                  <span className="px-3 py-1 text-[10px] font-black bg-emerald-950/95 text-emerald-300 rounded-full shadow-lg border border-emerald-500/45 flex items-center gap-1.5 backdrop-blur-md">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="px-3 py-1 text-[10px] font-black text-emerald-300 flex items-center gap-1.5" style={{ textShadow: '-1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0,0,0,0.95)' }}>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
                     <span>{selectedLanguage === 'bn' ? 'বর্তমান ম্যাপ' : 'Now (Present Map)'}</span>
                   </span>
                 </div>
 
                 {/* Right side display tag showing modern country name */}
-                <div className="absolute bottom-16 right-4 z-[1010] bg-emerald-950/95 border border-emerald-500/40 px-3.5 py-1.5 rounded-xl shadow-2xl flex flex-col items-start pointer-events-none backdrop-blur-md">
-                  <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">{selectedLanguage === 'bn' ? 'বর্তমান আধুনিক ভূখণ্ড' : 'Modern Territory'}</span>
-                  <span className="text-xs sm:text-sm font-black text-white">{getLangText(activeEvent.n, selectedLanguage)}</span>
+                <div className="absolute bottom-16 right-4 z-[1010] flex flex-col items-start pointer-events-none">
+                  <span className="text-[10px] text-emerald-400 font-black uppercase tracking-wider" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 1px 3px rgba(0,0,0,0.95)' }}>
+                    {selectedLanguage === 'bn' ? 'বর্তমান আধুনিক ভূখণ্ড' : 'Modern Territory'}
+                  </span>
+                  <span className="text-sm sm:text-base font-black text-white" style={{ textShadow: '-1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 5px rgba(0,0,0,0.95)' }}>
+                    {getLangText(activeEvent.n, selectedLanguage)}
+                  </span>
                 </div>
               </div>
             )}
 
             {/* FLOATING INTERACTIVE CENTER ERA-NAME COMPARISON HUDBOX (jst binno golo show korbe) */}
             {mapViewMode === 'compare' && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1010] bg-slate-950/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-teal-500/30 flex items-center gap-3.5 max-w-[90%] sm:max-w-md shadow-[0_10px_35px_rgba(0,0,0,0.8)] transition-all duration-300">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1010] flex items-center gap-3.5 max-w-[90%] sm:max-w-md pointer-events-none transition-all duration-300">
                 <div className="flex flex-col text-left">
-                  <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">{selectedLanguage === 'bn' ? 'তৎকালীন নাম (Then)' : 'Then Location'}</span>
-                  <span className="text-xs font-black text-amber-100/90 truncate max-w-[125px] sm:max-w-[150px]">{getLangText(activeEvent.p, selectedLanguage)}</span>
+                  <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{selectedLanguage === 'bn' ? 'তৎকালীন নাম (Then)' : 'Then Location'}</span>
+                  <span className="text-xs sm:text-sm font-black text-amber-100" style={{ textShadow: '-1.2px -1.2px 0 #000, 1.2px -1.2px 0 #000, -1.2px 1.2px 0 #000, 1.2px 1.2px 0 #000' }}>{getLangText(activeEvent.p, selectedLanguage)}</span>
                 </div>
-                <div className="flex items-center justify-center bg-teal-500/10 p-1.5 rounded-full border border-teal-500/25 shrink-0">
+                <div className="flex items-center justify-center bg-black/40 p-1.5 rounded-full border border-teal-500/30 shrink-0">
                   <ArrowRight className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{selectedLanguage === 'bn' ? 'বর্তমান নাম (Now)' : 'Now Location'}</span>
-                  <span className="text-xs font-black text-emerald-100/90 truncate max-w-[125px] sm:max-w-[150px]">{getLangText(activeEvent.n, selectedLanguage)}</span>
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>{selectedLanguage === 'bn' ? 'বর্তমান নাম (Now)' : 'Now Location'}</span>
+                  <span className="text-xs sm:text-sm font-black text-emerald-100" style={{ textShadow: '-1.2px -1.2px 0 #000, 1.2px -1.2px 0 #000, -1.2px 1.2px 0 #000, 1.2px 1.2px 0 #000' }}>{getLangText(activeEvent.n, selectedLanguage)}</span>
                 </div>
                 {isNameDifferent && (
-                  <span className="absolute -top-2.5 right-4 bg-gradient-to-r from-amber-500 to-orange-500 text-black text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-amber-400/50 shadow-lg animate-bounce shrink-0">
+                  <span className="absolute -top-3 right-4 bg-gradient-to-r from-amber-500 to-orange-500 text-black text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-amber-400/50 shadow-lg animate-bounce shrink-0">
                     {selectedLanguage === 'bn' ? 'ভিন্ন নাম' : 'Different'}
                   </span>
                 )}
@@ -956,16 +964,16 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           </div>
 
           {/* Large Gold-plated Vintage Chronometer displays year at Bottom-Left */}
-          <div className="absolute bottom-[60px] left-4 z-[1010] pointer-events-none space-y-0.5 bg-[#07181c]/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-amber-500/25 shadow-2xl">
+          <div className="absolute bottom-[60px] left-4 z-[1010] pointer-events-none space-y-0.5 flex flex-col items-start">
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl sm:text-4xl font-black text-amber-400 tracking-tighter leading-none font-mono tabular-nums">
+              <span className="text-3xl sm:text-4xl font-black text-amber-400 tracking-tighter leading-none font-mono tabular-nums" style={{ textShadow: '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 3px 6px rgba(0,0,0,0.95)' }}>
                 {toBengaliDigits(activeEvent.y)}
               </span>
-              <span className="text-[10px] font-black text-amber-200">
+              <span className="text-[10px] font-black text-amber-200" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
                 {selectedLanguage === 'bn' ? 'খ্রি.' : 'CE'}
               </span>
             </div>
-            <div className="text-[9px] sm:text-[10px] font-black text-teal-200 uppercase tracking-wide flex items-center gap-1">
+            <div className="text-[9px] sm:text-[10px] font-black text-teal-200 uppercase tracking-wide flex items-center gap-1" style={{ textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
               <Clock className="w-3 h-3 text-emerald-400" />
               <span>{getEraYearText(activeEvent, selectedLanguage)}</span>
             </div>
