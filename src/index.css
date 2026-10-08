@@ -206,6 +206,18 @@ body.theme-day .leaflet-tooltip-top:before {
   border-top-color: rgba(255, 255, 255, 0.95) !important;
 }
 
+/* Custom Tooltips with NO background, NO borders, and high contrast readable text shadow */
+.leaflet-tooltip-custom-nobg {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.leaflet-tooltip-custom-nobg:before {
+  display: none !important;
+}
+
 /* Custom Div Icon Markers */
 .custom-leaflet-marker {
   display: flex !important;

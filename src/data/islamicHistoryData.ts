@@ -1651,6 +1651,33 @@ export const ISLAMIC_HISTORY_EVENTS: HistoryEvent[] = [
     }
   },
   {
+    "y": 935,
+    "cat": "knowledge",
+    "lat": 33.31,
+    "lon": 44.36,
+    "sc": "books",
+    "t": {
+      "en": "Imam Abu al-Hasan al-Ash'ari {RH} and Sunni Aqeedah",
+      "bn": "ইমাম আবুল হাসান আল-আশআরী {RH} ও সুন্নী আকীদা সংকলন"
+    },
+    "p": {
+      "en": "Baghdad",
+      "bn": "বাগদাদ"
+    },
+    "n": {
+      "en": "Baghdad, Iraq",
+      "bn": "বাগদাদ, ইরাক"
+    },
+    "d": {
+      "en": "Hazrat Imam Abu al-Hasan al-Ash'ari {RH} (d. 935 CE) formulated and defended the creed of Ahl al-Sunnah wal-Jama'ah (Sunni theology) against innovations, basing it firmly on the Qur'an, Sunnah and intellect. Along with Imam Abu Mansur al-Maturidi {RH}, he defined the theological framework followed by Sunni Muslims around the world, including the Hanafi-Ash'ari scholars and general population of Bengal.",
+      "bn": "হযরত ইমাম আবুল হাসান আল-আশআরী {RH} (ইন্তেকাল ৯৩৫ খ্রি.) বিদআতের বিরুদ্ধে পবিত্র কুরআন, সুন্নাহ ও যুক্তির আলোকে আহলু সুন্নাহ ওয়াল জামাআতের আকীদা মুবারক সংকলন ও রক্ষা করেন। ইমাম আবু মনসুর আল-মাতুরিদী {RH} উনার সাথে যৌথভাবে উনি এমন এক ধর্মতাত্ত্বিক ভিত্তি রূপদান করেন যা আজ বিশ্বজুড়ে (বিশেষ করে বাংলার হানাফী-আশআরী আলেম ও সাধারণ মানুষের মাঝে) অনুসৃত হয়।"
+    },
+    "l": {
+      "en": "Protecting correct faith (Aqeedah) is the foundation of all righteous deeds.",
+      "bn": "সঠিক বিশ্বাস বা আকীদা মুবারক রক্ষা করাই হলো সমস্ত নেক আমল কবুল হওয়ার মূল ভিত্তি।"
+    }
+  },
+  {
     "y": 970,
     "cat": "knowledge",
     "lat": 30.0457,
