@@ -69,7 +69,11 @@ export type NavModule =
   | 'dua'
   | 'tablig'
   | 'allah_names'
-  | 'hajj_umrah';
+  | 'hajj_checklist'
+  | 'umrah_guide'
+  | 'hajj_route_map'
+  | 'hajj_essentials'
+  | 'history_timeline';
 
 export type DuaCategory =
   | 'salat'

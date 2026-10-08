@@ -49,6 +49,7 @@ interface HajjUmrahViewProps {
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
   voiceGender?: VoiceGender;
+  initialTab?: HajjTab;
 }
 
 type HajjTab = 'umrah_hub' | 'hajj_hub' | 'home_journey_hub' | 'essentials_hub';
@@ -203,10 +204,11 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
   voiceGender = 'male',
+  initialTab = 'home_journey_hub',
 }) => {
   const isDay = themeMode === 'day';
   const isBn = selectedLanguage === 'bn';
-  const [activeTab, setActiveTab] = useState<HajjTab>('umrah_hub');
+  const [activeTab, setActiveTab] = useState<HajjTab>(initialTab);
   const [journeySubTab, setJourneySubTab] = useState<JourneySubTab>('umrah_journey');
   const [showStudioModal, setShowStudioModal] = useState<boolean>(false);
   const [activeHajjMapDay, setActiveHajjMapDay] = useState<number>(1);
@@ -395,49 +397,102 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
       {/* ======================================================= */}
       {activeTab === 'umrah_hub' && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          <div
-            className={`p-6 sm:p-8 rounded-[28px] border shadow-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 transition-all duration-300 ${
-              isDay
-                ? 'bg-gradient-to-r from-slate-950 via-[#071f24] to-slate-950 text-white border-amber-500/30 shadow-2xl'
-                : 'bg-gradient-to-r from-[#031317] via-[#07242a] to-[#031317] text-white border-amber-500/30 shadow-2xl shadow-black/80'
-            }`}
-          >
-            <div
-              className="absolute inset-0 bg-cover bg-center opacity-35 pointer-events-none mix-blend-luminosity filter brightness-90 transition-transform duration-700 hover:scale-105"
-              style={{
-                backgroundImage: `url('https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1200&q=80')`,
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/60 pointer-events-none" />
-
-            <div className="relative z-10 space-y-2.5 text-center sm:text-left max-w-xl">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-black border border-amber-400/40 backdrop-blur-md">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>{isBn ? 'থ্রিডি রিয়ালিস্টিক সিমুলেটর' : '3D Realistic Studio'}</span>
-              </div>
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white drop-shadow-md">
-                {isBn ? '🎬 লাইভ রিয়ালিস্টিক অ্যানিমেশন স্টুдио ওপেন করুন' : 'Open Live 3D Simulation Studio'}
-              </h3>
-              <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed font-medium">
-                {isBn
-                  ? 'তাওয়াফ, সাঈ, মাকামে ইব্রাহিম ও কাবা শরিফের পূর্ণাঙ্গ ৩ডি অ্যানিমেটেড দৃশ্য ও স্টেপ-বাই-স্টেপ প্র্যাকটিক্যাল অ্যানিমেশন সিমুলেশন'
-                  : 'Interactive 3D animated visual simulation for Tawaf, Sa\'i, Maqam Ibrahim and sacred rituals.'}
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                setShowStudioModal(true);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className="px-6 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black text-sm sm:text-base shadow-xl transition-all duration-200 active:scale-95 flex items-center gap-3 cursor-pointer shrink-0 relative z-10 border border-amber-200"
-            >
-              <div className="w-8 h-8 rounded-xl bg-slate-950/15 flex items-center justify-center">
-                <Tv className="w-5 h-5 text-slate-950" />
-              </div>
-              <span>{isBn ? 'অ্যানিমেশন স্টুдио চালু করুন ➔' : 'Launch Studio ➔'}</span>
-            </button>
+          <div className={`p-4 rounded-2xl border flex items-center justify-between ${isDay ? 'bg-amber-50 border-amber-200 text-slate-900' : 'bg-[#0a242a] border-amber-500/40 text-white'}`}>
+            <h3 className="text-sm font-black">{isBn ? '🕋 ওমরাহের ধাপসমূহ, দোয়া ও প্র্যাকটিক্যাল নির্দেশিকা' : '🕋 Umrah Steps, Duas & Practical Guide'}</h3>
           </div>
+
+          {UMRAH_STEPS.map((step: HajjStepItem) => {
+            return (
+              <div
+                key={step.id}
+                className={`p-6 rounded-3xl border shadow-xl space-y-5 ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#0a242a] border-[#16444e]'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-teal-900/40 pb-4">
+                  <div>
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">
+                      {isBn ? step.dayOrStageBn : step.dayOrStageEn}
+                    </span>
+                    <h4 className={`text-base sm:text-lg font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                      {isBn ? step.titleBn : step.titleEn}
+                    </h4>
+                  </div>
+                  {step.arabicTitle && (
+                    <span className="font-arabic text-base text-amber-600 dark:text-amber-400 font-bold px-3 py-1 rounded-xl bg-amber-500/10">
+                      {step.arabicTitle}
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-emerald-300 leading-relaxed">
+                  {isBn ? step.summaryBn : step.summaryEn}
+                </p>
+
+                {/* INDIVIDUAL ACTION CHECKLIST ITEMS */}
+                <div className="space-y-2.5 pt-1">
+                  <div className="text-xs font-bold text-slate-500 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-amber-500" />
+                    <span>{isBn ? 'করণীয় চেকলিস্ট (প্রতিটি আলাদা টিক দিন):' : 'Action Checklist (Tick Individually):'}</span>
+                  </div>
+                  {(isBn ? step.actionItems : step.actionItemsEn).map((act, aIdx) => {
+                    const itemKey = `${step.id}_act_${aIdx}`;
+                    const isItemChecked = !!actionCheckedState[itemKey];
+                    return (
+                      <div
+                        key={aIdx}
+                        onClick={() => toggleActionItem(step.id, aIdx)}
+                        className={`p-3.5 rounded-2xl border text-xs sm:text-sm flex items-start gap-3 transition-all cursor-pointer select-none ${
+                          isItemChecked
+                            ? isDay ? 'bg-amber-50 border-amber-300 text-slate-900 opacity-90' : 'bg-amber-950/30 border-amber-500/40 text-amber-100 opacity-90'
+                            : isDay ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800' : 'bg-[#071d22] hover:bg-teal-950/40 border-teal-900/40 text-teal-100'
+                        }`}
+                      >
+                        <button className="shrink-0 mt-0.5 pointer-events-none">
+                          {isItemChecked ? (
+                            <CheckSquare className="w-5 h-5 text-amber-500" />
+                          ) : (
+                            <Square className="w-5 h-5 text-slate-400" />
+                          )}
+                        </button>
+                        <span className={`leading-relaxed ${isItemChecked ? 'line-through text-slate-400 dark:text-teal-400' : ''}`}>{act}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* ESSENTIAL DUAS IF ATTACHED TO THIS STEP */}
+                {step.essentialDuas && step.essentialDuas.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    {step.essentialDuas.map((d, dIdx) => (
+                      <div key={dIdx} className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${isDay ? 'bg-white border-[#dcebe8] shadow-md ring-1 ring-slate-100 text-slate-800' : 'bg-[#0f292d] border-amber-500/30 text-white shadow-md'}`}>
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+                          <span className={`text-xs font-bold ${isDay ? 'text-[#006747]' : 'text-amber-300'}`}>
+                            {isBn ? d.titleBn : d.titleEn}
+                          </span>
+                          <button
+                            onClick={() => handleSpeakArabic(d.arabic)}
+                            className={`p-2 rounded-xl cursor-pointer flex items-center justify-center transition active:scale-95 shadow-md ${
+                              isDay ? 'bg-[#006747] hover:bg-[#00553a] text-white' : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                            }`}
+                            title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
+                          >
+                            <Volume2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <p dir="rtl" className={`font-arabic text-xl sm:text-2xl text-right leading-loose font-bold ${isDay ? 'text-[#063327]' : 'text-amber-100'}`}>
+                          {d.arabic}
+                        </p>
+                        <p className={`text-xs sm:text-sm font-medium italic ${isDay ? 'text-[#166534]' : 'text-emerald-300'}`}>
+                          {isBn ? d.meaningBn : d.meaningEn}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

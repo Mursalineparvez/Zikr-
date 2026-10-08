@@ -1612,7 +1612,19 @@ export default function App() {
   };
 
   // Primary 5 module items metadata (Zikir Counter, Quran, Salat Time, Aamal Tracker, Other)
-  const otherModules: NavModule[] = ['other', 'dua', 'hadith', 'kitab', 'tablig', 'allah_names', 'hajj_umrah'];
+  const otherModules: NavModule[] = [
+    'other',
+    'dua',
+    'hadith',
+    'kitab',
+    'hajj_checklist',
+    'umrah_guide',
+    'hajj_route_map',
+    'hajj_essentials',
+    'tablig',
+    'allah_names',
+    'history_timeline',
+  ];
   const isOtherActive = otherModules.includes(activeModule);
 
   const moduleTabs: Array<{
@@ -1657,7 +1669,7 @@ export default function App() {
       label: selectedLanguage === 'bn' ? 'অন্যান্য (Other)' : 'Other',
       arabic: 'أخرى',
       icon: '✨',
-      badge: '6 Tools',
+      badge: '10 Tools',
       isActive: isOtherActive,
     },
   ];
@@ -1874,12 +1886,20 @@ export default function App() {
                   ? 'hadith'
                   : activeModule === 'kitab'
                   ? 'kitab'
+                  : activeModule === 'hajj_checklist'
+                  ? 'hajj_checklist'
+                  : activeModule === 'umrah_guide'
+                  ? 'umrah_guide'
+                  : activeModule === 'hajj_route_map'
+                  ? 'hajj_route_map'
+                  : activeModule === 'hajj_essentials'
+                  ? 'hajj_essentials'
                   : activeModule === 'tablig'
                   ? 'tablig'
                   : activeModule === 'allah_names'
                   ? 'allah_names'
-                  : activeModule === 'hajj_umrah'
-                  ? 'hajj_umrah'
+                  : activeModule === 'history_timeline'
+                  ? 'history_timeline'
                   : 'hub'
               }
             />

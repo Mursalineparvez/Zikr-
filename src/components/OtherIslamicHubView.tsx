@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Settings,
   Volume2,
+  Compass,
 } from 'lucide-react';
 import { DuaView } from './DuaView';
 import { HadithView } from './HadithView';
@@ -16,6 +17,7 @@ import { KitabView } from './KitabView';
 import { DailyTabligView } from './DailyTabligView';
 import { AllahNamesView } from './AllahNamesView';
 import { HajjUmrahView } from './HajjUmrahView';
+import { HistoryTimelineView } from './HistoryTimelineView';
 import { SettingsView } from './SettingsView';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI, SETTINGS_UI } from '../utils/appTranslations';
@@ -25,9 +27,13 @@ export type OtherSubSection =
   | 'dua'
   | 'hadith'
   | 'kitab'
+  | 'history_timeline'
+  | 'hajj_checklist'
+  | 'umrah_guide'
+  | 'hajj_route_map'
+  | 'hajj_essentials'
   | 'tablig'
   | 'allah_names'
-  | 'hajj_umrah'
   | 'settings';
 
 interface OtherIslamicHubViewProps {
@@ -75,6 +81,15 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const hubItems = [
     {
+      id: 'history_timeline' as OtherSubSection,
+      title: NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা',
+      arabic: 'خريطة التاريخ الإسلامي',
+      desc: selectedLanguage === 'bn' ? '৫৭০ খ্রি. থেকে ২০২৬ খ্রি. পর্যন্ত সকল ঐতিহাসিক ঘটনা, অবস্থান ও ইন্টারঅ্যাক্টিভ মানচিত্র' : 'Interactive history map & events from 570 AD to 2026 AD.',
+      icon: <Compass className="w-6 h-6 text-amber-400 animate-pulse" />,
+      color: 'from-amber-500/15 to-emerald-500/10 border-amber-500/30',
+      badge: selectedLanguage === 'bn' ? 'ইন্টারেক্টিভ ম্যাপ' : 'History Map',
+    },
+    {
       id: 'dua' as OtherSubSection,
       title: NAV_TRANSLATIONS.dua[selectedLanguage],
       arabic: 'الأدعية المأثورة',
@@ -102,6 +117,42 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       badge: OTHER_HUB_UI.badgeKitab[selectedLanguage],
     },
     {
+      id: 'hajj_checklist' as OtherSubSection,
+      title: NAV_TRANSLATIONS.hajj_checklist[selectedLanguage],
+      arabic: 'قائمة الحج والعمرة',
+      desc: selectedLanguage === 'bn' ? 'ঘর থেকে ঘর পর্যন্ত হজ ও ওমরাহের ধাপভিত্তিক প্রস্তুতকারী নির্দেশিকা ও অ্যাকশন চেকলিস্ট' : 'Step-by-step preparation guide & action checklist from home to holy sites.',
+      icon: <span className="text-2xl">🏠</span>,
+      color: 'from-teal-500/15 to-cyan-500/10 border-teal-500/30',
+      badge: selectedLanguage === 'bn' ? 'স্মার্ট চেকলিস্ট' : 'Checklist',
+    },
+    {
+      id: 'umrah_guide' as OtherSubSection,
+      title: NAV_TRANSLATIONS.umrah_guide[selectedLanguage],
+      arabic: 'دليل العمرة والرسوم المتحركة',
+      desc: selectedLanguage === 'bn' ? 'তাওয়াফ, সাঈ ও কাবার ৩ডি লাইভ অ্যানিমেটেড সিমুলেটেড থ্রিডি ভার্চুয়াল স্টুডিও' : 'Interactive 3D animated studio simulation for Tawaf, Sa\'i & sacred rituals.',
+      icon: <span className="text-2xl">🕋</span>,
+      color: 'from-amber-500/15 to-yellow-500/10 border-amber-500/30',
+      badge: selectedLanguage === 'bn' ? '৩ডি অ্যানিমেশন' : '3D Studio',
+    },
+    {
+      id: 'hajj_route_map' as OtherSubSection,
+      title: NAV_TRANSLATIONS.hajj_route_map[selectedLanguage],
+      arabic: 'خريطة أيام الحج الخمسة',
+      desc: selectedLanguage === 'bn' ? 'মিনা, আরাফাত, মুজদালিফা ও কঙ্কর নিক্ষেপের আসল লোকেশন ছবি ও রুট ম্যাপ' : 'Mina, Arafat, Muzdalifah real location photos & 5-day route map.',
+      icon: <span className="text-2xl">⛺</span>,
+      color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
+      badge: selectedLanguage === 'bn' ? '৫ দিনের হজ' : '5 Days Hajj',
+    },
+    {
+      id: 'hajj_essentials' as OtherSubSection,
+      title: NAV_TRANSLATIONS.hajj_essentials[selectedLanguage],
+      arabic: 'المواقيت والمدينة والحقائب',
+      desc: selectedLanguage === 'bn' ? 'মিকাত সীমা, ইহরামের নিষেধ, মদিনা যিয়ারত স্থান ও ট্রাভেল প্যাকিং লিস্ট' : 'Miqat boundaries, Ihram rules, Madinah ziyarah & packing guide.',
+      icon: <span className="text-2xl">🎒</span>,
+      color: 'from-blue-500/15 to-indigo-500/10 border-blue-500/30',
+      badge: selectedLanguage === 'bn' ? 'মিকাত ও ব্যাগ' : 'Essentials',
+    },
+    {
       id: 'tablig' as OtherSubSection,
       title: NAV_TRANSLATIONS.tablig[selectedLanguage],
       arabic: 'الدعوة والتبليغ',
@@ -118,15 +169,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       icon: <Sparkles className="w-6 h-6 text-amber-400" />,
       color: 'from-amber-500/15 to-orange-500/10 border-amber-500/30',
       badge: OTHER_HUB_UI.badgeAllahNames[selectedLanguage],
-    },
-    {
-      id: 'hajj_umrah' as OtherSubSection,
-      title: NAV_TRANSLATIONS.hajj_umrah[selectedLanguage],
-      arabic: 'الحج والعمرة',
-      desc: OTHER_HUB_UI.hajjUmrahDesc[selectedLanguage],
-      icon: <span className="text-2xl">🕋</span>,
-      color: 'from-teal-500/15 to-emerald-500/10 border-teal-500/30',
-      badge: OTHER_HUB_UI.badgeHajj[selectedLanguage],
     },
     {
       id: 'settings' as OtherSubSection,
@@ -160,6 +202,20 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSub('history_timeline')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'history_timeline'
+              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <Compass className="w-3.5 h-3.5 text-amber-400" />
+          <span>{NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা'}</span>
         </button>
 
         <button
@@ -205,6 +261,62 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onClick={() => handleSelectSub('hajj_checklist')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'hajj_checklist'
+              ? 'bg-teal-600 text-white border-teal-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>🏠</span>
+          <span>{NAV_TRANSLATIONS.hajj_checklist[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSub('umrah_guide')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'umrah_guide'
+              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>🕋</span>
+          <span>{NAV_TRANSLATIONS.umrah_guide[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSub('hajj_route_map')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'hajj_route_map'
+              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>⛺</span>
+          <span>{NAV_TRANSLATIONS.hajj_route_map[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSub('hajj_essentials')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'hajj_essentials'
+              ? 'bg-cyan-600 text-white border-cyan-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>🎒</span>
+          <span>{NAV_TRANSLATIONS.hajj_essentials[selectedLanguage]}</span>
+        </button>
+
+        <button
           onClick={() => handleSelectSub('tablig')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'tablig'
@@ -230,20 +342,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>{NAV_TRANSLATIONS.allah_names[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onClick={() => handleSelectSub('hajj_umrah')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'hajj_umrah'
-              ? 'bg-teal-600 text-white border-teal-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>🕋</span>
-          <span>{NAV_TRANSLATIONS.hajj_umrah[selectedLanguage]}</span>
         </button>
 
         <button
@@ -379,6 +477,15 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </div>
       )}
 
+      {/* Sub-view: History Timeline & Interactive Map */}
+      {activeSub === 'history_timeline' && (
+        <HistoryTimelineView
+          soundEnabled={soundEnabled}
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+        />
+      )}
+
       {/* Sub-view: Dua */}
       {activeSub === 'dua' && (
         <DuaView
@@ -427,13 +534,47 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         />
       )}
 
-      {/* Sub-view: Hajj & Umrah */}
-      {activeSub === 'hajj_umrah' && (
+      {/* Sub-view: Hajj & Umrah Checklist */}
+      {activeSub === 'hajj_checklist' && (
         <HajjUmrahView
           soundEnabled={soundEnabled}
           themeMode={themeMode}
           selectedLanguage={selectedLanguage}
           voiceGender={settings?.voiceGender || 'male'}
+          initialTab="home_journey_hub"
+        />
+      )}
+
+      {/* Sub-view: Umrah Guide & 3D Studio */}
+      {activeSub === 'umrah_guide' && (
+        <HajjUmrahView
+          soundEnabled={soundEnabled}
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          voiceGender={settings?.voiceGender || 'male'}
+          initialTab="umrah_hub"
+        />
+      )}
+
+      {/* Sub-view: 5 Days Hajj Route Map */}
+      {activeSub === 'hajj_route_map' && (
+        <HajjUmrahView
+          soundEnabled={soundEnabled}
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          voiceGender={settings?.voiceGender || 'male'}
+          initialTab="hajj_hub"
+        />
+      )}
+
+      {/* Sub-view: Miqat, Madinah & Essentials */}
+      {activeSub === 'hajj_essentials' && (
+        <HajjUmrahView
+          soundEnabled={soundEnabled}
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          voiceGender={settings?.voiceGender || 'male'}
+          initialTab="essentials_hub"
         />
       )}
 

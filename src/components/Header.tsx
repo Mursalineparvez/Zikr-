@@ -82,9 +82,12 @@ export const Header: React.FC<HeaderProps> = ({
     'dua',
     'hadith',
     'kitab',
+    'hajj_checklist',
+    'umrah_guide',
+    'hajj_route_map',
+    'hajj_essentials',
     'tablig',
     'allah_names',
-    'hajj_umrah',
   ];
   const isOtherActive = otherModules.includes(activeModule);
 

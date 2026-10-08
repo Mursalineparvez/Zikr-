@@ -27,7 +27,19 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   const isDay = themeMode === 'day';
 
-  const otherModules: NavModule[] = ['other', 'dua', 'hadith', 'kitab', 'tablig', 'allah_names', 'hajj_umrah'];
+  const otherModules: NavModule[] = [
+    'other',
+    'dua',
+    'hadith',
+    'kitab',
+    'hajj_checklist',
+    'umrah_guide',
+    'hajj_route_map',
+    'hajj_essentials',
+    'tablig',
+    'allah_names',
+    'history_timeline',
+  ];
   const isOtherActive = otherModules.includes(activeModule);
 
   const navItems: Array<{
