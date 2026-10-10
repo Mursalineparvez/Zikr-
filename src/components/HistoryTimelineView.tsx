@@ -136,6 +136,73 @@ function renderHonorificText(text: string | undefined, isDay: boolean): React.Re
   });
 }
 
+interface EraTheme {
+  color: string;
+  bgActive: string;
+  borderActive: string;
+  glow: string;
+  dotColor: string;
+}
+
+const ERA_THEMES: Record<string, EraTheme> = {
+  makkah: {
+    color: '#f59e0b',
+    bgActive: 'bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500',
+    borderActive: 'border-amber-400',
+    glow: 'rgba(245, 158, 11, 0.45)',
+    dotColor: '#f59e0b',
+  },
+  madinah: {
+    color: '#10b981',
+    bgActive: 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-400',
+    borderActive: 'border-emerald-400',
+    glow: 'rgba(16, 185, 129, 0.45)',
+    dotColor: '#10b981',
+  },
+  rashidun: {
+    color: '#06b6d4',
+    bgActive: 'bg-gradient-to-r from-cyan-600 via-teal-500 to-emerald-500',
+    borderActive: 'border-cyan-400',
+    glow: 'rgba(6, 182, 212, 0.45)',
+    dotColor: '#06b6d4',
+  },
+  umayyad: {
+    color: '#6366f1',
+    bgActive: 'bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-500',
+    borderActive: 'border-indigo-400',
+    glow: 'rgba(99, 102, 241, 0.45)',
+    dotColor: '#6366f1',
+  },
+  abbasid: {
+    color: '#8b5cf6',
+    bgActive: 'bg-gradient-to-r from-purple-600 via-violet-500 to-indigo-500',
+    borderActive: 'border-purple-400',
+    glow: 'rgba(139, 92, 246, 0.45)',
+    dotColor: '#8b5cf6',
+  },
+  sultanates: {
+    color: '#f97316',
+    bgActive: 'bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-500',
+    borderActive: 'border-orange-400',
+    glow: 'rgba(249, 115, 22, 0.45)',
+    dotColor: '#f97316',
+  },
+  empires: {
+    color: '#f43f5e',
+    bgActive: 'bg-gradient-to-r from-rose-600 via-red-500 to-pink-500',
+    borderActive: 'border-rose-400',
+    glow: 'rgba(244, 63, 94, 0.45)',
+    dotColor: '#f43f5e',
+  },
+  modern: {
+    color: '#14b8a6',
+    bgActive: 'bg-gradient-to-r from-teal-600 via-emerald-500 to-cyan-500',
+    borderActive: 'border-teal-400',
+    glow: 'rgba(20, 184, 166, 0.45)',
+    dotColor: '#14b8a6',
+  },
+};
+
 export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
@@ -711,6 +778,342 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
     }, 120);
     return () => clearTimeout(timer);
   }, [currentIndex, activeTab, activeRefSection, showBanner]);
+
+  const renderTimelineDeck = (isFixedBottom: boolean = false) => {
+    return (
+      <div
+        className={
+          isFixedBottom
+            ? `fixed bottom-[52px] md:bottom-0 left-0 right-0 z-50 backdrop-blur-3xl transition-all duration-300 border-t ${
+                isDay
+                  ? 'bg-white/95 border-emerald-200/90 shadow-[0_-12px_40px_rgba(0,103,71,0.12)]'
+                  : 'bg-[#04151a]/95 border-teal-500/30 shadow-[0_-15px_45px_rgba(0,0,0,0.85)]'
+              }`
+            : `w-full rounded-[24px] overflow-hidden border backdrop-blur-2xl transition-all duration-300 relative shadow-xl ${
+                isDay
+                  ? 'bg-white/95 border-emerald-200/90 shadow-[0_10px_35px_rgba(0,103,71,0.08)]'
+                  : 'bg-[#04151a]/95 border-teal-500/30 shadow-[0_12px_40px_rgba(0,0,0,0.65)]'
+              }`
+        }
+      >
+        {/* Luminous Top Accent Hairline */}
+        <div
+          className={`absolute ${
+            isFixedBottom ? '-top-[1.5px]' : 'top-0'
+          } inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 via-amber-400 to-transparent opacity-80 shadow-[0_0_10px_rgba(16,185,129,0.6)] pointer-events-none`}
+        />
+
+        <div
+          className={
+            isFixedBottom
+              ? 'max-w-7xl mx-auto px-2.5 sm:px-6 py-2 sm:py-2.5 space-y-1.5 sm:space-y-2'
+              : 'px-3 sm:px-6 py-2.5 sm:py-3 space-y-2'
+          }
+        >
+          {/* ROW 1: Playback Hub, Speed Capsule, Event Title Pill & Historical Span */}
+          <div className="flex items-center justify-between gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+            {/* Play/Pause & Step Buttons & Speed Capsule */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Prev Button */}
+              <button
+                type="button"
+                onClick={handlePrev}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer border ${
+                  isDay
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                    : 'bg-[#08262d] hover:bg-[#0c333c] border-teal-500/25 text-teal-200'
+                }`}
+                title={selectedLanguage === 'bn' ? 'পূর্ববর্তী ঘটনা' : 'Previous Event'}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Radiant Play/Pause Button with pulse ring */}
+              <div className="relative">
+                {isPlaying && (
+                  <span className="absolute -inset-1 rounded-full bg-amber-400/40 animate-ping pointer-events-none" />
+                )}
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className={`relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all active:scale-90 text-white shadow-lg cursor-pointer ${
+                    isPlaying
+                      ? 'bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 shadow-[0_0_15px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/40'
+                      : 'bg-gradient-to-tr from-[#059669] via-[#10b981] to-[#34d399] hover:brightness-110 shadow-[0_0_15px_rgba(16,185,129,0.5)] ring-2 ring-emerald-400/30'
+                  }`}
+                  title={isPlaying ? 'বিরতি দিন (Pause Tour)' : 'প্লে করুন (Play Interactive Tour)'}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 fill-current animate-pulse" />
+                  ) : (
+                    <Play className="w-4 h-4 fill-current ml-0.5" />
+                  )}
+                </button>
+              </div>
+
+              {/* Next Button */}
+              <button
+                type="button"
+                onClick={handleNext}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all active:scale-90 cursor-pointer border ${
+                  isDay
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                    : 'bg-[#08262d] hover:bg-[#0c333c] border-teal-500/25 text-teal-200'
+                }`}
+                title={selectedLanguage === 'bn' ? 'পরবর্তী ঘটনা' : 'Next Event'}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Segmented Speed Capsule */}
+              <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100/90 dark:bg-[#08262d] rounded-xl border border-slate-200/60 dark:border-teal-500/25 shadow-inner">
+                {[0.5, 1, 2, 3, 5].map((speed) => {
+                  const isActive = playSpeed === speed;
+                  return (
+                    <button
+                      key={speed}
+                      type="button"
+                      onClick={() => {
+                        setPlaySpeed(speed);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`px-1.5 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-black rounded-lg transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-[0_0_8px_rgba(16,185,129,0.5)] scale-105'
+                          : isDay
+                          ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                          : 'text-teal-300 hover:text-white hover:bg-teal-950/40'
+                      }`}
+                    >
+                      {toBengaliDigits(speed)}x
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Current Event Pill (Creative glowing HUD capsule) */}
+            <div className="flex-1 flex justify-center min-w-0">
+              <div className="inline-flex items-center gap-2 bg-[#ecfdf5]/95 dark:bg-[#062426]/90 border border-[#a7f3d0] dark:border-teal-500/35 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-emerald-950 dark:text-emerald-100 shadow-[0_2px_10px_rgba(0,103,71,0.08)] max-w-full backdrop-blur-md">
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span
+                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                    style={{ backgroundColor: CATEGORY_INFO[activeEvent.cat]?.color || '#f59e0b' }}
+                  />
+                  <span
+                    className="relative inline-flex rounded-full h-2.5 w-2.5"
+                    style={{
+                      backgroundColor: CATEGORY_INFO[activeEvent.cat]?.color || '#f59e0b',
+                      boxShadow: `0 0 6px ${CATEGORY_INFO[activeEvent.cat]?.color || '#f59e0b'}`,
+                    }}
+                  />
+                </span>
+                <span className="px-1.5 py-0.2 text-[9.5px] sm:text-[10.5px] font-mono font-black rounded-md bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/30 shrink-0">
+                  {toBengaliDigits(activeEvent.y)} খ্রি.
+                </span>
+                <span className="truncate max-w-[140px] sm:max-w-xs md:max-w-sm tracking-tight">
+                  {formattedTitle}
+                </span>
+                {CATEGORY_INFO[activeEvent.cat] && (
+                  <span
+                    className="hidden md:inline-block px-1.5 py-0.5 text-[9px] font-black rounded-md border shrink-0 text-slate-700 dark:text-teal-200"
+                    style={{
+                      borderColor: `${CATEGORY_INFO[activeEvent.cat]?.color || '#10b981'}40`,
+                      backgroundColor: `${CATEGORY_INFO[activeEvent.cat]?.color || '#10b981'}15`,
+                    }}
+                  >
+                    {selectedLanguage === 'bn'
+                      ? CATEGORY_INFO[activeEvent.cat].labelBn
+                      : CATEGORY_INFO[activeEvent.cat].labelEn}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Overall Timeline Range Display */}
+            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100/80 dark:bg-[#08262d] border border-slate-200/60 dark:border-teal-500/20 text-[10px] sm:text-xs text-slate-600 dark:text-teal-300 font-black font-mono">
+              <Clock className="w-3 h-3 text-amber-500 shrink-0" />
+              <span>৫৭০ খ্রি. – ২০২৬ খ্রি.</span>
+            </div>
+          </div>
+
+          {/* ROW 2: Chronological Segmented 8 Era Pills (Matching Image with Creative Glow) */}
+          <div className="w-full flex items-center gap-1 sm:grid sm:grid-cols-8 sm:gap-1.5 overflow-x-auto scrollbar-none rounded-xl text-[9px] select-none py-0.5">
+            {ISLAMIC_HISTORY_ERAS.map((era) => {
+              const isCurrentEra = activeEra.id === era.id;
+              const theme = ERA_THEMES[era.id] || {
+                color: '#f59e0b',
+                bgActive: 'bg-gradient-to-r from-amber-600 to-amber-500',
+                borderActive: 'border-amber-400',
+                glow: 'rgba(245, 158, 11, 0.45)',
+              };
+              return (
+                <button
+                  key={era.id}
+                  onClick={() => {
+                    handleJumpToEra(era);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  type="button"
+                  className={`shrink-0 sm:shrink relative flex flex-col items-center justify-center py-1 sm:py-1.5 px-2 sm:px-1 rounded-xl text-[9px] sm:text-[10px] font-black transition-all cursor-pointer text-center border min-w-[78px] sm:min-w-0 ${
+                    isCurrentEra
+                      ? `${theme.bgActive} ${theme.borderActive} text-white shadow-lg scale-[1.02] ring-1 ring-white/30`
+                      : isDay
+                      ? 'bg-slate-100/90 hover:bg-slate-200/90 text-slate-700 border-slate-200/70 hover:scale-[1.01]'
+                      : 'bg-[#08262d]/80 hover:bg-[#0c333c] text-emerald-100/80 border-teal-500/20 hover:scale-[1.01]'
+                  }`}
+                  style={
+                    isCurrentEra
+                      ? { boxShadow: `0 0 12px ${theme.glow}` }
+                      : undefined
+                  }
+                  title={`${getLangText(era.name, selectedLanguage)} (${era.from} - ${era.to} খ্রি.)`}
+                >
+                  <span className="truncate w-full block leading-tight font-black">
+                    {getLangText(era.name, selectedLanguage)}
+                  </span>
+                  <span className="text-[7.5px] sm:text-[8px] opacity-85 block font-mono font-normal mt-0.5 leading-none">
+                    {toBengaliDigits(era.from)} - {toBengaliDigits(era.to)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ROW 3: Interactive Luminous Timeline Track with Floating Year Beacon & Milestone Beads */}
+          <div className="relative py-2 sm:py-2.5 select-none">
+            {/* Underlay Track Line */}
+            <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-slate-200/80 dark:bg-teal-950/50 rounded-full -translate-y-1/2 pointer-events-none border border-slate-300/40 dark:border-teal-900/40" />
+
+            {/* Glowing Progress Line */}
+            <div
+              className="absolute top-1/2 left-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full -translate-y-1/2 pointer-events-none shadow-[0_0_8px_rgba(16,185,129,0.6)]"
+              style={{ width: `${(currentIndex / (ISLAMIC_HISTORY_EVENTS.length - 1)) * 100}%` }}
+            />
+
+            {/* Floating Year Beacon attached to current thumb position */}
+            <div
+              className="absolute top-[-10px] sm:top-[-12px] -translate-x-1/2 pointer-events-none transition-all duration-150 z-20 flex flex-col items-center"
+              style={{
+                left: `${(currentIndex / (ISLAMIC_HISTORY_EVENTS.length - 1)) * 100}%`,
+              }}
+            >
+              <div className="px-1.5 py-0.5 rounded-md bg-amber-500 text-slate-950 font-mono font-black text-[8px] sm:text-[9px] shadow-[0_0_8px_rgba(245,158,11,0.6)] border border-amber-300 flex items-center gap-0.5 whitespace-nowrap">
+                <span>{toBengaliDigits(activeEvent.y)} খ্রি.</span>
+              </div>
+              <div className="w-1 h-1 bg-amber-400 rotate-45 -mt-0.5" />
+            </div>
+
+            {/* Connected Colorful Interactive Tasbih Event Beads */}
+            <div className="absolute top-1/2 left-1 right-1 flex items-center justify-between -translate-y-1/2 pointer-events-none">
+              {ISLAMIC_HISTORY_EVENTS.map((evt, idx) => {
+                const isSelected = idx === currentIndex;
+                const catColor = CATEGORY_INFO[evt.cat]?.color || '#10b981';
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-center relative"
+                    style={{ width: '4px', height: '4px' }}
+                  >
+                    {/* Glowing vertical halo on active bead */}
+                    {isSelected && (
+                      <div className="absolute w-4 sm:w-5 h-6 sm:h-7 rounded-full bg-amber-400/35 ring-2 ring-amber-400 shadow-[0_0_12px_#f59e0b] pointer-events-none z-10 animate-pulse" />
+                    )}
+                    <div
+                      className={`rounded-full transition-all cursor-pointer pointer-events-auto ${
+                        isSelected ? 'w-2.5 h-2.5 z-20 scale-125' : 'w-1.5 h-1.5 opacity-80 hover:scale-150'
+                      }`}
+                      style={{
+                        backgroundColor: catColor,
+                        boxShadow: isSelected ? '0 0 6px rgba(0,0,0,0.5)' : undefined,
+                      }}
+                      onClick={() => {
+                        setCurrentIndex(idx);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      title={`${getLangText(evt.t, selectedLanguage)} (${evt.y} CE)`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Transparent Range Input Slider */}
+            <input
+              type="range"
+              min={0}
+              max={ISLAMIC_HISTORY_EVENTS.length - 1}
+              value={currentIndex}
+              onChange={(e) => {
+                setCurrentIndex(parseInt(e.target.value, 10));
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-7 opacity-0 cursor-pointer z-30"
+            />
+          </div>
+
+          {/* Historical Tick Marks Row */}
+          <div className="flex items-center justify-between text-[7.5px] sm:text-[8.5px] font-black text-slate-400/80 dark:text-teal-300/50 px-0.5 font-mono select-none">
+            <span>৫৭০ খ্রি.</span>
+            <span>৬২২ খ্রি.</span>
+            <span>৬৬১ খ্রি.</span>
+            <span>৭৫০ খ্রি.</span>
+            <span>১০০০ খ্রি.</span>
+            <span>১২৫৮ খ্রি.</span>
+            <span>১৫০০ খ্রি.</span>
+            <span>১৮০০ খ্রি.</span>
+            <span>২০২৬ খ্রি.</span>
+          </div>
+
+          {/* ROW 4: Visited Count, Tour Status & Shimmering Progress Bar Indicator */}
+          <div className="flex items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-teal-900/40 text-[10px] sm:text-xs font-black select-none">
+            <div className="flex items-center gap-1.5 text-slate-700 dark:text-emerald-300/95">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+              <span>
+                {selectedLanguage === 'bn'
+                  ? `${toBengaliDigits(currentIndex + 1)}টি স্থান ঘুরে দেখা হয়েছে (সর্বমোট ${toBengaliDigits(ISLAMIC_HISTORY_EVENTS.length)}টি ঘটনা)`
+                  : `${currentIndex + 1} of ${ISLAMIC_HISTORY_EVENTS.length} events explored`}
+              </span>
+            </div>
+
+            {/* Tour Status Pill in Center */}
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-slate-200/60 dark:border-teal-500/25 bg-slate-50/80 dark:bg-[#07242a] text-[10px]">
+              {isPlaying ? (
+                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>স্বয়ংক্রিয় টাইমলাইন সফর চালু ({toBengaliDigits(playSpeed)}x গতি)</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-slate-500 dark:text-teal-300/70">
+                  <Layers className="w-3 h-3 text-teal-400" />
+                  <span>ইন্টারেক্টিভ ইতিহাস পর্যালোচনা</span>
+                </span>
+              )}
+            </div>
+
+            {/* Right: Percentage & Shimmering Progress Bar */}
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[9px] sm:text-[10px] text-slate-500 dark:text-teal-300/80 font-black">
+                {toBengaliDigits((((currentIndex + 1) / ISLAMIC_HISTORY_EVENTS.length) * 100).toFixed(0))}%
+              </span>
+              <div className="w-24 sm:w-44 bg-slate-100 dark:bg-[#08262d] h-2 sm:h-2.5 rounded-full overflow-hidden border border-slate-200/60 dark:border-teal-500/25 p-0.5 relative text-left">
+                <div
+                  className="bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 h-full rounded-full transition-all duration-300 shadow shadow-emerald-500/30 relative overflow-hidden"
+                  style={{ width: `${((currentIndex + 1) / ISLAMIC_HISTORY_EVENTS.length) * 100}%` }}
+                >
+                  <div
+                    className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)] animate-[shimmer_2s_infinite] bg-[size:100px_100%]"
+                    style={{ animationDuration: '2s' }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const isNameDifferent = getLangText(activeEvent.p, selectedLanguage).trim().toLowerCase() !== getLangText(activeEvent.n, selectedLanguage).trim().toLowerCase();
 
@@ -1896,216 +2299,8 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
         </div>
       </div>
 
-      {/* 4. FIXED SLIM BOTTOM TIMELINE DECK WITH FULL INFORMATION (EXACTLY MATCHING USER SCREENSHOT) */}
-      <div
-        className={`fixed bottom-[52px] md:bottom-0 left-0 right-0 z-40 backdrop-blur-2xl transition-all duration-300 border-t ${
-          isDay
-            ? 'bg-white/95 border-slate-200/90 shadow-[0_-10px_30px_rgba(0,103,71,0.08)]'
-            : 'bg-[#05171d]/95 border-teal-500/25 shadow-[0_-12px_40px_rgba(0,0,0,0.7)]'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2 sm:py-2.5 space-y-1.5 sm:space-y-2">
-          
-          {/* ROW 1: Playback Button, Speed Pills, Event Title Badge & Historical Range */}
-          <div className="flex items-center justify-between gap-2 sm:gap-4 flex-wrap sm:flex-nowrap">
-            
-            {/* Play/Pause & Speed Buttons */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={togglePlay}
-                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all active:scale-90 text-white shadow-md cursor-pointer ${
-                  isPlaying
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/30 ring-2 ring-amber-500/30'
-                    : 'bg-[#059669] hover:bg-[#047857] shadow-emerald-600/30 ring-2 ring-emerald-500/20'
-                }`}
-                title={isPlaying ? 'বিরতি দিন (Pause)' : 'প্লে করুন (Play Timeline Tour)'}
-              >
-                {isPlaying ? (
-                  <Pause className="w-4 h-4 fill-current animate-pulse" />
-                ) : (
-                  <Play className="w-4 h-4 fill-current ml-0.5" />
-                )}
-              </button>
-
-              <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100/90 dark:bg-[#0c2a31] rounded-xl border border-slate-200/60 dark:border-teal-500/20">
-                {[0.5, 1, 2, 3, 5].map((speed) => {
-                  const isActive = playSpeed === speed;
-                  return (
-                    <button
-                      key={speed}
-                      type="button"
-                      onClick={() => {
-                        setPlaySpeed(speed);
-                        if (soundEnabled) soundHaptics.playTap();
-                      }}
-                      className={`px-1.5 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-black rounded-lg transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-[#059669] text-white shadow-sm'
-                          : isDay
-                          ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                          : 'text-teal-300 hover:text-white hover:bg-teal-950/40'
-                      }`}
-                    >
-                      {toBengaliDigits(speed)}x
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Current Event Pill (Exact style as shown in user screenshot) */}
-            <div className="flex-1 flex justify-center min-w-0">
-              <div className="inline-flex items-center gap-2 bg-[#ecfdf5] dark:bg-[#062426] border border-[#a7f3d0] dark:border-teal-500/30 px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-emerald-900 dark:text-emerald-100 shadow-sm max-w-full">
-                <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
-                  style={{
-                    backgroundColor: CATEGORY_INFO[activeEvent.cat]?.color || '#f59e0b',
-                    boxShadow: `0 0 6px ${CATEGORY_INFO[activeEvent.cat]?.color || '#f59e0b'}`,
-                  }}
-                />
-                <span className="truncate max-w-[200px] sm:max-w-md">
-                  {formattedTitle}
-                </span>
-              </div>
-            </div>
-
-            {/* Overall Timeline Range Display */}
-            <div className="shrink-0 text-[10px] sm:text-xs text-slate-400 dark:text-teal-300/50 font-black font-mono">
-              <span>৫৭০ খ্রি. – ২০২৬ খ্রি.</span>
-            </div>
-          </div>
-
-          {/* ROW 2: Chronological Segmented 8 Era Pills (Matching Image) */}
-          <div className="w-full flex items-center gap-1 sm:grid sm:grid-cols-8 sm:gap-1.5 overflow-x-auto scrollbar-none rounded-xl text-[9px] select-none py-0.5">
-            {ISLAMIC_HISTORY_ERAS.map((era) => {
-              const isCurrentEra = activeEra.id === era.id;
-              return (
-                <button
-                  key={era.id}
-                  onClick={() => {
-                    handleJumpToEra(era);
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  type="button"
-                  className={`shrink-0 sm:shrink relative flex flex-col items-center justify-center py-1 sm:py-1.5 px-2 sm:px-1 rounded-xl text-[9px] sm:text-[10px] font-black transition-all cursor-pointer text-center border min-w-[76px] sm:min-w-0 ${
-                    isCurrentEra
-                      ? 'bg-[#d97706] dark:bg-[#d97706] border-amber-500 text-white shadow-md'
-                      : isDay
-                      ? 'bg-slate-100/90 hover:bg-slate-200 text-slate-700 border-slate-200/60'
-                      : 'bg-[#0a262c]/80 hover:bg-[#0f343c] text-emerald-100/75 border-teal-500/15'
-                  }`}
-                  title={`${getLangText(era.name, selectedLanguage)} (${era.from} - ${era.to})`}
-                >
-                  <span className="truncate w-full block leading-tight font-black">
-                    {getLangText(era.name, selectedLanguage)}
-                  </span>
-                  <span className="text-[7.5px] sm:text-[8px] opacity-80 block font-mono font-normal mt-0.5 leading-none">
-                    {toBengaliDigits(era.from)} - {toBengaliDigits(era.to)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ROW 3: Interactive Tasbih Beads Slider with Glowing Halo & Ticks (Matching Image) */}
-          <div className="relative py-2 sm:py-2.5 select-none">
-            {/* Underlay Track Line */}
-            <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 dark:bg-teal-950/40 rounded-full -translate-y-1/2 pointer-events-none" />
-
-            {/* Glowing Progress Line */}
-            <div
-              className="absolute top-1/2 left-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full -translate-y-1/2 pointer-events-none"
-              style={{ width: `${(currentIndex / (ISLAMIC_HISTORY_EVENTS.length - 1)) * 100}%` }}
-            />
-
-            {/* Connected Colorful Interactive Tasbih Event Beads */}
-            <div className="absolute top-1/2 left-1 right-1 flex items-center justify-between -translate-y-1/2 pointer-events-none">
-              {ISLAMIC_HISTORY_EVENTS.map((evt, idx) => {
-                const isSelected = idx === currentIndex;
-                const catColor = CATEGORY_INFO[evt.cat]?.color || '#10b981';
-                return (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-center relative"
-                    style={{ width: '4px', height: '4px' }}
-                  >
-                    {/* Glowing vertical pill halo on active bead */}
-                    {isSelected && (
-                      <div className="absolute w-4 sm:w-5 h-6 sm:h-7 rounded-full bg-amber-400/35 ring-2 ring-amber-400 shadow-[0_0_12px_#f59e0b] pointer-events-none z-10 animate-pulse" />
-                    )}
-                    <div
-                      className={`rounded-full transition-all cursor-pointer pointer-events-auto ${
-                        isSelected ? 'w-2.5 h-2.5 z-20 scale-125' : 'w-1.5 h-1.5 opacity-80 hover:scale-150'
-                      }`}
-                      style={{
-                        backgroundColor: catColor,
-                        boxShadow: isSelected ? '0 0 6px rgba(0,0,0,0.5)' : undefined,
-                      }}
-                      onClick={() => {
-                        setCurrentIndex(idx);
-                        if (soundEnabled) soundHaptics.playTap();
-                      }}
-                      title={`${getLangText(evt.t, selectedLanguage)} (${evt.y} CE)`}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Transparent Range Input Slider */}
-            <input
-              type="range"
-              min={0}
-              max={ISLAMIC_HISTORY_EVENTS.length - 1}
-              value={currentIndex}
-              onChange={(e) => {
-                setCurrentIndex(parseInt(e.target.value, 10));
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-6 opacity-0 cursor-pointer z-30"
-            />
-          </div>
-
-          {/* Historical Tick Marks Row */}
-          <div className="flex items-center justify-between text-[7.5px] sm:text-[8.5px] font-black text-slate-400/80 dark:text-teal-300/40 px-0.5 font-mono select-none">
-            <span>৫৭০ খ্রি.</span>
-            <span>৬২২ খ্রি.</span>
-            <span>৬৬১ খ্রি.</span>
-            <span>৭৫০ খ্রি.</span>
-            <span>১০০০ খ্রি.</span>
-            <span>১২৫৮ খ্রি.</span>
-            <span>১৫০০ খ্রি.</span>
-            <span>১৮০০ খ্রি.</span>
-            <span>২০২৬ খ্রি.</span>
-          </div>
-
-          {/* ROW 4: Visited Count & Progress Bar Indicator */}
-          <div className="flex items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-teal-900/40 text-[10px] sm:text-xs font-black select-none">
-            <div className="flex items-center gap-1.5 text-slate-600 dark:text-emerald-300/90">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.3)]" />
-              <span>
-                {selectedLanguage === 'bn'
-                  ? `${toBengaliDigits(currentIndex + 1)}টি স্থান ঘুরে দেখা হয়েছে (সর্বমোট ${toBengaliDigits(ISLAMIC_HISTORY_EVENTS.length)}টি ঘটনা)`
-                  : `${currentIndex + 1} of ${ISLAMIC_HISTORY_EVENTS.length} events explored`}
-              </span>
-            </div>
-
-            <div className="w-28 sm:w-60 bg-slate-100 dark:bg-[#0c2a31] h-2 sm:h-2.5 rounded-full overflow-hidden border border-teal-500/15 p-0.5 relative text-left">
-              <div
-                className="bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 h-full rounded-full transition-all duration-300 shadow shadow-emerald-500/30 relative overflow-hidden"
-                style={{ width: `${((currentIndex + 1) / ISLAMIC_HISTORY_EVENTS.length) * 100}%` }}
-              >
-                <div
-                  className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent)] animate-[shimmer_1.5s_infinite] bg-[size:100px_100%]"
-                  style={{ animationDuration: '2s' }}
-                />
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
+      {/* 4. FIXED BOTTOM TIMELINE CONTROLLER DOCK - STAYS DOCKED WHILE EXPLORING STORIES */}
+      {renderTimelineDeck(true)}
     </div>
   );
 };

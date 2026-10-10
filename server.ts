@@ -46,7 +46,7 @@ if (!fs.existsSync(USERS_STORE_FILE)) {
       verificationMethod: 'Google Sign-In',
       lastSyncedAt: Date.now(),
       createdAtMs: Date.now() - 172800000,
-      lifetimeTotalCount: 895,
+      lifetimeTotalCount: 4098,
       activeZikrs: [],
       hasPassword: true,
     },
@@ -108,7 +108,7 @@ if (!fs.existsSync(USERS_STORE_FILE)) {
 // 1. POST /api/sync-user: Registers or updates any user instantly across all devices
 app.post('/api/sync-user', (req, res) => {
   try {
-    const { userKey, profile, zikrs, lifetimeTotalCount } = req.body;
+    const { userKey, profile, zikrs, lifetimeTotalCount, historySessions, aamalLogs, settings } = req.body;
     if (!userKey) {
       return res.status(400).json({ error: 'Missing userKey' });
     }
@@ -117,6 +117,11 @@ app.post('/api/sync-user', (req, res) => {
     const rawEmail = (profile?.emailOrPhone || profile?.email || '').toLowerCase().trim();
     const displayName = profile?.name || (rawEmail.includes('@') ? rawEmail.split('@')[0] : 'User');
     const existing = currentUsers[userKey] || {};
+
+    const incomingLifetime = typeof lifetimeTotalCount === 'number' ? lifetimeTotalCount : 0;
+    const existingLifetime = typeof existing.lifetimeTotalCount === 'number' ? existing.lifetimeTotalCount : 0;
+    const activeZikrSum = Array.isArray(zikrs) ? zikrs.reduce((acc: number, z: any) => acc + (z.count || 0), 0) : 0;
+    const resolvedLifetime = Math.max(incomingLifetime, existingLifetime, activeZikrSum);
 
     const cleanUser = {
       ...existing,
@@ -135,19 +140,36 @@ app.post('/api/sync-user', (req, res) => {
           : profile?.verificationMethod || existing.verificationMethod || 'Verified Account',
       lastSyncedAt: Date.now(),
       createdAtMs: existing.createdAtMs || Date.now(),
-      lifetimeTotalCount:
-        typeof lifetimeTotalCount === 'number' ? lifetimeTotalCount : existing.lifetimeTotalCount || 0,
-      activeZikrs: Array.isArray(zikrs) ? zikrs : existing.activeZikrs || [],
+      lifetimeTotalCount: resolvedLifetime,
+      activeZikrs: Array.isArray(zikrs) && zikrs.length > 0 ? zikrs : existing.activeZikrs || [],
+      historySessions: Array.isArray(historySessions) ? historySessions : existing.historySessions || [],
+      aamalLogs: aamalLogs && typeof aamalLogs === 'object' ? aamalLogs : existing.aamalLogs || {},
+      settings: settings && typeof settings === 'object' ? settings : existing.settings || {},
       hasPassword: !!(profile?.password || existing.hasPassword),
     };
 
     currentUsers[userKey] = cleanUser;
     saveServerUsers(currentUsers);
 
-    console.log(`[API /api/sync-user] Registered/Updated user: ${rawEmail || userKey} (${cleanUser.deviceModel})`);
+    console.log(`[API /api/sync-user] Registered/Updated user: ${rawEmail || userKey} (Lifetime: ${resolvedLifetime})`);
     return res.json({ success: true, user: cleanUser });
   } catch (err: any) {
     console.error('Error in /api/sync-user:', err);
+    return res.status(500).json({ error: err?.message || 'Server error' });
+  }
+});
+
+// 1.1 GET /api/sync-user/:userKey: Fetches user server registry record
+app.get('/api/sync-user/:userKey', (req, res) => {
+  try {
+    const { userKey } = req.params;
+    const currentUsers = loadServerUsers();
+    const user = currentUsers[userKey];
+    if (user) {
+      return res.json({ success: true, user });
+    }
+    return res.status(404).json({ error: 'User not found' });
+  } catch (err: any) {
     return res.status(500).json({ error: err?.message || 'Server error' });
   }
 });

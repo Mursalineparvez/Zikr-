@@ -244,6 +244,36 @@ export function sanitizeUserKey(emailOrPhone: string): string {
   return 'u_' + (digits || clean.replace(/[^a-z0-9]/g, '_'));
 }
 
+/**
+ * Safely updates device telemetry for this user without touching zikr counts, history or streak!
+ * Used on app mount and device connection so that other devices never have their counts overwritten.
+ */
+export async function updateDeviceTelemetry(
+  emailOrPhone: string,
+  deviceInfo: { model: string; osVersion: string; location: string }
+): Promise<void> {
+  if (!emailOrPhone) return;
+  const userKey = sanitizeUserKey(emailOrPhone);
+  const currentDeviceId = getDeviceId();
+  try {
+    const userDocRef = doc(db, 'users', userKey);
+    await setDoc(
+      userDocRef,
+      {
+        deviceModel: deviceInfo.model,
+        osVersion: deviceInfo.osVersion,
+        location: deviceInfo.location,
+        lastActiveAt: new Date().toISOString(),
+        lastActiveAtMs: Date.now(),
+        senderDeviceId: currentDeviceId,
+      },
+      { merge: true }
+    );
+  } catch {
+    // Non-blocking telemetry
+  }
+}
+
 export interface CloudZikrState {
   profile?: Partial<UserProfile>;
   zikrs?: ZikrItem[];
@@ -384,6 +414,8 @@ export async function saveUserDataToCloud(
       osVersion: effectiveOsVersion,
       profileJson: profileJsonStr,
       zikrsJson: zikrsJsonStr,
+      historyJson: historyJsonStr,
+      aamalLogsJson: aamalLogsJsonStr,
       settingsJson: settingsJsonStr,
       totalCount: totalCount,
       lifetimeTotalCount: lifetimeTotalCount,
@@ -427,6 +459,18 @@ export async function saveUserDataToCloud(
       const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
       setDoc(aamalDocRef, { aamalLogsJson: aamalLogsJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
     }
+
+    // Background sync to server fallback API so server registry and Admin panel always have latest data even if Firestore quota runs out
+    fetch('/api/sync-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userKey,
+        profile: safeProfile,
+        zikrs,
+        lifetimeTotalCount,
+      }),
+    }).catch(() => {});
 
     // 4. Always update local cache & account record
     try {
@@ -580,7 +624,28 @@ export async function loadUserDataFromCloud(
 
     if (typeof rawData.lifetimeTotalCount === 'number') {
       loadedLifetimeTotal = rawData.lifetimeTotalCount;
+    } else if (typeof rawData.totalCount === 'number') {
+      loadedLifetimeTotal = rawData.totalCount;
     }
+
+    let aamalDhikrSum = 0;
+    if (loadedAamalLogs && typeof loadedAamalLogs === 'object') {
+      for (const dayLog of Object.values(loadedAamalLogs)) {
+        if (dayLog && typeof (dayLog as any).dhikrCount === 'number') {
+          aamalDhikrSum += (dayLog as any).dhikrCount;
+        }
+      }
+    }
+    const historyDhikrSum = (loadedHistory || []).reduce((acc, s) => acc + (s.totalCount || 0), 0);
+    const activeDhikrSum = (loadedZikrs || []).reduce((acc, z) => acc + (z.count || 0), 0);
+    const verifiedLifetime = Math.max(
+      loadedLifetimeTotal || 0,
+      typeof rawData.totalCount === 'number' ? rawData.totalCount : 0,
+      aamalDhikrSum,
+      historyDhikrSum,
+      activeDhikrSum
+    );
+    loadedLifetimeTotal = verifiedLifetime;
 
     return {
       profile: loadedProfile,
@@ -688,7 +753,29 @@ export function subscribeToUserDataInCloud(
 
     if (typeof data.lifetimeTotalCount === 'number') {
       loadedLifetimeTotal = data.lifetimeTotalCount;
+    } else if (typeof data.totalCount === 'number') {
+      loadedLifetimeTotal = data.totalCount;
     }
+
+    // Ensure loadedLifetimeTotal is never lower than what's recorded in Aamal logs, History sessions, or active beads:
+    let aamalDhikrSum = 0;
+    if (loadedAamalLogs && typeof loadedAamalLogs === 'object') {
+      for (const dayLog of Object.values(loadedAamalLogs)) {
+        if (dayLog && typeof (dayLog as any).dhikrCount === 'number') {
+          aamalDhikrSum += (dayLog as any).dhikrCount;
+        }
+      }
+    }
+    const historyDhikrSum = (loadedHistory || []).reduce((acc, s) => acc + (s.totalCount || 0), 0);
+    const activeDhikrSum = (loadedZikrs || []).reduce((acc, z) => acc + (z.count || 0), 0);
+    const verifiedLifetime = Math.max(
+      loadedLifetimeTotal || 0,
+      typeof data.totalCount === 'number' ? data.totalCount : 0,
+      aamalDhikrSum,
+      historyDhikrSum,
+      activeDhikrSum
+    );
+    loadedLifetimeTotal = verifiedLifetime;
 
     return {
       profile: loadedProfile,
@@ -733,6 +820,23 @@ export function subscribeToUserDataInCloud(
       }
 
       const data = snap.data();
+
+      // If root document doesn't have aamalLogsJson or historyJson yet, pull from subcollections
+      if (!data.aamalLogsJson || !data.historyJson) {
+        try {
+          const [aamalSnap, historySnap] = await Promise.all([
+            !data.aamalLogsJson ? getDoc(doc(db, 'users', userKey, 'data', 'aamalDoc')).catch(() => null) : null,
+            !data.historyJson ? getDoc(doc(db, 'users', userKey, 'data', 'historyDoc')).catch(() => null) : null,
+          ]);
+          if (aamalSnap && aamalSnap.exists() && aamalSnap.data().aamalLogsJson) {
+            data.aamalLogsJson = aamalSnap.data().aamalLogsJson;
+          }
+          if (historySnap && historySnap.exists() && historySnap.data().historyJson) {
+            data.historyJson = historySnap.data().historyJson;
+          }
+        } catch {}
+      }
+
       // If main doc exists but doesn't have zikrsJson, check legacy
       if (!data.zikrsJson) {
         try {
@@ -1340,7 +1444,36 @@ export async function fetchAllUsersForAdmin(): Promise<AdminUserRecord[]> {
         verificationMethod: method,
         lastSyncedAt: data.updatedAtMs || (data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()),
         createdAtMs: data.createdAt ? new Date(data.createdAt).getTime() : (data.updatedAtMs || Date.now()),
-        lifetimeTotalCount: typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : (typeof data.totalCount === 'number' ? data.totalCount : 0),
+        lifetimeTotalCount: (() => {
+          let aamalSum = 0;
+          if (data.aamalLogsJson) {
+            try {
+              const pA = JSON.parse(data.aamalLogsJson);
+              if (pA && typeof pA === 'object') {
+                for (const d of Object.values(pA)) {
+                  if (d && typeof (d as any).dhikrCount === 'number') aamalSum += (d as any).dhikrCount;
+                }
+              }
+            } catch {}
+          }
+          let histSum = 0;
+          if (data.historyJson) {
+            try {
+              const pH = JSON.parse(data.historyJson);
+              if (Array.isArray(pH)) {
+                histSum = pH.reduce((acc: number, s: any) => acc + (s.totalCount || 0), 0);
+              }
+            } catch {}
+          }
+          const activeSum = activeZikrsParsed.reduce((acc, curr) => acc + (curr.count || 0), 0);
+          return Math.max(
+            typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : 0,
+            typeof data.totalCount === 'number' ? data.totalCount : 0,
+            activeSum,
+            aamalSum,
+            histSum
+          );
+        })(),
         activeZikrs: activeZikrsParsed,
         hasPassword: !!(data.password || prof.password),
       });
@@ -1349,7 +1482,16 @@ export async function fetchAllUsersForAdmin(): Promise<AdminUserRecord[]> {
     // Sort users by last synced / active time descending
     return results.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt);
   } catch (error) {
-    console.warn('Error fetching users for admin:', error);
+    console.warn('Error fetching users for admin, attempting server fallback:', error);
+    try {
+      const res = await fetch('/api/admin/users');
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.users) && json.users.length > 0) {
+          return json.users;
+        }
+      }
+    } catch {}
     return [];
   }
 }
@@ -1463,7 +1605,11 @@ export function subscribeToAllUsersForAdmin(
           verificationMethod: method,
           lastSyncedAt: data.updatedAtMs || (data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()),
           createdAtMs: data.createdAt ? new Date(data.createdAt).getTime() : (data.updatedAtMs || Date.now()),
-          lifetimeTotalCount: typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : (typeof data.totalCount === 'number' ? data.totalCount : 0),
+          lifetimeTotalCount: Math.max(
+          typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : 0,
+          typeof data.totalCount === 'number' ? data.totalCount : 0,
+          activeZikrsParsed.reduce((acc, curr) => acc + (curr.count || 0), 0)
+        ),
           activeZikrs: activeZikrsParsed,
           hasPassword: !!(data.password || prof.password),
         });

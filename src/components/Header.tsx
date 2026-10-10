@@ -77,59 +77,6 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const otherModules: NavModule[] = [
-    'other',
-    'dua',
-    'hadith',
-    'kitab',
-    'hajj_checklist',
-    'umrah_guide',
-    'hajj_route_map',
-    'hajj_essentials',
-    'tablig',
-    'allah_names',
-    'history_timeline',
-  ];
-  const isOtherActive = otherModules.includes(activeModule);
-
-  const navItems: Array<{
-    id: NavModule;
-    label: string;
-    icon: React.ReactNode;
-    isActive: boolean;
-  }> = [
-    {
-      id: 'zikir_counter',
-      label: NAV_TRANSLATIONS.zikir_counter[selectedLanguage],
-      icon: <span>📿</span>,
-      isActive: activeModule === 'zikir_counter',
-    },
-    {
-      id: 'quran',
-      label: NAV_TRANSLATIONS.quran[selectedLanguage],
-      icon: <BookOpen className="w-3.5 h-3.5" />,
-      isActive: activeModule === 'quran',
-    },
-    {
-      id: 'salat_time',
-      label: NAV_TRANSLATIONS.salat_time[selectedLanguage],
-      icon: <Clock className="w-3.5 h-3.5" />,
-      isActive: activeModule === 'salat_time',
-    },
-    {
-      id: 'aamal_tracker',
-      label: NAV_TRANSLATIONS.aamal_tracker[selectedLanguage],
-      icon: <Award className="w-3.5 h-3.5" />,
-      isActive: activeModule === 'aamal_tracker',
-    },
-    {
-      id: 'other',
-      label: NAV_TRANSLATIONS.other[selectedLanguage] || 'Other',
-      icon: <span>✨</span>,
-      isActive: isOtherActive,
-    },
-  ];
-
   const isDay = themeMode === 'day';
 
   return (
@@ -166,27 +113,6 @@ export const Header: React.FC<HeaderProps> = ({
             </p>
           </div>
         </div>
-
-        {/* Desktop Nav Items */}
-        <nav className="hidden md:flex items-center gap-1 bg-white/10 p-1 rounded-2xl border border-white/20 backdrop-blur-md">
-          {navItems.map((item) => {
-            const isActive = item.isActive;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onModuleChange(item.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 cursor-pointer ${
-                  isActive
-                    ? 'bg-white text-[#006747] font-bold shadow-md'
-                    : 'text-emerald-100/90 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
 
         {/* Clean Top-Right Controls: Quick Language, Settings & Sign In */}
         <div className="flex items-center gap-1.5 sm:gap-2">

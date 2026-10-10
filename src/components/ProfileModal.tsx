@@ -130,6 +130,8 @@ interface ProfileModalProps {
   zikrs?: ZikrItem[];
   historySessions?: HistorySession[];
   lifetimeTotalCount?: number;
+  dailyTotal?: number;
+  completedGoals?: number;
   voiceGender?: VoiceGender;
   onUpdateVoiceGender?: (gender: VoiceGender) => void;
 }
@@ -169,6 +171,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   zikrs = [],
   historySessions = [],
   lifetimeTotalCount = 0,
+  dailyTotal = 0,
+  completedGoals = 0,
   voiceGender = 'male',
   onUpdateVoiceGender,
 }) => {
@@ -418,14 +422,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setCloudSyncMessage('নতুন অ্যাকাউন্ট তৈরি হয়েছে! ক্লাউড সিঙ্ক চালু করা হয়েছে।');
     }
 
-    if (onCloudDataLoaded && cloudData) {
-      onCloudDataLoaded(cloudData, targetKey);
-    } else if (onCloudDataLoaded) {
-      onCloudDataLoaded({ foundInCloud: false }, targetKey);
+    if (cloudData && cloudData.foundInCloud) {
+      if (onCloudDataLoaded) {
+        onCloudDataLoaded(cloudData, targetKey);
+      }
+    } else {
+      const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+      if (localSum > 0 || lifetimeTotalCount > 0) {
+        saveUserDataToCloud(targetKey, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
+      } else if (onCloudDataLoaded) {
+        onCloudDataLoaded({ foundInCloud: false }, targetKey);
+      }
     }
-
-    // Save background cloud profile
-    saveUserDataToCloud(targetKey, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
 
     setVerificationStep('success');
     confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
@@ -514,13 +522,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
 
-    if (onCloudDataLoaded && cloudData) {
-      onCloudDataLoaded(cloudData, emailClean);
-    } else if (onCloudDataLoaded) {
-      onCloudDataLoaded({ foundInCloud: false }, emailClean);
+    if (cloudData && cloudData.foundInCloud) {
+      if (onCloudDataLoaded) {
+        onCloudDataLoaded(cloudData, emailClean);
+      }
+    } else {
+      const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+      if (localSum > 0 || lifetimeTotalCount > 0) {
+        saveUserDataToCloud(emailClean, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
+      } else if (onCloudDataLoaded) {
+        onCloudDataLoaded({ foundInCloud: false }, emailClean);
+      }
     }
-
-    saveUserDataToCloud(emailClean, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
 
     setVerificationStep('success');
     setCloudSyncMessage('ভেরিফিকেশন সফল! ক্লাউড থেকে আপনার ডাটা সিঙ্ক হয়েছে।');
@@ -565,13 +578,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         saveAccountToRegistry(updated);
         onUpdateProfile(updated);
 
-        if (onCloudDataLoaded && cloudData) {
-          onCloudDataLoaded(cloudData, targetEmail);
-        } else if (onCloudDataLoaded) {
-          onCloudDataLoaded({ foundInCloud: false }, targetEmail);
+        if (cloudData && cloudData.foundInCloud) {
+          if (onCloudDataLoaded) {
+            onCloudDataLoaded(cloudData, targetEmail);
+          }
+        } else {
+          const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+          if (localSum > 0 || lifetimeTotalCount > 0) {
+            saveUserDataToCloud(targetEmail, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
+          } else if (onCloudDataLoaded) {
+            onCloudDataLoaded({ foundInCloud: false }, targetEmail);
+          }
         }
-
-        saveUserDataToCloud(targetEmail, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
 
         setIsVerifying(false);
         setActiveSubModal('none');
@@ -857,6 +875,68 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
                       <span>{isSyncingCloud ? 'Syncing...' : 'Sync Now'}</span>
                     </button>
+                  </div>
+
+                  {/* ZIKR STATS OVERVIEW CARD FOR THIS ACCOUNT */}
+                  <div
+                    className={`p-3.5 rounded-2xl border text-xs space-y-2.5 ${
+                      isDay ? 'bg-emerald-50/70 border-emerald-200/80' : 'bg-[#082025] border-[#184850]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-extrabold text-xs flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <span>এই অ্যাকাউন্টের সর্বমোট জিকির পরিসংখ্যান</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                        Live Synced
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className={`p-2.5 rounded-xl border ${isDay ? 'bg-white border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          সর্বমোট পুঞ্জীভূত জিকির
+                        </div>
+                        <div className="text-xl font-black font-mono text-emerald-600 dark:text-amber-300 mt-0.5">
+                          {lifetimeTotalCount.toLocaleString()}
+                        </div>
+                        <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
+                          সকল দিন ও ডিভাইসের মোট যোগফল
+                        </div>
+                      </div>
+
+                      <div className={`p-2.5 rounded-xl border ${isDay ? 'bg-white border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          আজকের দৈনন্দিন গণনা
+                        </div>
+                        <div className="text-xl font-black font-mono text-teal-600 dark:text-emerald-400 mt-0.5">
+                          {(dailyTotal || 0).toLocaleString()}
+                        </div>
+                        <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
+                          আজকের পাঠ করা জিকির
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Active Beads vs History breakdown note */}
+                    <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-black/5 dark:bg-black/20 border border-black/5 dark:border-white/5 space-y-1.5">
+                      <div className="flex items-center justify-between font-semibold">
+                        <span>সক্রিয় দানার মোট গণনা (Active Beads):</span>
+                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          {zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between font-semibold">
+                        <span>সংরক্ষিত সেশন ইতিহাস (History Sessions):</span>
+                        <span className="font-mono font-bold text-teal-600 dark:text-teal-400">
+                          {historySessions.length}টি সেশন
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-black/5 dark:border-white/5">
+                        💡 হোমস্ক্রিনের উপরের বড় সংখ্যার সেন্ট্রাল কাউন্টারে আপনার <strong>সর্বমোট পুঞ্জীভূত জিকির ({lifetimeTotalCount.toLocaleString()})</strong> প্রদর্শিত হয়। প্রতিদিনের নামায বা দিনের শেষে দানার গণনা ০ হয়ে নতুন করে শুরু হলেও আপনার সর্বমোট পুঞ্জীভূত গণনা ক্লাউডে সবসময় অক্ষত থাকে।
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : (

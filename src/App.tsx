@@ -54,6 +54,7 @@ import {
   saveUserDataToCloud,
   loadUserDataFromCloud,
   subscribeToUserDataInCloud,
+  updateDeviceTelemetry,
   getDeviceId,
   checkGoogleRedirectResult,
   listenToAuthChanges,
@@ -305,6 +306,22 @@ export default function App() {
     } catch {}
   }, [lifetimeTotalCount]);
 
+  // Master Grand Total Count (Grand cumulative total of all zikrs including history logs sum)
+  const masterGrandTotal = useMemo(() => {
+    const allLogs = getAllAamalLogs();
+    const aamalHistorySum = Object.values(allLogs).reduce((acc, log) => acc + (log.dhikrCount || 0), 0);
+    const sessionHistorySum = historySessions.reduce((acc, s) => acc + (s.totalCount || 0), 0);
+    const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+    return Math.max(lifetimeTotalCount, aamalHistorySum, sessionHistorySum, activeSum);
+  }, [zikrs, lifetimeTotalCount, historySessions]);
+
+  // Keep lifetimeTotalCount state in sync with masterGrandTotal
+  useEffect(() => {
+    if (masterGrandTotal > lifetimeTotalCount) {
+      setLifetimeTotalCount(masterGrandTotal);
+    }
+  }, [masterGrandTotal, lifetimeTotalCount]);
+
   // User Profile Account state (Guest by default until signed in)
   const zikrsRef = useRef(zikrs);
   useEffect(() => {
@@ -386,15 +403,64 @@ export default function App() {
   const lastSyncedSignatureRef = useRef<string>('');
   const lastLocalActionTimestampRef = useRef<number>(0);
 
+  // Helper: Merge raw cloud zikrs with default translations and metadata
+  const mergeCloudZikrsWithDefaults = (cloudZikrs: any[], activeRefreshMode: string = 'fard'): ZikrItem[] => {
+    if (!cloudZikrs || !Array.isArray(cloudZikrs) || cloudZikrs.length === 0) {
+      return DEFAULT_ZIKRS.map((item, idx) => ({
+        ...item,
+        target: getTargetForZikrMode(item, activeRefreshMode as any, idx),
+      }));
+    }
+
+    const cloudMap = new Map<string, any>(cloudZikrs.map((item) => [item.id, item]));
+    const nameMap = new Map<string, any>(
+      cloudZikrs.map((item) => [
+        (item.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''),
+        item,
+      ])
+    );
+
+    const mergedList: ZikrItem[] = DEFAULT_ZIKRS.map((defaultItem, defaultIdx) => {
+      const normalizedName = defaultItem.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cloudItem = cloudMap.get(defaultItem.id) || nameMap.get(normalizedName);
+      const targetForMode = getTargetForZikrMode(defaultItem, activeRefreshMode as any, defaultIdx);
+      if (cloudItem) {
+        return {
+          ...defaultItem,
+          count: typeof cloudItem.count === 'number' ? Math.max(0, cloudItem.count) : 0,
+          target: cloudItem.target !== undefined ? cloudItem.target : targetForMode,
+          fardTarget: cloudItem.fardTarget !== undefined ? cloudItem.fardTarget : defaultItem.fardTarget,
+          maghribTarget: cloudItem.maghribTarget !== undefined ? cloudItem.maghribTarget : defaultItem.maghribTarget,
+          manualTarget: cloudItem.manualTarget !== undefined ? cloudItem.manualTarget : defaultItem.manualTarget,
+          updatedAt: cloudItem.updatedAt || defaultItem.updatedAt,
+        };
+      }
+      return {
+        ...defaultItem,
+        target: targetForMode,
+      };
+    });
+
+    const defaultIds = new Set(DEFAULT_ZIKRS.map((d) => d.id));
+    const customItems = cloudZikrs.filter(
+      (item: any) =>
+        item.id &&
+        !defaultIds.has(item.id) &&
+        !nameMap.has((item.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''))
+    ).map((c: any) => ({
+      ...c,
+      count: typeof c.count === 'number' ? Math.max(0, c.count) : 0,
+    }));
+
+    return [...mergedList, ...customItems];
+  };
+
   // Helper: Apply cloud data snapshot to active state (Seamless cross-device, web & app sync!)
   const applyCloudDataToState = (cloudData: CloudZikrState, isFromOtherDevice: boolean = false, isInitialSnapshot: boolean = false) => {
+    if (!cloudData || !cloudData.foundInCloud) return;
+
     isApplyingRemoteUpdateRef.current = true;
     isCloudSyncReadyRef.current = true;
-
-    // Calculate current local total count
-    const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
-    const localGrandTotal = Math.max(lifetimeTotalCount, localZikrSum);
-    const cloudGrandTotal = typeof cloudData.lifetimeTotalCount === 'number' ? cloudData.lifetimeTotalCount : 0;
 
     // 1. Synchronize Profile (photoUrl, password, name, location) across all devices / web & app!
     let mergedProfile = userProfile;
@@ -423,61 +489,21 @@ export default function App() {
       });
     }
 
-    // 2. Multi-device live sync vs Local refresh protection
-    const lastLocalResetTimestamp = parseInt(localStorage.getItem('zikrmate_last_reset_timestamp') || '0', 10);
+    // 2. Determine whether this device has uncommitted offline counts made AFTER the cloud timestamp
     const cloudUpdatedAtMs = cloudData.updatedAtMs || 0;
-    const currentSegment = getCurrentPrayerSegmentDetails();
-
-    let currentIslamicDayStartMs = 0;
-    try {
-      const now = new Date();
-      let lat = 23.8103;
-      let lng = 90.4125;
-      let method = 'Karachi';
-      let madhab = 'Hanafi';
-      const sLat = localStorage.getItem('salat_city_lat');
-      const sLng = localStorage.getItem('salat_city_lng');
-      const sMethod = localStorage.getItem('salat_method');
-      const sMadhab = localStorage.getItem('salat_madhab');
-      if (sLat && sLng) {
-        lat = parseFloat(sLat);
-        lng = parseFloat(sLng);
-      }
-      if (sMethod) method = sMethod;
-      if (sMadhab) madhab = sMadhab;
-
-      const times = calculatePrayerTimes(lat, lng, 'Dhaka', method as any, madhab !== 'Shafi', 0, true, now);
-      const todayMaghrib = times.maghribDate.getTime();
-      if (now.getTime() >= todayMaghrib) {
-        currentIslamicDayStartMs = todayMaghrib;
-      } else {
-        currentIslamicDayStartMs = todayMaghrib - 24 * 60 * 60 * 1000;
-      }
-    } catch {
-      currentIslamicDayStartMs = Date.now() - 12 * 60 * 60 * 1000; 
-    }
-
-    const isCloudResetStale = lastLocalResetTimestamp > 0 && cloudUpdatedAtMs <= lastLocalResetTimestamp;
-    const isCloudSegmentExpired =
-      (refreshMode === 'fard' && cloudUpdatedAtMs > 0 && cloudUpdatedAtMs < currentSegment.segmentStart.getTime()) ||
-      (refreshMode === 'maghrib' && cloudUpdatedAtMs > 0 && cloudUpdatedAtMs < currentIslamicDayStartMs);
-
+    const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
     const cloudZikrSum = Array.isArray(cloudData.zikrs)
       ? cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0)
       : 0;
 
-    const shouldKeepLocalOnRefresh =
+    const hasNewerLocalActions =
       !isFromOtherDevice &&
       isInitialSnapshot &&
-      (localGrandTotal > cloudGrandTotal ||
-        localZikrSum > cloudZikrSum ||
-        (localZikrSum > 0 && cloudZikrSum === 0) ||
-        isCloudResetStale ||
-        isCloudSegmentExpired ||
-        (localGrandTotal === cloudGrandTotal && localZikrSum > 0 && cloudZikrSum === 0));
+      lastLocalActionTimestampRef.current > cloudUpdatedAtMs &&
+      localZikrSum > cloudZikrSum;
 
-    if (shouldKeepLocalOnRefresh) {
-      // Local has newer/valid uncommitted counts on this device, push local to cloud
+    if (hasNewerLocalActions) {
+      // Local device actually counted after cloud was updated, push local to cloud
       const targetEmail = (userProfile.emailOrPhone || '').toLowerCase().trim();
       if (targetEmail) {
         saveUserDataToCloud(
@@ -485,47 +511,25 @@ export default function App() {
           userProfile,
           zikrsRef.current,
           historySessions,
-          localGrandTotal,
+          lifetimeTotalCountRef.current,
           settings,
           getAllAamalLogs()
         ).catch(() => {});
       }
-      lastSyncedSignatureRef.current = getStateSignature(
-        zikrsRef.current,
-        historySessions,
-        localGrandTotal,
-        mergedProfile,
-        settings
-      );
-      setLastCloudSyncTimestamp(Date.now());
       return;
     }
 
-    // Otherwise (from other device OR cloud is newer/equal): apply cloud data!
+    // 3. Apply Cloud Zikrs (counts and targets)
     let appliedZikrs = zikrsRef.current;
-    if (cloudData.zikrs && Array.isArray(cloudData.zikrs) && cloudData.zikrs.length > 0) {
-      if (isCloudResetStale || isCloudSegmentExpired) {
-        // Stale cloud counts from past prayer or before local reset: keep clean 0
-        const zeroed = zikrsRef.current.map((z) => ({ ...z, count: 0 }));
-        appliedZikrs = zeroed;
-        setZikrs(zeroed);
-        try {
-          localStorage.setItem('noor_zikr_items', JSON.stringify(zeroed));
-          localStorage.removeItem('zikrmate_active_zikrs_backup');
-        } catch {}
-      } else {
-        const incomingSum = cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-        if (isFromOtherDevice || (incomingSum > 0 && cloudUpdatedAtMs >= lastLocalActionTimestampRef.current)) {
-          appliedZikrs = cloudData.zikrs;
-          setZikrs(cloudData.zikrs);
-          try {
-            localStorage.setItem('noor_zikr_items', JSON.stringify(cloudData.zikrs));
-          } catch {}
-        }
-      }
+    if (cloudData.zikrs && Array.isArray(cloudData.zikrs)) {
+      appliedZikrs = mergeCloudZikrsWithDefaults(cloudData.zikrs, refreshMode);
+      setZikrs(appliedZikrs);
+      try {
+        localStorage.setItem('noor_zikr_items', JSON.stringify(appliedZikrs));
+      } catch {}
     }
 
-    // Synchronize History Sessions
+    // 4. Synchronize History Sessions
     let appliedHistory = historySessions;
     if (cloudData.history && Array.isArray(cloudData.history)) {
       appliedHistory = cloudData.history;
@@ -535,7 +539,7 @@ export default function App() {
       } catch {}
     }
 
-    // Synchronize Lifetime Total Count
+    // 5. Synchronize Lifetime Total Count
     let appliedLifetime = lifetimeTotalCount;
     if (typeof cloudData.lifetimeTotalCount === 'number') {
       appliedLifetime = cloudData.lifetimeTotalCount;
@@ -545,20 +549,26 @@ export default function App() {
       } catch {}
     }
 
-    // Synchronize App Settings
+    // 6. Synchronize App Settings
     let appliedSettings = settings;
-    if (cloudData.settings) {
+    if (cloudData.settings && typeof cloudData.settings === 'object') {
       appliedSettings = { ...settings, ...cloudData.settings };
       setSettings(appliedSettings);
+      try {
+        localStorage.setItem('zikrmate_settings', JSON.stringify(appliedSettings));
+      } catch {}
     }
 
-    // Synchronize Aamal Logs
+    // 7. Synchronize Aamal Logs
     if (cloudData.aamalLogs && typeof cloudData.aamalLogs === 'object') {
       try {
         clearAllAamalLogs();
         for (const [dateKey, logData] of Object.entries(cloudData.aamalLogs)) {
           localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(logData));
         }
+        const todayKey = getTodayDateKey();
+        const todayDhikr = getTodayDhikrTotal(todayKey);
+        setDailyTotalState(todayDhikr);
       } catch {}
     }
 
@@ -654,18 +664,20 @@ export default function App() {
             localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
           } catch {}
           if (cloudData && cloudData.foundInCloud) {
-            applyCloudDataToState(cloudData, false, true);
+            applyCloudDataToState(cloudData, true, true);
           } else {
-            // First time Google Sign-In: save immediately to Firestore so Admin dashboard sees it!
-            saveUserDataToCloud(
-              targetEmail,
-              updated,
-              zikrsRef.current,
-              historySessions,
-              lifetimeTotalCountRef.current,
-              settings,
-              getAllAamalLogs()
-            ).catch(() => {});
+            const localSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
+            if (localSum > 0 || lifetimeTotalCountRef.current > 0) {
+              saveUserDataToCloud(
+                targetEmail,
+                updated,
+                zikrsRef.current,
+                historySessions,
+                lifetimeTotalCountRef.current,
+                settings,
+                getAllAamalLogs()
+              ).catch(() => {});
+            }
           }
         }
       })
@@ -727,25 +739,8 @@ export default function App() {
     const detected = getDetectedDeviceInfo();
     const targetKey = userProfile.emailOrPhone.trim().toLowerCase();
 
-    // Initial Telemetry Registration for Admin Dashboard
-    const effectiveProfile: UserProfile = {
-      ...userProfile,
-      deviceModel: userProfile.deviceModel && !userProfile.deviceModel.includes('vivo ~~ V2144') ? userProfile.deviceModel : detected.model,
-      osVersion: userProfile.osVersion && userProfile.osVersion !== '35_15' ? userProfile.osVersion : detected.osVersion,
-      location: userProfile.location && !userProfile.location.includes('4C2J') ? userProfile.location : detected.location,
-    };
-
-    saveUserDataToCloud(
-      targetKey,
-      effectiveProfile,
-      zikrsRef.current,
-      historySessions,
-      lifetimeTotalCountRef.current,
-      settings,
-      getAllAamalLogs()
-    ).catch(() => {});
-
-    isCloudSyncReadyRef.current = true;
+    // Safely register device telemetry without touching zikr counts, history, or totals!
+    updateDeviceTelemetry(targetKey, detected).catch(() => {});
 
     const unsubscribe = subscribeToUserDataInCloud(targetKey, (cloudData, isInitial) => {
       if (!cloudData.foundInCloud) {
@@ -829,17 +824,18 @@ export default function App() {
       };
 
       const allAamal = getAllAamalLogs();
+      const trueLifetime = Math.max(lifetimeTotalCount, masterGrandTotal);
       const ok = await saveUserDataToCloud(
         targetKey,
         activeProfile,
         zikrs,
         historySessions,
-        lifetimeTotalCount,
+        trueLifetime,
         settings,
         allAamal
       );
       if (ok) {
-        lastSyncedSignatureRef.current = getStateSignature(zikrs, historySessions, lifetimeTotalCount, userProfile, settings);
+        lastSyncedSignatureRef.current = getStateSignature(zikrs, historySessions, trueLifetime, userProfile, settings);
         const now = Date.now();
         setLastCloudSyncTimestamp(now);
       }
@@ -848,7 +844,7 @@ export default function App() {
     return () => {
       if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
     };
-  }, [zikrs, historySessions, lifetimeTotalCount, userProfile, settings]);
+  }, [zikrs, historySessions, lifetimeTotalCount, masterGrandTotal, userProfile, settings]);
 
   // Handler when user signs in with email/phone and cloud data is restored
   const handleCloudDataLoaded = (cloudData: CloudZikrState, targetEmailOrPhone?: string) => {
@@ -863,7 +859,7 @@ export default function App() {
       return;
     }
 
-    applyCloudDataToState(cloudData);
+    applyCloudDataToState(cloudData, true, true);
   };
 
   // Manual Trigger Cloud Sync
@@ -875,12 +871,13 @@ export default function App() {
 
     setIsSyncingCloud(true);
     const allAamal = getAllAamalLogs();
+    const trueLifetime = Math.max(lifetimeTotalCount, masterGrandTotal);
     const ok = await saveUserDataToCloud(
       userProfile.emailOrPhone,
       userProfile,
       zikrs,
       historySessions,
-      lifetimeTotalCount,
+      trueLifetime,
       settings,
       allAamal
     );
@@ -937,12 +934,25 @@ export default function App() {
 
         if (!cloudData || !cloudData.foundInCloud) {
           // BRAND NEW ID / NEW GMAIL!
-          // MUST initialize everything to zero! Previous user's data on device must NOT be shown!
-          await initializeFreshZeroUserState(updated);
+          const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
+          if (localZikrSum > 0 || lifetimeTotalCountRef.current > 0) {
+            await saveUserDataToCloud(
+              newEmail,
+              updated,
+              zikrsRef.current,
+              historySessions,
+              lifetimeTotalCountRef.current,
+              settings,
+              getAllAamalLogs()
+            );
+            isCloudSyncReadyRef.current = true;
+          } else {
+            await initializeFreshZeroUserState(updated);
+          }
           return;
         } else {
-          // Existing user with saved cloud history: restore THAT user's data!
-          applyCloudDataToState(cloudData);
+          // Existing user with saved cloud history: restore THAT user's data across devices!
+          applyCloudDataToState(cloudData, true, true);
           return;
         }
       }
@@ -1280,14 +1290,6 @@ export default function App() {
     };
     requestWakeLock();
   }, [settings.screenAwake]);
-
-  // Master Grand Total Count (Grand cumulative total of all zikrs including history logs sum)
-  const masterGrandTotal = useMemo(() => {
-    const allLogs = getAllAamalLogs();
-    const historySum = Object.values(allLogs).reduce((acc, log) => acc + (log.dhikrCount || 0), 0);
-    const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-    return Math.max(lifetimeTotalCount, historySum, activeSum);
-  }, [zikrs, lifetimeTotalCount, historySessions]);
 
   // Completed Goals Count
   const completedGoals = useMemo(() => {
@@ -1673,66 +1675,11 @@ export default function App() {
   ];
   const isOtherActive = otherModules.includes(activeModule);
 
-  const moduleTabs: Array<{
-    id: NavModule;
-    label: string;
-    arabic: string;
-    icon: string;
-    badge?: string | number;
-    isActive: boolean;
-  }> = [
-    {
-      id: 'zikir_counter',
-      label: NAV_TRANSLATIONS.zikir_counter[selectedLanguage],
-      arabic: 'الذِّكْر',
-      icon: '📿',
-      badge: dailyTotal > 0 ? dailyTotal : lifetimeTotalCount,
-      isActive: activeModule === 'zikir_counter',
-    },
-    {
-      id: 'quran',
-      label: NAV_TRANSLATIONS.quran[selectedLanguage],
-      arabic: 'القرآن',
-      icon: '📖',
-      isActive: activeModule === 'quran',
-    },
-    {
-      id: 'salat_time',
-      label: NAV_TRANSLATIONS.salat_time[selectedLanguage],
-      arabic: 'الصلاة',
-      icon: '🕌',
-      isActive: activeModule === 'salat_time',
-    },
-    {
-      id: 'aamal_tracker',
-      label: NAV_TRANSLATIONS.aamal_tracker[selectedLanguage],
-      arabic: 'الأعمال',
-      icon: '📋',
-      isActive: activeModule === 'aamal_tracker',
-    },
-    {
-      id: 'history_timeline',
-      label: NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা',
-      arabic: 'التاريخ',
-      icon: '🗺️',
-      badge: '৫৭০-২০২৬',
-      isActive: activeModule === 'history_timeline',
-    },
-    {
-      id: 'other',
-      label: selectedLanguage === 'bn' ? 'অন্যান্য (Other)' : 'Other',
-      arabic: 'أخرى',
-      icon: '✨',
-      badge: '10 Tools',
-      isActive: isOtherActive && activeModule !== 'history_timeline',
-    },
-  ];
-
   const isDay = settings.themeMode === 'day';
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-20 md:pb-8 selection:bg-emerald-600 selection:text-white ${
+      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-24 md:pb-24 selection:bg-emerald-600 selection:text-white ${
         isDay ? 'bg-[#f4faf8] text-[#0a3328]' : 'bg-[#070e14] text-[#f1f8f7]'
       }`}
     >
@@ -1773,72 +1720,28 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6">
-        {/* Top Islamic Greeting & Module Switcher Card */}
+        {/* Top Islamic Greeting Banner */}
         <div
-          className={`rounded-[26px] p-3.5 sm:p-4.5 border transition-colors shadow-xl ${
+          className={`rounded-2xl p-3.5 sm:p-4 border transition-colors shadow-sm flex items-center justify-between flex-wrap gap-2 ${
             isDay
               ? 'bg-white border-[#dcebe8] shadow-[#006747]/5'
               : 'bg-[#0e1c26] border-[#1a3342] shadow-black/50'
           }`}
         >
           <div
-            className={`flex items-center justify-between pb-2.5 mb-2.5 border-b flex-wrap gap-2 text-xs ${
-              isDay ? 'border-slate-200' : 'border-[#152936]'
+            className={`flex items-center gap-2 font-bold ${
+              isDay ? 'text-[#006747]' : 'text-emerald-400'
             }`}
           >
-            <div
-              className={`flex items-center gap-2 font-bold ${
-                isDay ? 'text-[#006747]' : 'text-emerald-400'
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="font-arabic text-sm">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
-            </div>
-            <div className={`text-[11px] font-medium ${isDay ? 'text-slate-700' : 'text-slate-400'}`}>
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </div>
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span className="font-arabic text-sm sm:text-base">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
           </div>
-
-          {/* Module Selector Category Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {moduleTabs.map((tab) => {
-              const isActive = tab.isActive;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveModule(tab.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all duration-200 active:scale-95 cursor-pointer shrink-0 border ${
-                    isActive
-                      ? isDay
-                        ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20 scale-[1.02]'
-                        : 'bg-[#006747] text-white border-[#288a91] shadow-lg shadow-black/40 scale-[1.02]'
-                      : isDay
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300 hover:scale-[1.01]'
-                      : 'bg-[#0a1620] hover:bg-[#102330] text-slate-400 hover:text-white border-[#162c3a] hover:scale-[1.01]'
-                  }`}
-                >
-                  <span className="text-sm">{tab.icon}</span>
-                  <span>{tab.label}</span>
-                  {tab.badge !== undefined && (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold transition-transform ${
-                        isActive
-                          ? 'bg-white/20 text-white'
-                          : isDay
-                          ? 'bg-white text-[#006747] border border-slate-300'
-                          : 'bg-[#050e14] text-emerald-400 border border-[#142834]'
-                      }`}
-                    >
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
-              );
+          <div className={`text-xs font-medium ${isDay ? 'text-slate-600' : 'text-slate-400'}`}>
+            {new Date().toLocaleDateString(selectedLanguage === 'bn' ? 'bn-BD' : 'en-US', {
+              weekday: 'long',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
             })}
           </div>
         </div>
@@ -2023,6 +1926,7 @@ export default function App() {
         }}
         themeMode={settings.themeMode}
         selectedLanguage={selectedLanguage}
+        counterBadge={dailyTotal > 0 ? dailyTotal : masterGrandTotal}
       />
 
       <React.Suspense fallback={null}>
@@ -2107,7 +2011,9 @@ export default function App() {
             }
             zikrs={zikrs}
             historySessions={historySessions}
-            lifetimeTotalCount={lifetimeTotalCount}
+            lifetimeTotalCount={masterGrandTotal}
+            dailyTotal={dailyTotal}
+            completedGoals={completedGoals}
             voiceGender={settings.voiceGender || 'male'}
             onUpdateVoiceGender={(gender) => setSettings((prev) => ({ ...prev, voiceGender: gender }))}
           />
@@ -2121,6 +2027,10 @@ export default function App() {
             currentUserProfile={userProfile}
             soundEnabled={settings.soundEnabled}
             isDayTheme={settings.themeMode === 'day'}
+            currentMasterTotal={masterGrandTotal}
+            currentZikrs={zikrs}
+            currentDailyTotal={dailyTotal}
+            currentHistorySessions={historySessions}
           />
         )}
       </React.Suspense>

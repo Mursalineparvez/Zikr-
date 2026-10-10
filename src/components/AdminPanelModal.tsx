@@ -39,6 +39,10 @@ interface AdminPanelModalProps {
   currentUserProfile: UserProfile;
   soundEnabled: boolean;
   isDayTheme: boolean;
+  currentMasterTotal?: number;
+  currentZikrs?: Array<{ id: string; name: string; count: number; target?: number }>;
+  currentDailyTotal?: number;
+  currentHistorySessions?: HistorySession[];
 }
 
 export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
@@ -47,6 +51,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   currentUserProfile,
   soundEnabled,
   isDayTheme,
+  currentMasterTotal,
+  currentZikrs,
+  currentDailyTotal,
+  currentHistorySessions,
 }) => {
   const currentEmail = (currentUserProfile.emailOrPhone || '').toLowerCase().trim();
   const isOwner = currentEmail === 'mdmursalineparvez@gmail.com';
@@ -98,10 +106,30 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       const existing = userMap.get(uk) || userMap.get(em);
       const localTime = p.lastSyncedAt || (acc.savedAt ? new Date(acc.savedAt).getTime() : Date.now());
 
+      let localLifetime = 0;
+      try {
+        const s = localStorage.getItem('zikrmate_lifetime_total_count');
+        if (s) localLifetime = parseInt(s, 10) || 0;
+      } catch {}
+
       if (existing) {
         // Upgrade existing with recent local session data
         if (localTime > existing.lastSyncedAt) {
           existing.lastSyncedAt = localTime;
+        }
+        if (localLifetime > existing.lifetimeTotalCount) {
+          existing.lifetimeTotalCount = localLifetime;
+        }
+        if (currentEmail && em === currentEmail && currentMasterTotal !== undefined && currentMasterTotal > existing.lifetimeTotalCount) {
+          existing.lifetimeTotalCount = currentMasterTotal;
+        }
+        if (currentEmail && em === currentEmail && currentZikrs && currentZikrs.length > 0) {
+          existing.activeZikrs = currentZikrs.map((z) => ({
+            id: z.id,
+            name: z.name,
+            count: z.count,
+            target: z.target || 33,
+          }));
         }
         if (p.name && (!existing.name || existing.name.includes('ZikrMate User') || existing.name.includes('Zikr+ User'))) {
           existing.name = p.name;
@@ -122,6 +150,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           existing.hasPassword = true;
         }
       } else {
+        const liveCount = currentEmail && em === currentEmail && currentMasterTotal !== undefined
+          ? Math.max(localLifetime, currentMasterTotal)
+          : localLifetime;
+
+        const liveZikrs = currentEmail && em === currentEmail && currentZikrs && currentZikrs.length > 0
+          ? currentZikrs.map((z) => ({
+              id: z.id,
+              name: z.name,
+              count: z.count,
+              target: z.target || 33,
+            }))
+          : [];
+
         const newRecord: AdminUserRecord = {
           userKey: uk,
           name: p.name || (em.includes('@') ? em.split('@')[0] : 'User'),
@@ -135,8 +176,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           verificationMethod: p.authProvider === 'google' ? 'Google Sign-In' : (em.includes('@') ? 'Google / Email' : 'Phone Verified'),
           lastSyncedAt: localTime,
           createdAtMs: acc.savedAt ? new Date(acc.savedAt).getTime() : Date.now(),
-          lifetimeTotalCount: 0,
-          activeZikrs: [],
+          lifetimeTotalCount: liveCount,
+          activeZikrs: liveZikrs,
           hasPassword: !!p.password,
         };
         userMap.set(uk, newRecord);
@@ -146,8 +187,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       }
     });
 
-    // Deduplicate unique objects and sort descending by last activity
-    const uniqueUsers = Array.from(new Set(userMap.values()));
+    // Deduplicate unique objects and ensure lifetime count reflects true active or cloud maximum
+    const uniqueUsers = Array.from(new Set(userMap.values())).map((u) => {
+      const activeSum = (u.activeZikrs || []).reduce((acc, z) => acc + (z.count || 0), 0);
+      return {
+        ...u,
+        lifetimeTotalCount: Math.max(u.lifetimeTotalCount || 0, activeSum),
+      };
+    });
     return uniqueUsers.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt);
   };
 
@@ -212,6 +259,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     if (soundEnabled) soundHaptics.playTap();
 
     const detail = await fetchUserDetailForAdmin(user.userKey);
+    if (
+      (user.emailOrPhone || '').toLowerCase() === currentEmail &&
+      currentHistorySessions &&
+      currentHistorySessions.length > 0 &&
+      (!detail.historySessions || detail.historySessions.length === 0)
+    ) {
+      detail.historySessions = currentHistorySessions;
+    }
     setSelectedUserDetail(detail);
     setIsLoadingUserDetail(false);
   };
@@ -738,6 +793,55 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   <div>Lifetime Count: {selectedUser.lifetimeTotalCount.toLocaleString()}</div>
                 </div>
               </div>
+
+              {/* USER STATS BREAKDOWN SUMMARY */}
+              {(() => {
+                const activeSum = selectedUser.activeZikrs.reduce((acc, z) => acc + (z.count || 0), 0);
+                const aamalSum = selectedUserDetail?.aamalLogs
+                  ? Object.values(selectedUserDetail.aamalLogs).reduce((acc: number, l: any) => acc + (l.dhikrCount || 0), 0)
+                  : 0;
+                const historySum = selectedUserDetail?.historySessions
+                  ? selectedUserDetail.historySessions.reduce((acc: number, s: any) => acc + (s.totalCount || 0), 0)
+                  : 0;
+                const grandTotal = Math.max(selectedUser.lifetimeTotalCount || 0, activeSum, aamalSum, historySum);
+
+                return (
+                  <div className={`p-3.5 rounded-2xl border text-xs space-y-2.5 ${isDayTheme ? 'bg-emerald-50/80 border-emerald-200' : 'bg-[#062429] border-[#184850]'}`}>
+                    <div className="flex items-center justify-between font-extrabold text-emerald-600 dark:text-emerald-400">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-amber-400" />
+                        <span>জিকির হিস্ট্রি ও ক্যাটাগরি বিশ্লেষণ</span>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 font-mono text-emerald-600 dark:text-emerald-300">
+                        Total: {grandTotal.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+                      <div className={`p-2 rounded-xl border ${isDayTheme ? 'bg-white border-slate-200' : 'bg-[#04161a] border-emerald-900/40'}`}>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-sans font-bold">লাইফটাইম মোট</div>
+                        <div className="text-base font-black text-amber-500 mt-0.5">{grandTotal.toLocaleString()}</div>
+                      </div>
+                      <div className={`p-2 rounded-xl border ${isDayTheme ? 'bg-white border-slate-200' : 'bg-[#04161a] border-emerald-900/40'}`}>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-sans font-bold">আমল লগ যোগফল</div>
+                        <div className="text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{aamalSum.toLocaleString()}</div>
+                      </div>
+                      <div className={`p-2 rounded-xl border ${isDayTheme ? 'bg-white border-slate-200' : 'bg-[#04161a] border-emerald-900/40'}`}>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-sans font-bold">সক্রিয় কাউন্টার</div>
+                        <div className="text-base font-black text-teal-600 dark:text-teal-400 mt-0.5">{activeSum.toLocaleString()}</div>
+                      </div>
+                      <div className={`p-2 rounded-xl border ${isDayTheme ? 'bg-white border-slate-200' : 'bg-[#04161a] border-emerald-900/40'}`}>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-sans font-bold">সেশন হিস্ট্রি</div>
+                        <div className="text-base font-black text-blue-500 mt-0.5">{historySum.toLocaleString()}</div>
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-slate-500 dark:text-emerald-300/80 leading-relaxed pt-1 border-t border-black/5 dark:border-white/5">
+                      💡 <strong>কেন সংখ্যাগুলো ভিন্ন হতে পারে?</strong> হোমস্ক্রিনে প্রতিদিনের নামাজ বা নতুন দিনে সক্রিয় কাউন্টার (Active Beads) ০ হতে পারে, কিন্তু ক্লাউডে ইউজারের <strong>লাইফটাইম মোট জিকির ({grandTotal.toLocaleString()})</strong> ও দৈনিক আমল ট্র্যাকার হিস্ট্রি সবসময় অক্ষত ও সংরক্ষিত থাকে।
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* ACTIVE ZIKR BREAKDOWN */}
               <div className="space-y-2">
