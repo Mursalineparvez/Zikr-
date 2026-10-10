@@ -1286,6 +1286,37 @@ export function getAllAamalLogs(): Record<string, AamalDayLog> {
   return logs;
 }
 
+export function mergeAamalDayLogs(logA: Partial<AamalDayLog> = {}, logB: Partial<AamalDayLog> = {}): AamalDayLog {
+  const itemsA = Array.isArray(logA.items) ? logA.items : [];
+  const itemsB = Array.isArray(logB.items) ? logB.items : [];
+  
+  const itemMap = new Map<string, any>();
+  [...itemsA, ...itemsB].forEach((item) => {
+    if (!itemMap.has(item.id) || item.completed) {
+      itemMap.set(item.id, { ...item });
+    }
+  });
+  const mergedItems = Array.from(itemMap.values());
+
+  const dhikrA = typeof logA.dhikrCount === 'number' ? logA.dhikrCount : 0;
+  const dhikrB = typeof logB.dhikrCount === 'number' ? logB.dhikrCount : 0;
+  const quranA = typeof logA.quranPagesRead === 'number' ? logA.quranPagesRead : 0;
+  const quranB = typeof logB.quranPagesRead === 'number' ? logB.quranPagesRead : 0;
+  const targetDateKey = logA.dateKey || logB.dateKey || getTodayDateKey();
+
+  const completedCount = mergedItems.filter((i) => i.completed).length;
+  const totalRatio = mergedItems.length > 0 ? completedCount / mergedItems.length : 0;
+
+  return {
+    dateKey: targetDateKey,
+    items: mergedItems,
+    quranPagesRead: Math.max(quranA, quranB),
+    dhikrCount: Math.max(dhikrA, dhikrB),
+    completedRatio: totalRatio,
+    reflectionNotes: logA.reflectionNotes || logB.reflectionNotes,
+  };
+}
+
 export function downloadFile(content: string, fileName: string, contentType: string) {
   const blob = new Blob([content], { type: contentType });
   const url = URL.createObjectURL(blob);

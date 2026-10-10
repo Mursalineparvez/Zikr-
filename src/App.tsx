@@ -49,6 +49,8 @@ import {
   getTodayDateKey,
   getTodayDhikrTotal,
   resetTodayDhikrTotal,
+  getAamalLogForDate,
+  mergeAamalDayLogs,
 } from './utils/aamalTrackerData';
 import {
   saveUserDataToCloud,
@@ -59,7 +61,9 @@ import {
   checkGoogleRedirectResult,
   listenToAuthChanges,
   CloudZikrState,
+  auth,
 } from './services/firebase';
+import { signOut as firebaseSignOut } from 'firebase/auth';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
 import { getDetectedDeviceInfo } from './utils/deviceInfo';
 import { calculatePrayerTimes, getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
@@ -403,13 +407,29 @@ export default function App() {
   const lastSyncedSignatureRef = useRef<string>('');
   const lastLocalActionTimestampRef = useRef<number>(0);
 
-  // Helper: Merge raw cloud zikrs with default translations and metadata
-  const mergeCloudZikrsWithDefaults = (cloudZikrs: any[], activeRefreshMode: string = 'fard'): ZikrItem[] => {
+  // Helper: Merge raw cloud zikrs with default translations and metadata using smart Math.max across local and cloud
+  const mergeCloudZikrsWithDefaults = (
+    cloudZikrs: any[],
+    activeRefreshMode: string = 'fard',
+    currentLocalZikrs: ZikrItem[] = []
+  ): ZikrItem[] => {
+    const localMap = new Map<string, ZikrItem>(currentLocalZikrs.map((item) => [item.id, item]));
+    const localNameMap = new Map<string, ZikrItem>(
+      currentLocalZikrs.map((item) => [
+        (item.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''),
+        item,
+      ])
+    );
+
     if (!cloudZikrs || !Array.isArray(cloudZikrs) || cloudZikrs.length === 0) {
-      return DEFAULT_ZIKRS.map((item, idx) => ({
-        ...item,
-        target: getTargetForZikrMode(item, activeRefreshMode as any, idx),
-      }));
+      return DEFAULT_ZIKRS.map((item, idx) => {
+        const localItem = localMap.get(item.id) || localNameMap.get(item.name.toLowerCase().replace(/[^a-z0-9]/g, ''));
+        return {
+          ...item,
+          count: localItem && typeof localItem.count === 'number' ? localItem.count : 0,
+          target: getTargetForZikrMode(item, activeRefreshMode as any, idx),
+        };
+      });
     }
 
     const cloudMap = new Map<string, any>(cloudZikrs.map((item) => [item.id, item]));
@@ -423,20 +443,27 @@ export default function App() {
     const mergedList: ZikrItem[] = DEFAULT_ZIKRS.map((defaultItem, defaultIdx) => {
       const normalizedName = defaultItem.name.toLowerCase().replace(/[^a-z0-9]/g, '');
       const cloudItem = cloudMap.get(defaultItem.id) || nameMap.get(normalizedName);
+      const localItem = localMap.get(defaultItem.id) || localNameMap.get(normalizedName);
       const targetForMode = getTargetForZikrMode(defaultItem, activeRefreshMode as any, defaultIdx);
+
+      const localCount = localItem && typeof localItem.count === 'number' ? Math.max(0, localItem.count) : 0;
+      const cloudCount = cloudItem && typeof cloudItem.count === 'number' ? Math.max(0, cloudItem.count) : 0;
+      const finalCount = Math.max(localCount, cloudCount);
+
       if (cloudItem) {
         return {
           ...defaultItem,
-          count: typeof cloudItem.count === 'number' ? Math.max(0, cloudItem.count) : 0,
+          count: finalCount,
           target: cloudItem.target !== undefined ? cloudItem.target : targetForMode,
           fardTarget: cloudItem.fardTarget !== undefined ? cloudItem.fardTarget : defaultItem.fardTarget,
           maghribTarget: cloudItem.maghribTarget !== undefined ? cloudItem.maghribTarget : defaultItem.maghribTarget,
           manualTarget: cloudItem.manualTarget !== undefined ? cloudItem.manualTarget : defaultItem.manualTarget,
-          updatedAt: cloudItem.updatedAt || defaultItem.updatedAt,
+          updatedAt: Math.max(cloudItem.updatedAt || 0, localItem?.updatedAt || 0, Date.now()),
         };
       }
       return {
         ...defaultItem,
+        count: finalCount,
         target: targetForMode,
       };
     });
@@ -447,10 +474,15 @@ export default function App() {
         item.id &&
         !defaultIds.has(item.id) &&
         !nameMap.has((item.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''))
-    ).map((c: any) => ({
-      ...c,
-      count: typeof c.count === 'number' ? Math.max(0, c.count) : 0,
-    }));
+    ).map((c: any) => {
+      const localItem = localMap.get(c.id);
+      const localCount = localItem && typeof localItem.count === 'number' ? Math.max(0, localItem.count) : 0;
+      const cloudCount = typeof c.count === 'number' ? Math.max(0, c.count) : 0;
+      return {
+        ...c,
+        count: Math.max(localCount, cloudCount),
+      };
+    });
 
     return [...mergedList, ...customItems];
   };
@@ -489,67 +521,42 @@ export default function App() {
       });
     }
 
-    // 2. Determine whether this device has uncommitted offline counts made AFTER the cloud timestamp
-    const cloudUpdatedAtMs = cloudData.updatedAtMs || 0;
-    const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
-    const cloudZikrSum = Array.isArray(cloudData.zikrs)
-      ? cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0)
-      : 0;
-
-    const hasNewerLocalActions =
-      !isFromOtherDevice &&
-      isInitialSnapshot &&
-      lastLocalActionTimestampRef.current > cloudUpdatedAtMs &&
-      localZikrSum > cloudZikrSum;
-
-    if (hasNewerLocalActions) {
-      // Local device actually counted after cloud was updated, push local to cloud
-      const targetEmail = (userProfile.emailOrPhone || '').toLowerCase().trim();
-      if (targetEmail) {
-        saveUserDataToCloud(
-          targetEmail,
-          userProfile,
-          zikrsRef.current,
-          historySessions,
-          lifetimeTotalCountRef.current,
-          settings,
-          getAllAamalLogs()
-        ).catch(() => {});
-      }
-      return;
-    }
-
-    // 3. Apply Cloud Zikrs (counts and targets)
+    // 2. Apply Cloud Zikrs with Smart Max-Merge (Never loses counts between App & Web!)
     let appliedZikrs = zikrsRef.current;
     if (cloudData.zikrs && Array.isArray(cloudData.zikrs)) {
-      appliedZikrs = mergeCloudZikrsWithDefaults(cloudData.zikrs, refreshMode);
+      appliedZikrs = mergeCloudZikrsWithDefaults(
+        cloudData.zikrs,
+        refreshMode,
+        zikrsRef.current
+      );
       setZikrs(appliedZikrs);
       try {
         localStorage.setItem('noor_zikr_items', JSON.stringify(appliedZikrs));
       } catch {}
     }
 
-    // 4. Synchronize History Sessions
-    let appliedHistory = historySessions;
+    // 3. Synchronize & Merge History Sessions (Combine sessions from both devices!)
+    const historyMap = new Map<string, HistorySession>();
+    historySessions.forEach((s) => historyMap.set(s.id, s));
     if (cloudData.history && Array.isArray(cloudData.history)) {
-      appliedHistory = cloudData.history;
-      setHistorySessions(cloudData.history);
-      try {
-        localStorage.setItem('noor_zikr_history', JSON.stringify(cloudData.history));
-      } catch {}
+      cloudData.history.forEach((s) => historyMap.set(s.id, s));
     }
+    const mergedHistory = Array.from(historyMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+    setHistorySessions(mergedHistory);
+    try {
+      localStorage.setItem('noor_zikr_history', JSON.stringify(mergedHistory));
+    } catch {}
 
-    // 5. Synchronize Lifetime Total Count
-    let appliedLifetime = lifetimeTotalCount;
-    if (typeof cloudData.lifetimeTotalCount === 'number') {
-      appliedLifetime = cloudData.lifetimeTotalCount;
-      setLifetimeTotalCount(cloudData.lifetimeTotalCount);
-      try {
-        localStorage.setItem('zikrmate_lifetime_total_count', String(cloudData.lifetimeTotalCount));
-      } catch {}
-    }
+    // 4. Synchronize Lifetime Total Count (Monotonic: never decrease, always take max!)
+    const cloudLifetime = typeof cloudData.lifetimeTotalCount === 'number' ? cloudData.lifetimeTotalCount : 0;
+    const activeZikrSum = appliedZikrs.reduce((acc, z) => acc + (z.count || 0), 0);
+    const resolvedLifetime = Math.max(lifetimeTotalCountRef.current, cloudLifetime, masterGrandTotal, activeZikrSum);
+    setLifetimeTotalCount(resolvedLifetime);
+    try {
+      localStorage.setItem('zikrmate_lifetime_total_count', String(resolvedLifetime));
+    } catch {}
 
-    // 6. Synchronize App Settings
+    // 5. Synchronize App Settings
     let appliedSettings = settings;
     if (cloudData.settings && typeof cloudData.settings === 'object') {
       appliedSettings = { ...settings, ...cloudData.settings };
@@ -559,12 +566,13 @@ export default function App() {
       } catch {}
     }
 
-    // 7. Synchronize Aamal Logs
+    // 6. Synchronize Aamal Logs (Combine daily logs!)
     if (cloudData.aamalLogs && typeof cloudData.aamalLogs === 'object') {
       try {
-        clearAllAamalLogs();
         for (const [dateKey, logData] of Object.entries(cloudData.aamalLogs)) {
-          localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(logData));
+          const localLog = getAamalLogForDate(dateKey);
+          const mergedLog = mergeAamalDayLogs(localLog, logData);
+          localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(mergedLog));
         }
         const todayKey = getTodayDateKey();
         const todayDhikr = getTodayDhikrTotal(todayKey);
@@ -575,14 +583,36 @@ export default function App() {
     // Record applied state signature to ensure this incoming cloud state is not treated as a new local edit
     lastSyncedSignatureRef.current = getStateSignature(
       appliedZikrs,
-      appliedHistory,
-      appliedLifetime,
+      mergedHistory,
+      resolvedLifetime,
       mergedProfile,
       appliedSettings
     );
 
     const now = Date.now();
     setLastCloudSyncTimestamp(now);
+
+    // If local state had higher counts than cloud on initial load, push the merged state back to cloud immediately!
+    const cloudZikrSum = Array.isArray(cloudData.zikrs)
+      ? cloudData.zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0)
+      : 0;
+    if (
+      isInitialSnapshot &&
+      (resolvedLifetime > cloudLifetime || activeZikrSum > cloudZikrSum || mergedHistory.length > (cloudData.history?.length || 0))
+    ) {
+      const targetEmail = (userProfile.emailOrPhone || cloudData.profile?.emailOrPhone || '').toLowerCase().trim();
+      if (targetEmail) {
+        saveUserDataToCloud(
+          targetEmail,
+          mergedProfile,
+          appliedZikrs,
+          mergedHistory,
+          resolvedLifetime,
+          appliedSettings,
+          getAllAamalLogs()
+        ).catch(() => {});
+      }
+    }
   };
 
   // Helper: Initialize fresh ZERO state when a user first signs in or logs in
@@ -744,25 +774,17 @@ export default function App() {
 
     const unsubscribe = subscribeToUserDataInCloud(targetKey, (cloudData, isInitial) => {
       if (!cloudData.foundInCloud) {
-        // If local device already has counted data, save local data to cloud instead of resetting to 0!
-        const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
-        const hasExistingLocalData = localZikrSum > 0 || lifetimeTotalCountRef.current > 0;
-        if (hasExistingLocalData) {
-          saveUserDataToCloud(
-            targetKey,
-            userProfile,
-            zikrsRef.current,
-            historySessions,
-            Math.max(lifetimeTotalCountRef.current, localZikrSum),
-            settings,
-            getAllAamalLogs()
-          ).catch(() => {});
-          isCloudSyncReadyRef.current = true;
-          return;
-        }
-
-        // Only initialize fresh zero if local is truly empty
-        initializeFreshZeroUserState(userProfile);
+        // Push local device state to cloud so it is immediately initialized without wiping counts!
+        saveUserDataToCloud(
+          targetKey,
+          userProfile,
+          zikrsRef.current,
+          historySessions,
+          Math.max(lifetimeTotalCountRef.current, masterGrandTotal),
+          settings,
+          getAllAamalLogs()
+        ).catch(() => {});
+        isCloudSyncReadyRef.current = true;
         return;
       }
 
@@ -850,12 +872,17 @@ export default function App() {
   const handleCloudDataLoaded = (cloudData: CloudZikrState, targetEmailOrPhone?: string) => {
     const targetEmail = (targetEmailOrPhone || userProfile.emailOrPhone || '').toLowerCase().trim();
     if (!cloudData.foundInCloud) {
-      // First signin / new user! Initialize everything to 0
-      initializeFreshZeroUserState({
-        ...userProfile,
-        emailOrPhone: targetEmail,
-        isSignedIn: true,
-      });
+      const trueLifetime = Math.max(lifetimeTotalCountRef.current, masterGrandTotal);
+      saveUserDataToCloud(
+        targetEmail,
+        { ...userProfile, emailOrPhone: targetEmail, isSignedIn: true },
+        zikrsRef.current,
+        historySessions,
+        trueLifetime,
+        settings,
+        getAllAamalLogs()
+      ).catch(() => {});
+      isCloudSyncReadyRef.current = true;
       return;
     }
 
@@ -905,23 +932,37 @@ export default function App() {
     try {
       localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
 
-      // 1. Handle LOGOUT: Clean and zero state so next user/guest doesn't see old counts
+      // 1. Handle LOGOUT: Preserve all counts! Never wipe the user's hard-earned dhikr!
       if (wasSignedIn && !updated.isSignedIn) {
-        const resetZikrs: ZikrItem[] = DEFAULT_ZIKRS.map((item) => ({
-          ...item,
-          count: 0,
-          updatedAt: Date.now(),
-        }));
-        setZikrs(resetZikrs);
-        setHistorySessions([]);
-        setLifetimeTotalCount(0);
-        clearAllAamalLogs();
+        const trueLifetime = Math.max(lifetimeTotalCount, masterGrandTotal);
+        if (oldEmail) {
+          saveAccountToRegistry({
+            ...userProfile,
+            isSignedIn: false,
+          });
+          const allAamal = getAllAamalLogs();
+          saveUserDataToCloud(
+            oldEmail,
+            userProfile,
+            zikrs,
+            historySessions,
+            trueLifetime,
+            settings,
+            allAamal
+          ).catch(() => {});
+        }
         try {
-          localStorage.setItem('noor_zikr_items', JSON.stringify(resetZikrs));
-          localStorage.setItem('noor_zikr_history', JSON.stringify([]));
-          localStorage.setItem('zikrmate_lifetime_total_count', '0');
+          if (auth) firebaseSignOut(auth).catch(() => {});
         } catch {}
-        showToast('লগআউট সম্পন্ন হয়েছে। সকল কাউন্টার ফ্রেশ করা হয়েছে।');
+
+        // Explicitly preserve and store all current counts, history, and lifetime totals in localStorage
+        try {
+          localStorage.setItem('noor_zikr_items', JSON.stringify(zikrs));
+          localStorage.setItem('noor_zikr_history', JSON.stringify(historySessions));
+          localStorage.setItem('zikrmate_lifetime_total_count', String(trueLifetime));
+        } catch {}
+
+        showToast('লগআউট সম্পন্ন হয়েছে। আপনার পূর্বের সকল জিকির গণনা ডিভাইসে অক্ষত ও সুরক্ষিত রয়েছে।');
         return;
       }
 
@@ -929,30 +970,28 @@ export default function App() {
       if (isLoginOrSwitch && newEmail) {
         saveAccountToRegistry(updated);
 
-        // Fetch cloud data for this specific new account
+        // Fetch cloud data for this specific account
         const cloudData = await loadUserDataFromCloud(newEmail);
 
-        if (!cloudData || !cloudData.foundInCloud) {
-          // BRAND NEW ID / NEW GMAIL!
-          const localZikrSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
-          if (localZikrSum > 0 || lifetimeTotalCountRef.current > 0) {
-            await saveUserDataToCloud(
-              newEmail,
-              updated,
-              zikrsRef.current,
-              historySessions,
-              lifetimeTotalCountRef.current,
-              settings,
-              getAllAamalLogs()
-            );
-            isCloudSyncReadyRef.current = true;
-          } else {
-            await initializeFreshZeroUserState(updated);
-          }
+        if (cloudData && cloudData.foundInCloud) {
+          applyCloudDataToState(cloudData, true, true);
+          showToast(`✨ স্বাগতম ${updated.name || 'ইউজার'}! আপনার ক্লাউড ডাটা সিঙ্ক হয়েছে।`);
           return;
         } else {
-          // Existing user with saved cloud history: restore THAT user's data across devices!
-          applyCloudDataToState(cloudData, true, true);
+          // Cloud has no doc or offline: upload current local data to cloud for this email!
+          const localSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
+          const trueLifetime = Math.max(lifetimeTotalCountRef.current, masterGrandTotal, localSum);
+          await saveUserDataToCloud(
+            newEmail,
+            updated,
+            zikrsRef.current,
+            historySessions,
+            trueLifetime,
+            settings,
+            getAllAamalLogs()
+          );
+          isCloudSyncReadyRef.current = true;
+          showToast(`✨ স্বাগতম ${updated.name || 'ইউজার'}! আপনার জিকির অ্যাকাউন্ট সিঙ্ক শুরু হয়েছে।`);
           return;
         }
       }

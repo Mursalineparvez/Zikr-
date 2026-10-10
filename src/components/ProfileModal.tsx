@@ -863,19 +863,27 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         if (onTriggerCloudSync) {
                           await onTriggerCloudSync();
                         }
+                        setCloudSyncMessage('✓ অ্যাপের সকল কাউন্ট ক্লাউডে সফলভাবে আপলোড হয়েছে! এখন ওয়েব ব্রাউজারেও একই কাউন্ট দেখাবে।');
+                        setTimeout(() => setCloudSyncMessage(null), 4000);
                         if (soundEnabled) soundHaptics.playMilestone();
                       }}
                       disabled={isSyncingCloud}
-                      className={`px-3 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 transition active:scale-95 cursor-pointer shrink-0 ${
+                      className={`px-3.5 py-2 rounded-xl font-black text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0 ${
                         isDay
-                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                          : 'bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300'
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                          : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md'
                       }`}
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
-                      <span>{isSyncingCloud ? 'Syncing...' : 'Sync Now'}</span>
+                      <span>{isSyncingCloud ? 'Uploading...' : '☁️ আপলোড ও সিঙ্ক (Push to Web)'}</span>
                     </button>
                   </div>
+
+                  {cloudSyncMessage && (
+                    <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-800 dark:text-emerald-200 text-xs font-bold animate-in fade-in">
+                      {cloudSyncMessage}
+                    </div>
+                  )}
 
                   {/* ZIKR STATS OVERVIEW CARD FOR THIS ACCOUNT */}
                   <div
