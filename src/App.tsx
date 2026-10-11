@@ -365,11 +365,15 @@ export default function App() {
         }
       }
     } catch {}
+    const devId = getDeviceId();
+    const shortDevId = devId.replace(/[^a-z0-9]/g, '').slice(-6).toUpperCase();
     return {
-      name: '',
-      emailOrPhone: '',
+      name: 'Guest User',
+      emailOrPhone: `guest_${shortDevId}`,
       photoUrl: '',
       isSignedIn: false,
+      userId: `G-${shortDevId}`,
+      userSerial: 0,
       location: detected.location,
       deviceModel: detected.model,
       osVersion: detected.osVersion,
@@ -633,19 +637,27 @@ export default function App() {
     // 3. Reset history sessions to empty
     setHistorySessions([]);
 
-    // 4. Reset aamal logs for today to 0
+    // 4. Reset aamal logs and purge localStorage cache so total count is strictly 0
     clearAllAamalLogs();
+    try {
+      localStorage.removeItem('noor_zikr_items');
+      localStorage.removeItem('noor_zikr_history');
+      localStorage.setItem('zikrmate_lifetime_total_count', '0');
+      localStorage.removeItem('zikrmate_active_zikrs_backup');
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('zikrmate_aamal_')) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {}
+
     const todayKey = getTodayDateKey();
     const freshAamal = { [todayKey]: createInitialDayLog(todayKey) };
 
-    // 5. Update localStorage
-    try {
-      localStorage.setItem('noor_zikr_items', JSON.stringify(freshZikrs));
-      localStorage.setItem('noor_zikr_history', JSON.stringify([]));
-      localStorage.setItem('zikrmate_lifetime_total_count', '0');
-    } catch {}
-
-    // 6. Save zero baseline state to cloud for this user
+    // 5. Save zero baseline state to cloud for this user
     const targetEmail = (targetProfile.emailOrPhone || '').toLowerCase().trim();
     if (targetEmail) {
       await saveUserDataToCloud(

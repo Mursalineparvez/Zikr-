@@ -65,12 +65,20 @@ export const saveAccountToRegistry = (profile: UserProfile): void => {
     // Preserve existing password if not provided in new profile
     const finalPassword = profile.password || existing?.profile?.password || '';
 
+    let serial = profile.userSerial || existing?.profile?.userSerial;
+    if (!serial) {
+      serial = Object.keys(registry).length + 1;
+    }
+    const userId = profile.userId || existing?.profile?.userId || `USR-${String(serial).padStart(4, '0')}`;
+
     registry[key] = {
       profile: {
         ...profile,
         password: finalPassword,
         isSignedIn: true,
         isVerified: true,
+        userSerial: serial,
+        userId: userId,
       },
       savedAt: new Date().toISOString(),
     };

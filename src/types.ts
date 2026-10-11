@@ -199,5 +199,7 @@ export interface UserProfile {
   osVersion?: string;
   appVersion?: string;
   lastSyncedAt?: number;
+  userSerial?: number;
+  userId?: string;
 }
 
