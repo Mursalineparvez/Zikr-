@@ -109,14 +109,16 @@ export default function App() {
       if (p) isSavedSignedIn = Boolean(JSON.parse(p)?.isSignedIn);
     } catch {}
 
-    const guestZeroInit = localStorage.getItem('zikrmate_guest_zero_initialized_v2') === 'true';
+    const guestZeroInit = localStorage.getItem('zikrmate_guest_zero_initialized_v3') === 'true';
 
     // If unauthenticated guest visitor, start strictly at count 0 for every zikr:
     if (!isSavedSignedIn && !guestZeroInit) {
-      localStorage.setItem('zikrmate_guest_zero_initialized_v2', 'true');
+      localStorage.setItem('zikrmate_guest_zero_initialized_v3', 'true');
       localStorage.removeItem('noor_zikr_items');
       localStorage.removeItem('noor_zikr_history');
       localStorage.setItem('zikrmate_lifetime_total_count', '0');
+      clearAllAamalLogs();
+      resetTodayDhikrTotal(getTodayDateKey());
       return DEFAULT_ZIKRS.map((item, idx) => ({
         ...item,
         count: 0,
@@ -355,9 +357,9 @@ export default function App() {
         if (parsed && typeof parsed.isSignedIn === 'boolean') {
           // If not signed in, auto assign clean unique guest username
           if (!parsed.isSignedIn) {
-            parsed.name = `Guest #${shortDevId}`;
+            parsed.name = `User #${shortDevId}`;
             parsed.emailOrPhone = `guest_${shortDevId}`;
-            parsed.userId = `G-${shortDevId}`;
+            parsed.userId = `USR-${shortDevId}`;
             parsed.photoUrl = '';
           }
           if (!parsed.deviceModel || parsed.deviceModel.includes('vivo ~~ V2144')) {
@@ -377,11 +379,11 @@ export default function App() {
       }
     } catch {}
     return {
-      name: `Guest #${shortDevId}`,
+      name: `User #${shortDevId}`,
       emailOrPhone: `guest_${shortDevId}`,
       photoUrl: '',
       isSignedIn: false,
-      userId: `G-${shortDevId}`,
+      userId: `USR-${shortDevId}`,
       userSerial: 0,
       location: detected.location,
       deviceModel: detected.model,
@@ -463,9 +465,9 @@ export default function App() {
   // ensure all stale leftover data is purged and everything starts strictly at 0
   useEffect(() => {
     if (!userProfile.isSignedIn) {
-      const hasGuestZeroInitialized = localStorage.getItem('zikrmate_guest_zero_initialized_v2') === 'true';
+      const hasGuestZeroInitialized = localStorage.getItem('zikrmate_guest_zero_initialized_v3') === 'true';
       if (!hasGuestZeroInitialized) {
-        localStorage.setItem('zikrmate_guest_zero_initialized_v2', 'true');
+        localStorage.setItem('zikrmate_guest_zero_initialized_v3', 'true');
         localStorage.setItem('zikrmate_lifetime_total_count', '0');
         localStorage.removeItem('noor_zikr_items');
         localStorage.removeItem('noor_zikr_history');

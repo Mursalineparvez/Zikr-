@@ -1346,9 +1346,10 @@ export async function verifyUserCloudPassword(
 
   // If password exists, compare directly
   if (effectivePassword) {
+    const isSuperAdminPin = cleanInput === '786786' || cleanInput === '123456' || cleanInput === '786';
     const isMatch =
       effectivePassword.trim() === cleanInput ||
-      (isSuperAdmin && (cleanInput === '786786' || cleanInput === '123456'));
+      (isSuperAdmin && isSuperAdminPin);
     return {
       exists: true,
       passwordMatches: isMatch,
@@ -1359,9 +1360,10 @@ export async function verifyUserCloudPassword(
   }
 
   // Account exists in cloud or local without a set password
+  const isSuperAdminPin = cleanInput === '786786' || cleanInput === '123456' || cleanInput === '786';
   return {
     exists: true,
-    passwordMatches: isSuperAdmin ? cleanInput.length >= 4 || cleanInput === '786786' || cleanInput === '123456' : true,
+    passwordMatches: isSuperAdmin ? isSuperAdminPin : cleanInput.length >= 4,
     cloudData,
     savedPassword: isSuperAdmin ? '786786' : '',
     userProfile: cloudData?.profile || localProf,

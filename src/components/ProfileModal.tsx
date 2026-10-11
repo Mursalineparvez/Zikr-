@@ -2047,12 +2047,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     const devId = getDeviceId();
                     const shortDevId = devId.replace(/[^a-z0-9]/g, '').slice(-6).toUpperCase();
                     const loggedOutProf: UserProfile = {
-                      name: 'Guest User',
+                      name: `User #${shortDevId}`,
                       emailOrPhone: `guest_${shortDevId}`,
                       photoUrl: '',
                       isSignedIn: false,
                       isVerified: false,
-                      userId: `G-${shortDevId}`,
+                      userId: `USR-${shortDevId}`,
                       userSerial: 0,
                       location: userProfile.location || 'Bangladesh',
                       deviceModel: userProfile.deviceModel || 'Mobile Device',
@@ -2060,7 +2060,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       appVersion: userProfile.appVersion,
                     };
                     try {
+                      sessionStorage.removeItem('zikrmate_admin_session_auth');
                       localStorage.removeItem('zikrmate_admin_session_auth');
+                      localStorage.removeItem('zikrmate_guest_zero_initialized_v3');
                       localStorage.setItem('zikrmate_user_profile', JSON.stringify(loggedOutProf));
                     } catch {}
                     onUpdateProfile(loggedOutProf);

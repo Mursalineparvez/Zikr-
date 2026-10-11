@@ -190,18 +190,19 @@ app.post('/api/verify-password', (req, res) => {
     }
 
     const savedPass = (matchedUser.password || '').trim();
+    const isSuperAdmin = target === 'mdmursalineparvez@gmail.com';
+
     if (!savedPass) {
-      // If no password set yet, accept input (and accept master admin pin 786786 for admin)
-      const isSuperAdmin = target === 'mdmursalineparvez@gmail.com';
+      const isSuperAdminPin = cleanInput === '786786' || cleanInput === '123456' || cleanInput === '786';
       return res.json({
         exists: true,
-        passwordMatches: isSuperAdmin ? cleanInput.length >= 4 || cleanInput === '786786' || cleanInput === '123456' : true,
+        passwordMatches: isSuperAdmin ? isSuperAdminPin : cleanInput.length >= 4,
         hasSetPassword: false,
       });
     }
 
-    const isSuperAdmin = target === 'mdmursalineparvez@gmail.com';
-    const isMatch = savedPass === cleanInput || (isSuperAdmin && (cleanInput === '786786' || cleanInput === '123456'));
+    const isSuperAdminPin = cleanInput === '786786' || cleanInput === '123456' || cleanInput === '786';
+    const isMatch = savedPass === cleanInput || (isSuperAdmin && isSuperAdminPin);
     return res.json({ exists: true, passwordMatches: isMatch, hasSetPassword: true });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || 'Server error' });

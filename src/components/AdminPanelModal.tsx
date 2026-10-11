@@ -59,14 +59,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const currentEmail = (currentUserProfile.emailOrPhone || '').toLowerCase().trim();
   const isOwner = Boolean(currentUserProfile.isSignedIn && currentEmail === 'mdmursalineparvez@gmail.com');
 
-  // Admin Authentication State (Strictly only for signed-in mdmursalineparvez@gmail.com)
+  // Admin Authentication State (Strictly only for signed-in mdmursalineparvez@gmail.com with verified session)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
       if (!isOwner) return false;
-      return (
-        localStorage.getItem('zikrmate_admin_session_auth') === 'true' ||
-        Boolean(currentUserProfile.password && currentUserProfile.password.length >= 4)
-      );
+      return sessionStorage.getItem('zikrmate_admin_session_auth') === 'true';
     } catch {
       return false;
     }
@@ -261,6 +258,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     if (isPinMatch) {
       setIsAdminAuthenticated(true);
       try {
+        sessionStorage.setItem('zikrmate_admin_session_auth', 'true');
         localStorage.setItem('zikrmate_admin_session_auth', 'true');
       } catch {}
       if (soundEnabled) soundHaptics.playMilestone();
