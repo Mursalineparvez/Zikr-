@@ -932,7 +932,7 @@ export default function App() {
     try {
       localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
 
-      // 1. Handle LOGOUT: Preserve all counts! Never wipe the user's hard-earned dhikr!
+      // 1. Handle LOGOUT: Save to cloud and reset local screen counts to 0 for privacy
       if (wasSignedIn && !updated.isSignedIn) {
         const trueLifetime = Math.max(lifetimeTotalCount, masterGrandTotal);
         if (oldEmail) {
@@ -941,7 +941,7 @@ export default function App() {
             isSignedIn: false,
           });
           const allAamal = getAllAamalLogs();
-          saveUserDataToCloud(
+          await saveUserDataToCloud(
             oldEmail,
             userProfile,
             zikrs,
@@ -955,14 +955,21 @@ export default function App() {
           if (auth) firebaseSignOut(auth).catch(() => {});
         } catch {}
 
-        // Explicitly preserve and store all current counts, history, and lifetime totals in localStorage
+        // Reset local screen state to 0 so logged out screen shows 0 counts (data safely in cloud)
+        const freshZikrs = DEFAULT_ZIKRS.map((item) => ({ ...item, count: 0, updatedAt: Date.now() }));
+        setZikrs(freshZikrs);
+        setLifetimeTotalCount(0);
+        setHistorySessions([]);
+        setDailyTotalState(0);
+
         try {
-          localStorage.setItem('noor_zikr_items', JSON.stringify(zikrs));
-          localStorage.setItem('noor_zikr_history', JSON.stringify(historySessions));
-          localStorage.setItem('zikrmate_lifetime_total_count', String(trueLifetime));
+          localStorage.removeItem('noor_zikr_items');
+          localStorage.removeItem('noor_zikr_history');
+          localStorage.setItem('zikrmate_lifetime_total_count', '0');
+          localStorage.removeItem('zikrmate_active_zikrs_backup');
         } catch {}
 
-        showToast('লগআউট সম্পন্ন হয়েছে। আপনার পূর্বের সকল জিকির গণনা ডিভাইসে অক্ষত ও সুরক্ষিত রয়েছে।');
+        showToast('লগআউট সম্পন্ন হয়েছে। আপনার ডাটা ক্লাউডে সুরক্ষিত আছে এবং স্ক্রিন কাউন্টার ০ করা হয়েছে।');
         return;
       }
 

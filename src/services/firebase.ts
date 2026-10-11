@@ -1636,4 +1636,56 @@ export async function deleteUserByAdmin(userKey: string): Promise<boolean> {
   }
 }
 
+export interface LeaderboardUserEntry {
+  uid: string;
+  name: string;
+  photoUrl: string;
+  lifetimeTotalCount: number;
+  todayCount: number;
+  lastActive: string;
+}
+
+export async function getZikrLeaderboard(): Promise<LeaderboardUserEntry[]> {
+  try {
+    const usersCollRef = collection(db, 'users');
+    const snapshot = await getDocs(usersCollRef);
+    const entries: LeaderboardUserEntry[] = [];
+    const todayKey = new Date().toISOString().split('T')[0];
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const name = data.name || (data.email ? data.email.split('@')[0] : 'Zikr+ User');
+      const photoUrl = data.photoUrl || '';
+      const lifetimeTotalCount = typeof data.lifetimeTotalCount === 'number'
+        ? data.lifetimeTotalCount
+        : (typeof data.totalCount === 'number' ? data.totalCount : 0);
+      
+      let todayCount = 0;
+      if (data.aamalLogsJson) {
+        try {
+          const parsedAamal = JSON.parse(data.aamalLogsJson);
+          if (parsedAamal && parsedAamal[todayKey]) {
+            todayCount = parsedAamal[todayKey].dhikrCount || 0;
+          }
+        } catch {}
+      }
+
+      entries.push({
+        uid: docSnap.id,
+        name,
+        photoUrl,
+        lifetimeTotalCount,
+        todayCount,
+        lastActive: data.updatedAt || '',
+      });
+    });
+
+    entries.sort((a, b) => b.lifetimeTotalCount - a.lifetimeTotalCount);
+    return entries;
+  } catch (err) {
+    console.warn('Failed to fetch leaderboard from Firestore:', err);
+    return [];
+  }
+}
+
 

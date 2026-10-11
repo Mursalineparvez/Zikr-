@@ -44,11 +44,13 @@ import {
   SlidersHorizontal,
   Star,
   Droplets,
+  RefreshCw,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { soundHaptics } from '../utils/audioHaptics';
 import { HistoryReportModal } from './HistoryReportModal';
 import { AAMAL_ITEM_TRANSLATIONS, AAMAL_UI, PRAYER_NAMES } from '../utils/appTranslations';
+import { getZikrLeaderboard, LeaderboardUserEntry } from '../services/firebase';
 
 interface AamalTrackerViewProps {
   soundEnabled: boolean;
@@ -92,8 +94,26 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
   const isDay = themeMode === 'day';
   const todayKey = getTodayDateKey();
 
-  // Active view subtab: 'checklist' (Daily Amal), 'calendar' (Record), 'trends' (Trends & Stats)
-  const [activeSubTab, setActiveSubTab] = useState<'checklist' | 'calendar' | 'trends'>('checklist');
+  // Active view subtab: 'checklist', 'calendar', 'trends', 'leaderboard'
+  const [activeSubTab, setActiveSubTab] = useState<'checklist' | 'calendar' | 'trends' | 'leaderboard'>('checklist');
+  const [leaderboardUsers, setLeaderboardUsers] = useState<LeaderboardUserEntry[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState<boolean>(false);
+  const [leaderboardFilter, setLeaderboardFilter] = useState<'lifetime' | 'today'>('lifetime');
+
+  useEffect(() => {
+    if (activeSubTab === 'leaderboard') {
+      loadLeaderboard();
+    }
+  }, [activeSubTab]);
+
+  const loadLeaderboard = async () => {
+    setIsLoadingLeaderboard(true);
+    try {
+      const users = await getZikrLeaderboard();
+      setLeaderboardUsers(users);
+    } catch {}
+    setIsLoadingLeaderboard(false);
+  };
 
   // Auto-scroll to top when switching between Daily Checklist, Calendar, and Trends
   useEffect(() => {
@@ -607,6 +627,25 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
         >
           <TrendingUp className="w-4 h-4" />
           <span>{AAMAL_UI.tabTrends[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveSubTab('leaderboard');
+            if (soundEnabled) soundHaptics.playTap();
+          }}
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+            activeSubTab === 'leaderboard'
+              ? isDay
+                ? 'bg-[#006747] text-white shadow-md'
+                : 'bg-emerald-600 text-white shadow-md'
+              : isDay
+              ? 'text-[#3b6269] hover:text-[#006747]'
+              : 'text-emerald-300 hover:text-white'
+          }`}
+        >
+          <Award className="w-4 h-4" />
+          <span>{selectedLanguage === 'bn' ? 'র‍্যাংক' : 'Leaderboard'}</span>
         </button>
       </div>
 
@@ -2160,6 +2199,164 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== TAB 4: LEADERBOARD & RANKINGS ===================== */}
+      {activeSubTab === 'leaderboard' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          <div
+            className={`p-4 sm:p-5 rounded-3xl border shadow-lg space-y-4 ${
+              isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#0f343c] border-[#1c5763] text-white'
+            }`}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-teal-900/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base sm:text-lg">
+                    {selectedLanguage === 'bn' ? '🏆 জিকিরকারী লিডারবোর্ড ও র‍্যাঙ্কিং' : 'Zikr Leaderboard & Rankings'}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-emerald-300/80">
+                    {selectedLanguage === 'bn' ? 'শীর্ষ জিকিরকারীগণের দৈনিক ও সর্বমোট পুঞ্জীভূত র‍্যাংক' : 'Daily and lifetime top zikr performers'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadLeaderboard}
+                disabled={isLoadingLeaderboard}
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition active:scale-95 cursor-pointer shrink-0"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingLeaderboard ? 'animate-spin' : ''}`} />
+                <span>{selectedLanguage === 'bn' ? 'রিফ্রেশ' : 'Refresh'}</span>
+              </button>
+            </div>
+
+            {/* Filter Toggle: Lifetime vs Today */}
+            <div className="flex items-center gap-2 bg-slate-900/10 dark:bg-black/30 p-1 rounded-2xl border border-slate-300 dark:border-teal-900/40">
+              <button
+                type="button"
+                onClick={() => setLeaderboardFilter('lifetime')}
+                className={`flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                  leaderboardFilter === 'lifetime'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {selectedLanguage === 'bn' ? '🌟 সর্বমোট জিকির র‍্যাংক (Lifetime)' : 'Lifetime Rankings'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLeaderboardFilter('today')}
+                className={`flex-1 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                  leaderboardFilter === 'today'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-600 dark:text-emerald-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {selectedLanguage === 'bn' ? '🌅 আজকের জিকির র‍্যাংক (Today)' : 'Today\'s Rankings'}
+              </button>
+            </div>
+
+            {/* Leaderboard List */}
+            {isLoadingLeaderboard ? (
+              <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                <div className="w-8 h-8 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+                <span className="text-xs font-bold text-slate-400">র‍্যাঙ্কিং লোড হচ্ছে...</span>
+              </div>
+            ) : leaderboardUsers.length === 0 ? (
+              <div className="text-center py-12 space-y-2">
+                <div className="text-3xl">📭</div>
+                <div className="text-xs font-bold text-slate-500 dark:text-emerald-300">
+                  {selectedLanguage === 'bn' ? 'এখনো কোনো ডাটা পাওয়া যায়নি। সাইন-ইন করে জিকির করুন!' : 'No leaderboard entries yet.'}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1 scrollbar-thin">
+                {(() => {
+                  const sorted = [...leaderboardUsers].sort((a, b) =>
+                    leaderboardFilter === 'today' ? b.todayCount - a.todayCount : b.lifetimeTotalCount - a.lifetimeTotalCount
+                  );
+
+                  return sorted.map((user, idx) => {
+                    const rank = idx + 1;
+                    const isTop1 = rank === 1;
+                    const isTop2 = rank === 2;
+                    const isTop3 = rank === 3;
+                    const countVal = leaderboardFilter === 'today' ? user.todayCount : user.lifetimeTotalCount;
+
+                    return (
+                      <div
+                        key={user.uid}
+                        className={`p-3 rounded-2xl border flex items-center justify-between gap-3 transition ${
+                          isTop1
+                            ? isDay ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-400/50 shadow-sm' : 'bg-amber-950/30 border-amber-500/50 ring-2 ring-amber-500/30'
+                            : isTop2
+                            ? isDay ? 'bg-slate-50 border-slate-300' : 'bg-[#0a272e] border-teal-800/60'
+                            : isTop3
+                            ? isDay ? 'bg-orange-50/50 border-orange-200' : 'bg-orange-950/20 border-orange-900/40'
+                            : isDay ? 'bg-slate-50/60 border-slate-200' : 'bg-[#092226] border-[#184850]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* Rank Badge */}
+                          <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center shrink-0 shadow-xs ${
+                            isTop1 ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-300' :
+                            isTop2 ? 'bg-slate-300 text-slate-900' :
+                            isTop3 ? 'bg-amber-700 text-white' :
+                            'bg-slate-800/10 dark:bg-white/10 text-slate-600 dark:text-emerald-300'
+                          }`}>
+                            {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                          </div>
+
+                          {/* Profile Avatar */}
+                          <div className="relative shrink-0">
+                            {user.photoUrl ? (
+                              <img
+                                src={user.photoUrl}
+                                alt={user.name}
+                                className="w-10 h-10 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-xs"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center border-2 border-emerald-400/40 shadow-xs">
+                                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                              </div>
+                            )}
+                            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0f343c]" />
+                          </div>
+
+                          {/* Name & details */}
+                          <div className="min-w-0">
+                            <h4 className="font-extrabold text-xs sm:text-sm truncate text-slate-900 dark:text-white flex items-center gap-1.5">
+                              <span>{user.name}</span>
+                              {isTop1 && <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-black">Top 1</span>}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 dark:text-emerald-300/70 font-mono">
+                              {leaderboardFilter === 'today' ? 'আজকের জিকির' : 'সর্বমোট পুঞ্জীভূত জিকির'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Count & Trophy */}
+                        <div className="text-right shrink-0">
+                          <div className="text-sm sm:text-base font-black font-mono text-emerald-600 dark:text-emerald-400">
+                            {countVal.toLocaleString()} <span className="text-[10px] font-normal">বার</span>
+                          </div>
+                          <div className="text-[9px] text-slate-400 font-mono">
+                            Rank #{rank}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            )}
           </div>
         </div>
       )}

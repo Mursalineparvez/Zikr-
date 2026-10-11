@@ -1093,8 +1093,24 @@ export function getAamalLogForDate(dateKey: string): AamalDayLog {
 export function saveAamalLogForDate(dateKey: string, log: AamalDayLog): void {
   try {
     localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(log));
-  } catch (e) {
-    console.error('Failed to save aamal log for date', dateKey, e);
+  } catch (e: any) {
+    if (e?.name === 'QuotaExceededError' || e?.message?.includes('exceeded the quota')) {
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('zikrmate_aamal_') && !k.includes(dateKey)) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+        localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(log));
+      } catch (retryErr) {
+        console.warn('Quota exceeded retry failed:', retryErr);
+      }
+    } else {
+      console.error('Failed to save aamal log for date', dateKey, e);
+    }
   }
 }
 
