@@ -696,18 +696,7 @@ export default function App() {
           if (cloudData && cloudData.foundInCloud) {
             applyCloudDataToState(cloudData, true, true);
           } else {
-            const localSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
-            if (localSum > 0 || lifetimeTotalCountRef.current > 0) {
-              saveUserDataToCloud(
-                targetEmail,
-                updated,
-                zikrsRef.current,
-                historySessions,
-                lifetimeTotalCountRef.current,
-                settings,
-                getAllAamalLogs()
-              ).catch(() => {});
-            }
+            await initializeFreshZeroUserState(updated);
           }
         }
       })
@@ -985,20 +974,8 @@ export default function App() {
           showToast(`✨ স্বাগতম ${updated.name || 'ইউজার'}! আপনার ক্লাউড ডাটা সিঙ্ক হয়েছে।`);
           return;
         } else {
-          // Cloud has no doc or offline: upload current local data to cloud for this email!
-          const localSum = zikrsRef.current.reduce((acc, curr) => acc + (curr.count || 0), 0);
-          const trueLifetime = Math.max(lifetimeTotalCountRef.current, masterGrandTotal, localSum);
-          await saveUserDataToCloud(
-            newEmail,
-            updated,
-            zikrsRef.current,
-            historySessions,
-            trueLifetime,
-            settings,
-            getAllAamalLogs()
-          );
-          isCloudSyncReadyRef.current = true;
-          showToast(`✨ স্বাগতম ${updated.name || 'ইউজার'}! আপনার জিকির অ্যাকাউন্ট সিঙ্ক শুরু হয়েছে।`);
+          // Brand new account: initialize with fresh zero state (all zikrs blank / 0 counts)
+          await initializeFreshZeroUserState(updated);
           return;
         }
       }
