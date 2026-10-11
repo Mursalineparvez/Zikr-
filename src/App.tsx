@@ -103,6 +103,27 @@ export default function App() {
       return 'fard';
     })();
 
+    let isSavedSignedIn = false;
+    try {
+      const p = localStorage.getItem('zikrmate_user_profile');
+      if (p) isSavedSignedIn = Boolean(JSON.parse(p)?.isSignedIn);
+    } catch {}
+
+    const guestZeroInit = localStorage.getItem('zikrmate_guest_zero_initialized_v2') === 'true';
+
+    // If unauthenticated guest visitor, start strictly at count 0 for every zikr:
+    if (!isSavedSignedIn && !guestZeroInit) {
+      localStorage.setItem('zikrmate_guest_zero_initialized_v2', 'true');
+      localStorage.removeItem('noor_zikr_items');
+      localStorage.removeItem('noor_zikr_history');
+      localStorage.setItem('zikrmate_lifetime_total_count', '0');
+      return DEFAULT_ZIKRS.map((item, idx) => ({
+        ...item,
+        count: 0,
+        target: getTargetForZikrMode(item, activeRefreshMode, idx),
+      }));
+    }
+
     try {
       const saved = localStorage.getItem('noor_zikr_items');
       let parsed: any[] | null = null;
@@ -273,6 +294,17 @@ export default function App() {
 
   // Lifetime Cumulative Grand Total Count (Persists across sessions until manual Reset All)
   const [lifetimeTotalCount, setLifetimeTotalCount] = useState<number>(() => {
+    let isSignedIn = false;
+    try {
+      const p = localStorage.getItem('zikrmate_user_profile');
+      if (p) isSignedIn = Boolean(JSON.parse(p)?.isSignedIn);
+    } catch {}
+
+    // Visitors / unauthenticated guests start strictly at 0!
+    if (!isSignedIn) {
+      return 0;
+    }
+
     let savedTotal = 0;
     try {
       const saved = localStorage.getItem('zikrmate_lifetime_total_count');
@@ -310,45 +342,24 @@ export default function App() {
     } catch {}
   }, [lifetimeTotalCount]);
 
-  // Master Grand Total Count (Grand cumulative total of all zikrs including history logs sum)
-  const masterGrandTotal = useMemo(() => {
-    const allLogs = getAllAamalLogs();
-    const aamalHistorySum = Object.values(allLogs).reduce((acc, log) => acc + (log.dhikrCount || 0), 0);
-    const sessionHistorySum = historySessions.reduce((acc, s) => acc + (s.totalCount || 0), 0);
-    const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-    return Math.max(lifetimeTotalCount, aamalHistorySum, sessionHistorySum, activeSum);
-  }, [zikrs, lifetimeTotalCount, historySessions]);
-
-  // Keep lifetimeTotalCount state in sync with masterGrandTotal
-  useEffect(() => {
-    if (masterGrandTotal > lifetimeTotalCount) {
-      setLifetimeTotalCount(masterGrandTotal);
-    }
-  }, [masterGrandTotal, lifetimeTotalCount]);
-
   // User Profile Account state (Guest by default until signed in)
-  const zikrsRef = useRef(zikrs);
-  useEffect(() => {
-    zikrsRef.current = zikrs;
-  }, [zikrs]);
-
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
-
-  const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
-
-  const handleOpenProfileModal = (tab: 'profile' | 'settings' = 'profile') => {
-    setProfileModalTab(tab);
-    setIsProfileModalOpen(true);
-  };
-
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const detected = getDetectedDeviceInfo();
+    const devId = getDeviceId();
+    const shortDevId = devId.replace(/[^a-z0-9]/g, '').slice(-6).toUpperCase();
+
     try {
       const saved = localStorage.getItem('zikrmate_user_profile');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed.isSignedIn === 'boolean') {
+          // If not signed in, auto assign clean unique guest username
+          if (!parsed.isSignedIn) {
+            parsed.name = `Guest #${shortDevId}`;
+            parsed.emailOrPhone = `guest_${shortDevId}`;
+            parsed.userId = `G-${shortDevId}`;
+            parsed.photoUrl = '';
+          }
           if (!parsed.deviceModel || parsed.deviceModel.includes('vivo ~~ V2144')) {
             parsed.deviceModel = detected.model;
           }
@@ -365,10 +376,8 @@ export default function App() {
         }
       }
     } catch {}
-    const devId = getDeviceId();
-    const shortDevId = devId.replace(/[^a-z0-9]/g, '').slice(-6).toUpperCase();
     return {
-      name: 'Guest User',
+      name: `Guest #${shortDevId}`,
       emailOrPhone: `guest_${shortDevId}`,
       photoUrl: '',
       isSignedIn: false,
@@ -380,6 +389,46 @@ export default function App() {
       appVersion: detected.appVersion,
     };
   });
+
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+
+  const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
+
+  const handleOpenProfileModal = (tab: 'profile' | 'settings' = 'profile') => {
+    setProfileModalTab(tab);
+    setIsProfileModalOpen(true);
+  };
+
+  const zikrsRef = useRef(zikrs);
+  useEffect(() => {
+    zikrsRef.current = zikrs;
+  }, [zikrs]);
+
+  // Master Grand Total Count (Grand cumulative total of all zikrs including history logs sum)
+  const masterGrandTotal = useMemo(() => {
+    const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+    const sessionHistorySum = historySessions.reduce((acc, s) => acc + (s.totalCount || 0), 0);
+
+    // If user is not signed in (Guest Mode), total count strictly equals their active beads and sessions
+    if (!userProfile?.isSignedIn) {
+      return Math.max(0, activeSum + sessionHistorySum);
+    }
+
+    if (activeSum === 0 && sessionHistorySum === 0 && lifetimeTotalCount === 0) {
+      return 0;
+    }
+    const allLogs = getAllAamalLogs();
+    const aamalHistorySum = Object.values(allLogs).reduce((acc, log) => acc + (log.dhikrCount || 0), 0);
+    return Math.max(lifetimeTotalCount, aamalHistorySum, sessionHistorySum, activeSum);
+  }, [zikrs, lifetimeTotalCount, historySessions, userProfile?.isSignedIn]);
+
+  // Keep lifetimeTotalCount state in sync with masterGrandTotal
+  useEffect(() => {
+    if (masterGrandTotal > lifetimeTotalCount) {
+      setLifetimeTotalCount(masterGrandTotal);
+    }
+  }, [masterGrandTotal, lifetimeTotalCount]);
 
   const [isSyncingCloud, setIsSyncingCloud] = useState(false);
   const [lastCloudSyncTimestamp, setLastCloudSyncTimestamp] = useState<number | undefined>(() => {
@@ -409,6 +458,32 @@ export default function App() {
   const isCloudSyncReadyRef = useRef<boolean>(false);
   const isApplyingRemoteUpdateRef = useRef<boolean>(false);
   const lastSyncedSignatureRef = useRef<string>('');
+
+  // One-time sanitization: if a guest enters the app or downloads without signing up,
+  // ensure all stale leftover data is purged and everything starts strictly at 0
+  useEffect(() => {
+    if (!userProfile.isSignedIn) {
+      const hasGuestZeroInitialized = localStorage.getItem('zikrmate_guest_zero_initialized_v2') === 'true';
+      if (!hasGuestZeroInitialized) {
+        localStorage.setItem('zikrmate_guest_zero_initialized_v2', 'true');
+        localStorage.setItem('zikrmate_lifetime_total_count', '0');
+        localStorage.removeItem('noor_zikr_items');
+        localStorage.removeItem('noor_zikr_history');
+        localStorage.removeItem('zikrmate_active_zikrs_backup');
+        clearAllAamalLogs();
+        resetTodayDhikrTotal(getTodayDateKey());
+
+        setZikrs(DEFAULT_ZIKRS.map((item, idx) => ({
+          ...item,
+          count: 0,
+          target: getTargetForZikrMode(item, refreshMode, idx),
+        })));
+        setLifetimeTotalCount(0);
+        setHistorySessions([]);
+        setDailyTotalState(0);
+      }
+    }
+  }, [userProfile.isSignedIn, refreshMode]);
   const lastLocalActionTimestampRef = useRef<number>(0);
 
   // Helper: Merge raw cloud zikrs with default translations and metadata using smart Math.max across local and cloud
@@ -1014,7 +1089,7 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('zikrmate_user_profile', JSON.stringify(userProfile));
-      if (userProfile.isSignedIn && (userProfile.emailOrPhone || userProfile.name)) {
+      if (userProfile.isSignedIn && userProfile.emailOrPhone && !userProfile.emailOrPhone.startsWith('guest_')) {
         saveAccountToRegistry(userProfile);
       }
     } catch {}
@@ -1070,6 +1145,17 @@ export default function App() {
 
   // Dedicated State for Today's Dhikr Count (Resets to 0 on a new day or when reset)
   const [dailyTotalState, setDailyTotalState] = useState<number>(() => {
+    let isSignedIn = false;
+    try {
+      const p = localStorage.getItem('zikrmate_user_profile');
+      if (p) isSignedIn = Boolean(JSON.parse(p)?.isSignedIn);
+    } catch {}
+
+    // For unauthenticated guest visitors, today's count starts strictly at 0
+    if (!isSignedIn) {
+      return 0;
+    }
+
     const todayKey = getTodayDateKey();
     const lastActiveDate = localStorage.getItem('zikrmate_last_active_date_key');
     if (lastActiveDate && lastActiveDate !== todayKey) {
@@ -2040,7 +2126,10 @@ export default function App() {
             isSyncingCloud={isSyncingCloud}
             lastCloudSyncTimestamp={lastCloudSyncTimestamp}
             onOpenAdminPanel={
-              (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com'
+              Boolean(
+                userProfile.isSignedIn &&
+                (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com'
+              )
                 ? () => setIsAdminPanelOpen(true)
                 : undefined
             }
@@ -2054,8 +2143,12 @@ export default function App() {
           />
         )}
 
-        {/* Super Admin Dashboard Modal (Strictly only for mdmursalineparvez@gmail.com) */}
-        {isAdminPanelOpen && (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com' && (
+        {/* Super Admin Dashboard Modal (Strictly only for mdmursalineparvez@gmail.com WHEN SIGNED IN) */}
+        {isAdminPanelOpen &&
+          Boolean(
+            userProfile.isSignedIn &&
+            (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com'
+          ) && (
           <AdminPanelModal
             isOpen={isAdminPanelOpen}
             onClose={() => setIsAdminPanelOpen(false)}

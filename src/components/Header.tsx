@@ -209,11 +209,18 @@ export const Header: React.FC<HeaderProps> = ({
                   <User className="w-3.5 h-3.5 text-white" />
                 )}
               </div>
-              <span className="text-xs font-bold truncate max-w-[110px]">
-                {userProfile?.isSignedIn
-                  ? userProfile?.name?.split(' ')[0] || 'Profile'
-                  : 'Sign In'}
-              </span>
+              <div className="flex flex-col items-start leading-none text-left">
+                <span className="text-xs font-bold truncate max-w-[110px]">
+                  {userProfile?.isSignedIn
+                    ? userProfile?.name?.split(' ')[0] || 'Profile'
+                    : userProfile?.name || 'Guest User'}
+                </span>
+                {!userProfile?.isSignedIn && (
+                  <span className="text-[9px] text-emerald-200/90 font-medium">
+                    সাইন-ইন
+                  </span>
+                )}
+              </div>
             </button>
           )}
 

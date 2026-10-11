@@ -51,11 +51,22 @@ export const getAllSavedAccounts = (): Record<string, SavedAccountRecord> => {
 };
 
 /**
- * Save / Update an account into the cloud vault while strictly preserving password
+ * Save / Update an account into the cloud vault while strictly preserving password and preventing QuotaExceededError
  */
 export const saveAccountToRegistry = (profile: UserProfile): void => {
   const targetId = profile.emailOrPhone || profile.name;
   if (!targetId) return;
+
+  // Strictly skip guest or unauthenticated profiles from bloating the vault
+  if (!profile.isSignedIn || targetId.startsWith('guest_') || targetId.startsWith('G-')) {
+    return;
+  }
+
+  // Strip oversized base64 data URLs to prevent storage quota exhaustion
+  let safePhoto = profile.photoUrl || '';
+  if (safePhoto.length > 500) {
+    safePhoto = '';
+  }
 
   try {
     const registry = getAllSavedAccounts();
@@ -74,6 +85,7 @@ export const saveAccountToRegistry = (profile: UserProfile): void => {
     registry[key] = {
       profile: {
         ...profile,
+        photoUrl: safePhoto,
         password: finalPassword,
         isSignedIn: true,
         isVerified: true,
@@ -83,9 +95,55 @@ export const saveAccountToRegistry = (profile: UserProfile): void => {
       savedAt: new Date().toISOString(),
     };
 
-    localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(registry));
+    // Keep only registered signed-in accounts and at most 10 latest accounts
+    const prunedRegistry: Record<string, SavedAccountRecord> = {};
+    const entries = Object.entries(registry)
+      .filter(([k, v]) => !k.startsWith('guest_') && !k.startsWith('g-') && v.profile?.isSignedIn)
+      .slice(-10);
+
+    for (const [k, v] of entries) {
+      prunedRegistry[k] = v;
+    }
+
+    try {
+      localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(prunedRegistry));
+    } catch (quotaErr) {
+      // Aggressively free storage if browser storage limit reached
+      const leanRegistry: Record<string, SavedAccountRecord> = {};
+      for (const [k, v] of entries.slice(-5)) {
+        leanRegistry[k] = {
+          ...v,
+          profile: {
+            ...v.profile,
+            photoUrl: '', // strip photos completely
+          },
+        };
+      }
+
+      // Evict non-essential cache keys from localStorage
+      try {
+        const toEvict: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const lk = localStorage.key(i);
+          if (lk && (lk.startsWith('zikrmate_cloud_cache_') || lk.startsWith('zikrmate_active_zikrs_backup'))) {
+            toEvict.push(lk);
+          }
+        }
+        toEvict.forEach((k) => localStorage.removeItem(k));
+      } catch {}
+
+      try {
+        localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(leanRegistry));
+      } catch {
+        // If storage is completely full, remove the local vault key without crashing
+        try {
+          localStorage.removeItem(ACCOUNTS_DB_KEY);
+        } catch {}
+      }
+    }
   } catch (e) {
-    console.error('Failed to save account to registry', e);
+    // Non-fatal warning instead of throwing unhandled QuotaExceededError
+    console.warn('Notice: account registry vault storage skipped');
   }
 };
 
@@ -163,7 +221,9 @@ export const updateAccountPassword = (emailOrPhone: string, newPassword: string)
         },
         savedAt: new Date().toISOString(),
       };
-      localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(registry));
+      try {
+        localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(registry));
+      } catch {}
       return true;
     } else {
       // Register new entry with new password
@@ -178,11 +238,13 @@ export const updateAccountPassword = (emailOrPhone: string, newPassword: string)
         },
         savedAt: new Date().toISOString(),
       };
-      localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(registry));
+      try {
+        localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(registry));
+      } catch {}
       return true;
     }
   } catch (e) {
-    console.error('Failed to update account password in registry', e);
+    console.warn('Notice: password registry storage skipped');
   }
   return false;
 };

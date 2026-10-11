@@ -1,7 +1,7 @@
 {
   "u_mdmursalineparvez_gmail_com": {
     "userKey": "u_mdmursalineparvez_gmail_com",
-    "name": "Md. Mursaline Parvez",
+    "name": "mdmursalineparvez",
     "email": "mdmursalineparvez@gmail.com",
     "emailOrPhone": "mdmursalineparvez@gmail.com",
     "phone": "",
@@ -10,11 +10,15 @@
     "deviceModel": "Android Phone / Desktop",
     "osVersion": "Android / Windows",
     "verificationMethod": "Google Sign-In",
-    "lastSyncedAt": 1791596860468,
+    "lastSyncedAt": 1791689879382,
     "createdAtMs": 1791424060468,
     "lifetimeTotalCount": 4098,
     "activeZikrs": [],
-    "hasPassword": true
+    "hasPassword": true,
+    "historySessions": [],
+    "aamalLogs": {},
+    "settings": {},
+    "password": ""
   },
   "u_karim_gmail_com": {
     "userKey": "u_karim_gmail_com",

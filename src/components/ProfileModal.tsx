@@ -68,6 +68,7 @@ import {
   verifyUserCloudPassword,
   signInWithGoogleAuth,
   CloudZikrState,
+  getDeviceId,
 } from '../services/firebase';
 
 const COUNTRY_CODES = [
@@ -389,6 +390,27 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const cloudData = await loadUserDataFromCloud(targetKey);
     const existing = findSavedAccount(targetKey);
 
+    const isSuperAdminEmail = targetKey.toLowerCase() === 'mdmursalineparvez@gmail.com';
+
+    // Strictly enforce password check:
+    if (verifyResult.exists && verifyResult.savedPassword && !verifyResult.passwordMatches) {
+      setIsVerifying(false);
+      setOtpErrorMessage(
+        isSuperAdminEmail
+          ? 'ভুল পাসওয়ার্ড! mdmursalineparvez@gmail.com এর সঠিক পাসওয়ার্ড দিন।'
+          : 'ভুল পাসওয়ার্ড! আপনার অ্যাকাউন্টের সঠিক পাসওয়ার্ড দিন। পাসওয়ার্ড ভুলে গেলে নিচে "Forgot Password" চাপুন।'
+      );
+      if (soundEnabled) soundHaptics.playTap();
+      return;
+    }
+
+    if (isSuperAdminEmail && !verifyResult.passwordMatches) {
+      setIsVerifying(false);
+      setOtpErrorMessage('ভুল পাসওয়ার্ড! mdmursalineparvez@gmail.com এর সঠিক পাসওয়ার্ড দিন।');
+      if (soundEnabled) soundHaptics.playTap();
+      return;
+    }
+
     const displayName =
       inputName.trim() ||
       cloudData?.profile?.name ||
@@ -415,6 +437,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
+
+    if (isSuperAdminEmail) {
+      try {
+        localStorage.setItem('zikrmate_admin_session_auth', 'true');
+      } catch {}
+    }
 
     if (verifyResult.exists) {
       setCloudSyncMessage('লগইন সফল! ক্লাউড থেকে আপনার আমল ও হিস্ট্রি লোড হচ্ছে...');
@@ -970,6 +998,21 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
                   </div>
 
+                  {/* Auto Guest Username Badge */}
+                  <div className={`p-2.5 rounded-2xl border flex items-center justify-between text-xs ${
+                    isDay ? 'bg-white/80 border-emerald-200 text-slate-800' : 'bg-black/25 border-white/10 text-emerald-100'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                        <User className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="font-bold">আপনার অটো ইউজার নেম:</span>
+                    </div>
+                    <span className="font-mono font-black text-xs px-2.5 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+                      {userProfile.name || 'Guest User'}
+                    </span>
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleOpenVerifiedAuth}
@@ -1061,8 +1104,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">💬</span>
                 </button>
 
-                {/* Admin Dashboard (Exclusively visible ONLY to mdmursalineparvez@gmail.com) */}
-                {onOpenAdminPanel && (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com' && (
+                {/* Admin Dashboard (Exclusively visible ONLY to mdmursalineparvez@gmail.com WHEN SIGNED IN) */}
+                {onOpenAdminPanel &&
+                  Boolean(
+                    userProfile.isSignedIn &&
+                    (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com'
+                  ) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1997,16 +2044,30 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
+                    const devId = getDeviceId();
+                    const shortDevId = devId.replace(/[^a-z0-9]/g, '').slice(-6).toUpperCase();
                     const loggedOutProf: UserProfile = {
-                      ...userProfile,
+                      name: 'Guest User',
+                      emailOrPhone: `guest_${shortDevId}`,
+                      photoUrl: '',
                       isSignedIn: false,
                       isVerified: false,
+                      userId: `G-${shortDevId}`,
+                      userSerial: 0,
+                      location: userProfile.location || 'Bangladesh',
+                      deviceModel: userProfile.deviceModel || 'Mobile Device',
+                      osVersion: userProfile.osVersion || 'Android',
+                      appVersion: userProfile.appVersion,
                     };
+                    try {
+                      localStorage.removeItem('zikrmate_admin_session_auth');
+                      localStorage.setItem('zikrmate_user_profile', JSON.stringify(loggedOutProf));
+                    } catch {}
                     onUpdateProfile(loggedOutProf);
                     setActiveSubModal('none');
                     if (soundEnabled) soundHaptics.playMilestone();
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs shadow-md"
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs shadow-md cursor-pointer"
                 >
                   Yes, Logout
                 </button>

@@ -57,10 +57,20 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   currentHistorySessions,
 }) => {
   const currentEmail = (currentUserProfile.emailOrPhone || '').toLowerCase().trim();
-  const isOwner = currentEmail === 'mdmursalineparvez@gmail.com';
+  const isOwner = Boolean(currentUserProfile.isSignedIn && currentEmail === 'mdmursalineparvez@gmail.com');
 
-  // Admin Authentication State (Strictly only for mdmursalineparvez@gmail.com)
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(isOwner);
+  // Admin Authentication State (Strictly only for signed-in mdmursalineparvez@gmail.com)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      if (!isOwner) return false;
+      return (
+        localStorage.getItem('zikrmate_admin_session_auth') === 'true' ||
+        Boolean(currentUserProfile.password && currentUserProfile.password.length >= 4)
+      );
+    } catch {
+      return false;
+    }
+  });
 
   const [adminPinInput, setAdminPinInput] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
@@ -218,27 +228,37 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   useEffect(() => {
     if (!isOpen || !isOwner) return;
 
-    setIsAdminAuthenticated(true);
-    loadUsersData();
-    const unsubscribe = subscribeToAllUsersForAdmin((data) => {
-      const merged = mergeCloudAndVaultUsers(data);
-      setUsers(merged);
-      setIsLoading(false);
-    });
-    return () => {
-      unsubscribe();
-    };
-  }, [isOpen, isOwner]);
+    if (isAdminAuthenticated) {
+      loadUsersData();
+      const unsubscribe = subscribeToAllUsersForAdmin((data) => {
+        const merged = mergeCloudAndVaultUsers(data);
+        setUsers(merged);
+        setIsLoading(false);
+      });
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [isOpen, isOwner, isAdminAuthenticated]);
 
   // Strictly block any non-owner access
   if (!isOpen || !isOwner) return null;
 
-  // Handle Admin PIN Login
+  // Handle Admin PIN / Password Login
   const handleAdminPinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPinError(null);
-    // Secret default PIN is 786786 or 123456
-    if (adminPinInput.trim() === '786786' || adminPinInput.trim() === '123456' || adminPinInput.trim() === '786') {
+    const cleanPin = adminPinInput.trim();
+    const currentPass = (currentUserProfile.password || '').trim();
+
+    // Accept account password OR master PIN 786786 / 123456
+    const isPinMatch =
+      cleanPin === '786786' ||
+      cleanPin === '123456' ||
+      cleanPin === '786' ||
+      (currentPass && cleanPin === currentPass);
+
+    if (isPinMatch) {
       setIsAdminAuthenticated(true);
       try {
         localStorage.setItem('zikrmate_admin_session_auth', 'true');
@@ -246,7 +266,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       if (soundEnabled) soundHaptics.playMilestone();
       loadUsersData();
     } else {
-      setPinError('ভুল অ্যাডমিন পিন কোড! সঠিক পিন কোড দিন।');
+      setPinError('ভুল পাসওয়ার্ড বা অ্যাডমিন পিন! সঠিক পাসওয়ার্ড বা পিন কোড দিন।');
       if (soundEnabled) soundHaptics.playTap();
     }
   };
@@ -406,7 +426,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   অ্যাডমিন প্যানেল সিকিউরিটি
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-emerald-300/80 mt-1 leading-relaxed">
-                  অ্যাডমিন ড্যাশবোর্ড ব্যবহারের জন্য গোপন অ্যাডমিন পিন কোডটি দিন।
+                  অ্যাডমিন ড্যাশবোর্ড ব্যবহারের জন্য mdmursalineparvez@gmail.com এর পাসওয়ার্ড অথবা গোপন অ্যাডমিন পিন (786786) দিন।
                 </p>
               </div>
 
@@ -417,7 +437,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     autoFocus
                     value={adminPinInput}
                     onChange={(e) => setAdminPinInput(e.target.value)}
-                    placeholder="পিন কোড লিখুন (e.g. 786786)"
+                    placeholder="পাসওয়ার্ড বা অ্যাডমিন পিন লিখুন"
                     className={`w-full rounded-2xl px-4 py-3 border text-center font-mono font-bold text-sm tracking-widest focus:outline-none transition ${
                       isDayTheme
                         ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
