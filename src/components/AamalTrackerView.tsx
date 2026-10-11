@@ -2293,23 +2293,23 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                     return (
                       <div
                         key={user.uid}
-                        className={`p-3 rounded-2xl border flex items-center justify-between gap-3 transition ${
+                        className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition ${
                           isTop1
-                            ? isDay ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-400/50 shadow-sm' : 'bg-amber-950/30 border-amber-500/50 ring-2 ring-amber-500/30'
+                            ? isDay ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-400/50 shadow-md' : 'bg-gradient-to-r from-[#173d34] to-[#12312b] border-amber-500/60 ring-2 ring-amber-400/40 shadow-lg'
                             : isTop2
-                            ? isDay ? 'bg-slate-50 border-slate-300' : 'bg-[#0a272e] border-teal-800/60'
+                            ? isDay ? 'bg-slate-50 border-slate-300' : 'bg-gradient-to-r from-[#10343c] to-[#0a272e] border-teal-600/50'
                             : isTop3
-                            ? isDay ? 'bg-orange-50/50 border-orange-200' : 'bg-orange-950/20 border-orange-900/40'
-                            : isDay ? 'bg-slate-50/60 border-slate-200' : 'bg-[#092226] border-[#184850]'
+                            ? isDay ? 'bg-orange-50/50 border-orange-200' : 'bg-gradient-to-r from-[#2c2215] to-[#1a140d] border-orange-500/40'
+                            : isDay ? 'bg-white border-slate-200' : 'bg-[#0f343c] border-[#1c5763]'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {/* Rank Badge */}
-                          <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center shrink-0 shadow-xs ${
-                            isTop1 ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-300' :
-                            isTop2 ? 'bg-slate-300 text-slate-900' :
-                            isTop3 ? 'bg-amber-700 text-white' :
-                            'bg-slate-800/10 dark:bg-white/10 text-slate-600 dark:text-emerald-300'
+                          <div className={`w-9 h-9 rounded-xl font-black text-xs flex items-center justify-center shrink-0 shadow-sm ${
+                            isTop1 ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-200 text-sm' :
+                            isTop2 ? 'bg-slate-200 text-slate-900 text-sm' :
+                            isTop3 ? 'bg-amber-700 text-white text-sm' :
+                            'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
                           }`}>
                             {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                           </div>
@@ -2320,34 +2320,34 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                               <img
                                 src={user.photoUrl}
                                 alt={user.name}
-                                className="w-10 h-10 rounded-2xl object-cover border-2 border-emerald-500/40 shadow-xs"
+                                className="w-11 h-11 rounded-2xl object-cover border-2 border-emerald-400 shadow-sm"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center border-2 border-emerald-400/40 shadow-xs">
+                              <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center border-2 border-emerald-400 shadow-sm">
                                 {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                               </div>
                             )}
-                            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0f343c]" />
+                            <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0f343c]" />
                           </div>
 
                           {/* Name & details */}
                           <div className="min-w-0">
-                            <h4 className="font-extrabold text-xs sm:text-sm truncate text-slate-900 dark:text-white flex items-center gap-1.5">
-                              <span>{user.name}</span>
-                              {isTop1 && <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-black">Top 1</span>}
+                            <h4 className="font-black text-sm sm:text-base truncate text-white flex items-center gap-1.5">
+                              <span className="text-white font-black">{user.name}</span>
+                              {isTop1 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black shadow-xs">Top 1</span>}
                             </h4>
-                            <p className="text-[10px] text-slate-500 dark:text-emerald-300/70 font-mono">
-                              {leaderboardFilter === 'today' ? 'আজকের জিকির' : 'সর্বমোট পুঞ্জীভূত জিকির'}
+                            <p className="text-[11px] font-bold text-emerald-300/90 font-mono">
+                              {leaderboardFilter === 'today' ? '🌅 আজকের জিকির' : '🌟 সর্বমোট পুঞ্জীভূত জিকির'}
                             </p>
                           </div>
                         </div>
 
                         {/* Count & Trophy */}
                         <div className="text-right shrink-0">
-                          <div className="text-sm sm:text-base font-black font-mono text-emerald-600 dark:text-emerald-400">
-                            {countVal.toLocaleString()} <span className="text-[10px] font-normal">বার</span>
+                          <div className="text-base sm:text-lg font-black font-mono text-amber-300">
+                            {countVal.toLocaleString()} <span className="text-xs font-bold text-emerald-200">বার</span>
                           </div>
-                          <div className="text-[9px] text-slate-400 font-mono">
+                          <div className="text-[10px] font-bold text-emerald-300/80 font-mono">
                             Rank #{rank}
                           </div>
                         </div>
