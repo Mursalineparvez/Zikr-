@@ -328,16 +328,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setFeedbackOsVersion(detected.osVersion);
 
     if (isOpen) {
-      fetch('https://ipapi.co/json/')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.city && data.country_name) {
-            const netLoc = `${data.city}, ${data.country_name}`;
-            setEditLocation(netLoc);
-            setFeedbackLocation(netLoc);
-          }
-        })
-        .catch(() => {});
+      const ipTimer = setTimeout(() => {
+        fetch('https://ipapi.co/json/')
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && data.city && data.country_name) {
+              const netLoc = `${data.city}, ${data.country_name}`;
+              setEditLocation(netLoc);
+              setFeedbackLocation(netLoc);
+            }
+          })
+          .catch(() => {});
+      }, 500);
+      return () => clearTimeout(ipTimer);
     }
   }, [isOpen, userProfile]);
 

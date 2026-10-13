@@ -756,40 +756,42 @@ export default function App() {
 
   // Google Redirect Login Result Check & Firebase Auth State Listener
   useEffect(() => {
-    checkGoogleRedirectResult()
-      .then(async (result) => {
-        if (result && result.success && result.user && result.user.email) {
-          const targetEmail = result.user.email.toLowerCase().trim();
-          const detected = getDetectedDeviceInfo();
-          const cloudData = await loadUserDataFromCloud(targetEmail);
-          const updated: UserProfile = {
-            ...userProfile,
-            name: result.user.name || cloudData?.profile?.name || targetEmail.split('@')[0],
-            emailOrPhone: targetEmail,
-            photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || '',
-            location: userProfile.location || 'Bangladesh',
-            deviceModel: detected.model,
-            osVersion: detected.osVersion,
-            isSignedIn: true,
-            isVerified: true,
-            verificationMethod: 'google',
-            verificationDate: new Date().toISOString(),
-            authProvider: 'google',
-            lastSyncedAt: Date.now(),
-          };
-          saveAccountToRegistry(updated);
-          setUserProfile(updated);
-          try {
-            localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
-          } catch {}
-          if (cloudData && cloudData.foundInCloud) {
-            applyCloudDataToState(cloudData, true, true);
-          } else {
-            await initializeFreshZeroUserState(updated);
+    const startupTimer = setTimeout(() => {
+      checkGoogleRedirectResult()
+        .then(async (result) => {
+          if (result && result.success && result.user && result.user.email) {
+            const targetEmail = result.user.email.toLowerCase().trim();
+            const detected = getDetectedDeviceInfo();
+            const cloudData = await loadUserDataFromCloud(targetEmail);
+            const updated: UserProfile = {
+              ...userProfile,
+              name: result.user.name || cloudData?.profile?.name || targetEmail.split('@')[0],
+              emailOrPhone: targetEmail,
+              photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || '',
+              location: userProfile.location || 'Bangladesh',
+              deviceModel: detected.model,
+              osVersion: detected.osVersion,
+              isSignedIn: true,
+              isVerified: true,
+              verificationMethod: 'google',
+              verificationDate: new Date().toISOString(),
+              authProvider: 'google',
+              lastSyncedAt: Date.now(),
+            };
+            saveAccountToRegistry(updated);
+            setUserProfile(updated);
+            try {
+              localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
+            } catch {}
+            if (cloudData && cloudData.foundInCloud) {
+              applyCloudDataToState(cloudData, true, true);
+            } else {
+              await initializeFreshZeroUserState(updated);
+            }
           }
-        }
-      })
-      .catch(() => {});
+        })
+        .catch(() => {});
+    }, 400);
 
     // Listen to Firebase Auth persistence state changes
     const unsubAuth = listenToAuthChanges(async (authUser) => {

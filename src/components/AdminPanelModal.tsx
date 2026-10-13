@@ -77,6 +77,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'today' | 'google' | 'phone'>('all');
+  const [sortBy, setSortBy] = useState<'rank' | 'recent'>('rank');
 
   // Selected User Detail Modal
   const [selectedUser, setSelectedUser] = useState<AdminUserRecord | null>(null);
@@ -194,7 +195,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       }
     });
 
-    // Deduplicate unique objects and ensure lifetime count reflects true active or cloud maximum
+    // Deduplicate unique objects and ensure lifetime count reflects true active or cloud maximum, sorted by rank (lifetimeTotalCount descending)
     const uniqueUsers = Array.from(new Set(userMap.values())).map((u) => {
       const activeSum = (u.activeZikrs || []).reduce((acc, z) => acc + (z.count || 0), 0);
       return {
@@ -202,7 +203,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         lifetimeTotalCount: Math.max(u.lifetimeTotalCount || 0, activeSum),
       };
     });
-    return uniqueUsers.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt);
+    return uniqueUsers.sort((a, b) => b.lifetimeTotalCount - a.lifetimeTotalCount);
   };
 
   // Load users list when modal opens & admin is authenticated
@@ -336,6 +337,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
 
     return true;
+  });
+
+  const sortedAndFilteredUsers = [...filteredUsers].sort((a: AdminUserRecord, b: AdminUserRecord) => {
+    if (sortBy === 'rank') {
+      if (b.lifetimeTotalCount !== a.lifetimeTotalCount) {
+        return b.lifetimeTotalCount - a.lifetimeTotalCount;
+      }
+      return b.lastSyncedAt - a.lastSyncedAt;
+    }
+    return b.lastSyncedAt - a.lastSyncedAt;
   });
 
   // Calculate metrics
@@ -576,41 +587,54 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 )}
               </div>
 
-              {/* Filter Pills */}
-              <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 text-xs font-bold shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setFilterType('all')}
-                  className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
-                    filterType === 'all'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
-                  }`}
-                >
-                  সব ইউজার ({totalUsers})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterType('today')}
-                  className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
-                    filterType === 'today'
-                      ? 'bg-amber-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
-                  }`}
-                >
-                  আজকের সক্রিয় ({activeTodayCount})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterType('google')}
-                  className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
-                    filterType === 'google'
-                      ? 'bg-teal-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
-                  }`}
-                >
-                  Google Sign-In ({users.filter((u) => u.verificationMethod.toLowerCase().includes('google') || u.email.toLowerCase().includes('@gmail.com') || u.emailOrPhone.toLowerCase().includes('@gmail.com')).length})
-                </button>
+              {/* Filter Pills & Sort Selector */}
+              <div className="flex items-center justify-between w-full gap-2 flex-wrap shrink-0">
+                <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs font-bold shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setFilterType('all')}
+                    className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
+                      filterType === 'all'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
+                    }`}
+                  >
+                    সব ইউজার ({totalUsers})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterType('today')}
+                    className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
+                      filterType === 'today'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
+                    }`}
+                  >
+                    আজকের সক্রিয় ({activeTodayCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterType('google')}
+                    className={`py-2 px-3 rounded-xl transition cursor-pointer shrink-0 ${
+                      filterType === 'google'
+                        ? 'bg-teal-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
+                    }`}
+                  >
+                    Google Sign-In ({users.filter((u) => u.verificationMethod.toLowerCase().includes('google') || u.email.toLowerCase().includes('@gmail.com') || u.emailOrPhone.toLowerCase().includes('@gmail.com')).length})
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 text-xs font-bold">
+                  <span className="text-slate-400">সর্ট:</span>
+                  <button
+                    type="button"
+                    onClick={() => setSortBy(sortBy === 'rank' ? 'recent' : 'rank')}
+                    className="px-3 py-2 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 transition cursor-pointer hover:bg-emerald-500/30"
+                  >
+                    {sortBy === 'rank' ? '🏆 র‍্যাংক (সর্বোচ্চ জিকির)' : '⏰ সাম্প্রতিক সক্রিয়'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -623,7 +647,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     ফায়ারস্টোর থেকে সকল ইউজার ডাটা ও ডিভাইস মেট্রিক্স লোড হচ্ছে...
                   </p>
                 </div>
-              ) : filteredUsers.length === 0 ? (
+              ) : sortedAndFilteredUsers.length === 0 ? (
                 <div
                   className={`p-10 rounded-2xl border text-center space-y-2 ${
                     isDayTheme ? 'bg-white border-slate-200' : 'bg-[#0a252b] border-[#184e5a]'
@@ -638,7 +662,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   </p>
                 </div>
               ) : (
-                filteredUsers.map((user) => {
+                sortedAndFilteredUsers.map((user, idx) => {
+                  const globalRank = users.findIndex((u) => u.userKey === user.userKey);
+                  const rankNumber = globalRank !== -1 ? globalRank + 1 : idx + 1;
                   const isRecentlyActive = nowMs - user.lastSyncedAt <= 24 * 60 * 60 * 1000;
                   const dateStr = new Date(user.lastSyncedAt).toLocaleString('en-US', {
                     day: 'numeric',
@@ -680,6 +706,17 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                               <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">
                                 {user.name}
                               </h4>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                                rankNumber === 1
+                                  ? 'bg-amber-400 text-slate-900 shadow-sm'
+                                  : rankNumber === 2
+                                  ? 'bg-slate-300 text-slate-900'
+                                  : rankNumber === 3
+                                  ? 'bg-amber-700/40 text-amber-200'
+                                  : 'bg-emerald-500/15 text-emerald-300'
+                              }`}>
+                                🏆 Rank #{rankNumber}
+                              </span>
                               <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30">
                                 {user.verificationMethod.toUpperCase()}
                               </span>
