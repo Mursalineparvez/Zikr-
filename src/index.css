@@ -17,17 +17,36 @@
   font-family: 'Amiri', 'Traditional Arabic', serif;
 }
 
-/* Day Mode (Default - Clean Warm Porcelain & White Cards) */
+/* Day Mode (Clean Porcelain & Mint Accents) */
 body.theme-day,
 body {
-  background-color: #f6f8f7;
-  color: #0f2e24;
+  background-color: #f4f8f6;
+  color: #0d382f;
 }
 
-/* Night Mode (Deep Atmospheric Pine Teal - Rich & Harmonized, Never Pitch Black) */
+/* Night Mode (Deep Atmospheric Pine Teal - High-End & Attractive) */
 body.theme-night {
-  background-color: #082024;
-  color: #e6f7f5;
+  background-color: #051519;
+  background-image: radial-gradient(rgba(16, 185, 129, 0.08) 1.5px, transparent 1.5px),
+                    radial-gradient(rgba(20, 184, 166, 0.05) 1.5px, #051519 1.5px);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+  color: #f1f5f9;
+}
+
+/* Premium Card Glass & Glow */
+.card-glass-night {
+  background: rgba(10, 39, 46, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(23, 82, 93, 0.65);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(20, 184, 166, 0.18);
+}
+
+.card-glass-day {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 16px 30px -10px rgba(16, 185, 129, 0.14);
 }
 
 /* Subtle Geometric Pattern */
