@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import confetti from 'canvas-confetti';
 import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage, UserProfile, ZikrRefreshMode } from './types';
 import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES, getTargetForZikrMode } from './utils/constants';
 import { soundHaptics } from './utils/audioHaptics';
@@ -57,7 +56,6 @@ import {
   loadUserDataFromCloud,
   subscribeToUserDataInCloud,
   updateDeviceTelemetry,
-  getDeviceId,
   checkGoogleRedirectResult,
   listenToAuthChanges,
   CloudZikrState,
@@ -65,8 +63,9 @@ import {
 } from './services/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
 import { BookmarkCheck, Sparkles } from 'lucide-react';
-import { getDetectedDeviceInfo } from './utils/deviceInfo';
+import { getDetectedDeviceInfo, getDeviceId } from './utils/deviceInfo';
 import { calculatePrayerTimes, getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
+
 
 
 export default function App() {
@@ -834,9 +833,10 @@ export default function App() {
       import('./components/QuranView');
       import('./components/SalatTimeView');
       import('./components/OtherIslamicHubView');
-    }, 1500);
+    }, 4000);
     return () => clearTimeout(prefetchTimer);
   }, []);
+
 
   // 1. Real-time Multi-Device Cloud Subscription & Telemetry Auto-Registration
   useEffect(() => {
@@ -1498,12 +1498,15 @@ export default function App() {
     }
 
     if (isGoalJustReached) {
-      confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.7 },
-        colors: ['#006747', '#10b981', '#f59e0b', '#10b981'],
-      });
+      import('canvas-confetti').then((module) => {
+        const confettiFn = module.default || module;
+        confettiFn({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.7 },
+          colors: ['#006747', '#10b981', '#f59e0b', '#10b981'],
+        });
+      }).catch(() => {});
       showToast(`Mabrook! Goal completed for ${targetZikr.name}!`);
     }
   };

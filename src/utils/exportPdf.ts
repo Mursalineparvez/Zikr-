@@ -450,9 +450,31 @@ export async function generateComprehensiveHistoryPdfReport(
 
   document.body.appendChild(container);
 
-  const html2pdf = (window as unknown as { html2pdf?: () => any }).html2pdf;
+  // Dynamically load html2pdf script on-demand if not yet present
+  let html2pdfInstance = (window as unknown as { html2pdf?: () => any }).html2pdf;
+  if (!html2pdfInstance && typeof document !== 'undefined') {
+    try {
+      await new Promise<void>((resolve) => {
+        const existing = document.getElementById('html2pdf-async-script');
+        if (existing) {
+          existing.addEventListener('load', () => resolve(), { once: true });
+          setTimeout(resolve, 2500);
+          return;
+        }
+        const s = document.createElement('script');
+        s.id = 'html2pdf-async-script';
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        s.onload = () => resolve();
+        s.onerror = () => resolve();
+        document.head.appendChild(s);
+      });
+      html2pdfInstance = (window as unknown as { html2pdf?: () => any }).html2pdf;
+    } catch {}
+  }
 
-  if (html2pdf) {
+  if (html2pdfInstance) {
     const opt = {
       margin: [6, 6, 6, 6],
       filename: `Zikr+-History-${reportData.rangeType}-${now.toISOString().slice(0, 10)}.pdf`,
@@ -471,7 +493,7 @@ export async function generateComprehensiveHistoryPdfReport(
     };
 
     try {
-      await html2pdf().set(opt).from(container).save();
+      await html2pdfInstance().set(opt).from(container).save();
       return true;
     } catch (err) {
       console.warn('html2pdf error, triggering direct print fallback:', err);

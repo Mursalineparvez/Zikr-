@@ -20,18 +20,30 @@ export default defineConfig(() => {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom')) {
+                return 'vendor-react';
+              }
               if (id.includes('firebase')) {
                 return 'vendor-firebase';
               }
               if (id.includes('leaflet')) {
                 return 'vendor-leaflet';
               }
-              if (id.includes('canvas-confetti')) {
-                return 'vendor-confetti';
+              if (id.includes('adhan')) {
+                return 'vendor-adhan';
               }
               if (id.includes('lucide-react')) {
                 return 'vendor-icons';
               }
+              if (id.includes('canvas-confetti')) {
+                return 'vendor-confetti';
+              }
+            }
+            if (id.includes('src/data/tabligData') || id.includes('src/data/tabligEnglishData')) {
+              return 'data-tablig';
+            }
+            if (id.includes('src/data/islamicHistoryData') || id.includes('src/utils/historyEventDetails')) {
+              return 'data-history';
             }
           },
         },

@@ -21,13 +21,16 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // Register Offline Service Worker for Audio & App Caching
+  // Register Service Worker for Instant App Shell & Audio Caching
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then((reg) => {
-        console.log('Offline Audio ServiceWorker registered:', reg.scope);
-      }).catch(() => {});
-    });
+    const registerSW = () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    };
+    if (document.readyState === 'complete') {
+      registerSW();
+    } else {
+      window.addEventListener('load', registerSW);
+    }
   }
 }
 

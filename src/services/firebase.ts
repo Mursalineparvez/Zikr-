@@ -201,18 +201,9 @@ export const db = (() => {
 })();
 
 // 3. Unique Device ID to distinguish between different devices (e.g. mobile vs pc)
-export function getDeviceId(): string {
-  try {
-    let id = localStorage.getItem('zikrmate_device_uid');
-    if (!id) {
-      id = 'dev_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
-      localStorage.setItem('zikrmate_device_uid', id);
-    }
-    return id;
-  } catch {
-    return 'dev_browser';
-  }
-}
+import { getDeviceId } from '../utils/deviceInfo';
+export { getDeviceId };
+
 
 // 4. Test Connection safe helper
 export async function testFirestoreConnection(): Promise<boolean> {
