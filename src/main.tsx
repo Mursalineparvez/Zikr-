@@ -21,11 +21,12 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // Register Service Worker for Instant App Shell & Audio Caching
+  // Register Service Worker for Instant App Shell & Audio Caching with immediate update check
   if ('serviceWorker' in navigator) {
     const registerSW = () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
     };
+
     if (document.readyState === 'complete') {
       registerSW();
     } else {

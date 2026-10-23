@@ -81,7 +81,31 @@
             e.stopImmediatePropagation();
             return false;
           }
+          // Self-heal from stale service worker caches or chunk load errors
+          if (
+            errStr.indexOf('Unexpected token') !== -1 ||
+            errStr.indexOf('Failed to fetch dynamically imported module') !== -1 ||
+            errStr.indexOf('Loading chunk') !== -1
+          ) {
+            if (!sessionStorage.getItem('zikrmate_sw_purge_v9')) {
+              sessionStorage.setItem('zikrmate_sw_purge_v9', 'true');
+              if (window.caches) {
+                caches.keys().then(function(names) {
+                  names.forEach(function(n) { caches.delete(n); });
+                  if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(regs) {
+                      regs.forEach(function(r) { r.unregister(); });
+                      window.location.reload();
+                    });
+                  } else {
+                    window.location.reload();
+                  }
+                });
+              }
+            }
+          }
         }, true);
+
 
         var origError = console.error;
         console.error = function() {

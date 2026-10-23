@@ -1,10 +1,8 @@
-// Service Worker for Zikr+ PWA (High-Speed App Shell & Offline Audio Caching)
-const CACHE_NAME = 'zikrmate-v7';
+// Service Worker for Zikr+ PWA (Self-Healing & Offline Audio Caching)
+const CACHE_NAME = 'zikrmate-v9';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v2';
 
 const ASSETS_TO_PRECACHE = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/icon.svg',
 ];
@@ -13,9 +11,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     Promise.all([
       caches.open(CACHE_NAME).then((cache) => {
-        return cache.addAll(ASSETS_TO_PRECACHE).catch(() => {
-          // Graceful fallback if any asset fails
-        });
+        return cache.addAll(ASSETS_TO_PRECACHE).catch(() => {});
       }),
       caches.open(AUDIO_CACHE_NAME),
     ]).then(() => self.skipWaiting())
@@ -28,6 +24,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME && key !== AUDIO_CACHE_NAME) {
+            console.log('[SW] Purging obsolete cache:', key);
             return caches.delete(key);
           }
         })
@@ -53,7 +50,18 @@ function isAudioOrMediaRequest(request) {
   );
 }
 
-// Helper: Check if asset is static & immutable (Vite hashed bundles, images, fonts)
+// Helper: Check if asset is a Vite development server internal path
+function isViteDevPath(url) {
+  return (
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.includes('/node_modules/') ||
+    url.search.includes('t=') ||
+    url.search.includes('import')
+  );
+}
+
+// Helper: Check if asset is static & immutable production bundle or image
 function isStaticAssetRequest(url) {
   return (
     url.pathname.startsWith('/assets/') ||
@@ -71,12 +79,12 @@ self.addEventListener('fetch', (event) => {
 
   const requestUrl = new URL(event.request.url);
 
-  // Bypass API calls from service worker cache
-  if (requestUrl.pathname.startsWith('/api/')) {
+  // 1. Bypass API calls and all Vite development server paths entirely
+  if (requestUrl.pathname.startsWith('/api/') || isViteDevPath(requestUrl)) {
     return;
   }
 
-  // 1. Audio & Quran Recitations: Cache-First
+  // 2. Audio & Quran Recitations: Cache-First
   if (isAudioOrMediaRequest(event.request)) {
     event.respondWith(
       caches.open(AUDIO_CACHE_NAME).then((audioCache) => {
@@ -103,8 +111,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Static Vite Chunks, CSS, Images, Fonts: Cache-First with Background Revalidation
-  // Loads within 5ms from local storage, making the app open instantaneously!
+  // 3. Navigation / HTML Document: Network-First with Offline Fallback
+  // Always fetches fresh HTML so code updates apply immediately, never serving stuck stale bundles!
+  if (event.request.mode === 'navigate' || requestUrl.pathname === '/' || requestUrl.pathname === '/index.html') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match('/index.html');
+        })
+    );
+    return;
+  }
+
+  // 4. Static Production Chunks, CSS, Images, Fonts:
+  // Only cache if response is genuinely a JS/CSS/image file, NEVER cache HTML error fallbacks!
   if (isStaticAssetRequest(requestUrl)) {
     event.respondWith(
       caches.open(CACHE_NAME).then((cache) => {
@@ -114,9 +141,15 @@ self.addEventListener('fetch', (event) => {
           }
           return fetch(event.request).then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
-              try {
-                cache.put(event.request, networkResponse.clone());
-              } catch {}
+              const contentType = networkResponse.headers.get('content-type') || '';
+              // Strictly verify it's not an HTML 404 fallback before caching JS or CSS!
+              const isNotHtmlFallback =
+                !requestUrl.pathname.endsWith('.js') || contentType.includes('javascript');
+              if (isNotHtmlFallback) {
+                try {
+                  cache.put(event.request, networkResponse.clone());
+                } catch {}
+              }
             }
             return networkResponse;
           });
@@ -126,32 +159,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Navigation / HTML Document: Stale-While-Revalidate with fast fallback
-  // Returns instant cached index.html so user never waits, while updating cache in background
-  if (event.request.mode === 'navigate' || requestUrl.pathname === '/' || requestUrl.pathname === '/index.html') {
-    event.respondWith(
-      caches.open(CACHE_NAME).then((cache) => {
-        return cache.match('/index.html').then((cachedIndex) => {
-          const fetchPromise = fetch(event.request)
-            .then((networkResponse) => {
-              if (networkResponse && networkResponse.status === 200) {
-                try {
-                  cache.put('/index.html', networkResponse.clone());
-                } catch {}
-              }
-              return networkResponse;
-            })
-            .catch(() => cachedIndex);
-
-          // If we have a cached version, return it immediately for instant startup!
-          return cachedIndex || fetchPromise;
-        });
-      })
-    );
-    return;
-  }
-
-  // 4. Default: Network with Cache Fallback
+  // 5. Default: Network with Cache Fallback
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {

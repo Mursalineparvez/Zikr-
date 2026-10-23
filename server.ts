@@ -261,39 +261,26 @@ app.delete('/api/admin/users/:userKey', (req, res) => {
 });
 
 async function startServer() {
-  const distDir = path.join(process.cwd(), 'dist');
-  const hasDist = fs.existsSync(path.join(distDir, 'index.html'));
-  const forceDev = process.env.VITE_DEV === 'true';
+  const isProd = process.env.NODE_ENV === 'production';
 
-  if (!hasDist || forceDev) {
-    console.log('[Server] Starting Vite development middleware...');
+  if (!isProd) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
-    console.log('[Server] Serving high-speed prebuilt production app from dist/');
-    // Serve hashed immutable assets with 1-year cache
+    const distDir = path.join(process.cwd(), 'dist');
     app.use('/assets', express.static(path.join(distDir, 'assets'), {
       maxAge: '1y',
       immutable: true,
     }));
-    // Serve other static files (icons, manifest, sw.js)
-    app.use(express.static(distDir, {
-      maxAge: '1h',
-      setHeaders: (res, filePath) => {
-        if (filePath.endsWith('sw.js')) {
-          res.setHeader('Cache-Control', 'no-cache');
-        }
-      },
-    }));
-    // SPA fallback
+    app.use(express.static(distDir));
     app.get('*', (req, res) => {
-      res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(path.join(distDir, 'index.html'));
     });
   }
+
 
 
   app.listen(PORT, '0.0.0.0', () => {
