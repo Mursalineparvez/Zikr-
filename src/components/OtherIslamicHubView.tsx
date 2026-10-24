@@ -22,6 +22,7 @@ const AllahNamesView = React.lazy(() => import('./AllahNamesView').then((m) => (
 const HajjUmrahView = React.lazy(() => import('./HajjUmrahView').then((m) => ({ default: m.HajjUmrahView })));
 const HistoryTimelineView = React.lazy(() => import('./HistoryTimelineView').then((m) => ({ default: m.HistoryTimelineView })));
 const SettingsView = React.lazy(() => import('./SettingsView').then((m) => ({ default: m.SettingsView })));
+const ArabianIllustratedMapView = React.lazy(() => import('./ArabianIllustratedMapView').then((m) => ({ default: m.ArabianIllustratedMapView })));
 
 const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
   <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
@@ -38,6 +39,7 @@ const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
 
 export type OtherSubSection =
   | 'hub'
+  | 'arabian_map'
   | 'dua'
   | 'hadith'
   | 'kitab'
@@ -109,6 +111,17 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       icon: <Compass className="w-6 h-6 text-amber-400 animate-pulse" />,
       color: 'from-amber-500/15 to-emerald-500/10 border-amber-500/30',
       badge: selectedLanguage === 'bn' ? 'ইন্টারেক্টিভ ম্যাপ' : 'History Map',
+    },
+    {
+      id: 'arabian_map' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'পবিত্র ভূমি ও মধ্যপ্রাচ্যের সচিত্র মানচিত্র' : 'Pictorial Map of Holy Lands',
+      arabic: 'خريطة الأماكن المقدسة المصورة',
+      desc: selectedLanguage === 'bn'
+        ? 'ঐতিহ্যবাহী ভিন্টেজ কার্টোগ্রাফিক শৈলীতে সৌদি আরব, পবিত্র মক্কা-মদিনা, ৫টি মিকাত, লোহিত সাগরের পালতোলা জাহাজ ও হজ রুট'
+        : 'Vintage cartographic illustrated map of Saudi Arabia, Makkah, Madinah, 5 Miqats, Red Sea dhows & Hajj routes.',
+      icon: <span className="text-2xl">🗺️</span>,
+      color: 'from-amber-600/25 via-amber-500/15 to-emerald-500/10 border-amber-500/40',
+      badge: selectedLanguage === 'bn' ? 'সচিত্র মানচিত্র' : 'Pictorial Map',
     },
     {
       id: 'dua' as OtherSubSection,
@@ -378,6 +391,15 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       )}
 
       <React.Suspense fallback={<SubViewFallback isDay={isDay} />}>
+        {/* Sub-view: Arabian Illustrated Pictorial Map */}
+        {activeSub === 'arabian_map' && (
+          <ArabianIllustratedMapView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+          />
+        )}
+
         {/* Sub-view: History Timeline & Interactive Map */}
         {activeSub === 'history_timeline' && (
           <HistoryTimelineView
@@ -464,7 +486,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             themeMode={themeMode}
             selectedLanguage={selectedLanguage}
             voiceGender={settings?.voiceGender || 'male'}
-            initialTab="hajj_hub"
+            initialTab="arabian_map"
           />
         )}
 

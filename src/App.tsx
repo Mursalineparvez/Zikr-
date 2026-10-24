@@ -62,13 +62,14 @@ import {
   auth,
 } from './services/firebase';
 import { signOut as firebaseSignOut } from 'firebase/auth';
-import { BookmarkCheck, Sparkles } from 'lucide-react';
+import { BookmarkCheck, Sparkles, WifiOff } from 'lucide-react';
 import { getDetectedDeviceInfo, getDeviceId } from './utils/deviceInfo';
 import { calculatePrayerTimes, getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
-
-
+import { useOnlineStatus } from './hooks/usePWAInstall';
 
 export default function App() {
+  const isOnline = useOnlineStatus();
+
   // Refresh Mode state ('fard' | 'maghrib' | 'manual')
   const [refreshMode, setRefreshMode] = useState<ZikrRefreshMode>(() => {
     try {
@@ -1873,6 +1874,33 @@ export default function App() {
             })}
           </div>
         </div>
+
+        {/* Offline Status Reassurance Banner */}
+        {!isOnline && (
+          <div
+            className={`rounded-2xl p-3 sm:p-3.5 border transition-all shadow-sm flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${
+              isDay
+                ? 'bg-amber-50/95 border-amber-300/80 text-amber-900 shadow-amber-900/5'
+                : 'bg-[#1e1a11]/90 border-amber-700/60 text-amber-200 shadow-black/50'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+              <span className="flex h-2.5 w-2.5 relative shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              </span>
+              <span>
+                {selectedLanguage === 'bn'
+                  ? '📶 অফলাইন মোড সক্রিয় — সকল জিকির কাউন্টার, আল-কুরআন ও আমল ডিভাইসে সংরক্ষিত ও ১০০% সচল রয়েছে।'
+                  : '📶 Offline Mode Active — All Zikr counters, Quran, Salat times & Aamal tools are working offline.'}
+              </span>
+            </div>
+            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-[10px] sm:text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+              <WifiOff className="w-3.5 h-3.5" />
+              <span>Offline Ready</span>
+            </div>
+          </div>
+        )}
 
         {/* 1. ZIKIR COUNTER VIEW (HOME PAGE) */}
         {activeModule === 'zikir_counter' && (

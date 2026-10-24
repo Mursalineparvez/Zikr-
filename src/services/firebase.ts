@@ -15,6 +15,8 @@ import {
 import {
   initializeFirestore,
   getFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   doc,
   getDoc,
   getDocFromServer,
@@ -184,7 +186,7 @@ export function listenToAuthChanges(
   }
 }
 
-// 2. Initialize Firestore Database using provisioned database ID with long-polling resilience
+// 2. Initialize Firestore Database with persistent local offline IndexedDB cache and long-polling resilience
 export const db = (() => {
   const dbId = firebaseConfig.firestoreDatabaseId || undefined;
   try {
@@ -192,6 +194,7 @@ export const db = (() => {
       app,
       {
         experimentalAutoDetectLongPolling: true,
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
       },
       dbId
     );

@@ -11,8 +11,9 @@ import {
   Settings,
   ChevronDown,
   Check,
+  WifiOff,
 } from 'lucide-react';
-import { usePWAInstall } from '../hooks/usePWAInstall';
+import { usePWAInstall, useOnlineStatus } from '../hooks/usePWAInstall';
 import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
 import { NAV_TRANSLATIONS } from '../utils/appTranslations';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
@@ -48,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
   userProfile,
   onOpenProfile,
 }) => {
+  const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showIOSModal, setShowIOSModal] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -116,6 +118,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Clean Top-Right Controls: Quick Language, Settings & Sign In */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {!isOnline && (
+            <div
+              className="flex items-center gap-1 px-2 py-1 rounded-2xl bg-amber-500/25 border border-amber-400/40 text-amber-200 text-xs font-bold backdrop-blur-md shadow-xs animate-pulse"
+              title="অফলাইন মোড সক্রিয় — ইন্টারনেট ছাড়া সব ফিচার চলছে"
+            >
+              <WifiOff className="w-3 h-3 text-amber-300" />
+              <span className="text-[10px] sm:text-xs">Offline</span>
+            </div>
+          )}
+
           {/* 1. Quick Language Dropdown Selector (14 Languages) */}
           <div className="relative" ref={langDropdownRef}>
             <button

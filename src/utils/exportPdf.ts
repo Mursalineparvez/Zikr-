@@ -504,43 +504,80 @@ export async function generateComprehensiveHistoryPdfReport(
     }
   }
 
-  // Robust Direct Print-to-PDF Fallback
-  const printWin = window.open('', '_blank');
-  if (printWin) {
-    printWin.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Zikr+ Report - ${reportData.rangeLabel}</title>
-          <style>
-            body { margin: 0; padding: 20px; font-family: system-ui, sans-serif; }
-            @media print {
-              body { padding: 0; }
-              @page { size: A4; margin: 10mm; }
-            }
-          </style>
-        </head>
-        <body>
-          ${container.innerHTML}
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWin.document.close();
+  // 100% Offline-Safe Direct In-Page Print Fallback (Bypasses popup blocker & CDN network dependence)
+  const printStyle = document.createElement('style');
+  printStyle.id = 'print-report-style';
+  printStyle.innerHTML = `
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #direct-print-report-overlay, #direct-print-report-overlay * {
+        visibility: visible !important;
+      }
+      #direct-print-report-overlay {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+        z-index: 999999 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 8mm;
+      }
+    }
+  `;
+  document.head.appendChild(printStyle);
+  container.id = 'direct-print-report-overlay';
+
+  try {
+    window.print();
+    return true;
+  } catch (printErr) {
+    console.warn('In-page print failed, attempting popup fallback:', printErr);
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Zikr+ Report - ${reportData.rangeLabel}</title>
+            <style>
+              body { margin: 0; padding: 20px; font-family: system-ui, sans-serif; }
+              @media print {
+                body { padding: 0; }
+                @page { size: A4; margin: 10mm; }
+              }
+            </style>
+          </head>
+          <body>
+            ${container.innerHTML}
+            <script>
+              window.onload = function() {
+                window.print();
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWin.document.close();
+      return true;
+    }
+    return false;
+  } finally {
     if (document.body.contains(container)) {
       document.body.removeChild(container);
     }
-    return true;
+    const st = document.getElementById('print-report-style');
+    if (st && st.parentNode) {
+      st.parentNode.removeChild(st);
+    }
   }
-
-  if (document.body.contains(container)) {
-    document.body.removeChild(container);
-  }
-  return false;
 }
 
 export async function generateZikrPdfReport(zikrs: ZikrItem[], masterTotal: number): Promise<boolean> {

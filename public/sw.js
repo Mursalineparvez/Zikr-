@@ -3,6 +3,8 @@ const CACHE_NAME = 'zikrmate-v9';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v2';
 
 const ASSETS_TO_PRECACHE = [
+  '/',
+  '/index.html',
   '/manifest.json',
   '/icon.svg',
 ];
@@ -119,12 +121,17 @@ self.addEventListener('fetch', (event) => {
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put('/index.html', copy.clone());
+              cache.put('/', copy);
+            });
           }
           return networkResponse;
         })
-        .catch(() => {
-          return caches.match('/index.html');
+        .catch(async () => {
+          const cached = await caches.match('/index.html');
+          if (cached) return cached;
+          return caches.match('/');
         })
     );
     return;

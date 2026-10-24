@@ -43,6 +43,7 @@ import {
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { HAJJ_UMRAH_UI } from '../utils/appTranslations';
 import { LiveAnimationStudio } from './LiveAnimationStudio';
+import { ArabianIllustratedMapView } from './ArabianIllustratedMapView';
 
 interface HajjUmrahViewProps {
   soundEnabled: boolean;
@@ -52,7 +53,7 @@ interface HajjUmrahViewProps {
   initialTab?: HajjTab;
 }
 
-type HajjTab = 'umrah_hub' | 'hajj_hub' | 'home_journey_hub' | 'essentials_hub';
+type HajjTab = 'umrah_hub' | 'hajj_hub' | 'arabian_map' | 'home_journey_hub' | 'essentials_hub';
 type JourneySubTab = 'umrah_journey' | 'hajj_journey';
 
 interface HajjRoutePhotoItem {
@@ -329,21 +330,21 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
         </div>
       </div>
 
-      {/* 4 MASTER TABS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 p-1.5 rounded-2xl bg-slate-200 dark:bg-[#081f24] border border-slate-300 dark:border-[#14424a] shadow-inner">
+      {/* 5 MASTER TABS */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 rounded-2xl bg-slate-200 dark:bg-[#081f24] border border-slate-300 dark:border-[#14424a] shadow-inner">
         <button
           onClick={() => {
             setActiveTab('umrah_hub');
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-3 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'umrah_hub'
               ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 scale-[1.02] border border-amber-300'
               : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
           }`}
         >
           <span className="text-base">🕋</span>
-          <span className="truncate">{isBn ? 'ওমরাহ গাইড ও অ্যানিমেশন' : 'Umrah Hub'}</span>
+          <span className="truncate">{isBn ? 'ওমরাহ গাইড' : 'Umrah'}</span>
         </button>
 
         <button
@@ -351,14 +352,29 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             setActiveTab('hajj_hub');
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-3 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'hajj_hub'
               ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-950/30 scale-[1.02] border border-emerald-400/50'
               : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
           }`}
         >
           <span className="text-base">⛺</span>
-          <span className="truncate">{isBn ? 'হজের ৫ দিনের রুট ম্যাপ' : '5 Days Hajj'}</span>
+          <span className="truncate">{isBn ? 'হজের ৫ দিন' : '5 Days Hajj'}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('arabian_map');
+            if (soundEnabled) soundHaptics.playTap();
+          }}
+          className={`py-3 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
+            activeTab === 'arabian_map'
+              ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/30 scale-[1.02] border border-amber-300'
+              : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
+          }`}
+        >
+          <span className="text-base">🗺️</span>
+          <span className="truncate">{isBn ? 'সচিত্র মানচিত্র' : 'Pictorial Map'}</span>
         </button>
 
         <button
@@ -366,14 +382,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             setActiveTab('home_journey_hub');
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-3 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'home_journey_hub'
               ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-950/30 scale-[1.02] border border-teal-400/50'
               : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
           }`}
         >
           <span className="text-base">🏠</span>
-          <span className="truncate">{isBn ? 'হজ ও ওমরাহ চেকলিস্ট' : 'Hajj & Umrah Checklist'}</span>
+          <span className="truncate">{isBn ? 'হজ চেকলিস্ট' : 'Checklists'}</span>
         </button>
 
         <button
@@ -381,14 +397,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             setActiveTab('essentials_hub');
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+          className={`py-3 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-black transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer col-span-2 sm:col-span-1 lg:col-span-1 ${
             activeTab === 'essentials_hub'
               ? 'bg-gradient-to-r from-teal-700 to-emerald-800 text-white shadow-lg shadow-teal-950/30 scale-[1.02] border border-teal-400/50'
               : 'text-slate-700 dark:text-emerald-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-[#0e2f36]'
           }`}
         >
           <span className="text-base">🎒</span>
-          <span className="truncate">{isBn ? 'মিকাত, মদিনা ও ব্যাগ গাইড' : 'Essentials'}</span>
+          <span className="truncate">{isBn ? 'মিকাত ও ব্যাগ' : 'Essentials'}</span>
         </button>
       </div>
 
@@ -516,6 +532,31 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
               </h3>
             </div>
 
+            {/* Quick banner to open the full pictorial map */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-transparent border border-amber-500/30">
+              <div className="flex items-center gap-2.5">
+                <Compass className="w-5 h-5 text-amber-500 shrink-0" />
+                <div className="text-xs">
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {isBn ? 'ঐতিহ্যবাহী সচিত্র মানচিত্র (Pictorial Map)' : 'Illustrated Cartographic Map'}
+                  </span>
+                  <span className="opacity-75 ml-1.5 hidden sm:inline">
+                    {isBn ? '— সৌদি আরব, মক্কা-মদিনা, ৫টি মিকাত ও লোহিত সাগরের পূর্ণ ভৌগোলিক দৃশ্য' : '— Full geographic view with Kaaba, 5 Miqats & topography'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('arabian_map');
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition active:scale-95 shadow-sm cursor-pointer whitespace-nowrap self-start sm:self-center"
+              >
+                {isBn ? 'পূর্ণ সচিত্র মানচিত্র খুলুন' : 'Open Pictorial Map'}
+              </button>
+            </div>
+
             {/* 5 Step Buttons */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
               {HAJJ_ROUTE_PHOTOS.map((item) => (
@@ -626,6 +667,19 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ======================================================= */}
+      {/* 🗺️ TAB: ILLUSTRATED ARABIAN & HOLY LANDS MAP (PICTORIAL) */}
+      {/* ======================================================= */}
+      {activeTab === 'arabian_map' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          <ArabianIllustratedMapView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+          />
         </div>
       )}
 

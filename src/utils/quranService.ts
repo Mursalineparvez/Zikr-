@@ -1,6 +1,7 @@
 import { ALL_114_SURAHS, SurahMeta } from './quran114List';
 import { ZikrLanguage } from '../types';
 import { QURAN_EDITIONS } from './appTranslations';
+import { OFFLINE_FALLBACK_SURAHS } from './offlineQuranSurahs';
 
 export interface QuranWord {
   id?: number;
@@ -450,61 +451,131 @@ export async function fetchSurah(
     console.warn('Quran.com API fetch fallback to AlQuran Cloud', err);
   }
 
-  const editionCode = QURAN_EDITIONS[language] || 'bn.bengali';
-  const apiUrl = `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,${editionCode},en.transliteration,en.sahih`;
-  const response = await fetch(apiUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to load Surah ${meta.englishName} (HTTP ${response.status})`);
-  }
-
-  const result = await response.json();
-  const arabicData = result.data[0];
-  const translationData = result.data[1];
-  const transliterationData = result.data[2] || { ayahs: [] };
-  const englishData = result.data[3] || { ayahs: [] };
-
-  const ayahs: QuranAyah[] = arabicData.ayahs.map((arAyah: any, index: number) => {
-    const verseNum = arAyah.numberInSurah;
-    const globalNum = arAyah.number;
-    const translation = translationData.ayahs[index]?.text || '';
-    const transliteration = transliterationData.ayahs[index]?.text || '';
-    const englishTrans = englishData.ayahs[index]?.text || '';
-    const rawArabic = arAyah.text || '';
-    const cleanArabic = cleanVerse1Arabic(surahNumber, verseNum, rawArabic);
-
-    const words = generateFallbackWords(cleanArabic, englishTrans);
-
-    const translationsList: QuranAyahTranslation[] = [
-      { translator: 'Primary Translation', text: translation },
-    ];
-    if (englishTrans) {
-      translationsList.push({ translator: 'Sahih International (English)', text: englishTrans });
+  try {
+    const editionCode = QURAN_EDITIONS[language] || 'bn.bengali';
+    const apiUrl = `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,${editionCode},en.transliteration,en.sahih`;
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to load Surah ${meta.englishName} (HTTP ${response.status})`);
     }
 
-    return {
-      number: verseNum,
-      globalNumber: globalNum,
-      arabic: cleanArabic,
-      transliteration,
-      translation,
-      translations: translationsList,
-      words,
-      juz: arAyah.juz || meta.startJuz,
-      page: arAyah.page || 1,
-      sajda: Boolean(arAyah.sajda),
-      audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${globalNum}.mp3`,
+    const result = await response.json();
+    const arabicData = result.data[0];
+    const translationData = result.data[1];
+    const transliterationData = result.data[2] || { ayahs: [] };
+    const englishData = result.data[3] || { ayahs: [] };
+
+    const ayahs: QuranAyah[] = arabicData.ayahs.map((arAyah: any, index: number) => {
+      const verseNum = arAyah.numberInSurah;
+      const globalNum = arAyah.number;
+      const translation = translationData.ayahs[index]?.text || '';
+      const transliteration = transliterationData.ayahs[index]?.text || '';
+      const englishTrans = englishData.ayahs[index]?.text || '';
+      const rawArabic = arAyah.text || '';
+      const cleanArabic = cleanVerse1Arabic(surahNumber, verseNum, rawArabic);
+
+      const words = generateFallbackWords(cleanArabic, englishTrans);
+
+      const translationsList: QuranAyahTranslation[] = [
+        { translator: 'Primary Translation', text: translation },
+      ];
+      if (englishTrans) {
+        translationsList.push({ translator: 'Sahih International (English)', text: englishTrans });
+      }
+
+      return {
+        number: verseNum,
+        globalNumber: globalNum,
+        arabic: cleanArabic,
+        transliteration,
+        translation,
+        translations: translationsList,
+        words,
+        juz: arAyah.juz || meta.startJuz,
+        page: arAyah.page || 1,
+        sajda: Boolean(arAyah.sajda),
+        audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${globalNum}.mp3`,
+      };
+    });
+
+    const detail: QuranSurahDetail = {
+      ...meta,
+      audioUrl: `https://cdn.islamic.network/quran/audio-surah/128/${reciterId}/${surahNumber}.mp3`,
+      ayahs,
+      language,
     };
-  });
 
-  const detail: QuranSurahDetail = {
-    ...meta,
-    audioUrl: `https://cdn.islamic.network/quran/audio-surah/128/${reciterId}/${surahNumber}.mp3`,
-    ayahs,
-    language,
-  };
+    saveCachedSurah(detail, language);
+    return detail;
+  } catch (offlineErr) {
+    console.warn(`[QuranService] Offline fallback engaged for Surah ${surahNumber}:`, offlineErr);
 
-  saveCachedSurah(detail, language);
-  return detail;
+    // 1. If we have a complete embedded offline dataset for this Surah
+    if (OFFLINE_FALLBACK_SURAHS[surahNumber]) {
+      const baseAyahs = OFFLINE_FALLBACK_SURAHS[surahNumber];
+      const localizedAyahs: QuranAyah[] = baseAyahs.map((ayah) => {
+        const parts = (ayah.translation || '').split(' • ');
+        const engText = parts[0] || ayah.translation;
+        const bnText = parts[1] || parts[0] || '';
+        const selectedTrans = language === 'bn' ? bnText : engText;
+
+        return {
+          ...ayah,
+          translation: selectedTrans,
+          translations: [
+            { translator: language === 'bn' ? 'বাংলা অনুবাদ' : 'English Translation', text: selectedTrans },
+            { translator: 'Sahih International (English)', text: engText },
+          ],
+          audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${ayah.globalNumber}.mp3`,
+        };
+      });
+
+      const detail: QuranSurahDetail = {
+        ...meta,
+        audioUrl: `https://cdn.islamic.network/quran/audio-surah/128/${reciterId}/${surahNumber}.mp3`,
+        ayahs: localizedAyahs,
+        language,
+      };
+
+      saveCachedSurah(detail, language);
+      return detail;
+    }
+
+    // 2. Otherwise generate a graceful offline reader representation
+    const fallbackAyahs: QuranAyah[] = Array.from({ length: meta.numberOfAyahs }, (_, i) => {
+      const verseNum = i + 1;
+      return {
+        number: verseNum,
+        globalNumber: verseNum,
+        arabic: verseNum === 1 && surahNumber !== 9 ? 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ' : `[سورة ${meta.name} - الآية ${verseNum}]`,
+        transliteration: verseNum === 1 && surahNumber !== 9 ? 'Bismillāhir-Raḥmānir-Raḥīm' : `${meta.englishName} : Ayah ${verseNum}`,
+        translation: language === 'bn'
+          ? `সূরা ${meta.name} আয়াত নং ${verseNum}। (অফলাইন মোড — ইন্টারনেট সংযোগ পেলে পূর্ণ আয়াত ও তাফসীর স্বয়ংক্রিয়ভাবে লোড হবে)`
+          : `Surah ${meta.englishName} Verse ${verseNum}. (Offline Mode — connect to internet for full Arabic text & translations)`,
+        translations: [
+          {
+            translator: 'Offline Notice',
+            text: language === 'bn'
+              ? `অফলাইন ভিউ: সম্পূর্ণ ১৮টি প্রধান সূরা সম্পূর্ণ সংরক্ষিত রয়েছে।`
+              : `Offline preview for Surah ${meta.englishName}.`,
+          },
+        ],
+        juz: meta.startJuz,
+        page: 1,
+        sajda: false,
+        audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${verseNum}.mp3`,
+      };
+    });
+
+    const offlineDetail: QuranSurahDetail = {
+      ...meta,
+      audioUrl: '',
+      ayahs: fallbackAyahs,
+      language,
+    };
+
+    return offlineDetail;
+  }
 }
 
 /**
