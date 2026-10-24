@@ -1417,6 +1417,36 @@ export default function App() {
     requestWakeLock();
   }, [settings.screenAwake]);
 
+  // Preload all app views into CacheStorage in background so all modules work 100% offline
+  useEffect(() => {
+    const preloadAllViewsForOffline = () => {
+      import('./components/QuranView').catch(() => {});
+      import('./components/SalatTimeView').catch(() => {});
+      import('./components/AamalTrackerView').catch(() => {});
+      import('./components/OtherIslamicHubView').catch(() => {});
+      import('./components/ArabianIllustratedMapView').catch(() => {});
+      import('./components/DuaView').catch(() => {});
+      import('./components/HadithView').catch(() => {});
+      import('./components/KitabView').catch(() => {});
+      import('./components/DailyTabligView').catch(() => {});
+      import('./components/AllahNamesView').catch(() => {});
+      import('./components/HajjUmrahView').catch(() => {});
+      import('./components/HistoryTimelineView').catch(() => {});
+      import('./components/HistoryReportModal').catch(() => {});
+      import('./components/ZikrModal').catch(() => {});
+      import('./components/ProfileModal').catch(() => {});
+      import('./components/AdminPanelModal').catch(() => {});
+    };
+
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(preloadAllViewsForOffline);
+      } else {
+        setTimeout(preloadAllViewsForOffline, 1000);
+      }
+    }
+  }, []);
+
   // Completed Goals Count
   const completedGoals = useMemo(() => {
     return zikrs.filter((z) => z.target && z.target > 0 && z.count >= z.target).length;

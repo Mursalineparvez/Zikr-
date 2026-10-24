@@ -261,16 +261,23 @@ app.delete('/api/admin/users/:userKey', (req, res) => {
 });
 
 async function startServer() {
-  const isProd = process.env.NODE_ENV === 'production';
+  const distDir = path.join(process.cwd(), 'dist');
+  const hasDist = fs.existsSync(path.join(distDir, 'index.html'));
+  const isProd = process.env.NODE_ENV === 'production' || hasDist;
 
-  if (!isProd) {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distDir = path.join(process.cwd(), 'dist');
+  // Always serve service worker with no-cache so Android PWA / WebAPK gets immediate updates
+  app.get('/sw.js', (req, res, next) => {
+    const swPath = hasDist ? path.join(distDir, 'sw.js') : path.join(process.cwd(), 'public', 'sw.js');
+    if (fs.existsSync(swPath)) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Content-Type', 'application/javascript');
+      return res.sendFile(swPath);
+    }
+    next();
+  });
+
+  if (isProd) {
+    console.log('[Server] Serving production PWA bundle from dist/ with full offline capability');
     app.use('/assets', express.static(path.join(distDir, 'assets'), {
       maxAge: '1y',
       immutable: true,
@@ -279,6 +286,13 @@ async function startServer() {
     app.get('*', (req, res) => {
       res.sendFile(path.join(distDir, 'index.html'));
     });
+  } else {
+    console.log('[Server] Running Vite middleware mode');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
   }
 
 
