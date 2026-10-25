@@ -14,7 +14,7 @@ interface CircularCenterCounterProps {
   selectedLanguage?: ZikrLanguage;
 }
 
-export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
+export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React.memo(({
   totalCount,
   dailyCount,
   totalZikrs,
@@ -271,4 +271,4 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = ({
       </div>
     </section>
   );
-};
+});

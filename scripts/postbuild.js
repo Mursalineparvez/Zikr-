@@ -24,12 +24,10 @@ try {
         if (entry.isDirectory()) {
           walkDir(fullPath, urlPath);
         } else if (
-          entry.name.endsWith('.js') ||
-          entry.name.endsWith('.css') ||
-          entry.name.endsWith('.svg') ||
-          entry.name.endsWith('.jpg') ||
-          entry.name.endsWith('.png') ||
-          entry.name.endsWith('.webp')
+          (entry.name.endsWith('.js') ||
+           entry.name.endsWith('.css') ||
+           entry.name.endsWith('.svg')) &&
+          !urlPath.includes('/aistudio/')
         ) {
           assetUrls.push(urlPath);
         }

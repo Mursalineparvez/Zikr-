@@ -39,11 +39,23 @@ export default defineConfig(() => {
                 return 'vendor-confetti';
               }
             }
+            if (id.includes('src/utils/appTranslations')) {
+              return 'data-translations';
+            }
             if (id.includes('src/data/tabligData') || id.includes('src/data/tabligEnglishData')) {
               return 'data-tablig';
             }
             if (id.includes('src/data/islamicHistoryData') || id.includes('src/utils/historyEventDetails')) {
               return 'data-history';
+            }
+            if (id.includes('src/data/hajjUmrahData') || id.includes('src/data/homeToHomeJourneyData')) {
+              return 'data-hajj';
+            }
+            if (id.includes('src/data/prayerDetailsData')) {
+              return 'data-prayer';
+            }
+            if (id.includes('src/utils/offlineQuranSurahs') || id.includes('src/utils/quran114List')) {
+              return 'data-quran';
             }
           },
         },

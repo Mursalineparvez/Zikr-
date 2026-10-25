@@ -14,7 +14,7 @@ interface PortableFloatingCounterProps {
   onScrollToTop: () => void;
 }
 
-export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = ({
+export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = React.memo(({
   masterTotal,
   dailyTotal = 0,
   completedGoals = 0,
@@ -342,4 +342,4 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = (
     </div>,
     document.body
   );
-};
+});

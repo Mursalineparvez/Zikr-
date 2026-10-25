@@ -13,7 +13,6 @@ const ESSENTIAL_PRECACHE_URLS = [
   '/manifest.json',
   '/icon.svg',
   '/zikr-tasbeeh-standalone.html',
-  '/assets/aistudio/IMG_20261024_083219_d090a74c.jpg',
 ];
 
 // Guaranteed embedded offline shell (rendered if no cache entry exists for index.html)

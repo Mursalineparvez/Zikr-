@@ -17,7 +17,7 @@ interface ZikrCardProps {
   selectedLanguage?: ZikrLanguage;
 }
 
-export const ZikrCard: React.FC<ZikrCardProps> = ({
+export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
   zikr,
   index,
   totalCards,
@@ -540,4 +540,4 @@ export const ZikrCard: React.FC<ZikrCardProps> = ({
       </div>
     </div>
   );
-};
+});

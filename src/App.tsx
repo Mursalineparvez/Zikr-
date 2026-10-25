@@ -58,10 +58,9 @@ import {
   updateDeviceTelemetry,
   checkGoogleRedirectResult,
   listenToAuthChanges,
-  CloudZikrState,
-  auth,
-} from './services/firebase';
-import { signOut as firebaseSignOut } from 'firebase/auth';
+  signOutFirebaseUser,
+} from './services/firebaseLazy';
+import type { CloudZikrState } from './services/firebase';
 import { BookmarkCheck, Sparkles, WifiOff } from 'lucide-react';
 import { getDetectedDeviceInfo, getDeviceId } from './utils/deviceInfo';
 import { calculatePrayerTimes, getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
@@ -794,7 +793,8 @@ export default function App() {
     }, 400);
 
     // Listen to Firebase Auth persistence state changes
-    const unsubAuth = listenToAuthChanges(async (authUser) => {
+    let unsubAuthPromise: Promise<() => void> | null = null;
+    unsubAuthPromise = listenToAuthChanges(async (authUser) => {
       if (authUser && authUser.email) {
         const targetEmail = authUser.email.toLowerCase().trim();
         setUserProfile((prev) => {
@@ -824,18 +824,12 @@ export default function App() {
     });
 
     return () => {
-      unsubAuth();
+      if (unsubAuthPromise) {
+        unsubAuthPromise.then((unsub) => {
+          if (typeof unsub === 'function') unsub();
+        });
+      }
     };
-  }, []);
-
-  // Idle background prefetch for non-initial tabs to make subsequent navigation instant
-  useEffect(() => {
-    const prefetchTimer = setTimeout(() => {
-      import('./components/QuranView');
-      import('./components/SalatTimeView');
-      import('./components/OtherIslamicHubView');
-    }, 4000);
-    return () => clearTimeout(prefetchTimer);
   }, []);
 
 
@@ -853,7 +847,8 @@ export default function App() {
     // Safely register device telemetry without touching zikr counts, history, or totals!
     updateDeviceTelemetry(targetKey, detected).catch(() => {});
 
-    const unsubscribe = subscribeToUserDataInCloud(targetKey, (cloudData, isInitial) => {
+    let unsubCloudPromise: Promise<() => void> | null = null;
+    unsubCloudPromise = subscribeToUserDataInCloud(targetKey, (cloudData, isInitial) => {
       if (!cloudData.foundInCloud) {
         // Push local device state to cloud so it is immediately initialized without wiping counts!
         saveUserDataToCloud(
@@ -881,7 +876,11 @@ export default function App() {
     });
 
     return () => {
-      unsubscribe();
+      if (unsubCloudPromise) {
+        unsubCloudPromise.then((unsub) => {
+          if (typeof unsub === 'function') unsub();
+        });
+      }
     };
   }, [userProfile.isSignedIn, userProfile.emailOrPhone]);
 
@@ -1032,9 +1031,7 @@ export default function App() {
             allAamal
           ).catch(() => {});
         }
-        try {
-          if (auth) firebaseSignOut(auth).catch(() => {});
-        } catch {}
+        signOutFirebaseUser().catch(() => {});
 
         // Reset local screen state to 0 so logged out screen shows 0 counts (data safely in cloud)
         const freshZikrs = DEFAULT_ZIKRS.map((item) => ({ ...item, count: 0, updatedAt: Date.now() }));
@@ -1417,35 +1414,6 @@ export default function App() {
     requestWakeLock();
   }, [settings.screenAwake]);
 
-  // Preload all app views into CacheStorage in background so all modules work 100% offline
-  useEffect(() => {
-    const preloadAllViewsForOffline = () => {
-      import('./components/QuranView').catch(() => {});
-      import('./components/SalatTimeView').catch(() => {});
-      import('./components/AamalTrackerView').catch(() => {});
-      import('./components/OtherIslamicHubView').catch(() => {});
-      import('./components/ArabianIllustratedMapView').catch(() => {});
-      import('./components/DuaView').catch(() => {});
-      import('./components/HadithView').catch(() => {});
-      import('./components/KitabView').catch(() => {});
-      import('./components/DailyTabligView').catch(() => {});
-      import('./components/AllahNamesView').catch(() => {});
-      import('./components/HajjUmrahView').catch(() => {});
-      import('./components/HistoryTimelineView').catch(() => {});
-      import('./components/HistoryReportModal').catch(() => {});
-      import('./components/ZikrModal').catch(() => {});
-      import('./components/ProfileModal').catch(() => {});
-      import('./components/AdminPanelModal').catch(() => {});
-    };
-
-    if (typeof window !== 'undefined') {
-      if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(preloadAllViewsForOffline);
-      } else {
-        setTimeout(preloadAllViewsForOffline, 1000);
-      }
-    }
-  }, []);
 
   // Completed Goals Count
   const completedGoals = useMemo(() => {
