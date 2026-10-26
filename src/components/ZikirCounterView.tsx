@@ -140,10 +140,10 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
 
       {/* ================= REFRESH SYSTEM CARD ================= */}
       <div
-        className={`p-4 sm:p-5 rounded-3xl border shadow-lg transition-all duration-300 ${
+        className={`p-4 sm:p-5 rounded-3xl border shadow-sm transition-all duration-300 ${
           isDay
-            ? 'bg-gradient-to-br from-white via-[#f4faf8] to-[#e8f6f3] border-[#cbe4e0]'
-            : 'bg-gradient-to-br from-[#0c2f35] via-[#0f3b43] to-[#12454e] border-[#1b5864]'
+            ? 'bg-white border-blue-100/90 shadow-[0_4px_24px_-4px_rgba(0,102,255,0.06)]'
+            : 'bg-[#0f1a32] border-blue-900/40 shadow-black/60'
         }`}
       >
         {/* Upper Header Part (Always Visible) */}
@@ -153,22 +153,22 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             if (soundEnabled) soundHaptics.playTap();
           }}
           className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none ${
-            isRefreshSystemExpanded ? 'mb-3.5 pb-3 border-b border-emerald-500/20' : ''
+            isRefreshSystemExpanded ? 'mb-3.5 pb-3 border-b border-blue-500/20' : ''
           }`}
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div
               className={`p-2 rounded-2xl shrink-0 ${
-                isDay ? 'bg-emerald-100 text-emerald-800' : 'bg-teal-500/20 text-emerald-300'
+                isDay ? 'bg-blue-50 text-[#0066FF] border border-blue-100' : 'bg-blue-950/70 text-sky-300 border border-blue-800/60'
               }`}
             >
               <RotateCw className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-sm sm:text-base font-black tracking-tight truncate ${isDay ? 'text-[#063b33]' : 'text-white'}`}>
+              <h3 className={`text-sm sm:text-base font-black tracking-tight truncate ${isDay ? 'text-[#0f172a]' : 'text-white'}`}>
                 {selectedLanguage === 'bn' ? 'রিফ্রেশ সিস্টেম (Refresh System)' : 'Counter Refresh System'}
               </h3>
-              <p className={`text-xs truncate ${isDay ? 'text-[#2e6259]' : 'text-emerald-200/80'}`}>
+              <p className={`text-xs truncate ${isDay ? 'text-slate-500 font-medium' : 'text-blue-200/80'}`}>
                 {selectedLanguage === 'bn'
                   ? '৩টি অপশন থেকে যেকোনো একটি বেছে নিন (ফরজ নামাজ / মাগরিব / ম্যানুয়ালি)'
                   : 'Choose auto-reset frequency & automatic target presets'}
@@ -185,14 +185,14 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                   e.stopPropagation();
                   onManualCounterRefresh();
                 }}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold border shadow-sm transition active:scale-95 cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold border shadow-xs transition active:scale-95 cursor-pointer ${
                   isDay
-                    ? 'bg-white hover:bg-emerald-50 text-emerald-800 border-emerald-300'
-                    : 'bg-[#144f59] hover:bg-[#1a5f6b] text-teal-100 border-teal-400/40'
+                    ? 'bg-blue-50 hover:bg-blue-100/80 text-blue-900 border-blue-200'
+                    : 'bg-blue-950/60 hover:bg-blue-900/60 text-sky-200 border-blue-800/50'
                 }`}
                 title={selectedLanguage === 'bn' ? 'সব কাউন্টার ০ করুন' : 'Reset all counters to 0'}
               >
-                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
                 <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'কাউন্টার ০ করুন' : 'Reset Counters'}</span>
               </button>
             )}
@@ -208,11 +208,11 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               className={`px-3 py-1.5 rounded-2xl text-xs font-bold flex items-center gap-1.5 border transition-all active:scale-95 cursor-pointer ${
                 isRefreshSystemExpanded
                   ? isDay
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md'
-                    : 'bg-[#10b981] text-black border-[#10b981] font-extrabold shadow-md'
+                    ? 'bg-[#0066FF] text-white border-[#0066FF] shadow-md shadow-blue-500/25'
+                    : 'bg-[#0066FF] text-white border-blue-400 font-extrabold shadow-md shadow-blue-500/35'
                   : isDay
-                  ? 'bg-white border-emerald-300 text-emerald-800 hover:bg-emerald-50 shadow-sm'
-                  : 'bg-[#144f59] border-teal-400/40 text-teal-100 hover:bg-[#1a5f6b]'
+                  ? 'bg-white border-blue-200 text-slate-800 hover:bg-blue-50 shadow-xs'
+                  : 'bg-blue-950/50 border-blue-800/40 text-sky-100 hover:bg-blue-900/50'
               }`}
             >
               <span>
@@ -406,7 +406,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
           <div className="flex items-center gap-2">
             <h2
               className={`text-base font-bold tracking-tight flex items-center gap-2 ${
-                isDay ? 'text-[#0a3328]' : 'text-white'
+                isDay ? 'text-slate-900' : 'text-white'
               }`}
             >
               <span>{ZIKIR_UI.commonZikr[selectedLanguage]}</span>
@@ -416,8 +416,8 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               <span
                 className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
                   isDay
-                    ? 'bg-[#e6f7f2] text-[#00875a] border-[#c3edd9]'
-                    : 'bg-[#061f24] text-emerald-400 border-[#144349]'
+                    ? 'bg-blue-50 text-[#0066FF] border-blue-200/80'
+                    : 'bg-blue-950/60 text-blue-400 border-blue-800/60'
                 }`}
               >
                 {zikrs.length}
@@ -431,8 +431,8 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               onClick={onRestoreDefaults}
               className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-2xl border transition active:scale-95 cursor-pointer ${
                 isDay
-                  ? 'bg-white hover:bg-[#eefbf6] text-[#006747] border-[#d2ece9] shadow-sm'
-                  : 'bg-[#061f24] hover:bg-[#092a30] text-emerald-300 border-[#144349]'
+                  ? 'bg-white hover:bg-blue-50/60 text-slate-700 border-blue-100 shadow-sm'
+                  : 'bg-[#0f1b33] hover:bg-[#16274a] text-blue-300 border-blue-900/40'
               }`}
               title={ZIKIR_UI.resetDefaults[selectedLanguage]}
             >
@@ -447,8 +447,8 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               disabled={isExportingPdf}
               className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-2xl border transition active:scale-95 disabled:opacity-50 cursor-pointer ${
                 isDay
-                  ? 'bg-white hover:bg-[#eefbf6] text-[#006747] border-[#d2ece9] shadow-sm'
-                  : 'bg-[#061f24] hover:bg-[#092a30] text-emerald-300 border-[#144349]'
+                  ? 'bg-white hover:bg-blue-50/60 text-slate-700 border-blue-100 shadow-sm'
+                  : 'bg-[#0f1b33] hover:bg-[#16274a] text-blue-300 border-blue-900/40'
               }`}
               title={ZIKIR_UI.exportPdf[selectedLanguage]}
             >
@@ -459,7 +459,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             {/* Add Zikr Button */}
             <button
               onClick={onOpenAddModal}
-              className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-2xl shadow-md transition active:scale-95 cursor-pointer bg-[#006747] hover:bg-[#005a3e] text-white shadow-[#006747]/20 border border-emerald-400/30"
+              className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-2xl shadow-md transition active:scale-95 cursor-pointer bg-[#0066FF] hover:bg-[#0052cc] text-white shadow-blue-500/25 border border-blue-400/30"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>
@@ -483,11 +483,11 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
               filterMode === 'all'
                 ? isDay
-                  ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
-                  : 'bg-[#006747] text-white border-emerald-400/50 shadow-md'
+                  ? 'bg-[#0066FF] text-white border-[#0066FF] shadow-md shadow-blue-500/20'
+                  : 'bg-[#0066FF] text-white border-blue-400/50 shadow-md'
                 : isDay
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                : 'bg-[#061f24] hover:bg-[#0a2e36] text-slate-300 border-[#144349]'
+                ? 'bg-white hover:bg-blue-50 text-slate-600 border-blue-100/90 shadow-sm'
+                : 'bg-[#0f1b33] hover:bg-[#16274a] text-slate-300 border-blue-900/40'
             }`}
           >
             {ZIKIR_UI.all[selectedLanguage]} ({zikrs.length})
@@ -498,11 +498,11 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
               filterMode === 'targets'
                 ? isDay
-                  ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
-                  : 'bg-[#006747] text-white border-emerald-400/50 shadow-md'
+                  ? 'bg-[#0066FF] text-white border-[#0066FF] shadow-md shadow-blue-500/20'
+                  : 'bg-[#0066FF] text-white border-blue-400/50 shadow-md'
                 : isDay
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                : 'bg-[#061f24] hover:bg-[#0a2e36] text-slate-300 border-[#144349]'
+                ? 'bg-white hover:bg-blue-50 text-slate-600 border-blue-100/90 shadow-sm'
+                : 'bg-[#0f1b33] hover:bg-[#16274a] text-slate-300 border-blue-900/40'
             }`}
           >
             <Target className="w-3.5 h-3.5" />
@@ -514,11 +514,11 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
               filterMode === 'completed'
                 ? isDay
-                  ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
-                  : 'bg-[#006747] text-white border-emerald-400/50 shadow-md'
+                  ? 'bg-[#0066FF] text-white border-[#0066FF] shadow-md shadow-blue-500/20'
+                  : 'bg-[#0066FF] text-white border-blue-400/50 shadow-md'
                 : isDay
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                : 'bg-[#061f24] hover:bg-[#0a2e36] text-slate-300 border-[#144349]'
+                ? 'bg-white hover:bg-blue-50 text-slate-600 border-blue-100/90 shadow-sm'
+                : 'bg-[#0f1b33] hover:bg-[#16274a] text-slate-300 border-blue-900/40'
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />

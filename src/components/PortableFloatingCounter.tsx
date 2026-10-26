@@ -232,7 +232,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
       {particles.map((p) => (
         <span
           key={p.id}
-          className="absolute -top-4 left-1/2 -translate-x-1/2 font-black text-base sm:text-lg text-emerald-400 dark:text-emerald-300 drop-shadow-[0_2px_8px_rgba(16,185,129,0.8)] pointer-events-none z-50 animate-out fade-out slide-out-to-top duration-700"
+          className="absolute -top-4 left-1/2 -translate-x-1/2 font-black text-base sm:text-lg text-[#0066FF] drop-shadow-[0_2px_8px_rgba(0,102,255,0.7)] pointer-events-none z-50 animate-out fade-out slide-out-to-top duration-700"
         >
           {p.text}
         </span>
@@ -244,8 +244,8 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
           isDragging ? 'opacity-100' : 'opacity-70 hover:opacity-100'
         } ${
           isDay
-            ? 'bg-slate-800 text-white border border-slate-700'
-            : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+            ? 'bg-slate-900 text-white border border-slate-700'
+            : 'bg-[#0a1124] text-blue-300 border border-blue-500/40'
         }`}
       >
         <Move className="w-2.5 h-2.5" />
@@ -261,12 +261,12 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
             : 'w-24 h-24 sm:w-28 sm:h-28 p-1.5'
         } ${
           isPopping
-            ? 'scale-115 ring-8 ring-emerald-400/50 shadow-[0_0_35px_rgba(16,185,129,0.6)]'
-            : 'scale-100 ring-2 ring-emerald-500/30 hover:scale-105'
+            ? 'scale-115 ring-8 ring-[#0066FF]/50 shadow-[0_0_35px_rgba(0,102,255,0.6)]'
+            : 'scale-100 ring-2 ring-[#0066FF]/30 hover:scale-105'
         } ${
           isDay
-            ? 'bg-gradient-to-tr from-[#005a3e] via-[#247b82] to-[#3aa2aa] border-white shadow-teal-900/40'
-            : 'bg-gradient-to-tr from-[#062024] via-[#103d45] to-[#10b981] border-[#10b981]/60 shadow-black/90'
+            ? 'bg-gradient-to-tr from-[#0052cc] via-[#0066FF] to-[#38BDF8] border-white shadow-blue-900/30'
+            : 'bg-gradient-to-tr from-[#0a1124] via-[#102a5c] to-[#0066FF] border-[#0066FF]/60 shadow-black/90'
         }`}
       >
         {/* Inner Circle Dial */}
@@ -275,19 +275,19 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
             isPopping ? 'scale-[1.03]' : 'scale-100'
           } ${
             isDay
-              ? 'bg-[#edf5f4] text-[#103e42] border border-white'
-              : 'bg-gradient-to-b from-[#092226] via-[#0d2d33] to-[#092226] text-white border border-[#1a4a52]'
+              ? 'bg-[#F6F9FD] text-slate-900 border border-white'
+              : 'bg-gradient-to-b from-[#0a1124] via-[#0e1b38] to-[#0a1124] text-white border border-[#1e2f56]'
           }`}
         >
           {/* Outer Dashed Bead Ring */}
           <div
             className={`absolute inset-1.5 border border-dashed rounded-full pointer-events-none ${
-              isDay ? 'border-teal-500/30' : 'border-teal-300/30'
+              isDay ? 'border-blue-400/30' : 'border-blue-300/30'
             }`}
           />
 
           {/* Top Label */}
-          <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-0.5 z-10">
+          <div className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#0066FF] dark:text-blue-400 mb-0.5 z-10">
             <Sparkles className="w-2.5 h-2.5 text-amber-400 animate-pulse" />
             <span>{isExpanded ? ZIKIR_UI.masterTasbeehCount[selectedLanguage] : 'TOTAL'}</span>
           </div>
@@ -299,7 +299,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
                 ? 'text-2xl sm:text-3xl my-1'
                 : 'text-xl sm:text-2xl'
             } ${
-              isPopping ? 'scale-120 text-emerald-500' : isDay ? 'text-[#103e42]' : 'text-white'
+              isPopping ? 'scale-120 text-[#0066FF]' : isDay ? 'text-slate-900' : 'text-white'
             }`}
           >
             {masterTotal.toLocaleString()}
@@ -307,8 +307,8 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
 
           {/* Expanded extra details */}
           {isExpanded ? (
-            <div className="flex flex-col items-center gap-0.5 text-[9px] font-semibold text-teal-600 dark:text-emerald-300 z-10">
-              <span className="font-mono text-emerald-500 font-bold">
+            <div className="flex flex-col items-center gap-0.5 text-[9px] font-semibold text-blue-600 dark:text-blue-300 z-10">
+              <span className="font-mono text-[#0066FF] font-bold">
                 আজকের: {dailyTotal.toLocaleString()}
               </span>
               <span className="text-amber-500 text-[8px]">
@@ -316,7 +316,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
               </span>
             </div>
           ) : (
-            <div className="text-[8px] sm:text-[9px] font-semibold flex items-center gap-0.5 text-teal-600 dark:text-emerald-300/80 z-10">
+            <div className="text-[8px] sm:text-[9px] font-semibold flex items-center gap-0.5 text-blue-600 dark:text-blue-300/80 z-10">
               <ChevronUp className="w-2.5 h-2.5" />
               <span>Top</span>
             </div>
@@ -326,8 +326,8 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
           <button
             type="button"
             onClick={toggleExpand}
-            className={`absolute bottom-1 right-1 p-1 rounded-full text-slate-400 hover:text-emerald-400 z-20 cursor-pointer transition ${
-              isDay ? 'hover:bg-teal-100' : 'hover:bg-teal-900/60'
+            className={`absolute bottom-1 right-1 p-1 rounded-full text-slate-400 hover:text-blue-500 z-20 cursor-pointer transition ${
+              isDay ? 'hover:bg-blue-100/70' : 'hover:bg-blue-900/60'
             }`}
             title={isExpanded ? 'Collapse' : 'Expand'}
           >

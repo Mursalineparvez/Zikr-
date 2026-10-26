@@ -58,43 +58,43 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
   return (
     <section
       id="main-circular-center-counter"
-      className={`relative overflow-hidden rounded-[28px] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl ${
+      className={`relative overflow-hidden rounded-[32px] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl ${
         isDay
-          ? 'bg-white border border-[#d6e8e5] shadow-[#135d66]/5'
-          : 'bg-[#0e2f36] border border-[#1a515c] shadow-[#082024]/60'
+          ? 'bg-white border border-blue-100/90 shadow-[0_8px_30px_rgb(0,102,255,0.06)]'
+          : 'bg-[#0f1a30] border border-blue-900/40 shadow-black/80'
       }`}
     >
       {/* Decorative ambient breathing Noor flares */}
       <div
         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full pointer-events-none animate-nur-breathe ${
-          isDay ? 'bg-emerald-500/15' : 'bg-emerald-400/20'
+          isDay ? 'bg-blue-500/10' : 'bg-blue-400/15'
         }`}
       />
       <div
         className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none transition-opacity duration-300 ${
           isPopping ? 'opacity-100 scale-110' : 'opacity-70'
-        } ${isDay ? 'bg-emerald-500/15' : 'bg-emerald-400/20'}`}
+        } ${isDay ? 'bg-sky-500/10' : 'bg-sky-400/15'}`}
       />
       <div
         className={`absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
-          isDay ? 'bg-amber-400/15' : 'bg-amber-400/10'
+          isDay ? 'bg-amber-400/10' : 'bg-amber-400/10'
         }`}
       />
 
       {/* Top Quranic Bismillah & Subtitle */}
       <div className="relative z-10 mb-2 space-y-1">
         <div
-          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1 transition-transform ${
+          className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1 transition-transform ${
             isPopping ? 'scale-105' : 'scale-100'
           } ${
             isDay
-              ? 'bg-emerald-100 text-emerald-950 border border-emerald-300'
-              : 'bg-[#061f24] text-emerald-300 border-emerald-800/80'
+              ? 'bg-blue-50 text-[#0066FF] border border-blue-200/80 shadow-xs'
+              : 'bg-blue-950/80 text-sky-300 border-blue-800/80'
           }`}
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              isPopping ? 'bg-emerald-400 animate-ping' : 'bg-emerald-500'
+              isPopping ? 'bg-sky-400 animate-ping' : 'bg-[#0066FF]'
             }`}
           />
           <span>{ZIKIR_UI.centralMasterCounter[selectedLanguage]}</span>
@@ -104,12 +104,12 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
         <div
           dir="rtl"
           className={`font-arabic text-2xl sm:text-3xl font-bold tracking-wide select-none ${
-            isDay ? 'text-[#0a382c]' : 'text-emerald-300'
+            isDay ? 'text-[#0052cc]' : 'text-sky-300'
           }`}
         >
           بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </div>
-        <p className={`text-xs ${isDay ? 'text-slate-700 font-semibold' : 'text-slate-300'}`}>
+        <p className={`text-xs ${isDay ? 'text-slate-600 font-medium' : 'text-slate-300'}`}>
           {ZIKIR_UI.realtimeSubtitle[selectedLanguage]}
         </p>
       </div>
@@ -120,22 +120,22 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
         {popParticles.map((particle) => (
           <span
             key={particle.id}
-            className="absolute -top-4 font-black text-lg text-emerald-400 dark:text-emerald-300 drop-shadow-md pointer-events-none z-30 animate-out fade-out slide-out-to-top duration-700"
+            className="absolute -top-4 font-black text-lg text-[#0066FF] dark:text-sky-300 drop-shadow-md pointer-events-none z-30 animate-out fade-out slide-out-to-top duration-700"
           >
             {particle.text}
           </span>
         ))}
 
-        {/* Outer Halo with Teal/Emerald Gradient with Pop-Up Bounce */}
+        {/* Outer Halo with Royal Blue & Sky Gradient with Pop-Up Bounce */}
         <div
           className={`relative w-56 h-56 sm:w-64 sm:h-64 rounded-full p-2.5 transition-transform duration-200 ease-out shadow-2xl flex items-center justify-center ${
             isPopping
-              ? 'scale-105 ring-8 ring-emerald-500/30'
+              ? 'scale-105 ring-8 ring-blue-500/25'
               : 'scale-100 ring-0'
           } ${
             isDay
-              ? 'bg-gradient-to-tr from-[#005a3e] via-[#006747] to-[#00875a] shadow-[#006747]/25'
-              : 'bg-gradient-to-tr from-[#072528] via-[#005a3e] to-[#00875a] shadow-black/80'
+              ? 'bg-gradient-to-tr from-[#0052cc] via-[#0066FF] to-[#38bdf8] shadow-blue-500/20'
+              : 'bg-gradient-to-tr from-[#08152e] via-[#0052cc] to-[#0066FF] shadow-black/80'
           }`}
         >
           {/* Inner Circular Face */}
@@ -144,8 +144,8 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
               isPopping ? 'scale-[1.02]' : 'scale-100'
             } ${
               isDay
-                ? 'bg-[#f4faf8] border-2 border-white'
-                : 'bg-gradient-to-b from-[#061d22] via-[#092c30] to-[#061d22] border border-[#144349]'
+                ? 'bg-[#f8fafd] border-2 border-white'
+                : 'bg-gradient-to-b from-[#091326] via-[#0c1a36] to-[#091326] border border-blue-900/50'
             }`}
           >
             {/* 33 Animated Dynamic Tasbeeh Beads around Orbit */}
@@ -159,7 +159,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
                 cy="100"
                 r="86"
                 fill="none"
-                stroke={isDay ? 'rgba(0, 103, 71, 0.12)' : 'rgba(16, 185, 129, 0.15)'}
+                stroke={isDay ? 'rgba(0, 102, 255, 0.12)' : 'rgba(56, 189, 248, 0.15)'}
                 strokeWidth="1.5"
                 strokeDasharray="2 3"
               />
@@ -184,8 +184,8 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
                       isCurrent
                         ? '#f59e0b'
                         : isPassed
-                        ? isDay ? '#006747' : '#10b981'
-                        : isDay ? 'rgba(0, 103, 71, 0.25)' : 'rgba(16, 185, 129, 0.2)'
+                        ? isDay ? '#0066FF' : '#38bdf8'
+                        : isDay ? 'rgba(0, 102, 255, 0.22)' : 'rgba(56, 189, 248, 0.2)'
                     }
                     stroke={isCurrent ? '#ffffff' : 'none'}
                     strokeWidth={isCurrent ? '1.5' : '0'}
@@ -196,17 +196,17 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
 
             <span
               className={`text-[11px] font-bold uppercase tracking-widest mb-1 flex items-center gap-1 ${
-                isDay ? 'text-[#006747]' : 'text-emerald-300'
+                isDay ? 'text-[#0066FF]' : 'text-sky-300'
               }`}
             >
-              <Sparkles className="w-3 h-3 text-amber-400" />
+              <Sparkles className="w-3 h-3 text-amber-500" />
               <span>{ZIKIR_UI.masterTasbeehCount[selectedLanguage]}</span>
             </span>
 
             {/* Giant Digits with Pop Spring Effect */}
             <div
               className={`text-5xl sm:text-6xl font-black tracking-tight font-sans drop-shadow-md select-none transition-all duration-150 ${
-                isPopping ? 'scale-110 text-emerald-500' : isDay ? 'text-[#0a3328]' : 'text-white'
+                isPopping ? 'scale-110 text-[#0066FF]' : isDay ? 'text-[#0f172a]' : 'text-white'
               }`}
             >
               {totalCount.toLocaleString()}
@@ -214,7 +214,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
 
             <span
               className={`text-[11px] font-medium mt-1 ${
-                isDay ? 'text-[#4e7478]' : 'text-[#90b8be]'
+                isDay ? 'text-slate-500' : 'text-slate-400'
               }`}
             >
               {ZIKIR_UI.masterTasbeehCount[selectedLanguage] || 'Master Tasbeeh Count'}
@@ -225,13 +225,13 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
               <div
                 className={`flex items-center gap-2 text-[10px] px-3 py-1 rounded-full font-semibold border ${
                   isDay
-                    ? 'bg-white text-[#006747] border-[#d2ece9] shadow-sm'
-                    : 'bg-[#0a262c] text-[#86b5bc] border-[#184850]'
+                    ? 'bg-white text-slate-700 border-blue-100 shadow-sm'
+                    : 'bg-[#09152b] text-sky-200 border-blue-900/60'
                 }`}
               >
                 <span>
                   {ZIKIR_UI.todayDhikr[selectedLanguage]}{' '}
-                  <strong className="text-[#00875a] font-mono">{effectiveDaily.toLocaleString()}</strong>
+                  <strong className="text-[#0066FF] dark:text-sky-400 font-mono">{effectiveDaily.toLocaleString()}</strong>
                 </span>
                 <span>•</span>
                 <span className={isDay ? 'text-amber-600 font-bold' : 'text-amber-300 font-bold'}>
@@ -249,9 +249,9 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
         <button
           type="button"
           onClick={onSaveSession}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md transition active:scale-95 cursor-pointer bg-[#006747] hover:bg-[#005a3e] text-white shadow-[#006747]/20 border border-emerald-400/30"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-blue-500/25 transition active:scale-95 cursor-pointer bg-[#0066FF] hover:bg-[#0052CC] text-white border border-blue-400/40"
         >
-          <BookmarkPlus className="w-4 h-4 text-emerald-200" />
+          <BookmarkPlus className="w-4 h-4 text-sky-200" />
           <span>{ZIKIR_UI.saveSession[selectedLanguage]}</span>
         </button>
 

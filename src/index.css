@@ -17,51 +17,51 @@
   font-family: 'Amiri', 'Traditional Arabic', serif;
 }
 
-/* Day Mode (Clean Porcelain & Mint Accents) */
+/* Day Mode (Clean Creative Porcelain & Royal Azure Blue Accents) */
 body.theme-day,
 body {
-  background-color: #f4f8f6;
-  color: #0d382f;
+  background-color: #f6f9fd;
+  color: #0f172a;
 }
 
-/* Night Mode (Deep Atmospheric Pine Teal - High-End & Attractive) */
+/* Night Mode (Deep Obsidian Navy & Luminous Sapphire Blue) */
 body.theme-night {
-  background-color: #051519;
-  background-image: radial-gradient(rgba(16, 185, 129, 0.08) 1.5px, transparent 1.5px),
-                    radial-gradient(rgba(20, 184, 166, 0.05) 1.5px, #051519 1.5px);
+  background-color: #0a1124;
+  background-image: radial-gradient(rgba(0, 102, 255, 0.08) 1.5px, transparent 1.5px),
+                    radial-gradient(rgba(56, 189, 248, 0.04) 1.5px, #0a1124 1.5px);
   background-size: 40px 40px;
   background-position: 0 0, 20px 20px;
-  color: #f1f5f9;
+  color: #f8fafc;
 }
 
 /* Premium Card Glass & Glow */
 .card-glass-night {
-  background: rgba(10, 39, 46, 0.85);
+  background: rgba(16, 26, 48, 0.90);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(23, 82, 93, 0.65);
-  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(20, 184, 166, 0.18);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(56, 189, 248, 0.18);
 }
 
 .card-glass-day {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  box-shadow: 0 16px 30px -10px rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(224, 231, 243, 0.9);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.06);
 }
 
 /* Subtle Geometric Pattern */
 .islamic-pattern-day {
-  background-color: #f6f8f7;
-  background-image: radial-gradient(rgba(0, 103, 71, 0.06) 1.5px, transparent 1.5px),
-                    radial-gradient(rgba(245, 158, 11, 0.04) 1.5px, #f6f8f7 1.5px);
+  background-color: #f6f9fd;
+  background-image: radial-gradient(rgba(0, 102, 255, 0.05) 1.5px, transparent 1.5px),
+                    radial-gradient(rgba(245, 158, 11, 0.03) 1.5px, #f6f9fd 1.5px);
   background-size: 36px 36px;
   background-position: 0 0, 18px 18px;
 }
 
 .islamic-pattern-night {
-  background-color: #082024;
-  background-image: radial-gradient(rgba(16, 185, 129, 0.09) 1.5px, transparent 1.5px),
-                    radial-gradient(rgba(245, 158, 11, 0.04) 1.5px, #082024 1.5px);
+  background-color: #0d162d;
+  background-image: radial-gradient(rgba(0, 102, 255, 0.09) 1.5px, transparent 1.5px),
+                    radial-gradient(rgba(245, 158, 11, 0.03) 1.5px, #0d162d 1.5px);
   background-size: 36px 36px;
   background-position: 0 0, 18px 18px;
 }

@@ -2030,19 +2030,19 @@ export default function App() {
       <footer
         className={`mt-auto border-t py-6 px-4 text-center transition-colors ${
           isDay
-            ? 'bg-[#e2edea] border-[#cbe0dc] text-[#34595d]'
-            : 'bg-[#060c11] border-[#142633] text-[#71969c]'
+            ? 'bg-[#edf3fc] border-blue-100/80 text-slate-600'
+            : 'bg-[#070d1a] border-slate-800 text-slate-400'
         }`}
       >
         <div className="max-w-4xl mx-auto space-y-2">
           <div
             className={`font-arabic text-lg sm:text-xl font-bold ${
-              isDay ? 'text-[#006747]' : 'text-emerald-400'
+              isDay ? 'text-[#0052cc]' : 'text-sky-400'
             }`}
           >
             أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ
           </div>
-          <p className={`text-xs italic ${isDay ? 'text-slate-700' : 'text-slate-400'}`}>
+          <p className={`text-xs italic ${isDay ? 'text-slate-600' : 'text-slate-400'}`}>
             "Verily, in the remembrance of Allah do hearts find rest." — Surah Ar-Ra'd (13:28)
           </p>
           <div className="text-[11px] pt-1 flex items-center justify-center gap-2 flex-wrap opacity-80">
@@ -2053,7 +2053,7 @@ export default function App() {
             <button
               onClick={() => setIsStandaloneModalOpen(true)}
               className={`hover:underline font-bold cursor-pointer flex items-center gap-1 ${
-                isDay ? 'text-[#006747]' : 'text-emerald-400'
+                isDay ? 'text-[#0066FF]' : 'text-sky-400'
               }`}
             >
               <span>📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ</span>
