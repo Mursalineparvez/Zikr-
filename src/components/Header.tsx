@@ -17,6 +17,8 @@ import { usePWAInstall, useOnlineStatus } from '../hooks/usePWAInstall';
 import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
 import { NAV_TRANSLATIONS } from '../utils/appTranslations';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
+import { InstallAppModal } from './InstallAppModal';
+import confetti from 'canvas-confetti';
 
 interface HeaderProps {
   activeModule: NavModule;
@@ -51,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
-  const [showIOSModal, setShowIOSModal] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -73,10 +75,21 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleInstallClick = async () => {
     if (isInstallable) {
-      await install();
-    } else if (isIOS) {
-      setShowIOSModal(true);
+      const ok = await install();
+      if (ok) {
+        try {
+          confetti({
+            particleCount: 65,
+            spread: 60,
+            origin: { y: 0.6 },
+            colors: ['#006747', '#10b981', '#f59e0b', '#34d399'],
+          });
+        } catch {}
+        return;
+      }
     }
+    // If not installable via direct prompt, or user dismissed, or on iOS/manual:
+    setShowInstallModal(true);
   };
 
   const isDay = themeMode === 'day';
@@ -236,43 +249,37 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* PWA Install Quick Button (if available) */}
-          {(isInstallable || isIOS) && !isInstalled && (
+          {/* PWA Install Button (Always accessible on Mobile and Desktop) */}
+          {!isInstalled ? (
             <button
               type="button"
               onClick={handleInstallClick}
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer"
-              title="Install Zikr+ App"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer border border-emerald-300/30"
+              title="Install Zikr+ App (অ্যাপ ইনস্টল করুন)"
             >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Install</span>
+              <Smartphone className="w-3.5 h-3.5 text-white" />
+              <span className="text-xs">{selectedLanguage === 'bn' ? 'অ্যাপ ইনস্টল' : 'Install'}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowInstallModal(true)}
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-2xl bg-white/15 hover:bg-white/25 text-emerald-200 border border-emerald-400/30 text-xs font-semibold transition cursor-pointer"
+              title="Zikr+ App Installed (ইনস্টল করা আছে)"
+            >
+              <Check className="w-3.5 h-3.5 text-emerald-300 stroke-[3]" />
+              <span className="text-[11px] font-bold">ইনস্টল্ড</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* iOS Instructions Modal */}
-      {showIOSModal && (
-        <div className="fixed inset-0 z-50 bg-[#082024]/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#12454a] border border-teal-500/50 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-white">
-            <h3 className="text-base font-bold flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-emerald-300" />
-              <span>Install Zikr+ on iOS</span>
-            </h3>
-            <p className="text-xs text-teal-100 leading-relaxed">
-              1. Tap the <strong className="text-white">Share</strong> button at the bottom of Safari.<br />
-              2. Scroll down and tap <strong className="text-white">"Add to Home Screen"</strong>.<br />
-              3. Tap <strong className="text-white">"Add"</strong> in the top-right corner.
-            </p>
-            <button
-              onClick={() => setShowIOSModal(false)}
-              className="w-full py-2.5 rounded-xl bg-white text-[#006747] text-xs font-bold transition active:scale-95 cursor-pointer"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Universal Install App Modal with 1-click install and device instructions */}
+      <InstallAppModal
+        isOpen={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+        isDay={isDay}
+      />
     </header>
   );
 };

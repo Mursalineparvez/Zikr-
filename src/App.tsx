@@ -2052,11 +2052,11 @@ export default function App() {
             <span>•</span>
             <button
               onClick={() => setIsStandaloneModalOpen(true)}
-              className={`hover:underline font-bold cursor-pointer ${
+              className={`hover:underline font-bold cursor-pointer flex items-center gap-1 ${
                 isDay ? 'text-[#006747]' : 'text-emerald-400'
               }`}
             >
-              Export Standalone APK Guide
+              <span>📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ</span>
             </button>
           </div>
         </div>

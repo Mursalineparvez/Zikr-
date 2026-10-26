@@ -16,6 +16,8 @@ import { AppTheme, AppSettings, ZikrLanguage } from '../types';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { SETTINGS_UI } from '../utils/appTranslations';
 import { playArabicVoice, soundHaptics } from '../utils/audioHaptics';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { InstallAppModal } from './InstallAppModal';
 
 interface SettingsViewProps {
   settings: AppSettings;
@@ -41,6 +43,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onImportBackupJson,
 }) => {
   const [isPlayingSample, setIsPlayingSample] = useState(false);
+  const { isInstallable, isInstalled, install } = usePWAInstall();
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   const handlePlayVoiceSample = () => {
     if (isPlayingSample) {
@@ -130,6 +134,49 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {SETTINGS_UI.subtitle[selectedLanguage] ||
             'Customize language, themes, haptics, audio, and data backups.'}
         </p>
+      </div>
+
+      {/* App Install & Offline Card */}
+      <div className="bg-gradient-to-r from-emerald-950/70 via-teal-950/60 to-slate-900 p-5 rounded-3xl border border-emerald-500/30 space-y-3 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-sm text-white">
+                {selectedLanguage === 'bn' ? 'হোম স্ক্রিনে Zikr+ অ্যাপ ইনস্টল' : 'Install Zikr+ App on Device'}
+              </h3>
+              <p className="text-xs text-emerald-300/90 font-medium">
+                {selectedLanguage === 'bn' ? 'সম্পূর্ণ অফলাইনে নেট ছাড়া দ্রুততম স্পিডে রান করুন' : 'Run 100% offline at ultra-fast speeds'}
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hidden sm:inline">
+            PWA
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (isInstallable) {
+              install().then((ok) => {
+                if (!ok) setShowInstallModal(true);
+              });
+            } else {
+              setShowInstallModal(true);
+            }
+          }}
+          className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
+        >
+          <Download className="w-4 h-4 stroke-[2.5]" />
+          <span>
+            {isInstalled
+              ? (selectedLanguage === 'bn' ? 'অ্যাপটি ইতিমধ্যে ইনস্টল আছে ✓ (নির্দেশিকা)' : 'App Installed ✓ (View Guide)')
+              : (selectedLanguage === 'bn' ? 'ফোনে ইনস্টল করুন (Install App)' : 'Install App on Device')}
+          </span>
+        </button>
       </div>
 
       {/* 0. Language Configuration (14 Supported World Languages) */}
@@ -460,6 +507,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </button>
         </div>
       </div>
+
+      <InstallAppModal
+        isOpen={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+      />
     </div>
   );
 };

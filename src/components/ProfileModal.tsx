@@ -53,6 +53,7 @@ import { SETTINGS_UI } from '../utils/appTranslations';
 import { getDetectedDeviceInfo } from '../utils/deviceInfo';
 
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { InstallAppModal } from './InstallAppModal';
 import {
   checkUserExistsInCloud,
   generateAndSendVerificationOtp,
@@ -190,8 +191,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const handleInstallApp = async () => {
     if (soundEnabled) soundHaptics.playTap();
     if (isInstalled) {
-      setInstallFeedback('✓ অ্যাপটি ইতিমধ্যেই আপনার ডিভাইসে সফলভাবে ইনস্টল করা আছে!');
-      setTimeout(() => setInstallFeedback(null), 3000);
+      setShowInstallGuideModal(true);
       return;
     }
     if (isInstallable) {
@@ -200,9 +200,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setIsInstalling(false);
       if (res) {
         setInstallFeedback('✓ অভিনন্দন! Zikr+ অ্যাপটি হোম স্ক্রিনে ইনস্টল হয়েছে!');
-        confetti({ particleCount: 65, spread: 65, origin: { y: 0.6 } });
+        try { confetti({ particleCount: 65, spread: 65, origin: { y: 0.6 } }); } catch {}
+        setTimeout(() => setInstallFeedback(null), 4000);
+      } else {
+        setShowInstallGuideModal(true);
       }
-      setTimeout(() => setInstallFeedback(null), 4000);
     } else {
       setShowInstallGuideModal(true);
     }
@@ -1258,7 +1260,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       মোবাইলে Zikr+ অ্যাপ ইনস্টল
                     </h4>
                     <p className={`text-[11px] font-semibold ${isDay ? 'text-emerald-950' : 'text-emerald-200/90'}`}>
-                      হোম স্ক্রিনে রাখুন, অফলাইনে দ্রুত রান হবে।
+                      আলাদা কোনো APK ডাউনলোড ছাড়াই Chrome থেকে ১-ক্লিকে ইনস্টল হয়।
                     </p>
                   </div>
                 </div>
@@ -1267,11 +1269,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   type="button"
                   onClick={handleInstallApp}
                   disabled={isInstalling}
-                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-98"
                 >
                   <Download className="w-4 h-4" />
-                  <span>{isInstalled ? 'অ্যাপটি ইনস্টল আছে ✓' : 'Install App (ইনস্টল করুন)'}</span>
+                  <span>{isInstalled ? 'অ্যাপটি ইনস্টল আছে ✓ (নির্দেশিকা দেখুন)' : 'Install App (অ্যাপ ইনস্টল করুন)'}</span>
                 </button>
+
+                {onOpenStandaloneModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenStandaloneModal}
+                    className={`w-full py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      isDay
+                        ? 'border-emerald-300 text-emerald-800 hover:bg-emerald-100/50'
+                        : 'border-[#1f5c68] text-emerald-300 hover:bg-white/5'
+                    }`}
+                  >
+                    <span>📱 APK ও অফলাইন প্যাকেজ তথ্য</span>
+                  </button>
+                )}
+
+                {installFeedback && (
+                  <div className="p-2 rounded-xl text-center text-xs font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    {installFeedback}
+                  </div>
+                )}
               </div>
 
               {/* Theme Switcher */}
@@ -2080,6 +2102,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </div>
           </div>
         )}
+
+        {/* Universal PWA Install Guide Modal */}
+        <InstallAppModal
+          isOpen={showInstallGuideModal}
+          onClose={() => setShowInstallGuideModal(false)}
+          isDay={isDay}
+        />
       </div>
     </div>
   );

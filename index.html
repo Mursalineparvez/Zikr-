@@ -105,6 +105,14 @@
           if (isIgnorableNotice(arguments[0])) return;
           return origDebug.apply(console, arguments);
         };
+
+        // 3. Early capture beforeinstallprompt so it is never dropped before React hooks mount
+        window.__pwaInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          window.__pwaInstallPrompt = e;
+          window.dispatchEvent(new CustomEvent('pwa-prompt-ready', { detail: e }));
+        });
       })();
     </script>
     <title>Zikr+ - Digital Zikr PWA</title>
@@ -121,11 +129,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Zikr+" />
     <meta name="msapplication-TileColor" content="#0d614e" />
-    <meta name="msapplication-TileImage" content="/icon.svg" />
+    <meta name="msapplication-TileImage" content="/pwa-192x192.png" />
     <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="apple-touch-icon" href="/icon.svg" />
-    <link rel="apple-touch-icon-precomposed" href="/icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon.png" />
 
     <!-- Fast Preconnect & Font Loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
