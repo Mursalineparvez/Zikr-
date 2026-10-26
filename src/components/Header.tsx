@@ -96,10 +96,10 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
-      className={`sticky top-0 z-40 px-3 py-2.5 sm:px-6 transition-all duration-300 shadow-sm ${
+      className={`sticky top-0 z-40 px-3 py-2.5 sm:px-6 transition-all duration-300 shadow-md ${
         isDay
-          ? 'bg-white/95 backdrop-blur-md text-slate-900 border-b border-blue-100 shadow-[0_4px_20px_-4px_rgba(0,102,255,0.06)]'
-          : 'bg-gradient-to-r from-[#071120] via-[#0b1b36] to-[#0f244a] text-white border-b border-blue-900/50 shadow-black/60'
+          ? 'bg-[#006747] text-white shadow-[#006747]/20 border-b border-emerald-600/40'
+          : 'bg-gradient-to-r from-[#061f24] via-[#0b2d35] to-[#0f3b45] text-white border-b border-teal-800/40 shadow-black/60'
       }`}
     >
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
@@ -111,29 +111,19 @@ export const Header: React.FC<HeaderProps> = ({
           <img
             src="/icon.svg"
             alt="Zikr+"
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl shadow-md border border-blue-200/40 object-cover"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl shadow-md border border-white/20 object-cover"
           />
           <div>
             <div className="flex items-center gap-1.5">
-              <h1 className={`text-base sm:text-lg font-black tracking-tight drop-shadow-xs flex items-center ${
-                isDay ? 'text-slate-900' : 'text-white'
-              }`}>
+              <h1 className="text-base sm:text-lg font-black tracking-tight text-white drop-shadow-xs flex items-center">
                 <span>Zikr</span>
-                <span className={`font-black text-lg sm:text-xl ml-0.5 ${
-                  isDay ? 'text-[#0066FF]' : 'text-sky-400'
-                }`}>+</span>
+                <span className="text-amber-400 font-black text-lg sm:text-xl ml-0.5">+</span>
               </h1>
-              <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-bold border ${
-                isDay
-                  ? 'bg-blue-50 text-[#0066FF] border-blue-200/80'
-                  : 'bg-blue-950/80 text-sky-300 border-blue-800/60'
-              }`}>
+              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-bold bg-white/15 text-emerald-100 border border-white/20">
                 PWA
               </span>
             </div>
-            <p className={`text-[10px] font-medium hidden sm:block ${
-              isDay ? 'text-slate-500' : 'text-blue-200/80'
-            }`}>
+            <p className="text-[10px] font-medium text-emerald-100/80 hidden sm:block">
               Islamic Companion &amp; Counter
             </p>
           </div>
@@ -156,14 +146,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={() => setIsLangOpen((prev) => !prev)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border text-xs font-bold transition active:scale-95 cursor-pointer backdrop-blur-md shadow-xs ${
-                isDay
-                  ? 'border-blue-100 bg-blue-50/70 hover:bg-blue-100/70 text-slate-800'
-                  : 'border-white/20 bg-white/10 hover:bg-white/20 text-white'
-              }`}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition active:scale-95 cursor-pointer backdrop-blur-md shadow-xs"
               title="Change Language (ভাষা নির্বাচন করুন)"
             >
-              <Globe className={`w-3.5 h-3.5 ${isDay ? 'text-[#0066FF]' : 'text-sky-300'}`} />
+              <Globe className="w-3.5 h-3.5 text-emerald-200" />
               <span className="text-sm leading-none">{currentLangObj.flag}</span>
               <span className="hidden sm:inline text-xs">{currentLangObj.label}</span>
               <ChevronDown className={`w-3 h-3 transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
@@ -173,11 +159,11 @@ export const Header: React.FC<HeaderProps> = ({
               <div
                 className={`absolute right-0 top-full mt-2 w-64 max-h-80 overflow-y-auto rounded-2xl border shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150 scrollbar-thin ${
                   isDay
-                    ? 'bg-white text-slate-800 border-blue-100 shadow-[0_10px_35px_-5px_rgba(0,102,255,0.12)]'
-                    : 'bg-[#0f1d38] text-white border-blue-900 shadow-black/80'
+                    ? 'bg-white text-slate-800 border-[#cce8e2] shadow-xl'
+                    : 'bg-[#092b30] text-white border-teal-700 shadow-black/80'
                 }`}
               >
-                <div className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 text-blue-600 dark:text-sky-400 border-b border-blue-500/20 mb-1 flex items-center justify-between">
+                <div className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 text-emerald-600 dark:text-emerald-400 border-b border-emerald-500/20 mb-1 flex items-center justify-between">
                   <span>Select App Language (১৪ ভাষা)</span>
                   <Globe className="w-3 h-3" />
                 </div>
@@ -194,10 +180,10 @@ export const Header: React.FC<HeaderProps> = ({
                         }}
                         className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-bold transition flex items-center justify-between gap-2 cursor-pointer ${
                           isSelected
-                            ? 'bg-[#0066FF] text-white shadow-sm'
+                            ? 'bg-[#006747] text-white shadow-sm'
                             : isDay
-                            ? 'hover:bg-blue-50 text-slate-700'
-                            : 'hover:bg-blue-950/60 text-blue-100'
+                            ? 'hover:bg-emerald-50 text-slate-700'
+                            : 'hover:bg-white/10 text-emerald-100'
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
@@ -218,14 +204,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={() => onOpenProfile('settings')}
-              className={`p-2 rounded-2xl border transition active:scale-95 cursor-pointer backdrop-blur-md shadow-xs ${
-                isDay
-                  ? 'border-blue-100 bg-blue-50/70 hover:bg-blue-100/70 text-slate-800'
-                  : 'border-white/20 bg-white/10 hover:bg-white/20 text-white'
-              }`}
+              className="p-2 rounded-2xl border border-white/20 bg-white/10 hover:bg-white/20 text-white transition active:scale-95 cursor-pointer backdrop-blur-md shadow-xs"
               title="App Settings (সেটিংস ও ভাষা)"
             >
-              <Settings className={`w-4 h-4 ${isDay ? 'text-[#0066FF]' : 'text-sky-300'}`} />
+              <Settings className="w-4 h-4 text-emerald-200" />
             </button>
           )}
 
@@ -236,16 +218,12 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onOpenProfile('profile')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border transition active:scale-95 cursor-pointer backdrop-blur-md shadow-xs ${
                 userProfile?.isSignedIn
-                  ? isDay
-                    ? 'border-blue-200 bg-blue-50 text-blue-900 shadow-sm'
-                    : 'border-blue-400/50 bg-blue-950/40 text-white'
-                  : isDay
-                  ? 'border-blue-100 bg-blue-50/70 hover:bg-blue-100/70 text-slate-800'
+                  ? 'border-emerald-300/40 bg-white/20 text-white shadow-sm'
                   : 'border-white/20 bg-white/10 hover:bg-white/20 text-white'
               }`}
               title={userProfile?.isSignedIn ? `Profile: ${userProfile.name}` : 'Sign In (লগইন)'}
             >
-              <div className="w-6 h-6 rounded-full overflow-hidden border border-blue-400 shadow-xs flex items-center justify-center bg-[#0066FF] shrink-0">
+              <div className="w-6 h-6 rounded-full overflow-hidden border border-emerald-300 shadow-xs flex items-center justify-center bg-emerald-700 shrink-0">
                 {userProfile?.isSignedIn && userProfile?.photoUrl ? (
                   <img
                     src={userProfile.photoUrl}
@@ -257,13 +235,13 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
               <div className="flex flex-col items-start leading-none text-left">
-                <span className="text-xs font-bold truncate max-w-[110px]">
+                <span className="text-xs font-bold truncate max-w-[110px] text-white">
                   {userProfile?.isSignedIn
                     ? userProfile?.name?.split(' ')[0] || 'Profile'
                     : userProfile?.name || 'Guest User'}
                 </span>
                 {!userProfile?.isSignedIn && (
-                  <span className={`text-[9px] font-medium ${isDay ? 'text-blue-600' : 'text-blue-200/90'}`}>
+                  <span className="text-[9px] font-medium text-emerald-200">
                     সাইন-ইন
                   </span>
                 )}
@@ -276,24 +254,20 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={handleInstallClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs shadow-md shadow-blue-500/25 transition active:scale-95 cursor-pointer border border-blue-400/40"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs shadow-md transition active:scale-95 cursor-pointer border border-amber-300"
               title="Install Zikr+ App (অ্যাপ ইনস্টল করুন)"
             >
-              <Smartphone className="w-3.5 h-3.5 text-white" />
+              <Smartphone className="w-3.5 h-3.5 text-slate-900" />
               <span className="text-xs">{selectedLanguage === 'bn' ? 'অ্যাপ ইনস্টল' : 'Install'}</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setShowInstallModal(true)}
-              className={`hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-2xl border text-xs font-semibold transition cursor-pointer ${
-                isDay
-                  ? 'bg-blue-50 text-blue-700 border-blue-200'
-                  : 'bg-white/10 text-sky-200 border-blue-400/30'
-              }`}
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-2xl border border-white/20 bg-white/15 text-emerald-100 text-xs font-semibold transition cursor-pointer"
               title="Zikr+ App Installed (ইনস্টল করা আছে)"
             >
-              <Check className="w-3.5 h-3.5 text-blue-500 stroke-[3]" />
+              <Check className="w-3.5 h-3.5 text-emerald-300 stroke-[3]" />
               <span className="text-[11px] font-bold">ইনস্টল্ড</span>
             </button>
           )}

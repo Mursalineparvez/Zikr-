@@ -98,8 +98,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           onClick={onOpenAddModal}
           className={`fixed bottom-20 sm:bottom-20 right-4 sm:right-8 z-40 w-13 h-13 sm:w-14 sm:h-14 rounded-2xl active:scale-95 text-white shadow-2xl flex items-center justify-center transition-all cursor-pointer border ${
             isDay
-              ? 'bg-[#0066FF] hover:bg-[#0052CC] border-blue-300/60 shadow-xl shadow-blue-500/35'
-              : 'bg-[#0066FF] hover:bg-[#0052CC] text-white border-blue-400/40 shadow-xl shadow-blue-500/40'
+              ? 'bg-[#006747] hover:bg-[#005a3e] border-emerald-400/40 shadow-xl shadow-[#006747]/35'
+              : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-xl shadow-emerald-900/60'
           }`}
           aria-label="Add New Zikr"
           title="Add New Custom Zikr"
@@ -112,8 +112,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       <nav
         className={`fixed bottom-0 left-0 right-0 z-30 px-2 py-1.5 sm:pb-2.5 backdrop-blur-xl transition-colors duration-300 border-t ${
           isDay
-            ? 'bg-white/95 border-blue-100/90 shadow-[0_-4px_25px_rgba(0,102,255,0.06)]'
-            : 'bg-[#091224]/95 border-slate-800 shadow-2xl shadow-black/80'
+            ? 'bg-white/95 border-[#c8e6df] shadow-[0_-4px_25px_rgba(0,103,71,0.06)]'
+            : 'bg-[#041a1e]/95 border-teal-900/60 shadow-2xl shadow-black/80'
         }`}
       >
         <div className="max-w-2xl mx-auto flex items-center justify-around gap-1 sm:gap-2 py-0.5">
@@ -125,11 +125,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 className={`relative flex flex-col items-center justify-center flex-1 py-1 sm:py-1.5 px-1 rounded-xl sm:rounded-2xl transition-all duration-200 active:scale-95 cursor-pointer ${
                   item.isActive
                     ? isDay
-                      ? 'text-white font-extrabold bg-[#0066FF] shadow-md shadow-blue-500/30'
-                      : 'text-white font-extrabold bg-[#0066FF] border border-blue-400/40 shadow-md shadow-blue-500/35'
+                      ? 'text-white font-extrabold bg-[#006747] shadow-md shadow-[#006747]/30'
+                      : 'text-white font-extrabold bg-[#006747] border border-emerald-400/40 shadow-md shadow-emerald-500/35'
                     : isDay
-                    ? 'text-slate-500 hover:text-[#0066FF] hover:bg-blue-50/70 font-semibold'
-                    : 'text-slate-400 hover:text-sky-300 hover:bg-blue-950/40 font-semibold'
+                    ? 'text-[#1b4337] hover:text-[#006747] hover:bg-emerald-50 font-semibold'
+                    : 'text-slate-400 hover:text-emerald-300 hover:bg-[#062429] font-semibold'
                 }`}
               >
                 <div className="flex items-center justify-center relative">
