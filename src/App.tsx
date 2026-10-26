@@ -14,6 +14,19 @@ import { ZikirCounterView } from './components/ZikirCounterView';
 import { ConfirmModal } from './components/ConfirmModal';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
 import type { OtherSubSection } from './components/OtherIslamicHubView';
+import { CarePlusHeader } from './components/careplus/CarePlusHeader';
+import { CarePlusHome } from './components/careplus/CarePlusHome';
+import { CarePlusAppointments } from './components/careplus/CarePlusAppointments';
+import { CarePlusDoctors } from './components/careplus/CarePlusDoctors';
+import { CarePlusProfile } from './components/careplus/CarePlusProfile';
+import { CarePlusBottomNav, CarePlusTab } from './components/careplus/CarePlusBottomNav';
+import { CarePlusBookingModal } from './components/careplus/CarePlusBookingModal';
+import { CarePlusFilterModal } from './components/careplus/CarePlusFilterModal';
+import { CarePlusNotificationsModal } from './components/careplus/CarePlusNotificationsModal';
+import { CarePlusTrustModal } from './components/careplus/CarePlusTrustModal';
+import { CarePlusVideoConsultModal } from './components/careplus/CarePlusVideoConsultModal';
+import { Doctor, Appointment, NotificationItem } from './types/careplus';
+import { INITIAL_DOCTORS, INITIAL_NOTIFICATIONS } from './data/careplusData';
 
 // Code-split heavy non-initial views and modals to make initial app launch instantaneous
 const QuranView = React.lazy(() => import('./components/QuranView').then((m) => ({ default: m.QuranView })));
@@ -68,6 +81,109 @@ import { useOnlineStatus } from './hooks/usePWAInstall';
 
 export default function App() {
   const isOnline = useOnlineStatus();
+
+  // App Experience Mode: 'careplus' (Default - matching user prompt and image) or 'islamic'
+  const [appMode, setAppMode] = useState<'careplus' | 'islamic'>(() => {
+    try {
+      const saved = localStorage.getItem('careplus_app_mode');
+      if (saved === 'careplus' || saved === 'islamic') return saved;
+    } catch {}
+    return 'careplus';
+  });
+
+  const [carePlusTab, setCarePlusTab] = useState<CarePlusTab>('home');
+  const [carePlusDoctors, setCarePlusDoctors] = useState<Doctor[]>(INITIAL_DOCTORS);
+  const [carePlusSelectedCategory, setCarePlusSelectedCategory] = useState<string>('all');
+  const [carePlusSearchQuery, setCarePlusSearchQuery] = useState<string>('');
+  const [carePlusAppointments, setCarePlusAppointments] = useState<Appointment[]>(() => {
+    try {
+      const saved = localStorage.getItem('careplus_appointments');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [
+      {
+        id: 'appt-sample-1',
+        doctorId: 'doc-1',
+        doctorName: 'Dr. Sara Mohamed',
+        specialty: 'General Practitioner',
+        doctorImage: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80',
+        fallbackColor: '#007e8a',
+        hospital: 'CarePlus Central Medical Center',
+        date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+        timeSlot: '10:00 AM',
+        type: 'video',
+        status: 'upcoming',
+        patientName: 'Ahmed Mohamed',
+        patientPhone: '+1 (555) 234-5678',
+        fee: 45,
+        createdAt: Date.now(),
+      },
+    ];
+  });
+  const [carePlusNotifications, setCarePlusNotifications] = useState<NotificationItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('careplus_notifications');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return INITIAL_NOTIFICATIONS;
+  });
+  const [bookingDoctor, setBookingDoctor] = useState<Doctor | null>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [isTrustModalOpen, setIsTrustModalOpen] = useState(false);
+  const [activeVideoCallAppt, setActiveVideoCallAppt] = useState<Appointment | null>(null);
+
+  const [onlyOnlineFilter, setOnlyOnlineFilter] = useState(false);
+  const [minRatingFilter, setMinRatingFilter] = useState(0);
+  const [consultationTypeFilter, setConsultationTypeFilter] = useState<'all' | 'video' | 'in_person'>('all');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('careplus_appointments', JSON.stringify(carePlusAppointments));
+    } catch {}
+  }, [carePlusAppointments]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('careplus_app_mode', appMode);
+    } catch {}
+  }, [appMode]);
+
+  const handleConfirmCarePlusBooking = (apptData: Omit<Appointment, 'id' | 'createdAt'>) => {
+    const newAppt: Appointment = {
+      ...apptData,
+      id: `appt-${Date.now()}`,
+      createdAt: Date.now(),
+    };
+    setCarePlusAppointments((prev) => [newAppt, ...prev]);
+    const newNotif: NotificationItem = {
+      id: `notif-${Date.now()}`,
+      title: 'Appointment Confirmed',
+      message: `Your appointment with ${apptData.doctorName} on ${apptData.date} at ${apptData.timeSlot} is confirmed.`,
+      time: 'Just now',
+      unread: true,
+      type: 'appointment',
+    };
+    setCarePlusNotifications((prev) => [newNotif, ...prev]);
+  };
+
+  const handleCancelCarePlusAppointment = (id: string) => {
+    setCarePlusAppointments((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: 'cancelled' } : a))
+    );
+  };
+
+  const visibleCarePlusDoctors = useMemo(() => {
+    return carePlusDoctors.filter((doc) => {
+      if (onlyOnlineFilter && !doc.isOnline) return false;
+      if (minRatingFilter > 0 && doc.rating < minRatingFilter) return false;
+      return true;
+    });
+  }, [carePlusDoctors, onlyOnlineFilter, minRatingFilter]);
 
   // Refresh Mode state ('fard' | 'maghrib' | 'manual')
   const [refreshMode, setRefreshMode] = useState<ZikrRefreshMode>(() => {
@@ -1804,6 +1920,126 @@ export default function App() {
 
   const isDay = settings.themeMode === 'day';
 
+  if (appMode === 'careplus') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans antialiased selection:bg-[#007e8a] selection:text-white">
+        {/* CarePlus Header matching screenshot */}
+        <CarePlusHeader
+          unreadNotifsCount={carePlusNotifications.filter((n) => n.unread).length}
+          onOpenNotifications={() => setIsNotificationsModalOpen(true)}
+          onToggleTasbeehMode={() => setAppMode('islamic')}
+          isTasbeehMode={false}
+        />
+
+        {/* CarePlus View */}
+        <main className="flex-1">
+          {carePlusTab === 'home' && (
+            <CarePlusHome
+              doctors={visibleCarePlusDoctors}
+              selectedCategory={carePlusSelectedCategory}
+              onSelectCategory={setCarePlusSelectedCategory}
+              searchQuery={carePlusSearchQuery}
+              onSearchChange={setCarePlusSearchQuery}
+              onOpenFilter={() => setIsFilterModalOpen(true)}
+              onBookDoctor={(doc) => {
+                setBookingDoctor(doc);
+                setIsBookingModalOpen(true);
+              }}
+              onViewAllDoctors={() => setCarePlusTab('doctors')}
+              onOpenTrustModal={() => setIsTrustModalOpen(true)}
+            />
+          )}
+
+          {carePlusTab === 'appointments' && (
+            <CarePlusAppointments
+              appointments={carePlusAppointments}
+              onCancelAppointment={handleCancelCarePlusAppointment}
+              onOpenVideoCall={(appt) => setActiveVideoCallAppt(appt)}
+              onNavigateToDoctors={() => setCarePlusTab('doctors')}
+            />
+          )}
+
+          {carePlusTab === 'doctors' && (
+            <CarePlusDoctors
+              doctors={visibleCarePlusDoctors}
+              onBookDoctor={(doc) => {
+                setBookingDoctor(doc);
+                setIsBookingModalOpen(true);
+              }}
+              onOpenFilter={() => setIsFilterModalOpen(true)}
+            />
+          )}
+
+          {carePlusTab === 'profile' && (
+            <CarePlusProfile
+              onToggleTasbeehMode={() => setAppMode('islamic')}
+              isTasbeehMode={false}
+            />
+          )}
+        </main>
+
+        {/* CarePlus Bottom Navigation matching screenshot */}
+        <CarePlusBottomNav
+          currentTab={carePlusTab}
+          onTabChange={setCarePlusTab}
+          appointmentsCount={carePlusAppointments.filter((a) => a.status === 'upcoming').length}
+        />
+
+        {/* Modals */}
+        <CarePlusBookingModal
+          doctor={bookingDoctor}
+          isOpen={isBookingModalOpen}
+          onClose={() => {
+            setIsBookingModalOpen(false);
+            setBookingDoctor(null);
+          }}
+          onConfirmBooking={handleConfirmCarePlusBooking}
+        />
+
+        <CarePlusFilterModal
+          isOpen={isFilterModalOpen}
+          onClose={() => setIsFilterModalOpen(false)}
+          selectedSpecialty={carePlusSelectedCategory}
+          onSelectSpecialty={setCarePlusSelectedCategory}
+          onlyOnline={onlyOnlineFilter}
+          onToggleOnlyOnline={setOnlyOnlineFilter}
+          minRating={minRatingFilter}
+          onSelectMinRating={setMinRatingFilter}
+          consultationType={consultationTypeFilter}
+          onSelectConsultationType={setConsultationTypeFilter}
+          onResetFilters={() => {
+            setCarePlusSelectedCategory('all');
+            setOnlyOnlineFilter(false);
+            setMinRatingFilter(0);
+            setConsultationTypeFilter('all');
+          }}
+        />
+
+        <CarePlusNotificationsModal
+          isOpen={isNotificationsModalOpen}
+          onClose={() => setIsNotificationsModalOpen(false)}
+          notifications={carePlusNotifications}
+          onMarkAllAsRead={() => {
+            setCarePlusNotifications((prev) =>
+              prev.map((n) => ({ ...n, unread: false }))
+            );
+          }}
+        />
+
+        <CarePlusTrustModal
+          isOpen={isTrustModalOpen}
+          onClose={() => setIsTrustModalOpen(false)}
+        />
+
+        <CarePlusVideoConsultModal
+          appointment={activeVideoCallAppt}
+          isOpen={Boolean(activeVideoCallAppt)}
+          onClose={() => setActiveVideoCallAppt(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-24 md:pb-24 selection:bg-emerald-600 selection:text-white ${
@@ -1829,6 +2065,7 @@ export default function App() {
         onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
         userProfile={userProfile}
         onOpenProfile={(tab = 'profile') => handleOpenProfileModal(tab)}
+        onSwitchToCarePlus={() => setAppMode('careplus')}
       />
 
       {/* Toast Notification Popup */}

@@ -34,6 +34,7 @@ interface HeaderProps {
   onOpenStandaloneModal: () => void;
   userProfile?: UserProfile;
   onOpenProfile?: (tab?: 'profile' | 'settings') => void;
+  onSwitchToCarePlus?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -50,6 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStandaloneModal,
   userProfile,
   onOpenProfile,
+  onSwitchToCarePlus,
 }) => {
   const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -139,6 +141,19 @@ export const Header: React.FC<HeaderProps> = ({
               <WifiOff className="w-3 h-3 text-amber-500" />
               <span className="text-[10px] sm:text-xs">Offline</span>
             </div>
+          )}
+
+          {/* CarePlus UI Switch Button */}
+          {onSwitchToCarePlus && (
+            <button
+              type="button"
+              onClick={onSwitchToCarePlus}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-teal-400/20 hover:bg-teal-400/30 text-teal-200 font-bold text-xs border border-teal-300/40 backdrop-blur-md transition active:scale-95 cursor-pointer shadow-xs"
+              title="CarePlus UI মোডে ফিরে যান"
+            >
+              <span>🩺</span>
+              <span className="hidden sm:inline">CarePlus</span>
+            </button>
           )}
 
           {/* 1. Quick Language Dropdown Selector (14 Languages) */}
