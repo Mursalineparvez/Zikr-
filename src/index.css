@@ -17,18 +17,18 @@
   font-family: 'Amiri', 'Traditional Arabic', serif;
 }
 
-/* Day Mode (Clean White Canvas & Deep Emerald Accents) */
+/* Day Mode (Clean White Canvas & Deep Teal Accents matching reference image) */
 body.theme-day,
 body {
-  background-color: #f4faf7;
-  color: #0a3328;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
-/* Night Mode (Deep Celestial Teal & Luminous Emerald) */
+/* Night Mode (Deep Celestial Teal & Ocean Cyan) */
 body.theme-night {
-  background-color: #021316;
-  background-image: radial-gradient(rgba(16, 185, 129, 0.08) 1.5px, transparent 1.5px),
-                    radial-gradient(rgba(0, 103, 71, 0.04) 1.5px, #021316 1.5px);
+  background-color: #03171b;
+  background-image: radial-gradient(rgba(0, 126, 138, 0.12) 1.5px, transparent 1.5px),
+                    radial-gradient(rgba(20, 184, 166, 0.05) 1.5px, #03171b 1.5px);
   background-size: 40px 40px;
   background-position: 0 0, 20px 20px;
   color: #e6f7f2;
@@ -36,17 +36,17 @@ body.theme-night {
 
 /* Premium Card Glass & Glow */
 .card-glass-night {
-  background: rgba(6, 32, 36, 0.90);
+  background: rgba(4, 32, 38, 0.90);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(20, 184, 166, 0.22);
-  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(16, 185, 129, 0.18);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(0, 126, 138, 0.18);
 }
 
 .card-glass-day {
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(210, 236, 233, 0.9);
-  box-shadow: 0 10px 30px -10px rgba(0, 103, 71, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 30px -10px rgba(0, 126, 138, 0.06);
 }
 
 /* Subtle Geometric Pattern */

@@ -207,14 +207,14 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
   return (
     <div
       onClick={handleCardClick}
-      className={`relative rounded-[28px] border transition-all duration-200 p-4.5 sm:p-5.5 shadow-sm flex flex-col justify-between overflow-hidden cursor-pointer select-none active:scale-[0.99] group ${
+      className={`relative rounded-[26px] border transition-all duration-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between overflow-hidden cursor-pointer select-none active:scale-[0.99] group ${
         isDay
           ? isGoalMet
-            ? 'bg-white border-amber-400/80 shadow-amber-500/10 ring-2 ring-amber-400/25'
-            : 'bg-white border-[#d2ece9] hover:border-emerald-300/80 shadow-sm'
+            ? 'bg-white border-amber-300 shadow-md ring-2 ring-amber-400/20'
+            : 'bg-white border-slate-100/90 hover:border-teal-200 shadow-sm hover:shadow-md'
           : isGoalMet
-          ? 'bg-[#062024] border-amber-500/80 shadow-amber-950/20 ring-2 ring-amber-500/25'
-          : 'bg-[#062024] border-[#144349] hover:border-emerald-600/60 shadow-black/60'
+          ? 'bg-[#062024] border-amber-500/80 ring-2 ring-amber-500/25'
+          : 'bg-[#062024] border-teal-800/40 hover:border-teal-600/60 shadow-black/60'
       }`}
     >
       {/* Tap Ripple Effect Layers */}
@@ -222,7 +222,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         <span
           key={ripple.id}
           style={{ left: ripple.x, top: ripple.y }}
-          className="absolute -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full bg-emerald-500/25 dark:bg-emerald-400/25 animate-ripple pointer-events-none"
+          className="absolute -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full bg-teal-500/20 pointer-events-none animate-ripple"
         />
       ))}
 
@@ -231,7 +231,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         <span
           key={p.id}
           style={{ left: p.x, top: p.y - 12 }}
-          className="absolute font-black text-sm text-emerald-500 dark:text-emerald-300 drop-shadow-sm pointer-events-none z-20 animate-out fade-out slide-out-to-top duration-500 select-none"
+          className="absolute font-black text-sm text-[#007e8a] drop-shadow-sm pointer-events-none z-20 animate-out fade-out slide-out-to-top duration-500 select-none"
         >
           +1
         </span>
@@ -245,10 +245,10 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <span
-            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
               isDay
-                ? 'bg-[#e6f7f2] text-[#00875a] border-[#c3edd9]'
-                : 'bg-[#061f24] text-emerald-400 border-[#144349]'
+                ? 'bg-teal-50 text-[#007e8a] border-teal-200/60'
+                : 'bg-teal-900/50 text-teal-200 border-teal-700/50'
             }`}
           >
             #{String(index + 1).padStart(2, '0')}
@@ -257,19 +257,25 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
           {hasTarget && (
             <span
               className={`text-[11px] font-semibold ${
-                isDay ? 'text-slate-700' : 'text-slate-300'
+                isDay ? 'text-slate-600' : 'text-slate-300'
               }`}
             >
-              {getTargetLabel(currentLang)} <span className="font-bold text-amber-600 dark:text-amber-400">{target}</span>
+              {getTargetLabel(currentLang)} <span className="font-bold text-[#007e8a]">{target}</span>
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-          {isGoalMet && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shrink-0 animate-pulse">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+          {/* Status pill matching • Online from screenshot */}
+          {isGoalMet ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#e6f9f0] text-[#059669] border border-emerald-200/80 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
               <span>{getCompletedLabel(currentLang)}</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-teal-50 text-[#007e8a] border border-teal-200/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#007e8a] animate-pulse" />
+              <span>Active</span>
             </span>
           )}
 
@@ -280,10 +286,10 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
               e.stopPropagation();
               onReset(zikr);
             }}
-            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-medium transition active:scale-95 cursor-pointer border ${
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium transition active:scale-95 cursor-pointer border ${
               isDay
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-emerald-800 border-slate-300'
-                : 'bg-[#061f24] hover:bg-[#0a2e36] text-emerald-300 hover:text-white border-[#144349]'
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
+                : 'bg-teal-950/60 hover:bg-teal-900 text-teal-200 border-teal-800'
             }`}
             title={`${getResetLabel(currentLang)} (0)`}
           >
@@ -338,7 +344,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
               isDay ? 'text-slate-700 font-medium' : 'text-slate-200'
             }`}
           >
-            <span className="font-bold text-[#006747] dark:text-emerald-400">
+            <span className="font-bold text-[#007e8a] dark:text-teal-400">
               {getMeaningLabel(currentLang)}
             </span>
             <span>{displayMeaning}</span>
@@ -346,12 +352,12 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         )}
       </div>
 
-      {/* Counter Inset Box: */}
+      {/* Counter Inset Box matching soft mint card from reference image: */}
       <div
         className={`my-2 p-3 sm:p-4 rounded-2xl border transition-colors ${
           isDay
-            ? 'bg-[#f0f8f5] border-[#d2ece9]'
-            : 'bg-[#08282e] border-[#164950]'
+            ? 'bg-[#e7f6f5] border-teal-100/80'
+            : 'bg-[#042026] border-teal-800/50'
         }`}
       >
         <div className="flex items-center justify-between mb-1.5 text-xs font-bold">
@@ -359,7 +365,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             {getCountLabel(currentLang)}
           </span>
           {hasTarget && (
-            <span className={isGoalMet ? 'text-amber-500 font-bold' : isDay ? 'text-[#006747] font-extrabold' : 'text-emerald-400'}>
+            <span className={isGoalMet ? 'text-amber-500 font-bold' : isDay ? 'text-[#007e8a] font-extrabold' : 'text-teal-300'}>
               {isGoalMet ? `${getCompletedLabel(currentLang)} (100%)` : `${progressPercent}%`}
             </span>
           )}
@@ -368,11 +374,11 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         {/* Big Count Display */}
         <div className="flex items-baseline justify-between gap-2">
           <div
-            className={`text-3xl sm:text-4xl font-black tracking-tight font-sans select-none drop-shadow-sm transition-all duration-150 ${
+            className={`text-3xl sm:text-4xl font-extrabold tracking-tight font-sans select-none drop-shadow-xs transition-all duration-150 ${
               isBumping
-                ? 'scale-115 text-emerald-500'
+                ? 'scale-110 text-[#007e8a]'
                 : isDay
-                ? 'text-[#0a3328]'
+                ? 'text-slate-900'
                 : 'text-white'
             }`}
           >
@@ -382,8 +388,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
           <div
             className={`text-xs font-bold px-2.5 py-1 rounded-xl border ${
               isDay
-                ? 'bg-white border-[#c3edd9] text-[#006747] shadow-xs'
-                : 'bg-[#0c3138] border-[#1c555e] text-emerald-300'
+                ? 'bg-white border-teal-200/80 text-[#007e8a] shadow-xs'
+                : 'bg-[#0c3138] border-teal-700/60 text-teal-200'
             }`}
           >
             {hasTarget ? `${zikr.count} / ${target}` : `${zikr.count}`}
@@ -394,14 +400,14 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         {hasTarget && (
           <div
             className={`w-full h-2 rounded-full overflow-hidden mt-2.5 ${
-              isDay ? 'bg-emerald-100/70' : 'bg-[#0c3138]'
+              isDay ? 'bg-teal-100/60' : 'bg-[#0c3138]'
             }`}
           >
             <div
               className={`h-full transition-all duration-300 ${
                 isGoalMet
                   ? 'bg-gradient-to-r from-amber-500 to-amber-300'
-                  : 'bg-[#006747]'
+                  : 'bg-[#007e8a]'
               }`}
               style={{ width: `${progressPercent}%` }}
             />
@@ -416,7 +422,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
           e.stopPropagation();
           onIncrement(zikr.id);
         }}
-        className="w-full py-3 sm:py-3.5 mt-1 rounded-2xl text-sm sm:text-base font-bold shadow-md shadow-[#006747]/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-[#006747] hover:bg-[#005a3e] text-white border border-emerald-400/40"
+        className="w-full py-3 sm:py-3.5 mt-1 rounded-xl text-sm font-bold shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-[#006747] hover:bg-[#005439] text-white border-none"
       >
         <Plus className="w-4 h-4 stroke-[3]" />
         <span>+1 {getCountLabel(currentLang)} ({displayPronunciation})</span>

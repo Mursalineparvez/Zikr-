@@ -58,116 +58,106 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
   return (
     <section
       id="main-circular-center-counter"
-      className={`relative overflow-hidden rounded-[32px] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl ${
+      className={`relative overflow-hidden rounded-[28px] transition-all duration-300 p-5 sm:p-7 flex flex-col items-center justify-center text-center border shadow-sm ${
         isDay
-          ? 'bg-white border border-blue-100/90 shadow-[0_8px_30px_rgb(0,102,255,0.06)]'
-          : 'bg-[#0f1a30] border border-blue-900/40 shadow-black/80'
+          ? 'bg-[#F0FDF8] border-[#CDECE0] shadow-[0_4px_20px_-2px_rgba(0,106,78,0.06)]'
+          : 'bg-[#042026] border-teal-800/40 shadow-black/80'
       }`}
     >
-      {/* Decorative ambient breathing Noor flares */}
+      {/* Ambient background soft glow */}
       <div
         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full pointer-events-none animate-nur-breathe ${
-          isDay ? 'bg-blue-500/10' : 'bg-blue-400/15'
-        }`}
-      />
-      <div
-        className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none transition-opacity duration-300 ${
-          isPopping ? 'opacity-100 scale-110' : 'opacity-70'
-        } ${isDay ? 'bg-sky-500/10' : 'bg-sky-400/15'}`}
-      />
-      <div
-        className={`absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl pointer-events-none ${
-          isDay ? 'bg-amber-400/10' : 'bg-amber-400/10'
+          isDay ? 'bg-emerald-500/10' : 'bg-teal-400/15'
         }`}
       />
 
-      {/* Top Quranic Bismillah & Subtitle */}
-      <div className="relative z-10 mb-2 space-y-1">
+      {/* Top Header Pill Badge & Bismillah Calligraphy */}
+      <div className="relative z-10 mb-3 space-y-1.5 flex flex-col items-center">
+        {/* Badge Pill: CENTRAL MASTER COUNTER • সর্বমোট তাসবীহ */}
         <div
-          className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1 transition-transform ${
+          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-transform ${
             isPopping ? 'scale-105' : 'scale-100'
           } ${
             isDay
-              ? 'bg-blue-50 text-[#0066FF] border border-blue-200/80 shadow-xs'
-              : 'bg-blue-950/80 text-sky-300 border-blue-800/80'
+              ? 'bg-[#D0F2E3] text-[#006A4E] border border-[#B5E9D2] shadow-xs'
+              : 'bg-teal-950/80 text-teal-300 border border-teal-800/80'
           }`}
         >
           <span
             className={`w-2 h-2 rounded-full ${
-              isPopping ? 'bg-sky-400 animate-ping' : 'bg-[#0066FF]'
+              isPopping ? 'bg-emerald-500 animate-ping' : 'bg-[#006A4E]'
             }`}
           />
-          <span>{ZIKIR_UI.centralMasterCounter[selectedLanguage]}</span>
+          <span>● CENTRAL MASTER COUNTER • সর্বমোট তাসবীহ</span>
         </div>
 
-        {/* Arabic remains purely Arabic */}
+        {/* Arabic Bismillah Calligraphy */}
         <div
           dir="rtl"
           className={`font-arabic text-2xl sm:text-3xl font-bold tracking-wide select-none ${
-            isDay ? 'text-[#0052cc]' : 'text-sky-300'
+            isDay ? 'text-[#006A4E]' : 'text-teal-300'
           }`}
         >
           بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
         </div>
+
+        {/* Subtitle */}
         <p className={`text-xs ${isDay ? 'text-slate-600 font-medium' : 'text-slate-300'}`}>
-          {ZIKIR_UI.realtimeSubtitle[selectedLanguage]}
+          {selectedLanguage === 'bn' ? 'সকল সক্রিয় যিকিরের তাৎক্ষণিক সর্বমোট সমষ্টি' : ZIKIR_UI.realtimeSubtitle[selectedLanguage]}
         </p>
       </div>
 
-      {/* Large Circular Center Dial with Pop-up Animation */}
-      <div className="relative z-10 my-3 flex items-center justify-center">
+      {/* Large Circular Center Counter Gauge */}
+      <div className="relative z-10 my-2 flex items-center justify-center">
         {/* Floating "+1" Pop Particles */}
         {popParticles.map((particle) => (
           <span
             key={particle.id}
-            className="absolute -top-4 font-black text-lg text-emerald-400 dark:text-emerald-300 drop-shadow-md pointer-events-none z-30 animate-out fade-out slide-out-to-top duration-700"
+            className="absolute -top-4 font-black text-lg text-emerald-600 dark:text-emerald-300 drop-shadow-md pointer-events-none z-30 animate-out fade-out slide-out-to-top duration-700"
           >
             {particle.text}
           </span>
         ))}
 
-        {/* Outer Halo with Emerald & Teal Gradient with Pop-Up Bounce */}
+        {/* Outer Circle Container matching exact green border ring from screenshot */}
         <div
-          className={`relative w-56 h-56 sm:w-64 sm:h-64 rounded-full p-2.5 transition-transform duration-200 ease-out shadow-2xl flex items-center justify-center ${
-            isPopping
-              ? 'scale-105 ring-8 ring-emerald-400/30'
-              : 'scale-100 ring-0'
+          className={`relative w-60 h-60 sm:w-68 sm:h-68 rounded-full p-3 transition-transform duration-200 ease-out flex items-center justify-center ${
+            isPopping ? 'scale-105 ring-8 ring-emerald-500/20' : 'scale-100'
           } ${
             isDay
-              ? 'bg-gradient-to-tr from-[#006747] via-[#00875a] to-[#10b981] shadow-[#006747]/20'
-              : 'bg-gradient-to-tr from-[#031d22] via-[#0d3b42] to-[#10b981] shadow-black/80'
+              ? 'bg-gradient-to-tr from-[#006A4E] to-[#008763] shadow-md shadow-emerald-900/15'
+              : 'bg-gradient-to-tr from-[#031d22] via-[#0d3b42] to-[#007e8a] shadow-black/80'
           }`}
         >
-          {/* Inner Circular Face */}
+          {/* Inner White Face */}
           <div
             className={`w-full h-full rounded-full flex flex-col items-center justify-center p-4 relative shadow-inner transition-transform duration-200 ${
               isPopping ? 'scale-[1.02]' : 'scale-100'
             } ${
               isDay
-                ? 'bg-[#f0f8f5] border-2 border-white'
-                : 'bg-gradient-to-b from-[#061f24] via-[#0d2d33] to-[#061f24] border border-[#144349]'
+                ? 'bg-white border-2 border-white'
+                : 'bg-gradient-to-b from-[#062024] via-[#08292e] to-[#062024] border border-teal-800/50'
             }`}
           >
-            {/* 33 Animated Dynamic Tasbeeh Beads around Orbit */}
+            {/* Dotted Orbit Path Around Ring */}
             <svg
               className="absolute inset-0 w-full h-full pointer-events-none"
               viewBox="0 0 200 200"
             >
-              {/* Outer track circle */}
               <circle
                 cx="100"
                 cy="100"
-                r="86"
+                r="90"
                 fill="none"
-                stroke={isDay ? 'rgba(0, 103, 71, 0.15)' : 'rgba(20, 184, 166, 0.2)'}
-                strokeWidth="1.5"
-                strokeDasharray="2 3"
+                stroke={isDay ? '#006A4E' : '#14b8a6'}
+                strokeWidth="2.5"
+                strokeDasharray="3 4"
               />
-              {/* 33 Individual Beads */}
+              {/* Individual Dotted Beads */}
               {Array.from({ length: 33 }).map((_, i) => {
                 const angle = (i * 360) / 33 - 90;
                 const rad = (angle * Math.PI) / 180;
-                const r = 86;
+                const r = 90;
                 const cx = 100 + r * Math.cos(rad);
                 const cy = 100 + r * Math.sin(rad);
                 const currentBead = totalCount > 0 ? (totalCount - 1) % 33 : -1;
@@ -178,95 +168,80 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
                     key={i}
                     cx={cx}
                     cy={cy}
-                    r={isCurrent ? 4.5 : isPassed ? 2.8 : 2}
+                    r={isCurrent ? 4 : isPassed ? 2.5 : 1.8}
                     className="transition-all duration-200"
                     fill={
                       isCurrent
                         ? '#f59e0b'
                         : isPassed
-                        ? isDay ? '#006747' : '#10b981'
-                        : isDay ? 'rgba(0, 103, 71, 0.25)' : 'rgba(20, 184, 166, 0.25)'
+                        ? isDay ? '#006A4E' : '#14b8a6'
+                        : isDay ? '#006A4E' : '#14b8a6'
                     }
-                    stroke={isCurrent ? '#ffffff' : 'none'}
-                    strokeWidth={isCurrent ? '1.5' : '0'}
                   />
                 );
               })}
             </svg>
 
-            <span
-              className={`text-[11px] font-bold uppercase tracking-widest mb-1 flex items-center gap-1 ${
-                isDay ? 'text-[#006747]' : 'text-emerald-400'
-              }`}
-            >
-              <Sparkles className="w-3 h-3 text-amber-500" />
-              <span>{ZIKIR_UI.masterTasbeehCount[selectedLanguage]}</span>
-            </span>
+            {/* Upper Golden Star Label */}
+            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-emerald-300 mb-0.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+              <span>সর্বমোট তাসবীহ গণনা</span>
+            </div>
 
-            {/* Giant Digits with Pop Spring Effect */}
+            {/* Giant Bold Counter Digits matching reference screenshot (e.g., 11,573) */}
             <div
-              className={`text-5xl sm:text-6xl font-black tracking-tight font-sans drop-shadow-md select-none transition-all duration-150 ${
-                isPopping ? 'scale-110 text-emerald-500' : isDay ? 'text-[#0a3328]' : 'text-white'
+              className={`text-4xl sm:text-5xl font-black tracking-tight font-sans drop-shadow-xs select-none transition-all duration-150 ${
+                isPopping ? 'scale-110 text-[#006A4E]' : isDay ? 'text-[#004D38]' : 'text-white'
               }`}
             >
               {totalCount.toLocaleString()}
             </div>
 
-            <span
-              className={`text-[11px] font-medium mt-1 ${
-                isDay ? 'text-slate-500' : 'text-slate-400'
-              }`}
-            >
-              {ZIKIR_UI.masterTasbeehCount[selectedLanguage] || 'Master Tasbeeh Count'}
+            <span className={`text-[11px] font-medium text-slate-500 mt-0.5`}>
+              সর্বমোট তাসবীহ গণনা
             </span>
 
-            {/* Inset Sub-metrics pill */}
-            <div className="mt-2 flex flex-col items-center gap-1">
-              <div
-                className={`flex items-center gap-2 text-[10px] px-3 py-1 rounded-full font-semibold border ${
-                  isDay
-                    ? 'bg-white text-slate-700 border-[#cbe6df] shadow-sm'
-                    : 'bg-[#061f24] text-emerald-200 border-[#144349]'
-                }`}
-              >
-                <span>
-                  {ZIKIR_UI.todayDhikr[selectedLanguage]}{' '}
-                  <strong className="text-[#006747] dark:text-emerald-400 font-mono">{effectiveDaily.toLocaleString()}</strong>
-                </span>
-                <span>•</span>
-                <span className={isDay ? 'text-amber-600 font-bold' : 'text-amber-300 font-bold'}>
-                  {completedGoals} {ZIKIR_UI.goalsMet[selectedLanguage]}
-                </span>
+            {/* Breakdown Indicators inside circle matching orange dots from image */}
+            <div className="mt-2 flex items-center justify-center gap-2 text-[10px] font-bold">
+              <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700">
+                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                <span>আজকের জিকির:</span>
+                <span className="font-mono text-[#006A4E] font-extrabold">{effectiveDaily.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700">
+                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                <span>২ লক্ষ পূরণ</span>
+                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Action Controls beneath Circular Counter */}
-      <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 mt-3">
-        {/* Save Current Session to History */}
+      {/* Action Controls beneath Circular Counter: Left Solid Emerald, Right Red Border Outline */}
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 mt-4 w-full max-w-sm">
+        {/* Left Green Save Button: [ 💾 হিস্ট্রিতে সংরক্ষণ করুন ] */}
         <button
           type="button"
           onClick={onSaveSession}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold shadow-md shadow-[#006747]/20 transition active:scale-95 cursor-pointer bg-[#006747] hover:bg-[#005a3e] text-white border border-emerald-400/30"
+          className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 cursor-pointer bg-[#006A4E] hover:bg-[#005439] text-white"
         >
           <BookmarkPlus className="w-4 h-4 text-emerald-200" />
-          <span>{ZIKIR_UI.saveSession[selectedLanguage]}</span>
+          <span>হিস্ট্রিতে সংরক্ষণ করুন</span>
         </button>
 
-        {/* Global Reset */}
+        {/* Right Red Reset Button: [ 🔄 সব রিসেট ] */}
         <button
           type="button"
           onClick={onGlobalReset}
-          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-semibold transition active:scale-95 cursor-pointer border ${
+          className={`flex-1 min-w-[120px] flex items-center justify-center gap-1.5 py-3 px-4 rounded-2xl text-xs sm:text-sm font-bold transition active:scale-95 cursor-pointer border ${
             isDay
-              ? 'bg-white hover:bg-red-50 text-red-600 border-red-200 shadow-sm'
-              : 'bg-[#221215] hover:bg-red-950/60 text-red-300 border-red-900/50'
+              ? 'bg-white hover:bg-rose-50 text-rose-600 border-rose-300 shadow-xs'
+              : 'bg-[#221215] hover:bg-rose-950/60 text-rose-300 border-rose-900/50'
           }`}
         >
-          <RotateCcw className="w-4 h-4" />
-          <span>{ZIKIR_UI.resetAll[selectedLanguage]}</span>
+          <RotateCcw className="w-4 h-4 text-rose-500" />
+          <span>সব রিসেট</span>
         </button>
       </div>
     </section>

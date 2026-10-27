@@ -96,59 +96,41 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       {activeModule === 'zikir_counter' && (
         <button
           onClick={onOpenAddModal}
-          className={`fixed bottom-20 sm:bottom-20 right-4 sm:right-8 z-40 w-13 h-13 sm:w-14 sm:h-14 rounded-2xl active:scale-95 text-white shadow-2xl flex items-center justify-center transition-all cursor-pointer border ${
-            isDay
-              ? 'bg-[#006747] hover:bg-[#005a3e] border-emerald-400/40 shadow-xl shadow-[#006747]/35'
-              : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400/40 shadow-xl shadow-emerald-900/60'
-          }`}
+          className="fixed bottom-20 sm:bottom-20 right-4 sm:right-8 z-40 w-13 h-13 sm:w-14 sm:h-14 rounded-2xl active:scale-95 text-white shadow-2xl flex items-center justify-center transition-all cursor-pointer bg-[#006A4E] hover:bg-[#005439] border border-emerald-400/30"
           aria-label="Add New Zikr"
           title="Add New Custom Zikr"
         >
-          <Plus className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5]" />
+          <Plus className="w-7 h-7 stroke-[3]" />
         </button>
       )}
 
-      {/* Unified Bottom Navigation Bar across Mobile, Tablet & Desktop */}
-      <nav
-        className={`fixed bottom-0 left-0 right-0 z-30 px-2 py-1.5 sm:pb-2.5 backdrop-blur-xl transition-colors duration-300 border-t ${
-          isDay
-            ? 'bg-white/95 border-[#c8e6df] shadow-[0_-4px_25px_rgba(0,103,71,0.06)]'
-            : 'bg-[#041a1e]/95 border-teal-900/60 shadow-2xl shadow-black/80'
-        }`}
-      >
-        <div className="max-w-2xl mx-auto flex items-center justify-around gap-1 sm:gap-2 py-0.5">
+      {/* Unified Bottom Navigation Bar matching reference screenshot (#006A4E Deep Forest Emerald) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 px-3 py-2 bg-[#006A4E] text-white shadow-2xl border-t border-emerald-700/50">
+        <div className="max-w-md mx-auto flex items-center justify-around gap-1">
           {navItems.map((item) => {
             return (
               <button
                 key={item.id}
                 onClick={() => onModuleChange(item.id)}
-                className={`relative flex flex-col items-center justify-center flex-1 py-1 sm:py-1.5 px-1 rounded-xl sm:rounded-2xl transition-all duration-200 active:scale-95 cursor-pointer ${
+                className={`relative flex items-center justify-center py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95 cursor-pointer group ${
                   item.isActive
-                    ? isDay
-                      ? 'text-white font-extrabold bg-[#006747] shadow-md shadow-[#006747]/30'
-                      : 'text-white font-extrabold bg-[#006747] border border-emerald-400/40 shadow-md shadow-emerald-500/35'
-                    : isDay
-                    ? 'text-[#1b4337] hover:text-[#006747] hover:bg-emerald-50 font-semibold'
-                    : 'text-slate-400 hover:text-emerald-300 hover:bg-[#062429] font-semibold'
+                    ? 'bg-[#008763] text-white font-extrabold shadow-sm'
+                    : 'text-emerald-100/80 hover:text-white hover:bg-white/10 font-semibold'
                 }`}
               >
-                <div className="flex items-center justify-center relative">
-                  {item.icon}
+                <div className="flex items-center gap-1.5">
+                  <div className="transition-transform duration-200 text-base sm:text-lg">
+                    {item.icon}
+                  </div>
+                  <span className="text-xs tracking-tight whitespace-nowrap">
+                    {item.label}
+                  </span>
                   {item.badge !== undefined && (
-                    <span
-                      className={`absolute -top-1 -right-3 text-[9px] px-1 py-0.2 rounded-full font-mono font-bold leading-none ${
-                        item.isActive
-                          ? 'bg-amber-400 text-slate-900 shadow-xs'
-                          : 'bg-[#0066FF] text-white'
-                      }`}
-                    >
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold leading-none bg-emerald-400 text-slate-950">
                       {item.badge}
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] sm:text-xs tracking-tight mt-0.5 whitespace-nowrap">
-                  {item.label}
-                </span>
               </button>
             );
           })}

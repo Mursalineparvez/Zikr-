@@ -138,12 +138,12 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
         selectedLanguage={selectedLanguage}
       />
 
-      {/* ================= REFRESH SYSTEM CARD ================= */}
+      {/* ================= REFRESH SYSTEM CARD (Styled matching reference image) ================= */}
       <div
-        className={`p-4 sm:p-5 rounded-3xl border shadow-sm transition-all duration-300 ${
+        className={`p-4 sm:p-5 rounded-[28px] border shadow-xs transition-all duration-300 ${
           isDay
-            ? 'bg-white border-blue-100/90 shadow-[0_4px_24px_-4px_rgba(0,102,255,0.06)]'
-            : 'bg-[#0f1a32] border-blue-900/40 shadow-black/60'
+            ? 'bg-[#F0FDF8] border-[#CDECE0]'
+            : 'bg-[#042026] border-teal-800/40 shadow-black/60'
         }`}
       >
         {/* Upper Header Part (Always Visible) */}
@@ -152,52 +152,40 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             setIsRefreshSystemExpanded(!isRefreshSystemExpanded);
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none ${
-            isRefreshSystemExpanded ? 'mb-3.5 pb-3 border-b border-blue-500/20' : ''
+          className={`flex items-center justify-between gap-3 cursor-pointer select-none ${
+            isRefreshSystemExpanded ? 'mb-3.5 pb-3 border-b border-[#CDECE0]' : ''
           }`}
         >
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Green Refresh Ring Icon */}
             <div
-              className={`p-2 rounded-2xl shrink-0 ${
-                isDay ? 'bg-blue-50 text-[#0066FF] border border-blue-100' : 'bg-blue-950/70 text-sky-300 border border-blue-800/60'
+              className={`p-2.5 rounded-2xl shrink-0 ${
+                isDay ? 'bg-[#D0F2E3] text-[#006A4E] border border-[#B5E9D2]' : 'bg-teal-950/70 text-teal-300 border border-teal-800/60'
               }`}
             >
-              <RotateCw className="w-4 h-4" />
+              <RotateCw className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div className="min-w-0">
-              <h3 className={`text-sm sm:text-base font-black tracking-tight truncate ${isDay ? 'text-[#0f172a]' : 'text-white'}`}>
-                {selectedLanguage === 'bn' ? 'রিফ্রেশ সিস্টেম (Refresh System)' : 'Counter Refresh System'}
+              <h3 className={`text-sm sm:text-base font-bold tracking-tight truncate ${isDay ? 'text-[#004D38]' : 'text-white'}`}>
+                {selectedLanguage === 'bn' ? 'রিফ্রেশ সিস্টেম (Refresh System)' : 'Refresh System'}
               </h3>
-              <p className={`text-xs truncate ${isDay ? 'text-slate-500 font-medium' : 'text-blue-200/80'}`}>
+              <p className={`text-xs truncate ${isDay ? 'text-slate-600 font-medium' : 'text-teal-200/80'}`}>
                 {selectedLanguage === 'bn'
-                  ? '৩টি অপশন থেকে যেকোনো একটি বেছে নিন (ফরজ নামাজ / মাগরিব / ম্যানুয়ালি)'
-                  : 'Choose auto-reset frequency & automatic target presets'}
+                  ? '৩টি অপশন থেকে যেকোনো একটি বেছে নিন (ফরজ নামাজ / মাগরিব...)'
+                  : 'Choose auto-reset frequency'}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Manual Instant Refresh button */}
-            {onManualCounterRefresh && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onManualCounterRefresh();
-                }}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold border shadow-xs transition active:scale-95 cursor-pointer ${
-                  isDay
-                    ? 'bg-blue-50 hover:bg-blue-100/80 text-blue-900 border-blue-200'
-                    : 'bg-blue-950/60 hover:bg-blue-900/60 text-sky-200 border-blue-800/50'
-                }`}
-                title={selectedLanguage === 'bn' ? 'সব কাউন্টার ০ করুন' : 'Reset all counters to 0'}
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
-                <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'কাউন্টার ০ করুন' : 'Reset Counters'}</span>
-              </button>
-            )}
+            {/* Percentage Widget Indicator [ ˄ 0% ˅ ] from screenshot */}
+            <div className="hidden sm:flex flex-col items-center justify-center bg-white/80 border border-slate-200/80 rounded-xl px-2 py-1 text-[10px] font-bold text-slate-500 shadow-xs">
+              <ChevronUp className="w-3 h-3 text-slate-400 -mb-1" />
+              <span className="font-mono text-slate-700">0%</span>
+              <ChevronDown className="w-3 h-3 text-slate-400 -mt-1" />
+            </div>
 
-            {/* Expand / Collapse Toggle Button */}
+            {/* Dropdown Toggle Button: [ অপশনসমূহ দেখুন ˅ ] */}
             <button
               type="button"
               onClick={(e) => {
@@ -205,14 +193,12 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 setIsRefreshSystemExpanded(!isRefreshSystemExpanded);
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className={`px-3 py-1.5 rounded-2xl text-xs font-bold flex items-center gap-1.5 border transition-all active:scale-95 cursor-pointer ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all active:scale-95 cursor-pointer shadow-xs ${
                 isRefreshSystemExpanded
-                  ? isDay
-                    ? 'bg-[#0066FF] text-white border-[#0066FF] shadow-md shadow-blue-500/25'
-                    : 'bg-[#0066FF] text-white border-blue-400 font-extrabold shadow-md shadow-blue-500/35'
+                  ? 'bg-[#006A4E] text-white border-[#006A4E]'
                   : isDay
-                  ? 'bg-white border-blue-200 text-slate-800 hover:bg-blue-50 shadow-xs'
-                  : 'bg-blue-950/50 border-blue-800/40 text-sky-100 hover:bg-blue-900/50'
+                  ? 'bg-white border-[#BDE5D5] text-[#006A4E] hover:bg-emerald-50'
+                  : 'bg-teal-950/50 border-teal-800/40 text-teal-100 hover:bg-teal-900/50'
               }`}
             >
               <span>
@@ -244,9 +230,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 onClick={() => onRefreshModeChange && onRefreshModeChange('fard')}
                 className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] relative overflow-hidden ${
                   refreshMode === 'fard'
-                    ? isDay
-                      ? 'bg-emerald-700 text-white border-emerald-600 shadow-md shadow-emerald-800/20 ring-2 ring-emerald-500/40'
-                      : 'bg-gradient-to-r from-teal-700 to-emerald-700 text-white border-teal-400/60 shadow-lg ring-2 ring-teal-400/50'
+                    ? 'bg-[#006A4E] text-white border-[#005740] shadow-md ring-2 ring-emerald-500/40'
                     : isDay
                     ? 'bg-white hover:bg-emerald-50/70 text-[#143d35] border-[#d2ece7]'
                     : 'bg-[#0a262c] hover:bg-[#103840] text-teal-100 border-[#184850]'
@@ -263,7 +247,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 </div>
                 <p
                   className={`text-[11px] font-medium leading-relaxed ${
-                    refreshMode === 'fard' ? 'text-teal-100' : isDay ? 'text-gray-600' : 'text-emerald-300/70'
+                    refreshMode === 'fard' ? 'text-emerald-100' : isDay ? 'text-gray-600' : 'text-emerald-300/70'
                   }`}
                 >
                   {selectedLanguage === 'bn'
@@ -278,9 +262,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 onClick={() => onRefreshModeChange && onRefreshModeChange('maghrib')}
                 className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] relative overflow-hidden ${
                   refreshMode === 'maghrib'
-                    ? isDay
-                      ? 'bg-emerald-700 text-white border-emerald-600 shadow-md shadow-emerald-800/20 ring-2 ring-emerald-500/40'
-                      : 'bg-gradient-to-r from-teal-700 to-emerald-700 text-white border-teal-400/60 shadow-lg ring-2 ring-teal-400/50'
+                    ? 'bg-[#006A4E] text-white border-[#005740] shadow-md ring-2 ring-emerald-500/40'
                     : isDay
                     ? 'bg-white hover:bg-emerald-50/70 text-[#143d35] border-[#d2ece7]'
                     : 'bg-[#0a262c] hover:bg-[#103840] text-teal-100 border-[#184850]'
@@ -297,7 +279,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 </div>
                 <p
                   className={`text-[11px] font-medium leading-relaxed ${
-                    refreshMode === 'maghrib' ? 'text-teal-100' : isDay ? 'text-gray-600' : 'text-emerald-300/70'
+                    refreshMode === 'maghrib' ? 'text-emerald-100' : isDay ? 'text-gray-600' : 'text-emerald-300/70'
                   }`}
                 >
                   {selectedLanguage === 'bn'
@@ -312,9 +294,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 onClick={() => onRefreshModeChange && onRefreshModeChange('manual')}
                 className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer active:scale-[0.98] relative overflow-hidden ${
                   refreshMode === 'manual'
-                    ? isDay
-                      ? 'bg-emerald-700 text-white border-emerald-600 shadow-md shadow-emerald-800/20 ring-2 ring-emerald-500/40'
-                      : 'bg-gradient-to-r from-teal-700 to-emerald-700 text-white border-teal-400/60 shadow-lg ring-2 ring-teal-400/50'
+                    ? 'bg-[#006A4E] text-white border-[#005740] shadow-md ring-2 ring-emerald-500/40'
                     : isDay
                     ? 'bg-white hover:bg-emerald-50/70 text-[#143d35] border-[#d2ece7]'
                     : 'bg-[#0a262c] hover:bg-[#103840] text-teal-100 border-[#184850]'
@@ -331,7 +311,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 </div>
                 <p
                   className={`text-[11px] font-medium leading-relaxed ${
-                    refreshMode === 'manual' ? 'text-teal-100' : isDay ? 'text-gray-600' : 'text-emerald-300/70'
+                    refreshMode === 'manual' ? 'text-emerald-100' : isDay ? 'text-gray-600' : 'text-emerald-300/70'
                   }`}
                 >
                   {selectedLanguage === 'bn'
@@ -344,17 +324,17 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             {/* Live Auto-Refresh Status Pill */}
             <div
               className={`mt-3 pt-2.5 border-t flex flex-wrap items-center justify-between gap-2 text-xs ${
-                isDay ? 'border-[#cbe4e0] text-[#006747]' : 'border-[#1b5864] text-emerald-200/90'
+                isDay ? 'border-[#CDECE0] text-[#006A4E]' : 'border-[#1b5864] text-emerald-200/90'
               }`}
             >
               <div className="flex items-center gap-1.5 font-medium">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
                 <span>
                   {refreshMode === 'fard' ? (
                     selectedLanguage === 'bn' ? (
                       currentPrayerSegment ? (
                         <>
-                          বর্তমান পর্যায়: <strong className="text-amber-400">{currentPrayerSegment.prayerNameBn}</strong> • {currentPrayerSegment.nextTransitionNameBn} পর স্বয়ংক্রিয়ভাবে কাউন্টার ০ হবে
+                          বর্তমান পর্যায়: <strong className="text-amber-600">{currentPrayerSegment.prayerNameBn}</strong> • {currentPrayerSegment.nextTransitionNameBn} পর স্বয়ংক্রিয়ভাবে কাউন্টার ০ হবে
                         </>
                       ) : (
                         'প্রতিটি ফরজ নামাজের ওয়াক্ত শেষ হওয়ার সাথে সাথে কাউন্টার স্বয়ংক্রিয়ভাবে ০ হবে'
@@ -362,7 +342,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                     ) : (
                       currentPrayerSegment ? (
                         <>
-                          Current Window: <strong className="text-amber-400">{currentPrayerSegment.prayerNameEn}</strong> • Auto resets to 0 at {currentPrayerSegment.nextTransitionNameEn}
+                          Current Window: <strong className="text-amber-600">{currentPrayerSegment.prayerNameEn}</strong> • Auto resets to 0 at {currentPrayerSegment.nextTransitionNameEn}
                         </>
                       ) : (
                         'Counters reset to 0 automatically after each fard prayer window'
@@ -376,9 +356,9 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                     )
                   ) : (
                     selectedLanguage === 'bn' ? (
-                      'ম্যানুয়াল মোড সক্রিয়: উপরের "কাউন্টার ০ করুন" বাটনে চাপলে ০ হবে'
+                      'ম্যানুয়াল মোড সক্রিয়: রিসেট বাটনে চাপলে ০ হবে'
                     ) : (
-                      'Manual mode active: Click "Reset Counters" to zero'
+                      'Manual mode active'
                     )
                   )}
                 </span>
@@ -387,10 +367,10 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                   refreshMode === 'fard'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    ? 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
                     : refreshMode === 'maghrib'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                    : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                    ? 'bg-amber-500/20 text-amber-700 border border-amber-500/30'
+                    : 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
                 }`}
               >
                 {refreshMode === 'fard' ? '✓ Auto Fard Sync' : refreshMode === 'maghrib' ? '✓ Maghrib Sync' : '✓ Manual'}
@@ -400,23 +380,20 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
         )}
       </div>
 
-      {/* Category Pills & Action Bar */}
+      {/* Section Header: [ সাধারণ যিকির  12 ] & Actions */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <h2
-              className={`text-base font-bold tracking-tight flex items-center gap-2 ${
-                isDay ? 'text-[#0a3328]' : 'text-white'
+              className={`text-base sm:text-lg font-extrabold tracking-tight flex items-center gap-2 ${
+                isDay ? 'text-[#004D38]' : 'text-white'
               }`}
             >
               <span>{ZIKIR_UI.commonZikr[selectedLanguage]}</span>
-              <span className="text-xs font-normal opacity-70 hidden sm:inline">
-                {selectedLanguage === 'bn' ? '(২৩টি প্রামাণিক যিকির)' : '(23 Authentic Zikrs)'}
-              </span>
               <span
                 className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
                   isDay
-                    ? 'bg-[#e6f7f2] text-[#00875a] border-[#c3edd9]'
+                    ? 'bg-[#D0F2E3] text-[#006A4E] border-[#B5E9D2]'
                     : 'bg-[#061f24] text-emerald-400 border-[#144349]'
                 }`}
               >
@@ -425,69 +402,57 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             </h2>
           </div>
 
+          {/* Action Bar Buttons matching reference screenshot: Reset, PDF Report, + Zikr Add */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Restore Defaults button */}
+            {/* Reset button */}
             <button
               onClick={onRestoreDefaults}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-2xl border transition active:scale-95 cursor-pointer ${
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition active:scale-95 cursor-pointer shadow-xs ${
                 isDay
-                  ? 'bg-white hover:bg-[#eefbf6] text-[#006747] border-[#d2ece9] shadow-sm'
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
                   : 'bg-[#061f24] hover:bg-[#092a30] text-emerald-300 border-[#144349]'
               }`}
-              title={ZIKIR_UI.resetDefaults[selectedLanguage]}
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{ZIKIR_UI.resetDefaults[selectedLanguage]}</span>
-              <span className="sm:hidden">Reset</span>
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Reset</span>
             </button>
 
             {/* Export PDF Button */}
             <button
               onClick={onExportPdf}
               disabled={isExportingPdf}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-2xl border transition active:scale-95 disabled:opacity-50 cursor-pointer ${
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-xs ${
                 isDay
-                  ? 'bg-white hover:bg-[#eefbf6] text-[#006747] border-[#d2ece9] shadow-sm'
-                  : 'bg-[#061f24] hover:bg-[#092a30] text-emerald-300 border-[#144349]'
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  : 'bg-teal-950/60 hover:bg-teal-900 text-teal-200 border-teal-800'
               }`}
-              title={ZIKIR_UI.exportPdf[selectedLanguage]}
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span>{ZIKIR_UI.exportPdf[selectedLanguage]}</span>
+              <FileText className="w-3.5 h-3.5 text-slate-500" />
+              <span>PDF রিপোর্ট</span>
             </button>
 
-            {/* Add Zikr Button */}
+            {/* + Zikr Add Button: [ + + জিকির যোগ ] */}
             <button
               onClick={onOpenAddModal}
-              className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-2xl shadow-md transition active:scale-95 cursor-pointer bg-[#006747] hover:bg-[#005a3e] text-white shadow-[#006747]/20 border border-emerald-400/30"
+              className="flex items-center gap-1.5 text-xs font-extrabold px-4 py-2 rounded-xl shadow-sm transition active:scale-95 cursor-pointer bg-[#006A4E] hover:bg-[#005439] text-white"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>
-                +{' '}
-                {selectedLanguage === 'bn'
-                  ? 'যিকির যোগ'
-                  : selectedLanguage === 'ur'
-                  ? 'نیا ذکر'
-                  : selectedLanguage === 'hi'
-                  ? 'नया ज़िक्र'
-                  : 'Add Zikr'}
-              </span>
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>+ জিকির যোগ</span>
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Filter Pills row */}
+        {/* Filter Pills row matching category pill design */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setFilterMode('all')}
-            className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
               filterMode === 'all'
-                ? isDay
-                  ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
-                  : 'bg-[#006747] text-white border-emerald-400/50 shadow-md'
+                ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
                 : isDay
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                : 'bg-[#061f24] hover:bg-[#0a2e36] text-slate-300 border-[#144349]'
+                ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
+                : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
             }`}
           >
             {ZIKIR_UI.all[selectedLanguage]} ({zikrs.length})
@@ -495,14 +460,12 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
 
           <button
             onClick={() => setFilterMode('targets')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
               filterMode === 'targets'
-                ? isDay
-                  ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
-                  : 'bg-[#006747] text-white border-emerald-400/50 shadow-md'
+                ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
                 : isDay
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                : 'bg-[#061f24] hover:bg-[#0a2e36] text-slate-300 border-[#144349]'
+                ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
+                : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
             }`}
           >
             <Target className="w-3.5 h-3.5" />
@@ -511,14 +474,12 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
 
           <button
             onClick={() => setFilterMode('completed')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
               filterMode === 'completed'
-                ? isDay
-                  ? 'bg-[#006747] text-white border-[#006747] shadow-md shadow-[#006747]/20'
-                  : 'bg-[#006747] text-white border-emerald-400/50 shadow-md'
+                ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
                 : isDay
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                : 'bg-[#061f24] hover:bg-[#0a2e36] text-slate-300 border-[#144349]'
+                ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
+                : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -527,7 +488,6 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             </span>
           </button>
         </div>
-      </div>
 
       {/* Grid of Individual 12 Zikr Cards */}
       {filteredZikrs.length > 0 ? (
