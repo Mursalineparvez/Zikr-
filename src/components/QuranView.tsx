@@ -60,6 +60,7 @@ import {
 
 import { MakhrajVisualizer, AyahMouthCard } from './MakhrajVisualizer';
 import { getWordMakhrajInfo } from '../utils/tajweedMakhraj';
+import { getFormattedTransliteration } from '../utils/transliterationHelper';
 
 export type WordAnimationType = 'glow' | 'float' | 'spotlight' | 'gold' | 'wave' | 'minimal' | 'makhraj';
 
@@ -1832,8 +1833,8 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       </div>
                     </div>
 
-                      {/* LIVE MOUTH DIAGRAM RIGHT BESIDE / ABOVE THE AYAH WORDS */}
-                      {(isThisAyahPlaying || wordAnimationType === 'makhraj' || showMakhrajVisualizer) && (
+                      {/* LIVE MOUTH DIAGRAM SHOWN ONLY WHEN 'LIVE ARTICULATOR' (makhraj) STYLE IS SELECTED */}
+                      {(wordAnimationType === 'makhraj') && (
                         <div className="my-2 animate-in fade-in zoom-in-95 duration-200">
                           <AyahMouthCard
                             arabicWord={
@@ -1984,14 +1985,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         </div>
                       )}
 
-                      {/* Transliteration (Pronunciation) */}
-                      {showTransliteration && ayah.transliteration && (
+                      {/* Transliteration (Pronunciation) - Formatted according to user's selected language */}
+                      {showTransliteration && (
                         <div
                           className={`text-xs sm:text-sm italic font-sans leading-relaxed pt-1 font-semibold ${
                             isDay ? 'text-[#006747]' : 'text-[#10b981]'
                           }`}
                         >
-                          {ayah.transliteration}
+                          {getFormattedTransliteration(ayah.transliteration, ayah.arabic, selectedLanguage)}
                         </div>
                       )}
 
@@ -3183,7 +3184,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       {/* ======================================================== */}
       {/* FLOATING / DOCKED LIVE MAKHRAJ ANATOMICAL ARTICULATOR    */}
       {/* ======================================================== */}
-      {(showMakhrajVisualizer || (isPlaying && wordAnimationType === 'makhraj')) && (
+      {showMakhrajVisualizer && (
         <div className="fixed bottom-24 right-3 sm:right-6 z-40 w-[92vw] max-w-[340px] sm:max-w-sm animate-in slide-in-from-right-5 duration-300">
           <MakhrajVisualizer
             activeArabicWord={activeWordObj?.arabic || 'ٱلرَّحْمَٰنِ'}
