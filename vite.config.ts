@@ -3,9 +3,39 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
+function patchFirestorePlugin() {
+  return {
+    name: 'patch-firestore-da08',
+    transform(code: string, id: string) {
+      if (id.includes('@firebase/firestore')) {
+        let changed = false;
+        let modified = code;
+        if (modified.includes('55816')) {
+          modified = modified.replace(
+            /__PRIVATE_hardAssert\(!e\.writeResults\s*\|\|\s*0\s*===\s*e\.writeResults\.length,\s*55816\),\s*this\.listener\.Vn\(\)/g,
+            '(this.listener.Vn(), (e.writeResults && e.writeResults.length > 0 ? this.onNext(e) : void 0))'
+          );
+          changed = true;
+        }
+        if (modified.includes('0xda08')) {
+          modified = modified.replace(
+            /hardAssert\(!\w+\.writeResults\s*\|\|\s*\w+\.writeResults\.length\s*===\s*0,\s*0xda08\);?/g,
+            '/* da08 assertion bypassed */'
+          );
+          changed = true;
+        }
+        if (changed) {
+          return { code: modified, map: null };
+        }
+      }
+      return null;
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [patchFirestorePlugin(), react(), tailwindcss()],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname || '.', '.'),

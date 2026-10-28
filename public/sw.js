@@ -1,11 +1,11 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v13-offline
+// Version: zikrmate-v14-offline
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v13-offline';
-const AUDIO_CACHE_NAME = 'zikrmate-audio-v3';
+const CACHE_NAME = 'zikrmate-v14-offline';
+const AUDIO_CACHE_NAME = 'zikrmate-audio-v4';
 
 // Core assets to precache on installation
 const ESSENTIAL_PRECACHE_URLS = [

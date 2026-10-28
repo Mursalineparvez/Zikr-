@@ -278,12 +278,42 @@ async function startServer() {
 
   if (isProd) {
     console.log('[Server] Serving production PWA bundle from dist/ with full offline capability');
-    app.use('/assets', express.static(path.join(distDir, 'assets'), {
-      maxAge: '1y',
-      immutable: true,
-    }));
+
+    // Transparently remap any legacy vendor-firebase requests (from cached client HTML) to the current patched bundle
+    app.get('/assets/vendor-firebase-*.js', (req, res, next) => {
+      try {
+        const requestedFile = path.basename(req.path);
+        const exactPath = path.join(distDir, 'assets', requestedFile);
+        if (fs.existsSync(exactPath)) {
+          res.setHeader('Content-Type', 'application/javascript');
+          return res.sendFile(exactPath);
+        }
+        const assetFiles = fs.readdirSync(path.join(distDir, 'assets'));
+        const currentVendorFirebase = assetFiles.find(
+          (f) => f.startsWith('vendor-firebase-') && f.endsWith('.js')
+        );
+        if (currentVendorFirebase) {
+          res.setHeader('Content-Type', 'application/javascript');
+          return res.sendFile(path.join(distDir, 'assets', currentVendorFirebase));
+        }
+      } catch (err) {
+        console.warn('Error remapping vendor-firebase chunk:', err);
+      }
+      next();
+    });
+
+    app.use(
+      '/assets',
+      express.static(path.join(distDir, 'assets'), {
+        maxAge: '1y',
+        immutable: true,
+      })
+    );
     app.use(express.static(distDir));
     app.get('*', (req, res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.join(distDir, 'index.html'));
     });
   } else {
