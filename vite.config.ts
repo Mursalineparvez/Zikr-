@@ -13,7 +13,7 @@ function patchFirestorePlugin() {
         if (modified.includes('55816')) {
           modified = modified.replace(
             /__PRIVATE_hardAssert\(!e\.writeResults\s*\|\|\s*0\s*===\s*e\.writeResults\.length,\s*55816\),\s*this\.listener\.Vn\(\)/g,
-            '(this.listener.Vn(), (e.writeResults && e.writeResults.length > 0 ? this.onNext(e) : void 0))'
+            '(e.writeResults && e.writeResults.length > 0 && this.onNext(e), this.listener.Vn())'
           );
           changed = true;
         }

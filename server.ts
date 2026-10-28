@@ -279,21 +279,16 @@ async function startServer() {
   if (isProd) {
     console.log('[Server] Serving production PWA bundle from dist/ with full offline capability');
 
-    // Transparently remap any legacy vendor-firebase requests (from cached client HTML) to the current patched bundle
+    // Transparently remap ANY vendor-firebase chunk request to the current patched bundle with no-cache
     app.get('/assets/vendor-firebase-*.js', (req, res, next) => {
       try {
-        const requestedFile = path.basename(req.path);
-        const exactPath = path.join(distDir, 'assets', requestedFile);
-        if (fs.existsSync(exactPath)) {
-          res.setHeader('Content-Type', 'application/javascript');
-          return res.sendFile(exactPath);
-        }
         const assetFiles = fs.readdirSync(path.join(distDir, 'assets'));
         const currentVendorFirebase = assetFiles.find(
           (f) => f.startsWith('vendor-firebase-') && f.endsWith('.js')
         );
         if (currentVendorFirebase) {
           res.setHeader('Content-Type', 'application/javascript');
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
           return res.sendFile(path.join(distDir, 'assets', currentVendorFirebase));
         }
       } catch (err) {

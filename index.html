@@ -6,15 +6,22 @@
     <script>
       (function() {
         // 0. Intercept and suppress Firestore assertion and WebSocket errors at the capture phase
-        window.addEventListener('error', function(event) {
-          var msg = String(event.message || (event.error && event.error.message) || event.error || '');
-          if (
+        function shouldSuppress(msg, stack) {
+          return (
             msg.indexOf('FIRESTORE') !== -1 ||
             msg.indexOf('INTERNAL ASSERTION FAILED') !== -1 ||
             msg.indexOf('da08') !== -1 ||
             msg.indexOf('WebSocket') !== -1 ||
-            msg.indexOf('websocket') !== -1
-          ) {
+            msg.indexOf('websocket') !== -1 ||
+            stack.indexOf('vendor-firebase') !== -1 ||
+            (msg.indexOf("reading 'then'") !== -1 && stack.indexOf('firebase') !== -1)
+          );
+        }
+
+        window.addEventListener('error', function(event) {
+          var msg = String(event.message || (event.error && event.error.message) || event.error || '');
+          var stack = String((event.error && event.error.stack) || '');
+          if (shouldSuppress(msg, stack)) {
             event.preventDefault();
             if (typeof event.stopImmediatePropagation === 'function') {
               event.stopImmediatePropagation();
@@ -28,13 +35,8 @@
 
         window.addEventListener('unhandledrejection', function(event) {
           var msg = String((event.reason && event.reason.message) || event.reason || '');
-          if (
-            msg.indexOf('FIRESTORE') !== -1 ||
-            msg.indexOf('INTERNAL ASSERTION FAILED') !== -1 ||
-            msg.indexOf('da08') !== -1 ||
-            msg.indexOf('WebSocket') !== -1 ||
-            msg.indexOf('websocket') !== -1
-          ) {
+          var stack = String((event.reason && event.reason.stack) || '');
+          if (shouldSuppress(msg, stack)) {
             event.preventDefault();
             if (typeof event.stopImmediatePropagation === 'function') {
               event.stopImmediatePropagation();

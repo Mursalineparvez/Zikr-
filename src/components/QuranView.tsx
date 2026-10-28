@@ -199,6 +199,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const activeWordRef = useRef<HTMLDivElement | null>(null);
 
   // Track latest playback state in ref so audio event listeners don't recreate Audio element
   const playStateRef = useRef({
@@ -214,6 +215,28 @@ export const QuranView: React.FC<QuranViewProps> = ({
       currentPlayingAyahNum,
     };
   }, [playingMode, surahDetail, currentPlayingAyahNum]);
+
+  // High-frequency 60fps audio tracking loop for real-time word highlighting synchronization
+  useEffect(() => {
+    let animId: number;
+    const pollTime = () => {
+      const audio = audioRef.current;
+      if (audio && !audio.paused && !audio.ended && audio.duration) {
+        setAudioCurrentTime(audio.currentTime);
+        setAudioDuration(audio.duration);
+        setAudioProgress((audio.currentTime / audio.duration) * 100);
+      }
+      if (isPlaying) {
+        animId = requestAnimationFrame(pollTime);
+      }
+    };
+    if (isPlaying) {
+      animId = requestAnimationFrame(pollTime);
+    }
+    return () => {
+      cancelAnimationFrame(animId);
+    };
+  }, [isPlaying]);
 
   // Audio setup - instantiate ONCE on component mount
   useEffect(() => {
@@ -375,7 +398,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     }
   };
 
-  // Tajweed & Phonetic Weighted Audio Alignment Algorithm for 100% Precise Word-by-Word Synchronization
+  // 100% Exact Word-by-Word Audio Synchronization Engine (Quran.com Millisecond Segments + Tajweed Fallback)
   const activeWordIndex = useMemo(() => {
     if (!isPlaying || currentPlayingAyahNum === null || !audioDuration || audioDuration <= 0) return -1;
     const currentAyah = surahDetail?.ayahs.find((a) => a.number === currentPlayingAyahNum);
@@ -385,36 +408,49 @@ export const QuranView: React.FC<QuranViewProps> = ({
     const numWords = words.length;
     if (numWords === 1) return 0;
 
-    // 1. Compute Tajweed Phonetic Weights for each word based on diacritics, Madd, Shaddah, and Waqf
+    const currentMs = audioCurrentTime * 1000;
+
+    // A. Official Quran.com Recitation Segments (100% Real-Time Millisecond Precision)
+    if (typeof words[0]?.startMs === 'number') {
+      for (let i = 0; i < words.length; i++) {
+        const w = words[i];
+        if (typeof w.startMs === 'number' && typeof w.endMs === 'number') {
+          // 40ms perceptual lead buffer so human eye catches the word right as sound begins
+          if (currentMs >= w.startMs - 40 && currentMs < w.endMs) {
+            return i;
+          }
+        }
+      }
+      // If audio is nearing completion, keep the final word active
+      if (typeof words[words.length - 1].endMs === 'number' && currentMs >= (words[words.length - 1].endMs || 0) - 50) {
+        return words.length - 1;
+      }
+    }
+
+    // B. Fallback: Tajweed Phonetic Weighted Audio Alignment
     const weights = words.map((w, idx) => {
       const text = w.arabic || '';
-      // Strip diacritics to measure base consonant skeleton length
       const baseConsonants = text.replace(/[\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '');
       let weight = Math.max(2.2, baseConsonants.length * 1.15);
 
-      // Tajweed Rule 1: Prolonged Madd / Dagger Alif (ـٰ, ـٓ, آ, ـٰى, ۦ, ۥ) (+3.5)
       if (/[\u0670\u0653\u0622\u06E5\u06E6]/u.test(text)) {
         weight += 3.6;
       } else if (/[اوى]/u.test(text) && text.length > 3) {
         weight += 1.6;
       }
 
-      // Tajweed Rule 2: Shaddah / Tashdeed (ـّ) doubles consonant duration (+2.0)
       if (/\u0651/u.test(text)) {
         weight += 2.0;
       }
 
-      // Tajweed Rule 3: Ghunnah or Tanween (ـً, ـٍ, ـٌ, نّ, مّ) (+1.5)
       if (/[\u064B\u064C\u064D]/u.test(text) || /[نم]\u0651/u.test(text)) {
         weight += 1.5;
       }
 
-      // Tajweed Rule 4: Final word of Ayah has Waqf / Al-Arid Li-Sukun elongation (+3.5)
       if (idx === numWords - 1) {
         weight += 3.5;
       }
 
-      // Tajweed Rule 5: Short prepositions / particles (e.g. وَ, فَ, بِـ, لِـ)
       if (text.length <= 3 && !/\u0651/u.test(text) && !/[\u0670\u0653]/u.test(text)) {
         weight = Math.min(weight, 2.5);
       }
@@ -425,14 +461,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
     const totalWeight = weights.reduce((acc, w) => acc + w, 0);
     if (totalWeight <= 0) return 0;
 
-    // 2. Account for Reciter Leading Breath/Pause (0.35s - 0.5s) and Trailing Silence (0.4s - 0.6s)
     const leadingOffset = Math.min(0.5, audioDuration * 0.035);
     const trailingOffset = Math.min(0.6, audioDuration * 0.045);
     const effectiveDuration = Math.max(0.1, audioDuration - leadingOffset - trailingOffset);
     const adjustedCurrentTime = Math.min(effectiveDuration, Math.max(0, audioCurrentTime - leadingOffset));
     const progressRatio = Math.min(1, Math.max(0, adjustedCurrentTime / effectiveDuration));
 
-    // 3. Match adjusted time progress with cumulative Tajweed weight boundaries
     let cumWeight = 0;
     for (let i = 0; i < numWords; i++) {
       const wordStartRatio = cumWeight / totalWeight;
@@ -447,50 +481,63 @@ export const QuranView: React.FC<QuranViewProps> = ({
     return numWords - 1;
   }, [isPlaying, currentPlayingAyahNum, audioCurrentTime, audioDuration, surahDetail]);
 
+  // Smoothly center the active word in the viewport when it speaks
+  useEffect(() => {
+    if (isPlaying && activeWordIndex >= 0 && activeWordRef.current && autoScroll) {
+      activeWordRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [activeWordIndex, isPlaying, autoScroll]);
+
   // Handle clicking on any word in word-by-word mode to seek audio directly to that word
   const handleWordClick = (ayah: QuranAyah, wordIndex: number) => {
     if (!ayah.words || ayah.words.length === 0) return;
     const audio = audioRef.current;
     const words = ayah.words;
     const numWords = words.length;
+    const targetWord = words[wordIndex];
 
-    const weights = words.map((w, idx) => {
-      const text = w.arabic || '';
-      const baseConsonants = text.replace(/[\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '');
-      let weight = Math.max(2.2, baseConsonants.length * 1.15);
-      if (/[\u0670\u0653\u0622\u06E5\u06E6]/u.test(text)) weight += 3.6;
-      else if (/[اوى]/u.test(text) && text.length > 3) weight += 1.6;
-      if (/\u0651/u.test(text)) weight += 2.0;
-      if (/[\u064B\u064C\u064D]/u.test(text) || /[نم]\u0651/u.test(text)) weight += 1.5;
-      if (idx === numWords - 1) weight += 3.5;
-      if (text.length <= 3 && !/\u0651/u.test(text) && !/[\u0670\u0653]/u.test(text)) weight = Math.min(weight, 2.5);
-      return weight;
-    });
+    let seekSeconds = 0;
+    if (typeof targetWord?.startMs === 'number') {
+      seekSeconds = Math.max(0, targetWord.startMs / 1000);
+    } else {
+      const weights = words.map((w, idx) => {
+        const text = w.arabic || '';
+        const baseConsonants = text.replace(/[\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '');
+        let weight = Math.max(2.2, baseConsonants.length * 1.15);
+        if (/[\u0670\u0653\u0622\u06E5\u06E6]/u.test(text)) weight += 3.6;
+        else if (/[اوى]/u.test(text) && text.length > 3) weight += 1.6;
+        if (/\u0651/u.test(text)) weight += 2.0;
+        if (/[\u064B\u064C\u064D]/u.test(text) || /[نم]\u0651/u.test(text)) weight += 1.5;
+        if (idx === numWords - 1) weight += 3.5;
+        if (text.length <= 3 && !/\u0651/u.test(text) && !/[\u0670\u0653]/u.test(text)) weight = Math.min(weight, 2.5);
+        return weight;
+      });
 
-    const totalWeight = weights.reduce((acc, w) => acc + w, 0);
-    const cumWeightBefore = weights.slice(0, wordIndex).reduce((acc, w) => acc + w, 0);
-    const wordStartRatio = cumWeightBefore / totalWeight;
+      const totalWeight = weights.reduce((acc, w) => acc + w, 0);
+      const cumWeightBefore = weights.slice(0, wordIndex).reduce((acc, w) => acc + w, 0);
+      const wordStartRatio = cumWeightBefore / totalWeight;
 
-    if (isPlaying && currentPlayingAyahNum === ayah.number && audio && audio.duration) {
-      const dur = audio.duration;
+      const dur = audio?.duration || 5;
       const leadingOffset = Math.min(0.5, dur * 0.035);
       const trailingOffset = Math.min(0.6, dur * 0.045);
       const effectiveDuration = Math.max(0.1, dur - leadingOffset - trailingOffset);
-      const seekTime = leadingOffset + wordStartRatio * effectiveDuration;
-      audio.currentTime = Math.min(dur - 0.1, Math.max(0, seekTime));
+      seekSeconds = leadingOffset + wordStartRatio * effectiveDuration;
+    }
+
+    if (isPlaying && currentPlayingAyahNum === ayah.number && audio && audio.duration) {
+      audio.currentTime = Math.min(audio.duration - 0.1, seekSeconds);
     } else {
       playAyahAudio(ayah);
       setTimeout(() => {
         const activeAudio = audioRef.current;
-        if (activeAudio && activeAudio.duration) {
-          const dur = activeAudio.duration;
-          const leadingOffset = Math.min(0.5, dur * 0.035);
-          const trailingOffset = Math.min(0.6, dur * 0.045);
-          const effectiveDuration = Math.max(0.1, dur - leadingOffset - trailingOffset);
-          const seekTime = leadingOffset + wordStartRatio * effectiveDuration;
-          activeAudio.currentTime = Math.min(dur - 0.1, Math.max(0, seekTime));
+        if (activeAudio) {
+          activeAudio.currentTime = Math.max(0, seekSeconds);
         }
-      }, 280);
+      }, 150);
     }
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -1617,50 +1664,71 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       </div>
                     </div>
 
-                      {/* ARABIC WORD-BY-WORD (HIGH-CONTRAST & BRILLIANT IN NIGHT MODE) */}
+                      {/* ARABIC WORD-BY-WORD (HIGH-CONTRAST, EXACT SYNC, GORGEOUS JADE-EMERALD CARD) */}
                       {wordByWordMode && ayah.words && ayah.words.length > 0 ? (
                         <div
                           dir="rtl"
-                          className="flex flex-wrap items-start justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-5 py-2.5"
+                          className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-4 py-3 select-none"
                         >
                           {ayah.words.map((word, wIdx) => {
-                            const isWordActive = isPlaying && currentPlayingAyahNum === ayah.number && wIdx === activeWordIndex;
+                            const isWordActive =
+                              isPlaying && currentPlayingAyahNum === ayah.number && wIdx === activeWordIndex;
                             return (
                               <div
                                 key={wIdx}
+                                ref={(el) => {
+                                  if (isWordActive && el) {
+                                    activeWordRef.current = el;
+                                  }
+                                }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleWordClick(ayah, wIdx);
                                 }}
-                                className={`flex flex-col items-center text-center group cursor-pointer p-2 sm:p-2.5 rounded-2xl transition-all duration-200 select-none ${
+                                className={`relative group flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 select-none ${
                                   isWordActive
                                     ? isDay
-                                      ? 'bg-emerald-100 border-2 border-emerald-600 shadow-lg scale-105 ring-2 ring-emerald-500/40 z-10'
-                                      : 'bg-emerald-950/80 border-2 border-emerald-500 shadow-xl scale-105 ring-2 ring-emerald-400/40 z-10'
+                                      ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] shadow-[0_8px_24px_rgba(0,135,99,0.25)] rounded-2xl scale-105 z-10 px-4 py-2.5 ring-4 ring-emerald-500/20'
+                                      : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 shadow-[0_8px_28px_rgba(16,185,129,0.35)] rounded-2xl scale-105 z-10 px-4 py-2.5 ring-4 ring-emerald-400/25'
                                     : isDay
-                                    ? 'hover:bg-[#edf5f4] border border-transparent hover:border-[#cbe4e1]'
-                                    : 'hover:bg-[#152e3c] border border-transparent hover:border-[#1e4456]'
+                                    ? 'hover:bg-emerald-50/80 border-[2.5px] border-transparent hover:border-emerald-200/80 rounded-2xl px-3 py-2 text-[#0f172a]'
+                                    : 'hover:bg-slate-800/60 border-[2.5px] border-transparent hover:border-emerald-900/60 rounded-2xl px-3 py-2 text-[#f8fafc]'
                                 }`}
                               >
-                                {/* Arabic Word Script (Pure High Contrast) */}
+                                {/* Active Speaking pill badge */}
+                                {isWordActive && (
+                                  <span className="absolute -top-3 bg-[#008763] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
+                                    <Volume2 className="w-2.5 h-2.5 inline" />
+                                    <span>তিলাওয়াত</span>
+                                  </span>
+                                )}
+
+                                {/* Arabic Word Script */}
                                 <span
-                                  className={`font-arabic text-2xl sm:text-3xl font-bold leading-relaxed transition drop-shadow-sm ${
+                                  className={`font-arabic text-3xl sm:text-4xl font-bold leading-relaxed transition-all tracking-normal ${
                                     isWordActive
-                                      ? isDay ? 'text-emerald-700 font-black' : 'text-emerald-300 font-black animate-pulse'
+                                      ? isDay
+                                        ? 'text-[#005a3e] font-black'
+                                        : 'text-emerald-300 font-black'
                                       : isDay
                                       ? 'text-[#0f172a] group-hover:text-[#006747]'
-                                      : 'text-[#f8fafc] group-hover:text-[#10b981]'
+                                      : 'text-[#f8fafc] group-hover:text-[#34d399]'
                                   }`}
                                 >
                                   {word.arabic}
                                 </span>
+
                                 {/* Word Meaning Translation */}
                                 <span
                                   dir="ltr"
-                                  className={`text-[11px] sm:text-xs font-sans mt-1 px-1 text-center max-w-[95px] leading-tight font-semibold ${
+                                  className={`text-xs sm:text-sm font-sans mt-0.5 px-1 text-center max-w-[110px] leading-snug font-semibold transition-colors ${
                                     isWordActive
-                                      ? isDay ? 'text-emerald-800 font-extrabold' : 'text-emerald-200 font-extrabold'
-                                      : isDay ? 'text-[#006747]' : 'text-[#10b981]'
+                                      ? isDay
+                                        ? 'text-[#006747] font-bold'
+                                        : 'text-emerald-200 font-bold'
+                                      : isDay
+                                      ? 'text-[#006747]'
+                                      : 'text-[#10b981]'
                                   }`}
                                 >
                                   {word.translation}

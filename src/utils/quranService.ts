@@ -10,6 +10,8 @@ export interface QuranWord {
   translation: string;
   transliteration?: string;
   audioUrl?: string;
+  startMs?: number;
+  endMs?: number;
 }
 
 export interface QuranAyahTranslation {
@@ -377,25 +379,76 @@ export async function fetchSurah(
 
   const activeTranslationIds = languageTranslationIds[language] || '163,161,20';
 
+  const QURAN_COM_RECITER_MAP: Record<string, number> = {
+    'ar.alafasy': 7,
+    'ar.abdurrahmaansudais': 3,
+    'ar.abdulbasitmurattal': 2,
+    'ar.abdulbasitmujawwad': 1,
+    'ar.shaatree': 4,
+    'ar.husary': 6,
+    'ar.minshawi': 9,
+    'ar.minshawimujawwad': 8,
+    'ar.saudshuraim': 10,
+    'ar.hanirifai': 5,
+  };
+
   try {
+    const qdcReciterId = QURAN_COM_RECITER_MAP[reciterId] || 7;
     const quranDotComUrl = `https://api.quran.com/api/v4/verses/by_chapter/${surahNumber}?language=${language}&words=true&word_fields=text_uthmani,text_indopak&translations=${activeTranslationIds}&per_page=300`;
-    const qcRes = await fetch(quranDotComUrl);
+    const recitationsUrl = `https://api.quran.com/api/v4/chapter_recitations/${qdcReciterId}/${surahNumber}?segments=true`;
+
+    const [qcRes, recRes] = await Promise.all([
+      fetch(quranDotComUrl),
+      fetch(recitationsUrl).catch(() => null),
+    ]);
+
+    let timestampsMap = new Map<string, any>();
+    if (recRes && recRes.ok) {
+      try {
+        const recJson = await recRes.json();
+        if (recJson.audio_file?.timestamps && Array.isArray(recJson.audio_file.timestamps)) {
+          recJson.audio_file.timestamps.forEach((t: any) => {
+            if (t.verse_key) timestampsMap.set(t.verse_key, t);
+          });
+        }
+      } catch {}
+    }
+
     if (qcRes.ok) {
       const qcJson = await qcRes.json();
       if (qcJson.verses && Array.isArray(qcJson.verses) && qcJson.verses.length > 0) {
         const ayahs: QuranAyah[] = qcJson.verses.map((v: any, index: number) => {
           const verseNum = v.verse_number || index + 1;
           const globalNum = v.id || verseNum;
+          const verseKey = `${surahNumber}:${verseNum}`;
+          const timing = timestampsMap.get(verseKey);
+          let baseOffset = 0;
+          if (timing && Array.isArray(timing.segments) && timing.segments.length > 0) {
+            baseOffset = timing.segments[0][1];
+          }
           
           const words: QuranWord[] = (v.words || [])
             .filter((w: any) => w.char_type_name !== 'end')
-            .map((w: any) => ({
-              id: w.id,
-              position: w.position,
-              arabic: w.text_uthmani || w.text || '',
-              translation: w.translation?.text || '',
-              transliteration: w.transliteration?.text || '',
-            }));
+            .map((w: any) => {
+              let startMs: number | undefined = undefined;
+              let endMs: number | undefined = undefined;
+              if (timing && Array.isArray(timing.segments)) {
+                const seg = timing.segments.find((s: any) => s[0] === w.position);
+                if (seg) {
+                  startMs = Math.max(0, seg[1] - baseOffset);
+                  endMs = Math.max(0, seg[2] - baseOffset);
+                }
+              }
+              return {
+                id: w.id,
+                position: w.position,
+                arabic: w.text_uthmani || w.text || '',
+                translation: w.translation?.text || '',
+                transliteration: w.transliteration?.text || '',
+                startMs,
+                endMs,
+              };
+            });
 
           const translationsList: QuranAyahTranslation[] = [];
           if (v.translations && Array.isArray(v.translations)) {
