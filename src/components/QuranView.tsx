@@ -1868,78 +1868,40 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             if (isWordActive) {
                               if (wordAnimationType === 'glow') {
                                 activeCardStyle = isDay
-                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-500/20'
-                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/25';
+                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-500/20 shadow-md'
+                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/25 shadow-md';
                                 activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
                                 activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
-                                activeBadge = (
-                                  <span className="absolute -top-3 bg-[#008763] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
-                                    <Volume2 className="w-2.5 h-2.5 inline" />
-                                    <span>{selectedLanguage === 'bn' ? 'তিলাওয়াত' : 'Reciting'}</span>
-                                  </span>
-                                );
                               } else if (wordAnimationType === 'float') {
                                 activeCardStyle = isDay
-                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-float rounded-2xl z-20 px-4 py-2.5'
-                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-float rounded-2xl z-20 px-4 py-2.5';
+                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-float rounded-2xl z-20 px-4 py-2.5 shadow-lg'
+                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-float rounded-2xl z-20 px-4 py-2.5 shadow-lg';
                                 activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
                                 activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
-                                activeBadge = (
-                                  <span className="absolute -top-3.5 bg-[#006747] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                                    <span>🕊️</span>
-                                    <span>{selectedLanguage === 'bn' ? 'উত্তোলন' : 'Floating'}</span>
-                                  </span>
-                                );
                               } else if (wordAnimationType === 'spotlight') {
                                 activeCardStyle = isDay
                                   ? 'bg-[#bbf7d0] border-[3px] border-[#007050] text-[#004e37] anim-word-spotlight rounded-2xl z-30 px-4 py-2.5 shadow-[0_12px_36px_rgba(0,112,80,0.4)] ring-4 ring-emerald-600/30'
                                   : 'bg-emerald-900 border-[3px] border-emerald-300 text-emerald-100 anim-word-spotlight rounded-2xl z-30 px-4 py-2.5 shadow-[0_12px_40px_rgba(52,211,153,0.5)] ring-4 ring-emerald-400/40';
                                 activeArabicTextStyle = isDay ? 'text-[#004225] font-black' : 'text-emerald-100 font-black';
                                 activeMeaningStyle = isDay ? 'text-[#005a3e] font-bold' : 'text-emerald-200 font-bold';
-                                activeBadge = (
-                                  <span className="absolute -top-3.5 bg-[#005a3e] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                                    <Sparkles className="w-2.5 h-2.5 inline text-amber-300" />
-                                    <span>{selectedLanguage === 'bn' ? 'ফোকাস' : 'Focus'}</span>
-                                  </span>
-                                );
                               } else if (wordAnimationType === 'gold') {
                                 activeCardStyle = isDay
-                                  ? 'bg-gradient-to-b from-amber-50 to-amber-100/90 border-[2.5px] border-amber-500 text-amber-950 anim-word-gold rounded-2xl z-20 px-4 py-2.5 ring-4 ring-amber-400/30'
-                                  : 'bg-gradient-to-b from-amber-950/90 to-amber-900/70 border-[2.5px] border-amber-400 text-amber-200 anim-word-gold rounded-2xl z-20 px-4 py-2.5 ring-4 ring-amber-400/35';
+                                  ? 'bg-gradient-to-b from-amber-50 to-amber-100/90 border-[2.5px] border-amber-500 text-amber-950 anim-word-gold rounded-2xl z-20 px-4 py-2.5 ring-4 ring-amber-400/30 shadow-md'
+                                  : 'bg-gradient-to-b from-amber-950/90 to-amber-900/70 border-[2.5px] border-amber-400 text-amber-200 anim-word-gold rounded-2xl z-20 px-4 py-2.5 ring-4 ring-amber-400/35 shadow-md';
                                 activeArabicTextStyle = isDay ? 'text-amber-950 font-black' : 'text-amber-300 font-black';
                                 activeMeaningStyle = isDay ? 'text-amber-800 font-bold' : 'text-amber-200 font-bold';
-                                activeBadge = (
-                                  <span className="absolute -top-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 animate-pulse">
-                                    <Sparkles className="w-2.5 h-2.5 inline text-yellow-200" />
-                                    <span>{selectedLanguage === 'bn' ? 'স্বর্ণালী নূর' : 'Golden Noor'}</span>
-                                  </span>
-                                );
                               } else if (wordAnimationType === 'wave') {
                                 activeCardStyle = isDay
-                                  ? 'bg-gradient-to-r from-emerald-100 via-teal-50 to-emerald-100 border-[2.5px] border-teal-600 text-teal-900 anim-word-wave-shimmer rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-500/20'
-                                  : 'bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-950 border-[2.5px] border-teal-400 text-teal-200 anim-word-wave-shimmer rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-400/25';
+                                  ? 'bg-gradient-to-r from-emerald-100 via-teal-50 to-emerald-100 border-[2.5px] border-teal-600 text-teal-900 anim-word-wave-shimmer rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-500/20 shadow-md'
+                                  : 'bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-950 border-[2.5px] border-teal-400 text-teal-200 anim-word-wave-shimmer rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-400/25 shadow-md';
                                 activeArabicTextStyle = isDay ? 'text-teal-950 font-black' : 'text-teal-200 font-black';
                                 activeMeaningStyle = isDay ? 'text-teal-800 font-bold' : 'text-teal-200 font-bold';
-                                activeBadge = (
-                                  <span className="absolute -top-3 bg-teal-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                                    <Volume2 className="w-2.5 h-2.5 inline" />
-                                    <span>{selectedLanguage === 'bn' ? 'তরঙ্গ নূর' : 'Wave'}</span>
-                                  </span>
-                                );
                               } else if (wordAnimationType === 'makhraj') {
-                                const mInfo = getWordMakhrajInfo(word.arabic);
-                                const organName = mInfo.primaryLetter ? `${mInfo.primaryLetter.letter} • ${mInfo.primaryLetter.organNameBn}` : 'মুখের মাখরাজ';
                                 activeCardStyle = isDay
-                                  ? 'bg-gradient-to-b from-teal-50 to-emerald-100/90 border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-500/25'
-                                  : 'bg-gradient-to-b from-[#091f26] to-[#04151a] border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/30';
+                                  ? 'bg-gradient-to-b from-teal-50 to-emerald-100/90 border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-500/25 shadow-md'
+                                  : 'bg-gradient-to-b from-[#091f26] to-[#04151a] border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/30 shadow-md';
                                 activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
                                 activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
-                                activeBadge = (
-                                  <span className="absolute -top-3.5 bg-[#008763] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 animate-pulse">
-                                    <span>🗣️</span>
-                                    <span>{organName}</span>
-                                  </span>
-                                );
                               } else {
                                 // minimal
                                 activeCardStyle = isDay
@@ -1947,11 +1909,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   : 'bg-emerald-950/70 border-[2px] border-emerald-500 text-emerald-200 shadow-sm rounded-2xl z-10 px-3.5 py-2 scale-100';
                                 activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
                                 activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
-                                activeBadge = (
-                                  <span className="absolute -top-2.5 bg-[#008763] text-white text-[8px] font-bold px-1.5 py-0.2 rounded-full shadow-none">
-                                    <span>{selectedLanguage === 'bn' ? 'তিলাওয়াত' : 'Reciting'}</span>
-                                  </span>
-                                );
                               }
                             } else {
                               // Inactive words
