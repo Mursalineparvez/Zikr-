@@ -580,3 +580,167 @@ export function getWordMakhrajInfo(arabicWord: string): {
     cleanText: stripTashkeel(arabicWord),
   };
 }
+
+// Madd (মাদ / দীর্ঘ টান) rule info interface
+export interface MaddRuleInfo {
+  isMadd: boolean;
+  typeBn: string;
+  typeEn: string;
+  countAlif: number; // 1 to 3 Alif counts
+  countMetrics: number; // 2 to 6 duration counts
+  descriptionBn: string;
+  descriptionEn: string;
+  color: string;
+}
+
+// Analyzes an Arabic word or Ayah phrase for Tajweed Madd elongation rules
+export function getMaddInfo(arabicWord: string): MaddRuleInfo {
+  if (!arabicWord) {
+    return {
+      isMadd: false,
+      typeBn: 'সাধারণ হরফ (মাদ্দ নেই)',
+      typeEn: 'Normal Letter (No Madd)',
+      countAlif: 0,
+      countMetrics: 1,
+      descriptionBn: 'স্বাভাবিক স্বরধ্বনি, দীর্ঘ টান বা মাদ্দ প্রয়োজন নেই।',
+      descriptionEn: 'Normal pronunciation without vowel elongation.',
+      color: '#10b981',
+    };
+  }
+
+  // Check for Madd Wave symbol ~ or Madd Alif آ or Madda in word (e.g. الضَّالِّينَ, جَاءَ, آلْآنَ, أُولَـٰئِكَ)
+  if (/[\u0653\u06E4~آ]/.test(arabicWord) || /الضَّالِّينَ|جَاءَ|سُوءَ|أُولَـٰئِكَ|آلم/.test(arabicWord)) {
+    return {
+      isMadd: true,
+      typeBn: 'মাদ্দে মুত্তাসিল / লাজিম (দীর্ঘতম টান)',
+      typeEn: 'Madd Muttasil / Lazim (Longest Stretch)',
+      countAlif: 3,
+      countMetrics: 6,
+      descriptionBn: 'ধ্বনিকে ৩ আলিফ (৬ মাত্রা) পরিমাণ দীর্ঘায়িত করে টেনে পড়তে হবে। মুখের ফাঁকা বায়ুপ্রবাহ (জাওফ) পূর্ণমাত্রায় প্রসারিত হবে।',
+      descriptionEn: 'Elongate the vocal sound for 3 Alifs (6 counts). Full open oral cavity resonance.',
+      color: '#ec4899',
+    };
+  }
+
+  // Check for Dagger Alif (ٰ) or Alif / Yaa / Waaw after corresponding harakat
+  if (/[\u0670\u06E5\u06E6]/.test(arabicWord) || /الرَّحْمَـٰنِ|مَالِكِ|إِيَّاكَ|الرَّحِيمِ|الْعَالَمِينَ|نَسْتَعِينُ/.test(arabicWord)) {
+    // Longer end of Ayah Madd (Madd Arid lissukoon e.g. الرحيم, العالمين)
+    if (/ِي$|ِينَ$|ِيمِ$|ِينِ$|ُون$|ِيمَ$/.test(arabicWord)) {
+      return {
+        isMadd: true,
+        typeBn: 'মাদ্দে আরিজ লিসসুকুন (আয়াত বিরতির টান)',
+        typeEn: 'Madd Arid Lissukoon (Verse Ending Stretch)',
+        countAlif: 2,
+        countMetrics: 4,
+        descriptionBn: 'আয়াতের শেষে ওয়াকফ করার জন্য ২ থেকে ৩ আলিফ (৪-৬ মাত্রা) টেনে পড়তে হবে।',
+        descriptionEn: 'Elongate for 2-3 Alifs (4-6 counts) when stopping at verse end.',
+        color: '#f59e0b',
+      };
+    }
+    return {
+      isMadd: true,
+      typeBn: 'মাদ্দে আসলী / ত্বভাবী (মৌলিক টান)',
+      typeEn: 'Madd Asli / Tabi\'i (Original Natural Stretch)',
+      countAlif: 1,
+      countMetrics: 2,
+      descriptionBn: '১ আলিফ (২ মাত্রা) পরিমাণ স্বাভাবিক দীর্ঘ টানে পড়তে হবে (আঙ্গুল দ্রুত ভাঁজ ও খোলার সময় পরিমাণ)।',
+      descriptionEn: 'Elongate naturally for 1 Alif (2 counts duration).',
+      color: '#06b6d4',
+    };
+  }
+
+  // Generic check for Madd letters (ا, و, ي)
+  if (/[اوي]/.test(arabicWord)) {
+    return {
+      isMadd: true,
+      typeBn: 'মাদ্দে আসলী (স্বাভাবিক টান)',
+      typeEn: 'Madd Asli (Natural Elongation)',
+      countAlif: 1,
+      countMetrics: 2,
+      descriptionBn: '১ আলিফ (২ মাত্রা) পরিমাণ দীর্ঘ টানে পড়তে হবে।',
+      descriptionEn: 'Stretch sound for 1 Alif (2 counts).',
+      color: '#14b8a6',
+    };
+  }
+
+  return {
+    isMadd: false,
+    typeBn: 'স্বাভাবিক উচ্চারণ (মাদ্দ বিহীন)',
+    typeEn: 'Normal Pronunciation',
+    countAlif: 0,
+    countMetrics: 1,
+    descriptionBn: 'কোনো দীর্ঘ টান ছাড়াই ১ মাত্রা স্বাভাবিক টানে পড়ুন।',
+    descriptionEn: 'Standard 1 count without elongation.',
+    color: '#10b981',
+  };
+}
+
+// Multi-letter callout item for image_2f033692.png style visualization
+export interface MultiLetterCallout {
+  letter: string;
+  nameBn: string;
+  nameEn: string;
+  actionBn: string;
+  actionEn: string;
+  organ: VocalOrgan;
+  coords: { x: number; y: number };
+  color: string;
+}
+
+// Generates multi-letter anatomical callouts matching image_2f033692.png
+export function getMultiLetterCallouts(arabicText: string): MultiLetterCallout[] {
+  const letters = extractWordLetters(arabicText);
+  const seenOrgans = new Set<string>();
+  const callouts: MultiLetterCallout[] = [];
+
+  for (const l of letters) {
+    if (!l || seenOrgans.has(l.letter)) continue;
+    seenOrgans.add(l.letter);
+
+    let actionBn = l.locationBn;
+    let actionEn = l.locationEn;
+
+    if (l.organ === 'lips') {
+      actionBn = 'দুই ঠোঁট মিলিত হয়ে স্পন্দিত হয়';
+      actionEn = 'Both lips meet & articulate';
+    } else if (l.organ === 'tongue_tip') {
+      actionBn = 'জিহ্বার আগা ওপরের মাড়ির তালুর স্পর্শে';
+      actionEn = 'Tongue contacts the upper gum ridge';
+    } else if (l.organ === 'tongue_mid') {
+      actionBn = 'জিহ্বার মধ্যভাগ ওপরের শক্ত তালুতে উঠে';
+      actionEn = 'Tongue middle rises to hard palate';
+    } else if (l.organ === 'throat_mid') {
+      actionBn = 'কণ্ঠনালীর মধ্যভাগ সংকুচিত হয়ে বিশুদ্ধ ধ্বনি';
+      actionEn = 'Middle of the throat articulates clear tone';
+    } else if (l.organ === 'throat_lower') {
+      actionBn = 'কণ্ঠনালীর শেষ ভাগ ও স্বরতন্ত্রী থেকে';
+      actionEn = 'Deepest part of throat at vocal cords';
+    }
+
+    callouts.push({
+      letter: l.letter,
+      nameBn: l.nameBn,
+      nameEn: l.nameEn,
+      actionBn,
+      actionEn,
+      organ: l.organ,
+      coords: l.coords,
+      color: MAKHRAJ_REGIONS[l.organ]?.color || '#10b981',
+    });
+
+    if (callouts.length >= 4) break; // Maximum 4 callout badges simultaneously to keep diagram clean
+  }
+
+  // Fallback defaults if text has fewer than 2 letters (e.g. Bismillah defaults like image_2f033692.png)
+  if (callouts.length === 0) {
+    return [
+      { letter: 'ب', nameBn: 'বা', nameEn: 'Bā', actionBn: 'দুই ঠোঁট পরষ্পর মিলিত হয়', actionEn: 'Both lips meet', organ: 'lips', coords: { x: 242, y: 164 }, color: '#f43f5e' },
+      { letter: 'ل', nameBn: 'লাম', nameEn: 'Lām', actionBn: 'জিহ্বার আগা ওপরের মাড়ির তালুতে', actionEn: 'Tongue contacts the upper gum ridge', organ: 'tongue_tip', coords: { x: 198, y: 146 }, color: '#008763' },
+      { letter: 'ر', nameBn: 'র', nameEn: 'Rā', actionBn: 'জিহ্বার আগার পিঠ ওপরের তালুতে কঁপে', actionEn: 'Tongue tip articulates near upper gum', organ: 'tongue_tip', coords: { x: 202, y: 146 }, color: '#f59e0b' },
+      { letter: 'ح', nameBn: 'হ্বা', nameEn: 'Ḥā', actionBn: 'কণ্ঠনালীর মাঝখান সংকুচিত হয়', actionEn: 'Middle of the throat', organ: 'throat_mid', coords: { x: 128, y: 210 }, color: '#eab308' },
+    ];
+  }
+
+  return callouts;
+}
+
