@@ -58,7 +58,10 @@ import {
   WifiOff,
 } from 'lucide-react';
 
-export type WordAnimationType = 'glow' | 'float' | 'spotlight' | 'gold' | 'wave' | 'minimal';
+import { MakhrajVisualizer, AyahMouthCard } from './MakhrajVisualizer';
+import { getWordMakhrajInfo } from '../utils/tajweedMakhraj';
+
+export type WordAnimationType = 'glow' | 'float' | 'spotlight' | 'gold' | 'wave' | 'minimal' | 'makhraj';
 
 export interface WordAnimationOption {
   id: WordAnimationType;
@@ -83,6 +86,17 @@ export const WORD_ANIMATION_OPTIONS: WordAnimationOption[] = [
     descEn: 'Pulsing emerald aura with soothing halo illumination',
     icon: '✨',
     tagBn: 'জনপ্রিয় ও মনোরম',
+  },
+  {
+    id: 'makhraj',
+    nameBn: 'মুখের মাখরাজ লাইভ (Live Articulator)',
+    nameEn: 'Live Mouth Articulator',
+    badgeBn: 'মাখরাজ লাইভ',
+    badgeEn: 'Makhraj Live',
+    descBn: 'পড়ার সময় মুখের কোন স্থান (কণ্ঠ, জিহ্বা, তালু, দাঁত, ঠোঁট) থেকে শব্দটি উচ্চারিত হচ্ছে তা অ্যানিমেশনে লাইভ দেখাবে',
+    descEn: 'Live anatomical animation showing exactly where the sound originates in the mouth, tongue & throat',
+    icon: '🗣️',
+    tagBn: 'মুখের লাইভ মাখরাজ',
   },
   {
     id: 'float',
@@ -179,13 +193,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [wordAnimationType, setWordAnimationType] = useState<WordAnimationType>(() => {
     try {
       const saved = localStorage.getItem('noor_quran_word_anim');
-      if (saved && ['glow', 'float', 'spotlight', 'gold', 'wave', 'minimal'].includes(saved)) {
+      if (saved && ['glow', 'float', 'spotlight', 'gold', 'wave', 'minimal', 'makhraj'].includes(saved)) {
         return saved as WordAnimationType;
       }
     } catch {}
     return 'glow';
   });
   const [showAnimationModal, setShowAnimationModal] = useState<boolean>(false);
+  const [showMakhrajVisualizer, setShowMakhrajVisualizer] = useState<boolean>(false);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -575,6 +590,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
     return numWords - 1;
   }, [isPlaying, currentPlayingAyahNum, audioCurrentTime, audioDuration, surahDetail]);
+
+  // Active Word object during audio recitation (for live Makhraj & speech animation)
+  const activeWordObj = useMemo(() => {
+    if (!isPlaying || !currentPlayingAyahNum || !surahDetail) return null;
+    const curAyah = surahDetail.ayahs.find((a) => a.number === currentPlayingAyahNum);
+    if (!curAyah || !curAyah.words || curAyah.words.length === 0) return null;
+    return curAyah.words[activeWordIndex] || curAyah.words[0] || null;
+  }, [isPlaying, currentPlayingAyahNum, surahDetail, activeWordIndex]);
 
   // Smoothly center the active word in the viewport when it speaks
   useEffect(() => {
@@ -1289,6 +1312,34 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </span>
             </button>
 
+            {/* 2.8 Live Makhraj Articulator Toggle Button */}
+            <button
+              onClick={() => {
+                setShowMakhrajVisualizer(!showMakhrajVisualizer);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              title={selectedLanguage === 'bn' ? 'মুখ ও কণ্ঠের মাখরাজ অ্যানাটমি প্রদর্শন' : 'Live Mouth Articulator'}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
+                showMakhrajVisualizer || wordAnimationType === 'makhraj'
+                  ? isDay ? 'text-[#006747] font-extrabold' : 'text-[#10b981] font-extrabold'
+                  : isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center relative ${
+                showMakhrajVisualizer || wordAnimationType === 'makhraj'
+                  ? isDay ? 'bg-[#008763] text-white shadow-md' : 'bg-[#008763] text-white shadow-md'
+                  : isDay ? 'bg-teal-50 text-teal-700' : 'bg-teal-900/30 text-teal-300'
+              }`}>
+                <span className="text-sm">🗣️</span>
+                {(showMakhrajVisualizer || wordAnimationType === 'makhraj') && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white dark:border-[#0e1c26] animate-ping" />
+                )}
+              </div>
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                {selectedLanguage === 'bn' ? 'মাখরাজ লাইভ' : 'Makhraj Live'}
+              </span>
+            </button>
+
             {/* 3. Prominent Circular Play Audio Button */}
             <button
               onClick={playSurahAudio}
@@ -1781,6 +1832,22 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       </div>
                     </div>
 
+                      {/* LIVE MOUTH DIAGRAM RIGHT BESIDE / ABOVE THE AYAH WORDS */}
+                      {(isThisAyahPlaying || wordAnimationType === 'makhraj' || showMakhrajVisualizer) && (
+                        <div className="my-2 animate-in fade-in zoom-in-95 duration-200">
+                          <AyahMouthCard
+                            arabicWord={
+                              isThisAyahPlaying && activeWordObj?.arabic
+                                ? activeWordObj.arabic
+                                : ayah.words?.[0]?.arabic || ayah.arabic
+                            }
+                            isDay={isDay}
+                            selectedLanguage={selectedLanguage}
+                            onClickExpand={() => setShowMakhrajVisualizer(true)}
+                          />
+                        </div>
+                      )}
+
                       {/* ARABIC WORD-BY-WORD (HIGH-CONTRAST, EXACT SYNC, GORGEOUS JADE-EMERALD CARD) */}
                       {wordByWordMode && ayah.words && ayah.words.length > 0 ? (
                         <div
@@ -1857,6 +1924,20 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   <span className="absolute -top-3 bg-teal-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
                                     <Volume2 className="w-2.5 h-2.5 inline" />
                                     <span>{selectedLanguage === 'bn' ? 'তরঙ্গ নূর' : 'Wave'}</span>
+                                  </span>
+                                );
+                              } else if (wordAnimationType === 'makhraj') {
+                                const mInfo = getWordMakhrajInfo(word.arabic);
+                                const organName = mInfo.primaryLetter ? `${mInfo.primaryLetter.letter} • ${mInfo.primaryLetter.organNameBn}` : 'মুখের মাখরাজ';
+                                activeCardStyle = isDay
+                                  ? 'bg-gradient-to-b from-teal-50 to-emerald-100/90 border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-500/25'
+                                  : 'bg-gradient-to-b from-[#091f26] to-[#04151a] border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/30';
+                                activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
+                                activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
+                                activeBadge = (
+                                  <span className="absolute -top-3.5 bg-[#008763] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 animate-pulse">
+                                    <span>🗣️</span>
+                                    <span>{organName}</span>
                                   </span>
                                 );
                               } else {
@@ -2876,6 +2957,20 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         </div>
                       );
                     }
+                    if (wordAnimationType === 'makhraj') {
+                      return (
+                        <div className={`relative flex flex-col items-center justify-center text-center px-6 py-3 rounded-2xl border-[2.5px] border-[#008763] anim-word-glow ${
+                          isDay ? 'bg-gradient-to-b from-teal-50 to-emerald-100 text-[#006747] ring-4 ring-teal-500/25' : 'bg-gradient-to-b from-[#091f26] to-[#04151a] text-emerald-200 border-emerald-400 ring-4 ring-emerald-400/30'
+                        }`}>
+                          <span className="absolute -top-3.5 bg-[#008763] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 animate-pulse">
+                            <span>🗣️</span>
+                            <span>র (ر) • জিহ্বার আগার পিঠ ও ওপরের তালু</span>
+                          </span>
+                          <span className="font-arabic text-3xl font-black">ٱلرَّحْمَٰنِ</span>
+                          <span className="text-xs font-bold mt-1">পরম করুণাময়</span>
+                        </div>
+                      );
+                    }
                     if (wordAnimationType === 'spotlight') {
                       return (
                         <div className={`relative flex flex-col items-center justify-center text-center px-5 py-3 rounded-2xl border-[3px] border-[#007050] anim-word-spotlight ${
@@ -3061,6 +3156,25 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <span>{selectedLanguage === 'bn' ? 'স্টাইল' : 'Style'}</span>
               </button>
 
+              {/* Quick Makhraj Toggle Button */}
+              <button
+                onClick={() => {
+                  setShowMakhrajVisualizer(!showMakhrajVisualizer);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`px-2 py-1 rounded-lg text-[10px] font-bold border flex items-center gap-1 cursor-pointer transition active:scale-95 ${
+                  showMakhrajVisualizer || wordAnimationType === 'makhraj'
+                    ? 'bg-[#008763] text-white border-emerald-400 shadow-sm'
+                    : isDay
+                    ? 'bg-emerald-50 text-[#006747] border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-emerald-950/60 text-emerald-300 border-emerald-800 hover:bg-emerald-900'
+                }`}
+                title="Toggle Live Mouth Makhraj"
+              >
+                <span>🗣️</span>
+                <span>{selectedLanguage === 'bn' ? 'মাখরাজ' : 'Makhraj'}</span>
+              </button>
+
               {/* Pause/Play Button */}
               <button
                 onClick={() => {
@@ -3106,6 +3220,21 @@ export const QuranView: React.FC<QuranViewProps> = ({
               style={{ width: `${Math.min(100, Math.max(0, audioProgress))}%` }}
             />
           </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* FLOATING / DOCKED LIVE MAKHRAJ ANATOMICAL ARTICULATOR    */}
+      {/* ======================================================== */}
+      {(showMakhrajVisualizer || (isPlaying && wordAnimationType === 'makhraj')) && (
+        <div className="fixed bottom-24 right-3 sm:right-6 z-40 w-[92vw] max-w-[340px] sm:max-w-sm animate-in slide-in-from-right-5 duration-300">
+          <MakhrajVisualizer
+            activeArabicWord={activeWordObj?.arabic || 'ٱلرَّحْمَٰنِ'}
+            isDay={isDay}
+            selectedLanguage={selectedLanguage}
+            onClose={() => setShowMakhrajVisualizer(false)}
+            isCompact={true}
+          />
         </div>
       )}
     </div>
