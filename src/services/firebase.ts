@@ -189,11 +189,6 @@ export function listenToAuthChanges(
 export const db = (() => {
   const dbId = firebaseConfig.firestoreDatabaseId || undefined;
   try {
-    const existingDb = dbId ? getFirestore(app, dbId) : getFirestore(app);
-    if (existingDb) return existingDb;
-  } catch {}
-
-  try {
     return initializeFirestore(
       app,
       {
@@ -202,7 +197,8 @@ export const db = (() => {
       },
       dbId
     );
-  } catch {
+  } catch (err) {
+    console.warn('Firestore fallback notice, using existing instance:', err);
     return dbId ? getFirestore(app, dbId) : getFirestore(app);
   }
 })();
