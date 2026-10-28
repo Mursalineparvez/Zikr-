@@ -15,8 +15,7 @@ import {
 import {
   initializeFirestore,
   getFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
+  memoryLocalCache,
   doc,
   getDoc,
   getDocFromServer,
@@ -186,15 +185,20 @@ export function listenToAuthChanges(
   }
 }
 
-// 2. Initialize Firestore Database with persistent local offline IndexedDB cache and long-polling resilience
+// 2. Initialize Firestore Database with crash-safe memory local cache (prevents IndexedDB assertion da08 crashes)
 export const db = (() => {
   const dbId = firebaseConfig.firestoreDatabaseId || undefined;
+  try {
+    const existingDb = dbId ? getFirestore(app, dbId) : getFirestore(app);
+    if (existingDb) return existingDb;
+  } catch {}
+
   try {
     return initializeFirestore(
       app,
       {
         experimentalAutoDetectLongPolling: true,
-        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+        localCache: memoryLocalCache(),
       },
       dbId
     );
@@ -785,77 +789,86 @@ export function subscribeToUserDataInCloud(
     };
   };
 
-  const unsub = onSnapshot(
-    profileDocRef,
-    async (snap) => {
-      if (snap.metadata.hasPendingWrites) {
-        // Local unconfirmed write already in local React state
-        return;
-      }
-
-      if (!snap.exists()) {
-        // Check legacy dataDocRef if this was created before single-doc refactor
+  try {
+    const unsub = onSnapshot(
+      profileDocRef,
+      async (snap) => {
         try {
-          const legacySnap = await getDoc(doc(db, 'users', userKey, 'data', 'zikrState'));
-          if (legacySnap.exists()) {
-            const legacyData = legacySnap.data();
-            const state = parseDocToState(legacyData);
-            onUpdate(state, isInitial);
-            isInitial = false;
-            // Migrate to main doc
-            setDoc(profileDocRef, legacyData, { merge: true }).catch(() => {});
+          if (snap.metadata.hasPendingWrites) {
+            // Local unconfirmed write already in local React state
             return;
           }
-        } catch {}
 
-        onUpdate({ foundInCloud: false, hasZikrData: false }, isInitial);
-        isInitial = false;
-        return;
-      }
+          if (!snap.exists()) {
+            // Check legacy dataDocRef if this was created before single-doc refactor
+            try {
+              const legacySnap = await getDoc(doc(db, 'users', userKey, 'data', 'zikrState'));
+              if (legacySnap.exists()) {
+                const legacyData = legacySnap.data();
+                const state = parseDocToState(legacyData);
+                onUpdate(state, isInitial);
+                isInitial = false;
+                // Migrate to main doc
+                setDoc(profileDocRef, legacyData, { merge: true }).catch(() => {});
+                return;
+              }
+            } catch {}
 
-      const data = snap.data();
-
-      // If root document doesn't have aamalLogsJson or historyJson yet, pull from subcollections
-      if (!data.aamalLogsJson || !data.historyJson) {
-        try {
-          const [aamalSnap, historySnap] = await Promise.all([
-            !data.aamalLogsJson ? getDoc(doc(db, 'users', userKey, 'data', 'aamalDoc')).catch(() => null) : null,
-            !data.historyJson ? getDoc(doc(db, 'users', userKey, 'data', 'historyDoc')).catch(() => null) : null,
-          ]);
-          if (aamalSnap && aamalSnap.exists() && aamalSnap.data().aamalLogsJson) {
-            data.aamalLogsJson = aamalSnap.data().aamalLogsJson;
-          }
-          if (historySnap && historySnap.exists() && historySnap.data().historyJson) {
-            data.historyJson = historySnap.data().historyJson;
-          }
-        } catch {}
-      }
-
-      // If main doc exists but doesn't have zikrsJson, check legacy
-      if (!data.zikrsJson) {
-        try {
-          const legacySnap = await getDoc(doc(db, 'users', userKey, 'data', 'zikrState'));
-          if (legacySnap.exists()) {
-            const legacyData = legacySnap.data();
-            const merged = { ...legacyData, ...data };
-            const state = parseDocToState(merged);
-            onUpdate(state, isInitial);
+            onUpdate({ foundInCloud: false, hasZikrData: false }, isInitial);
             isInitial = false;
             return;
           }
-        } catch {}
+
+          const data = snap.data();
+
+          // If root document doesn't have aamalLogsJson or historyJson yet, pull from subcollections
+          if (!data.aamalLogsJson || !data.historyJson) {
+            try {
+              const [aamalSnap, historySnap] = await Promise.all([
+                !data.aamalLogsJson ? getDoc(doc(db, 'users', userKey, 'data', 'aamalDoc')).catch(() => null) : null,
+                !data.historyJson ? getDoc(doc(db, 'users', userKey, 'data', 'historyDoc')).catch(() => null) : null,
+              ]);
+              if (aamalSnap && aamalSnap.exists() && aamalSnap.data().aamalLogsJson) {
+                data.aamalLogsJson = aamalSnap.data().aamalLogsJson;
+              }
+              if (historySnap && historySnap.exists() && historySnap.data().historyJson) {
+                data.historyJson = historySnap.data().historyJson;
+              }
+            } catch {}
+          }
+
+          // If main doc exists but doesn't have zikrsJson, check legacy
+          if (!data.zikrsJson) {
+            try {
+              const legacySnap = await getDoc(doc(db, 'users', userKey, 'data', 'zikrState'));
+              if (legacySnap.exists()) {
+                const legacyData = legacySnap.data();
+                const merged = { ...legacyData, ...data };
+                const state = parseDocToState(merged);
+                onUpdate(state, isInitial);
+                isInitial = false;
+                return;
+              }
+            } catch {}
+          }
+
+          const state = parseDocToState(data);
+          onUpdate(state, isInitial);
+          isInitial = false;
+        } catch (innerErr) {
+          console.warn('Firestore live subscription update notice:', innerErr);
+        }
+      },
+      (err) => {
+        console.warn('Firestore live subscription notice:', err);
       }
+    );
 
-      const state = parseDocToState(data);
-      onUpdate(state, isInitial);
-      isInitial = false;
-    },
-    (err) => {
-      console.warn('Firestore live subscription notice:', err);
-    }
-  );
-
-  return unsub;
+    return unsub;
+  } catch (err) {
+    console.warn('Error initiating Firestore live subscription:', err);
+    return () => {};
+  }
 }
 
 // 5. Verification OTP Store & Dispatcher

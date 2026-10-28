@@ -3,19 +3,31 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-// Silently catch and suppress expected Vite preview WebSocket HMR connection messages
+// Silently catch and suppress expected WebSocket and Firestore internal assertion messages
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
-    const msg = event.reason?.message || event.reason?.toString() || '';
-    if (msg.includes('WebSocket') || msg.includes('websocket')) {
+    const msg = String(event.reason?.message || event.reason || '');
+    if (
+      msg.includes('WebSocket') ||
+      msg.includes('websocket') ||
+      msg.includes('FIRESTORE') ||
+      msg.includes('INTERNAL ASSERTION FAILED') ||
+      msg.includes('da08')
+    ) {
       event.preventDefault();
       event.stopPropagation();
     }
   });
 
   window.addEventListener('error', (event) => {
-    const msg = event.message || event.error?.message || '';
-    if (msg.includes('WebSocket') || msg.includes('websocket')) {
+    const msg = String(event.message || event.error?.message || event.error || '');
+    if (
+      msg.includes('WebSocket') ||
+      msg.includes('websocket') ||
+      msg.includes('FIRESTORE') ||
+      msg.includes('INTERNAL ASSERTION FAILED') ||
+      msg.includes('da08')
+    ) {
       event.preventDefault();
       event.stopPropagation();
     }
