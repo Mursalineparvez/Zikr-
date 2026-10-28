@@ -289,3 +289,82 @@ body.theme-day .leaflet-control-attribution {
   --era8: #0d9488; /* Modern - Global Teal */
 }
 
+/* ============================================================ */
+/* QURAN WORD-BY-WORD RECITATION ANIMATION TYPES               */
+/* ============================================================ */
+
+/* 1. Glow Pulse Animation (নূরানি গ্লো) */
+@keyframes wordGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(0, 135, 99, 0.35), 0 0 32px rgba(16, 185, 129, 0.22);
+    transform: scale(1.05);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(0, 135, 99, 0.6), 0 0 48px rgba(16, 185, 129, 0.4);
+    transform: scale(1.08);
+  }
+}
+.anim-word-glow {
+  animation: wordGlowPulse 1.6s ease-in-out infinite;
+}
+
+/* 2. Float & Lift Animation (ভাসমান উত্তোলন) */
+@keyframes wordFloatLift {
+  0%, 100% {
+    transform: translateY(-5px) scale(1.07);
+    box-shadow: 0 14px 28px rgba(0, 135, 99, 0.3);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.10);
+    box-shadow: 0 20px 36px rgba(0, 135, 99, 0.45);
+  }
+}
+.anim-word-float {
+  animation: wordFloatLift 1.8s ease-in-out infinite;
+}
+
+/* 3. Golden Amber Noor Glow (স্বর্ণালী নূর) */
+@keyframes wordGoldPulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.35), 0 0 32px rgba(217, 119, 6, 0.25);
+    transform: scale(1.05);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(245, 158, 11, 0.7), 0 0 52px rgba(217, 119, 6, 0.45);
+    transform: scale(1.09);
+  }
+}
+.anim-word-gold {
+  animation: wordGoldPulse 1.5s ease-in-out infinite;
+}
+
+/* 4. Shimmering Wave Animation (তরঙ্গ ওয়েভ) */
+@keyframes wordShimmerSweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.anim-word-wave-shimmer {
+  background-size: 200% 100%;
+  animation: wordShimmerSweep 2.2s linear infinite;
+}
+
+/* 5. Spotlight Focus Pop (স্পটলাইট ফোকাস) */
+@keyframes wordSpotlightPop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+.anim-word-spotlight {
+  animation: wordSpotlightPop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
