@@ -120,15 +120,6 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
     }
   };
 
-  const [displayMode, setDisplayMode] = useState<'single' | 'grid'>(() => {
-    try {
-      const saved = localStorage.getItem('zikrmate_zikr_display_mode');
-      if (saved === 'single' || saved === 'grid') return saved;
-    } catch {}
-    return 'single';
-  });
-  const [singleIndex, setSingleIndex] = useState<number>(0);
-
   const filteredZikrs = zikrs.filter((z) => {
     if (filterMode === 'targets') return z.target && z.target > 0;
     if (filterMode === 'completed') return z.target && z.count >= z.target;
@@ -487,218 +478,82 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
         </div>
       </div>
 
-        {/* Filter Pills and View Mode Switcher (১টি করে vs সবগুলো) */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <button
-              onClick={() => setFilterMode('all')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
-                filterMode === 'all'
-                  ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
-                  : isDay
-                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
-                  : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
-              }`}
-            >
-              {ZIKIR_UI.all[selectedLanguage]} ({zikrs.length})
-            </button>
+        {/* Filter Pills row matching category pill design */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            onClick={() => setFilterMode('all')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
+              filterMode === 'all'
+                ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
+                : isDay
+                ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
+                : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
+            }`}
+          >
+            {ZIKIR_UI.all[selectedLanguage]} ({zikrs.length})
+          </button>
 
-            <button
-              onClick={() => setFilterMode('targets')}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
-                filterMode === 'targets'
-                  ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
-                  : isDay
-                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
-                  : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
-              }`}
-            >
-              <Target className="w-3.5 h-3.5" />
-              <span>{ZIKIR_UI.withTarget[selectedLanguage]}</span>
-            </button>
+          <button
+            onClick={() => setFilterMode('targets')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
+              filterMode === 'targets'
+                ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
+                : isDay
+                ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
+                : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
+            }`}
+          >
+            <Target className="w-3.5 h-3.5" />
+            <span>{ZIKIR_UI.withTarget[selectedLanguage]}</span>
+          </button>
 
-            <button
-              onClick={() => setFilterMode('completed')}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
-                filterMode === 'completed'
-                  ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
-                  : isDay
-                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
-                  : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
-              }`}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>
-                {ZIKIR_UI.completedFilter[selectedLanguage]} ({completedGoals})
-              </span>
-            </button>
-          </div>
-
-          {/* View mode toggle: 1 by 1 vs Grid */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-black/10 dark:bg-white/5 border border-white/10 shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                setDisplayMode('single');
-                try { localStorage.setItem('zikrmate_zikr_display_mode', 'single'); } catch {}
-              }}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-black transition active:scale-95 cursor-pointer ${
-                displayMode === 'single'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : isDay
-                  ? 'text-slate-700 hover:text-slate-900'
-                  : 'text-teal-200 hover:text-white'
-              }`}
-              title="একটি একটি করে জিকির দেখুন"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>১টি করে</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setDisplayMode('grid');
-                try { localStorage.setItem('zikrmate_zikr_display_mode', 'grid'); } catch {}
-              }}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-black transition active:scale-95 cursor-pointer ${
-                displayMode === 'grid'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : isDay
-                  ? 'text-slate-700 hover:text-slate-900'
-                  : 'text-teal-200 hover:text-white'
-              }`}
-              title="সবগুলো জিকির এক সাথে গ্রিডে দেখুন"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>সবগুলো ({filteredZikrs.length})</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setFilterMode('completed')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer whitespace-nowrap border ${
+              filterMode === 'completed'
+                ? 'bg-[#007e8a] text-white border-[#007e8a] shadow-sm'
+                : isDay
+                ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-xs'
+                : 'bg-teal-950/40 hover:bg-teal-900/40 text-teal-200 border-teal-800/40'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>
+              {ZIKIR_UI.completedFilter[selectedLanguage]} ({completedGoals})
+            </span>
+          </button>
         </div>
 
-      {/* Cards Render: Single Zikr Mode (One at a time) OR Grid Mode */}
+      {/* Grid of Individual 12 Zikr Cards - সব জিকির আগের মতো একসাথে */}
       {filteredZikrs.length > 0 ? (
-        displayMode === 'single' ? (
-          <div className="space-y-3 pb-20">
-            {/* Navigation Header for Single Zikr Mode */}
-            <div
-              className={`p-2.5 sm:p-3 rounded-2xl border flex items-center justify-between gap-2 shadow-xs ${
-                isDay ? 'bg-white border-slate-200' : 'bg-[#061f24] border-[#144349]'
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => setSingleIndex((prev) => Math.max(0, prev - 1))}
-                disabled={singleIndex <= 0}
-                className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-extrabold transition active:scale-95 disabled:opacity-30 cursor-pointer border ${
-                  isDay
-                    ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                    : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>{selectedLanguage === 'bn' ? 'পূর্বের' : 'Prev'}</span>
-              </button>
-
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-black font-mono px-2.5 py-1 rounded-full border ${
-                  isDay ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-black/30 text-emerald-300 border-teal-800/60'
-                }`}>
-                  {String(Math.min(singleIndex + 1, filteredZikrs.length)).padStart(2, '0')} / {String(filteredZikrs.length).padStart(2, '0')}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const targetZikr = filteredZikrs[Math.min(singleIndex, filteredZikrs.length - 1)];
-                    if (targetZikr) {
-                      const realIndex = zikrs.findIndex((z) => z.id === targetZikr.id);
-                      setShowFocusMode(realIndex >= 0 ? realIndex : singleIndex);
-                    } else {
-                      setShowFocusMode(singleIndex);
-                    }
-                  }}
-                  className="flex items-center gap-1 text-xs font-extrabold px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 active:scale-95 transition cursor-pointer shadow-xs"
-                >
-                  <Eye className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>{selectedLanguage === 'bn' ? 'ফোকাস মোড' : 'Focus Mode'}</span>
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSingleIndex((prev) => Math.min(filteredZikrs.length - 1, prev + 1))}
-                disabled={singleIndex >= filteredZikrs.length - 1}
-                className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-extrabold transition active:scale-95 disabled:opacity-30 cursor-pointer border ${
-                  isDay
-                    ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                    : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
-                }`}
-              >
-                <span>{selectedLanguage === 'bn' ? 'পরের' : 'Next'}</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Strictly ONLY the active Single Zikr Card rendered on screen */}
-            {filteredZikrs[Math.min(singleIndex, filteredZikrs.length - 1)] && (
-              <ZikrCard
-                key={filteredZikrs[Math.min(singleIndex, filteredZikrs.length - 1)].id}
-                zikr={filteredZikrs[Math.min(singleIndex, filteredZikrs.length - 1)]}
-                index={Math.min(singleIndex, filteredZikrs.length - 1)}
-                totalCards={zikrs.length}
-                onIncrement={onIncrement}
-                onDecrement={onDecrement}
-                onReset={onReset}
-                onDelete={onDelete}
-                onEdit={onEdit}
-                onMoveUp={onMoveUp}
-                onMoveDown={onMoveDown}
-                onOpenFocusMode={(idx) => {
-                  const targetZikr = filteredZikrs[idx];
-                  if (targetZikr) {
-                    const realIndex = zikrs.findIndex((z) => z.id === targetZikr.id);
-                    setShowFocusMode(realIndex >= 0 ? realIndex : idx);
-                  } else {
-                    setShowFocusMode(idx);
-                  }
-                }}
-                themeMode={themeMode}
-                selectedLanguage={selectedLanguage}
-              />
-            )}
-          </div>
-        ) : (
-          /* Grid mode showing all cards */
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 pb-20">
-            {filteredZikrs.map((zikr, index) => (
-              <ZikrCard
-                key={zikr.id}
-                zikr={zikr}
-                index={index}
-                totalCards={zikrs.length}
-                onIncrement={onIncrement}
-                onDecrement={onDecrement}
-                onReset={onReset}
-                onDelete={onDelete}
-                onEdit={onEdit}
-                onMoveUp={onMoveUp}
-                onMoveDown={onMoveDown}
-                onOpenFocusMode={(idx) => {
-                  const targetZikr = filteredZikrs[idx];
-                  if (targetZikr) {
-                    const realIndex = zikrs.findIndex((z) => z.id === targetZikr.id);
-                    setShowFocusMode(realIndex >= 0 ? realIndex : idx);
-                  } else {
-                    setShowFocusMode(idx);
-                  }
-                }}
-                themeMode={themeMode}
-                selectedLanguage={selectedLanguage}
-              />
-            ))}
-          </div>
-        )
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 pb-20">
+          {filteredZikrs.map((zikr, index) => (
+            <ZikrCard
+              key={zikr.id}
+              zikr={zikr}
+              index={index}
+              totalCards={zikrs.length}
+              onIncrement={onIncrement}
+              onDecrement={onDecrement}
+              onReset={onReset}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+              onOpenFocusMode={(idx) => {
+                const targetZikr = filteredZikrs[idx];
+                if (targetZikr) {
+                  const realIndex = zikrs.findIndex((z) => z.id === targetZikr.id);
+                  setShowFocusMode(realIndex >= 0 ? realIndex : idx);
+                } else {
+                  setShowFocusMode(idx);
+                }
+              }}
+              themeMode={themeMode}
+              selectedLanguage={selectedLanguage}
+            />
+          ))}
+        </div>
       ) : (
         <div
           className={`p-10 text-center rounded-[28px] border ${

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { ZikrItem, ThemeMode, ZikrLanguage } from '../types';
 import {
   Lock,
@@ -79,9 +80,9 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
   const progressPercent = Math.min(100, Math.round(progressFraction * 100));
   const rounds = hasTarget ? Math.floor(zikr.count / target) : 0;
 
-  // SVG circular gauge geometry
-  const radius = 96;
-  const strokeWidth = 8;
+  // SVG circular gauge geometry - enlarged for maximum visibility and tactile experience
+  const radius = 104;
+  const strokeWidth = 9;
   const center = 120; // 240x240 box
   const circumference = 2 * Math.PI * radius;
   // Arc calculation: offset based on progress modulo 1 round so multiple rounds cycle beautifully
@@ -268,12 +269,12 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
     }
   };
 
-  return (
+  const content = (
     <div
       onClick={handleContainerClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className={`fixed inset-0 z-[100] w-full h-[100dvh] flex flex-col justify-between overflow-hidden select-none ${
+      className={`fixed inset-0 z-[9999] w-full h-[100dvh] flex flex-col justify-between overflow-hidden select-none ${
         isDay
           ? 'bg-gradient-to-b from-[#f9fbfb] via-[#eef6f4] to-[#e4f1ed] text-slate-800'
           : 'bg-gradient-to-b from-[#061e23] via-[#09292f] to-[#04161a] text-white'
@@ -290,9 +291,9 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
         </span>
       ))}
 
-      {/* Ambient background glow aura */}
+      {/* Ambient background soft glow aura */}
       <div
-        className={`absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full pointer-events-none blur-3xl opacity-35 transition-all duration-500 ${
+        className={`absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full pointer-events-none blur-3xl opacity-35 transition-all duration-500 ${
           isGoalMet
             ? 'bg-amber-400'
             : isDay
@@ -301,12 +302,12 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
         }`}
       />
 
-      {/* Full-width Responsive Content Container (Edge-to-Edge with Zero Gaps Around It) */}
+      {/* Dedicated Phone-Sized Responsive Content Container */}
       <div
         onClick={(e) => {
           if (!isLocked) e.stopPropagation();
         }}
-        className="relative z-10 w-full max-w-lg mx-auto h-full flex flex-col justify-between overflow-hidden px-2 sm:px-4"
+        className="relative z-10 w-full max-w-[390px] sm:max-w-[420px] mx-auto h-full flex flex-col justify-between overflow-hidden px-3"
       >
 
         {/* ================= 1. SLEEK TOP APP BAR ================= */}
@@ -562,7 +563,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               e.stopPropagation();
               triggerIncrement(e.clientX, e.clientY);
             }}
-            className={`relative w-[190px] h-[190px] sm:w-[210px] sm:h-[210px] rounded-full flex flex-col items-center justify-center cursor-pointer transition-transform duration-100 active:scale-[0.97] group ${
+            className={`relative w-[230px] h-[230px] sm:w-[250px] sm:h-[250px] rounded-full flex flex-col items-center justify-center cursor-pointer transition-transform duration-100 active:scale-[0.97] group ${
               isDay ? 'bg-white shadow-xl shadow-emerald-900/10' : 'bg-[#06242a] shadow-2xl shadow-black/70'
             }`}
           >
@@ -795,8 +796,21 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               {totalCount.toLocaleString()}
             </span>
           </div>
+
+          {/* Requested PWA Footer Line at the very bottom ("ei line ta sobar nice thkabe") */}
+          <div className="pt-1.5 pb-0.5 text-center flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] opacity-75 flex-wrap border-t border-white/5 select-none">
+            <span>Zikr+ PWA</span>
+            <span>•</span>
+            <span>100% Offline &amp; Privacy-First</span>
+            <span>•</span>
+            <span className={isDay ? 'text-[#0066FF] font-bold' : 'text-sky-300 font-bold'}>
+              📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ
+            </span>
+          </div>
         </div>
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 };
