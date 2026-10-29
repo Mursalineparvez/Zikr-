@@ -273,8 +273,10 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
       onClick={handleContainerClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-start overflow-y-auto sm:overflow-hidden select-none p-0 sm:py-3 sm:px-2 ${
-        isDay ? 'bg-slate-900/60 backdrop-blur-md' : 'bg-black/85 backdrop-blur-md'
+      className={`fixed inset-0 z-[100] w-full h-[100dvh] flex flex-col justify-between overflow-hidden select-none ${
+        isDay
+          ? 'bg-gradient-to-b from-[#f9fbfb] via-[#eef6f4] to-[#e4f1ed] text-slate-800'
+          : 'bg-gradient-to-b from-[#061e23] via-[#09292f] to-[#04161a] text-white'
       }`}
     >
       {/* Floating Micro Particle +1 */}
@@ -288,27 +290,24 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
         </span>
       ))}
 
-      {/* Device-Fitted Phone/Tablet Smart Frame (Top-aligned, Compact Height, No Wasted Space) */}
+      {/* Ambient background glow aura */}
+      <div
+        className={`absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full pointer-events-none blur-3xl opacity-35 transition-all duration-500 ${
+          isGoalMet
+            ? 'bg-amber-400'
+            : isDay
+            ? 'bg-emerald-300'
+            : 'bg-teal-500'
+        }`}
+      />
+
+      {/* Full-width Responsive Content Container (Edge-to-Edge with Zero Gaps Around It) */}
       <div
         onClick={(e) => {
           if (!isLocked) e.stopPropagation();
         }}
-        className={`relative w-full max-w-[420px] h-full sm:h-auto sm:max-h-[820px] sm:rounded-[36px] flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300 border ${
-          isDay
-            ? 'bg-gradient-to-b from-[#f9fbfb] via-[#eef6f4] to-[#e4f1ed] text-slate-800 border-emerald-600/30 shadow-emerald-950/20'
-            : 'bg-gradient-to-b from-[#061e23] via-[#09292f] to-[#04161a] text-white border-teal-500/20 shadow-black/80'
-        }`}
+        className="relative z-10 w-full max-w-lg mx-auto h-full flex flex-col justify-between overflow-hidden px-2 sm:px-4"
       >
-        {/* Glow ambient background aura */}
-        <div
-          className={`absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full pointer-events-none blur-3xl opacity-35 transition-all duration-500 ${
-            isGoalMet
-              ? 'bg-amber-400'
-              : isDay
-              ? 'bg-emerald-300'
-              : 'bg-teal-500'
-          }`}
-        />
 
         {/* ================= 1. SLEEK TOP APP BAR ================= */}
         <div className="relative z-20 px-3.5 pt-3 sm:pt-4 pb-2 flex items-center justify-between gap-1.5 border-b border-white/10 shrink-0">
