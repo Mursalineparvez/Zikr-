@@ -232,6 +232,18 @@ const BENGALI_AYAH_PRONUNCIATION_MAP: Record<string, string> = {
   'innal-insāna lafī khusr': 'ইন্নাল ইনসানা লাফী খুসর',
   'innal-insana lafi khusr': 'ইন্নাল ইনসানা লাফী খুসর',
 
+  // Surah Al-Fajr (89:27 - 89:30)
+  "yā ayyatuhan-nafsul-muṭma'innah": "ইয়া আইয়্যাতুহান নাফসুল মুত্বমা'ইন্নাহ",
+  "irji'ī ilā rabbiki rāḍiyatam-marḍiyyah": "ইরজি'ঈ ইলা রাব্বিকি রাদিয়াতাম মারদিয়্যাহ",
+  "fadkhulī fī 'ibādī": "ফাদখুলী ফী 'ইবাদী",
+  "fadkhulee fee 'ibaadee": "ফাদখুলী ফী 'ইবাদী",
+  "fa-ud'khulī fī ʿibādī": "ফাদখুলী ফী 'ইবাদী",
+  "fa-ud'khulee fee 'ibaadee": "ফাদখুলী ফী 'ইবাদী",
+  "wadkhulī jannatī": "ওয়াদখুলী জান্নাতী",
+  "wadkhulee jannatee": "ওয়াদখুলী জান্নাতী",
+  "wa-ud'khulī jannatī": "ওয়াদখুলী জান্নাতী",
+  "wa-ud'khulee jannatee": "ওয়াদখুলী জান্নাতী",
+
   // Surah Al-Qadr (97:1 - 97:5)
   'innā anzalnāhu fī laylatil-qadr': 'ইন্না আনযালনাহু ফী লাইলাতিল ক্বদর',
   'inna anzalnahu fi laylatil-qadr': 'ইন্না আনযালনাহু ফী লাইলাতিল ক্বদর',
