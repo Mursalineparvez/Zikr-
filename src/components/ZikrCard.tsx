@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw, Trash2, Edit3, CheckCircle2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
+import { RotateCcw, Trash2, Edit3, CheckCircle2, ArrowUp, ArrowDown, Plus, Eye } from 'lucide-react';
 import { ZikrItem, ThemeMode, ZikrLanguage } from '../types';
 
 interface ZikrCardProps {
@@ -13,6 +13,7 @@ interface ZikrCardProps {
   onEdit: (zikr: ZikrItem) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
+  onOpenFocusMode?: (index: number) => void;
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
 }
@@ -28,6 +29,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
   onEdit,
   onMoveUp,
   onMoveDown,
+  onOpenFocusMode,
   themeMode = 'night',
   selectedLanguage = 'bn',
 }) => {
@@ -296,6 +298,26 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             <RotateCcw className="w-3 h-3" />
             <span>{getResetLabel(currentLang)}</span>
           </button>
+
+          {/* Focus Mode button */}
+          {onOpenFocusMode && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenFocusMode(index);
+              }}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold transition active:scale-95 cursor-pointer border ${
+                isDay
+                  ? 'bg-emerald-50 hover:bg-emerald-100 text-[#006747] border-emerald-200'
+                  : 'bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border-emerald-700/60'
+              }`}
+              title="ফোকাস মোডে এক নজরে পড়ুন"
+            >
+              <Eye className="w-3 h-3" />
+              <span>ফোকাস</span>
+            </button>
+          )}
         </div>
       </div>
 

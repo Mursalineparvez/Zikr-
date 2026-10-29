@@ -436,14 +436,17 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             {/* Focus Mode Button */}
             <button
               onClick={() => setShowFocusMode(0)}
-              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition active:scale-95 cursor-pointer shadow-xs ${
+              className={`flex items-center gap-1.5 text-xs font-extrabold px-3.5 py-2 rounded-xl border transition active:scale-95 cursor-pointer shadow-xs ${
                 isDay
-                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
-                  : 'bg-[#061f24] hover:bg-[#092a30] text-emerald-300 border-[#144349]'
+                  ? 'bg-gradient-to-r from-emerald-50 to-teal-50 hover:bg-emerald-100 text-[#006747] border-emerald-300'
+                  : 'bg-gradient-to-r from-[#072d2f] to-[#0a383d] hover:bg-[#0c4248] text-emerald-300 border-teal-700/60 shadow-teal-950/40'
               }`}
             >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Focus Mode</span>
+              <Eye className="w-3.5 h-3.5 text-amber-400" />
+              <span>{selectedLanguage === 'bn' ? 'ফোকাস মোড' : 'Focus Mode'}</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-400 text-slate-950 leading-none">
+                NEW
+              </span>
             </button>
 
             {/* + Zikr Add Button: [ + + জিকির যোগ ] */}
@@ -469,6 +472,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
           onClose={() => setShowFocusMode(null)}
           themeMode={themeMode}
           selectedLanguage={selectedLanguage}
+          soundEnabled={soundEnabled}
         />
       )}
 
@@ -534,6 +538,15 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               onEdit={onEdit}
               onMoveUp={onMoveUp}
               onMoveDown={onMoveDown}
+              onOpenFocusMode={(idx) => {
+                const targetZikr = filteredZikrs[idx];
+                if (targetZikr) {
+                  const realIndex = zikrs.findIndex((z) => z.id === targetZikr.id);
+                  setShowFocusMode(realIndex >= 0 ? realIndex : idx);
+                } else {
+                  setShowFocusMode(idx);
+                }
+              }}
               themeMode={themeMode}
               selectedLanguage={selectedLanguage}
             />
