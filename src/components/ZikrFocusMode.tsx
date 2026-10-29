@@ -273,7 +273,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
       onClick={handleContainerClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className={`fixed inset-0 z-[100] flex items-center justify-center overflow-hidden select-none ${
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-start overflow-y-auto sm:overflow-hidden select-none p-0 sm:py-3 sm:px-2 ${
         isDay ? 'bg-slate-900/60 backdrop-blur-md' : 'bg-black/85 backdrop-blur-md'
       }`}
     >
@@ -288,12 +288,12 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
         </span>
       ))}
 
-      {/* Device-Fitted Phone/Tablet Smart Frame */}
+      {/* Device-Fitted Phone/Tablet Smart Frame (Top-aligned, Compact Height, No Wasted Space) */}
       <div
         onClick={(e) => {
           if (!isLocked) e.stopPropagation();
         }}
-        className={`relative w-full h-[100dvh] sm:h-[94dvh] sm:max-h-[820px] sm:max-w-[410px] sm:rounded-[38px] flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300 border ${
+        className={`relative w-full max-w-[420px] h-full sm:h-auto sm:max-h-[820px] sm:rounded-[36px] flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300 border ${
           isDay
             ? 'bg-gradient-to-b from-[#f9fbfb] via-[#eef6f4] to-[#e4f1ed] text-slate-800 border-emerald-600/30 shadow-emerald-950/20'
             : 'bg-gradient-to-b from-[#061e23] via-[#09292f] to-[#04161a] text-white border-teal-500/20 shadow-black/80'
@@ -557,13 +557,13 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
         </div>
 
         {/* ================= 3. CIRCULAR SMART TASBEEH GAUGE (Centerpiece) ================= */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center py-1 sm:py-2 px-4">
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center py-1 px-4">
           <div
             onClick={(e) => {
               e.stopPropagation();
               triggerIncrement(e.clientX, e.clientY);
             }}
-            className={`relative w-[210px] h-[210px] sm:w-[230px] sm:h-[230px] rounded-full flex flex-col items-center justify-center cursor-pointer transition-transform duration-100 active:scale-[0.97] group ${
+            className={`relative w-[190px] h-[190px] sm:w-[210px] sm:h-[210px] rounded-full flex flex-col items-center justify-center cursor-pointer transition-transform duration-100 active:scale-[0.97] group ${
               isDay ? 'bg-white shadow-xl shadow-emerald-900/10' : 'bg-[#06242a] shadow-2xl shadow-black/70'
             }`}
           >
@@ -636,16 +636,16 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
             </svg>
 
             {/* Inner Dial Content */}
-            <div className="relative z-10 flex flex-col items-center justify-center text-center select-none space-y-1">
+            <div className="relative z-10 flex flex-col items-center justify-center text-center select-none space-y-0.5">
               {/* Round / Cycle badge */}
               <div className="flex items-center gap-1">
                 {isGoalMet ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.2 text-[9px] font-black rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
                     <span>{selectedLanguage === 'bn' ? 'সম্পন্ন' : 'Completed'}</span>
                   </span>
                 ) : (
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest opacity-60">
+                  <span className="text-[9px] font-extrabold uppercase tracking-widest opacity-60">
                     {selectedLanguage === 'bn' ? `চক্র: ${rounds + 1}` : `Round: ${rounds + 1}`}
                   </span>
                 )}
@@ -657,10 +657,10 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   isBumping ? 'scale-110 text-amber-400' : isDay ? 'text-slate-900' : 'text-white'
                 } ${
                   zikr.count >= 10000
-                    ? 'text-4xl sm:text-5xl'
+                    ? 'text-3xl sm:text-4xl'
                     : zikr.count >= 1000
-                    ? 'text-5xl sm:text-6xl'
-                    : 'text-6xl sm:text-7xl'
+                    ? 'text-4xl sm:text-5xl'
+                    : 'text-5xl sm:text-6xl'
                 }`}
               >
                 {zikr.count.toLocaleString()}
@@ -668,7 +668,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
 
               {/* Target / Progress Pill */}
               <div
-                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                className={`text-[10px] font-bold px-2 py-0.2 rounded-full border ${
                   isDay
                     ? 'bg-slate-100 text-slate-600 border-slate-200'
                     : 'bg-black/30 text-teal-200 border-teal-800/60'
@@ -689,10 +689,10 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
           </div>
 
           {/* Micro hint below dial */}
-          <p className="text-[10px] tracking-wider uppercase opacity-50 font-bold mt-2 select-none">
+          <p className="text-[9px] tracking-wider uppercase opacity-50 font-bold mt-1 select-none">
             {isLocked
               ? selectedLanguage === 'bn'
-                ? '🔒 লক সক্রিয় • স্ক্রিনের যেকোনো স্থানে ট্যাপ করুন'
+                ? '🔒 লক সক্রিয় • যেকোনো স্থানে ট্যাপ করুন'
                 : '🔒 Locked • Tap anywhere to count'
               : selectedLanguage === 'bn'
               ? 'চক্রে ট্যাপ করুন বা নিচের বাটনে চাপুন'
@@ -701,22 +701,22 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
         </div>
 
         {/* ================= 4. CONTROLS, ACTIONS & NAVIGATION ================= */}
-        <div className="relative z-20 px-4 pt-2 pb-4 sm:pb-5 space-y-2.5 shrink-0 border-t border-white/10 bg-black/10 backdrop-blur-xs">
+        <div className="relative z-20 px-3.5 pt-1.5 pb-2.5 sm:pb-3 space-y-2 shrink-0 border-t border-white/10 bg-black/10 backdrop-blur-xs">
           {/* Main Large +1 Count Button & Decrement button */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* -1 Decrement button */}
             <button
               type="button"
               onClick={triggerDecrement}
               disabled={zikr.count <= 0 || isLocked}
-              className={`p-3.5 rounded-2xl font-bold transition active:scale-95 disabled:opacity-30 cursor-pointer border flex items-center justify-center shrink-0 ${
+              className={`p-3 rounded-xl font-bold transition active:scale-95 disabled:opacity-30 cursor-pointer border flex items-center justify-center shrink-0 ${
                 isDay
                   ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs'
                   : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
               }`}
               title="১ কমান (-1)"
             >
-              <Minus className="w-5 h-5 stroke-[2.5]" />
+              <Minus className="w-4 h-4 stroke-[2.5]" />
             </button>
 
             {/* +1 Primary Big Tactile Count Button */}
@@ -726,9 +726,9 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                 e.stopPropagation();
                 triggerIncrement(e.clientX, e.clientY);
               }}
-              className="flex-1 py-3.5 sm:py-4 rounded-2xl font-black text-sm sm:text-base tracking-wide shadow-lg shadow-emerald-900/30 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-gradient-to-r from-[#006747] via-[#007a52] to-[#008763] hover:from-[#005439] hover:to-[#006e4c] text-white border-none"
+              className="flex-1 py-3 rounded-xl font-black text-sm tracking-wide shadow-lg shadow-emerald-900/30 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#006747] via-[#007a52] to-[#008763] hover:from-[#005439] hover:to-[#006e4c] text-white border-none"
             >
-              <Plus className="w-5 h-5 stroke-[3]" />
+              <Plus className="w-4 h-4 stroke-[3]" />
               <span>
                 +১ {selectedLanguage === 'bn' ? 'গণনা' : 'Count'} ({displayPronunciation})
               </span>
