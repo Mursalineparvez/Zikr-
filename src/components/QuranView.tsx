@@ -24,6 +24,13 @@ import {
 } from '../utils/appTranslations';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { getSurahInsight } from '../utils/surahInsights';
+import {
+  detectTajweedRule,
+  detectWordBadges,
+  TAJWEED_LEGEND_ITEMS,
+  TAJWEED_SIGN_LEGEND_ITEMS,
+  getColoredPronunciationTokens,
+} from '../utils/tajweedColorHelper';
 
 const POPULAR_SURAHS = [1, 18, 36, 55, 56, 67, 78, 112, 113, 114];
 import {
@@ -165,11 +172,13 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
   // Reader Customization & Display Settings
   const [wordByWordMode, setWordByWordMode] = useState<boolean>(true);
+  const [tajweedColorMode, setTajweedColorMode] = useState<boolean>(true);
   const [showTranslation, setShowTranslation] = useState<boolean>(true);
   const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
   const [fontSize, setFontSize] = useState<FontSizeType>('large');
   const [selectedReciterId, setSelectedReciterId] = useState<string>('ar.alafasy');
   const [autoScroll, setAutoScroll] = useState<boolean>(true);
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState<'normal' | 'slow' | 'fast'>('normal');
 
   // Audio Playback State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -650,7 +659,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     }
   }, [currentPlayingAyahNum, isPlaying, autoScroll]);
 
-  // Continuous Smooth Auto-scroll Engine for Reading Pace when Audio is not active
+  // Continuous Ultra-Smooth Auto-scroll Engine for Reading Pace when Audio is not active
   useEffect(() => {
     if (!autoScroll || selectedSurahNumber === null || isPlaying || !surahDetail) {
       return;
@@ -661,33 +670,84 @@ export const QuranView: React.FC<QuranViewProps> = ({
     let isUserInteracting = false;
     let interactionTimeout: ReturnType<typeof setTimeout>;
 
+    // Target sub-pixel scroll position tracker for 100% hardware-accelerated smooth gliding
+    let targetY = window.scrollY;
+
     // Temporarily pause auto-scroll if user manually drags or touches the screen
     const handleUserInteraction = () => {
       isUserInteracting = true;
+      targetY = window.scrollY;
       clearTimeout(interactionTimeout);
       interactionTimeout = setTimeout(() => {
         isUserInteracting = false;
-      }, 2500); // Resume auto-scrolling 2.5s after user stops touching/scrolling
+        targetY = window.scrollY;
+      }, 1800); // Resume auto-scrolling 1.8s after user stops touching/scrolling
     };
 
     window.addEventListener('wheel', handleUserInteraction, { passive: true });
     window.addEventListener('touchstart', handleUserInteraction, { passive: true });
     window.addEventListener('touchmove', handleUserInteraction, { passive: true });
 
-    // Smooth continuous glide downwards (~32px per second, natural Quran reading pace)
-    const scrollSpeedPixelsPerSec = 32;
+    // Seconds required per Arabic word based on speed setting (slower pace for relaxed reading)
+    const secPerWord = autoScrollSpeed === 'slow' ? 4.0 : autoScrollSpeed === 'fast' ? 1.2 : 2.5;
+
+    let currentSpeed = 12; // base px/s
+    let lastSpeedCheckTime = 0;
+
+    // Throttle DOM measuring to once every 600ms to completely prevent 60fps layout thrashing & jitter
+    const updateVerseSpeed = (now: number) => {
+      if (now - lastSpeedCheckTime < 600) return;
+      lastSpeedCheckTime = now;
+
+      if (!surahDetail || !surahDetail.ayahs || surahDetail.ayahs.length === 0) return;
+
+      const viewportCenter = window.scrollY + window.innerHeight * 0.35;
+      let activeAyah = surahDetail.ayahs[0];
+
+      for (const ayah of surahDetail.ayahs) {
+        const el = ayahRefs.current.get(ayah.number);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const topInDoc = rect.top + window.scrollY;
+          const bottomInDoc = rect.bottom + window.scrollY;
+          if (viewportCenter >= topInDoc && viewportCenter <= bottomInDoc) {
+            activeAyah = ayah;
+            break;
+          }
+        }
+      }
+
+      const el = ayahRefs.current.get(activeAyah.number);
+      const height = el ? Math.max(100, el.offsetHeight) : 140;
+      const wordCount = activeAyah.words?.length || activeAyah.arabic.split(' ').filter(Boolean).length || 8;
+      const totalTimeSec = Math.max(2, wordCount * secPerWord);
+
+      currentSpeed = Math.min(35, Math.max(4, height / totalTimeSec));
+    };
 
     const scrollStep = (now: number) => {
       const delta = (now - lastTime) / 1000;
       lastTime = now;
 
       if (!isUserInteracting && delta > 0 && delta < 0.2) {
-        const moveAmount = scrollSpeedPixelsPerSec * delta;
+        updateVerseSpeed(now);
+
+        // Keep targetY in sync if user manually scrolled away
+        if (Math.abs(targetY - window.scrollY) > 25) {
+          targetY = window.scrollY;
+        }
+
+        targetY += currentSpeed * delta;
         const maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
 
-        if (window.scrollY < maxScrollTop - 10) {
-          window.scrollBy(0, moveAmount);
+        if (targetY < maxScrollTop - 5) {
+          window.scrollTo(0, targetY);
+        } else {
+          targetY = maxScrollTop;
+          window.scrollTo(0, targetY);
         }
+      } else {
+        targetY = window.scrollY;
       }
 
       animFrameId = requestAnimationFrame(scrollStep);
@@ -702,7 +762,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       window.removeEventListener('touchstart', handleUserInteraction);
       window.removeEventListener('touchmove', handleUserInteraction);
     };
-  }, [autoScroll, selectedSurahNumber, isPlaying, surahDetail]);
+  }, [autoScroll, autoScrollSpeed, selectedSurahNumber, isPlaying, surahDetail]);
 
   // Handle clicking on any word in word-by-word mode to seek audio directly to that word
   const handleWordClick = (ayah: QuranAyah, wordIndex: number) => {
@@ -1445,6 +1505,31 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </span>
             </button>
 
+            {/* 2.2 Color-Coded Tajweed & Pronunciation Toggle */}
+            <button
+              onClick={() => {
+                setTajweedColorMode(!tajweedColorMode);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              title={selectedLanguage === 'bn' ? 'কালার কোডেড তাজবীদ ও উচ্চরণ চালু/বন্ধ করুন' : 'Toggle Color-Coded Tajweed & Pronunciation'}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
+                tajweedColorMode
+                  ? isDay ? 'text-rose-700 font-extrabold' : 'text-rose-400 font-extrabold'
+                  : 'text-slate-400'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center relative ${
+                tajweedColorMode
+                  ? isDay ? 'bg-gradient-to-br from-rose-100 via-cyan-100 to-amber-100 text-rose-600 ring-2 ring-rose-500/30' : 'bg-gradient-to-br from-rose-950/80 via-cyan-950/80 to-purple-950/80 text-rose-400 ring-2 ring-rose-400/30'
+                  : isDay ? 'bg-slate-100 text-slate-400' : 'bg-[#152a36] text-slate-500'
+              }`}>
+                <Sparkles className="w-4 h-4 text-rose-500" />
+              </div>
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                {selectedLanguage === 'bn' ? (tajweedColorMode ? 'রঙিন তাজবীদ ON' : 'রঙিন তাজবীদ OFF') : (tajweedColorMode ? 'Color Tajweed' : 'Tajweed OFF')}
+              </span>
+            </button>
+
             {/* 2.5 Animation Type Selector (Active Word Highlight Styles) */}
             <button
               onClick={() => {
@@ -1526,24 +1611,48 @@ export const QuranView: React.FC<QuranViewProps> = ({
             </button>
 
             {/* 4. AutoScroll Toggle */}
-            <button
-              onClick={() => {
-                setAutoScroll(!autoScroll);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
-                autoScroll
-                  ? isDay ? 'text-[#006747]' : 'text-[#10b981]'
-                  : 'text-slate-400'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDay ? 'bg-[#edf5f4] text-[#006747]' : 'bg-[#152e3c] text-[#10b981]'}`}>
-                <RotateCcw className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-bold whitespace-nowrap">
-                AutoScroll: {autoScroll ? 'ON' : 'OFF'}
-              </span>
-            </button>
+            <div className="flex flex-col items-center justify-center shrink-0 min-w-[68px]">
+              <button
+                onClick={() => {
+                  setAutoScroll(!autoScroll);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`flex flex-col items-center justify-center gap-1 p-1.5 rounded-xl transition cursor-pointer ${
+                  autoScroll
+                    ? isDay ? 'text-[#006747]' : 'text-[#10b981]'
+                    : 'text-slate-400'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center relative ${
+                  autoScroll 
+                    ? isDay ? 'bg-[#edf5f4] text-[#006747] ring-2 ring-[#006747]/30' : 'bg-[#152e3c] text-[#10b981] ring-2 ring-[#10b981]/30' 
+                    : isDay ? 'bg-slate-100 text-slate-400' : 'bg-[#152a36] text-slate-500'
+                }`}>
+                  <RotateCcw className={`w-4 h-4 ${autoScroll ? 'animate-spin-slow' : ''}`} />
+                </div>
+                <span className="text-[10px] font-bold whitespace-nowrap">
+                  AutoScroll: {autoScroll ? 'ON' : 'OFF'}
+                </span>
+              </button>
+
+              {autoScroll && (
+                <button
+                  onClick={() => {
+                    const next = autoScrollSpeed === 'normal' ? 'slow' : autoScrollSpeed === 'slow' ? 'fast' : 'normal';
+                    setAutoScrollSpeed(next);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className="mt-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-[#10b981] dark:text-[#10b981] text-[9px] font-extrabold transition active:scale-95 cursor-pointer border border-emerald-500/30"
+                  title={selectedLanguage === 'bn' ? 'গতি পরিবর্তন করুন' : 'Change Speed'}
+                >
+                  {autoScrollSpeed === 'slow'
+                    ? (selectedLanguage === 'bn' ? '🐢 ধীর' : 'Slow')
+                    : autoScrollSpeed === 'fast'
+                    ? (selectedLanguage === 'bn' ? '⚡ দ্রুত' : 'Fast')
+                    : (selectedLanguage === 'bn' ? '📖 স্বাভাবিক' : 'Normal')}
+                </button>
+              )}
+            </div>
 
             {/* 5. Details Button */}
             <button
@@ -1804,6 +1913,65 @@ export const QuranView: React.FC<QuranViewProps> = ({
           {/* ======================================================== */}
           {surahDetail && !isLoadingSurah && (
             <div className="space-y-4">
+              {/* Tajweed Color & Sign Legend Bar (Matching Physical Quran Color & Sign Coding) */}
+              {tajweedColorMode && (
+                <div
+                  className={`p-3.5 rounded-[22px] border shadow-md space-y-2.5 animate-in fade-in transition-all ${
+                    isDay
+                      ? 'bg-gradient-to-r from-emerald-50/90 via-teal-50/80 to-cyan-50/90 border-emerald-200/90 text-slate-800'
+                      : 'bg-gradient-to-r from-[#091f27] via-[#0b2732] to-[#0f303d] border-[#184452] text-slate-200 shadow-black/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 text-xs font-bold">
+                    <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>
+                        {selectedLanguage === 'bn'
+                          ? 'তাজবীদ কালার ও সংকেত গাইড (Tajweed & Sign Guide)'
+                          : 'Tajweed & Notation Sign Guide'}
+                      </span>
+                    </span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold">
+                      {selectedLanguage === 'bn' ? 'শব্দ ও উচ্চরণ রঙিন সংকেত' : 'Color & Sign Coded'}
+                    </span>
+                  </div>
+
+                  {/* Rules Color Items */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px] font-bold">
+                    {TAJWEED_LEGEND_ITEMS.map((item) => (
+                      <div
+                        key={item.rule}
+                        className={`px-2.5 py-1 rounded-xl border flex items-center gap-1.5 shrink-0 shadow-xs ${
+                          isDay
+                            ? `${item.dayBg} ${item.dayText} ${item.dayBorder}`
+                            : `${item.nightBg} ${item.nightText} ${item.nightBorder}`
+                        }`}
+                      >
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs" style={{ backgroundColor: item.hexColor }} />
+                        <span>{selectedLanguage === 'bn' ? item.labelBn : item.labelEn}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Notation Signs Legend Bar (১, ৩, ৪ আলিফ টান, গুন্নাহ, মোটা পাঠ, ক্বাল ক্বলা) */}
+                  {selectedLanguage === 'bn' && (
+                    <div className={`pt-2 border-t flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-[10px] font-bold ${isDay ? 'border-emerald-200/80' : 'border-[#184452]'}`}>
+                      <span className="shrink-0 text-amber-600 dark:text-amber-400 font-extrabold mr-1">সংকেত সংক্ষেপ:</span>
+                      {TAJWEED_SIGN_LEGEND_ITEMS.map((sign) => (
+                        <div
+                          key={sign.symbol}
+                          title={sign.descriptionBn}
+                          className={`px-2 py-0.5 rounded-lg border flex items-center gap-1 shrink-0 ${sign.bgClass} ${sign.colorClass} ${sign.borderClass}`}
+                        >
+                          <span className="font-black px-1 rounded bg-white/40 dark:bg-black/30 border border-current/20">{sign.symbol}</span>
+                          <span>{sign.labelBn}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {displayedAyahs.map((ayah, index) => {
                 const bookmarked = isAyahBookmarked(surahDetail.number, ayah.number);
                 const isCopied = copiedAyah === ayah.number;
@@ -2042,17 +2210,30 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
                               }
                             } else {
-                              // Inactive words
-                              activeCardStyle = isDay
-                                ? 'bg-[#f0fdf4] border border-[#bbf7d0] hover:bg-[#dcfce7] rounded-2xl px-3.5 py-2.5 shadow-sm text-slate-900'
-                                : 'bg-[#0f2935] border border-[#1e4e5f] hover:bg-[#153545] rounded-2xl px-3.5 py-2.5 shadow-sm text-slate-100';
-                              activeArabicTextStyle = isDay
-                                ? 'text-[#065f46] font-black'
-                                : 'text-emerald-300 font-black';
-                              activeMeaningStyle = isDay ? 'text-[#047857] font-bold' : 'text-[#34d399] font-bold';
+                              // Inactive words (Tajweed color coded or default)
+                              if (tajweedColorMode) {
+                                const tajweedStyle = detectTajweedRule(word.arabic, wIdx);
+                                activeCardStyle = isDay
+                                  ? `${tajweedStyle.dayBg} ${tajweedStyle.dayBorder} border hover:shadow-md rounded-2xl px-3.5 py-2.5 shadow-xs`
+                                  : `${tajweedStyle.nightBg} ${tajweedStyle.nightBorder} border hover:shadow-md rounded-2xl px-3.5 py-2.5 shadow-xs`;
+                                activeArabicTextStyle = isDay ? `${tajweedStyle.dayText} font-black` : `${tajweedStyle.nightText} font-black`;
+                                activeMeaningStyle = isDay ? `${tajweedStyle.dayText} font-bold opacity-90` : `${tajweedStyle.nightText} font-bold opacity-90`;
+                              } else {
+                                activeCardStyle = isDay
+                                  ? 'bg-[#f0fdf4] border border-[#bbf7d0] hover:bg-[#dcfce7] rounded-2xl px-3.5 py-2.5 shadow-sm text-slate-900'
+                                  : 'bg-[#0f2935] border border-[#1e4e5f] hover:bg-[#153545] rounded-2xl px-3.5 py-2.5 shadow-sm text-slate-100';
+                                activeArabicTextStyle = isDay
+                                  ? 'text-[#065f46] font-black'
+                                  : 'text-emerald-300 font-black';
+                                activeMeaningStyle = isDay ? 'text-[#047857] font-bold' : 'text-[#34d399] font-bold';
+                              }
                             }
 
-                            return (
+                             // Get formatted pronunciation and Tajweed badges for this word
+                             const wordPronunciation = getFormattedTransliteration(word.transliteration || '', word.arabic, selectedLanguage);
+                             const wordBadges = detectWordBadges(word.arabic, wordPronunciation);
+
+                             return (
                               <div
                                 key={wIdx}
                                 ref={(el) => {
@@ -2075,10 +2256,32 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   {word.arabic}
                                 </span>
 
+                                {/* Word Pronunciation (with Tajweed Badges) */}
+                                {(wordPronunciation || word.transliteration) && (
+                                  <div dir="ltr" className="flex items-center justify-center gap-1 my-0.5">
+                                    <span className={`text-xs sm:text-sm font-extrabold transition-colors ${activeMeaningStyle}`}>
+                                      {wordPronunciation || word.transliteration}
+                                    </span>
+                                    {selectedLanguage === 'bn' && wordBadges && wordBadges.length > 0 && (
+                                      <span className="inline-flex items-center gap-0.5 -mt-2">
+                                        {wordBadges.map((b, bIdx) => (
+                                          <sup
+                                            key={bIdx}
+                                            title={b.labelBn}
+                                            className={`px-1 py-0.2 rounded-md border text-[9px] font-black leading-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
+                                          >
+                                            {b.symbol}
+                                          </sup>
+                                        ))}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
                                 {/* Word Meaning Translation */}
                                 <span
                                   dir="ltr"
-                                  className={`text-xs sm:text-sm font-sans mt-0.5 px-1 text-center max-w-[110px] leading-snug font-semibold transition-colors ${activeMeaningStyle}`}
+                                  className={`text-[11px] sm:text-xs font-sans px-1 text-center max-w-[110px] leading-snug font-medium opacity-80 transition-colors ${activeMeaningStyle}`}
                                 >
                                   {word.translation || ''}
                                 </span>
@@ -2109,12 +2312,58 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
                       {/* Transliteration (Pronunciation) - Formatted according to user's selected language */}
                       {showTransliteration && (
-                        <div
-                          className={`text-xs sm:text-sm italic font-sans leading-relaxed pt-1 font-semibold ${
-                            isDay ? 'text-[#006747]' : 'text-[#10b981]'
-                          }`}
-                        >
-                          {getFormattedTransliteration(ayah.transliteration, ayah.arabic, selectedLanguage)}
+                        <div className="pt-2">
+                          {tajweedColorMode ? (
+                            <div className="space-y-1.5">
+                              <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <span>📖</span>
+                                <span>
+                                  {selectedLanguage === 'bn' ? 'বাংলা উচ্চারণ (তাজবীদ কালার ও সংকেতচিহ্নসহ):' : 'Pronunciation (Color & Tajweed Coded):'}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-relaxed">
+                                {getColoredPronunciationTokens(
+                                  getFormattedTransliteration(ayah.transliteration, ayah.arabic, selectedLanguage),
+                                  ayah.words,
+                                  isDay
+                                ).map((token, tIdx) => (
+                                  <span
+                                    key={tIdx}
+                                    className={`relative group px-2.5 py-1 rounded-xl border text-xs sm:text-sm font-black transition-all duration-150 inline-flex items-center gap-1 shadow-2xs ${
+                                      isDay
+                                        ? `${token.style.dayText} ${token.style.dayBg} ${token.style.dayBorder}`
+                                        : `${token.style.nightText} ${token.style.nightBg} ${token.style.nightBorder}`
+                                    }`}
+                                  >
+                                    <span>{token.text}</span>
+
+                                    {/* Tajweed Sign Badges (১, ৩, ৪ আলিফ টান, গুন্নাহ, মোটা পাঠ, ক্বাল ক্বলা) */}
+                                    {selectedLanguage === 'bn' && token.badges && token.badges.length > 0 && (
+                                      <span className="inline-flex items-center gap-0.5 -mt-2 -mr-1">
+                                        {token.badges.map((b, bIdx) => (
+                                          <sup
+                                            key={bIdx}
+                                            title={b.labelBn}
+                                            className={`px-1 py-0.2 rounded-md border text-[9px] font-black leading-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
+                                          >
+                                            {b.symbol}
+                                          </sup>
+                                        ))}
+                                      </span>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              className={`text-xs sm:text-sm italic font-sans leading-relaxed pt-1 font-semibold ${
+                                isDay ? 'text-[#006747]' : 'text-[#10b981]'
+                              }`}
+                            >
+                              {getFormattedTransliteration(ayah.transliteration, ayah.arabic, selectedLanguage)}
+                            </div>
+                          )}
                         </div>
                       )}
 

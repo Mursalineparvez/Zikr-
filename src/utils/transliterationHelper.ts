@@ -429,16 +429,16 @@ function parseQuranicLatinWord(word: string): string {
   let isStart = true;
 
   while (idx < rest.length) {
-    if (rest[idx] === '\'' || rest[idx] === '’' || rest[idx] === '‘') {
+    if (rest[idx] === '\'' || rest[idx] === '’' || rest[idx] === '‘' || rest[idx] === 'ʿ') {
       res += '\'';
       idx++;
-      isStart = false;
+      isStart = true; // Crucial: Next letter after apostrophe/glottal stop must be an initial vowel, NOT a matra
       continue;
     }
     if (rest[idx] === '-' || rest[idx] === '—') {
       res += '-';
       idx++;
-      isStart = true;
+      isStart = true; // Next letter after hyphen is a new syllable boundary
       continue;
     }
 
@@ -498,6 +498,83 @@ function parseQuranicLatinWord(word: string): string {
   return prefix + res;
 }
 
+/**
+  * Sanitizes Bengali Quranic transliteration strings to ensure zero malformed/dotted circle characters (◌ / ○),
+  * correct matra attachments, clean Anusvara (ং) placement, and authentic orthography.
+  */
+export function sanitizeBengaliTransliteration(text: string): string {
+  if (!text) return '';
+
+  let s = text;
+
+  // 1. Remove dotted circle \u25CC (◌), generic white circle \u25CB (○), and other placeholder circle glyphs
+  s = s.replace(/[\u25CC\u25CB\u25EF\u25CE\u25CD]/g, '');
+
+  // 2. Fix invalid combinations of standalone vowel + vowel matra
+  s = s
+    .replace(/আি/g, 'আই')
+    .replace(/আু/g, 'আউ')
+    .replace(/আে/g, 'আএ')
+    .replace(/আো/g, 'আও')
+    .replace(/আা/g, 'আ')
+    .replace(/ইি/g, 'ই')
+    .replace(/ইা/g, 'ইয়া')
+    .replace(/ইু/g, 'িউ')
+    .replace(/ইো/g, 'ইও')
+    .replace(/ঈা/g, 'ইয়া')
+    .replace(/উি/g, 'উই')
+    .replace(/উা/g, 'উয়া')
+    .replace(/উু/g, 'উ')
+    .replace(/এি/g, 'এই')
+    .replace(/এু/g, 'এউ')
+    .replace(/ওি/g, 'ওই')
+    .replace(/ওু/g, 'ওউ');
+
+  // 3. Fix orphan matras after punctuation, hyphens, apostrophes, quotes, spaces, or string start.
+  // Matras (ি, ী, ু, ূ, ে, ৈ, ো, ৌ, া, ৃ, ্) and Anusvara (ং) CANNOT attach to non-consonants.
+  const nonConsonantRegex = /(^|[\s\u00A0\-–—\'"’‘()\[\]0-9অআইঈউঊঋএঐওঔ])([িীুূেৈোৌাৃ্ং])/g;
+  const matraToVowelMap: Record<string, string> = {
+    'ি': 'ই',
+    'ী': 'ঈ',
+    'ু': 'উ',
+    'ূ': 'ঊ',
+    'ে': 'এ',
+    'ৈ': 'ঐ',
+    'ো': 'ও',
+    'ৌ': 'ঔ',
+    'া': 'আ',
+    'ৃ': 'ঋ',
+    '্': '',
+    'ং': 'ইং',
+  };
+
+  s = s.replace(nonConsonantRegex, (_match, prefix, matra) => {
+    return prefix + (matraToVowelMap[matra] || '');
+  });
+
+  // Second pass for consecutive orphan matras or newly shifted boundaries
+  s = s.replace(/(^|[\s\u00A0\-–—\'"’‘()\[\]0-9অআইঈউঊঋএঐওঔ])([িীুূেৈোৌাৃ্ং])/g, (_match, prefix, matra) => {
+    return prefix + (matraToVowelMap[matra] || '');
+  });
+
+  // 4. Duplicate matra cleanup
+  s = s
+    .replace(/িি/g, 'ী')
+    .replace(/ুু/g, 'ূ')
+    .replace(/াা/g, 'া')
+    .replace(/েে/g, 'ে')
+    .replace(/োো/g, 'ো');
+
+  // 5. Clean punctuation spacing
+  s = s
+    .replace(/['’‘]-/g, '-')
+    .replace(/-['’‘]/g, '-')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  return s;
+}
+
 // Converts Latin transliteration to authentic Bengali Quranic pronunciation
 export function latinToBengaliPronunciation(latinText: string): string {
   if (!latinText) return '';
@@ -517,12 +594,13 @@ export function latinToBengaliPronunciation(latinText: string): string {
   // 3. Normalization for any distorted strings like 'অ্যালিফ্- ল’আ-ম্- মীম্'
   const normalizedDirect = normalizeArabicPronunciationBn(latinText);
   if (normalizedDirect !== latinText && normalizedDirect !== '') {
-    return normalizedDirect;
+    return sanitizeBengaliTransliteration(normalizedDirect);
   }
 
   // 4. Tokenize and parse syllable-by-syllable
   const words = latinText.trim().split(/\s+/);
-  return words.map(parseQuranicLatinWord).join(' ');
+  const parsed = words.map(parseQuranicLatinWord).join(' ');
+  return sanitizeBengaliTransliteration(parsed);
 }
 
 // Main helper function to return transliteration formatted according to selected user language
@@ -554,7 +632,7 @@ export function getFormattedTransliteration(
     if (rawTransliteration) {
       const cleanedBn = normalizeArabicPronunciationBn(rawTransliteration);
       if (cleanedBn !== rawTransliteration) {
-        return cleanedBn;
+        return sanitizeBengaliTransliteration(cleanedBn);
       }
     }
 
@@ -565,3 +643,4 @@ export function getFormattedTransliteration(
   // English, Urdu, or other languages return standard Latin transliteration
   return rawTransliteration;
 }
+
