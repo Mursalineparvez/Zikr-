@@ -1992,6 +1992,7 @@ export default function App() {
               themeMode={settings.themeMode}
               selectedLanguage={selectedLanguage}
               soundEnabled={settings.soundEnabled}
+              onOpenInstallModal={() => setIsStandaloneModalOpen(true)}
             />
           </div>
         )}

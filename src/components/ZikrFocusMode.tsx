@@ -28,6 +28,7 @@ interface ZikrFocusModeProps {
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
   soundEnabled?: boolean;
+  onOpenInstallModal?: () => void;
 }
 
 export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
@@ -40,6 +41,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
   soundEnabled = true,
+  onOpenInstallModal,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLocked, setIsLocked] = useState(false);
@@ -796,19 +798,30 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               {totalCount.toLocaleString()}
             </span>
           </div>
-
-          {/* Requested PWA Footer Line at the very bottom ("ei line ta sobar nice thkabe") */}
-          <div className="pt-1.5 pb-0.5 text-center flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] opacity-75 flex-wrap border-t border-white/5 select-none">
-            <span>Zikr+ PWA</span>
-            <span>•</span>
-            <span>100% Offline &amp; Privacy-First</span>
-            <span>•</span>
-            <span className={isDay ? 'text-[#0066FF] font-bold' : 'text-sky-300 font-bold'}>
-              📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ
-            </span>
-          </div>
         </div>
       </div>
+
+      {/* ================= 5. ABSOLUTE BOTTOM APP FOOTER (Ekdom Nice) ================= */}
+      <footer className="relative z-30 w-full text-center pb-[max(0.65rem,env(safe-area-inset-bottom))] pt-2 px-3 select-none border-t border-white/10 bg-black/20 backdrop-blur-md shrink-0">
+        <div className="max-w-[390px] sm:max-w-[420px] mx-auto flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-medium opacity-85 flex-wrap">
+          <span>Zikr+ PWA</span>
+          <span>•</span>
+          <span>100% Offline &amp; Privacy-First</span>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenInstallModal?.();
+            }}
+            className={`font-extrabold hover:underline cursor-pointer active:scale-95 transition-transform flex items-center gap-1 ${
+              isDay ? 'text-[#0066FF]' : 'text-sky-300'
+            }`}
+          >
+            <span>📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ</span>
+          </button>
+        </div>
+      </footer>
     </div>
   );
 

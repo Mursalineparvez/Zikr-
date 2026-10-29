@@ -34,6 +34,7 @@ interface ZikirCounterViewProps {
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
   soundEnabled?: boolean;
+  onOpenInstallModal?: () => void;
 }
 
 export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
@@ -61,6 +62,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
   soundEnabled = true,
+  onOpenInstallModal,
 }) => {
   const isDay = themeMode === 'day';
   const [filterMode, setFilterMode] = useState<'all' | 'targets' | 'completed'>('all');
@@ -139,6 +141,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
         themeMode={themeMode}
         selectedLanguage={selectedLanguage}
         soundEnabled={soundEnabled}
+        onOpenInstallModal={onOpenInstallModal}
       />
     );
   }
