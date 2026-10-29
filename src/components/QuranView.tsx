@@ -1493,11 +1493,26 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 {/* Lower Content Part (Only Visible when Expanded) */}
                 {isInsightExpanded && (
                   <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                    {/* 1. Central Core Message (if present) */}
+                    {(selectedLanguage === 'bn' ? insight.coreMessageBn : insight.coreMessageEn) && (
+                      <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-emerald-50/80 border-emerald-200/80 text-emerald-900' : 'bg-[#0b242a] border-emerald-500/30 text-emerald-100'}`}>
+                        <strong className="text-emerald-700 dark:text-emerald-300 font-extrabold flex items-center gap-1.5 text-xs mb-1">
+                          <span>🎯</span>
+                          <span>{selectedLanguage === 'bn' ? 'সূরার মূল বাণী ও বার্তা:' : 'Core Central Message:'}</span>
+                        </strong>
+                        <p className="text-xs leading-relaxed font-medium">
+                          {selectedLanguage === 'bn' ? insight.coreMessageBn : insight.coreMessageEn}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 2. Grid of Virtues (Fojilot) and Shan-e-Nuzul */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs leading-relaxed">
                       <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-white/80 border-emerald-100' : 'bg-[#081a20] border-teal-900/40'}`}>
                         <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
-                          <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
-                            {selectedLanguage === 'bn' ? '🌟 ফজিলাত ও বরকত:' : '🌟 Virtues & Benefits:'}
+                          <strong className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                            <span>🌟</span>
+                            <span>{selectedLanguage === 'bn' ? 'ফজিলাত ও বিশেষ বরকত:' : 'Virtues & Benefits:'}</span>
                           </strong>
                           {insight.referenceBn && (
                             <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
@@ -1510,16 +1525,50 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       </div>
 
                       <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-white/80 border-emerald-100' : 'bg-[#081a20] border-teal-900/40'}`}>
-                        <strong className="text-amber-600 dark:text-amber-400 block mb-1.5 font-bold">
-                          {selectedLanguage === 'bn' ? '📜 নাজিল হওয়ার পটভূমি (শানে নুযুল):' : '📜 Context of Revelation (Sabun Nuzul):'}
+                        <strong className="text-amber-600 dark:text-amber-400 block mb-1.5 font-bold flex items-center gap-1">
+                          <span>📜</span>
+                          <span>{selectedLanguage === 'bn' ? 'নাজিল হওয়ার পটভূমি (শানে নুযুল):' : 'Context of Revelation (Sabun Nuzul):'}</span>
                         </strong>
                         <p className="opacity-90 leading-relaxed">{selectedLanguage === 'bn' ? insight.sabunNuzulBn : insight.sabunNuzulEn}</p>
                       </div>
                     </div>
 
+                    {/* 3. Historical Context & Background (if present) */}
+                    {(selectedLanguage === 'bn' ? insight.historicalContextBn : insight.historicalContextEn) && (
+                      <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-amber-50/60 border-amber-200/60 text-amber-950' : 'bg-[#181a14] border-amber-500/20 text-amber-100'}`}>
+                        <strong className="text-amber-700 dark:text-amber-300 block mb-1 font-bold text-xs flex items-center gap-1">
+                          <span>🏛️</span>
+                          <span>{selectedLanguage === 'bn' ? 'ঐতিহাসিক পটভূমি ও পরিবেশ:' : 'Historical Background:'}</span>
+                        </strong>
+                        <p className="text-xs leading-relaxed opacity-90">
+                          {selectedLanguage === 'bn' ? insight.historicalContextBn : insight.historicalContextEn}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 4. Actionable Key Life Lessons (if present) */}
+                    {((selectedLanguage === 'bn' ? insight.keyLessonsBn : insight.keyLessonsEn) || []).length > 0 && (
+                      <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-teal-50/70 border-teal-100 text-teal-950' : 'bg-[#061e22] border-teal-800/40 text-teal-100'}`}>
+                        <strong className="text-teal-700 dark:text-teal-300 block mb-2 font-bold text-xs flex items-center gap-1">
+                          <span>💡</span>
+                          <span>{selectedLanguage === 'bn' ? 'জীবনমুখী শিক্ষা ও আমল:' : 'Actionable Key Takeaways:'}</span>
+                        </strong>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {((selectedLanguage === 'bn' ? insight.keyLessonsBn : insight.keyLessonsEn) || []).map((lesson, lIdx) => (
+                            <div key={lIdx} className="flex items-start gap-1.5 opacity-90">
+                              <span className="text-emerald-500 font-black shrink-0 mt-0.5">•</span>
+                              <span className="leading-snug">{lesson}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 5. Important Topics Covered */}
                     <div>
-                      <div className="text-[11px] font-bold text-slate-500 dark:text-teal-300 uppercase tracking-wider mb-2">
-                        {selectedLanguage === 'bn' ? '📌 গুরুত্বপূর্ণ আলোচ্য বিষয়সমূহ:' : '📌 Important Topics Covered:'}
+                      <div className="text-[11px] font-bold text-slate-500 dark:text-teal-300 uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <span>📌</span>
+                        <span>{selectedLanguage === 'bn' ? 'গুরুত্বপূর্ণ আলোচ্য বিষয়সমূহ:' : 'Important Topics Covered:'}</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {(selectedLanguage === 'bn' ? insight.importantTopicsBn : insight.importantTopicsEn).map((topic, tIdx) => (

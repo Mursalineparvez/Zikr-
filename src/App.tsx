@@ -9,7 +9,6 @@ import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES, getTargetForZikrMode } from './util
 import { soundHaptics } from './utils/audioHaptics';
 import { NAV_TRANSLATIONS } from './utils/appTranslations';
 import { Header } from './components/Header';
-import { BottomNav } from './components/BottomNav';
 import { ZikirCounterView } from './components/ZikirCounterView';
 import { ConfirmModal } from './components/ConfirmModal';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
@@ -61,7 +60,7 @@ import {
   signOutFirebaseUser,
 } from './services/firebaseLazy';
 import type { CloudZikrState } from './services/firebase';
-import { BookmarkCheck, Sparkles, WifiOff } from 'lucide-react';
+import { BookmarkCheck, Sparkles, WifiOff, Plus } from 'lucide-react';
 import { getDetectedDeviceInfo, getDeviceId } from './utils/deviceInfo';
 import { calculatePrayerTimes, getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
 import { useOnlineStatus } from './hooks/usePWAInstall';
@@ -1806,7 +1805,7 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-24 md:pb-24 selection:bg-[#007e8a] selection:text-white ${
+      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-8 selection:bg-[#007e8a] selection:text-white ${
         isDay ? 'bg-[#f8fafc] text-slate-900' : 'bg-[#03171b] text-[#e6f4f2]'
       }`}
     >
@@ -2129,18 +2128,20 @@ export default function App() {
         activeModule={activeModule}
       />
 
-      {/* Bottom Sticky Navigation for Mobile & Thumb Floating Add Button */}
-      <BottomNav
-        activeModule={activeModule}
-        onModuleChange={setActiveModule}
-        onOpenAddModal={() => {
-          setZikrToEdit(null);
-          setIsZikrModalOpen(true);
-        }}
-        themeMode={settings.themeMode}
-        selectedLanguage={selectedLanguage}
-        counterBadge={dailyTotal > 0 ? dailyTotal : masterGrandTotal}
-      />
+      {/* Floating Add Zikr Button (Only on Zikir Counter module) */}
+      {activeModule === 'zikir_counter' && (
+        <button
+          onClick={() => {
+            setZikrToEdit(null);
+            setIsZikrModalOpen(true);
+          }}
+          className="fixed bottom-6 right-6 z-40 w-13 h-13 rounded-2xl active:scale-95 text-white shadow-2xl flex items-center justify-center transition-all cursor-pointer bg-[#006A4E] hover:bg-[#005439] border border-emerald-400/30"
+          aria-label="Add New Zikr"
+          title="Add New Custom Zikr"
+        >
+          <Plus className="w-7 h-7 stroke-[3]" />
+        </button>
+      )}
 
       <React.Suspense fallback={null}>
         {/* Add / Edit Zikr Modal */}

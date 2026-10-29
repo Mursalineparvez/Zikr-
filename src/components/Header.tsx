@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Check,
   WifiOff,
+  Layers,
 } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from '../hooks/usePWAInstall';
 import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
@@ -92,6 +93,21 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const isDay = themeMode === 'day';
+
+  const otherModules: NavModule[] = [
+    'other',
+    'dua',
+    'hadith',
+    'kitab',
+    'hajj_checklist',
+    'umrah_guide',
+    'hajj_route_map',
+    'hajj_essentials',
+    'tablig',
+    'allah_names',
+    'history_timeline',
+  ];
+  const isOtherActive = otherModules.includes(activeModule);
 
   return (
     <header className="sticky top-0 z-40 transition-all duration-300">
@@ -219,6 +235,57 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Top Module Navigation Bar (cleanly integrated at top, eliminating sticky bottom bar) */}
+      <div className="bg-[#005740] border-t border-emerald-600/30 px-3 py-1.5 text-white shadow-inner">
+        <div className="max-w-4xl mx-auto flex items-center justify-start sm:justify-center gap-1 sm:gap-2 overflow-x-auto scrollbar-none py-0.5">
+          {[
+            {
+              id: 'zikir_counter' as NavModule,
+              label: NAV_TRANSLATIONS.zikir_counter[selectedLanguage],
+              icon: <span className="text-sm">📿</span>,
+              isActive: activeModule === 'zikir_counter',
+            },
+            {
+              id: 'quran' as NavModule,
+              label: NAV_TRANSLATIONS.quran[selectedLanguage],
+              icon: <BookOpen className="w-3.5 h-3.5" />,
+              isActive: activeModule === 'quran',
+            },
+            {
+              id: 'salat_time' as NavModule,
+              label: NAV_TRANSLATIONS.salat_time[selectedLanguage],
+              icon: <Clock className="w-3.5 h-3.5" />,
+              isActive: activeModule === 'salat_time',
+            },
+            {
+              id: 'aamal_tracker' as NavModule,
+              label: NAV_TRANSLATIONS.aamal_tracker[selectedLanguage],
+              icon: <Award className="w-3.5 h-3.5" />,
+              isActive: activeModule === 'aamal_tracker',
+            },
+            {
+              id: 'other' as NavModule,
+              label: NAV_TRANSLATIONS.other[selectedLanguage] || 'Other',
+              icon: <Layers className="w-3.5 h-3.5" />,
+              isActive: isOtherActive,
+            },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onModuleChange(item.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 ${
+                item.isActive
+                  ? 'bg-white text-[#006A4E] shadow-sm font-extrabold'
+                  : 'text-emerald-100/90 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
