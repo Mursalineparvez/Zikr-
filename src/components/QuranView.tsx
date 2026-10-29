@@ -61,7 +61,7 @@ import {
 
 import { MakhrajVisualizer, AyahMouthCard } from './MakhrajVisualizer';
 import { getWordMakhrajInfo } from '../utils/tajweedMakhraj';
-import { getFormattedTransliteration } from '../utils/transliterationHelper';
+import { getFormattedTransliteration, normalizeArabicPronunciationBn } from '../utils/transliterationHelper';
 
 export type WordAnimationType = 'makhraj' | 'glow' | 'minimal';
 
@@ -268,6 +268,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const activeWordRef = useRef<HTMLDivElement | null>(null);
+  const nextAudioPreloadRef = useRef<HTMLAudioElement | null>(null);
 
   // Track latest playback state in ref so audio event listeners don't recreate Audio element
   const playStateRef = useRef({
@@ -311,6 +312,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   // Audio setup - instantiate ONCE on component mount
   useEffect(() => {
     const audio = new Audio();
+    audio.preload = 'auto';
     audioRef.current = audio;
 
     const handleTimeUpdate = () => {
@@ -388,9 +390,34 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const loadSurah = async (surahNumber: number, targetAyahNumber?: number, openTafsirImmediately?: boolean) => {
     setSelectedSurahNumber(surahNumber);
     setIsInsightExpanded(false);
-    setIsLoadingSurah(true);
-    setSurahLoadError(null);
     stopAudio();
+
+    // Fast synchronous cache hit: Render in 0ms without waiting!
+    const quickCached = getCachedSurah(surahNumber, selectedReciterId, selectedLanguage);
+    if (quickCached) {
+      setSurahDetail(quickCached);
+      setIsLoadingSurah(false);
+
+      const targetAyah = targetAyahNumber || 1;
+      const matchedAyah = quickCached.ayahs.find((a) => a.number === targetAyah) || quickCached.ayahs[0];
+      if (matchedAyah) {
+        setActiveTafsirAyah(matchedAyah);
+      }
+
+      // Preload first ayah audio in background so "Play" is instantaneous
+      if (quickCached.ayahs[0]?.audioUrl) {
+        try {
+          const pre = new Audio();
+          pre.preload = 'auto';
+          pre.src = quickCached.ayahs[0].audioUrl;
+          pre.load();
+          nextAudioPreloadRef.current = pre;
+        } catch {}
+      }
+    } else {
+      setIsLoadingSurah(true);
+    }
+    setSurahLoadError(null);
 
     try {
       const detail = await fetchSurah(surahNumber, selectedReciterId, selectedLanguage);
@@ -400,6 +427,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
       const matchedAyah = detail.ayahs.find((a) => a.number === targetAyah) || detail.ayahs[0];
       if (matchedAyah) {
         setActiveTafsirAyah(matchedAyah);
+      }
+
+      // Preload first ayah audio in background
+      if (detail.ayahs[0]?.audioUrl) {
+        try {
+          const pre = new Audio();
+          pre.preload = 'auto';
+          pre.src = detail.ayahs[0].audioUrl;
+          pre.load();
+          nextAudioPreloadRef.current = pre;
+        } catch {}
       }
 
       setLastRead({
@@ -420,7 +458,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err: any) {
-      setSurahLoadError(err.message || 'সূরা লোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।');
+      if (!quickCached) {
+        setSurahLoadError(err.message || 'সূরা লোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।');
+      }
     } finally {
       setIsLoadingSurah(false);
     }
@@ -440,6 +480,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
     if (selectedSurahNumber !== null) {
       loadSurah(selectedSurahNumber);
     }
+  }, [selectedLanguage, selectedReciterId]);
+
+  // Idle-time background prefetch for top popular Surahs (Al-Fatihah, Al-Baqarah, Yasin, Al-Mulk, Al-Ikhlas, etc.)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      [1, 2, 36, 67, 112, 113, 114].forEach((sNum) => {
+        fetchSurah(sNum, selectedReciterId, selectedLanguage).catch(() => {});
+      });
+    }, 400);
+    return () => clearTimeout(timer);
   }, [selectedLanguage, selectedReciterId]);
 
   // Keep activeTafsirAyah updated with fresh translation when surahDetail updates
@@ -669,13 +719,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
     if (!audio) return;
     const audioUrl = ayah.audioUrl || `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber}.mp3`;
 
-    // Auto-cache audio for offline listening via CacheStorage
-    if ('caches' in window) {
-      caches.open('zikrmate-audio-v2').then((cache) => {
-        cache.add(audioUrl).catch(() => {});
-      }).catch(() => {});
-    }
-
     if (isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === ayah.number) {
       try {
         audio.pause();
@@ -688,7 +731,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
       audio.pause();
     } catch {}
 
-    audio.src = audioUrl;
+    if (audio.src !== audioUrl) {
+      audio.src = audioUrl;
+      audio.preload = 'auto';
+      audio.load();
+    }
     setPlayingMode('ayah');
     setCurrentPlayingAyahNum(ayah.number);
 
@@ -700,11 +747,31 @@ export const QuranView: React.FC<QuranViewProps> = ({
           if (autoScroll) {
             scrollToAyah(ayah.number);
           }
+          // Non-blocking offline cache after audio has already started smoothly
+          if ('caches' in window) {
+            setTimeout(() => {
+              caches.open('zikrmate-audio-v2').then((cache) => {
+                cache.add(audioUrl).catch(() => {});
+              }).catch(() => {});
+            }, 1000);
+          }
         })
         .catch(() => {
           // Gracefully handle browser play interruption or abort
           setIsPlaying(false);
         });
+    }
+
+    // Ultra-fast Next Ayah Preloader: Preload next verse so playback transitions with 0ms lag
+    const nextAyah = surahDetail?.ayahs.find((a) => a.number === ayah.number + 1);
+    if (nextAyah?.audioUrl) {
+      try {
+        const pre = new Audio();
+        pre.preload = 'auto';
+        pre.src = nextAyah.audioUrl;
+        pre.load();
+        nextAudioPreloadRef.current = pre;
+      } catch {}
     }
   };
 
@@ -1691,7 +1758,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           isDay ? 'text-[#006747]' : 'text-[#10b981]'
                         }`}
                       >
-                        {selectedLanguage === 'bn' ? 'ইসলামিক ফাউন্ডেশন' : 'Verified Translation'}
+                        Zikr+
                       </div>
                     )}
 
@@ -1962,7 +2029,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   dir="ltr"
                                   className={`text-xs sm:text-sm font-sans mt-0.5 px-1 text-center max-w-[110px] leading-snug font-semibold transition-colors ${activeMeaningStyle}`}
                                 >
-                                  {word.translation}
+                                  {selectedLanguage === 'bn' ? normalizeArabicPronunciationBn(word.translation) : word.translation}
                                 </span>
                               </div>
                             );
@@ -2015,7 +2082,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                     isDay ? 'text-[#006747]' : 'text-[#10b981]'
                                   }`}
                                 >
-                                  {trans.translator}
+                                  Zikr+
                                 </div>
                                 <div
                                   className={`text-xs sm:text-sm leading-relaxed font-sans font-normal ${
@@ -2033,7 +2100,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   isDay ? 'text-[#006747]' : 'text-[#10b981]'
                                 }`}
                               >
-                                {selectedLanguage === 'bn' ? 'মুফতী তাকী উসমানী' : 'Translation'}
+                                Zikr+
                               </div>
                               <div
                                 className={`text-xs sm:text-sm leading-relaxed font-sans font-normal ${
