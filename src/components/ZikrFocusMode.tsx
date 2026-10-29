@@ -83,8 +83,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
   const rounds = hasTarget ? Math.floor(zikr.count / target) : 0;
 
   // SVG circular gauge geometry - enlarged for maximum visibility and tactile experience
-  const radius = 104;
-  const strokeWidth = 9;
+  const radius = 106;
+  const strokeWidth = 10;
   const center = 120; // 240x240 box
   const circumference = 2 * Math.PI * radius;
   // Arc calculation: offset based on progress modulo 1 round so multiple rounds cycle beautifully
@@ -222,14 +222,53 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
     }, 2200);
   };
 
+  // Prevent leaving the page or browser back navigation when lock mode is ON
+  useEffect(() => {
+    if (!isLocked) return;
+
+    // Push dummy state to browser history to intercept back button / swipe back gesture
+    try {
+      window.history.pushState({ zikrFocusLocked: true }, '');
+    } catch {}
+
+    const handlePopState = () => {
+      if (isLocked) {
+        try {
+          window.history.pushState({ zikrFocusLocked: true }, '');
+        } catch {}
+        flashLockNotice();
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isLocked) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isLocked]);
+
   // Keyboard navigation & space-bar counting
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isLocked) {
-        onClose();
-      } else if (e.key === 'ArrowRight' && !isLocked) {
+      if (e.key === 'Escape') {
+        if (isLocked) {
+          flashLockNotice();
+        } else {
+          onClose();
+        }
+      } else if (e.key === 'ArrowRight') {
         handleNext();
-      } else if (e.key === 'ArrowLeft' && !isLocked) {
+      } else if (e.key === 'ArrowLeft') {
         handlePrev();
       } else if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
@@ -249,12 +288,15 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (isLocked) return;
     const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
     const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
 
     // Horizontal swipe threshold: 45px and more horizontal than vertical
     if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+      if (isLocked) {
+        flashLockNotice();
+        return;
+      }
       if (deltaX < 0) {
         handleNext();
       } else {
@@ -309,7 +351,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
         onClick={(e) => {
           if (!isLocked) e.stopPropagation();
         }}
-        className="relative z-10 w-full max-w-[390px] sm:max-w-[420px] mx-auto h-full flex flex-col justify-between overflow-hidden px-3"
+        className="relative z-10 w-full max-w-[420px] sm:max-w-[460px] mx-auto h-full flex flex-col justify-between overflow-hidden px-2.5 sm:px-4"
       >
 
         {/* ================= 1. SLEEK TOP APP BAR ================= */}
@@ -446,20 +488,21 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
 
         {/* Lock Screen Floating Banner / Notice */}
         {showLockNotice && (
-          <div className="absolute top-14 left-4 right-4 z-40 bg-amber-500/95 text-slate-950 font-extrabold text-xs py-2 px-3.5 rounded-2xl shadow-xl flex items-center justify-between gap-2 border border-amber-300 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex items-center gap-1.5">
-              <Lock className="w-4 h-4 shrink-0" />
-              <span>
+          <div className="absolute top-14 left-3 right-3 z-50 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-xs py-2.5 px-3.5 rounded-2xl shadow-2xl flex items-center justify-between gap-2 border-2 border-amber-300 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4.5 h-4.5 shrink-0 stroke-[2.5]" />
+              <span className="leading-snug">
                 {selectedLanguage === 'bn'
-                  ? '🔒 স্ক্রিন লক করা আছে — যেকোনো স্থানে ট্যাপ করে গণনা করুন!'
-                  : '🔒 Screen Locked — Tap anywhere to count!'}
+                  ? '🔒 স্ক্রিন লক করা আছে! আনলক না করা পর্যন্ত এই পেজ থেকে বের হওয়া যাবে না। বের হতে "Locked" বাটনে চাপুন।'
+                  : '🔒 Screen Locked! You cannot exit this page until you tap "Locked" to unlock.'}
               </span>
             </div>
             <button
+              type="button"
               onClick={() => setShowLockNotice(false)}
-              className="text-slate-900 hover:text-black p-0.5"
+              className="text-slate-900 hover:text-black p-1 rounded-lg bg-black/10 active:scale-95 transition cursor-pointer shrink-0"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5 stroke-[2.5]" />
             </button>
           </div>
         )}
@@ -508,8 +551,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
           </div>
         )}
 
-        {/* ================= 2. ZIKR TYPOGRAPHY (Arabic & Meaning) ================= */}
-        <div className="relative z-10 px-4 pt-2 pb-1 text-center flex flex-col items-center justify-center shrink-0 space-y-1">
+        {/* ================= 2. ZIKR TYPOGRAPHY (Arabic & Full Meaning - No Truncation) ================= */}
+        <div className="relative z-10 px-3 pt-1.5 pb-1 text-center flex flex-col items-center justify-center shrink-0 space-y-1">
           {/* Arabic Calligraphy with Recitation Speaker button */}
           <div className="flex items-center justify-center gap-2 max-w-full">
             <h2
@@ -542,14 +585,14 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
             </button>
           </div>
 
-          {/* Pronunciation in Radiant Golden Amber */}
-          <div className="font-extrabold text-sm sm:text-base text-amber-500 dark:text-amber-400 tracking-wide drop-shadow-xs line-clamp-1">
+          {/* Full Pronunciation in Radiant Golden Amber (No Truncation) */}
+          <div className="font-extrabold text-sm sm:text-base text-amber-500 dark:text-amber-400 tracking-wide drop-shadow-xs leading-snug break-words px-2 max-w-md">
             {displayPronunciation}
           </div>
 
-          {/* Meaning (Compact, clear) */}
+          {/* Full Meaning (No Truncation) */}
           {displayMeaning && (
-            <p className="text-[11px] sm:text-xs leading-tight opacity-80 line-clamp-2 px-2 max-w-sm">
+            <p className="text-[11px] sm:text-xs leading-snug opacity-90 px-2 max-w-md break-words pt-0.5">
               <span className="font-bold text-[#007e8a] dark:text-teal-300">
                 {selectedLanguage === 'bn' ? 'অর্থ: ' : 'Meaning: '}
               </span>
@@ -558,14 +601,14 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
           )}
         </div>
 
-        {/* ================= 3. CIRCULAR SMART TASBEEH GAUGE (Centerpiece) ================= */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center py-1 px-4">
+        {/* ================= 3. CIRCULAR SMART TASBEEH GAUGE (Centerpiece - Enlarged) ================= */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center py-1 px-2">
           <div
             onClick={(e) => {
               e.stopPropagation();
               triggerIncrement(e.clientX, e.clientY);
             }}
-            className={`relative w-[230px] h-[230px] sm:w-[250px] sm:h-[250px] rounded-full flex flex-col items-center justify-center cursor-pointer transition-transform duration-100 active:scale-[0.97] group ${
+            className={`relative w-[260px] h-[260px] sm:w-[285px] sm:h-[285px] rounded-full flex flex-col items-center justify-center cursor-pointer transition-transform duration-100 active:scale-[0.97] group ${
               isDay ? 'bg-white shadow-xl shadow-emerald-900/10' : 'bg-[#06242a] shadow-2xl shadow-black/70'
             }`}
           >
