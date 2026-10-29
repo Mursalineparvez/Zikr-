@@ -14,6 +14,7 @@ import {
   fetchAyahTafsir,
   AVAILABLE_TAFSIRS,
   DEFAULT_TAFSIR_BY_LANG,
+  getReciterAudioUrls,
 } from '../utils/quranService';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -62,7 +63,7 @@ import { MakhrajVisualizer, AyahMouthCard } from './MakhrajVisualizer';
 import { getWordMakhrajInfo } from '../utils/tajweedMakhraj';
 import { getFormattedTransliteration } from '../utils/transliterationHelper';
 
-export type WordAnimationType = 'glow' | 'float' | 'spotlight' | 'gold' | 'wave' | 'minimal' | 'makhraj';
+export type WordAnimationType = 'makhraj' | 'glow' | 'minimal';
 
 export interface WordAnimationOption {
   id: WordAnimationType;
@@ -78,70 +79,26 @@ export interface WordAnimationOption {
 
 export const WORD_ANIMATION_OPTIONS: WordAnimationOption[] = [
   {
-    id: 'glow',
-    nameBn: 'নূরানি গ্লো (Radiant Glow)',
-    nameEn: 'Radiant Glow',
-    badgeBn: 'তিলাওয়াত',
-    badgeEn: 'Reciting',
-    descBn: 'স্নিগ্ধ সবুজ নূরানি পালস আলো ও চতুর্পাশে উজ্জ্বল আভা',
-    descEn: 'Pulsing emerald aura with soothing halo illumination',
-    icon: '✨',
-    tagBn: 'জনপ্রিয় ও মনোরম',
-  },
-  {
     id: 'makhraj',
     nameBn: 'মুখের মাখরাজ লাইভ (Live Articulator)',
     nameEn: 'Live Mouth Articulator',
     badgeBn: 'মাখরাজ লাইভ',
     badgeEn: 'Makhraj Live',
-    descBn: 'পড়ার সময় মুখের কোন স্থান (কণ্ঠ, জিহ্বা, তালু, দাঁত, ঠোঁট) থেকে শব্দটি উচ্চারিত হচ্ছে তা অ্যানিমেশনে লাইভ দেখাবে',
-    descEn: 'Live anatomical animation showing exactly where the sound originates in the mouth, tongue & throat',
+    descBn: 'পড়ার সময় মুখের কোন স্থান (কণ্ঠ, জিহ্বা, তালু, দাঁত, ঠোঁট) থেকে শব্দটি উচ্চারিত হচ্ছে তা ৩ডি অ্যানিমেশনে লাইভ দেখাবে',
+    descEn: 'Live 3D anatomical animation showing where the sound originates in the mouth & throat',
     icon: '🗣️',
     tagBn: 'মুখের লাইভ মাখরাজ',
   },
   {
-    id: 'float',
-    nameBn: 'ভাসমান উত্তোলন (Float & Lift)',
-    nameEn: 'Float & Lift',
-    badgeBn: 'উত্তোলন',
-    badgeEn: 'Floating',
-    descBn: 'পঠিত শব্দটি আলতোভাবে উপরে ভেসে উঠবে এবং ৩ডি গভীরতা তৈরি করবে',
-    descEn: 'Lifts the word gracefully towards the reader with 3D elevation',
-    icon: '🕊️',
-    tagBn: 'গতিময় ৩ডি রূপ',
-  },
-  {
-    id: 'spotlight',
-    nameBn: 'স্পটলাইট ফোকাস (Spotlight Focus)',
-    nameEn: 'Spotlight Focus',
-    badgeBn: 'ফোকাস',
-    badgeEn: 'Spotlight',
-    descBn: 'অন্যান্য শব্দ মৃদু আবছা হয়ে কেবল সক্রিয় শব্দটিতে গভীর মনোযোগ দেবে (হিফজের জন্য সেরা)',
-    descEn: 'Dims surrounding words for laser-sharp focus and memorization',
-    icon: '🎯',
-    tagBn: 'হিফজ ও গভীর একাগ্রতা',
-  },
-  {
-    id: 'gold',
-    nameBn: 'স্বর্ণালী নূর (Golden Amber)',
-    nameEn: 'Golden Amber',
-    badgeBn: 'স্বর্ণালী নূর',
-    badgeEn: 'Golden Noor',
-    descBn: 'উষ্ণ আম্বার ও সোনালী রাজকীয় নূরে ঝলমলে পবিত্র আবহ',
-    descEn: 'Warm royal golden glow with luminous amber reflections',
-    icon: '👑',
-    tagBn: 'রাজকীয় স্বর্ণালী',
-  },
-  {
-    id: 'wave',
-    nameBn: 'তরঙ্গ শিমিং (Shimmer Wave)',
-    nameEn: 'Shimmer Wave',
-    badgeBn: 'তরঙ্গ নূর',
-    badgeEn: 'Wave Light',
-    descBn: 'শব্দ কার্ডে মৃদু আলোক রশ্মি প্রবাহিত হবে এবং ছন্দময় আলো ছড়াবে',
-    descEn: 'Light shimmer beam sweeps rhythmically across the word card',
-    icon: '🌊',
-    tagBn: 'আলোকিত তরঙ্গ',
+    id: 'glow',
+    nameBn: 'নূরানি গ্লো (Radiant Glow)',
+    nameEn: 'Radiant Glow',
+    badgeBn: 'তিলাওয়াত',
+    badgeEn: 'Reciting',
+    descBn: 'পঠিত শব্দে স্নিগ্ধ সবুজ নূরানি পালস আলো ও চতুর্পাশে উজ্জ্বল আভা',
+    descEn: 'Pulsing emerald aura with soothing halo illumination',
+    icon: '✨',
+    tagBn: 'জনপ্রিয় ও মনোরম',
   },
   {
     id: 'minimal',
@@ -317,6 +274,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     playingMode,
     surahDetail,
     currentPlayingAyahNum,
+    selectedReciterId,
   });
 
   useEffect(() => {
@@ -324,8 +282,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
       playingMode,
       surahDetail,
       currentPlayingAyahNum,
+      selectedReciterId,
     };
-  }, [playingMode, surahDetail, currentPlayingAyahNum]);
+  }, [playingMode, surahDetail, currentPlayingAyahNum, selectedReciterId]);
 
   // High-frequency 60fps audio tracking loop for real-time word highlighting synchronization
   useEffect(() => {
@@ -377,6 +336,19 @@ export const QuranView: React.FC<QuranViewProps> = ({
     };
 
     const handleError = () => {
+      const { currentPlayingAyahNum: ayahNum, surahDetail: detail, selectedReciterId: activeReciterId } = playStateRef.current;
+      if (detail && ayahNum && activeReciterId) {
+        const curAyah = detail.ayahs.find((a) => a.number === ayahNum);
+        if (curAyah) {
+          const urls = getReciterAudioUrls(activeReciterId, detail.number, curAyah.number, curAyah.globalNumber);
+          if (audio.src !== urls.secondary) {
+            console.warn('Primary audio mirror failed, switching to secondary CDN for Qari:', activeReciterId);
+            audio.src = urls.secondary;
+            audio.play().then(() => setIsPlaying(true)).catch(() => stopAudio());
+            return;
+          }
+        }
+      }
       stopAudio();
     };
 
@@ -521,19 +493,26 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
     const currentMs = audioCurrentTime * 1000;
 
-    // A. Official Quran.com Recitation Segments (100% Real-Time Millisecond Precision)
+    // A. Official Quran.com Recitation Segments (Continuous Gapless Precision)
     if (typeof words[0]?.startMs === 'number') {
       for (let i = 0; i < words.length; i++) {
         const w = words[i];
-        if (typeof w.startMs === 'number' && typeof w.endMs === 'number') {
-          // 40ms perceptual lead buffer so human eye catches the word right as sound begins
-          if (currentMs >= w.startMs - 40 && currentMs < w.endMs) {
+        if (typeof w.startMs === 'number') {
+          const startMs = Math.max(0, w.startMs - 50);
+          const nextWord = words[i + 1];
+          const endMs =
+            nextWord && typeof nextWord.startMs === 'number'
+              ? Math.max(startMs + 50, nextWord.startMs - 50)
+              : typeof w.endMs === 'number'
+              ? w.endMs + 400
+              : Number.MAX_SAFE_INTEGER;
+
+          if (currentMs >= startMs && currentMs < endMs) {
             return i;
           }
         }
       }
-      // If audio is nearing completion, keep the final word active
-      if (typeof words[words.length - 1].endMs === 'number' && currentMs >= (words[words.length - 1].endMs || 0) - 50) {
+      if (currentMs >= (words[words.length - 1]?.startMs || 0) - 50) {
         return words.length - 1;
       }
     }
@@ -1516,17 +1495,25 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs leading-relaxed">
                       <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-white/80 border-emerald-100' : 'bg-[#081a20] border-teal-900/40'}`}>
-                        <strong className="text-emerald-600 dark:text-emerald-400 block mb-1 font-bold">
-                          {selectedLanguage === 'bn' ? '🌟 ফজিলাত ও বরকত:' : '🌟 Virtues & Benefits:'}
-                        </strong>
-                        <p className="opacity-90">{selectedLanguage === 'bn' ? insight.fojilotBn : insight.fojilotEn}</p>
+                        <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                          <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
+                            {selectedLanguage === 'bn' ? '🌟 ফজিলাত ও বরকত:' : '🌟 Virtues & Benefits:'}
+                          </strong>
+                          {insight.referenceBn && (
+                            <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                              <span>📖</span>
+                              <span>{selectedLanguage === 'bn' ? insight.referenceBn : (insight.referenceEn || insight.referenceBn)}</span>
+                            </span>
+                          )}
+                        </div>
+                        <p className="opacity-90 leading-relaxed">{selectedLanguage === 'bn' ? insight.fojilotBn : insight.fojilotEn}</p>
                       </div>
 
                       <div className={`p-3.5 rounded-2xl border ${isDay ? 'bg-white/80 border-emerald-100' : 'bg-[#081a20] border-teal-900/40'}`}>
-                        <strong className="text-amber-600 dark:text-amber-400 block mb-1 font-bold">
+                        <strong className="text-amber-600 dark:text-amber-400 block mb-1.5 font-bold">
                           {selectedLanguage === 'bn' ? '📜 নাজিল হওয়ার পটভূমি (শানে নুযুল):' : '📜 Context of Revelation (Sabun Nuzul):'}
                         </strong>
-                        <p className="opacity-90">{selectedLanguage === 'bn' ? insight.sabunNuzulBn : insight.sabunNuzulEn}</p>
+                        <p className="opacity-90 leading-relaxed">{selectedLanguage === 'bn' ? insight.sabunNuzulBn : insight.sabunNuzulEn}</p>
                       </div>
                     </div>
 
@@ -1867,40 +1854,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             let activeBadge = null;
 
                             if (isWordActive) {
-                              if (wordAnimationType === 'glow') {
-                                activeCardStyle = isDay
-                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-500/20 shadow-md'
-                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/25 shadow-md';
-                                activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
-                                activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
-                              } else if (wordAnimationType === 'float') {
-                                activeCardStyle = isDay
-                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-float rounded-2xl z-20 px-4 py-2.5 shadow-lg'
-                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-float rounded-2xl z-20 px-4 py-2.5 shadow-lg';
-                                activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
-                                activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
-                              } else if (wordAnimationType === 'spotlight') {
-                                activeCardStyle = isDay
-                                  ? 'bg-[#bbf7d0] border-[3px] border-[#007050] text-[#004e37] anim-word-spotlight rounded-2xl z-30 px-4 py-2.5 shadow-[0_12px_36px_rgba(0,112,80,0.4)] ring-4 ring-emerald-600/30'
-                                  : 'bg-emerald-900 border-[3px] border-emerald-300 text-emerald-100 anim-word-spotlight rounded-2xl z-30 px-4 py-2.5 shadow-[0_12px_40px_rgba(52,211,153,0.5)] ring-4 ring-emerald-400/40';
-                                activeArabicTextStyle = isDay ? 'text-[#004225] font-black' : 'text-emerald-100 font-black';
-                                activeMeaningStyle = isDay ? 'text-[#005a3e] font-bold' : 'text-emerald-200 font-bold';
-                              } else if (wordAnimationType === 'gold') {
-                                activeCardStyle = isDay
-                                  ? 'bg-gradient-to-b from-amber-50 to-amber-100/90 border-[2.5px] border-amber-500 text-amber-950 anim-word-gold rounded-2xl z-20 px-4 py-2.5 ring-4 ring-amber-400/30 shadow-md'
-                                  : 'bg-gradient-to-b from-amber-950/90 to-amber-900/70 border-[2.5px] border-amber-400 text-amber-200 anim-word-gold rounded-2xl z-20 px-4 py-2.5 ring-4 ring-amber-400/35 shadow-md';
-                                activeArabicTextStyle = isDay ? 'text-amber-950 font-black' : 'text-amber-300 font-black';
-                                activeMeaningStyle = isDay ? 'text-amber-800 font-bold' : 'text-amber-200 font-bold';
-                              } else if (wordAnimationType === 'wave') {
-                                activeCardStyle = isDay
-                                  ? 'bg-gradient-to-r from-emerald-100 via-teal-50 to-emerald-100 border-[2.5px] border-teal-600 text-teal-900 anim-word-wave-shimmer rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-500/20 shadow-md'
-                                  : 'bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-950 border-[2.5px] border-teal-400 text-teal-200 anim-word-wave-shimmer rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-400/25 shadow-md';
-                                activeArabicTextStyle = isDay ? 'text-teal-950 font-black' : 'text-teal-200 font-black';
-                                activeMeaningStyle = isDay ? 'text-teal-800 font-bold' : 'text-teal-200 font-bold';
-                              } else if (wordAnimationType === 'makhraj') {
+                              if (wordAnimationType === 'makhraj') {
                                 activeCardStyle = isDay
                                   ? 'bg-gradient-to-b from-teal-50 to-emerald-100/90 border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-teal-500/25 shadow-md'
                                   : 'bg-gradient-to-b from-[#091f26] to-[#04151a] border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/30 shadow-md';
+                                activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
+                                activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
+                              } else if (wordAnimationType === 'glow') {
+                                activeCardStyle = isDay
+                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-500/20 shadow-md'
+                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/25 shadow-md';
                                 activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
                                 activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
                               } else {
@@ -1913,10 +1876,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                               }
                             } else {
                               // Inactive words
-                              const isDimmed = isAyahActive && wordAnimationType === 'spotlight';
-                              activeCardStyle = isDimmed
-                                ? 'opacity-35 blur-[0.25px] transition-all duration-300 rounded-2xl px-3 py-2 border-[2.5px] border-transparent scale-95'
-                                : isDay
+                              activeCardStyle = isDay
                                 ? 'hover:bg-emerald-50/80 border-[2.5px] border-transparent hover:border-emerald-200/80 rounded-2xl px-3 py-2 text-[#0f172a]'
                                 : 'hover:bg-slate-800/60 border-[2.5px] border-transparent hover:border-emerald-900/60 rounded-2xl px-3 py-2 text-[#f8fafc]';
                               activeArabicTextStyle = isDay
@@ -1940,11 +1900,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 className={`relative group flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 select-none ${activeCardStyle}`}
                               >
                                 {activeBadge}
-
-                                {/* Shimmer bar for Wave mode */}
-                                {isWordActive && wordAnimationType === 'wave' && (
-                                  <span className="absolute bottom-0 left-2 right-2 h-1 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-300 to-emerald-400 animate-pulse" />
-                                )}
 
                                 {/* Arabic Word Script */}
                                 <span
@@ -2887,88 +2842,23 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 {/* Simulated Word Card Preview */}
                 <div className="py-4 flex justify-center items-center">
                   {(() => {
-                    if (wordAnimationType === 'glow') {
-                      return (
-                        <div className={`relative flex flex-col items-center justify-center text-center px-5 py-3 rounded-2xl border-[2.5px] border-[#008763] anim-word-glow ${
-                          isDay ? 'bg-[#d1fae5] text-[#006747] ring-4 ring-emerald-500/20' : 'bg-emerald-950/90 text-emerald-200 border-emerald-400 ring-4 ring-emerald-400/25'
-                        }`}>
-                          <span className="absolute -top-3 bg-[#008763] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
-                            <Volume2 className="w-2.5 h-2.5 inline" />
-                            <span>তিলাওয়াত</span>
-                          </span>
-                          <span className="font-arabic text-3xl font-black">ٱلرَّحْمَٰنِ</span>
-                          <span className="text-xs font-bold mt-1">পরম করুণাময়</span>
-                        </div>
-                      );
-                    }
-                    if (wordAnimationType === 'float') {
-                      return (
-                        <div className={`relative flex flex-col items-center justify-center text-center px-5 py-3 rounded-2xl border-[2.5px] border-[#008763] anim-word-float ${
-                          isDay ? 'bg-[#d1fae5] text-[#006747]' : 'bg-emerald-950/90 text-emerald-200 border-emerald-400'
-                        }`}>
-                          <span className="absolute -top-3.5 bg-emerald-700 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
-                            <span>🕊️</span>
-                            <span>উত্তোলন</span>
-                          </span>
-                          <span className="font-arabic text-3xl font-black">ٱلرَّحْمَٰنِ</span>
-                          <span className="text-xs font-bold mt-1">পরম করুণাময়</span>
-                        </div>
-                      );
-                    }
                     if (wordAnimationType === 'makhraj') {
                       return (
                         <div className={`relative flex flex-col items-center justify-center text-center px-6 py-3 rounded-2xl border-[2.5px] border-[#008763] anim-word-glow ${
                           isDay ? 'bg-gradient-to-b from-teal-50 to-emerald-100 text-[#006747] ring-4 ring-teal-500/25' : 'bg-gradient-to-b from-[#091f26] to-[#04151a] text-emerald-200 border-emerald-400 ring-4 ring-emerald-400/30'
                         }`}>
-                          <span className="absolute -top-3.5 bg-[#008763] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 animate-pulse">
-                            <span>🗣️</span>
-                            <span>র (ر) • জিহ্বার আগার পিঠ ও ওপরের তালু</span>
-                          </span>
                           <span className="font-arabic text-3xl font-black">ٱلرَّحْمَٰنِ</span>
                           <span className="text-xs font-bold mt-1">পরম করুণাময়</span>
                         </div>
                       );
                     }
-                    if (wordAnimationType === 'spotlight') {
+                    if (wordAnimationType === 'glow') {
                       return (
-                        <div className={`relative flex flex-col items-center justify-center text-center px-5 py-3 rounded-2xl border-[3px] border-[#007050] anim-word-spotlight ${
-                          isDay ? 'bg-[#bbf7d0] text-[#004225] ring-4 ring-emerald-600/30' : 'bg-emerald-900 text-emerald-100 border-emerald-300 ring-4 ring-emerald-400/40'
+                        <div className={`relative flex flex-col items-center justify-center text-center px-5 py-3 rounded-2xl border-[2.5px] border-[#008763] anim-word-glow ${
+                          isDay ? 'bg-[#d1fae5] text-[#006747] ring-4 ring-emerald-500/20' : 'bg-emerald-950/90 text-emerald-200 border-emerald-400 ring-4 ring-emerald-400/25'
                         }`}>
-                          <span className="absolute -top-3.5 bg-[#005a3e] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1">
-                            <Sparkles className="w-2.5 h-2.5 inline text-amber-300" />
-                            <span>ফোকাস</span>
-                          </span>
                           <span className="font-arabic text-3xl font-black">ٱلرَّحْمَٰنِ</span>
                           <span className="text-xs font-bold mt-1">পরম করুণাময়</span>
-                        </div>
-                      );
-                    }
-                    if (wordAnimationType === 'gold') {
-                      return (
-                        <div className={`relative flex flex-col items-center justify-center text-center px-5 py-3 rounded-2xl border-[2.5px] border-amber-500 anim-word-gold ${
-                          isDay ? 'bg-gradient-to-b from-amber-50 to-amber-100 text-amber-950 ring-4 ring-amber-400/30' : 'bg-gradient-to-b from-amber-950/90 to-amber-900/70 text-amber-200 border-amber-400 ring-4 ring-amber-400/35'
-                        }`}>
-                          <span className="absolute -top-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 animate-pulse">
-                            <Sparkles className="w-2.5 h-2.5 inline text-yellow-200" />
-                            <span>স্বর্ণালী নূর</span>
-                          </span>
-                          <span className="font-arabic text-3xl font-black text-amber-900 dark:text-amber-300">ٱلرَّحْمَٰنِ</span>
-                          <span className="text-xs font-bold mt-1 text-amber-700 dark:text-amber-200">পরম করুণাময়</span>
-                        </div>
-                      );
-                    }
-                    if (wordAnimationType === 'wave') {
-                      return (
-                        <div className={`relative flex flex-col items-center justify-center text-center px-5 py-3 rounded-2xl border-[2.5px] border-teal-600 anim-word-wave-shimmer ${
-                          isDay ? 'bg-gradient-to-r from-emerald-100 via-teal-50 to-emerald-100 text-teal-900 ring-4 ring-teal-500/20' : 'bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-950 text-teal-200 border-teal-400 ring-4 ring-teal-400/25'
-                        }`}>
-                          <span className="absolute -top-3 bg-teal-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                            <Volume2 className="w-2.5 h-2.5 inline" />
-                            <span>তরঙ্গ নূর</span>
-                          </span>
-                          <span className="absolute bottom-0 left-2 right-2 h-1 rounded-full bg-gradient-to-r from-emerald-400 via-cyan-300 to-emerald-400 animate-pulse" />
-                          <span className="font-arabic text-3xl font-black text-teal-950 dark:text-teal-200">ٱلرَّحْمَٰنِ</span>
-                          <span className="text-xs font-bold mt-1 text-teal-800 dark:text-teal-200">পরম করুণাময়</span>
                         </div>
                       );
                     }
@@ -2977,9 +2867,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       <div className={`relative flex flex-col items-center justify-center text-center px-5 py-3 rounded-2xl border-[2px] border-[#008763] ${
                         isDay ? 'bg-[#ecfdf5] text-[#006747]' : 'bg-emerald-950/70 text-emerald-200 border-emerald-500'
                       }`}>
-                        <span className="absolute -top-2.5 bg-[#008763] text-white text-[8px] font-bold px-1.5 py-0.2 rounded-full">
-                          <span>তিলাওয়াত</span>
-                        </span>
                         <span className="font-arabic text-3xl font-black">ٱلرَّحْمَٰنِ</span>
                         <span className="text-xs font-bold mt-1">পরম করুণাময়</span>
                       </div>

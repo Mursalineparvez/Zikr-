@@ -47,6 +47,7 @@ export interface Reciter {
   subtext: string;
   category?: 'makkah' | 'egypt' | 'melodic' | 'slow';
   surahAudioBase?: string;
+  is114SurahsVerified?: boolean;
 }
 
 export const QURAN_RECITERS: Reciter[] = [
@@ -54,179 +55,83 @@ export const QURAN_RECITERS: Reciter[] = [
     id: 'ar.alafasy',
     name: 'Mishary Rashid Alafasy',
     arabicName: 'مشاري بن راشد العفاسي',
-    subtext: 'Clear, Melodic & World Famous (Kuwait)',
+    subtext: 'সুমধুর ও স্পষ্ট তারতীল (কুয়েত) • ১১৪টি সূরা সম্পূর্ণ',
     category: 'melodic',
-    surahAudioBase: 'https://server8.mp3quran.net/afs',
-  },
-  {
-    id: 'ar.yasserdussary',
-    name: 'Yasser Al-Dosari (Yasir Al-Doshori)',
-    arabicName: 'ياسر بن راشد الدوسري',
-    subtext: 'Imam of Masjid al-Haram, Makkah',
-    category: 'makkah',
-    surahAudioBase: 'https://server11.mp3quran.net/yasser',
+    is114SurahsVerified: true,
   },
   {
     id: 'ar.abdurrahmaansudais',
     name: 'Abdul Rahman Al-Sudais',
     arabicName: 'عبد الرحمن السديس',
-    subtext: 'Head Imam of Masjid al-Haram, Makkah',
+    subtext: 'মসজিদুল হারাম মক্কার তারাবীহ স্টাইল • ১১৪টি সূরা সম্পূর্ণ',
     category: 'makkah',
-    surahAudioBase: 'https://server11.mp3quran.net/sds',
+    is114SurahsVerified: true,
   },
   {
-    id: 'ar.mahermuaiqly',
-    name: 'Maher Al-Muaiqly',
-    arabicName: 'ماهر المعيقلي',
-    subtext: 'Emotional & Moving Imam of Masjid al-Haram',
-    category: 'makkah',
-    surahAudioBase: 'https://server12.mp3quran.net/maher',
+    id: 'ar.minshawi',
+    name: 'Mohamed Siddiq El-Minshawi',
+    arabicName: 'محمد صديق المنشاوي',
+    subtext: 'হৃদয়স্পর্শী মিশরীয় তারতীল ও তাজবীদ • ১১৪টি সূরা সম্পূর্ণ',
+    category: 'egypt',
+    is114SurahsVerified: true,
   },
   {
-    id: 'ar.saudshuraim',
-    name: 'Saud Al-Shuraim',
-    arabicName: 'سعود الشريم',
-    subtext: 'Former Senior Imam of Masjid al-Haram',
-    category: 'makkah',
-    surahAudioBase: 'https://server7.mp3quran.net/shur',
-  },
-  {
-    id: 'ar.hudhaify',
-    name: 'Ali Abdul-Rahman Al-Huthaify',
-    arabicName: 'علي بن عبد الرحمن الحذيفي',
-    subtext: 'Senior Chief Imam of Masjid an-Nabawi, Madinah',
-    category: 'makkah',
-    surahAudioBase: 'https://server9.mp3quran.net/hthfi',
+    id: 'ar.husary',
+    name: 'Mahmoud Khalil Al-Husary',
+    arabicName: 'محمود خليل الحصري',
+    subtext: 'বিশুদ্ধতম শিক্ষণীয় শিক্ষকসুলভ তাজবীদ • ১১৪টি সূরা সম্পূর্ণ',
+    category: 'slow',
+    is114SurahsVerified: true,
   },
   {
     id: 'ar.saadalghamidi',
     name: 'Saad Al-Ghamdi',
     arabicName: 'سعد الغامدي',
-    subtext: 'Gentle, Rhythmic & Soothing',
+    subtext: 'স্নিগ্ধ, মৃদু ও হৃদয়জুড়ানো ছন্দময় তিলাওয়াত • ১১৪টি সূরা সম্পূর্ণ',
     category: 'melodic',
-    surahAudioBase: 'https://server7.mp3quran.net/s_gmd',
+    is114SurahsVerified: true,
   },
   {
     id: 'ar.shaatree',
     name: 'Abu Bakr Ash-Shatri',
     arabicName: 'أبو بكر الشاطري',
-    subtext: 'Reverent, Deep & Slow Pace',
+    subtext: 'ধীরস্থির, গম্ভীর ও ভক্তিপূর্ণ বিনম্র পাঠ • ১১৪টি সূরা সম্পূর্ণ',
     category: 'slow',
-    surahAudioBase: 'https://server11.mp3quran.net/shatri',
-  },
-  {
-    id: 'ar.minshawi',
-    name: 'Mohamed Siddiq El-Minshawi (Murattal)',
-    arabicName: 'محمد صديق المنشاوي',
-    subtext: 'Heart-Touching Legendary Master (Egypt)',
-    category: 'egypt',
-    surahAudioBase: 'https://server10.mp3quran.net/minsh',
-  },
-  {
-    id: 'ar.minshawimujawwad',
-    name: 'Mohamed Siddiq El-Minshawi (Mujawwad)',
-    arabicName: 'المنشاوي (مجود)',
-    subtext: 'Slow Pace Heart-wrenching Tajweed',
-    category: 'egypt',
-    surahAudioBase: 'https://server10.mp3quran.net/minsh_mjwd',
-  },
-  {
-    id: 'ar.abdulbasitmurattal',
-    name: 'Abdul Basit Abdul Samad (Murattal)',
-    arabicName: 'عبد الباسط عبد الصمد',
-    subtext: 'Golden Voice of the Islamic World (Egypt)',
-    category: 'egypt',
-    surahAudioBase: 'https://server7.mp3quran.net/basit',
-  },
-  {
-    id: 'ar.husary',
-    name: 'Mahmoud Khalil Al-Husary (Murattal)',
-    arabicName: 'محمود خليل الحصري',
-    subtext: 'The Perfect Tajweed Reference Master',
-    category: 'egypt',
-    surahAudioBase: 'https://server13.mp3quran.net/husr',
-  },
-  {
-    id: 'ar.husarymujawwad',
-    name: 'Mahmoud Khalil Al-Husary (Mujawwad)',
-    arabicName: 'الحصري (مجود)',
-    subtext: 'Slow Melodic Tajweed Teaching Style',
-    category: 'egypt',
-    surahAudioBase: 'https://server13.mp3quran.net/husr_mjwd',
-  },
-  {
-    id: 'ar.ahmedajamy',
-    name: 'Ahmed Ibn Ali Al-Ajamy',
-    arabicName: 'أحمد بن علي العجمي',
-    subtext: 'Powerful, Energetic & Melodic Resonance',
-    category: 'melodic',
-    surahAudioBase: 'https://server10.mp3quran.net/ajm',
-  },
-  {
-    id: 'ar.muhammadayyoob',
-    name: 'Muhammad Ayyub',
-    arabicName: 'محمد أيوب',
-    subtext: 'Legendary Imam of Prophet’s Mosque, Madinah',
-    category: 'makkah',
-    surahAudioBase: 'https://server8.mp3quran.net/ayyoub',
-  },
-  {
-    id: 'ar.hanifaghabro',
-    name: 'Hani Ar-Rifai',
-    arabicName: 'هاني الرفاعي',
-    subtext: 'Emotional & Tears-inducing Recitation',
-    category: 'melodic',
-    surahAudioBase: 'https://server8.mp3quran.net/hrefe',
-  },
-  {
-    id: 'ar.nasserqatami',
-    name: 'Nasser Al-Qatami',
-    arabicName: 'ناصر القطامي',
-    subtext: 'Modern Melodic & Reverent Recitation',
-    category: 'melodic',
-    surahAudioBase: 'https://server6.mp3quran.net/qtm',
-  },
-  {
-    id: 'ar.faresabbad',
-    name: 'Fares Abbad',
-    arabicName: 'فارس عباد',
-    subtext: 'Smooth Rhythmic Flow (Yemen)',
-    category: 'melodic',
-    surahAudioBase: 'https://server8.mp3quran.net/abbad',
-  },
-  {
-    id: 'ar.abdullahbasfar',
-    name: 'Abdullah Basfar',
-    arabicName: 'عبد الله بصفر',
-    subtext: 'Calm, Clear & Perfect for Memorization',
-    category: 'slow',
-    surahAudioBase: 'https://server6.mp3quran.net/bsfr',
-  },
-  {
-    id: 'ar.muhammadjibreel',
-    name: 'Muhammad Jibreel',
-    arabicName: 'محمد جبريل',
-    subtext: 'Famous Egyptian Qari & Dua Master',
-    category: 'egypt',
-    surahAudioBase: 'https://server8.mp3quran.net/jbrl',
-  },
-  {
-    id: 'ar.khalifaaltunaiji',
-    name: 'Khalifa Al-Tunaiji',
-    arabicName: 'خليفة التنيجي',
-    subtext: 'Clear UAE Reciter & Tajweed Instructor',
-    category: 'slow',
-    surahAudioBase: 'https://server12.mp3quran.net/tnjy',
-  },
-  {
-    id: 'ar.salahbudair',
-    name: 'Salah Al-Budair',
-    arabicName: 'صلاح البدير',
-    subtext: 'Imam of Masjid an-Nabawi, Madinah',
-    category: 'makkah',
-    surahAudioBase: 'https://server6.mp3quran.net/s_bud',
+    is114SurahsVerified: true,
   },
 ];
+
+export const EVERY_AYAH_RECITER_MAP: Record<string, string> = {
+  'ar.alafasy': 'Alafasy_128kbps',
+  'ar.abdurrahmaansudais': 'Abdurrahmaan_As-Sudais_192kbps',
+  'ar.minshawi': 'Minshawy_Murattal_128kbps',
+  'ar.husary': 'Husary_128kbps',
+  'ar.saadalghamidi': 'Ghamadi_40kbps',
+  'ar.shaatree': 'Abu_Bakr_Ash-Shaatree_128kbps',
+};
+
+export const QURAN_COM_RECITER_MAP: Record<string, number> = {
+  'ar.alafasy': 7,
+  'ar.abdurrahmaansudais': 3,
+  'ar.minshawi': 9,
+  'ar.husary': 6,
+  'ar.saadalghamidi': 12,
+  'ar.shaatree': 4,
+};
+
+export function getReciterAudioUrls(
+  reciterId: string,
+  surahNumber: number,
+  verseNumber: number,
+  globalNumber: number
+): { primary: string; secondary: string } {
+  const folder = EVERY_AYAH_RECITER_MAP[reciterId] || 'Alafasy_128kbps';
+  const surahPadded = String(surahNumber).padStart(3, '0');
+  const ayahPadded = String(verseNumber).padStart(3, '0');
+  const primary = `https://everyayah.com/data/${folder}/${surahPadded}${ayahPadded}.mp3`;
+  const secondary = `https://cdn.islamic.network/quran/audio/128/${reciterId}/${globalNumber}.mp3`;
+  return { primary, secondary };
+}
 
 export interface TafsirOption {
   id: number;
@@ -283,7 +188,7 @@ export const DEFAULT_TAFSIR_BY_LANG: Record<ZikrLanguage, number> = {
 
 export const POPULAR_SURAHS_NUMBERS = [1, 2, 18, 19, 36, 55, 56, 67, 112, 113, 114];
 
-const CACHE_PREFIX = 'zikrmate_quran_cache_v4_';
+const CACHE_PREFIX = 'zikrmate_quran_cache_v8_';
 
 function cleanVerse1Arabic(surahNumber: number, verseNumber: number, text: string): string {
   if (surahNumber !== 1 && surahNumber !== 9 && verseNumber === 1) {
@@ -292,8 +197,8 @@ function cleanVerse1Arabic(surahNumber: number, verseNumber: number, text: strin
   return text.trim();
 }
 
-export function getCachedSurah(surahNumber: number, language: ZikrLanguage = 'bn'): QuranSurahDetail | null {
-  const cacheKey = `${language}_${surahNumber}`;
+export function getCachedSurah(surahNumber: number, reciterId: string = 'ar.alafasy', language: ZikrLanguage = 'bn'): QuranSurahDetail | null {
+  const cacheKey = `${language}_${reciterId}_${surahNumber}`;
   const rawKey = `${CACHE_PREFIX}${cacheKey}`;
   try {
     const raw = localStorage.getItem(rawKey);
@@ -306,8 +211,8 @@ export function getCachedSurah(surahNumber: number, language: ZikrLanguage = 'bn
   return null;
 }
 
-export function saveCachedSurah(surah: QuranSurahDetail, language: ZikrLanguage = 'bn'): void {
-  const cacheKey = `${language}_${surah.number}`;
+export function saveCachedSurah(surah: QuranSurahDetail, reciterId: string = 'ar.alafasy', language: ZikrLanguage = 'bn'): void {
+  const cacheKey = `${language}_${reciterId}_${surah.number}`;
   const rawKey = `${CACHE_PREFIX}${cacheKey}`;
   try {
     localStorage.setItem(rawKey, JSON.stringify(surah));
@@ -346,11 +251,11 @@ export async function fetchSurah(
     throw new Error(`Surah ${surahNumber} not found in Quran index.`);
   }
 
-  const cached = getCachedSurah(surahNumber, language);
+  const cached = getCachedSurah(surahNumber, reciterId, language);
   if (cached && cached.ayahs && cached.ayahs.length === meta.numberOfAyahs) {
     const updatedAyahs = cached.ayahs.map((ayah) => ({
       ...ayah,
-      audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${ayah.globalNumber}.mp3`,
+      audioUrl: getReciterAudioUrls(reciterId, surahNumber, ayah.number, ayah.globalNumber).primary,
     }));
     return {
       ...cached,
@@ -378,19 +283,6 @@ export async function fetchSurah(
   };
 
   const activeTranslationIds = languageTranslationIds[language] || '163,161,20';
-
-  const QURAN_COM_RECITER_MAP: Record<string, number> = {
-    'ar.alafasy': 7,
-    'ar.abdurrahmaansudais': 3,
-    'ar.abdulbasitmurattal': 2,
-    'ar.abdulbasitmujawwad': 1,
-    'ar.shaatree': 4,
-    'ar.husary': 6,
-    'ar.minshawi': 9,
-    'ar.minshawimujawwad': 8,
-    'ar.saudshuraim': 10,
-    'ar.hanirifai': 5,
-  };
 
   try {
     const qdcReciterId = QURAN_COM_RECITER_MAP[reciterId] || 7;
@@ -485,18 +377,18 @@ export async function fetchSurah(
             juz: v.juz_number || meta.startJuz,
             page: v.page_number || 1,
             sajda: Boolean(v.sajdah_number),
-            audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${globalNum}.mp3`,
+            audioUrl: getReciterAudioUrls(reciterId, surahNumber, verseNum, globalNum).primary,
           };
         });
 
         const detail: QuranSurahDetail = {
           ...meta,
-          audioUrl: `https://cdn.islamic.network/quran/audio-surah/128/${reciterId}/${surahNumber}.mp3`,
+          audioUrl: getReciterAudioUrls(reciterId, surahNumber, 1, 1).primary,
           ayahs,
           language,
         };
 
-        saveCachedSurah(detail, language);
+        saveCachedSurah(detail, reciterId, language);
         return detail;
       }
     }
@@ -547,18 +439,18 @@ export async function fetchSurah(
         juz: arAyah.juz || meta.startJuz,
         page: arAyah.page || 1,
         sajda: Boolean(arAyah.sajda),
-        audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${globalNum}.mp3`,
+        audioUrl: getReciterAudioUrls(reciterId, surahNumber, verseNum, globalNum).primary,
       };
     });
 
     const detail: QuranSurahDetail = {
       ...meta,
-      audioUrl: `https://cdn.islamic.network/quran/audio-surah/128/${reciterId}/${surahNumber}.mp3`,
+      audioUrl: getReciterAudioUrls(reciterId, surahNumber, 1, 1).primary,
       ayahs,
       language,
     };
 
-    saveCachedSurah(detail, language);
+    saveCachedSurah(detail, reciterId, language);
     return detail;
   } catch (offlineErr) {
     console.warn(`[QuranService] Offline fallback engaged for Surah ${surahNumber}:`, offlineErr);
@@ -579,18 +471,18 @@ export async function fetchSurah(
             { translator: language === 'bn' ? 'বাংলা অনুবাদ' : 'English Translation', text: selectedTrans },
             { translator: 'Sahih International (English)', text: engText },
           ],
-          audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${ayah.globalNumber}.mp3`,
+          audioUrl: getReciterAudioUrls(reciterId, surahNumber, ayah.number, ayah.globalNumber).primary,
         };
       });
 
       const detail: QuranSurahDetail = {
         ...meta,
-        audioUrl: `https://cdn.islamic.network/quran/audio-surah/128/${reciterId}/${surahNumber}.mp3`,
+        audioUrl: getReciterAudioUrls(reciterId, surahNumber, 1, 1).primary,
         ayahs: localizedAyahs,
         language,
       };
 
-      saveCachedSurah(detail, language);
+      saveCachedSurah(detail, reciterId, language);
       return detail;
     }
 
@@ -616,7 +508,7 @@ export async function fetchSurah(
         juz: meta.startJuz,
         page: 1,
         sajda: false,
-        audioUrl: `https://cdn.islamic.network/quran/audio/128/${reciterId}/${verseNum}.mp3`,
+        audioUrl: getReciterAudioUrls(reciterId, surahNumber, verseNum, verseNum).primary,
       };
     });
 
