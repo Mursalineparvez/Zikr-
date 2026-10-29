@@ -257,9 +257,24 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
     };
   }, [isLocked]);
 
-  // Keyboard navigation & space-bar counting
+  // Keyboard & Hardware Volume Key counting (Physical Tasbeeh Counter)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const isVolumeKey =
+        e.key === 'VolumeUp' ||
+        e.key === 'VolumeDown' ||
+        e.key === 'AudioVolumeUp' ||
+        e.key === 'AudioVolumeDown' ||
+        e.code === 'VolumeUp' ||
+        e.code === 'VolumeDown';
+
+      if (isVolumeKey) {
+        // Hardware volume buttons work as physical Tasbeeh count button even when screen is locked!
+        e.preventDefault();
+        triggerIncrement();
+        return;
+      }
+
       if (e.key === 'Escape') {
         if (isLocked) {
           flashLockNotice();
@@ -396,12 +411,18 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                if (isLocked) {
+                  flashLockNotice();
+                  return;
+                }
                 toggleSound();
               }}
               className={`p-1 rounded-md transition-colors ${
+                isLocked ? 'opacity-30 cursor-not-allowed' : ''
+              } ${
                 soundActive ? 'text-emerald-400' : 'text-slate-400 opacity-60'
               }`}
-              title={soundActive ? 'শব্দ বন্ধ করুন' : 'শব্দ চালু করুন'}
+              title={isLocked ? 'লক করা আছে' : soundActive ? 'শব্দ বন্ধ করুন' : 'শব্দ চালু করুন'}
             >
               {soundActive ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             </button>
@@ -411,12 +432,18 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                if (isLocked) {
+                  flashLockNotice();
+                  return;
+                }
                 toggleVibration();
               }}
               className={`p-1 rounded-md transition-colors ${
+                isLocked ? 'opacity-30 cursor-not-allowed' : ''
+              } ${
                 vibrationActive ? 'text-amber-400' : 'text-slate-400 opacity-60'
               }`}
-              title={vibrationActive ? 'ভাইব্রেশন বন্ধ করুন' : 'ভাইব্রেশন চালু করুন'}
+              title={isLocked ? 'লক করা আছে' : vibrationActive ? 'ভাইব্রেশন বন্ধ করুন' : 'ভাইব্রেশন চালু করুন'}
             >
               <Smartphone className="w-3.5 h-3.5" />
             </button>
@@ -442,7 +469,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 shadow-xs'
                   : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
               }`}
-              title="কাউন্টার রিসেট (০ করুন)"
+              title={isLocked ? 'লক করা আছে' : 'কাউন্টার রিসেট (০ করুন)'}
             >
               <RotateCcw className="w-4 h-4 stroke-[2]" />
             </button>
@@ -462,19 +489,19 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   return next;
                 });
               }}
-              className={`px-2.5 py-1.5 rounded-xl active:scale-95 transition-all cursor-pointer flex items-center gap-1 border shadow-xs ${
+              className={`px-3 py-1.5 rounded-xl active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 border shadow-xs ${
                 isLocked
                   ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-amber-500/40 ring-2 ring-amber-400/40 animate-pulse'
                   : isDay
                   ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
                   : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
               }`}
-              title={isLocked ? 'আনলক করুন' : 'স্ক্রিন লক করুন'}
+              title={isLocked ? 'আনলক করতে চাপুন' : 'স্ক্রিন লক করুন'}
             >
               {isLocked ? (
                 <>
                   <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Locked</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider">Locked</span>
                 </>
               ) : (
                 <>
@@ -493,8 +520,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               <Lock className="w-4.5 h-4.5 shrink-0 stroke-[2.5]" />
               <span className="leading-snug">
                 {selectedLanguage === 'bn'
-                  ? '🔒 স্ক্রিন লক করা আছে! আনলক না করা পর্যন্ত এই পেজ থেকে বের হওয়া যাবে না। বের হতে "Locked" বাটনে চাপুন।'
-                  : '🔒 Screen Locked! You cannot exit this page until you tap "Locked" to unlock.'}
+                  ? '🔒 স্ক্রিন লকড! ব্যাক বাটন বা অন্য বাটন কাজ করবে না। স্ক্রিন বা ভলিউম বাটনে ট্যাপ করে গণনা করতে পারবেন। আনলক করতে "Locked" বাটনে চাপুন।'
+                  : '🔒 Screen Locked! Back button and other controls are disabled. Tap screen or volume buttons to count. Tap "Locked" to unlock.'}
               </span>
             </div>
             <button
