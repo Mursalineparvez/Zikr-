@@ -461,7 +461,7 @@ export async function fetchSurah(
     const recitationsUrl = `https://api.quran.com/api/v4/chapter_recitations/${qdcReciterId}/${surahNumber}?segments=true`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 1800);
 
     // Fire recitations in background without blocking the main verses display at all
     const recPromise = fetch(recitationsUrl)
@@ -469,11 +469,15 @@ export async function fetchSurah(
       .catch(() => null);
 
     // Ultra-fast Global Edge CDN query (average 150ms-250ms worldwide)
-    let qcRes = await fetch(primaryEdgeUrl, { signal: controller.signal }).catch(() => null);
-    if (!qcRes || !qcRes.ok) {
-      qcRes = await fetch(fallbackOriginUrl, { signal: controller.signal });
-    }
+    let qcRes: Response | null = await fetch(primaryEdgeUrl, { signal: controller.signal }).catch(() => null);
     clearTimeout(timeout);
+
+    if (!qcRes || !qcRes.ok) {
+      const fallbackController = new AbortController();
+      const fallbackTimeout = setTimeout(() => fallbackController.abort(), 2000);
+      qcRes = await fetch(fallbackOriginUrl, { signal: fallbackController.signal }).catch(() => null);
+      clearTimeout(fallbackTimeout);
+    }
 
     let timestampsMap = new Map<string, any>();
 
@@ -505,7 +509,7 @@ export async function fetchSurah(
       }
     }).catch(() => {});
 
-    if (qcRes.ok) {
+    if (qcRes && qcRes.ok) {
       const qcJson = await qcRes.json();
       if (qcJson.verses && Array.isArray(qcJson.verses) && qcJson.verses.length > 0) {
         const ayahs: QuranAyah[] = qcJson.verses.map((v: any, index: number) => {
@@ -602,9 +606,12 @@ export async function fetchSurah(
   try {
     const editionCode = QURAN_EDITIONS[language] || 'bn.bengali';
     const apiUrl = `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,${editionCode},en.transliteration,en.sahih`;
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to load Surah ${meta.englishName} (HTTP ${response.status})`);
+    const alquranController = new AbortController();
+    const alquranTimeout = setTimeout(() => alquranController.abort(), 2200);
+    const response = await fetch(apiUrl, { signal: alquranController.signal }).catch(() => null);
+    clearTimeout(alquranTimeout);
+    if (!response || !response.ok) {
+      throw new Error(`Failed to load Surah ${meta.englishName}`);
     }
 
     const result = await response.json();
