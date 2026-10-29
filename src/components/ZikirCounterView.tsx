@@ -3,10 +3,11 @@ import { ZikrItem, ThemeMode, ZikrLanguage, ZikrRefreshMode } from '../types';
 import { CircularCenterCounter } from './CircularCenterCounter';
 import { ZikrCard } from './ZikrCard';
 import { PortableFloatingCounter } from './PortableFloatingCounter';
-import { Plus, FileText, CheckCircle2, Target, RotateCcw, RotateCw, Clock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, FileText, CheckCircle2, Target, RotateCcw, RotateCw, Clock, Sparkles, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { ZIKIR_UI } from '../utils/appTranslations';
 import { PrayerSegmentDetails } from '../utils/prayerTimes';
 import { soundHaptics } from '../utils/audioHaptics';
+import { ZikrFocusMode } from './ZikrFocusMode';
 
 interface ZikirCounterViewProps {
   masterTotal: number;
@@ -64,6 +65,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   const isDay = themeMode === 'day';
   const [filterMode, setFilterMode] = useState<'all' | 'targets' | 'completed'>('all');
   const [showFloatingCounter, setShowFloatingCounter] = useState(false);
+  const [showFocusMode, setShowFocusMode] = useState<number | null>(null);
   const [isRefreshSystemExpanded, setIsRefreshSystemExpanded] = useState<boolean>(false);
 
   // Monitor scroll position to show/hide portable floating popup
@@ -431,6 +433,19 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               <span>PDF রিপোর্ট</span>
             </button>
 
+            {/* Focus Mode Button */}
+            <button
+              onClick={() => setShowFocusMode(0)}
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition active:scale-95 cursor-pointer shadow-xs ${
+                isDay
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  : 'bg-[#061f24] hover:bg-[#092a30] text-emerald-300 border-[#144349]'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Focus Mode</span>
+            </button>
+
             {/* + Zikr Add Button: [ + + জিকির যোগ ] */}
             <button
               onClick={onOpenAddModal}
@@ -442,6 +457,20 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Focus Mode Overlay */}
+      {showFocusMode !== null && (
+        <ZikrFocusMode
+          zikrs={zikrs}
+          initialIndex={showFocusMode}
+          onIncrement={onIncrement}
+          onDecrement={onDecrement}
+          onReset={onReset}
+          onClose={() => setShowFocusMode(null)}
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+        />
+      )}
 
         {/* Filter Pills row matching category pill design */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
