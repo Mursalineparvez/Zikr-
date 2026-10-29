@@ -755,37 +755,15 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               <span>{selectedLanguage === 'bn' ? 'পূর্বের' : 'Prev'}</span>
             </button>
 
-            {/* Horizontal Pagination Dots */}
-            <div className="flex items-center justify-center gap-1 overflow-x-auto max-w-[150px] py-1 scrollbar-none">
-              {zikrs.map((item, idx) => {
-                const isActive = idx === currentIndex;
-                const isItemDone = item.target && item.count >= item.target;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isLocked) {
-                        flashLockNotice();
-                        return;
-                      }
-                      setCurrentIndex(idx);
-                      if (soundActive) soundHaptics.playTap();
-                    }}
-                    className={`h-2 rounded-full transition-all duration-200 cursor-pointer ${
-                      isActive
-                        ? 'w-5 bg-emerald-400 shadow-sm'
-                        : isItemDone
-                        ? 'w-2 bg-amber-400'
-                        : isDay
-                        ? 'w-2 bg-slate-300'
-                        : 'w-2 bg-white/20 hover:bg-white/40'
-                    }`}
-                    title={item.pronunciationBn || item.name}
-                  />
-                );
-              })}
+            {/* Clean Zikr Position Pill (One at a time) */}
+            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/25 border border-white/10 text-xs font-black font-mono shadow-inner">
+              <span className="text-amber-400">
+                {String(currentIndex + 1).padStart(2, '0')}
+              </span>
+              <span className="opacity-40">/</span>
+              <span className="opacity-80">
+                {String(zikrs.length).padStart(2, '0')}
+              </span>
             </div>
 
             {/* Next Zikr button */}
