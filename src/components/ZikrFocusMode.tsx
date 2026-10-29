@@ -62,10 +62,36 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
         </button>
       </div>
 
+  const zikr = zikrs[currentIndex];
+  const hasTarget = zikr.target !== undefined && zikr.target > 0;
+  const target = zikr.target || 0;
+
+  return (
+    <div className={`fixed inset-0 z-[100] flex flex-col ${isDay ? 'bg-slate-50' : 'bg-[#0A262C]'}`}>
+      {/* Sleek Header */}
+      <div className="flex items-center justify-between p-3">
+        <button 
+          onClick={() => !isLocked && onClose()} 
+          className={`p-2 rounded-2xl ${isDay ? 'bg-slate-100 text-slate-700' : 'bg-[#0E353C] text-slate-300'}`}
+          disabled={isLocked}
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <div className={`text-xs font-bold tracking-widest uppercase ${isDay ? 'text-slate-400' : 'text-emerald-500'}`}>
+          Zikr Focus
+        </div>
+        <button 
+          onClick={() => setIsLocked(!isLocked)} 
+          className={`p-2 rounded-2xl transition-all ${isLocked ? 'bg-amber-500/20 text-amber-500' : 'bg-[#0E353C] text-slate-400'}`}
+        >
+          {isLocked ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+        </button>
+      </div>
+
       {/* Main Zikr Display */}
-      <div className="flex-1 flex flex-col items-center justify-start pt-2 px-4 space-y-4" onClick={() => !isLocked && onIncrement(zikr.id)}>
-          <div className="text-center space-y-1">
-              <div className={`font-arabic text-4xl sm:text-5xl font-bold leading-tight ${isDay ? 'text-[#064e3b]' : 'text-emerald-100'}`}>
+      <div className="flex-1 flex flex-col items-center justify-center px-4 space-y-6" onClick={() => !isLocked && onIncrement(zikr.id)}>
+          <div className="text-center space-y-2">
+              <div className={`font-arabic text-3xl sm:text-4xl font-bold leading-tight ${isDay ? 'text-[#064e3b]' : 'text-emerald-100'}`}>
                   {zikr.arabic}
               </div>
               <div className="text-sm font-semibold text-amber-500">
@@ -73,38 +99,33 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               </div>
           </div>
           
-          <div className="relative flex items-center justify-center py-4">
-             <div className="text-8xl sm:text-9xl font-black text-white drop-shadow-lg leading-none">
-                 {zikr.count}
-             </div>
-             {hasTarget && (
-                 <div className="absolute -bottom-2 text-xl font-bold text-emerald-500">
-                     / {target}
-                 </div>
-             )}
+          <div className="text-7xl sm:text-8xl font-black text-white drop-shadow-xl my-4">
+              {zikr.count}
+          </div>
+
+          <div className="text-xs font-bold text-slate-400 bg-[#0E353C] px-4 py-1.5 rounded-full uppercase tracking-wider">
+              {hasTarget ? `${zikr.count} / ${target}` : `${zikr.count} total`}
           </div>
       </div>
 
-      {/* Bottom Control Area */}
-      <div className="p-4 pb-6">
-          <div className={`text-center text-xs font-bold mb-4 uppercase tracking-tighter ${isDay ? 'text-slate-500' : 'text-emerald-600'}`}>
-              Total Zikr: {zikrs.reduce((acc, z) => acc + z.count, 0)}
-          </div>
-          
-          {!isLocked && (
-              <div className="flex items-center justify-between gap-4">
-                  <button onClick={handlePrev} disabled={currentIndex === 0} className="p-3 rounded-2xl bg-[#0E353C] disabled:opacity-30 text-white shadow-lg">
-                      <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <div className={`text-sm font-bold ${isDay ? 'text-slate-700' : 'text-slate-300'}`}>
-                    {currentIndex + 1} / {zikrs.length}
-                  </div>
-                  <button onClick={handleNext} disabled={currentIndex === zikrs.length - 1} className="p-3 rounded-2xl bg-[#0E353C] disabled:opacity-30 text-white shadow-lg">
-                      <ChevronRight className="w-6 h-6" />
-                  </button>
+      {/* Footer / Nav */}
+      <div className="p-6">
+          <div className="flex items-center justify-between gap-4">
+              <button onClick={handlePrev} disabled={currentIndex === 0} className="p-3 rounded-2xl bg-[#0E353C] disabled:opacity-20 text-white">
+                  <ChevronLeft className="w-6 h-6" />
+              </button>
+              
+              <div className={`text-sm font-bold ${isDay ? 'text-slate-400' : 'text-slate-500'}`}>
+                {currentIndex + 1} / {zikrs.length}
               </div>
-          )}
+              
+              <button onClick={handleNext} disabled={currentIndex === zikrs.length - 1} className="p-3 rounded-2xl bg-[#0E353C] disabled:opacity-20 text-white">
+                  <ChevronRight className="w-6 h-6" />
+              </button>
+          </div>
       </div>
+    </div>
+  );
     </div>
   );
 };
