@@ -646,21 +646,21 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
   // Smoothly center the active word in the viewport when it speaks
   useEffect(() => {
-    if (isPlaying && activeWordIndex >= 0 && activeWordRef.current && autoScroll) {
+    if (isPlaying && activeWordIndex >= 0 && activeWordRef.current) {
       activeWordRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
         inline: 'center',
       });
     }
-  }, [activeWordIndex, isPlaying, autoScroll]);
+  }, [activeWordIndex, isPlaying]);
 
   // Smoothly center active verse during audio playback
   useEffect(() => {
-    if (isPlaying && autoScroll && currentPlayingAyahNum !== null) {
+    if (isPlaying && currentPlayingAyahNum !== null) {
       scrollToAyah(currentPlayingAyahNum);
     }
-  }, [currentPlayingAyahNum, isPlaying, autoScroll]);
+  }, [currentPlayingAyahNum, isPlaying]);
 
   // Continuous Ultra-Smooth Auto-scroll Engine for Reading Pace when Audio is not active
   useEffect(() => {
@@ -767,17 +767,27 @@ export const QuranView: React.FC<QuranViewProps> = ({
     };
   }, [autoScroll, autoScrollSpeed, selectedSurahNumber, isPlaying, surahDetail]);
 
-  // Handle clicking on any word in word-by-word mode to seek audio directly to that word
+  // Handle clicking on any word in word-by-word mode to pronounce ONLY that single word
   const handleWordClick = (ayah: QuranAyah, wordIndex: number) => {
     if (!ayah.words || ayah.words.length === 0) return;
     const audio = audioRef.current;
+    if (!audio) return;
     const words = ayah.words;
     const numWords = words.length;
     const targetWord = words[wordIndex];
 
     let seekSeconds = 0;
+    let wordDuration = 0.8; // default duration in seconds
+
     if (typeof targetWord?.startMs === 'number') {
       seekSeconds = Math.max(0, targetWord.startMs / 1000);
+      if (typeof targetWord?.endMs === 'number' && targetWord.endMs > targetWord.startMs) {
+        wordDuration = Math.max(0.3, (targetWord.endMs - targetWord.startMs) / 1000 + 0.15);
+      } else if (words[wordIndex + 1] && typeof words[wordIndex + 1].startMs === 'number') {
+        wordDuration = Math.max(0.3, (words[wordIndex + 1].startMs! - targetWord.startMs) / 1000);
+      } else {
+        wordDuration = 0.9;
+      }
     } else {
       const weights = words.map((w, idx) => {
         const text = w.arabic || '';
@@ -795,25 +805,48 @@ export const QuranView: React.FC<QuranViewProps> = ({
       const totalWeight = weights.reduce((acc, w) => acc + w, 0);
       const cumWeightBefore = weights.slice(0, wordIndex).reduce((acc, w) => acc + w, 0);
       const wordStartRatio = cumWeightBefore / totalWeight;
+      const wordWeightRatio = weights[wordIndex] / totalWeight;
 
-      const dur = audio?.duration || 5;
+      const dur = audio.duration || 5;
       const leadingOffset = Math.min(0.5, dur * 0.035);
       const trailingOffset = Math.min(0.6, dur * 0.045);
       const effectiveDuration = Math.max(0.1, dur - leadingOffset - trailingOffset);
       seekSeconds = leadingOffset + wordStartRatio * effectiveDuration;
+      wordDuration = Math.max(0.3, wordWeightRatio * effectiveDuration);
     }
 
-    if (isPlaying && currentPlayingAyahNum === ayah.number && audio && audio.duration) {
-      audio.currentTime = Math.min(audio.duration - 0.1, seekSeconds);
-    } else {
-      playAyahAudio(ayah);
-      setTimeout(() => {
-        const activeAudio = audioRef.current;
-        if (activeAudio) {
-          activeAudio.currentTime = Math.max(0, seekSeconds);
+    const playAndSliceWord = () => {
+      audio.currentTime = Math.max(0, seekSeconds);
+      setIsPlaying(true);
+      setPlayingMode('ayah');
+      setCurrentPlayingAyahNum(ayah.number);
+      audio.play().then(() => {
+        if ((window as any).__wordPauseTimer) {
+          clearTimeout((window as any).__wordPauseTimer);
         }
-      }, 150);
+        (window as any).__wordPauseTimer = setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+          }
+        }, wordDuration * 1000);
+      }).catch(() => {
+        setIsPlaying(false);
+      });
+    };
+
+    const audioUrl = ayah.audioUrl || `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber}.mp3`;
+    if (audio.src !== audioUrl) {
+      audio.src = audioUrl;
+      audio.load();
+      audio.oncanplaythrough = () => {
+        audio.oncanplaythrough = null;
+        playAndSliceWord();
+      };
+    } else {
+      playAndSliceWord();
     }
+
     if (soundEnabled) soundHaptics.playTap();
   };
 
@@ -871,9 +904,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       playPromise
         .then(() => {
           setIsPlaying(true);
-          if (autoScroll) {
-            scrollToAyah(ayah.number);
-          }
+          scrollToAyah(ayah.number);
           // Non-blocking offline cache after audio has already started smoothly
           if ('caches' in window) {
             setTimeout(() => {
