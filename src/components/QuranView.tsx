@@ -560,6 +560,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
     // A. Official Quran.com Recitation Segments (Continuous Gapless Precision)
     if (typeof words[0]?.startMs === 'number') {
+      if (currentMs < (words[0].startMs - 80)) {
+        return -1;
+      }
       for (let i = 0; i < words.length; i++) {
         const w = words[i];
         if (typeof w.startMs === 'number') {
@@ -569,17 +572,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
             nextWord && typeof nextWord.startMs === 'number'
               ? Math.max(startMs + 50, nextWord.startMs - 50)
               : typeof w.endMs === 'number'
-              ? w.endMs + 400
-              : Number.MAX_SAFE_INTEGER;
+              ? w.endMs + 100
+              : startMs + 600;
 
           if (currentMs >= startMs && currentMs < endMs) {
             return i;
           }
         }
       }
-      if (currentMs >= (words[words.length - 1]?.startMs || 0) - 50) {
-        return words.length - 1;
-      }
+      // Do not linger on last word at the end of the ayah! Return -1.
+      return -1;
     }
 
     // B. Fallback: Tajweed Phonetic Weighted Audio Alignment
@@ -614,7 +616,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     });
 
     const totalWeight = weights.reduce((acc, w) => acc + w, 0);
-    if (totalWeight <= 0) return 0;
+    if (totalWeight <= 0) return -1;
 
     const leadingOffset = Math.min(0.5, audioDuration * 0.035);
     const trailingOffset = Math.min(0.6, audioDuration * 0.045);
@@ -629,11 +631,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
       const wordEndRatio = cumWeight / totalWeight;
 
       if (progressRatio >= wordStartRatio && progressRatio < wordEndRatio) {
+        if (i === numWords - 1 && progressRatio > 0.95) {
+          return -1;
+        }
         return i;
       }
     }
 
-    return numWords - 1;
+    return -1;
   }, [isPlaying, currentPlayingAyahNum, audioCurrentTime, audioDuration, surahDetail]);
 
   // Active Word object during audio recitation (for live Makhraj & speech animation)
@@ -2229,7 +2234,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             }
 
                              // Get formatted pronunciation and Tajweed badges for this word
-                             const wordPronunciation = getFormattedTransliteration(word.transliteration || '', word.arabic, selectedLanguage);
+                             const wordPronunciation = '';
                              const wordBadges = detectWordBadges(word.arabic, wordPronunciation);
 
                              return (

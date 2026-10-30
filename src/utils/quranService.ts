@@ -407,6 +407,7 @@ function generateFallbackWords(arabicText: string, englishText: string, language
       position: idx + 1,
       arabic: ar,
       translation,
+      transliteration: '',
     };
   });
 }
@@ -540,7 +541,7 @@ export async function fetchSurah(
                 position: w.position,
                 arabic: w.text_uthmani || w.text || '',
                 translation: wTranslation,
-                transliteration: w.transliteration?.text || '',
+                transliteration: '',
                 startMs,
                 endMs,
               };
