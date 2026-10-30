@@ -322,112 +322,277 @@ export function detectTajweedRule(arabic: string, wordIndex: number = 0): Tajwee
   };
 }
 
+export interface PhoneticSyllable {
+  text: string;
+  badges: TajweedBadge[];
+}
+
 export interface ColoredPronunciationWord {
   text: string;
   style: TajweedColorStyle;
   wordIndex: number;
   badges: TajweedBadge[];
+  syllables?: PhoneticSyllable[];
+  arabic?: string;
 }
 
 /**
- * Detects specific Tajweed signs (Alif stretch 1/3/4, Heavy sound 'ম', Ghunna 'গু', Qalqalah 'ক্ব')
+ * Splits a Bengali transliteration word into natural phonetic syllables
  */
-export function detectWordBadges(arabic: string, tokenBn: string): TajweedBadge[] {
+export function splitBengaliWordIntoSyllables(word: string): string[] {
+  if (!word) return [];
+
+  // If word contains hyphens, preserve and split around them
+  if (word.includes('-') || word.includes('–')) {
+    const parts = word.split(/([-–])/);
+    const result: string[] = [];
+    for (const part of parts) {
+      if (part === '-' || part === '–') {
+        if (result.length > 0) {
+          result[result.length - 1] += part;
+        } else {
+          result.push(part);
+        }
+      } else if (part) {
+        result.push(...splitBengaliWordIntoSyllables(part));
+      }
+    }
+    return result;
+  }
+
+  // Bengali syllable regex:
+  // Matches independent vowels, consonants with diacritics and codas
+  const regex = /(?:[অ-ঔ]|(?:[ক-হ]্)*[ক-হ])(?:[\u09BE-\u09CC\u09D7])?(?:্[ক-হ]|ং|ঃ|ঁ)?/g;
+  const matches = word.match(regex);
+  if (!matches || matches.length === 0) {
+    return [word];
+  }
+
+  // Ensure trailing punctuation or characters are not lost
+  const joined = matches.join('');
+  if (joined.length < word.length) {
+    const remainder = word.slice(joined.length);
+    matches[matches.length - 1] += remainder;
+  }
+
+  return matches;
+}
+
+/**
+ * Detects specific Tajweed signs for a specific Bengali syllable:
+ * - 1, 3, or 4 Alif Stretch ('১', '৩', '৪')
+ * - Heavy sound ('ম')
+ * - Ghunnah ('গু')
+ * - Qalqalah ('ক্ব')
+ */
+export function detectSyllableBadges(
+  syllable: string,
+  fullBnWord: string,
+  arWord?: string,
+  isAyahEnd: boolean = false,
+  isLastSyllableOfWord: boolean = false
+): TajweedBadge[] {
   const badges: TajweedBadge[] = [];
+  if (!syllable) return badges;
 
-  if (!arabic && !tokenBn) return badges;
-
-  const ar = arabic || '';
-  const bn = tokenBn || '';
+  const s = syllable;
+  const ar = arWord || '';
 
   // 1. Check Alif Stretch (৪, ৩, ১ আলিফ টান)
   // 4-Alif Stretch (Madd Muttasil / Lazim: ~ / ٓ / آ / أُولَٰئِكَ / السَّمَاءِ)
-  if (/[\u0653~ٓآ]/.test(ar) || ar.includes('أُولَٰئِكَ') || ar.includes('السَّمَاءِ') || ar.includes('جَاءَ') || bn.includes('আ-') || bn.includes('ঈ-') || bn.includes('ঊ-')) {
-    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === '৪')!;
-    badges.push({
-      symbol: '৪',
-      labelBn: legend.labelBn,
-      labelEn: legend.labelEn,
-      type: 'stretch',
-      colorClass: legend.colorClass,
-      bgClass: legend.bgClass,
-      borderClass: legend.borderClass,
-    });
-  } else if (/[\u0670ٰ]/.test(ar) && (ar.length > 5 || ar.includes('لَا') || ar.includes('مَا'))) {
-    // 3-Alif Stretch (Madd Munfasil)
-    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === '৩')!;
-    badges.push({
-      symbol: '৩',
-      labelBn: legend.labelBn,
-      labelEn: legend.labelEn,
-      type: 'stretch',
-      colorClass: legend.colorClass,
-      bgClass: legend.bgClass,
-      borderClass: legend.borderClass,
-    });
-  } else if (/[\u0670\u06E5\u06E6ٰ]/.test(ar) || ar.includes('ا') || ar.includes('و') || ar.includes('ي') || /[াীূ]/.test(bn)) {
-    // 1-Alif Stretch (Madd Asli)
-    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === '১')!;
-    badges.push({
-      symbol: '১',
-      labelBn: legend.labelBn,
-      labelEn: legend.labelEn,
-      type: 'stretch',
-      colorClass: legend.colorClass,
-      bgClass: legend.bgClass,
-      borderClass: legend.borderClass,
-    });
+  const isMadd4 =
+    /[\u0653~ٓآ]/.test(ar) ||
+    ar.includes('أُولَٰئِكَ') ||
+    ar.includes('السَّمَاءِ') ||
+    ar.includes('جَاءَ') ||
+    s.includes('~') ||
+    s.includes('ٓ') ||
+    s.includes('আ-') ||
+    s.includes('ঈ-') ||
+    s.includes('ঊ-');
+
+  // 3-Alif Stretch: Madd Aarid at Ayah ending pause on the last prolonged syllable
+  const isMadd3 =
+    !isMadd4 &&
+    isAyahEnd &&
+    isLastSyllableOfWord &&
+    (/[ীূ]/.test(s) || /[া]/.test(s) || /[يُو]\u0652?[ء-ي]?$/.test(ar));
+
+  // 1-Alif Stretch: Regular Madd Asli (Aa-kar, Ee-kar, Oo-kar, or Alif/Waw/Yaa)
+  const isMadd1 =
+    !isMadd4 &&
+    !isMadd3 &&
+    (/[াীূ]/.test(s) || /^[আঈঊ]/.test(s) || /[\u0670\u06E5\u06E6ٰ]/.test(ar));
+
+  if (isMadd4) {
+    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === '৪');
+    if (legend) {
+      badges.push({
+        symbol: '৪',
+        labelBn: legend.labelBn,
+        labelEn: legend.labelEn,
+        type: 'stretch',
+        colorClass: legend.colorClass,
+        bgClass: legend.bgClass,
+        borderClass: legend.borderClass,
+      });
+    }
+  } else if (isMadd3) {
+    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === '৩');
+    if (legend) {
+      badges.push({
+        symbol: '৩',
+        labelBn: legend.labelBn,
+        labelEn: legend.labelEn,
+        type: 'stretch',
+        colorClass: legend.colorClass,
+        bgClass: legend.bgClass,
+        borderClass: legend.borderClass,
+      });
+    }
+  } else if (isMadd1) {
+    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === '১');
+    if (legend) {
+      badges.push({
+        symbol: '১',
+        labelBn: legend.labelBn,
+        labelEn: legend.labelEn,
+        type: 'stretch',
+        colorClass: legend.colorClass,
+        bgClass: legend.bgClass,
+        borderClass: legend.borderClass,
+      });
+    }
   }
 
   // 2. Check Heavy Letter Sound (তাফখীম / মোটা পাঠ 'ম')
-  // Heavy letters: ص, ض, ط, ظ, ق, غ, خ or Heavy Allah 'اللَّهِ' or heavy 'ر'
-  if (/[صضطظقغخ]/.test(ar) || ar.includes('الله') || ar.includes('اللَّهِ') || /[খগসদ্বত্বক]/.test(bn)) {
-    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === 'ম')!;
-    badges.push({
-      symbol: 'ম',
-      labelBn: legend.labelBn,
-      labelEn: legend.labelEn,
-      type: 'heavy',
-      colorClass: legend.colorClass,
-      bgClass: legend.bgClass,
-      borderClass: legend.borderClass,
-    });
+  // Letters: ق (ক্ব), ط (ত্ব), ص (সো/ছ), ض (দ্ব), ظ (যো/জো), خ (খ), غ (গ)
+  // Plus heavy ر (রা, রো, রু) and heavy 'ল্লা' / 'ল্লাহ' in Allah's name
+  const isHeavy =
+    s.includes('ক্ব') ||
+    s.includes('ত্ব') ||
+    s.includes('সো') ||
+    s.includes('ছ') ||
+    s.includes('দ্ব') ||
+    s.includes('যো') ||
+    s.includes('জো') ||
+    s.includes('খ') ||
+    s.includes('গ') ||
+    /^(?:র[াোু]|রা|রো|রু)/.test(s) ||
+    (s.includes('ল্লা') && (ar.includes('الله') || ar.includes('اللَّهِ')));
+
+  if (isHeavy) {
+    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === 'ম');
+    if (legend) {
+      badges.push({
+        symbol: 'ম',
+        labelBn: legend.labelBn,
+        labelEn: legend.labelEn,
+        type: 'heavy',
+        colorClass: legend.colorClass,
+        bgClass: legend.bgClass,
+        borderClass: legend.borderClass,
+      });
+    }
   }
 
   // 3. Check Ghunna ('গু')
-  if (/[نم]\u0651/.test(ar) || ar.includes('إِنَّ') || ar.includes('أنَّ') || /[ংন্ন্ম্ম]/.test(bn)) {
-    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === 'গু')!;
-    badges.push({
-      symbol: 'গু',
-      labelBn: legend.labelBn,
-      labelEn: legend.labelEn,
-      type: 'ghunna',
-      colorClass: legend.colorClass,
-      bgClass: legend.bgClass,
-      borderClass: legend.borderClass,
-    });
+  // Wajib Ghunnah: ম্ম (Meem Mushaddad), ন্ন (Noon Mushaddad)
+  // Ikhfa: ং (Anusvara representing nasalization), or ন্ before ikhfa consonants
+  const isGhunna =
+    s.includes('ং') ||
+    s.includes('ম্ম') ||
+    s.includes('ন্ন') ||
+    (/[নণ]্/.test(s) && /[তথদধজঝসশছক]/.test(fullBnWord.slice(fullBnWord.indexOf(s) + s.length)));
+
+  if (isGhunna) {
+    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === 'গু');
+    if (legend) {
+      badges.push({
+        symbol: 'গু',
+        labelBn: legend.labelBn,
+        labelEn: legend.labelEn,
+        type: 'ghunna',
+        colorClass: legend.colorClass,
+        bgClass: legend.bgClass,
+        borderClass: legend.borderClass,
+      });
+    }
   }
 
   // 4. Check Qalqalah ('ক্ব')
-  if (/[قطبجد]\u0652/.test(ar) || /[قطبجد]$/.test(ar.replace(/[\u064B-\u0652]/g, '')) || /[ক্বত্বব্জ্দ]/.test(bn)) {
-    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === 'ক্ব')!;
-    badges.push({
-      symbol: 'ক্ব',
-      labelBn: legend.labelBn,
-      labelEn: legend.labelEn,
-      type: 'qalqalah',
-      colorClass: legend.colorClass,
-      bgClass: legend.bgClass,
-      borderClass: legend.borderClass,
-    });
+  // Letters of Qutub Jadd (ق ط ب ج د) with Sukun/Jazm: ক্ব্, ত্ব্, ব্, জ্, দ্
+  // Or at ayah ending pause on these letters
+  const isQalqalah =
+    /ক্ব্|ত্ব্|ব্|জ্|দ্/.test(s) ||
+    (isAyahEnd && isLastSyllableOfWord && /[ক্বত্বব্জ্দ]$/.test(s.replace(/[\s\(\)০-৯]/g, '')));
+
+  if (isQalqalah) {
+    const legend = TAJWEED_SIGN_LEGEND_ITEMS.find((i) => i.symbol === 'ক্ব');
+    if (legend) {
+      badges.push({
+        symbol: 'ক্ব',
+        labelBn: legend.labelBn,
+        labelEn: legend.labelEn,
+        type: 'qalqalah',
+        colorClass: legend.colorClass,
+        bgClass: legend.bgClass,
+        borderClass: legend.borderClass,
+      });
+    }
   }
 
   return badges;
 }
 
 /**
+ * Parses a Bengali transliteration word into syllables, attaching specific
+ * Tajweed indicators directly to the exact syllable where the rule applies.
+ */
+export function parseBengaliWordIntoPhoneticSyllables(
+  bnWord: string,
+  arWord?: string,
+  isAyahEnd: boolean = false
+): PhoneticSyllable[] {
+  if (!bnWord) return [];
+
+  // Pass punctuation or pure numbers like (৫৭) through directly
+  if (/^[\s\(\)০-৯.,;:!?–-]+$/.test(bnWord.trim())) {
+    return [{ text: bnWord, badges: [] }];
+  }
+
+  const rawSyllables = splitBengaliWordIntoSyllables(bnWord);
+  if (rawSyllables.length === 0) {
+    return [{ text: bnWord, badges: [] }];
+  }
+
+  return rawSyllables.map((syl, sIdx) => {
+    const isLastSyllableOfWord = sIdx === rawSyllables.length - 1;
+    const badges = detectSyllableBadges(syl, bnWord, arWord, isAyahEnd, isLastSyllableOfWord);
+    return {
+      text: syl,
+      badges,
+    };
+  });
+}
+
+/**
+ * Detects specific Tajweed signs for backwards compatibility
+ */
+export function detectWordBadges(arabic: string, tokenBn: string): TajweedBadge[] {
+  const syllables = parseBengaliWordIntoPhoneticSyllables(tokenBn, arabic);
+  const badgesMap = new Map<string, TajweedBadge>();
+  for (const syl of syllables) {
+    for (const b of syl.badges) {
+      badgesMap.set(b.symbol, b);
+    }
+  }
+  return Array.from(badgesMap.values());
+}
+
+/**
  * Splits transliteration / pronunciation string into tokens and pairs each token
- * with the corresponding Arabic word's Tajweed / Color style and notation badges
+ * with the corresponding Arabic word's Tajweed / Color style and syllable-level signs
  */
 export function getColoredPronunciationTokens(
   pronunciationText: string,
@@ -436,19 +601,19 @@ export function getColoredPronunciationTokens(
 ): ColoredPronunciationWord[] {
   if (!pronunciationText) return [];
 
-  // Clean and tokenize pronunciation
   const tokens = pronunciationText.trim().split(/\s+/);
   if (tokens.length === 0) return [];
 
   const wordCount = arabicWords?.length || tokens.length;
 
   return tokens.map((token, idx) => {
-    // Determine corresponding Arabic word index
     const mappedWordIdx = Math.min(idx, wordCount - 1);
     const arabicWordObj = arabicWords ? arabicWords[mappedWordIdx] : undefined;
     const arabicText = arabicWordObj?.arabic || '';
+    const isAyahEnd = idx === tokens.length - 1;
 
     const style = detectTajweedRule(arabicText, mappedWordIdx);
+    const syllables = parseBengaliWordIntoPhoneticSyllables(token, arabicText, isAyahEnd);
     const badges = detectWordBadges(arabicText, token);
 
     return {
@@ -456,7 +621,10 @@ export function getColoredPronunciationTokens(
       style,
       wordIndex: mappedWordIdx,
       badges,
+      syllables,
+      arabic: arabicText,
     };
   });
 }
+
 

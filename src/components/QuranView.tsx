@@ -30,6 +30,8 @@ import {
   TAJWEED_LEGEND_ITEMS,
   TAJWEED_SIGN_LEGEND_ITEMS,
   getColoredPronunciationTokens,
+  parseBengaliWordIntoPhoneticSyllables,
+  PhoneticSyllable,
 } from '../utils/tajweedColorHelper';
 
 const POPULAR_SURAHS = [1, 18, 36, 55, 56, 67, 78, 112, 113, 114];
@@ -177,7 +179,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
   const [fontSize, setFontSize] = useState<FontSizeType>('large');
   const [selectedReciterId, setSelectedReciterId] = useState<string>('ar.alafasy');
-  const [autoScroll, setAutoScroll] = useState<boolean>(true);
+  const [autoScroll, setAutoScroll] = useState<boolean>(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState<'normal' | 'slow' | 'fast'>('normal');
 
   // Audio Playback State
@@ -385,6 +387,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const loadSurah = async (surahNumber: number, targetAyahNumber?: number, openTafsirImmediately?: boolean) => {
     setSelectedSurahNumber(surahNumber);
     setIsInsightExpanded(false);
+    setAutoScroll(false);
     stopAudio();
 
     // Fast synchronous cache hit: Render in 0ms without waiting!
@@ -1142,6 +1145,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
             <button
               onClick={() => {
                 stopAudio();
+                setAutoScroll(false);
                 setSelectedSurahNumber(null);
                 setSurahDetail(null);
               }}
@@ -1208,42 +1212,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <Search className="w-4 h-4 text-white" />
               </button>
             </div>
-          </div>
-
-          {/* Sticky Surah Navigation Footer */}
-          <div className="fixed bottom-24 left-4 right-4 z-50 bg-emerald-900/95 backdrop-blur-md rounded-2xl p-2 shadow-2xl border border-emerald-700/50 flex items-center justify-between gap-2">
-            <button
-              onClick={() => {
-                if (selectedSurahNumber !== null && selectedSurahNumber > 1) {
-                  loadSurah(selectedSurahNumber - 1);
-                }
-              }}
-              disabled={selectedSurahNumber === 1}
-              className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all ${
-                selectedSurahNumber === 1
-                  ? 'opacity-40 cursor-not-allowed bg-emerald-950 text-emerald-400'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              }`}
-            >
-              <ChevronLeft className="w-5 h-5" />
-              {selectedLanguage === 'bn' ? 'পূর্বের' : 'Prev'}
-            </button>
-            <button
-              onClick={() => {
-                if (selectedSurahNumber !== null && selectedSurahNumber < 114) {
-                  loadSurah(selectedSurahNumber + 1);
-                }
-              }}
-              disabled={selectedSurahNumber === 114}
-              className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all ${
-                selectedSurahNumber === 114
-                  ? 'opacity-40 cursor-not-allowed bg-emerald-950 text-emerald-400'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              }`}
-            >
-              {selectedLanguage === 'bn' ? 'পরের' : 'Next'}
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </div>
 
           {/* Quick Reciter Switcher Dropdown */}
@@ -2256,23 +2224,33 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   {word.arabic}
                                 </span>
 
-                                {/* Word Pronunciation (with Tajweed Badges) */}
+                                {/* Word Pronunciation (with Inline Tajweed signs on exact syllables) */}
                                 {(wordPronunciation || word.transliteration) && (
-                                  <div dir="ltr" className="flex items-center justify-center gap-1 my-0.5">
-                                    <span className={`text-xs sm:text-sm font-extrabold transition-colors ${activeMeaningStyle}`}>
-                                      {wordPronunciation || word.transliteration}
-                                    </span>
-                                    {selectedLanguage === 'bn' && wordBadges && wordBadges.length > 0 && (
-                                      <span className="inline-flex items-center gap-0.5 -mt-2">
-                                        {wordBadges.map((b, bIdx) => (
-                                          <sup
-                                            key={bIdx}
-                                            title={b.labelBn}
-                                            className={`px-1 py-0.2 rounded-md border text-[9px] font-black leading-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
-                                          >
-                                            {b.symbol}
-                                          </sup>
+                                  <div dir="ltr" className="flex items-center justify-center my-0.5">
+                                    {selectedLanguage === 'bn' ? (
+                                      <span className={`text-xs sm:text-sm font-extrabold transition-colors inline-flex flex-wrap items-baseline justify-center ${activeMeaningStyle}`}>
+                                        {parseBengaliWordIntoPhoneticSyllables(
+                                          wordPronunciation || word.transliteration || '',
+                                          word.arabic,
+                                          wIdx === (ayah.words?.length ?? 0) - 1
+                                        ).map((syl, sIdx) => (
+                                          <span key={sIdx} className="inline-flex items-baseline">
+                                            <span>{syl.text}</span>
+                                            {syl.badges && syl.badges.map((b, bIdx) => (
+                                              <sup
+                                                key={bIdx}
+                                                title={b.labelBn}
+                                                className={`mx-[1px] px-0.5 py-0 rounded text-[9px] font-black leading-none border align-super select-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
+                                              >
+                                                {b.symbol}
+                                              </sup>
+                                            ))}
+                                          </span>
                                         ))}
+                                      </span>
+                                    ) : (
+                                      <span className={`text-xs sm:text-sm font-extrabold transition-colors ${activeMeaningStyle}`}>
+                                        {wordPronunciation || word.transliteration}
                                       </span>
                                     )}
                                   </div>
@@ -2329,27 +2307,29 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 ).map((token, tIdx) => (
                                   <span
                                     key={tIdx}
-                                    className={`relative group px-2.5 py-1 rounded-xl border text-xs sm:text-sm font-black transition-all duration-150 inline-flex items-center gap-1 shadow-2xs ${
+                                    className={`relative group px-2.5 py-1 rounded-xl border text-xs sm:text-sm font-black transition-all duration-150 inline-flex flex-wrap items-baseline gap-x-0.5 gap-y-0.5 shadow-2xs ${
                                       isDay
                                         ? `${token.style.dayText} ${token.style.dayBg} ${token.style.dayBorder}`
                                         : `${token.style.nightText} ${token.style.nightBg} ${token.style.nightBorder}`
                                     }`}
                                   >
-                                    <span>{token.text}</span>
-
-                                    {/* Tajweed Sign Badges (১, ৩, ৪ আলিফ টান, গুন্নাহ, মোটা পাঠ, ক্বাল ক্বলা) */}
-                                    {selectedLanguage === 'bn' && token.badges && token.badges.length > 0 && (
-                                      <span className="inline-flex items-center gap-0.5 -mt-2 -mr-1">
-                                        {token.badges.map((b, bIdx) => (
-                                          <sup
-                                            key={bIdx}
-                                            title={b.labelBn}
-                                            className={`px-1 py-0.2 rounded-md border text-[9px] font-black leading-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
-                                          >
-                                            {b.symbol}
-                                          </sup>
-                                        ))}
-                                      </span>
+                                    {selectedLanguage === 'bn' && token.syllables && token.syllables.length > 0 ? (
+                                      token.syllables.map((syl, sIdx) => (
+                                        <span key={sIdx} className="inline-flex items-baseline">
+                                          <span>{syl.text}</span>
+                                          {syl.badges && syl.badges.map((b, bIdx) => (
+                                            <sup
+                                              key={bIdx}
+                                              title={b.labelBn}
+                                              className={`mx-[1px] px-0.5 py-0 rounded text-[9px] font-black leading-none border align-super select-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
+                                            >
+                                              {b.symbol}
+                                            </sup>
+                                          ))}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span>{token.text}</span>
                                     )}
                                   </span>
                                 ))}
@@ -2436,6 +2416,44 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   </div>
                 );
               })}
+
+              {/* Surah Navigation Footer (In-flow below all text) */}
+              <div className="mt-8 mb-12 p-3 sm:p-4 rounded-2xl bg-emerald-900/90 shadow-xl border border-emerald-700/50 flex items-center justify-between gap-3">
+                <button
+                  onClick={() => {
+                    if (selectedSurahNumber !== null && selectedSurahNumber > 1) {
+                      loadSurah(selectedSurahNumber - 1);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  disabled={selectedSurahNumber === 1}
+                  className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all cursor-pointer ${
+                    selectedSurahNumber === 1
+                      ? 'opacity-40 cursor-not-allowed bg-emerald-950 text-emerald-400'
+                      : 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-md'
+                  }`}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                  <span>{selectedLanguage === 'bn' ? 'পূর্বের' : 'Prev'}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedSurahNumber !== null && selectedSurahNumber < 114) {
+                      loadSurah(selectedSurahNumber + 1);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  disabled={selectedSurahNumber === 114}
+                  className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all cursor-pointer ${
+                    selectedSurahNumber === 114
+                      ? 'opacity-40 cursor-not-allowed bg-emerald-950 text-emerald-400'
+                      : 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white shadow-md'
+                  }`}
+                >
+                  <span>{selectedLanguage === 'bn' ? 'পরের' : 'Next'}</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           )}
         </div>
