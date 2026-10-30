@@ -2185,7 +2185,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       {wordByWordMode && ayah.words && ayah.words.length > 0 ? (
                         <div
                           dir="rtl"
-                          className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-4 py-3 select-none"
+                          className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 sm:gap-x-3.5 gap-y-2.5 sm:gap-y-3.5 py-2 select-none"
                         >
                           {ayah.words.map((word, wIdx) => {
                             const isWordActive =
@@ -2201,15 +2201,15 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             if (isWordActive) {
                               if (wordAnimationType === 'glow') {
                                 activeCardStyle = isDay
-                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-500/20 shadow-md'
-                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-2xl z-20 px-4 py-2.5 ring-4 ring-emerald-400/25 shadow-md';
+                                  ? 'bg-[#d1fae5] border-[2.5px] border-[#008763] text-[#006747] anim-word-glow rounded-xl sm:rounded-2xl z-20 px-2.5 py-1.5 sm:px-3 sm:py-2 ring-2 ring-emerald-500/20 shadow-md'
+                                  : 'bg-emerald-950/90 border-[2.5px] border-emerald-400 text-emerald-200 anim-word-glow rounded-xl sm:rounded-2xl z-20 px-2.5 py-1.5 sm:px-3 sm:py-2 ring-2 ring-emerald-400/25 shadow-md';
                                 activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
                                 activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
                               } else {
                                 // minimal
                                 activeCardStyle = isDay
-                                  ? 'bg-[#ecfdf5] border-[2px] border-[#008763] text-[#006747] shadow-sm rounded-2xl z-10 px-3.5 py-2 scale-100'
-                                  : 'bg-emerald-950/70 border-[2px] border-emerald-500 text-emerald-200 shadow-sm rounded-2xl z-10 px-3.5 py-2 scale-100';
+                                  ? 'bg-[#ecfdf5] border-[2px] border-[#008763] text-[#006747] shadow-sm rounded-xl sm:rounded-2xl z-10 px-2.5 py-1.5 sm:px-3 sm:py-2 scale-100'
+                                  : 'bg-emerald-950/70 border-[2px] border-emerald-500 text-emerald-200 shadow-sm rounded-xl sm:rounded-2xl z-10 px-2.5 py-1.5 sm:px-3 sm:py-2 scale-100';
                                 activeArabicTextStyle = isDay ? 'text-[#005a3e] font-black' : 'text-emerald-300 font-black';
                                 activeMeaningStyle = isDay ? 'text-[#006747] font-bold' : 'text-emerald-200 font-bold';
                               }
@@ -2218,14 +2218,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
                               if (tajweedColorMode) {
                                 const tajweedStyle = detectTajweedRule(word.arabic, wIdx);
                                 activeCardStyle = isDay
-                                  ? `${tajweedStyle.dayBg} ${tajweedStyle.dayBorder} border hover:shadow-md rounded-2xl px-3.5 py-2.5 shadow-xs`
-                                  : `${tajweedStyle.nightBg} ${tajweedStyle.nightBorder} border hover:shadow-md rounded-2xl px-3.5 py-2.5 shadow-xs`;
+                                  ? `${tajweedStyle.dayBg} ${tajweedStyle.dayBorder} border hover:shadow-md rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 shadow-xs`
+                                  : `${tajweedStyle.nightBg} ${tajweedStyle.nightBorder} border hover:shadow-md rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 shadow-xs`;
                                 activeArabicTextStyle = isDay ? `${tajweedStyle.dayText} font-black` : `${tajweedStyle.nightText} font-black`;
                                 activeMeaningStyle = isDay ? `${tajweedStyle.dayText} font-bold opacity-90` : `${tajweedStyle.nightText} font-bold opacity-90`;
                               } else {
                                 activeCardStyle = isDay
-                                  ? 'bg-[#f0fdf4] border border-[#bbf7d0] hover:bg-[#dcfce7] rounded-2xl px-3.5 py-2.5 shadow-sm text-slate-900'
-                                  : 'bg-[#0f2935] border border-[#1e4e5f] hover:bg-[#153545] rounded-2xl px-3.5 py-2.5 shadow-sm text-slate-100';
+                                  ? 'bg-[#f0fdf4] border border-[#bbf7d0] hover:bg-[#dcfce7] rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 shadow-sm text-slate-900'
+                                  : 'bg-[#0f2935] border border-[#1e4e5f] hover:bg-[#153545] rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 shadow-sm text-slate-100';
                                 activeArabicTextStyle = isDay
                                   ? 'text-[#065f46] font-black'
                                   : 'text-emerald-300 font-black';
@@ -2255,47 +2255,15 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
                                 {/* Arabic Word Script */}
                                 <span
-                                  className={`font-arabic text-3xl sm:text-4xl font-bold leading-relaxed transition-all tracking-normal ${activeArabicTextStyle}`}
+                                  className={`font-arabic text-xl sm:text-2xl md:text-3xl font-bold leading-relaxed transition-all tracking-normal ${activeArabicTextStyle}`}
                                 >
                                   {word.arabic}
                                 </span>
 
-                                {/* Word Pronunciation (with Inline Tajweed signs on exact syllables) */}
-                                {(wordPronunciation || word.transliteration) && (
-                                  <div dir="ltr" className="flex items-center justify-center my-0.5">
-                                    {selectedLanguage === 'bn' ? (
-                                      <span className={`text-xs sm:text-sm font-extrabold transition-colors inline-flex flex-wrap items-baseline justify-center ${activeMeaningStyle}`}>
-                                        {parseBengaliWordIntoPhoneticSyllables(
-                                          wordPronunciation || word.transliteration || '',
-                                          word.arabic,
-                                          wIdx === (ayah.words?.length ?? 0) - 1
-                                        ).map((syl, sIdx) => (
-                                          <span key={sIdx} className="inline-flex items-baseline">
-                                            <span>{syl.text}</span>
-                                            {syl.badges && syl.badges.map((b, bIdx) => (
-                                              <sup
-                                                key={bIdx}
-                                                title={b.labelBn}
-                                                className={`mx-[1px] px-0.5 py-0 rounded text-[9px] font-black leading-none border align-super select-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
-                                              >
-                                                {b.symbol}
-                                              </sup>
-                                            ))}
-                                          </span>
-                                        ))}
-                                      </span>
-                                    ) : (
-                                      <span className={`text-xs sm:text-sm font-extrabold transition-colors ${activeMeaningStyle}`}>
-                                        {wordPronunciation || word.transliteration}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-
                                 {/* Word Meaning Translation */}
                                 <span
                                   dir="ltr"
-                                  className={`text-[11px] sm:text-xs font-sans px-1 text-center max-w-[110px] leading-snug font-medium opacity-80 transition-colors ${activeMeaningStyle}`}
+                                  className={`text-[10px] sm:text-[11px] font-sans px-1 text-center max-w-[90px] sm:max-w-[105px] leading-tight font-medium opacity-85 transition-colors ${activeMeaningStyle}`}
                                 >
                                   {word.translation || ''}
                                 </span>
