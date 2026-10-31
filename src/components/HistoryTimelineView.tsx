@@ -232,6 +232,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   const [nowMapStyle, setNowMapStyle] = useState<'satellite' | 'street' | 'dark'>('satellite');
   const [showBanner, setShowBanner] = useState<boolean>(false);
   const [showEraPicker, setShowEraPicker] = useState<boolean>(false);
+  const [mobileLayoutMode, setMobileLayoutMode] = useState<'both' | 'map' | 'story'>('both');
 
   // Dedicated Content Scroll & Stepper State (Matches Pic 2)
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
@@ -865,8 +866,8 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                 <ChevronRight className="w-4 h-4" />
               </button>
 
-              {/* Segmented Speed Capsule */}
-              <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100/90 dark:bg-[#08262d] rounded-xl border border-slate-200/60 dark:border-teal-500/25 shadow-inner">
+              {/* Segmented Speed Capsule on Desktop */}
+              <div className="hidden sm:flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100/90 dark:bg-[#08262d] rounded-xl border border-slate-200/60 dark:border-teal-500/25 shadow-inner">
                 {[0.5, 1, 2, 3, 5].map((speed) => {
                   const isActive = playSpeed === speed;
                   return (
@@ -890,28 +891,42 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   );
                 })}
               </div>
+
+              {/* Mobile Single Cycle Speed Button */}
+              <button
+                type="button"
+                onClick={cycleSpeed}
+                className={`sm:hidden px-2 py-1 text-[10px] font-black rounded-lg transition-all cursor-pointer border ${
+                  isDay
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                    : 'bg-[#08262d] border-teal-500/35 text-teal-300'
+                }`}
+                title="প্লেব্যাক স্পিড পরিবর্তন করুন"
+              >
+                ⚡ {toBengaliDigits(playSpeed)}x
+              </button>
             </div>
 
             {/* Current Event Pill (Creative glowing HUD capsule) */}
             <div className="flex-1 flex justify-center min-w-0">
-              <div className="inline-flex items-center gap-2 bg-[#ecfdf5]/95 dark:bg-[#062426]/90 border border-[#a7f3d0] dark:border-teal-500/35 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-emerald-950 dark:text-emerald-100 shadow-[0_2px_10px_rgba(0,103,71,0.08)] max-w-full backdrop-blur-md">
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-[#ecfdf5]/95 dark:bg-[#062426]/90 border border-[#a7f3d0] dark:border-teal-500/35 px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10.5px] sm:text-xs font-bold text-emerald-950 dark:text-emerald-100 shadow-[0_2px_10px_rgba(0,103,71,0.08)] max-w-full backdrop-blur-md">
+                <span className="relative flex h-2 sm:h-2.5 w-2 sm:w-2.5 shrink-0">
                   <span
                     className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
                     style={{ backgroundColor: CATEGORY_INFO[activeEvent.cat]?.color || '#f59e0b' }}
                   />
                   <span
-                    className="relative inline-flex rounded-full h-2.5 w-2.5"
+                    className="relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5"
                     style={{
                       backgroundColor: CATEGORY_INFO[activeEvent.cat]?.color || '#f59e0b',
                       boxShadow: `0 0 6px ${CATEGORY_INFO[activeEvent.cat]?.color || '#f59e0b'}`,
                     }}
                   />
                 </span>
-                <span className="px-1.5 py-0.2 text-[9.5px] sm:text-[10.5px] font-mono font-black rounded-md bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/30 shrink-0">
+                <span className="px-1.5 py-0.2 text-[9px] sm:text-[10.5px] font-mono font-black rounded-md bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/30 shrink-0">
                   {toBengaliDigits(activeEvent.y)} খ্রি.
                 </span>
-                <span className="truncate max-w-[140px] sm:max-w-xs md:max-w-sm tracking-tight">
+                <span className="truncate max-w-[110px] sm:max-w-xs md:max-w-sm tracking-tight">
                   {formattedTitle}
                 </span>
                 {CATEGORY_INFO[activeEvent.cat] && (
@@ -931,7 +946,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             </div>
 
             {/* Overall Timeline Range Display */}
-            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100/80 dark:bg-[#08262d] border border-slate-200/60 dark:border-teal-500/20 text-[10px] sm:text-xs text-slate-600 dark:text-teal-300 font-black font-mono">
+            <div className="hidden sm:flex shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100/80 dark:bg-[#08262d] border border-slate-200/60 dark:border-teal-500/20 text-[10px] sm:text-xs text-slate-600 dark:text-teal-300 font-black font-mono">
               <Clock className="w-3 h-3 text-amber-500 shrink-0" />
               <span>৫৭০ খ্রি. – ২০২৬ খ্রি.</span>
             </div>
@@ -1118,7 +1133,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   const isNameDifferent = getLangText(activeEvent.p, selectedLanguage).trim().toLowerCase() !== getLangText(activeEvent.n, selectedLanguage).trim().toLowerCase();
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500 select-none pb-48 sm:pb-44 font-bengali">
+    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-500 select-none pb-24 sm:pb-12 font-bengali">
       
       {/* 1. TOP PREMIUM WIDE HERO BANNER - GOLD ACCENTED EPOCH DASHBOARD */}
       <div className="relative w-full rounded-[26px] overflow-hidden border border-[#1a4b54]/60 bg-gradient-to-r from-[#051419] via-[#0c242b] to-[#123640] p-6 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
@@ -1216,15 +1231,77 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
         })}
       </div>
 
+      {/* 2.5 MOBILE VIEW MODE SELECTOR (Strictly on Mobile/Tablets to toggle focus) */}
+      <div className="flex lg:hidden items-center justify-between p-1.5 rounded-2xl border shadow-sm select-none gap-1 bg-slate-100/90 dark:bg-[#07242a] border-slate-200/80 dark:border-teal-700/40 text-xs font-black">
+        <button
+          type="button"
+          onClick={() => {
+            setMobileLayoutMode('both');
+            if (soundEnabled) soundHaptics.playTap();
+            setTimeout(() => {
+              thenMapRef.current?.invalidateSize();
+              nowMapRef.current?.invalidateSize();
+            }, 200);
+          }}
+          className={`flex-1 py-1.5 px-2 rounded-xl text-center transition cursor-pointer flex items-center justify-center gap-1 active:scale-95 ${
+            mobileLayoutMode === 'both'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+              : isDay ? 'text-slate-700 hover:text-slate-900' : 'text-teal-200 hover:text-white'
+          }`}
+        >
+          <span>📱</span>
+          <span>{selectedLanguage === 'bn' ? 'উভয়ই (Both)' : 'Both'}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setMobileLayoutMode('map');
+            if (soundEnabled) soundHaptics.playTap();
+            setTimeout(() => {
+              thenMapRef.current?.invalidateSize();
+              nowMapRef.current?.invalidateSize();
+            }, 200);
+          }}
+          className={`flex-1 py-1.5 px-2 rounded-xl text-center transition cursor-pointer flex items-center justify-center gap-1 active:scale-95 ${
+            mobileLayoutMode === 'map'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+              : isDay ? 'text-slate-700 hover:text-slate-900' : 'text-teal-200 hover:text-white'
+          }`}
+        >
+          <span>🗺️</span>
+          <span>{selectedLanguage === 'bn' ? 'মানচিত্র (Map)' : 'Map'}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setMobileLayoutMode('story');
+            if (soundEnabled) soundHaptics.playTap();
+          }}
+          className={`flex-1 py-1.5 px-2 rounded-xl text-center transition cursor-pointer flex items-center justify-center gap-1 active:scale-95 ${
+            mobileLayoutMode === 'story'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+              : isDay ? 'text-slate-700 hover:text-slate-900' : 'text-teal-200 hover:text-white'
+          }`}
+        >
+          <span>📖</span>
+          <span>{selectedLanguage === 'bn' ? 'ইতিহাস ও দলিল' : 'Story'}</span>
+        </button>
+      </div>
+
       {/* 3. MIDDLE GRID: CRISP COMPARATIVE ATLAS & EVENT DETAIL CARDS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         
         {/* LEFT COLUMN: CRISP GEOGRAPHIC MAP SECTION - DUAL ATLAS */}
-        <div
-          className={`lg:col-span-7 rounded-[26px] border shadow-2xl overflow-hidden relative flex flex-col justify-between h-[440px] sm:h-[520px] lg:h-[600px] transition-all duration-300 ${
-            isDay ? 'bg-[#d8edd9] border-teal-200 shadow-teal-900/5' : 'bg-[#0f2427] border-[#184852] shadow-black/70'
-          }`}
-        >
+        {(mobileLayoutMode === 'both' || mobileLayoutMode === 'map') && (
+          <div
+            className={`lg:col-span-7 rounded-[26px] border shadow-2xl overflow-hidden relative flex flex-col justify-between ${
+              mobileLayoutMode === 'map'
+                ? 'h-[460px] sm:h-[540px] lg:h-[600px]'
+                : 'h-[360px] sm:h-[460px] lg:h-[600px]'
+            } transition-all duration-300 ${
+              isDay ? 'bg-[#d8edd9] border-teal-200 shadow-teal-900/5' : 'bg-[#0f2427] border-[#184852] shadow-black/70'
+            }`}
+          >
           {/* Top Floating Glassmorphic Control Islands */}
           <div className="absolute top-4 left-4 right-4 z-[1010] flex flex-wrap gap-2 items-center justify-between pointer-events-none">
             
@@ -1526,15 +1603,20 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
               #FreePalestine
             </div>
           </div>
-
         </div>
+      )}
 
         {/* RIGHT COLUMN: EVENT DETAIL CARD INFO-PANEL */}
-        <div
-          className={`lg:col-span-5 rounded-[26px] border shadow-2xl overflow-hidden flex flex-col h-[440px] sm:h-[520px] lg:h-[600px] relative transition-all duration-300 ${
-            isDay ? 'bg-[#f4f8f5] border-slate-200/80 text-slate-900 shadow-slate-200/50' : 'bg-[#061e24] border-[#123e47] text-white shadow-black/85'
-          }`}
-        >
+        {(mobileLayoutMode === 'both' || mobileLayoutMode === 'story') && (
+          <div
+            className={`lg:col-span-5 rounded-[26px] border shadow-2xl overflow-hidden flex flex-col ${
+              mobileLayoutMode === 'story'
+                ? 'min-h-[520px] sm:h-[580px] lg:h-[600px]'
+                : 'h-[440px] sm:h-[520px] lg:h-[600px]'
+            } relative transition-all duration-300 ${
+              isDay ? 'bg-[#f4f8f5] border-slate-200/80 text-slate-900 shadow-slate-200/50' : 'bg-[#061e24] border-[#123e47] text-white shadow-black/85'
+            }`}
+          >
           {/* 1. FIXED TOP ANIMATED SCENE GRAPHIC BANNER (STAYS FIXED AT TOP AS REQUESTED) */}
           <div className="shrink-0 p-3 sm:p-3.5 pb-2 select-none border-b border-black/5 dark:border-teal-900/40 relative z-20 shadow-sm">
             <AnimatedHistoryBanner
@@ -2201,7 +2283,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             </div>
 
             {/* VERTICAL STEPPER SCROLLBAR (AS IN PIC 2) */}
-            <div className={`w-4 sm:w-5 shrink-0 flex flex-col items-center justify-between py-1 border-l select-none ${
+            <div className={`hidden sm:flex w-4 sm:w-5 shrink-0 flex-col items-center justify-between py-1 border-l select-none ${
               isDay ? 'border-slate-200 bg-slate-100/70' : 'border-teal-900/60 bg-black/40'
             }`}>
               {/* Up Arrow Button */}
@@ -2297,10 +2379,99 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             </button>
           </div>
         </div>
+      )}
       </div>
 
-      {/* 4. FIXED BOTTOM TIMELINE CONTROLLER DOCK - STAYS DOCKED WHILE EXPLORING STORIES */}
-      {renderTimelineDeck(true)}
+      {/* 4. IN-FLOW TIMELINE CONTROLLER DECK - ALWAYS ACCESSIBLE WITHOUT OBSCURING ANYTHING */}
+      <div id="full-timeline-deck" className="w-full pt-2">
+        {renderTimelineDeck(false)}
+      </div>
+
+      {/* 5. MOBILE FLOATING MINI-PLAYER HUD (Visible strictly on mobile screens, height only ~48px) */}
+      <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 transition-all duration-300">
+        <div
+          className={`px-3 py-2 rounded-2xl border shadow-2xl backdrop-blur-2xl flex items-center justify-between gap-2 ${
+            isDay
+              ? 'bg-white/95 border-emerald-300 shadow-[0_8px_30px_rgba(0,103,71,0.25)] text-slate-900'
+              : 'bg-[#04151a]/95 border-teal-500/40 shadow-[0_8px_30px_rgba(0,0,0,0.9)] text-white'
+          }`}
+        >
+          {/* Play/Pause & Step Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              className={`w-7 h-7 rounded-full flex items-center justify-center border cursor-pointer active:scale-90 ${
+                !hasPrev
+                  ? 'opacity-30 border-transparent text-slate-400'
+                  : isDay ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-[#08262d] border-teal-500/25 text-teal-200'
+              }`}
+              title={selectedLanguage === 'bn' ? 'পূর্ববর্তী' : 'Prev'}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={togglePlay}
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-white shadow-md active:scale-90 cursor-pointer ${
+                isPlaying
+                  ? 'bg-gradient-to-tr from-amber-600 to-yellow-500 ring-2 ring-amber-400/40'
+                  : 'bg-gradient-to-tr from-emerald-600 to-teal-500 ring-2 ring-emerald-400/30'
+              }`}
+              title={isPlaying ? 'বিরতি দিন' : 'প্লে করুন'}
+            >
+              {isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!hasNext}
+              className={`w-7 h-7 rounded-full flex items-center justify-center border cursor-pointer active:scale-90 ${
+                !hasNext
+                  ? 'opacity-30 border-transparent text-slate-400'
+                  : isDay ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-[#08262d] border-teal-500/25 text-teal-200'
+              }`}
+              title={selectedLanguage === 'bn' ? 'পরবর্তী' : 'Next'}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Current Event Info */}
+          <div
+            onClick={() => {
+              document.getElementById('full-timeline-deck')?.scrollIntoView({ behavior: 'smooth' });
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className="flex-1 min-w-0 cursor-pointer text-left pl-1"
+          >
+            <div className="flex items-center gap-1 text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400">
+              <span>{toBengaliDigits(activeEvent.y)} খ্রি.</span>
+              <span>•</span>
+              <span className="truncate">{getLangText(activeEvent.p, selectedLanguage)}</span>
+            </div>
+            <div className="text-[11px] font-black truncate leading-tight text-slate-900 dark:text-white">
+              {formattedTitle}
+            </div>
+          </div>
+
+          {/* Jump to Full Timeline */}
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById('full-timeline-deck')?.scrollIntoView({ behavior: 'smooth' });
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className="px-2.5 py-1.5 rounded-xl text-[10px] font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white shrink-0 shadow flex items-center gap-1 active:scale-95 cursor-pointer"
+          >
+            <span>🎛️</span>
+            <span>{selectedLanguage === 'bn' ? 'টাইমলাইন' : 'Deck'}</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
