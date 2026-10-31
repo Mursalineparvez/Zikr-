@@ -24,6 +24,7 @@ const HistoryTimelineView = React.lazy(() => import('./HistoryTimelineView').the
 const SettingsView = React.lazy(() => import('./SettingsView').then((m) => ({ default: m.SettingsView })));
 const ArabianIllustratedMapView = React.lazy(() => import('./ArabianIllustratedMapView').then((m) => ({ default: m.ArabianIllustratedMapView })));
 const IslamicHistoryWarsView = React.lazy(() => import('./IslamicHistoryWarsView').then((m) => ({ default: m.IslamicHistoryWarsView })));
+const HayatusSahabaView = React.lazy(() => import('./HayatusSahabaView').then((m) => ({ default: m.HayatusSahabaView })));
 
 const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
   <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
@@ -40,8 +41,9 @@ const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
 
 export type OtherSubSection =
   | 'hub'
-  | 'arabian_map'
+  | 'hayatus_sahaba'
   | 'islamic_history_wars'
+  | 'arabian_map'
   | 'dua'
   | 'hadith'
   | 'kitab'
@@ -105,6 +107,15 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [activeSub]);
 
   const hubItems = [
+    {
+      id: 'hayatus_sahaba' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'হায়াতুস সাহাবা (Hayatus Sahaba)' : 'Hayatus Sahaba',
+      arabic: 'حياة الصحابة رضي الله عنهم',
+      desc: selectedLanguage === 'bn' ? 'মর্যাদা ও জনপ্রিয়তার ক্রমানুসারে ৩০ জন সাহাবির ইসলাম গ্রহণ, হৃদয়স্পর্শী ইতিহাস, আত্মত্যাগ ও সহিহ হাদিসের দলিল' : 'Ranked biographical accounts of prominent Sahaba, their sacrifices, emotional stories and authentic hadith citations.',
+      icon: <span className="text-2xl">📜</span>,
+      color: 'from-emerald-500/20 via-amber-500/15 to-teal-500/10 border-emerald-500/40',
+      badge: selectedLanguage === 'bn' ? 'বইয়ের সূচিপত্র' : 'Sahaba',
+    },
     {
       id: 'islamic_history_wars' as OtherSubSection,
       title: selectedLanguage === 'bn' ? 'ইসলামের ইতিহাসের যুদ্ধ' : 'Islamic History Wars',
@@ -220,6 +231,20 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSub('hayatus_sahaba')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'hayatus_sahaba'
+              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>📜</span>
+          <span>{selectedLanguage === 'bn' ? 'হায়াতুস সাহাবা' : 'Sahaba'}</span>
         </button>
 
         <button
@@ -416,6 +441,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       )}
 
       <React.Suspense fallback={<SubViewFallback isDay={isDay} />}>
+        {/* Sub-view: Hayatus Sahaba */}
+        {activeSub === 'hayatus_sahaba' && (
+          <HayatusSahabaView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+            onBackToHub={() => setActiveSub('hub')}
+          />
+        )}
+
         {/* Sub-view: Islamic History Wars */}
         {activeSub === 'islamic_history_wars' && (
           <IslamicHistoryWarsView
