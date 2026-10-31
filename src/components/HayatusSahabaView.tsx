@@ -231,6 +231,25 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             </p>
           </div>
 
+          {/* বিস্তারিত জীবনী ও ঐতিহাসিক অবদান (যদি থাকে) */}
+          {activeSahaba.detailedBiographyBn && (
+            <div
+              className={`p-4 sm:p-6 rounded-2xl border space-y-3 ${
+                isDay
+                  ? 'bg-amber-50/60 border-amber-200/80 shadow-xs'
+                  : 'bg-[#0f242d] border-[#1b4654] shadow-inner'
+              }`}
+            >
+              <strong className="text-amber-700 dark:text-amber-300 flex items-center gap-2 text-sm sm:text-base font-black">
+                <ScrollText className="w-5 h-5 text-amber-500 shrink-0" />
+                <span>বিস্তারিত জীবনী ও সামগ্রিক ঐতিহাসিক অবদান (Detailed Biography):</span>
+              </strong>
+              <div className="text-xs sm:text-sm leading-relaxed opacity-95 font-medium whitespace-pre-line space-y-3 pl-1 sm:pl-2">
+                {activeSahaba.detailedBiographyBn}
+              </div>
+            </div>
+          )}
+
           {/* ১. ইসলাম গ্রহণ ও প্রাথমিক ত্যাগ */}
           <div
             className={`p-4 sm:p-5 rounded-2xl border space-y-2.5 ${
