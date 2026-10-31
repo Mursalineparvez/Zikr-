@@ -500,7 +500,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <span>হায়াতুস সাহাবা (Hayatus Sahaba)</span>
           </h2>
           <span className="text-[10px] text-emerald-300 font-semibold truncate block">
-            সর্বোচ্চ জনপ্রিয় ও মর্যাদাবান ১০২+ জন সাহাবির প্রামাণিক ত্যাগ ও ইতিহাস
+            সর্বোচ্চ জনপ্রিয় ও মর্যাদাবান {SAHABA_DATABASE.length} জন সাহাবির প্রামাণিক ত্যাগ ও ইতিহাস
           </span>
         </div>
 
@@ -533,7 +533,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <span>প্রামাণিক নির্ভরযোগ্য সংকলন</span>
           </span>
           <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold border border-emerald-500/30">
-            মোট ১০২+ জন মর্যাদাবান সাহাবি ও সহিহ হাদিসের দলিল
+            মোট {SAHABA_DATABASE.length} জন মর্যাদাবান সাহাবি ও সহিহ হাদিসের দলিল
           </span>
         </div>
 
@@ -703,7 +703,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
               : 'bg-[#0a1e24] border-[#183e48] text-slate-300 hover:bg-[#112d36]'
           }`}
         >
-          সকল সাহাবি (১০২+)
+          সকল সাহাবি ({SAHABA_DATABASE.length} জন)
         </button>
         {SAHABA_CATEGORIES.map((cat) => {
           const count = sahabaByCategory[cat.key]?.length || 0;

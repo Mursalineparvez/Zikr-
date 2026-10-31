@@ -122,7 +122,9 @@ export const SAHABA_CATEGORIES: CategoryMeta[] = [
   },
 ];
 
-export const SAHABA_DATABASE: SahabaItem[] = [
+import { SAHABA_DATABASE_PART2 } from './sahabaDataPart2';
+
+const SAHABA_DATABASE_PART1: SahabaItem[] = [
   // -------------------------------------------------------------
   // ১. খোলাফায়ে রাশেদীন (১ - ৪)
   // -------------------------------------------------------------
@@ -1330,4 +1332,9 @@ export const SAHABA_DATABASE: SahabaItem[] = [
     lessonsBn: ['অন্যায়ের সামনে কখনো মাথা নত না করা।'],
     referencesBn: ['হায়াতুস সাহাবা', 'তারিখে তাবারী', 'আল-বিদায়া ওয়ান নিহায়া'],
   },
+];
+
+export const SAHABA_DATABASE: SahabaItem[] = [
+  ...SAHABA_DATABASE_PART1,
+  ...SAHABA_DATABASE_PART2,
 ];
