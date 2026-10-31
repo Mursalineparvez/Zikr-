@@ -23,6 +23,7 @@ const HajjUmrahView = React.lazy(() => import('./HajjUmrahView').then((m) => ({ 
 const HistoryTimelineView = React.lazy(() => import('./HistoryTimelineView').then((m) => ({ default: m.HistoryTimelineView })));
 const SettingsView = React.lazy(() => import('./SettingsView').then((m) => ({ default: m.SettingsView })));
 const ArabianIllustratedMapView = React.lazy(() => import('./ArabianIllustratedMapView').then((m) => ({ default: m.ArabianIllustratedMapView })));
+const IslamicHistoryWarsView = React.lazy(() => import('./IslamicHistoryWarsView').then((m) => ({ default: m.IslamicHistoryWarsView })));
 
 const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
   <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
@@ -40,6 +41,7 @@ const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
 export type OtherSubSection =
   | 'hub'
   | 'arabian_map'
+  | 'islamic_history_wars'
   | 'dua'
   | 'hadith'
   | 'kitab'
@@ -97,12 +99,21 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     }
   }, [initialSubSection]);
 
-  // Auto-scroll to top whenever switching sub-module (Dua, Hadith, Kitab, etc.)
+  // Auto-scroll to top whenever switching sub-module
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [activeSub]);
 
   const hubItems = [
+    {
+      id: 'islamic_history_wars' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'ইসলামের ইতিহাসের যুদ্ধ' : 'Islamic History Wars',
+      arabic: 'حروب التاريخ الإسلامي',
+      desc: selectedLanguage === 'bn' ? 'বইয়ের সূচিপত্র অনুযায়ী নববি যুগ, খিলাফতে রাশিদা, উমাইয়া, আব্বাসি ও আন্দালুসের ঐতিহাসিক যুদ্ধসমূহ' : 'Comprehensive battles from the Prophet\'s era to modern times categorized by era.',
+      icon: <span className="text-2xl">⚔️</span>,
+      color: 'from-amber-500/20 via-rose-500/15 to-emerald-500/10 border-amber-500/40',
+      badge: selectedLanguage === 'bn' ? 'বইয়ের সূচিপত্র' : 'Battles',
+    },
     {
       id: 'history_timeline' as OtherSubSection,
       title: NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা',
@@ -209,6 +220,20 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onClick={() => handleSelectSub('islamic_history_wars')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'islamic_history_wars'
+              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>⚔️</span>
+          <span>{selectedLanguage === 'bn' ? 'ইতিহাসের যুদ্ধ' : 'Wars'}</span>
         </button>
 
         <button
@@ -347,7 +372,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             </p>
           </div>
 
-          {/* 7 Feature Cards Grid */}
+          {/* Feature Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {hubItems.map((item) => (
               <div
@@ -391,6 +416,15 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       )}
 
       <React.Suspense fallback={<SubViewFallback isDay={isDay} />}>
+        {/* Sub-view: Islamic History Wars */}
+        {activeSub === 'islamic_history_wars' && (
+          <IslamicHistoryWarsView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            onBackToHub={() => setActiveSub('hub')}
+          />
+        )}
+
         {/* Sub-view: Arabian Illustrated Pictorial Map */}
         {activeSub === 'arabian_map' && (
           <ArabianIllustratedMapView
@@ -465,39 +499,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             selectedLanguage={selectedLanguage}
             voiceGender={settings?.voiceGender || 'male'}
             initialTab="home_journey_hub"
-          />
-        )}
-
-        {/* Sub-view: Umrah Guide & 3D Studio */}
-        {activeSub === 'umrah_guide' && (
-          <HajjUmrahView
-            soundEnabled={soundEnabled}
-            themeMode={themeMode}
-            selectedLanguage={selectedLanguage}
-            voiceGender={settings?.voiceGender || 'male'}
-            initialTab="umrah_hub"
-          />
-        )}
-
-        {/* Sub-view: 5 Days Hajj Route Map */}
-        {activeSub === 'hajj_route_map' && (
-          <HajjUmrahView
-            soundEnabled={soundEnabled}
-            themeMode={themeMode}
-            selectedLanguage={selectedLanguage}
-            voiceGender={settings?.voiceGender || 'male'}
-            initialTab="arabian_map"
-          />
-        )}
-
-        {/* Sub-view: Miqat, Madinah & Essentials */}
-        {activeSub === 'hajj_essentials' && (
-          <HajjUmrahView
-            soundEnabled={soundEnabled}
-            themeMode={themeMode}
-            selectedLanguage={selectedLanguage}
-            voiceGender={settings?.voiceGender || 'male'}
-            initialTab="essentials_hub"
           />
         )}
 
