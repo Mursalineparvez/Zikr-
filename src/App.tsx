@@ -266,6 +266,22 @@ export default function App() {
     };
   });
 
+  // Sync document theme classes with settings.themeMode
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_zikr_settings', JSON.stringify(settings));
+    } catch {}
+    if (settings.themeMode === 'day') {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark', 'theme-night');
+      document.body.classList.add('theme-day');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.body.classList.remove('theme-day');
+      document.body.classList.add('dark', 'theme-night');
+    }
+  }, [settings]);
+
   // Selected language state for Arabic pronunciation & meaning (defaults to Bengali 'bn')
   const [selectedLanguage, setSelectedLanguage] = useState<ZikrLanguage>(() => {
     try {
