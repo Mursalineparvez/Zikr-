@@ -1221,7 +1221,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
         
         {/* LEFT COLUMN: CRISP GEOGRAPHIC MAP SECTION - DUAL ATLAS */}
         <div
-          className={`lg:col-span-7 rounded-[26px] border shadow-2xl overflow-hidden relative flex flex-col justify-between h-[580px] sm:h-[620px] ${
+          className={`lg:col-span-7 rounded-[26px] border shadow-2xl overflow-hidden relative flex flex-col justify-between h-[440px] sm:h-[520px] lg:h-[600px] transition-all duration-300 ${
             isDay ? 'bg-[#d8edd9] border-teal-200 shadow-teal-900/5' : 'bg-[#0f2427] border-[#184852] shadow-black/70'
           }`}
         >
@@ -1531,7 +1531,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
         {/* RIGHT COLUMN: EVENT DETAIL CARD INFO-PANEL */}
         <div
-          className={`lg:col-span-5 rounded-[26px] border shadow-2xl overflow-hidden flex flex-col h-[580px] sm:h-[620px] relative ${
+          className={`lg:col-span-5 rounded-[26px] border shadow-2xl overflow-hidden flex flex-col h-[440px] sm:h-[520px] lg:h-[600px] relative transition-all duration-300 ${
             isDay ? 'bg-[#f4f8f5] border-slate-200/80 text-slate-900 shadow-slate-200/50' : 'bg-[#061e24] border-[#123e47] text-white shadow-black/85'
           }`}
         >
