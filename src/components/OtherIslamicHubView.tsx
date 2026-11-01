@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI, SETTINGS_UI } from '../utils/appTranslations';
+import { prefetchView } from '../utils/viewPreloader';
 
 // Code-split sub-views to keep initial app bundle small and startup instantaneous
 const DuaView = React.lazy(() => import('./DuaView').then((m) => ({ default: m.DuaView })));
@@ -210,9 +211,13 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     },
   ];
 
+  const [, startSubTransition] = React.useTransition();
+
   const handleSelectSub = (sub: OtherSubSection) => {
-    setActiveSub(sub);
     if (soundEnabled) soundHaptics.playTap();
+    startSubTransition(() => {
+      setActiveSub(sub);
+    });
   };
 
   return (
@@ -234,6 +239,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('hayatus_sahaba')}
+          onTouchStart={() => prefetchView('hayatus_sahaba')}
           onClick={() => handleSelectSub('hayatus_sahaba')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'hayatus_sahaba'
@@ -244,10 +251,12 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <span>📜</span>
-          <span>{selectedLanguage === 'bn' ? 'হায়াতুস সাহাবা' : 'Sahaba'}</span>
+          <span>{selectedLanguage === 'bn' ? 'হায়াতুস সাহাবা' : (selectedLanguage === 'ar' ? 'حياة الصحابة' : (selectedLanguage === 'ur' ? 'حیات الصحابہ' : 'Sahaba'))}</span>
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('islamic_history_wars')}
+          onTouchStart={() => prefetchView('islamic_history_wars')}
           onClick={() => handleSelectSub('islamic_history_wars')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'islamic_history_wars'
@@ -258,10 +267,12 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <span>⚔️</span>
-          <span>{selectedLanguage === 'bn' ? 'ইতিহাসের যুদ্ধ' : 'Wars'}</span>
+          <span>{selectedLanguage === 'bn' ? 'ইতিহাসের যুদ্ধ' : (selectedLanguage === 'ar' ? 'معارك التاريخ' : (selectedLanguage === 'ur' ? 'تاریخ کی جنگیں' : 'Wars'))}</span>
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('history_timeline')}
+          onTouchStart={() => prefetchView('history_timeline')}
           onClick={() => handleSelectSub('history_timeline')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'history_timeline'
@@ -276,6 +287,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('dua')}
+          onTouchStart={() => prefetchView('dua')}
           onClick={() => handleSelectSub('dua')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'dua'
@@ -290,6 +303,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('hadith')}
+          onTouchStart={() => prefetchView('hadith')}
           onClick={() => handleSelectSub('hadith')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'hadith'
@@ -304,6 +319,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('kitab')}
+          onTouchStart={() => prefetchView('kitab')}
           onClick={() => handleSelectSub('kitab')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'kitab'
@@ -318,6 +335,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('hajj_checklist')}
+          onTouchStart={() => prefetchView('hajj_checklist')}
           onClick={() => handleSelectSub('hajj_checklist')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'hajj_checklist'
@@ -332,6 +351,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('tablig')}
+          onTouchStart={() => prefetchView('tablig')}
           onClick={() => handleSelectSub('tablig')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'tablig'
@@ -346,6 +367,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('allah_names')}
+          onTouchStart={() => prefetchView('allah_names')}
           onClick={() => handleSelectSub('allah_names')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'allah_names'
@@ -360,6 +383,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </button>
 
         <button
+          onPointerEnter={() => prefetchView('settings')}
+          onTouchStart={() => prefetchView('settings')}
           onClick={() => handleSelectSub('settings')}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
             activeSub === 'settings'
@@ -402,6 +427,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             {hubItems.map((item) => (
               <div
                 key={item.id}
+                onPointerEnter={() => prefetchView(item.id)}
+                onTouchStart={() => prefetchView(item.id)}
                 onClick={() => handleSelectSub(item.id)}
                 className={`p-5 rounded-3xl border shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between gap-4 ${
                   isDay

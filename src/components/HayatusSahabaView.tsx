@@ -88,6 +88,15 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   const isBn = selectedLanguage === 'bn';
 
   const [selectedSahabaId, setSelectedSahabaId] = useState<string | null>(null);
+  const [, startTransition] = React.useTransition();
+
+  const handleSelectSahaba = (id: string | null) => {
+    if (soundEnabled) soundHaptics.playTap();
+    startTransition(() => {
+      setSelectedSahabaId(id);
+    });
+  };
+
   const [selectedFamilyBioModal, setSelectedFamilyBioModal] = useState<FamilyMemberBio | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all'>('all');
@@ -276,10 +285,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           }`}
         >
           <button
-            onClick={() => {
-              setSelectedSahabaId(null);
-              if (soundEnabled) soundHaptics.playTap();
-            }}
+            onClick={() => handleSelectSahaba(null)}
             className="p-2 -ml-1 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer flex items-center gap-1.5"
           >
             <ArrowLeft className="w-5 h-5 text-white stroke-[2.5]" />
@@ -913,10 +919,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                     return (
                       <div
                         key={sahaba.id}
-                        onClick={() => {
-                          setSelectedSahabaId(sahaba.id);
-                          if (soundEnabled) soundHaptics.playTap();
-                        }}
+                        onClick={() => handleSelectSahaba(sahaba.id)}
                         className={`p-2 rounded-xl border text-xs font-semibold transition cursor-pointer flex items-center justify-between gap-2 ${
                           isDay
                             ? 'bg-white hover:bg-emerald-50 border-slate-200 text-slate-800 hover:border-emerald-300'

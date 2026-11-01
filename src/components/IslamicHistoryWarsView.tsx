@@ -62,6 +62,15 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   const isBn = selectedLanguage === 'bn';
 
   const [selectedWarId, setSelectedWarId] = useState<string | null>(null);
+  const [, startTransition] = React.useTransition();
+
+  const handleSelectWar = (id: string | null) => {
+    if (soundEnabled) soundHaptics.playTap();
+    startTransition(() => {
+      setSelectedWarId(id);
+    });
+  };
+
   const [activeEraFilter, setActiveEraFilter] = useState<WarItem['eraKey'] | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [active3DMapWarId, setActive3DMapWarId] = useState<string | null>(null);
@@ -178,10 +187,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
           }`}
         >
           <button
-            onClick={() => {
-              setSelectedWarId(null);
-              if (soundEnabled) soundHaptics.playTap();
-            }}
+            onClick={() => handleSelectWar(null)}
             className="p-2 -ml-1 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer flex items-center gap-1.5"
           >
             <ArrowLeft className="w-5 h-5 text-white stroke-[2.5]" />
@@ -611,10 +617,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                       return (
                         <div
                           key={war.id}
-                          onClick={() => {
-                            setSelectedWarId(war.id);
-                            if (soundEnabled) soundHaptics.playTap();
-                          }}
+                          onClick={() => handleSelectWar(war.id)}
                           className={`flex items-center justify-between py-1.5 px-2 rounded-lg transition-colors cursor-pointer group ${
                             isDay
                               ? 'hover:bg-amber-50/90 text-slate-800'
@@ -770,10 +773,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             return (
               <div
                 key={war.id}
-                onClick={() => {
-                  setSelectedWarId(war.id);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
+                onClick={() => handleSelectWar(war.id)}
                 className={`p-4 rounded-3xl border shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between gap-3 ${
                   isDay
                     ? 'bg-white border-slate-200 hover:border-amber-400 hover:shadow-xl'

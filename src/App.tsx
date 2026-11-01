@@ -12,6 +12,7 @@ import { Header } from './components/Header';
 import { ZikirCounterView } from './components/ZikirCounterView';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
 import type { OtherSubSection } from './components/OtherIslamicHubView';
+import { prefetchView, warmupViewsIdle } from './utils/viewPreloader';
 
 // Code-split heavy non-initial views and modals to make initial app launch instantaneous
 const QuranView = React.lazy(() => import('./components/QuranView').then((m) => ({ default: m.QuranView })));
@@ -300,8 +301,22 @@ export default function App() {
     } catch {}
   }, [selectedLanguage]);
 
-  // Active module navigation
+  // Active module navigation with React Concurrent Transition for sub-second, instant zero-lag switching
   const [activeModule, setActiveModule] = useState<NavModule>('zikir_counter');
+  const [, startNavTransition] = React.useTransition();
+
+  const handleNavigate = (targetModule: NavModule) => {
+    if (targetModule === activeModule) return;
+    if (settings.soundEnabled) soundHaptics.playTap();
+    startNavTransition(() => {
+      setActiveModule(targetModule);
+    });
+  };
+
+  // Pre-warm all view chunks during idle time so page loads are instantaneous
+  useEffect(() => {
+    warmupViewsIdle();
+  }, []);
 
   // Auto-scroll to top whenever entering or switching any page/module
   useEffect(() => {
@@ -1828,7 +1843,7 @@ export default function App() {
       {/* Top Header */}
       <Header
         activeModule={activeModule}
-        onModuleChange={setActiveModule}
+        onModuleChange={handleNavigate}
         soundEnabled={settings.soundEnabled}
         onToggleSound={handleToggleSound}
         themeMode={settings.themeMode}
@@ -1852,7 +1867,7 @@ export default function App() {
           {/* Tab 1: Zikr Counter */}
           <button
             type="button"
-            onClick={() => setActiveModule('zikir_counter')}
+            onClick={() => handleNavigate('zikir_counter')}
             className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               activeModule === 'zikir_counter'
                 ? 'bg-[#006A4E] text-white shadow-md'
@@ -1860,7 +1875,7 @@ export default function App() {
             }`}
           >
             <span>🔍</span>
-            <span>জিকির কাউন্টার</span>
+            <span>{NAV_TRANSLATIONS.zikir_counter[selectedLanguage] || 'জিকির কাউন্টার'}</span>
             <span
               className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
                 activeModule === 'zikir_counter'
@@ -1875,7 +1890,9 @@ export default function App() {
           {/* Tab 2: Al-Quran */}
           <button
             type="button"
-            onClick={() => setActiveModule('quran')}
+            onPointerEnter={() => prefetchView('quran')}
+            onTouchStart={() => prefetchView('quran')}
+            onClick={() => handleNavigate('quran')}
             className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               activeModule === 'quran'
                 ? 'bg-[#006A4E] text-white shadow-md'
@@ -1883,13 +1900,15 @@ export default function App() {
             }`}
           >
             <span>📖</span>
-            <span>আল-কোরআন</span>
+            <span>{NAV_TRANSLATIONS.quran[selectedLanguage] || 'আল-কোরআন'}</span>
           </button>
 
           {/* Tab 3: Namaz Time */}
           <button
             type="button"
-            onClick={() => setActiveModule('salat_time')}
+            onPointerEnter={() => prefetchView('salat_time')}
+            onTouchStart={() => prefetchView('salat_time')}
+            onClick={() => handleNavigate('salat_time')}
             className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               activeModule === 'salat_time'
                 ? 'bg-[#006A4E] text-white shadow-md'
@@ -1897,13 +1916,15 @@ export default function App() {
             }`}
           >
             <span>🕌</span>
-            <span>নামাজের সময়</span>
+            <span>{NAV_TRANSLATIONS.salat_time[selectedLanguage] || 'নামাজের সময়'}</span>
           </button>
 
           {/* Tab 4: Aamal Tracker */}
           <button
             type="button"
-            onClick={() => setActiveModule('aamal_tracker')}
+            onPointerEnter={() => prefetchView('aamal_tracker')}
+            onTouchStart={() => prefetchView('aamal_tracker')}
+            onClick={() => handleNavigate('aamal_tracker')}
             className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               activeModule === 'aamal_tracker'
                 ? 'bg-[#006A4E] text-white shadow-md'
@@ -1911,13 +1932,23 @@ export default function App() {
             }`}
           >
             <span>🕋</span>
-            <span>আমল ট্র্যাকার</span>
+            <span>{NAV_TRANSLATIONS.aamal_tracker[selectedLanguage] || 'আমল ট্র্যাকার'}</span>
           </button>
 
           {/* Tab 5: Other Islamic Hub */}
           <button
             type="button"
-            onClick={() => setActiveModule('other')}
+            onPointerEnter={() => {
+              prefetchView('other');
+              prefetchView('hayatus_sahaba');
+              prefetchView('islamic_history_wars');
+            }}
+            onTouchStart={() => {
+              prefetchView('other');
+              prefetchView('hayatus_sahaba');
+              prefetchView('islamic_history_wars');
+            }}
+            onClick={() => handleNavigate('other')}
             className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               isOtherActive
                 ? 'bg-[#006A4E] text-white shadow-md'
@@ -1925,7 +1956,7 @@ export default function App() {
             }`}
           >
             <span>📚</span>
-            <span>অন্যান্য (Other)</span>
+            <span>{NAV_TRANSLATIONS.other[selectedLanguage] || 'অন্যান্য (Other)'}</span>
           </button>
         </div>
       </div>

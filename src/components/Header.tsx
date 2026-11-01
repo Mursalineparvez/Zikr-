@@ -18,6 +18,7 @@ import { usePWAInstall, useOnlineStatus } from '../hooks/usePWAInstall';
 import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
 import { NAV_TRANSLATIONS } from '../utils/appTranslations';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
+import { prefetchView } from '../utils/viewPreloader';
 
 const InstallAppModal = React.lazy(() =>
   import('./InstallAppModal').then((m) => ({ default: m.InstallAppModal }))
@@ -279,6 +280,8 @@ export const Header: React.FC<HeaderProps> = ({
           ].map((item) => (
             <button
               key={item.id}
+              onPointerEnter={() => prefetchView(item.id)}
+              onTouchStart={() => prefetchView(item.id)}
               onClick={() => onModuleChange(item.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 ${
                 item.isActive
