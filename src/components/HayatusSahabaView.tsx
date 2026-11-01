@@ -893,7 +893,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             return (
               <div
                 key={catMeta.key}
-                className={`p-4 rounded-2xl border shadow-md space-y-3 flex flex-col justify-between ${
+                className={`p-4 rounded-2xl border shadow-md space-y-3 flex flex-col justify-start ${
                   isDay
                     ? 'bg-gradient-to-b from-amber-50/40 via-white to-white border-amber-200/80 text-slate-900'
                     : 'bg-gradient-to-b from-[#0f282e] via-[#091a1e] to-[#071518] border-teal-800/50 text-white'
