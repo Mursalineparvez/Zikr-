@@ -62,43 +62,50 @@ export function prefetchView(view: PreloadableView | string): void {
 }
 
 /**
- * Gently pre-warm all views during idle time after app startup
+ * Gently pre-warm views in background ONLY when the app is completely idle
+ * and initial counter view has been fully rendered and displayed.
  */
 export function warmupViewsIdle(): void {
-  const scheduleIdle = (fn: () => void, timeout = 1000) => {
-    if (typeof (window as any).requestIdleCallback === 'function') {
-      (window as any).requestIdleCallback(fn, { timeout });
-    } else {
-      setTimeout(fn, Math.min(timeout, 350));
-    }
+  // If user has data saver on, do not prefetch in background
+  if ((navigator as any).connection?.saveData) {
+    return;
+  }
+
+  const scheduleIdle = (fn: () => void, delayMs: number) => {
+    setTimeout(() => {
+      if (typeof (window as any).requestIdleCallback === 'function') {
+        (window as any).requestIdleCallback(fn, { timeout: 3000 });
+      } else {
+        setTimeout(fn, 50);
+      }
+    }, delayMs);
   };
 
-  // Phase 1: High-priority core navigation pages (Quran, Salat, Aamal, Other Hub)
+  // Phase 1: High-priority core navigation pages (Quran, Salat, Aamal, Other Hub) after 4.5 seconds
   scheduleIdle(() => {
     prefetchView('quran');
     prefetchView('salat_time');
     prefetchView('aamal_tracker');
     prefetchView('other');
-  }, 400);
+  }, 4500);
 
-  // Phase 2: High-traffic Other Hub modules (Sahaba, Wars, Dua, Hadith)
+  // Phase 2: High-traffic Other Hub modules (Sahaba, Wars, Dua, Hadith) after 9 seconds
   scheduleIdle(() => {
     prefetchView('hayatus_sahaba');
     prefetchView('islamic_history_wars');
     prefetchView('dua');
     prefetchView('hadith');
-  }, 1200);
+  }, 9000);
 
-  // Phase 3: Secondary modules and modals (Kitab, Tablig, Hajj, Names, Maps)
+  // Phase 3: Secondary modules and modals after 16 seconds
   scheduleIdle(() => {
     prefetchView('kitab');
     prefetchView('tablig');
     prefetchView('allah_names');
     prefetchView('hajj_checklist');
     prefetchView('history_timeline');
-    prefetchView('arabian_map');
     prefetchView('settings');
     prefetchView('zikr_modal');
-    prefetchView('profile_modal');
-  }, 2200);
+  }, 16000);
 }
+

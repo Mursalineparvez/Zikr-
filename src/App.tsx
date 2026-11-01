@@ -7,7 +7,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage, UserProfile, ZikrRefreshMode } from './types';
 import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES, getTargetForZikrMode } from './utils/constants';
 import { soundHaptics } from './utils/audioHaptics';
-import { NAV_TRANSLATIONS } from './utils/appTranslations';
+import { NAV_TRANSLATIONS } from './utils/navTranslations';
 import { Header } from './components/Header';
 import { ZikirCounterView } from './components/ZikirCounterView';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
@@ -783,81 +783,106 @@ export default function App() {
     showToast('✨ স্বাগতম! আপনার অ্যাকাউন্ট নতুনভাবে ০ থেকে শুরু হয়েছে। এখন থেকে আপনার সকল জিকির গণনা ও হিস্ট্রি সংরক্ষিত হবে।');
   };
 
-  // Google Redirect Login Result Check & Firebase Auth State Listener
+  // Google Redirect Login Result Check & Firebase Auth State Listener (Deferred to protect cold startup speed)
   useEffect(() => {
+    let unsubAuth: (() => void) | null = null;
+    let isCancelled = false;
+
+    const isRedirectPending =
+      typeof sessionStorage !== 'undefined' &&
+      sessionStorage.getItem('zikrmate_google_redirect_in_progress') === 'true';
+
+    const delayMs = isRedirectPending ? 600 : 4500;
+
     const startupTimer = setTimeout(() => {
-      checkGoogleRedirectResult()
-        .then(async (result) => {
-          if (result && result.success && result.user && result.user.email) {
-            const targetEmail = result.user.email.toLowerCase().trim();
+      if (isCancelled) return;
+
+      // Start gentle background view warmup only when app is fully mounted and idle
+      warmupViewsIdle();
+
+      if (isRedirectPending) {
+        checkGoogleRedirectResult()
+          .then(async (result) => {
+            if (isCancelled) return;
+            if (result && result.success && result.user && result.user.email) {
+              const targetEmail = result.user.email.toLowerCase().trim();
+              const detected = getDetectedDeviceInfo();
+              const cloudData = await loadUserDataFromCloud(targetEmail);
+              const updated: UserProfile = {
+                ...userProfile,
+                name: result.user.name || cloudData?.profile?.name || targetEmail.split('@')[0],
+                emailOrPhone: targetEmail,
+                photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || '',
+                location: userProfile.location || 'Bangladesh',
+                deviceModel: detected.model,
+                osVersion: detected.osVersion,
+                isSignedIn: true,
+                isVerified: true,
+                verificationMethod: 'google',
+                verificationDate: new Date().toISOString(),
+                authProvider: 'google',
+                lastSyncedAt: Date.now(),
+              };
+              saveAccountToRegistry(updated);
+              setUserProfile(updated);
+              try {
+                localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
+              } catch {}
+              if (cloudData && cloudData.foundInCloud) {
+                applyCloudDataToState(cloudData, true, true);
+              } else {
+                await initializeFreshZeroUserState(updated);
+              }
+            }
+          })
+          .catch(() => {});
+      }
+
+      // Listen to Firebase Auth persistence state changes gently in the background
+      listenToAuthChanges(async (authUser) => {
+        if (isCancelled) return;
+        if (authUser && authUser.email) {
+          const targetEmail = authUser.email.toLowerCase().trim();
+          setUserProfile((prev) => {
+            if (prev.isSignedIn && prev.emailOrPhone?.toLowerCase().trim() === targetEmail) {
+              return prev;
+            }
             const detected = getDetectedDeviceInfo();
-            const cloudData = await loadUserDataFromCloud(targetEmail);
             const updated: UserProfile = {
-              ...userProfile,
-              name: result.user.name || cloudData?.profile?.name || targetEmail.split('@')[0],
+              ...prev,
+              name: authUser.name || prev.name || targetEmail.split('@')[0],
               emailOrPhone: targetEmail,
-              photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || '',
-              location: userProfile.location || 'Bangladesh',
-              deviceModel: detected.model,
-              osVersion: detected.osVersion,
+              photoUrl: authUser.photoUrl || prev.photoUrl || '',
               isSignedIn: true,
               isVerified: true,
               verificationMethod: 'google',
-              verificationDate: new Date().toISOString(),
+              verificationDate: prev.verificationDate || new Date().toISOString(),
               authProvider: 'google',
               lastSyncedAt: Date.now(),
             };
             saveAccountToRegistry(updated);
-            setUserProfile(updated);
             try {
               localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
             } catch {}
-            if (cloudData && cloudData.foundInCloud) {
-              applyCloudDataToState(cloudData, true, true);
-            } else {
-              await initializeFreshZeroUserState(updated);
-            }
+            return updated;
+          });
+        }
+      })
+        .then((unsub) => {
+          if (isCancelled && typeof unsub === 'function') {
+            unsub();
+          } else {
+            unsubAuth = unsub;
           }
         })
         .catch(() => {});
-    }, 400);
-
-    // Listen to Firebase Auth persistence state changes
-    let unsubAuthPromise: Promise<() => void> | null = null;
-    unsubAuthPromise = listenToAuthChanges(async (authUser) => {
-      if (authUser && authUser.email) {
-        const targetEmail = authUser.email.toLowerCase().trim();
-        setUserProfile((prev) => {
-          if (prev.isSignedIn && prev.emailOrPhone?.toLowerCase().trim() === targetEmail) {
-            return prev;
-          }
-          const detected = getDetectedDeviceInfo();
-          const updated: UserProfile = {
-            ...prev,
-            name: authUser.name || prev.name || targetEmail.split('@')[0],
-            emailOrPhone: targetEmail,
-            photoUrl: authUser.photoUrl || prev.photoUrl || '',
-            isSignedIn: true,
-            isVerified: true,
-            verificationMethod: 'google',
-            verificationDate: prev.verificationDate || new Date().toISOString(),
-            authProvider: 'google',
-            lastSyncedAt: Date.now(),
-          };
-          saveAccountToRegistry(updated);
-          try {
-            localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
-          } catch {}
-          return updated;
-        });
-      }
-    });
+    }, delayMs);
 
     return () => {
-      if (unsubAuthPromise) {
-        unsubAuthPromise.then((unsub) => {
-          if (typeof unsub === 'function') unsub();
-        });
+      isCancelled = true;
+      clearTimeout(startupTimer);
+      if (typeof unsubAuth === 'function') {
+        unsubAuth();
       }
     };
   }, []);

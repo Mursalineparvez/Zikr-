@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from '../hooks/usePWAInstall';
 import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
-import { NAV_TRANSLATIONS } from '../utils/appTranslations';
+import { NAV_TRANSLATIONS } from '../utils/navTranslations';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { prefetchView } from '../utils/viewPreloader';
 

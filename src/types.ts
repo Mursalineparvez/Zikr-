@@ -73,7 +73,10 @@ export type NavModule =
   | 'umrah_guide'
   | 'hajj_route_map'
   | 'hajj_essentials'
-  | 'history_timeline';
+  | 'history_timeline'
+  | 'hayatus_sahaba'
+  | 'islamic_history_wars';
+
 
 export type DuaCategory =
   | 'salat'
