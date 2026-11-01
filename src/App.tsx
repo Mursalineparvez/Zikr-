@@ -10,7 +10,6 @@ import { soundHaptics } from './utils/audioHaptics';
 import { NAV_TRANSLATIONS } from './utils/appTranslations';
 import { Header } from './components/Header';
 import { ZikirCounterView } from './components/ZikirCounterView';
-import { ConfirmModal } from './components/ConfirmModal';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
 import type { OtherSubSection } from './components/OtherIslamicHubView';
 
@@ -24,6 +23,7 @@ const StandaloneExportModal = React.lazy(() => import('./components/StandaloneEx
 const HistoryReportModal = React.lazy(() => import('./components/HistoryReportModal').then((m) => ({ default: m.HistoryReportModal })));
 const ProfileModal = React.lazy(() => import('./components/ProfileModal').then((m) => ({ default: m.ProfileModal })));
 const AdminPanelModal = React.lazy(() => import('./components/AdminPanelModal').then((m) => ({ default: m.AdminPanelModal })));
+const ConfirmModal = React.lazy(() => import('./components/ConfirmModal').then((m) => ({ default: m.ConfirmModal })));
 
 const AppViewLoadingFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
   <div className="flex flex-col items-center justify-center min-h-[350px] py-20 space-y-3">

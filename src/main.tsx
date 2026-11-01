@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import 'leaflet/dist/leaflet.css';
 
 // Silently catch and suppress expected WebSocket and Firestore internal assertion messages
 if (typeof window !== 'undefined') {
@@ -34,17 +33,19 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // Register Service Worker for Instant App Shell & Audio Caching with immediate update check
+  // Register Service Worker non-blockingly during idle time to prevent network contention on launch
   if ('serviceWorker' in navigator) {
     const registerSW = () => {
       navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
     };
 
-    if (document.readyState === 'complete') {
-      registerSW();
-    } else {
-      window.addEventListener('load', registerSW);
-    }
+    window.addEventListener('load', () => {
+      if (typeof (window as any).requestIdleCallback === 'function') {
+        (window as any).requestIdleCallback(registerSW, { timeout: 2500 });
+      } else {
+        setTimeout(registerSW, 1200);
+      }
+    });
   }
 }
 

@@ -87,6 +87,14 @@ export default defineConfig(() => {
             if (id.includes('src/utils/offlineQuranSurahs') || id.includes('src/utils/quran114List')) {
               return 'data-quran';
             }
+            if (
+              id.includes('src/data/sahabaData') ||
+              id.includes('src/data/sahabaEnglishData') ||
+              id.includes('src/data/sahabaTranslations') ||
+              id.includes('src/data/familyBiographiesData')
+            ) {
+              return 'data-sahaba';
+            }
           },
         },
       },

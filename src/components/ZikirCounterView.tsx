@@ -7,7 +7,10 @@ import { Plus, FileText, CheckCircle2, Target, RotateCcw, RotateCw, Clock, Spark
 import { ZIKIR_UI } from '../utils/appTranslations';
 import { PrayerSegmentDetails } from '../utils/prayerTimes';
 import { soundHaptics } from '../utils/audioHaptics';
-import { ZikrFocusMode } from './ZikrFocusMode';
+
+const ZikrFocusMode = React.lazy(() =>
+  import('./ZikrFocusMode').then((m) => ({ default: m.ZikrFocusMode }))
+);
 
 interface ZikirCounterViewProps {
   masterTotal: number;
@@ -131,18 +134,26 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   // When in Focus Mode, exclusively render Focus Mode so nothing else is mounted or visible
   if (showFocusMode !== null) {
     return (
-      <ZikrFocusMode
-        zikrs={zikrs}
-        initialIndex={showFocusMode}
-        onIncrement={onIncrement}
-        onDecrement={onDecrement}
-        onReset={onReset}
-        onClose={() => setShowFocusMode(null)}
-        themeMode={themeMode}
-        selectedLanguage={selectedLanguage}
-        soundEnabled={soundEnabled}
-        onOpenInstallModal={onOpenInstallModal}
-      />
+      <React.Suspense
+        fallback={
+          <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50">
+            <div className="w-8 h-8 border-3 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin" />
+          </div>
+        }
+      >
+        <ZikrFocusMode
+          zikrs={zikrs}
+          initialIndex={showFocusMode}
+          onIncrement={onIncrement}
+          onDecrement={onDecrement}
+          onReset={onReset}
+          onClose={() => setShowFocusMode(null)}
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={soundEnabled}
+          onOpenInstallModal={onOpenInstallModal}
+        />
+      </React.Suspense>
     );
   }
 

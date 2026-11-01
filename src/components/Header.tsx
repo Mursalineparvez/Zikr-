@@ -18,8 +18,10 @@ import { usePWAInstall, useOnlineStatus } from '../hooks/usePWAInstall';
 import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
 import { NAV_TRANSLATIONS } from '../utils/appTranslations';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
-import { InstallAppModal } from './InstallAppModal';
-import confetti from 'canvas-confetti';
+
+const InstallAppModal = React.lazy(() =>
+  import('./InstallAppModal').then((m) => ({ default: m.InstallAppModal }))
+);
 
 interface HeaderProps {
   activeModule: NavModule;
@@ -79,6 +81,8 @@ export const Header: React.FC<HeaderProps> = ({
       const ok = await install();
       if (ok) {
         try {
+          const confettiModule = await import('canvas-confetti');
+          const confetti = (confettiModule as any).default || confettiModule;
           confetti({
             particleCount: 65,
             spread: 60,
@@ -311,11 +315,15 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Universal Install App Modal */}
-      <InstallAppModal
-        isOpen={showInstallModal}
-        onClose={() => setShowInstallModal(false)}
-        isDay={isDay}
-      />
+      {showInstallModal && (
+        <React.Suspense fallback={null}>
+          <InstallAppModal
+            isOpen={showInstallModal}
+            onClose={() => setShowInstallModal(false)}
+            isDay={isDay}
+          />
+        </React.Suspense>
+      )}
     </header>
   );
 };

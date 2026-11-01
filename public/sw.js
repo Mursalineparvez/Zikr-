@@ -7,7 +7,7 @@
 const CACHE_NAME = 'zikrmate-v15-offline';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v5';
 
-// Core assets to precache on installation
+// Core assets to precache on installation (Lightweight App Shell < 500KB)
 const ESSENTIAL_PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -20,6 +20,9 @@ const ESSENTIAL_PRECACHE_URLS = [
   '/apple-touch-icon.png',
   '/zikr-tasbeeh-standalone.html',
 ];
+
+// Secondary on-demand chunks warmed up gently in background during idle time (non-blocking)
+const SECONDARY_PRECACHE_URLS = [];
 
 // Guaranteed embedded offline shell (rendered if no cache entry exists for index.html)
 const OFFLINE_EMBEDDED_SHELL = `<!doctype html>
@@ -156,7 +159,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// 2. Activate Event: Clean up outdated caches and immediately take control
+// 2. Activate Event: Clean up outdated caches, take control, and gently pre-warm secondary assets
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
@@ -170,6 +173,28 @@ self.addEventListener('activate', (event) => {
         })
       );
       await self.clients.claim();
+
+      // Gentle, non-blocking background warming of secondary views/data during idle time (1 at a time)
+      if (Array.isArray(SECONDARY_PRECACHE_URLS) && SECONDARY_PRECACHE_URLS.length > 0) {
+        setTimeout(async () => {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            for (const url of SECONDARY_PRECACHE_URLS) {
+              try {
+                const match = await cache.match(url, { ignoreSearch: true });
+                if (!match) {
+                  const res = await fetch(url);
+                  if (res && (res.status === 200 || res.type === 'opaque')) {
+                    await cache.put(url, res);
+                  }
+                  // Pause 180ms between requests to never saturate CPU or network
+                  await new Promise((resolve) => setTimeout(resolve, 180));
+                }
+              } catch {}
+            }
+          } catch {}
+        }, 4000); // Wait 4 full seconds after app start so user experiences zero latency
+      }
     })()
   );
 });

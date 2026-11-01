@@ -7,7 +7,7 @@ const distSwPath = path.join(distDir, 'sw.js');
 const publicSwPath = path.resolve('public', 'sw.js');
 
 try {
-  let assetUrls = [
+  const coreUrls = [
     '/',
     '/index.html',
     '/manifest.json',
@@ -19,6 +19,8 @@ try {
     '/apple-touch-icon.png',
     '/zikr-tasbeeh-standalone.html',
   ];
+
+  const secondaryUrls = [];
 
   if (fs.existsSync(assetsDir)) {
     function walkDir(dir, prefix = '/assets') {
@@ -34,26 +36,42 @@ try {
            entry.name.endsWith('.svg')) &&
           !urlPath.includes('/aistudio/')
         ) {
-          assetUrls.push(urlPath);
+          const isCore =
+            entry.name.startsWith('index-') ||
+            entry.name.startsWith('vendor-react-') ||
+            entry.name.startsWith('vendor-icons-') ||
+            entry.name.startsWith('data-translations-');
+
+          if (isCore) {
+            coreUrls.push(urlPath);
+          } else {
+            secondaryUrls.push(urlPath);
+          }
         }
       }
     }
     walkDir(assetsDir);
   }
 
-  console.log(`[PostBuild] Found ${assetUrls.length} assets to precache in Service Worker.`);
+  console.log(`[PostBuild] Core App Shell precache: ${coreUrls.length} assets.`);
+  console.log(`[PostBuild] Secondary on-demand assets: ${secondaryUrls.length} assets.`);
 
   const swSource = fs.readFileSync(publicSwPath, 'utf8');
-  const precacheJson = JSON.stringify(assetUrls, null, 2);
 
   // Replace ESSENTIAL_PRECACHE_URLS array in sw.js
-  const updatedSw = swSource.replace(
+  let updatedSw = swSource.replace(
     /const ESSENTIAL_PRECACHE_URLS = \[[\s\S]*?\];/,
-    `const ESSENTIAL_PRECACHE_URLS = ${precacheJson};`
+    `const ESSENTIAL_PRECACHE_URLS = ${JSON.stringify(coreUrls, null, 2)};`
+  );
+
+  // Replace SECONDARY_PRECACHE_URLS array in sw.js
+  updatedSw = updatedSw.replace(
+    /const SECONDARY_PRECACHE_URLS = \[[\s\S]*?\];/,
+    `const SECONDARY_PRECACHE_URLS = ${JSON.stringify(secondaryUrls, null, 2)};`
   );
 
   fs.writeFileSync(distSwPath, updatedSw, 'utf8');
-  console.log(`[PostBuild] Successfully updated dist/sw.js with ${assetUrls.length} precache assets.`);
+  console.log(`[PostBuild] Successfully updated dist/sw.js (Core: ${coreUrls.length}, Secondary: ${secondaryUrls.length}).`);
 } catch (err) {
   console.error('[PostBuild] Error updating Service Worker:', err);
 }
