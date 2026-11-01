@@ -69,6 +69,7 @@ import {
 } from 'lucide-react';
 
 import { getFormattedTransliteration, normalizeArabicPronunciationBn } from '../utils/transliterationHelper';
+import { QuranAyahCardModal } from './QuranAyahCardModal';
 
 export type WordAnimationType = 'glow' | 'minimal';
 
@@ -232,6 +233,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [activeAyahActionMenu, setActiveAyahActionMenu] = useState<number | null>(null);
+  const [cardModalAyah, setCardModalAyah] = useState<QuranAyah | null>(null);
 
   // Lock body scroll and handle Escape key for Tafsir Reader
   useEffect(() => {
@@ -2075,6 +2077,23 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             </span>
                           </button>
 
+                          {/* Quick Card & HD Download Button */}
+                          <button
+                            onClick={() => {
+                              setCardModalAyah(ayah);
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-sm ${
+                              isDay
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
+                                : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25'
+                            }`}
+                            title={selectedLanguage === 'bn' ? 'প্রিমিয়াম কার্ড ও হাই-রেস ডাউনলোড' : 'Premium Card & HD Download'}
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <span>{selectedLanguage === 'bn' ? 'কার্ড' : 'Card'}</span>
+                          </button>
+
                           {/* 3-Dots Options Menu */}
                           <div className="relative">
                             <button
@@ -2165,6 +2184,19 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   <Book className="w-4 h-4 text-slate-400" />
                                 )}
                                 <span>{selectedLanguage === 'bn' ? 'আয়াত কপি করুন' : 'Copy Ayah'}</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setCardModalAyah(ayah);
+                                  setActiveAyahActionMenu(null);
+                                  if (soundEnabled) soundHaptics.playTap();
+                                }}
+                                className={`w-full px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer font-medium ${
+                                  isDay ? 'hover:bg-slate-100' : 'hover:bg-[#152e3c]'
+                                }`}
+                              >
+                                <Sparkles className="w-4 h-4 text-emerald-400" />
+                                <span>{selectedLanguage === 'bn' ? 'প্রিমিয়াম কার্ড ও এইচডি ডাউনলোড' : 'Premium Card & HD Download'}</span>
                               </button>
                               <button
                                 onClick={() => handleShareAyah(ayah)}
@@ -3496,6 +3528,18 @@ export const QuranView: React.FC<QuranViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Premium Ayah Card & High-Res PNG Download Modal */}
+      <QuranAyahCardModal
+        isOpen={cardModalAyah !== null}
+        onClose={() => setCardModalAyah(null)}
+        ayah={cardModalAyah}
+        surahNumber={surahDetail?.number || 1}
+        surahName={surahDetail?.name || ''}
+        surahEnglishName={surahDetail?.englishName || ''}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+      />
     </div>
   );
 };

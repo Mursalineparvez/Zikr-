@@ -1958,12 +1958,12 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               <X className="w-5 h-5" />
             </button>
 
-            <BattleLocation3DMap
+            <BattleLiveMap
               war={mapWar}
               allWars={ISLAMIC_WARS_DATA}
               isDay={false}
               soundEnabled={soundEnabled}
-              onSelectWar={(newId) => setActive3DMapWarId(newId)}
+              onSelectWar={(newId: string) => setActive3DMapWarId(newId)}
               onClose={() => setActive3DMapWarId(null)}
             />
 
