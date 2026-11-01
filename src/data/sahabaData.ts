@@ -26,6 +26,17 @@ export interface QuranRef {
   translationBn: string;
 }
 
+export interface SahabaFamily {
+  fatherBn?: string;
+  motherBn?: string;
+  tribeOrClanBn?: string;
+  wivesBn?: string[];
+  sonsBn?: string[];
+  daughtersBn?: string[];
+  keyRelativesBn?: string[];
+  overviewBn?: string;
+}
+
 export interface SahabaItem {
   id: string;
   rank: number;
@@ -45,6 +56,7 @@ export interface SahabaItem {
   lessonsBn: string[];
   referencesBn: string[];
   detailedBiographyBn?: string;
+  familyBn?: SahabaFamily;
 }
 
 export interface CategoryMeta {
@@ -187,7 +199,34 @@ const SAHABA_DATABASE_PART1: SahabaItem[] = [
       "সিয়ারু আ'লামিন নুবালা (ইমাম যাহাবী রহ.)",
       "তারিখে তাবারী",
       "সহিহ বুখারি (কিতাবুল ফাযায়িল)"
-    ]
+    ],
+    "familyBn": {
+      "fatherBn": "আবু কুহাফা (উসমান ইবনে আমীর ইবনে আমর)",
+      "motherBn": "উম্মুল খায়ের সালমা বিনতে সাখর",
+      "tribeOrClanBn": "কুরাইশ বংশের সম্মানিত বনু তাইম গোত্র",
+      "wivesBn": [
+        "কুতাইলা বিনতে আবদ আল-উজ্জা",
+        "উম্মে রুমান বিনতে আমীর (উম্মুল মুমিনীন আয়িশার মাতা)",
+        "আসমা বিনতে উমাইস",
+        "হাবিবাহ বিনতে খারেজাহ"
+      ],
+      "sonsBn": [
+        "আবদুল্লাহ ইবনে আবি বকর",
+        "আবদুর রহমান ইবনে আবি বকর",
+        "মুহাম্মদ ইবনে আবি বকর"
+      ],
+      "daughtersBn": [
+        "যাতুন নিতাকাইন হযরত আসমা বিনতে আবি বকর",
+        "উম্মুল মুমিনীন হযরত আয়িশা সিদ্দিকা (রা.)",
+        "উম্মে কুলসুম বিনতে আবি বকর"
+      ],
+      "keyRelativesBn": [
+        "রাসূলুল্লাহ (সা.) — পরম সম্মানিত জামাতা (আয়িশা রা.-এর স্বামী)",
+        "হযরত জুবায়ের ইবনুল আওয়াম (রা.) — জামাতা (আসমা রা.-এর স্বামী)",
+        "ইমাম আল-কাসিম ইবনে মুহাম্মদ ইবনে আবি বকর — পৌত্র"
+      ],
+      "overviewBn": "আবু বকর সিদ্দিক (রা.)-এর পরিবার ছিল দ্বীনের জন্য অকাতরে বিলিয়ে দেওয়া প্রথম পূর্ণাঙ্গ মুসলিম পরিবার। তাঁর পিতা, মাতা, সন্তান ও নাতি-নাতনিরা সকলেই সাহাবি হওয়ার সুমহান সম্মান লাভ করেন।"
+    }
   },
   {
     "id": "umar-ibn-khattab",

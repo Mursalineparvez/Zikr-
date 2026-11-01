@@ -21,8 +21,11 @@ import {
   Heart,
   ScrollText,
   Quote,
+  Globe,
+  MapPin,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
+import { BattleLiveMap } from './BattleLiveMap';
 
 interface IslamicHistoryWarsViewProps {
   themeMode?: ThemeMode;
@@ -1110,6 +1113,12 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   const [selectedWarId, setSelectedWarId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showTocIndex, setShowTocIndex] = useState<boolean>(true);
+  const [active3DMapWarId, setActive3DMapWarId] = useState<string | null>(null);
+
+  const mapWar = useMemo(() => {
+    if (!active3DMapWarId) return null;
+    return ISLAMIC_WARS_DATA.find((w) => w.id === active3DMapWarId) || null;
+  }, [active3DMapWarId]);
 
   // Group wars by era
   const warsByEra = useMemo(() => {
@@ -1277,6 +1286,15 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               {activeWar.nameAr}
             </p>
           </div>
+
+          {/* 🛰️ সরাসরি লাইভ স্যাটেলাইট ও ভৌগোলিক মানচিত্র (Direct Live Battle Map) */}
+          <BattleLiveMap
+            war={activeWar}
+            allWars={ISLAMIC_WARS_DATA}
+            isDay={isDay}
+            soundEnabled={soundEnabled}
+            onSelectWar={(newId) => setSelectedWarId(newId)}
+          />
 
           {/* ১. যুদ্ধের মূল কারণ ও ঐতিহাসিক প্রেক্ষাপট */}
           <div
@@ -1599,17 +1617,31 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
           </span>
         </div>
 
-        <button
-          onClick={() => {
-            setShowTocIndex(!showTocIndex);
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition text-xs font-bold flex items-center gap-1 shrink-0"
-          title="বইয়ের সূচিপত্র"
-        >
-          <ScrollText className="w-4 h-4 text-amber-300" />
-          <span className="hidden sm:inline text-[11px]">সূচিপত্র</span>
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={() => {
+              setActive3DMapWarId(ISLAMIC_WARS_DATA[0].id);
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className="p-2 rounded-xl bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-300 active:scale-95 transition text-xs font-bold flex items-center gap-1 border border-emerald-500/30 cursor-pointer"
+            title="সকল যুদ্ধক্ষেত্রের ৩ডি মানচিত্র"
+          >
+            <Globe className="w-4 h-4 text-emerald-400" />
+            <span className="hidden sm:inline text-[11px]">৩ডি ম্যাপ</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setShowTocIndex(!showTocIndex);
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition text-xs font-bold flex items-center gap-1 shrink-0 cursor-pointer"
+            title="বইয়ের সূচিপত্র"
+          >
+            <ScrollText className="w-4 h-4 text-amber-300" />
+            <span className="hidden sm:inline text-[11px]">সূচিপত্র</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Intro Hero Banner */}
@@ -1719,17 +1751,44 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                     {wars.map((w, idx) => (
                       <li
                         key={w.id}
-                        onClick={() => {
-                          setSelectedWarId(w.id);
-                          if (soundEnabled) soundHaptics.playTap();
-                        }}
-                        className="flex items-center justify-between py-1 px-1 rounded-md hover:bg-emerald-500/10 cursor-pointer transition-colors group"
+                        className="flex items-center justify-between py-1 px-1 rounded-md hover:bg-emerald-500/10 transition-colors group"
                       >
-                        <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 group-hover:text-emerald-500 font-semibold truncate text-xs">
+                        <span
+                          onClick={() => {
+                            setSelectedWarId(w.id);
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                          className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 group-hover:text-emerald-500 font-semibold truncate text-xs cursor-pointer flex-1"
+                        >
                           <span className="text-[10px] text-amber-500 font-mono">{idx + 1}.</span>
                           <span className="truncate">{w.nameBn}</span>
                         </span>
-                        <span className="text-slate-400 text-[10px] shrink-0 ml-1">📖</span>
+                        
+                        <div className="flex items-center gap-1 shrink-0 ml-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActive3DMapWarId(w.id);
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className="p-1 px-1.5 rounded bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20 text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                            title="৩ডি মানচিত্রে যুদ্ধক্ষেত্রের অবস্থান দেখুন"
+                          >
+                            <MapPin className="w-3 h-3 text-rose-400" />
+                            <span className="hidden sm:inline">৩ডি ম্যাপ</span>
+                          </button>
+                          
+                          <span
+                            onClick={() => {
+                              setSelectedWarId(w.id);
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className="text-slate-400 text-[10px] cursor-pointer hover:text-emerald-500"
+                            title="অধ্যায় পড়ুন"
+                          >
+                            📖
+                          </span>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -1824,7 +1883,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {searchFilteredWars.map((war) =>
-              renderWarCard(war, isDay, setSelectedWarId, soundEnabled)
+              renderWarCard(war, isDay, setSelectedWarId, setActive3DMapWarId, soundEnabled)
             )}
           </div>
         </div>
@@ -1875,12 +1934,63 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                 {/* Wars Grid for this era */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {wars.map((war) =>
-                    renderWarCard(war, isDay, setSelectedWarId, soundEnabled)
+                    renderWarCard(war, isDay, setSelectedWarId, setActive3DMapWarId, soundEnabled)
                   )}
                 </div>
               </section>
             );
           })}
+        </div>
+      )}
+
+      {/* Standalone 3D Battle Location Map Modal Overlay */}
+      {mapWar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-slate-950 border border-emerald-500/40 p-3 sm:p-5 space-y-3.5 shadow-2xl">
+            <button
+              onClick={() => {
+                setActive3DMapWarId(null);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/25 text-white transition active:scale-95 cursor-pointer z-10"
+              title="বন্ধ করুন"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <BattleLocation3DMap
+              war={mapWar}
+              allWars={ISLAMIC_WARS_DATA}
+              isDay={false}
+              soundEnabled={soundEnabled}
+              onSelectWar={(newId) => setActive3DMapWarId(newId)}
+              onClose={() => setActive3DMapWarId(null)}
+            />
+
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <button
+                onClick={() => {
+                  setSelectedWarId(mapWar.id);
+                  setActive3DMapWarId(null);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs sm:text-sm shadow-lg transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>📖</span>
+                <span>{mapWar.nameBn}-এর সম্পূর্ণ অধ্যায় পড়ুন</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setActive3DMapWarId(null);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className="py-3 px-5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -1892,6 +2002,7 @@ function renderWarCard(
   war: WarItem,
   isDay: boolean,
   setSelectedWarId: (id: string) => void,
+  setActive3DMapWarId: (id: string) => void,
   soundEnabled: boolean
 ) {
   return (
@@ -1933,7 +2044,7 @@ function renderWarCard(
             </span>
           </h4>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
-            <span>📍</span>
+            <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
             <span>{war.location}</span>
           </p>
         </div>
@@ -1961,9 +2072,24 @@ function renderWarCard(
       </div>
 
       {/* Card Action Footer */}
-      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
-        <span className="group-hover:underline">সম্পূর্ণ ইতিহাস ও হাদিসের দলিল পড়ুন</span>
-        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+      <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs font-bold gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setActive3DMapWarId(war.id);
+            if (soundEnabled) soundHaptics.playTap();
+          }}
+          className="px-2.5 py-1 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-black flex items-center gap-1 transition active:scale-95 cursor-pointer"
+          title="৩ডি মানচিত্রে যুদ্ধক্ষেত্রের অবস্থান দেখুন"
+        >
+          <MapPin className="w-3.5 h-3.5 text-rose-500" />
+          <span>৩ডি ম্যাপ</span>
+        </button>
+
+        <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 group-hover:underline">
+          <span>সম্পূর্ণ অধ্যায় পড়ুন</span>
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </div>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import 'leaflet/dist/leaflet.css';
 
 // Silently catch and suppress expected WebSocket and Firestore internal assertion messages
 if (typeof window !== 'undefined') {
