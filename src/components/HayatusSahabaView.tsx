@@ -27,6 +27,7 @@ import {
   SahabaCategoryKey,
   SahabaItem,
 } from '../data/sahabaData';
+import { GenealogyChartView } from './GenealogyChartView';
 
 interface HayatusSahabaViewProps {
   themeMode?: ThemeMode;
@@ -42,6 +43,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   onBackToHub,
 }) => {
   const isDay = themeMode === 'day';
+  const [mainTab, setMainTab] = useState<'list' | 'genealogy'>('list');
   const [selectedSahabaId, setSelectedSahabaId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all'>('all');
@@ -646,7 +648,61 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         </button>
       </div>
 
-      {/* Main Intro Hero Banner */}
+      {/* Top Main Tab Switcher Bar */}
+      <div className={`p-1.5 rounded-2xl border flex items-center gap-1.5 shadow-lg ${
+        isDay ? 'bg-slate-100/90 border-slate-200' : 'bg-[#091f26] border-teal-800/60'
+      }`}>
+        <button
+          type="button"
+          onClick={() => {
+            setMainTab('list');
+            if (soundEnabled) soundHaptics.playTap();
+          }}
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 ${
+            mainTab === 'list'
+              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md scale-[1.01]'
+              : isDay
+              ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
+              : 'text-teal-200 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <span>📜</span>
+          <span>১০৭+ সাহাবির জীবনী ও সূচিপত্র</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMainTab('genealogy');
+            if (soundEnabled) soundHaptics.playTap();
+          }}
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 ${
+            mainTab === 'genealogy'
+              ? 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-md scale-[1.01]'
+              : isDay
+              ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/60'
+              : 'text-amber-200 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <span>🌳</span>
+          <span>শাজারা শরীফ ও বংশলতিকা Chart</span>
+        </button>
+      </div>
+
+      {/* Conditionally Render Genealogy Chart or Sahaba List */}
+      {mainTab === 'genealogy' ? (
+        <GenealogyChartView
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={soundEnabled}
+          onSelectSahabaBio={(sahabaId) => {
+            setSelectedSahabaId(sahabaId);
+            setMainTab('list');
+          }}
+        />
+      ) : (
+        <>
+          {/* Main Intro Hero Banner */}
       <div
         className={`p-4 sm:p-6 rounded-2xl border shadow-xl relative overflow-hidden ${
           isDay
@@ -1009,6 +1065,8 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           })
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };
