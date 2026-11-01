@@ -16,6 +16,7 @@ export interface EmotionalStory {
 export interface HadithPraise {
   arabic?: string;
   textBn: string;
+  textEn?: string;
   source: string;
 }
 
@@ -24,46 +25,70 @@ export interface QuranRef {
   verse: string;
   arabic?: string;
   translationBn: string;
+  translationEn?: string;
 }
 
 export interface SahabaFamily {
   fatherBn?: string;
+  fatherEn?: string;
   motherBn?: string;
+  motherEn?: string;
   tribeOrClanBn?: string;
+  tribeOrClanEn?: string;
   wivesBn?: string[];
+  wivesEn?: string[];
   sonsBn?: string[];
+  sonsEn?: string[];
   daughtersBn?: string[];
+  daughtersEn?: string[];
   keyRelativesBn?: string[];
+  keyRelativesEn?: string[];
   overviewBn?: string;
+  overviewEn?: string;
 }
 
 export interface SahabaItem {
   id: string;
   rank: number;
   nameBn: string;
+  nameEn?: string;
   nameAr: string;
   titleBn: string;
+  titleEn?: string;
   categoryKey: SahabaCategoryKey;
   categoryBn: string;
+  categoryEn?: string;
   birthAndDeathBn: string;
+  birthAndDeathEn?: string;
   summaryBn: string;
+  summaryEn?: string;
   islamAcceptanceBn: string;
+  islamAcceptanceEn?: string;
   keyVirtuesBn: string[];
+  keyVirtuesEn?: string[];
   emotionalStoriesBn: EmotionalStory[];
+  emotionalStoriesEn?: EmotionalStory[];
   hadithPraiseBn: HadithPraise[];
   quranRefBn?: QuranRef[];
   deathOrMartyrdomBn: string;
+  deathOrMartyrdomEn?: string;
   lessonsBn: string[];
+  lessonsEn?: string[];
   referencesBn: string[];
+  referencesEn?: string[];
   detailedBiographyBn?: string;
+  detailedBiographyEn?: string;
   familyBn?: SahabaFamily;
+  familyEn?: SahabaFamily;
 }
 
 export interface CategoryMeta {
   key: SahabaCategoryKey;
   titleBn: string;
+  titleEn: string;
   titleAr: string;
   descBn: string;
+  descEn: string;
   accentColor: string;
   icon: string;
 }
@@ -72,64 +97,80 @@ export const SAHABA_CATEGORIES: CategoryMeta[] = [
   {
     "key": "rashidun",
     "titleBn": "১. খোলাফায়ে রাশেদীন",
+    "titleEn": "1. The Righteous Caliphs (Khulafa-e-Rashideen)",
     "titleAr": "الخلفاء الراشدون المهديون",
     "descBn": "ইসলামের সর্বোচ্চ মর্যাদাবান চার খলিফা—যাঁদের শাসন ছিল ইনসাফ ও নবুওয়তের পরিপূর্ণ প্রতিচ্ছবি।",
+    "descEn": "The four righteous and guided caliphs whose governance was the epitome of justice and prophetic values.",
     "accentColor": "#10b981",
     "icon": "👑"
   },
   {
     "key": "ashara",
     "titleBn": "২. আশারায়ে মুবাশশারা",
+    "titleEn": "2. The Ten Promised Paradise (Ashara Mubashshara)",
     "titleAr": "العشرة المبشرون بالجنة",
     "descBn": "রাসূলুল্লাহ (সা.) যাদের এক মজলিসে দুনিয়াতেই জান্নাতের দ্ব্যর্থহীন সুসংবাদ দিয়েছিলেন।",
+    "descEn": "The ten eminent companions whom Prophet Muhammad (PBUH) directly guaranteed Paradise in a single gathering.",
     "accentColor": "#f59e0b",
     "icon": "✨"
   },
   {
     "key": "pioneers_martyrs",
     "titleBn": "৩. প্রারম্ভিক ঈমানদার ও শীর্ষ শহীদগণ",
+    "titleEn": "3. Early Pioneers & Noble Martyrs",
     "titleAr": "السابقون الأولون وسادات الشهداء",
     "descBn": "ইসলামের সূচনাপর্বে চরম নির্যাতন সহ্য করে ঈমানের অটলতা প্রমাণকারী ও রণাঙ্গনের বীর শহীদবৃন্দ।",
+    "descEn": "Early pioneers who bore extreme persecution with unshakeable faith and valiant martyrs of the battlefields.",
     "accentColor": "#ef4444",
     "icon": "🛡️"
   },
   {
     "key": "commanders",
     "titleBn": "৪. অপরাজেয় সেনাপতি ও বীর সাহাবিগণ",
+    "titleEn": "4. Unconquered Generals & Valiant Warriors",
     "titleAr": "القادة الفاتحون والفرسان",
     "descBn": "পারস্য ও রোমান পরাশক্তিকে পরাজিত করে তাওহীদের বিজয় পতাকা বহনকারী নির্ভীক সেনাপতিগণ।",
+    "descEn": "Legendary military masterminds and knights who toppled the Persian and Byzantine empires.",
     "accentColor": "#8b5cf6",
     "icon": "⚔️"
   },
   {
     "key": "scholars",
     "titleBn": "৫. হাদিস বর্ণনাকারী, ক্বারী ও ফকিহগণ",
+    "titleEn": "5. Hadith Scholars, Qurra & Jurists",
     "titleAr": "العلماء وحفاظ الحديث والفقهاء",
     "descBn": "যাঁদের নিরলস জ্ঞানসাধনায় রাসুল (সা.)-এর সুন্নাহ, কুরআন তিলাওয়াত ও ইসলামি ফিকহ সুরক্ষিত রয়েছে।",
+    "descEn": "Pioneering scholars whose dedication preserved the Prophet's Sunnah, Quran recitation, and Islamic jurisprudence.",
     "accentColor": "#0ea5e9",
     "icon": "📜"
   },
   {
     "key": "ansar",
     "titleBn": "৬. মদিনার আনসার সাহাবিদের নেতৃত্ব",
+    "titleEn": "6. Leaders of the Ansar of Madinah",
     "titleAr": "سادات الأنصار الكرام",
     "descBn": "যাঁরা দ্বীনের জন্য নিজেদের সম্পদ ও জীবন অকাতরে বিলিয়ে দিয়ে মুহাজির ভাইদের বুকে টেনে নিয়েছিলেন।",
+    "descEn": "Noble helpers of Madinah who embraced the Muhajirun and sacrificed everything for the cause of Islam.",
     "accentColor": "#14b8a6",
     "icon": "🤝"
   },
   {
     "key": "beloved_companions",
     "titleBn": "৭. রাসুল (সা.)-এর সুপ্রিয় ও বিশিষ্ট সাহাবিগণ",
+    "titleEn": "7. Beloved Household & Kin (Ahl al-Bayt & Companions)",
     "titleAr": "أحباء النبي وأعيان الصحابة",
     "descBn": "যাঁদের রাসুলুল্লাহ (সা.) অত্যন্ত ভালোবাসতেন, প্রশংসা করতেন এবং যাঁদের অবদান ইসলামি ইতিহাসে স্মরণীয়।",
+    "descEn": "Cherished household members and beloved companions held in supreme affection by the Prophet (PBUH).",
     "accentColor": "#f97316",
     "icon": "💖"
   },
   {
     "key": "sahabiyyat",
     "titleBn": "৮. মহীয়সী নারী সাহাবিয়াত (রা.)",
+    "titleEn": "8. Venerable Female Companions (Sahabiyyat)",
     "titleAr": "أمهات المؤمنين وفضليات الصحابيات",
     "descBn": "উম্মাহর শ্রেষ্ঠ মাতাগণ ও মহিয়সী নারী সাহাবি, যাঁদের আত্মত্যাগ ও প্রজ্ঞা ইসলামের চিরন্তন আলোকবর্তিকা।",
+    "descEn": "Mothers of the Believers and iconic women whose unyielding courage, knowledge, and piety remain a beacon.",
     "accentColor": "#ec4899",
     "icon": "🌸"
   }

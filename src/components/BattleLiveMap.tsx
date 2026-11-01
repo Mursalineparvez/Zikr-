@@ -461,19 +461,19 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
       BATTLE_GEO_DATA[activeWarId] ||
       BATTLE_GEO_DATA[war.id] || {
         warId: war.id,
-        nameBn: war.location,
+        nameBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
         nameAr: war.nameAr,
         lat: 24.4672,
         lng: 39.6111,
         zoom: 14,
         countryBn: 'ঐতিহাসিক ইসলামি ভূখণ্ড',
-        regionBn: war.location,
+        regionBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
         terrainBn: 'ঐতিহাসিক প্রান্তর',
         elevationMeters: 450,
         distanceFromMadinahKm: 0,
         distanceFromMakkahKm: 430,
         strategicImportanceBn: war.causeBn.slice(0, 100),
-        modernSiteBn: war.location,
+        modernSiteBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
       }
     );
   }, [activeWarId, war]);
