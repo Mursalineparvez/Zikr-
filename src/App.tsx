@@ -1844,6 +1844,9 @@ export default function App() {
   // Primary 5 module items metadata (Zikir Counter, Quran, Salat Time, Aamal Tracker, Other)
   const otherModules: NavModule[] = [
     'other',
+    'seerat_un_nabi',
+    'hayatus_sahaba',
+    'islamic_history_wars',
     'dua',
     'hadith',
     'kitab',
@@ -2129,7 +2132,13 @@ export default function App() {
                 onExportPdf={handleExportPdf}
                 onOpenSettingsModal={() => handleOpenProfileModal('settings')}
                 initialSubSection={
-                  activeModule === 'dua'
+                  activeModule === 'seerat_un_nabi'
+                    ? 'seerat_un_nabi'
+                    : activeModule === 'hayatus_sahaba'
+                    ? 'hayatus_sahaba'
+                    : activeModule === 'islamic_history_wars'
+                    ? 'islamic_history_wars'
+                    : activeModule === 'dua'
                     ? 'dua'
                     : activeModule === 'hadith'
                     ? 'hadith'

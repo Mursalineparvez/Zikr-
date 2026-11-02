@@ -75,7 +75,8 @@ export type NavModule =
   | 'hajj_essentials'
   | 'history_timeline'
   | 'hayatus_sahaba'
-  | 'islamic_history_wars';
+  | 'islamic_history_wars'
+  | 'seerat_un_nabi';
 
 
 export type DuaCategory =

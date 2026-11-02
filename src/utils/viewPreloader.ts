@@ -13,6 +13,7 @@ type PreloadableView =
   | 'other'
   | 'hayatus_sahaba'
   | 'islamic_history_wars'
+  | 'seerat_un_nabi'
   | 'history_timeline'
   | 'arabian_map'
   | 'dua'
@@ -33,6 +34,7 @@ const viewLoaders: Record<PreloadableView, () => Promise<any>> = {
   other: () => import('../components/OtherIslamicHubView'),
   hayatus_sahaba: () => import('../components/HayatusSahabaView'),
   islamic_history_wars: () => import('../components/IslamicHistoryWarsView'),
+  seerat_un_nabi: () => import('../components/SeeratUnNabiView'),
   history_timeline: () => import('../components/HistoryTimelineView'),
   arabian_map: () => import('../components/ArabianIllustratedMapView'),
   dua: () => import('../components/DuaView'),

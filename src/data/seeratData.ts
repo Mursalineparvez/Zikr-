@@ -1,0 +1,489 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+export type SeeratPhaseKey =
+  | 'infancy_childhood'
+  | 'youth_preprophetic'
+  | 'makki_prophetic'
+  | 'madani_early'
+  | 'madani_battles'
+  | 'madani_victory_farewell';
+
+export interface SeeratPhaseMeta {
+  key: SeeratPhaseKey;
+  ageRange: string;
+  titleBn: string;
+  titleEn: string;
+  titleAr: string;
+  descBn: string;
+  descEn: string;
+  icon: string;
+  color: string;
+  count: number;
+}
+
+export interface SeeratAgeItem {
+  age: number; // 1 to 63
+  yearCE: number; // 571 to 632
+  yearHijri: string; // e.g. "নবুওয়াত-পূর্ব ৫৩ বছর", "১ম হিজরি"
+  phaseKey: SeeratPhaseKey;
+  phaseNameBn: string;
+  phaseNameEn: string;
+  titleBn: string;
+  titleEn: string;
+  titleAr: string;
+  locationBn: string;
+  locationEn: string;
+  highlightsBn: string[];
+  highlightsEn: string[];
+  historicalNarrativeBn: string;
+  historicalNarrativeEn: string;
+  emotionalStoryBn: string;
+  emotionalStoryEn: string;
+  quranRef?: {
+    surah: string;
+    ayah: string;
+    arabic?: string;
+    meaningBn: string;
+    meaningEn: string;
+  };
+  hadithRef?: {
+    source: string;
+    narrator: string;
+    textBn: string;
+    textEn: string;
+  };
+  lessonsBn: string[];
+  lessonsEn: string[];
+}
+
+export const SEERAT_PHASES: SeeratPhaseMeta[] = [
+  {
+    key: 'infancy_childhood',
+    ageRange: 'বয়স ১ - ১২ বছর',
+    titleBn: '১. শৈশব, লালন-পালন ও কৈশোর',
+    titleEn: '1. Infancy, Childhood & Early Youth',
+    titleAr: 'الطفولة والرعاية المبكرة (سن ١ - ١٢)',
+    descBn: 'পবিত্র জন্ম, মা হালিমা আস-সাদিয়ার স্নেহচ্ছায়া, বক্ষ বিদারণ, মা আমিনার ইন্তেকাল ও দাদা-চাচার অভিভাবকত্ব।',
+    descEn: 'Blessed birth, foster mother Halima As-Sa\'diyah, chest opening, mother\'s demise & guardianship.',
+    icon: '🌱',
+    color: 'from-emerald-500/20 via-teal-500/15 to-emerald-600/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400',
+    count: 12,
+  },
+  {
+    key: 'youth_preprophetic',
+    ageRange: 'বয়স ১৩ - ৩৯ বছর',
+    titleBn: '২. যৌবন ও আল-আমিন চরিত্র',
+    titleEn: '2. Youth & The Trustworthy Citizen',
+    titleAr: 'الشباب وعصر الصادق الأمين (سن ١٣ - ٣٩)',
+    descBn: 'ফুজ্জারের যুদ্ধ, হিলফুল ফুজুল গঠন, খাদিজা (রা.)-এর সাথে বিবাহ, হাজরে আসওয়াদ স্থাপন ও হেরা গুহায় গভীর ধ্যান।',
+    descEn: 'Hilf al-Fudul, blessed marriage to Khadijah RA, Kaaba arbitration & retreats in Cave Hira.',
+    icon: '✨',
+    color: 'from-amber-500/20 via-yellow-500/15 to-amber-600/10 border-amber-500/40 text-amber-600 dark:text-amber-400',
+    count: 27,
+  },
+  {
+    key: 'makki_prophetic',
+    ageRange: 'বয়স ৪০ - ৫২ বছর',
+    titleBn: '৩. নবুওয়াত লাভ ও মক্কী দাওয়াত',
+    titleEn: '3. Prophethood & The Makkah Trials',
+    titleAr: 'البعثة والدعوة المكية (سن ٤٠ - ٥٢)',
+    descBn: 'হেরা গুহায় প্রথম ওহী, প্রকাশ্য দাওয়াত, কুরাইশদের নিষ্ঠুর নির্যাতন, হাবশায় হিজরত, দুঃখের বছর ও ঐতিহাসিক মিরাজ।',
+    descEn: 'First revelation, public call, intense persecution, Abyssinia migration, Year of Sorrow & Isra-Mi\'raj.',
+    icon: '📜',
+    color: 'from-blue-500/20 via-indigo-500/15 to-blue-600/10 border-blue-500/40 text-blue-600 dark:text-blue-400',
+    count: 13,
+  },
+  {
+    key: 'madani_early',
+    ageRange: 'বয়স ৫৩ - ৫৪ বছর',
+    titleBn: '৪. ঐতিহাসিক হিজরত ও মদিনা সনদের প্রতিষ্ঠা',
+    titleEn: '4. The Great Hijrah & Madinah Constitution',
+    titleAr: 'الهجرة المباركة وتأسيس الدولة (سن ٥٣ - ٥٤)',
+    descBn: 'সাওর পর্বত পার হয়ে মদিনায় আগমন, আনসার-মুহাজির ভ্রাতৃত্ব, মদিনা সনদ ও কিবলা পরিবর্তন।',
+    descEn: 'Journey of Hijrah, Cave Thawr, Masjid Nabawi, Mu\'akhah brotherhood & the world\'s first constitution.',
+    icon: '🕌',
+    color: 'from-teal-500/20 via-emerald-500/15 to-teal-600/10 border-teal-500/40 text-teal-600 dark:text-teal-400',
+    count: 2,
+  },
+  {
+    key: 'madani_battles',
+    ageRange: 'বয়স ৫৫ - ৫৯ বছর',
+    titleBn: '৫. প্রধান যুদ্ধসমূহ ও হুদাইবিয়ার সন্ধি',
+    titleEn: '5. Major Battles & Treaty of Hudaybiyyah',
+    titleAr: 'الغزوات الكبرى وصلح الحديبية (سن ٥٥ - ٥٩)',
+    descBn: 'বদর যুদ্ধ (প্রথম বিজয়), উহুদ, খন্দকের যুদ্ধ, হুদাইবিয়ার সন্ধি এবং বিশ্বের সম্রাটদের কাছে ইসলামের পত্র প্রেরণ।',
+    descEn: 'Battle of Badr, Uhud, Trench (Ahzab), Treaty of Hudaybiyyah & diplomatic letters to world monarchs.',
+    icon: '⚔️',
+    color: 'from-rose-500/20 via-amber-500/15 to-rose-600/10 border-rose-500/40 text-rose-600 dark:text-rose-400',
+    count: 5,
+  },
+  {
+    key: 'madani_victory_farewell',
+    ageRange: 'বয়স ৬০ - ৬৩ বছর',
+    titleBn: '৬. মক্কা বিজয়, বিদায় হজ ও ওফাত',
+    titleEn: '6. Conquest of Makkah, Farewell & Passing',
+    titleAr: 'فتح مكة وحجة الوداع والوفاة (سن ٦٠ - ٦٣)',
+    descBn: 'রক্তপাতহীন মক্কা বিজয় ও সাধারণ ক্ষমা, তাবুক অভিযান, বিদায় হজের মহাসনদ এবং রফীকুল আলায় চিরবিদায়।',
+    descEn: 'Bloodless conquest of Makkah, Farewell Pilgrimage human rights charter, final illness & transition.',
+    icon: '🕊️',
+    color: 'from-amber-600/20 via-emerald-500/15 to-amber-700/10 border-amber-600/40 text-amber-700 dark:text-amber-300',
+    count: 4,
+  },
+];
+
+import { SEERAT_PART_1 } from './seeratDataPart1';
+import { SEERAT_PART_2 } from './seeratDataPart2';
+import { SEERAT_PART_3 } from './seeratDataPart3';
+import { SEERAT_PART_4 } from './seeratDataPart4';
+
+export const SEERAT_DATABASE: SeeratAgeItem[] = [
+  ...SEERAT_PART_1,
+  ...SEERAT_PART_2,
+  ...SEERAT_PART_3,
+  ...SEERAT_PART_4,
+];
+
+/**
+ * UI Localization Dictionary for Seerat-un-Nabi module across all 14 supported languages
+ */
+export const SEERAT_UI: Record<string, Record<string, string>> = {
+  headerBadge: {
+    bn: 'পবিত্র সীরাত বিশ্বকোষ',
+    en: 'Prophetic Life Encyclopedia',
+    ar: 'موسوعة السيرة النبوية الشاملة',
+    ur: 'جامع انسائیکلوپیڈیا سیرت النبی ﷺ',
+    hi: 'पवित्र सीरत विश्वकोश',
+    id: 'Ensiklopedia Sirah Nabawiyah',
+    tr: 'Kapsamlı Siyer-i Nebi Ansiklopedisi',
+    ms: 'Ensiklopedia Sirah Nabawiyyah',
+    fr: 'Encyclopédie de la Sirah Prophétique',
+    es: 'Enciclopedia de la Sira Profética',
+    ru: 'Энциклопедия Жизнеописания Пророка',
+    fa: 'دانشنامه جامع سیره نبوی ﷺ',
+    de: 'Enzyklopädie der prophetischen Biografie',
+    sw: 'Ensaiklopidia ya Maisha ya Mtume',
+  },
+  mainTitle: {
+    bn: 'সিরাতুন নবী (সা.) — পূর্ণাঙ্গ জীবন পরিক্রমা (১ থেকে ৬৩ বছর)',
+    en: 'Seerat-un-Nabi (PBUH) — The Complete Life Chronicle (Ages 1 to 63)',
+    ar: 'سيرة النبي ﷺ — الرحلة المباركة من المولد إلى الوفاة (سن ١ إلى ٦٣)',
+    ur: 'سیرت النبی ﷺ — ولادت سے وصال تک کے ۶۳ سالہ مکمل تاریخی احوال',
+    hi: 'सीरतुन नबी (स.) — पवित्र जीवन परिक्रमा (१ से ६३ वर्ष)',
+    id: 'Sirah Nabawiyah — Perjalanan Hidup Lengkap (Usia 1 hingga 63 Tahun)',
+    tr: 'Siyer-i Nebi (s.a.v.) — Doğumdan Vefata 63 Yıllık Hayat Kronolojisi',
+    ms: 'Sirah Nabawiyyah — Kronologi Hayat Lengkap (Umur 1 hingga 63 Tahun)',
+    fr: 'La Vie du Prophète (Sirah) — Chronologie Complète (Âges 1 à 63 ans)',
+    es: 'La Sira del Profeta (BPD) — Crónica Completa de Vida (Edades 1 a 63)',
+    ru: 'Сира Пророка Мухаммада ﷺ — Полная хроника жизни (от 1 до 63 лет)',
+    fa: 'سیره نبوی ﷺ — شرح تفصیلی زندگی مبارک از ولادت تا وفات (سن ۱ تا ۶۳)',
+    de: 'Das Leben des Propheten (s.a.w.s.) — Vollständige Chronik (Alter 1 bis 63)',
+    sw: 'Maisha ya Mtume Muhammad (SAW) — Mwongozo Kamili (Miaka 1 hadi 63)',
+  },
+  subTitle: {
+    bn: 'রাসুলুল্লাহ সাল্লাল্লাহু আলাইহি ওয়া সাল্লাম-এর শুভ জন্ম থেকে ওফাত পর্যন্ত ৬৩ বছরের প্রতিটি বয়সের ঐতিহাসিক ঘটনা, হৃদয়স্পর্শী সিরাত ও সহিহ হাদিসের প্রামাণ্য দলিল।',
+    en: 'Chronological authentic documentation of every single year of the blessed Prophet\'s life (Ages 1 to 63) with verified Quranic and Hadith citations.',
+    ar: 'التوثيق الشامل المؤصل لكل عام من أعوام السيرة النبوية العطرة (من سن ١ إلى ٦٣) مع شواهد القرآن وصحيح الحديث الشريف.',
+    ur: 'نبی کریم ﷺ کی ولادت مبارکہ سے لے کر وفات تک ۶۳ سالہ زندگی کے تمام اہم واقعات، دل سوز احوال اور احادیث کے مستند حوالے۔',
+    hi: 'हज़रत मुहम्मद (स.) के जन्म से वफ़ात तक ६३ वर्षों के प्रत्येक वर्ष की ऐतिहासिक घटनाएं और प्रामाणिक हदीस संदर्भ।',
+    id: 'Dokumentasi otentik kronologis setiap tahun kehidupan Nabi (usia 1-63) dengan referensi shahih Al-Qur\'an dan Hadits.',
+    tr: 'Peygamber Efendimiz\'in (s.a.v.) doğumundan vefatına kadar 63 yılın her yaşındaki tarihi olaylar ve sahih hadis delilleri.',
+    ms: 'Dokumentasi sahih kronologi setiap tahun kehidupan Rasulullah SAW (umur 1-63) bersama rujukan al-Quran dan Hadis.',
+    fr: 'Documentation chronologique et authentique de chaque année de la vie du Prophète (âges 1 à 63) avec sources vérifiées.',
+    es: 'Documentación cronológica auténtica de cada año de la vida del Profeta (1 a 63 años) con fuentes canónicas del Corán y Hadiz.',
+    ru: 'Достоверная хронология каждого года благословенной жизни Пророка (от 1 до 63 лет) со ссылками на Коран и Сунну.',
+    fa: 'اسناد تاریخی معتبر و شرح سال به سال زندگی پربرکت پیامبر اعظم ﷺ از ولادت تا رحلت با استناد به آیات و احادیث صحیح.',
+    de: 'Chronologische, authentische Dokumentation jedes Lebensjahres des Propheten (1-63) mit Koran- und Hadith-Quellen.',
+    sw: 'Mwongozo sahihi wa kihistoria kwa kila mwaka wa maisha ya Mtume (miaka 1 hadi 63) na marejeo ya Qurani na Hadithi.',
+  },
+  tocTitle: {
+    bn: 'বইয়ের মূল সূচিপত্র (Table of Contents)',
+    en: 'Book Table of Contents (TOC)',
+    ar: 'فهرس فصول السيرة الشريفة',
+    ur: 'کتاب کی اصل فہرست مضامین (সূচিপত্র)',
+    hi: 'किताब की मूल अनुक्रमणिका (TOC)',
+    id: 'Daftar Isi Buku Sirah (TOC)',
+    tr: 'Kitap İçindekiler Tablosu (TOC)',
+    ms: 'Isi Kandungan Kitab Sirah (TOC)',
+    fr: 'Table des Matières du Livre (TOC)',
+    es: 'Índice General del Libro (TOC)',
+    ru: 'Оглавление Книги (TOC)',
+    fa: 'فهرست سرفصل‌های کتاب سیره',
+    de: 'Inhaltsverzeichnis des Buches (TOC)',
+    sw: 'Yaliyomo Katika Kitabu (TOC)',
+  },
+  tocHint: {
+    bn: 'যেকোনো বয়সে স্পর্শ করে সম্পূর্ণ বিস্তারিত অধ্যায় ও ইতিহাস পড়ুন',
+    en: 'Tap any age to read the complete detailed chapter & history',
+    ar: 'اضغط على أي سن لقراءة الفصل التفصيلي والأحداث التاريخية كاملة',
+    ur: 'مکمل باب اور تفصیلی تاریخ پڑھنے کے لیے کسی بھی عمر پر کلک کریں',
+    hi: 'पूरा अध्याय और इतिहास पढ़ने के लिए किसी भी आयु पर टैप करें',
+    id: 'Ketuk usia mana pun untuk membaca bab lengkap & sejarah mendalam',
+    tr: 'Detaylı bölümü ve tarihi okumak için herhangi bir yaşa dokunun',
+    ms: 'Ketik mana-mana umur untuk membaca bab terperinci dan sejarah lengkap',
+    fr: 'Appuyez sur n\'importe quel âge pour lire le chapitre complet et l\'histoire',
+    es: 'Toca cualquier edad para leer el capítulo completo y la historia detallada',
+    ru: 'Нажмите на любой возраст, чтобы прочитать полную главу и историю',
+    fa: 'برای مطالعه فصل تفصیلی و تاریخ رویدادها، روی هر سنی کلیک کنید',
+    de: 'Tippen Sie auf ein Alter, um das vollständige Kapitel zu lesen',
+    sw: 'Gusa umri wowote kusoma sura kamili na historia kwa urefu',
+  },
+  searchPlaceholder: {
+    bn: 'বয়স (যেমন: ২৫, ৪০, ৬৩), ঘটনা (যেমন: হিজরত, মিরাজ, বদর, বিবাহ) খুঁজুন...',
+    en: 'Search by age (e.g. 25, 40, 63), event (e.g. Hijrah, Miraj, Badr)...',
+    ar: 'ابحث بالسنة (مثل: ٢٥، ٤٠، ٦٣)، أو الحدث (الهجرة، المعراج، بدر، الزواج)...',
+    ur: 'عمر (جیسے: ۲۵، ۴۰، ۶۳) یا واقعہ (ہجرت، معراج، بدر، شادی) تلاش کریں...',
+    hi: 'आयु (जैसे २५, ४०, ६৩) या घटना (हिजरत, मेराज, बदर) खोजें...',
+    id: 'Cari berdasarkan usia (misal: 25, 40, 63) atau peristiwa (Hijrah, Mi\'raj, Badr)...',
+    tr: 'Yaşa (örn: 25, 40, 63) veya olaya göre ara (Hicret, Miraç, Bedir)...',
+    ms: 'Cari mengikut umur (cth: 25, 40, 63) atau peristiwa (Hijrah, Mi\'raj, Badr)...',
+    fr: 'Rechercher par âge (ex. 25, 40, 63) ou événement (Hégire, Miraj, Badr)...',
+    es: 'Buscar por edad (ej. 25, 40, 63) o evento (Hégira, Miraj, Badr)...',
+    ru: 'Поиск по возрасту (например: 25, 40, 63) или событию (Хиджра, Мирадж, Бадр)...',
+    fa: 'جستجو بر اساس سن (مثلاً ۲۵، ۴۰، ۶۳) یا رویداد (هجرت، معراج، بدر، ازدواج)...',
+    de: 'Suche nach Alter (z. B. 25, 40, 63) oder Ereignis (Hidschra, Miradsch, Badr)...',
+    sw: 'Tafuta kwa umri (mfano 25, 40, 63) au tukio (Hijra, Miraj, Badr)...',
+  },
+  allAges: {
+    bn: 'সব বয়স (১ - ৬৩)',
+    en: 'All Ages (1-63)',
+    ar: 'جميع الأعمار (١ - ٦٣)',
+    ur: 'تمام عمریں (۱ - ۶۳)',
+    hi: 'सभी आयु (१-६३)',
+    id: 'Semua Usia (1-63)',
+    tr: 'Tüm Yaşlar (1-63)',
+    ms: 'Semua Umur (1-63)',
+    fr: 'Tous les âges (1-63)',
+    es: 'Todas las edades (1-63)',
+    ru: 'Все возрасты (1-63)',
+    fa: 'تمام سنین (۱ تا ۶۳)',
+    de: 'Alle Altersstufen (1-63)',
+    sw: 'Miaka Yote (1-63)',
+  },
+  backToToc: {
+    bn: 'সূচিপত্রে ফিরুন',
+    en: 'Back to Contents',
+    ar: 'العودة إلى الفهرس',
+    ur: 'فہرست پر واپس جائیں',
+    hi: 'अनुक्रमणिका पर लौटें',
+    id: 'Kembali ke Daftar Isi',
+    tr: 'İçindekilere Dön',
+    ms: 'Kembali ke Isi Kandungan',
+    fr: 'Retour au Sommaire',
+    es: 'Volver al Índice',
+    ru: 'Назад к оглавлению',
+    fa: 'بازگشت به فهرست',
+    de: 'Zurück zum Inhaltsverzeichnis',
+    sw: 'Rudi kwenye Yaliyomo',
+  },
+  nextAge: {
+    bn: 'পরবর্তী বয়স',
+    en: 'Next Age',
+    ar: 'العام التالي',
+    ur: 'اگلی عمر',
+    hi: 'अगली आयु',
+    id: 'Usia Berikutnya',
+    tr: 'Sonraki Yaş',
+    ms: 'Umur Seterusnya',
+    fr: 'Âge suivant',
+    es: 'Edad siguiente',
+    ru: 'Следующий возраст',
+    fa: 'سن بعدی',
+    de: 'Nächstes Alter',
+    sw: 'Umri Unaofuata',
+  },
+  prevAge: {
+    bn: 'পূর্ববর্তী বয়স',
+    en: 'Previous Age',
+    ar: 'العام السابق',
+    ur: 'پچھلی عمر',
+    hi: 'पिछली आयु',
+    id: 'Usia Sebelumnya',
+    tr: 'Önceki Yaş',
+    ms: 'Umur Sebelumnya',
+    fr: 'Âge précédent',
+    es: 'Edad anterior',
+    ru: 'Предыдущий возраст',
+    fa: 'سن قبلی',
+    de: 'Vorheriges Alter',
+    sw: 'Umri Uliopita',
+  },
+  copySummary: {
+    bn: 'অধ্যায় কপি করুন',
+    en: 'Copy Chapter',
+    ar: 'نسخ الفصل',
+    ur: 'باب کاپی کریں',
+    hi: 'अध्याय कॉपी करें',
+    id: 'Salin Bab',
+    tr: 'Bölümü Kopyala',
+    ms: 'Salin Bab',
+    fr: 'Copier le chapitre',
+    es: 'Copiar capítulo',
+    ru: 'Копировать главу',
+    fa: 'کپی فصل',
+    de: 'Kapitel kopieren',
+    sw: 'Nakili Sura',
+  },
+  copiedNotice: {
+    bn: '✓ কপি হয়েছে!',
+    en: '✓ Copied!',
+    ar: '✓ تم النسخ!',
+    ur: '✓ کاپی ہو گیا!',
+    hi: '✓ कॉपी किया गया!',
+    id: '✓ Disalin!',
+    tr: '✓ Kopyalandı!',
+    ms: '✓ Disalin!',
+    fr: '✓ Copié!',
+    es: '✓ ¡Copiado!',
+    ru: '✓ Скопировано!',
+    fa: '✓ کپی شد!',
+    de: '✓ Kopiert!',
+    sw: '✓ Imenakiliwa!',
+  },
+  ageLabel: {
+    bn: 'বয়স',
+    en: 'Age',
+    ar: 'العمر',
+    ur: 'عمر',
+    hi: 'आयु',
+    id: 'Usia',
+    tr: 'Yaş',
+    ms: 'Umur',
+    fr: 'Âge',
+    es: 'Edad',
+    ru: 'Возраст',
+    fa: 'سن',
+    de: 'Alter',
+    sw: 'Umri',
+  },
+  yearLabel: {
+    bn: 'সাল',
+    en: 'Year',
+    ar: 'العام',
+    ur: 'سال',
+    hi: 'वर्ष',
+    id: 'Tahun',
+    tr: 'Yıl',
+    ms: 'Tahun',
+    fr: 'Année',
+    es: 'Año',
+    ru: 'Год',
+    fa: 'سال',
+    de: 'Jahr',
+    sw: 'Mwaka',
+  },
+  locationLabel: {
+    bn: 'ঐতিহাসিক স্থান',
+    en: 'Location',
+    ar: 'الموقع التاريخي',
+    ur: 'تاریخی مقام',
+    hi: 'ऐतिहासिक स्थान',
+    id: 'Lokasi Sejarah',
+    tr: 'Tarihi Konum',
+    ms: 'Lokasi Sejarah',
+    fr: 'Lieu Historique',
+    es: 'Ubicación Histórica',
+    ru: 'Историческое место',
+    fa: 'مکان تاریخی',
+    de: 'Historischer Ort',
+    sw: 'Eneo la Kihistoria',
+  },
+  keyHighlights: {
+    bn: 'মূল ঘটনাসমূহ ও বৈশিষ্ট্যাবলি',
+    en: 'Key Milestones & Landmark Events',
+    ar: 'أبرز معالم هذا العام والأحداث الفاصلة',
+    ur: 'اس سال کے نمایاں سنگ میل اور اہم واقعات',
+    hi: 'प्रमुख ऐतिहासिक घटनाएं व मील के पत्थर',
+    id: 'Tonggak Sejarah & Peristiwa Penting',
+    tr: 'Önemli Dönüm Noktaları ve Tarihi Olaylar',
+    ms: 'Peristiwa Penting dan Mercu Tanda',
+    fr: 'Événements Marquants et Faits Historiques',
+    es: 'Hitos Clave y Acontecimientos Históricos',
+    ru: 'Ключевые события и исторические вехи',
+    fa: 'نقاط عطوف تاریخی و رویدادهای سرنوشت‌ساز',
+    de: 'Wichtige Meilensteine und historische Ereignisse',
+    sw: 'Matukio Muhimu na Historia Kubwa',
+  },
+  narrativeTitle: {
+    bn: 'পূর্ণাঙ্গ সীরাত ও ঐতিহাসিক বিবরণ',
+    en: 'Detailed Biography & Historical Chronicle',
+    ar: 'السياق التاريخي والسيرة المفصلة الموثقة',
+    ur: 'تفصیلی سیرت اور تاریخی احوال',
+    hi: 'विस्तृत सीरत व ऐतिहासिक विवरण',
+    id: 'Kronik Sejarah & Biografi Mendalam',
+    fr: 'Chronique Historique et Biographie Détaillée',
+    es: 'Crónica Histórica y Biografía Detallada',
+    ru: 'Подробная биография и историческая хроника',
+    tr: 'Detaylı Biyografi ve Tarihi Anlatım',
+    ms: 'Riwayat Sejarah dan Biografi Terperinci',
+    fa: 'شرح تفصیلی سیره و وقایع‌نگاری تاریخی',
+    de: 'Ausführliche Biografie & historische Chronik',
+    sw: 'Wasifu wa Kina na Historia Kamili',
+  },
+  emotionalStoryTitle: {
+    bn: 'হৃদয়স্পর্শী ঘটনা ও অনুপম সিরাত',
+    en: 'Heart-Touching Moments & Exemplary Character',
+    ar: 'مواقف إيمانية مؤثرة وعبر خالدة من السيرة',
+    ur: 'دل سوز ایمان افروز واقعات اور اسوہ حسنہ',
+    hi: 'हृदयस्पर्शी प्रसंग व अनुकरणीय चरित्र',
+    id: 'Kisah Menyentuh Hati & Keteladanan Akhlak',
+    tr: 'Yürekleri Isıtan İman Tabloları ve Güzel Ahlak',
+    ms: 'Kisah Menyentuh Hati dan Akhlak Terpuji',
+    fr: 'Moments Émouvants et Modèle d\'Excellence',
+    es: 'Momentos Conmovedores y Ejemplo de Carácter',
+    ru: 'Трогательные события и пример для подражания',
+    fa: 'رویدادهای دل‌نشین و جلوه‌های اخلاق نبوی',
+    de: 'Berührende Momente und vorbildlicher Charakter',
+    sw: 'Mambo Yanayogusa Moyo na Tabia Bora',
+  },
+  lessonsTitle: {
+    bn: 'উম্মাহর জন্য শিক্ষণীয় শিক্ষা ও পাথেয়',
+    en: 'Enduring Lessons & Guidance for the Ummah',
+    ar: 'الدروس التربوية المستفادة والعبر للأمة',
+    ur: 'امت کے لیے اسباق اور مشعل راہ',
+    hi: 'उम्मत के लिए सीख व मार्गदर्शक पाठ',
+    id: 'Pelajaran Abadi & Hikmah untuk Umat',
+    tr: 'Ümmet İçin İbretler ve Yol Haritası',
+    ms: 'Iktibar dan Pedoman untuk Umat',
+    fr: 'Leçons Éternelles et Enseignements pour l\'Oumma',
+    es: 'Lecciones Eternas y Guía para la Comunidad',
+    ru: 'Уроки и наставления для всей уммы',
+    fa: 'درس‌های آموزنده و رهنمودهای ابدی برای امت',
+    de: 'Bleibende Lehren & Wegweisung für die Umma',
+    sw: 'Mafunzo ya Milele na Mwongozo kwa Umma',
+  },
+  quranReferenceTitle: {
+    bn: 'কুরআনুল কারিমের ঐশী দলিল',
+    en: 'Divine Reference from the Holy Quran',
+    ar: 'الشاهد الإلهي من القرآن الكريم',
+    ur: 'قرآن کریم سے قرآنی سند',
+    hi: 'पवित्र क़ुरआन का ईश्वरीय संदर्भ',
+    id: 'Rujukan Ilahi dari Al-Qur\'an Al-Karim',
+    tr: 'Kur\'an-ı Kerim\'den İlahi Delil',
+    ms: 'Rujukan Ilahi daripada al-Quran',
+    fr: 'Référence Divine du Saint Coran',
+    es: 'Referencia Divina del Sagrado Corán',
+    ru: 'Свидетельство из Священного Корана',
+    fa: 'سند قرآنی و آیه مبارکه مرتبط',
+    de: 'Göttlicher Beleg aus dem Heiligen Koran',
+    sw: 'Dalili ya Kiungu Kutoka kwenye Qurani Tukufu',
+  },
+  hadithReferenceTitle: {
+    bn: 'সহিহ হাদিসের প্রামাণ্য দলিল',
+    en: 'Authentic Hadith Citation',
+    ar: 'الدليل المعتمد من صحيح السنة النبوية',
+    ur: 'صحیح احادیث کے مستند حوالہ جات',
+    hi: 'सहीह हदीस का प्रामाणिक संदर्भ',
+    id: 'Rujukan Shahih dari Hadits Nabawi',
+    tr: 'Sahih Hadis-i Şerif Kaynağı',
+    ms: 'Rujukan Sahih daripada Hadis Nabawi',
+    fr: 'Citation Authentique de Hadith',
+    es: 'Cita Auténtica del Hadiz',
+    ru: 'Достоверное свидетельство из хадисов',
+    fa: 'مستند روایی از احادیث صحیح نبوی',
+    de: 'Authentisches Hadith-Zitat',
+    sw: 'Nukuu ya Hadithi Sahihi',
+  },
+};
