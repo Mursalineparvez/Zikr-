@@ -1968,11 +1968,13 @@ export default function App() {
             type="button"
             onPointerEnter={() => {
               prefetchView('other');
+              prefetchView('seerat_un_nabi');
               prefetchView('hayatus_sahaba');
               prefetchView('islamic_history_wars');
             }}
             onTouchStart={() => {
               prefetchView('other');
+              prefetchView('seerat_un_nabi');
               prefetchView('hayatus_sahaba');
               prefetchView('islamic_history_wars');
             }}

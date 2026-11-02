@@ -111,6 +111,17 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const hubItems = [
     {
+      id: 'seerat_un_nabi' as OtherSubSection,
+      title: NAV_TRANSLATIONS.seerat_un_nabi[selectedLanguage] || 'সিরাতুন নবী (সা.)',
+      arabic: 'سيرة رسول الله ﷺ',
+      desc: selectedLanguage === 'bn'
+        ? 'রাসূলুল্লাহ ﷺ-এর জন্ম থেকে ওফাত পর্যন্ত ১ থেকে ৬৩ বছর বয়সের প্রতি বছরের পূর্ণাঙ্গ ধারাবাহিক ঘটনাপ্রবাহ, হৃদয়স্পর্শী ইতিহাস, সূচিপত্র ও মূল শিক্ষা'
+        : 'Complete chronological year-by-year life journey of Prophet Muhammad ﷺ from Year 1 to 63 with Table of Contents and enduring lessons.',
+      icon: <span className="text-2xl">🌱</span>,
+      color: 'from-emerald-600/25 via-teal-500/15 to-amber-500/10 border-emerald-500/40',
+      badge: selectedLanguage === 'bn' ? '১–৬৩ বছর সূচিপত্র' : 'Ages 1-63 TOC',
+    },
+    {
       id: 'hayatus_sahaba' as OtherSubSection,
       title: selectedLanguage === 'bn' ? 'হায়াতুস সাহাবা (Hayatus Sahaba)' : 'Hayatus Sahaba',
       arabic: 'حياة الصحابة رضي الله عنهم',
@@ -238,6 +249,22 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onPointerEnter={() => prefetchView('seerat_un_nabi')}
+          onTouchStart={() => prefetchView('seerat_un_nabi')}
+          onClick={() => handleSelectSub('seerat_un_nabi')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'seerat_un_nabi'
+              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>🌱</span>
+          <span>{NAV_TRANSLATIONS.seerat_un_nabi[selectedLanguage] || 'সিরাতুন নবী (সা.)'}</span>
         </button>
 
         <button
@@ -470,6 +497,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       )}
 
       <React.Suspense fallback={<SubViewFallback isDay={isDay} />}>
+        {/* Sub-view: Seerat-un-Nabi (PBUH) */}
+        {activeSub === 'seerat_un_nabi' && (
+          <SeeratUnNabiView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+            onBackToHub={() => setActiveSub('hub')}
+          />
+        )}
+
         {/* Sub-view: Hayatus Sahaba */}
         {activeSub === 'hayatus_sahaba' && (
           <HayatusSahabaView
