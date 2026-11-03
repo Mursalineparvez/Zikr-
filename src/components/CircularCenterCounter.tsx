@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { RotateCcw, BookmarkPlus, Sparkles } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
-import { ZIKIR_UI } from '../utils/appTranslations';
+import { ZIKIR_UI } from '../utils/zikirTranslations';
 
 interface CircularCenterCounterProps {
   totalCount: number;

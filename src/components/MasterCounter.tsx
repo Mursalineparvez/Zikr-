@@ -1,7 +1,7 @@
 import React from 'react';
 import { RotateCcw, CheckCircle2 } from 'lucide-react';
 import { ZikrLanguage } from '../types';
-import { ZIKIR_UI } from '../utils/appTranslations';
+import { ZIKIR_UI } from '../utils/zikirTranslations';
 
 interface MasterCounterProps {
   totalCount: number;

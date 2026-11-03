@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Sparkles, ChevronUp, Move, Maximize2, Minimize2 } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
-import { ZIKIR_UI } from '../utils/appTranslations';
+import { ZIKIR_UI } from '../utils/zikirTranslations';
 
 interface PortableFloatingCounterProps {
   masterTotal: number;

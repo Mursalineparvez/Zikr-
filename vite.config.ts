@@ -95,9 +95,18 @@ export default defineConfig(() => {
             ) {
               return 'data-sahaba';
             }
+            if (
+              id.includes('src/data/seeratData') ||
+              id.includes('src/data/seeratLocations')
+            ) {
+              return 'data-seerat';
+            }
           },
         },
       },
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'lucide-react', 'adhan', 'leaflet'],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

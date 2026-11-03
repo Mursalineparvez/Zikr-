@@ -63,7 +63,7 @@ import {
 import type { CloudZikrState } from './services/firebase';
 import { BookmarkCheck, Sparkles, WifiOff, Plus } from 'lucide-react';
 import { getDetectedDeviceInfo, getDeviceId } from './utils/deviceInfo';
-import { calculatePrayerTimes, getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
+import { getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
 import { useOnlineStatus } from './hooks/usePWAInstall';
 
 export default function App() {
@@ -436,6 +436,16 @@ export default function App() {
     zikrsRef.current = zikrs;
   }, [zikrs]);
 
+  const aamalHistorySumRef = useRef<number>(0);
+  useEffect(() => {
+    try {
+      if (userProfile?.isSignedIn) {
+        const allLogs = getAllAamalLogs();
+        aamalHistorySumRef.current = Object.values(allLogs).reduce((acc, log) => acc + (log.dhikrCount || 0), 0);
+      }
+    } catch {}
+  }, [userProfile?.isSignedIn]);
+
   // Master Grand Total Count (Grand cumulative total of all zikrs including history logs sum)
   const masterGrandTotal = useMemo(() => {
     const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
@@ -449,8 +459,7 @@ export default function App() {
     if (activeSum === 0 && sessionHistorySum === 0 && lifetimeTotalCount === 0) {
       return 0;
     }
-    const allLogs = getAllAamalLogs();
-    const aamalHistorySum = Object.values(allLogs).reduce((acc, log) => acc + (log.dhikrCount || 0), 0);
+    const aamalHistorySum = aamalHistorySumRef.current;
     return Math.max(lifetimeTotalCount, aamalHistorySum, sessionHistorySum, activeSum);
   }, [zikrs, lifetimeTotalCount, historySessions, userProfile?.isSignedIn]);
 

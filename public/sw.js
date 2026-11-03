@@ -222,8 +222,14 @@ self.addEventListener('fetch', (event) => {
 
   const requestUrl = new URL(event.request.url);
 
-  // A. Skip backend API routes from cache
-  if (requestUrl.pathname.startsWith('/api/')) {
+  // A. Skip backend API routes and Vite dev server internals from cache
+  if (
+    requestUrl.pathname.startsWith('/api/') ||
+    requestUrl.pathname.startsWith('/@') ||
+    requestUrl.pathname.startsWith('/node_modules/') ||
+    requestUrl.searchParams.has('t') ||
+    requestUrl.searchParams.has('v')
+  ) {
     return;
   }
 

@@ -4,7 +4,7 @@ import { CircularCenterCounter } from './CircularCenterCounter';
 import { ZikrCard } from './ZikrCard';
 import { PortableFloatingCounter } from './PortableFloatingCounter';
 import { Plus, FileText, CheckCircle2, Target, RotateCcw, RotateCw, Clock, Sparkles, ChevronDown, ChevronUp, Eye, ChevronLeft, ChevronRight, LayoutGrid, Smartphone } from 'lucide-react';
-import { ZIKIR_UI } from '../utils/appTranslations';
+import { ZIKIR_UI } from '../utils/zikirTranslations';
 import { PrayerSegmentDetails } from '../utils/prayerTimes';
 import { soundHaptics } from '../utils/audioHaptics';
 
