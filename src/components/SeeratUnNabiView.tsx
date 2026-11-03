@@ -963,9 +963,9 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                   {narrative.split('\n\n').map((paragraph, idx) => (
                     <p
                       key={idx}
-                      className={`${fontClass} text-slate-700 dark:text-emerald-100/90 leading-relaxed font-serif ${
+                      className={`${fontClass} ${isDay ? 'text-slate-900 font-normal' : 'text-emerald-100'} leading-relaxed font-serif ${
                         idx === 0
-                          ? 'first-letter:float-left first-letter:text-3xl sm:first-letter:text-4xl first-letter:font-black first-letter:mr-2.5 first-letter:mt-0.5 first-letter:text-emerald-600 dark:first-letter:text-emerald-400'
+                          ? `first-letter:float-left first-letter:text-3xl sm:first-letter:text-4xl first-letter:font-black first-letter:mr-2.5 first-letter:mt-0.5 ${isDay ? 'first-letter:text-emerald-800' : 'first-letter:text-emerald-400'}`
                           : ''
                       }`}
                     >
@@ -1003,7 +1003,9 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                       {activeItem.quranRef.arabic}
                     </p>
                   )}
-                  <p className="text-xs sm:text-sm leading-relaxed italic text-slate-700 dark:text-teal-100/90 bg-white/40 dark:bg-black/20 p-3 rounded-xl border border-teal-300/30">
+                  <p className={`text-xs sm:text-sm leading-relaxed italic p-3 rounded-xl border border-teal-300/30 ${
+                    isDay ? 'text-slate-900 bg-white/80 font-medium' : 'text-teal-100 bg-black/20'
+                  }`}>
                     "{isBn ? activeItem.quranRef.meaningBn : activeItem.quranRef.meaningEn}"
                   </p>
                 </div>
@@ -1027,10 +1029,12 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                       {activeItem.hadithRef.source}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-emerald-400/80 font-medium">
-                    {isBn ? 'বর্ণনাকারী:' : 'Narrator:'} <span className="font-bold text-slate-700 dark:text-emerald-200">{activeItem.hadithRef.narrator}</span>
+                  <p className={`text-xs font-medium ${isDay ? 'text-slate-700' : 'text-emerald-300'}`}>
+                    {isBn ? 'বর্ণনাকারী:' : 'Narrator:'} <span className={`font-bold ${isDay ? 'text-slate-900' : 'text-emerald-200'}`}>{activeItem.hadithRef.narrator}</span>
                   </p>
-                  <p className="text-xs sm:text-sm leading-relaxed italic font-serif bg-white/40 dark:bg-black/20 p-3 rounded-xl border border-emerald-300/30">
+                  <p className={`text-xs sm:text-sm leading-relaxed italic font-serif p-3 rounded-xl border border-emerald-300/30 ${
+                    isDay ? 'text-slate-900 bg-white/80 font-medium' : 'text-emerald-100 bg-black/20'
+                  }`}>
                     "{isBn ? activeItem.hadithRef.textBn : activeItem.hadithRef.textEn}"
                   </p>
                 </div>
@@ -1150,7 +1154,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                 <div
                   className={`rounded-2xl p-5 border relative overflow-hidden space-y-2 ${
                     isDay
-                      ? 'bg-amber-50/90 border-amber-200 text-amber-950'
+                      ? 'bg-amber-50/90 border-amber-300 text-slate-900'
                       : 'bg-[#1a1c12]/90 border-amber-700/50 text-amber-100'
                   }`}
                 >
@@ -1158,7 +1162,9 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                     <Heart className="w-4 h-4 text-rose-500" />
                     <span>{t('emotionalStoryTitle')}</span>
                   </div>
-                  <p className={`${fontClass} italic whitespace-pre-line font-serif leading-relaxed`}>
+                  <p className={`${fontClass} italic whitespace-pre-line font-serif leading-relaxed ${
+                    isDay ? 'text-slate-900 font-medium' : 'text-amber-100'
+                  }`}>
                     "{emotional}"
                   </p>
                 </div>
