@@ -101,6 +101,12 @@ export default defineConfig(() => {
             ) {
               return 'data-seerat';
             }
+            if (id.includes('src/data/quranTopicsData')) {
+              return 'data-quran-topics';
+            }
+            if (id.includes('src/data/islamicWarsData')) {
+              return 'data-wars';
+            }
           },
         },
       },

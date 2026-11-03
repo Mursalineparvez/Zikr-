@@ -28,6 +28,7 @@ import {
   UserCheck,
   Home,
   Baby,
+  RotateCcw,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import {
@@ -78,6 +79,12 @@ function getSahabaCategory(item: SahabaItem, lang: ZikrLanguage): string {
   return catMeta ? catMeta.titleEn : 'Honored Companion';
 }
 
+const SAHABA_STORAGE_KEYS = {
+  COMPLETED: 'zikr_sahaba_completed_ids',
+  BOOKMARKED: 'zikr_sahaba_bookmarks',
+  LAST_READ: 'zikr_sahaba_last_read_id',
+};
+
 export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
@@ -90,11 +97,96 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   const [selectedSahabaId, setSelectedSahabaId] = useState<string | null>(null);
   const [, startTransition] = React.useTransition();
 
+  const [completedSahaba, setCompletedSahaba] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(SAHABA_STORAGE_KEYS.COMPLETED);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [bookmarkedSahaba, setBookmarkedSahaba] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(SAHABA_STORAGE_KEYS.BOOKMARKED);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [lastReadSahabaId, setLastReadSahabaId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(SAHABA_STORAGE_KEYS.LAST_READ);
+    } catch {
+      return null;
+    }
+  });
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((prev) => (prev === msg ? null : prev));
+    }, 2500);
+  };
+
   const handleSelectSahaba = (id: string | null) => {
     if (soundEnabled) soundHaptics.playTap();
+    if (id) {
+      try {
+        localStorage.setItem(SAHABA_STORAGE_KEYS.LAST_READ, id);
+        setLastReadSahabaId(id);
+      } catch {}
+    }
     startTransition(() => {
       setSelectedSahabaId(id);
     });
+  };
+
+  const toggleCompleteSahaba = (id: string) => {
+    setCompletedSahaba((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem(SAHABA_STORAGE_KEYS.COMPLETED, JSON.stringify(next));
+      } catch {}
+      showToast(next.includes(id) ? (isBn ? 'পঠন সম্পন্ন হিসেবে চিহ্নিত করা হয়েছে' : 'Marked as Completed') : (isBn ? 'পঠন তালিকা থেকে সরানো হয়েছে' : 'Marked as Unread'));
+      if (soundEnabled) soundHaptics.playTap();
+      return next;
+    });
+  };
+
+  const toggleBookmarkSahaba = (id: string) => {
+    setBookmarkedSahaba((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem(SAHABA_STORAGE_KEYS.BOOKMARKED, JSON.stringify(next));
+      } catch {}
+      showToast(next.includes(id) ? (isBn ? 'বুকমার্কে যুক্ত করা হয়েছে' : 'Bookmarked') : (isBn ? 'বুকমার্ক সরানো হয়েছে' : 'Bookmark Removed'));
+      if (soundEnabled) soundHaptics.playTap();
+      return next;
+    });
+  };
+
+  const handleCopyHadith = (hp: { arabic?: string; textBn: string; textEn?: string; source: string }) => {
+    const parts: string[] = [];
+    if (hp.arabic) parts.push(hp.arabic);
+    parts.push(`"${isBn ? hp.textBn : (hp.textEn || hp.textBn)}"`);
+    parts.push(`— ${hp.source}`);
+    navigator.clipboard.writeText(parts.join('\n\n'));
+    showToast(isBn ? 'হাদীস শরীফ কপি করা হয়েছে' : 'Hadith Copied');
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleCopyQuran = (qr: { surah: string; verse: string; arabic?: string; translationBn: string; translationEn?: string }) => {
+    const parts: string[] = [];
+    if (qr.arabic) parts.push(qr.arabic);
+    parts.push(`"${isBn ? qr.translationBn : (qr.translationEn || qr.translationBn)}"`);
+    parts.push(`— ${qr.surah} (${isBn ? 'আয়াত:' : 'Verse:'} ${qr.verse}) [পবিত্র কুরআন]`);
+    navigator.clipboard.writeText(parts.join('\n\n'));
+    showToast(isBn ? 'কুরআনের আয়াত কপি করা হয়েছে' : 'Quranic Verse Copied');
+    if (soundEnabled) soundHaptics.playTap();
   };
 
   const [selectedFamilyBioModal, setSelectedFamilyBioModal] = useState<FamilyMemberBio | null>(null);
@@ -127,6 +219,15 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     if (currentIndex >= 0 && currentIndex < SAHABA_DATABASE.length - 1) return SAHABA_DATABASE[currentIndex + 1];
     return null;
   }, [currentIndex]);
+
+  const lastReadSahaba = useMemo(() => {
+    if (!lastReadSahabaId) return null;
+    return SAHABA_DATABASE.find((s) => s.id === lastReadSahabaId) || null;
+  }, [lastReadSahabaId]);
+
+  const totalSahaba = SAHABA_DATABASE.length;
+  const completedCount = completedSahaba.length;
+  const progressPercentage = Math.round((completedCount / totalSahaba) * 100);
 
   // Group database by category for Book-Style Table of Contents (TOC)
   const sahabaByCategory = useMemo(() => {
@@ -291,8 +392,19 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     const relatives = isBn ? familyData.keyRelativesBn : (familyData.keyRelativesEn || []);
     const familyOverview = isBn ? familyData.overviewBn : (familyData.overviewEn || 'A venerable household honored through lifelong dedication to Prophet Muhammad (PBUH) and early Islam.');
 
+    const isCompleted = completedSahaba.includes(activeSahaba.id);
+    const isBookmarked = bookmarkedSahaba.includes(activeSahaba.id);
+
     return (
-      <div className="w-full space-y-4 pb-28 animate-in fade-in duration-300">
+      <div className="w-full space-y-4 pb-28 animate-in fade-in duration-300 relative">
+        {/* Floating Toast Notification */}
+        {toastMessage && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-2xl bg-[#006747] text-white text-xs font-bold border border-emerald-400/50 shadow-2xl flex items-center gap-2 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
         {/* Sticky Top Header */}
         <div
           className={`sticky top-0 z-40 text-white shadow-xl rounded-2xl px-3 sm:px-4 py-3 flex items-center justify-between gap-3 border transition-colors ${
@@ -306,7 +418,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             className="p-2 -ml-1 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer flex items-center gap-1.5"
           >
             <ArrowLeft className="w-5 h-5 text-white stroke-[2.5]" />
-            <span className="text-xs font-bold hidden sm:inline">{isBn ? 'সূচিপত্র ও তালিকা' : 'Back to List'}</span>
+            <span className="text-xs font-bold hidden sm:inline">{isBn ? 'সূচিপত্র' : 'Back'}</span>
           </button>
 
           <div className="flex-1 text-center truncate px-1">
@@ -319,13 +431,42 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Mark as Completed Toggle */}
+            <button
+              onClick={() => toggleCompleteSahaba(activeSahaba.id)}
+              className={`p-2 rounded-xl text-xs font-bold flex items-center gap-1 border transition cursor-pointer active:scale-95 ${
+                isCompleted
+                  ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm'
+                  : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+              }`}
+              title={isCompleted ? (isBn ? 'পঠিত সম্পন্ন' : 'Completed') : (isBn ? 'পঠিত হিসেবে চিহ্নিত করুন' : 'Mark as Read')}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="hidden md:inline text-[11px]">{isCompleted ? (isBn ? 'পঠিত' : 'Read') : (isBn ? 'পঠিত চিহ্নিত' : 'Mark Read')}</span>
+            </button>
+
+            {/* Bookmark Toggle */}
+            <button
+              onClick={() => toggleBookmarkSahaba(activeSahaba.id)}
+              className={`p-2 rounded-xl text-xs font-bold flex items-center gap-1 border transition cursor-pointer active:scale-95 ${
+                isBookmarked
+                  ? 'bg-amber-500 text-white border-amber-400 shadow-sm'
+                  : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+              }`}
+              title={isBookmarked ? (isBn ? 'বুকমার্ক সরানো' : 'Remove Bookmark') : (isBn ? 'বুকমার্ক করুন' : 'Bookmark')}
+            >
+              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-white' : ''}`} />
+            </button>
+
             <button
               onClick={handleCopySahabaSummary}
               className="p-2 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer text-xs font-bold flex items-center gap-1"
+              title={isBn ? 'জীবনচরিত কপি করুন' : 'Copy Summary'}
             >
               {copiedQuote ? <CheckCircle2 className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4 text-white" />}
               <span className="hidden sm:inline text-[11px]">{copiedQuote ? (isBn ? 'কপি হয়েছে' : 'Copied') : (isBn ? 'কপি' : 'Copy')}</span>
             </button>
+
             <button
               onClick={() => {
                 setSelectedSahabaId(null);
@@ -656,7 +797,17 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                   <div key={qIdx} className={`p-4 rounded-xl border space-y-2 ${isDay ? 'bg-white border-emerald-200' : 'bg-[#061813] border-emerald-500/30'}`}>
                     <div className="flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
                       <span>{qr.surah} • {isBn ? 'আয়াত:' : 'Verse:'} {qr.verse}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">القرآن الكريم</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleCopyQuran(qr)}
+                          className="px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
+                          title="আয়াত ও অনুবাদ কপি করুন"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>কপি</span>
+                        </button>
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">القرآن الكريم</span>
+                      </div>
                     </div>
                     {qr.arabic && (
                       <p className="font-arabic text-right text-base sm:text-lg leading-loose font-bold text-emerald-800 dark:text-emerald-300">
@@ -692,8 +843,16 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                     <p className="text-xs leading-relaxed opacity-95 font-medium">
                       "{isBn ? hp.textBn : (hp.textEn || hp.textBn)}"
                     </p>
-                    <div className="text-[11px] font-bold text-teal-600 dark:text-teal-400 text-right pt-1 border-t border-teal-100 dark:border-teal-900/30">
-                      — {hp.source}
+                    <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400 pt-1 border-t border-teal-100 dark:border-teal-900/30">
+                      <span>— {hp.source}</span>
+                      <button
+                        onClick={() => handleCopyHadith(hp)}
+                        className="px-2 py-0.5 rounded-md bg-teal-500/15 hover:bg-teal-500/30 text-teal-700 dark:text-teal-300 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
+                        title="হাদীসটি কপি করুন"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>কপি</span>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -848,6 +1007,65 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   // =========================================================================
   return (
     <div className="space-y-5 pb-24 animate-in fade-in duration-200">
+      {/* Top Action Pills Bar Matching Seerat Screenshot */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-2">
+          {lastReadSahaba && (
+            <button
+              onClick={() => handleSelectSahaba(lastReadSahaba.id)}
+              className="px-3.5 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{isBn ? `সর্বশেষ পঠিত (${getSahabaName(lastReadSahaba, selectedLanguage)})` : `Resume (${getSahabaName(lastReadSahaba, selectedLanguage)})`}</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              if (soundEnabled) soundHaptics.playTap();
+              setShowBibliographyModal(true);
+            }}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+              isDay
+                ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200'
+                : 'bg-emerald-950/80 text-amber-300 border-emerald-700/60 hover:bg-emerald-900'
+            }`}
+            title="হায়াতুস সাহাবা প্রামাণ্য গ্রন্থমালা"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+            <span>{isBn ? 'সাহাবা গ্রন্থমালা' : 'Bibliography'}</span>
+          </button>
+
+          {onBackToHub && (
+            <button
+              onClick={onBackToHub}
+              className={`p-2.5 rounded-2xl text-xs font-bold border transition cursor-pointer active:scale-95 ${
+                isDay
+                  ? 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                  : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
+              }`}
+              title="Back to Hub"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Reading Progress Bar */}
+        <div className="w-full sm:w-56 space-y-1">
+          <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-emerald-300">
+            <span>{isBn ? 'পঠন অগ্রগতি' : 'Reading Progress'}</span>
+            <span className="font-mono">{completedCount}/{totalSahaba} ({progressPercentage}%)</span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-emerald-950/80 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Top Banner */}
       <div
         className={`p-5 sm:p-6 rounded-3xl border shadow-xl relative overflow-hidden ${
@@ -861,16 +1079,9 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             <span>حياة الصحابة رضي الله عنهم • Hayatus Sahaba</span>
           </div>
-          <button
-            onClick={() => {
-              setShowBibliographyModal(true);
-              if (soundEnabled) soundHaptics.playTap();
-            }}
-            className="px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-            <span>{isBn ? 'গ্রন্থ পরিচিতি ও উৎস' : 'Book Bibliography'}</span>
-          </button>
+          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30">
+            {totalSahaba} {isBn ? 'জন সাহাবি' : 'Companions'}
+          </span>
         </div>
         <h2 className="text-xl sm:text-2xl font-black tracking-tight">
           {isBn ? 'হায়াতুস সাহাবা (১০৭+ বিশিষ্ট সাহাবির জীবনী)' : 'Hayatus Sahaba (107+ Prominent Biographies)'}

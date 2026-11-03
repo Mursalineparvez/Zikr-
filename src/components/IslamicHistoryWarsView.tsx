@@ -26,6 +26,7 @@ import {
   ExternalLink,
   Crown,
   Layers,
+  RotateCcw,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { BattleLiveMap } from './BattleLiveMap';
@@ -52,6 +53,12 @@ interface IslamicHistoryWarsViewProps {
   onBackToHub?: () => void;
 }
 
+const WARS_STORAGE_KEYS = {
+  COMPLETED: 'zikr_wars_completed_ids',
+  BOOKMARKED: 'zikr_wars_bookmarks',
+  LAST_READ: 'zikr_wars_last_read_id',
+};
+
 export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
@@ -64,11 +71,97 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   const [selectedWarId, setSelectedWarId] = useState<string | null>(null);
   const [, startTransition] = React.useTransition();
 
+  const [completedWars, setCompletedWars] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(WARS_STORAGE_KEYS.COMPLETED);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [bookmarkedWars, setBookmarkedWars] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(WARS_STORAGE_KEYS.BOOKMARKED);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [lastReadWarId, setLastReadWarId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(WARS_STORAGE_KEYS.LAST_READ);
+    } catch {
+      return null;
+    }
+  });
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showWarBibliographyModal, setShowWarBibliographyModal] = useState<boolean>(false);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((prev) => (prev === msg ? null : prev));
+    }, 2500);
+  };
+
   const handleSelectWar = (id: string | null) => {
     if (soundEnabled) soundHaptics.playTap();
+    if (id) {
+      try {
+        localStorage.setItem(WARS_STORAGE_KEYS.LAST_READ, id);
+        setLastReadWarId(id);
+      } catch {}
+    }
     startTransition(() => {
       setSelectedWarId(id);
     });
+  };
+
+  const toggleCompleteWar = (id: string) => {
+    setCompletedWars((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem(WARS_STORAGE_KEYS.COMPLETED, JSON.stringify(next));
+      } catch {}
+      showToast(next.includes(id) ? (isBn ? 'যুদ্ধ পঠন সম্পন্ন চিহ্নিত হয়েছে' : 'Marked as Completed') : (isBn ? 'পঠন তালিকা থেকে সরানো হয়েছে' : 'Marked as Unread'));
+      if (soundEnabled) soundHaptics.playTap();
+      return next;
+    });
+  };
+
+  const toggleBookmarkWar = (id: string) => {
+    setBookmarkedWars((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem(WARS_STORAGE_KEYS.BOOKMARKED, JSON.stringify(next));
+      } catch {}
+      showToast(next.includes(id) ? (isBn ? 'বুকমার্কে যুক্ত করা হয়েছে' : 'Bookmarked') : (isBn ? 'বুকমার্ক সরানো হয়েছে' : 'Bookmark Removed'));
+      if (soundEnabled) soundHaptics.playTap();
+      return next;
+    });
+  };
+
+  const handleCopyHadithRef = (hr: HadithRef) => {
+    const parts: string[] = [];
+    if (hr.arabic) parts.push(hr.arabic);
+    parts.push(`"${isBn ? hr.textBn : (hr.textEn || hr.textBn)}"`);
+    parts.push(`— ${isBn ? hr.sourceBn : hr.sourceEn}`);
+    navigator.clipboard.writeText(parts.join('\n\n'));
+    showToast(isBn ? 'হাদীস শরীফ কপি করা হয়েছে' : 'Hadith Copied');
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleCopyQuranRef = (qr: QuranRef) => {
+    const parts: string[] = [];
+    if (qr.arabic) parts.push(qr.arabic);
+    parts.push(`"${isBn ? qr.translationBn : (qr.translationEn || qr.translationBn)}"`);
+    parts.push(`— ${isBn ? qr.surahNameBn : qr.surahNameEn} (আয়াত: ${qr.verseNo}) [পবিত্র কুরআন]`);
+    navigator.clipboard.writeText(parts.join('\n\n'));
+    showToast(isBn ? 'কুরআনের আয়াত কপি করা হয়েছে' : 'Quranic Verse Copied');
+    if (soundEnabled) soundHaptics.playTap();
   };
 
   const [activeEraFilter, setActiveEraFilter] = useState<WarItem['eraKey'] | 'all'>('all');
@@ -90,6 +183,30 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
     if (!active3DMapWarId) return null;
     return ISLAMIC_WARS_DATA.find((w) => w.id === active3DMapWarId) || null;
   }, [active3DMapWarId]);
+
+  const lastReadWar = useMemo(() => {
+    if (!lastReadWarId) return null;
+    return ISLAMIC_WARS_DATA.find((w) => w.id === lastReadWarId) || null;
+  }, [lastReadWarId]);
+
+  const currentIndex = useMemo(() => {
+    if (!selectedWarId) return -1;
+    return ISLAMIC_WARS_DATA.findIndex((w) => w.id === selectedWarId);
+  }, [selectedWarId]);
+
+  const prevWar = useMemo(() => {
+    if (currentIndex > 0) return ISLAMIC_WARS_DATA[currentIndex - 1];
+    return null;
+  }, [currentIndex]);
+
+  const nextWar = useMemo(() => {
+    if (currentIndex >= 0 && currentIndex < ISLAMIC_WARS_DATA.length - 1) return ISLAMIC_WARS_DATA[currentIndex + 1];
+    return null;
+  }, [currentIndex]);
+
+  const totalWars = ISLAMIC_WARS_DATA.length;
+  const completedCount = completedWars.length;
+  const progressPercentage = Math.round((completedCount / totalWars) * 100);
 
   // Group wars by era for Book-Style Table of Contents (TOC)
   const warsByEra = useMemo(() => {
@@ -204,6 +321,35 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Mark as Completed Toggle */}
+            <button
+              onClick={() => toggleCompleteWar(activeWar.id)}
+              className={`p-2 rounded-xl transition cursor-pointer text-xs font-bold flex items-center gap-1 active:scale-95 ${
+                completedWars.includes(activeWar.id)
+                  ? 'bg-emerald-500 text-white shadow-xs'
+                  : 'bg-white/10 hover:bg-white/20 text-white/90'
+              }`}
+              title={completedWars.includes(activeWar.id) ? (isBn ? 'পঠিত চিহ্নিত (ক্লিক করে বাতিল করুন)' : 'Marked as Read') : (isBn ? 'পঠিত চিহ্নিত করুন' : 'Mark as Read')}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="hidden md:inline text-[11px]">
+                {completedWars.includes(activeWar.id) ? (isBn ? 'পঠিত' : 'Read') : (isBn ? 'পড়িনি' : 'Unread')}
+              </span>
+            </button>
+
+            {/* Bookmark Toggle */}
+            <button
+              onClick={() => toggleBookmarkWar(activeWar.id)}
+              className={`p-2 rounded-xl transition cursor-pointer active:scale-95 ${
+                bookmarkedWars.includes(activeWar.id)
+                  ? 'bg-amber-400 text-slate-900 shadow-xs'
+                  : 'bg-white/10 hover:bg-white/20 text-white/90'
+              }`}
+              title={bookmarkedWars.includes(activeWar.id) ? (isBn ? 'বুকমার্ক সরানো' : 'Remove Bookmark') : (isBn ? 'বুকমার্ক করুন' : 'Bookmark')}
+            >
+              <Bookmark className={`w-4 h-4 ${bookmarkedWars.includes(activeWar.id) ? 'fill-current' : ''}`} />
+            </button>
+
             <button
               onClick={() => {
                 setActive3DMapWarId(activeWar.id);
@@ -233,6 +379,13 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Floating Toast Notification */}
+        {toastMessage && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/95 text-white border border-amber-500/40 text-xs font-bold shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top duration-200">
+            {toastMessage}
+          </div>
+        )}
 
         {/* Modal for 3D Battle Map */}
         {active3DMapWarId && mapWar && (
@@ -436,7 +589,17 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                   <div key={qIdx} className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white/90 border-emerald-200' : 'bg-[#061813] border-emerald-500/30'}`}>
                     <div className="flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
                       <span>{isBn ? qr.surahNameBn : qr.surahNameEn} : {qr.verseNo}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">القرآن الكريم</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleCopyQuranRef(qr)}
+                          className="px-2 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/30 text-[10px] text-emerald-700 dark:text-emerald-300 font-bold transition flex items-center gap-1 cursor-pointer active:scale-95"
+                          title={isBn ? 'আয়াত কপি করুন' : 'Copy Verse'}
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>{isBn ? 'কপি' : 'Copy'}</span>
+                        </button>
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">القرآن الكريم</span>
+                      </div>
                     </div>
                     <p className="font-arabic text-right text-base sm:text-lg leading-loose font-bold text-emerald-800 dark:text-emerald-300">
                       {qr.arabic}
@@ -460,8 +623,16 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               <div className="space-y-2.5">
                 {activeWar.hadithRefs.map((hr, hIdx) => (
                   <div key={hIdx} className={`p-3.5 rounded-xl border space-y-1.5 ${isDay ? 'bg-white/90 border-teal-200' : 'bg-[#05161a] border-teal-500/30'}`}>
-                    <div className="text-xs font-black text-teal-600 dark:text-teal-400">
-                      {isBn ? hr.sourceBn : hr.sourceEn}
+                    <div className="flex items-center justify-between text-xs font-black text-teal-600 dark:text-teal-400">
+                      <span>{isBn ? hr.sourceBn : hr.sourceEn}</span>
+                      <button
+                        onClick={() => handleCopyHadithRef(hr)}
+                        className="px-2 py-0.5 rounded bg-teal-500/15 hover:bg-teal-500/30 text-[10px] text-teal-700 dark:text-teal-300 font-bold transition flex items-center gap-1 cursor-pointer active:scale-95"
+                        title={isBn ? 'হাদিস কপি করুন' : 'Copy Hadith'}
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{isBn ? 'কপি' : 'Copy'}</span>
+                      </button>
                     </div>
                     {hr.arabic && (
                       <p className="font-arabic text-right text-sm leading-loose font-bold text-teal-800 dark:text-teal-300">
@@ -501,6 +672,48 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               <strong>{isBn ? 'ঐতিহাসিক তথ্যসূত্র:' : 'Historical References:'}</strong> {activeWar.references.join(' • ')}
             </div>
           )}
+
+          {/* Bottom Navigation for previous/next war & mark as read */}
+          <div className="flex items-center justify-between gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <button
+              disabled={!prevWar}
+              onClick={() => prevWar && handleSelectWar(prevWar.id)}
+              className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+                prevWar
+                  ? (isDay ? 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100' : 'bg-[#1e1308] border-amber-700 text-amber-200 hover:bg-[#2c1b0a]')
+                  : 'opacity-40 cursor-not-allowed border-transparent'
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <div className="text-left hidden sm:block">
+                <div className="text-[10px] text-slate-400 font-normal">{isBn ? 'পূর্ববর্তী যুদ্ধ' : 'Previous'}</div>
+                <div className="truncate max-w-[120px]">{prevWar ? (isBn ? prevWar.nameBn : prevWar.nameEn) : ''}</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleSelectWar(null)}
+              className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
+            >
+              {isBn ? 'বইয়ের মূল সূচিপত্র' : 'Table of Contents'}
+            </button>
+
+            <button
+              disabled={!nextWar}
+              onClick={() => nextWar && handleSelectWar(nextWar.id)}
+              className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+                nextWar
+                  ? (isDay ? 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100' : 'bg-[#1e1308] border-amber-700 text-amber-200 hover:bg-[#2c1b0a]')
+                  : 'opacity-40 cursor-not-allowed border-transparent'
+              }`}
+            >
+              <div className="text-right hidden sm:block">
+                <div className="text-[10px] text-slate-400 font-normal">{isBn ? 'পরবর্তী যুদ্ধ' : 'Next'}</div>
+                <div className="truncate max-w-[120px]">{nextWar ? (isBn ? nextWar.nameBn : nextWar.nameEn) : ''}</div>
+              </div>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -511,6 +724,53 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   // =========================================================================
   return (
     <div className="space-y-5 pb-24 animate-in fade-in duration-200">
+      {/* Top Action Pills Bar Matching Seerat & Hayatus Sahaba Screenshot */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-2">
+          {lastReadWar && (
+            <button
+              onClick={() => handleSelectWar(lastReadWar.id)}
+              className="px-3.5 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{isBn ? `সর্বশেষ পঠিত (${lastReadWar.nameBn})` : `Resume (${lastReadWar.nameEn})`}</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowWarBibliographyModal(true)}
+            className="px-3.5 py-2 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700/60 font-bold text-xs flex items-center gap-1.5 shadow-xs hover:bg-amber-200 dark:hover:bg-amber-900/60 active:scale-95 transition cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>{isBn ? 'যুদ্ধ ইতিহাস গ্রন্থমালা' : 'War Chronicles'}</span>
+          </button>
+        </div>
+
+        {onBackToHub && (
+          <button
+            onClick={onBackToHub}
+            className="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition shadow-xs cursor-pointer"
+            title={isBn ? 'ফিরে যান' : 'Back'}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Reading Progress Indicator Matching Seerat & Hayatus Sahaba */}
+      <div className="space-y-1.5 px-1">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
+          <span>{isBn ? 'পঠন অগ্রগতি' : 'Reading Progress'}</span>
+          <span className="font-mono text-[11px]">{completedCount}/{totalWars} ({progressPercentage}%)</span>
+        </div>
+        <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-300"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+      </div>
+
       {/* Top Banner */}
       <div
         className={`p-5 sm:p-6 rounded-3xl border shadow-xl ${
@@ -769,24 +1029,39 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             const warCause = isBn ? war.causeBn : war.causeEn;
             const warDate = isBn ? war.dateBn : war.dateEn;
             const warLocation = isBn ? war.locationBn : war.locationEn;
+            const isCompleted = completedWars.includes(war.id);
+            const isBookmarked = bookmarkedWars.includes(war.id);
 
             return (
               <div
                 key={war.id}
                 onClick={() => handleSelectWar(war.id)}
-                className={`p-4 rounded-3xl border shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`p-4 rounded-3xl border shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between gap-3 relative ${
                   isDay
                     ? 'bg-white border-slate-200 hover:border-amber-400 hover:shadow-xl'
                     : 'bg-[#140f07] border-amber-500/20 hover:border-amber-500/50 hover:shadow-black/70'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-black text-xs flex items-center justify-center shrink-0">
-                    #{war.orderNumber}
-                  </span>
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 truncate">
-                    {warEra}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-black text-xs flex items-center justify-center shrink-0">
+                      #{war.orderNumber}
+                    </span>
+                    {isCompleted && (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        <span>{isBn ? 'পঠিত' : 'Read'}</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {isBookmarked && (
+                      <Bookmark className="w-3.5 h-3.5 text-amber-500 fill-current" />
+                    )}
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 truncate">
+                      {warEra}
+                    </span>
+                  </div>
                 </div>
 
                 <div>
@@ -813,6 +1088,100 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
           })}
         </div>
       </div>
+
+      {/* Bibliography Modal for Islamic History Wars */}
+      {showWarBibliographyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            className={`w-full max-w-xl rounded-3xl border p-5 sm:p-7 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto ${
+              isDay ? 'bg-white border-amber-200 text-slate-900' : 'bg-[#181108] border-amber-500/30 text-white'
+            }`}
+          >
+            <button
+              onClick={() => {
+                setShowWarBibliographyModal(false);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-1 border-b pb-3 border-amber-500/20 pr-8">
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300">
+                المصادر والمراجع التاريخية • Classical War Chronicles
+              </span>
+              <h3 className="text-lg sm:text-xl font-black text-amber-700 dark:text-amber-400">
+                {isBn ? 'ইসলামের ইতিহাসের যুদ্ধসমূহ: প্রামাণ্য গ্রন্থমালা' : 'Chronicles of Islamic Battles: Bibliography'}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {isBn
+                  ? 'এই সংকলনে উল্লেখিত প্রতিটি যুদ্ধের তারিখ, পটভূমি, সেনাদল ও শহীদ সাহাবিগণের বিবরণ নিম্নোক্ত প্রামাণ্য শাস্ত্রীয় গ্রন্থাবলি থেকে সংকলিত:'
+                  : 'Historical dates, causal backgrounds, troop numbers, and martyr accounts referenced from primary chronicles:'}
+              </p>
+            </div>
+
+            <div className="space-y-3 text-xs sm:text-sm leading-relaxed">
+              <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-amber-50/60 border-amber-200' : 'bg-[#1f160a] border-amber-500/30'}`}>
+                <h4 className="font-extrabold text-amber-600 dark:text-amber-300 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-amber-500" />
+                  <span>{isBn ? '১. ইতিহাস ও সীরাতের মূল ক্লাসিক্যাল গ্রন্থাবলি' : '1. Classical Military & History Compilations'}</span>
+                </h4>
+                <ul className="space-y-2 text-xs">
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 font-bold">•</span>
+                    <span><strong>تاريخ الرسل والملوك (তারীখে তাবারী):</strong> ইমাম আবু জাফর আত-তাবারী (২২৪–৩১০ হি:) — প্রাচীনতম ও প্রামাণ্য ইতিহাস বিশ্বকোষ।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 font-bold">•</span>
+                    <span><strong>البداية والنহাية (আল-বিদায়া ওয়ান নিহায়া):</strong> হাফেজ ইবনে কাসীর (৭০১–৭৭৪ হি:) — বদর, উহুদ, খন্দক ও খিলাফতের বিজয়াভিযানের ধারাবাহিক ইতিহাস।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 font-bold">•</span>
+                    <span><strong>كتاب المغازي (কিতাবুল মাগাযী):</strong> ইমাম মুহাম্মদ ইবনে উমর আল-ওয়াকিদী (১৩০–২০৭ হি:) — রাসূলুল্লাহ (সা.)-এর পবিত্র সামরিক অভিযানের পুঙ্খানুপুঙ্খ দলিল।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 font-bold">•</span>
+                    <span><strong>سيرة ابن هشام (সীরাতে ইবনে হিশাম):</strong> আবু মুহাম্মদ আবদুল মালিক ইবনে হিশাম (মৃত্যু ২১৩ হি:) — আদি সীরাতের নির্ভরযোগ্য রূপ।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 font-bold">•</span>
+                    <span><strong>الكامل في التاريخ (আল-কামিল ফিত তারীখ):</strong> আল্লামা ইবনুল আসীর (৫৫৫–৬৩০ হি:) — ইসলামের সার্বিক ইতিহাস ও আন্দালুস/ক্রুসেড প্রতিরোধ।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-500 font-bold">•</span>
+                    <span><strong>زاد المعاد (যাদুল মা‘আদ):</strong> ইমাম ইবনুল কাইয়্যিম (৬৯১–৭৫১ হি:) — নববি যুদ্ধনীতি, ফিকহ ও সামরিক চুক্তিবিধান।</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#081f19] border-emerald-500/30'}`}>
+                <h4 className="font-extrabold text-emerald-600 dark:text-emerald-300 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-emerald-500" />
+                  <span>{isBn ? '২. সহিহ হাদিস ও তাফসির শাস্ত্র' : '2. Hadith & Tafsir Foundations'}</span>
+                </h4>
+                <p className="text-xs">
+                  {isBn
+                    ? 'সহিহ বুখারি (কিতাবুল মাগাযী ও কিতাবুল জিহাদ), সহিহ মুসলিম, জামে আত-তিরমিজি ও তাফসিরে ইবনে কাসীর থেকে যুদ্ধের প্রত্যক্ষ বর্ণনা ও কুরআনের আয়াতের শানে নুযুল গ্রহণ করা হয়েছে।'
+                    : 'Authentic narrations derived from Sahih al-Bukhari (Kitab al-Maghazi & Kitab al-Jihad), Sahih Muslim, Jami at-Tirmidhi, and Tafsir Ibn Kathir.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-amber-500/20 text-center">
+              <button
+                onClick={() => {
+                  setShowWarBibliographyModal(false);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className="px-6 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-black text-xs shadow-lg transition cursor-pointer"
+              >
+                {isBn ? 'বুঝেছি, পঠন শুরু করুন' : 'Got it, Start Reading'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
