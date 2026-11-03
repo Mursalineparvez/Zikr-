@@ -25,8 +25,10 @@ import {
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import {
   QURAN_TOPICS_DATABASE,
+  QURAN_TOPIC_CATEGORIES,
   QuranTopicItem,
   TopicAyah,
+  TopicSubSection,
 } from '../data/quranTopicsData';
 import { getSurahInsight } from '../utils/surahInsights';
 import {
@@ -151,6 +153,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
   // Topic-wise Verses State
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [selectedTopicCategory, setSelectedTopicCategory] = useState<string>('সকল বিষয় (All)');
   const [topicSearchQuery, setTopicSearchQuery] = useState<string>('');
 
   // Recitation Animation Type state (with persistence)
@@ -2670,346 +2673,317 @@ export const QuranView: React.FC<QuranViewProps> = ({
           {/* Topic-wise Verses Studio */}
           {activeTab === 'topics' ? (
             <div className="space-y-5 animate-in fade-in duration-200">
-              {/* Topic Banner Header */}
-              <div className={`p-5 sm:p-6 rounded-3xl border shadow-xl space-y-4 ${
-                isDay
-                  ? 'bg-gradient-to-r from-emerald-50 via-white to-emerald-50/50 border-emerald-200 text-slate-900'
-                  : 'bg-gradient-to-r from-[#071b22] via-[#0b272f] to-[#0d303a] border-teal-800/50 text-white'
-              }`}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-xl font-black shadow-inner">
-                      ✨
-                    </span>
-                    <div>
-                      <h3 className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-300">
-                        {selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক কুরআন সূচিপত্র (১৮টি বিষয়)' : 'Subject-wise Quran Index (18 Topics)'}
-                      </h3>
-                      <p className="text-xs opacity-80 mt-0.5">
-                        {selectedLanguage === 'bn'
-                          ? 'সালাত, জিকির, ইবাদত, জান্নাত, জাহান্নাম, হালাল-হারাম, সবর, তওবা ও দোয়াসহ সকল বিষয় আলাদা আলাদা কার্ডে সংকলিত'
-                          : 'Categorized Quranic verses on Prayer, Dhikr, Worship, Jannah, Jahannam, Halal, Haram & Duas'}
-                      </p>
-                    </div>
+              {/* If NO topic is selected: Show MessageBD Subject Grid */}
+              {!selectedTopicId ? (
+                <div className="space-y-4">
+                  {/* Topic Header: MessageBD Title & Search */}
+                  <div className="text-center space-y-2 pt-2">
+                    <h2 className="text-xl sm:text-2xl font-bold text-[#642b10] dark:text-amber-200 font-serif tracking-tight">
+                      {selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক আয়াত-হাদীস' : 'Subject-wise Ayah & Hadith'}
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-teal-400">
+                      {selectedLanguage === 'bn'
+                        ? `মোট ${QURAN_TOPICS_DATABASE.length}টি বিষয়ের অধীনে পবিত্র কুরআনের আয়াত ও সহীহ হাদিস`
+                        : `${QURAN_TOPICS_DATABASE.length} comprehensive topics with Quranic ayahs and hadiths`}
+                    </p>
                   </div>
-                  <span className="text-xs font-black px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    {QURAN_TOPICS_DATABASE.length} {selectedLanguage === 'bn' ? 'টি আলাদা বিভাগ' : 'Distinct Topics'}
-                  </span>
-                </div>
 
-                {/* Topic Search Input */}
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-                  <input
-                    type="text"
-                    value={topicSearchQuery}
-                    onChange={(e) => setTopicSearchQuery(e.target.value)}
-                    placeholder={selectedLanguage === 'bn' ? 'বিষয় বা শব্দ দিয়ে খুঁজুন (যেমন: সালাত, জিকির, ইবাদত, জান্নাত, তওবা...)' : 'Search topic or keyword (e.g. Salat, Dhikr, Worship, Jannah, Tawbah)...'}
-                    className={`w-full pl-11 pr-10 py-3 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
-                      isDay ? 'bg-white border-emerald-200 text-slate-900 focus:border-emerald-500' : 'bg-[#07181f] border-teal-800/60 text-white focus:border-emerald-500'
-                    }`}
-                  />
-                  {topicSearchQuery && (
-                    <button onClick={() => setTopicSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer">
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+                  {/* Centered Search Bar */}
+                  <div className="max-w-md mx-auto relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-700/60 dark:text-amber-400" />
+                    <input
+                      type="text"
+                      value={topicSearchQuery}
+                      onChange={(e) => setTopicSearchQuery(e.target.value)}
+                      placeholder="Search ..."
+                      className={`w-full pl-10 pr-9 py-2.5 rounded-xl border text-xs sm:text-sm font-medium transition focus:outline-none ${
+                        isDay
+                          ? 'bg-white border-slate-300 text-slate-900 focus:border-amber-600'
+                          : 'bg-[#07181f] border-teal-800 text-white focus:border-amber-500'
+                      }`}
+                    />
+                    {topicSearchQuery && (
+                      <button
+                        onClick={() => setTopicSearchQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
 
-                {/* 18-Topic Visual Grid Explorer (Shown when no search query or when all topics active) */}
-                {!topicSearchQuery && selectedTopicId === null && (
-                  <div className="space-y-2 pt-2 border-t border-emerald-500/20">
-                    <div className="flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400 px-1">
-                      <span>{selectedLanguage === 'bn' ? '📌 সকল বিষয়ের দ্রুত গ্রিড কার্ড (পছন্দের বিষয় নির্বাচন করুন):' : '📌 All Subject Categories (Tap to Explore):'}</span>
-                      <span className="text-[11px] opacity-75">{selectedLanguage === 'bn' ? 'মোট ১৮টি বিভাগ' : '18 Categories'}</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
-                      {QURAN_TOPICS_DATABASE.map((topic) => (
-                        <div
-                          key={topic.id}
+                  {/* Category Pills Strip */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none justify-start sm:justify-center">
+                    {QURAN_TOPIC_CATEGORIES.map((cat) => {
+                      const isActive = selectedTopicCategory === cat;
+                      return (
+                        <button
+                          key={cat}
                           onClick={() => {
-                            setSelectedTopicId(topic.id);
+                            setSelectedTopicCategory(cat);
                             if (soundEnabled) soundHaptics.playTap();
                           }}
-                          className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2 shadow-sm hover:scale-[1.03] active:scale-98 ${
-                            isDay
-                              ? 'bg-white border-slate-200 hover:border-emerald-400 hover:shadow-md'
-                              : 'bg-[#0a1f26] border-teal-900/60 hover:border-emerald-500 hover:shadow-emerald-950/40'
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+                            isActive
+                              ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
+                              : isDay
+                              ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                              : 'bg-[#081b22] border-teal-900/60 text-slate-300 hover:bg-[#0d2a35]'
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl p-1.5 rounded-xl bg-amber-500/15 shrink-0">{topic.icon}</span>
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-                              {topic.count} {selectedLanguage === 'bn' ? 'আয়াত' : 'Ayahs'}
-                            </span>
-                          </div>
-                          <div>
-                            <h4 className="font-extrabold text-xs text-slate-800 dark:text-slate-100 truncate">
-                              {selectedLanguage === 'bn' ? topic.nameBn : topic.nameEn}
-                            </h4>
-                            <p className="text-[10px] opacity-70 font-arabic dir-rtl text-right truncate text-amber-500">
-                              {topic.nameAr}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                          {cat}
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
 
-                {/* Filtered Active Topic Strip / Switcher Chips */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-1">
-                  <button
-                    onClick={() => {
-                      setSelectedTopicId(null);
-                      if (soundEnabled) soundHaptics.playTap();
-                    }}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
-                      selectedTopicId === null
-                        ? 'bg-amber-500 text-black border-amber-400 shadow-sm font-black'
-                        : isDay ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100' : 'bg-[#0a1b22] border-teal-900/60 text-slate-300 hover:bg-[#102933]'
-                    }`}
-                  >
-                    🌟 {selectedLanguage === 'bn' ? 'সকল বিষয় দেখুন' : 'Show All Topics'}
-                  </button>
-                  {QURAN_TOPICS_DATABASE.map((topic) => {
-                    const isSelected = selectedTopicId === topic.id;
+                  {/* 4-Column Subject Grid (MessageBD Style) */}
+                  {(() => {
+                    const query = topicSearchQuery.trim().toLowerCase();
+                    const filtered = QURAN_TOPICS_DATABASE.filter(t => {
+                      const matchCat = selectedTopicCategory === 'সকল বিষয় (All)' || t.categoryBn === selectedTopicCategory;
+                      if (!matchCat) return false;
+                      if (!query) return true;
+                      return (
+                        t.nameBn.toLowerCase().includes(query) ||
+                        t.nameEn.toLowerCase().includes(query) ||
+                        t.nameAr.includes(query) ||
+                        t.descriptionBn.toLowerCase().includes(query)
+                      );
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className={`p-8 rounded-2xl border text-center space-y-2 ${isDay ? 'bg-white border-slate-200' : 'bg-[#0b1f26] border-teal-900/50'}`}>
+                          <span className="text-3xl">🔍</span>
+                          <h4 className="font-extrabold text-sm">{selectedLanguage === 'bn' ? 'কোনো বিষয় খুঁজে পাওয়া যায়নি' : 'No topic found'}</h4>
+                          <p className="text-xs opacity-75">{selectedLanguage === 'bn' ? 'দয়া করে অন্য শব্দ দিয়ে অনুসন্ধান করুন।' : 'Please search with another keyword.'}</p>
+                        </div>
+                      );
+                    }
+
                     return (
-                      <button
-                        key={topic.id}
-                        onClick={() => {
-                          setSelectedTopicId(topic.id);
-                          if (soundEnabled) soundHaptics.playTap();
-                        }}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border flex items-center gap-1.5 ${
-                          isSelected
-                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm font-black'
-                            : isDay ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100' : 'bg-[#0a1b22] border-teal-900/60 text-slate-300 hover:bg-[#102933]'
-                        }`}
-                      >
-                        <span>{topic.icon}</span>
-                        <span>{selectedLanguage === 'bn' ? topic.nameBn : topic.nameEn}</span>
-                        <span className="text-[10px] opacity-75 px-1.5 py-0.2 rounded-full bg-black/20">
-                          {topic.count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Topic Content Body */}
-              <div className="space-y-4">
-                {(() => {
-                  const query = topicSearchQuery.trim().toLowerCase();
-
-                  let filteredTopics = QURAN_TOPICS_DATABASE.filter(t => {
-                    if (selectedTopicId && t.id !== selectedTopicId) return false;
-                    if (!query) return true;
-                    const matchName = t.nameBn.toLowerCase().includes(query) || t.nameEn.toLowerCase().includes(query) || t.nameAr.includes(query);
-                    const matchDesc = t.descriptionBn.toLowerCase().includes(query) || t.descriptionEn.toLowerCase().includes(query);
-                    const matchAyahs = t.ayahs.some(a =>
-                      a.surahNameBn.toLowerCase().includes(query) ||
-                      a.translationBn.toLowerCase().includes(query) ||
-                      a.arabic.includes(query) ||
-                      a.themeNoteBn.toLowerCase().includes(query)
-                    );
-                    return matchName || matchDesc || matchAyahs;
-                  });
-
-                  if (filteredTopics.length === 0) {
-                    return (
-                      <div className={`p-8 rounded-3xl border text-center space-y-2 ${isDay ? 'bg-white border-slate-200' : 'bg-[#0b1f26] border-teal-900/50'}`}>
-                        <span className="text-3xl">🔍</span>
-                        <h4 className="font-extrabold text-sm">{selectedLanguage === 'bn' ? 'কোনো বিষয় বা আয়াত খুঁজে পাওয়া যায়নি' : 'No topics or verses found'}</h4>
-                        <p className="text-xs opacity-75">{selectedLanguage === 'bn' ? 'দয়া করে অন্য শব্দ বা বিষয় লিখে আবার চেষ্টা করুন।' : 'Please try searching with another keyword.'}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
+                        {filtered.map(topic => (
+                          <button
+                            key={topic.id}
+                            onClick={() => {
+                              setSelectedTopicId(topic.id);
+                              window.scrollTo({ top: 0, behavior: 'instant' });
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className={`py-3 px-2.5 rounded-xl border text-center transition cursor-pointer flex items-center justify-center min-h-[50px] shadow-xs hover:border-[#a0522d] hover:shadow-sm active:scale-[0.98] ${
+                              isDay
+                                ? 'bg-white border-slate-200/90 text-[#6d3017] hover:bg-amber-50/30'
+                                : 'bg-[#081b22] border-teal-900/60 text-amber-200 hover:bg-[#0c2630]'
+                            }`}
+                          >
+                            <span className="font-bold text-xs sm:text-sm leading-snug line-clamp-2">
+                              {topic.nameBn}
+                            </span>
+                          </button>
+                        ))}
                       </div>
                     );
-                  }
+                  })()}
+                </div>
+              ) : (
+                /* Detail View of Selected Topic (Exact layout from user screenshot image_2da601e9.png) */
+                (() => {
+                  const currentTopic = QURAN_TOPICS_DATABASE.find(t => t.id === selectedTopicId);
+                  if (!currentTopic) return null;
 
-                  return filteredTopics.map(topic => {
-                    const topicAyahs = query
-                      ? topic.ayahs.filter(a =>
-                          a.surahNameBn.toLowerCase().includes(query) ||
-                          a.translationBn.toLowerCase().includes(query) ||
-                          a.arabic.includes(query) ||
-                          a.themeNoteBn.toLowerCase().includes(query)
-                        )
-                      : topic.ayahs;
+                  const topicIndex = QURAN_TOPICS_DATABASE.findIndex(t => t.id === selectedTopicId);
+                  const sections: TopicSubSection[] = (currentTopic.sections && currentTopic.sections.length > 0)
+                    ? currentTopic.sections
+                    : [
+                        {
+                          id: `${currentTopic.id}_sec1`,
+                          subHeadingBn: `${currentTopic.nameBn} সংক্রান্ত মূল বিধান:`,
+                          ayahs: currentTopic.ayahs
+                        }
+                      ];
 
-                    if (topicAyahs.length === 0) return null;
+                  return (
+                    <div className="space-y-4 max-w-3xl mx-auto">
+                      {/* Back button & Breadcrumb */}
+                      <div className="flex items-center justify-between pb-1">
+                        <button
+                          onClick={() => {
+                            setSelectedTopicId(null);
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 hover:underline cursor-pointer py-1"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          <span>{selectedLanguage === 'bn' ? 'সকল বিষয় (তালিকা)' : 'All Topics'}</span>
+                        </button>
+                        <span className="text-[11px] font-mono opacity-60">
+                          {topicIndex + 1} / {QURAN_TOPICS_DATABASE.length}
+                        </span>
+                      </div>
 
-                    return (
-                      <div key={topic.id} className={`p-4 sm:p-5 rounded-3xl border shadow-lg space-y-4 ${
-                        isDay ? 'bg-white border-amber-200/80 text-slate-900' : 'bg-[#091b22] border-teal-900/60 text-white'
-                      }`}>
-                        {/* Topic Header Box */}
-                        <div className="flex items-center justify-between border-b pb-3 border-amber-500/20">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-xl shrink-0">
-                              {topic.icon}
-                            </span>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-black text-sm sm:text-base text-amber-600 dark:text-amber-300">
-                                  {selectedLanguage === 'bn' ? topic.nameBn : topic.nameEn}
-                                </h3>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
-                                  {selectedLanguage === 'bn' ? topic.badgeBn : topic.badgeEn}
-                                </span>
-                              </div>
-                              <p className="text-xs opacity-75 font-arabic dir-rtl text-right text-amber-500/90 font-bold">
-                                {topic.nameAr}
-                              </p>
+                      {/* Main Title Header (Centered, bold serif) */}
+                      <h2 className="text-xl sm:text-2xl font-bold text-center text-slate-900 dark:text-slate-100 my-2">
+                        {currentTopic.nameBn}
+                      </h2>
+
+                      {/* Grouped Sub-Section Cards */}
+                      <div className="space-y-4">
+                        {sections.map(sec => (
+                          <div
+                            key={sec.id}
+                            className={`rounded-2xl border p-4 sm:p-5 shadow-xs space-y-4 ${
+                              isDay ? 'bg-white border-slate-200/90' : 'bg-[#071920] border-teal-900/60'
+                            }`}
+                          >
+                            {/* Subheading in bold with colon */}
+                            <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">
+                              {sec.subHeadingBn}
+                            </h3>
+
+                            {/* Ayahs inside this section */}
+                            <div className="space-y-5">
+                              {sec.ayahs.map(ayah => {
+                                const isBookmarked = isAyahBookmarked(ayah.surahNumber, ayah.ayahNumber);
+                                const synthAyah: QuranAyah = {
+                                  number: ayah.ayahNumber,
+                                  globalNumber: ayah.globalNumber || 1,
+                                  arabic: ayah.arabic,
+                                  translation: ayah.translationBn,
+                                  transliteration: ayah.transliterationBn || '',
+                                  juz: 1,
+                                  page: 1,
+                                  sajda: false,
+                                  audioUrl: `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber || 1}.mp3`,
+                                };
+                                const isPlayingThisAyah = isPlaying && currentPlayingAyahNum === ayah.ayahNumber && surahDetail?.number === ayah.surahNumber;
+
+                                return (
+                                  <div
+                                    key={ayah.id}
+                                    className="space-y-2.5 pt-3.5 first:pt-0 border-t first:border-t-0 border-slate-100 dark:border-teal-900/30"
+                                  >
+                                    {/* Arabic Verse (Clean Uthmani right-aligned font) */}
+                                    <p className="font-arabic text-right text-lg sm:text-2xl leading-loose font-bold text-slate-900 dark:text-emerald-100 dir-rtl select-text">
+                                      {ayah.arabic}
+                                    </p>
+
+                                    {/* Bengali Translation (Directly beneath Arabic) */}
+                                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
+                                      {ayah.translationBn}
+                                    </p>
+
+                                    {/* Clickable blue link & quick audio/bookmark buttons */}
+                                    <div className="flex items-center justify-between gap-2 pt-1">
+                                      <button
+                                        onClick={() => {
+                                          setSelectedSurahNumber(ayah.surahNumber);
+                                          setActiveTab('all');
+                                          loadSurah(ayah.surahNumber, ayah.ayahNumber);
+                                          if (soundEnabled) soundHaptics.playTap();
+                                        }}
+                                        className="text-blue-500 hover:text-blue-600 dark:text-sky-400 dark:hover:text-sky-300 underline text-xs font-semibold cursor-pointer inline-flex items-center gap-1 transition"
+                                        title={`পবিত্র কুরআনে ${ayah.surahNameBn} (আয়াত : ${ayah.ayahNumber}) পড়ুন`}
+                                      >
+                                        {ayah.surahNameBn} (আয়াত : {ayah.ayahNumber})
+                                      </button>
+
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => playAyahAudio(synthAyah)}
+                                          className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
+                                            isPlayingThisAyah
+                                              ? 'bg-emerald-600 text-white'
+                                              : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-teal-950/40'
+                                          }`}
+                                          title={isPlayingThisAyah ? 'থামান' : 'তিলাওয়াত শুনুন'}
+                                        >
+                                          {isPlayingThisAyah ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                                        </button>
+                                        <button
+                                          onClick={() => toggleBookmark(ayah.surahNumber, ayah.ayahNumber, ayah.arabic, ayah.translationBn)}
+                                          className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
+                                            isBookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40'
+                                          }`}
+                                          title={isBookmarked ? 'বুকমার্ক সরানো' : 'বুকমার্ক করুন'}
+                                        >
+                                          <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400' : ''}`} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
-                          <span className="text-xs font-black px-2.5 py-1 rounded-xl bg-amber-500/15 text-amber-400 shrink-0">
-                            {topicAyahs.length} {selectedLanguage === 'bn' ? 'টি আয়াত' : 'Ayahs'}
-                          </span>
+                        ))}
+                      </div>
+
+                      {/* Related Sahih Hadith (if available) */}
+                      {currentTopic.hadiths && currentTopic.hadiths.length > 0 && (
+                        <div className={`p-4 rounded-2xl border space-y-2 ${
+                          isDay ? 'bg-amber-50/60 border-amber-200 text-slate-900' : 'bg-[#071b22] border-amber-500/20 text-white'
+                        }`}>
+                          <div className="flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300">
+                            <span>📜 সম্পর্কিত সহীহ হাদীস</span>
+                            <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+                              {currentTopic.hadiths[0].referenceBn}
+                            </span>
+                          </div>
+                          <p className="text-xs opacity-75 font-semibold">
+                            {currentTopic.hadiths[0].narratorBn}
+                          </p>
+                          <p className="text-xs sm:text-sm leading-relaxed italic opacity-95">
+                            "{currentTopic.hadiths[0].translationBn}"
+                          </p>
                         </div>
+                      )}
 
-                        <p className="text-xs opacity-85 leading-relaxed italic">
-                          "{selectedLanguage === 'bn' ? topic.descriptionBn : topic.descriptionEn}"
-                        </p>
+                      {/* Bottom Navigation Buttons (matching screenshot) */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 pb-6">
+                        {topicIndex > 0 ? (
+                          <button
+                            onClick={() => {
+                              setSelectedTopicId(QURAN_TOPICS_DATABASE[topicIndex - 1].id);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className="px-4 py-2 rounded-xl border border-slate-300 dark:border-teal-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-semibold hover:bg-slate-100 dark:hover:bg-teal-900/40 transition cursor-pointer"
+                          >
+                            ← পূর্ববর্তী বিষয়
+                          </button>
+                        ) : <div />}
 
-                        {/* Ayahs Cards List inside Topic */}
-                        <div className="space-y-3.5">
-                          {topicAyahs.map(aItem => {
-                            const synthAyah: QuranAyah = {
-                              number: aItem.ayahNumber,
-                              globalNumber: aItem.globalNumber,
-                              arabic: aItem.arabic,
-                              translation: aItem.translationBn,
-                              transliteration: aItem.transliterationBn,
-                              juz: 1,
-                              page: 1,
-                              sajda: false,
-                              audioUrl: `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${aItem.globalNumber}.mp3`,
-                            };
+                        <div className="flex items-center gap-2 ml-auto">
+                          <button
+                            onClick={() => {
+                              setSelectedTopicId(null);
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className="px-4 py-2 rounded-xl border border-slate-300 dark:border-teal-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-semibold hover:bg-slate-100 dark:hover:bg-teal-900/40 transition cursor-pointer"
+                          >
+                            সকল বিষয়
+                          </button>
 
-                            const isBookmarked = isAyahBookmarked(aItem.surahNumber, aItem.ayahNumber);
-                            const isPlayingThisAyah = isPlaying && currentPlayingAyahNum === aItem.ayahNumber && surahDetail?.number === aItem.surahNumber;
-
-                            return (
-                              <div
-                                key={aItem.id}
-                                className={`p-4 rounded-2xl border space-y-3 transition shadow-sm ${
-                                  isDay ? 'bg-slate-50/80 border-slate-200 hover:border-emerald-300' : 'bg-[#06161d] border-teal-900/50 hover:border-teal-700/60'
-                                }`}
-                              >
-                                {/* Top Ayah Reference Badge & Context Note */}
-                                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2 border-slate-200 dark:border-teal-900/30">
-                                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                                    <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
-                                    <span>
-                                      {selectedLanguage === 'bn'
-                                        ? `সূরা ${aItem.surahNameBn} (${aItem.surahNumber}) : আয়াত ${aItem.ayahNumber}`
-                                        : `Surah ${aItem.surahNameEn} (${aItem.surahNumber}) : Ayah ${aItem.ayahNumber}`}
-                                    </span>
-                                  </span>
-
-                                  {aItem.themeNoteBn && (
-                                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                                      💡 {selectedLanguage === 'bn' ? aItem.themeNoteBn : aItem.themeNoteEn}
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Arabic Text */}
-                                <p className="font-arabic text-right text-lg sm:text-2xl leading-loose font-bold text-emerald-900 dark:text-emerald-200 dir-rtl">
-                                  {aItem.arabic}
-                                </p>
-
-                                {/* Translation */}
-                                <p className="text-xs sm:text-sm leading-relaxed font-medium opacity-95">
-                                  "{selectedLanguage === 'bn' ? aItem.translationBn : aItem.translationEn}"
-                                </p>
-
-                                {/* Transliteration */}
-                                {aItem.transliterationBn && (
-                                  <p className="text-[11px] opacity-75 font-mono italic">
-                                    উচ্চারণ: {aItem.transliterationBn}
-                                  </p>
-                                )}
-
-                                {/* Action Bar */}
-                                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-teal-900/30">
-                                  <div className="flex items-center gap-1.5">
-                                    {/* Play Audio Button */}
-                                    <button
-                                      onClick={() => playAyahAudio(synthAyah)}
-                                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                                        isPlayingThisAyah
-                                          ? 'bg-emerald-600 text-white shadow-md'
-                                          : isDay ? 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200' : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                                      }`}
-                                    >
-                                      {isPlayingThisAyah ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                                      <span>{isPlayingThisAyah ? (selectedLanguage === 'bn' ? 'থামান' : 'Pause') : (selectedLanguage === 'bn' ? 'শুনুন' : 'Listen')}</span>
-                                    </button>
-
-                                    {/* Open Full Surah at Ayah */}
-                                    <button
-                                      onClick={() => loadSurah(aItem.surahNumber, aItem.ayahNumber)}
-                                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                                        isDay ? 'bg-blue-50 text-blue-900 hover:bg-blue-100 border border-blue-200' : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 border border-blue-500/30'
-                                      }`}
-                                      title={selectedLanguage === 'bn' ? 'সম্পূর্ণ সূরা ও সকল আয়াত দেখুন' : 'Open in Full Surah'}
-                                    >
-                                      <Book className="w-3.5 h-3.5 text-blue-400" />
-                                      <span>{selectedLanguage === 'bn' ? 'সূরা খুলুন' : 'Open Surah'}</span>
-                                    </button>
-
-                                    {/* Open Tafsir */}
-                                    <button
-                                      onClick={() => handleOpenTafsir(synthAyah)}
-                                      className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
-                                        isDay ? 'bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200' : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30'
-                                      }`}
-                                    >
-                                      <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                                      <span>{selectedLanguage === 'bn' ? 'তাফসীর' : 'Tafsir'}</span>
-                                    </button>
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5">
-                                    {/* Card Poster Generator */}
-                                    <button
-                                      onClick={() => {
-                                        setCardModalAyah(synthAyah);
-                                        if (soundEnabled) soundHaptics.playTap();
-                                      }}
-                                      className="p-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 border border-purple-500/30 transition cursor-pointer text-xs font-bold flex items-center gap-1"
-                                      title={selectedLanguage === 'bn' ? 'আয়াত পোস্টার কার্ড তৈরি ও এইচডি ডাউনলোড' : 'Generate Poster Card'}
-                                    >
-                                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                                      <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'কার্ড' : 'Card'}</span>
-                                    </button>
-
-                                    {/* Bookmark */}
-                                    <button
-                                      onClick={() => toggleBookmark(aItem.surahNumber, aItem.ayahNumber, aItem.arabic, aItem.translationBn)}
-                                      className={`p-2 rounded-xl border transition cursor-pointer ${
-                                        isBookmarked
-                                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                                          : isDay ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-slate-800/80 text-slate-300 border-slate-700'
-                                      }`}
-                                      title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Ayah'}
-                                    >
-                                      <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400' : ''}`} />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {topicIndex < QURAN_TOPICS_DATABASE.length - 1 && (
+                            <button
+                              onClick={() => {
+                                setSelectedTopicId(QURAN_TOPICS_DATABASE[topicIndex + 1].id);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                if (soundEnabled) soundHaptics.playTap();
+                              }}
+                              className="px-5 py-2 rounded-xl border border-[#c48c69] text-[#7d3b1b] dark:text-amber-200 hover:bg-amber-500/10 transition font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
+                            >
+                              পরের আয়াত / বিষয় →
+                            </button>
+                          )}
                         </div>
                       </div>
-                    );
-                  });
-                })()}
-              </div>
+                    </div>
+                  );
+                })()
+              )}
             </div>
           ) : activeTab === 'bookmarks' ? (
             <div className="space-y-3">
