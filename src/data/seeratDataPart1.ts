@@ -56,6 +56,36 @@ His noble grandfather Abdul Muttalib carried the newborn baby inside the Sacred 
       'Allah chose His final Messenger to experience orphanhood from infancy, instilling boundless empathy for the vulnerable.',
       'True divine blessing transforms hardship into overflowing contentment.',
     ],
+    classicalSources: [
+      {
+        bookBn: 'আর-রাহীকুল মাখতূম (صفوة الرحيق المختوم)',
+        bookEn: 'Ar-Raheeq Al-Makhtum (The Sealed Nectar)',
+        authorBn: 'আল্লামা সফিউর রহমান মুবারকপুরী (র.)',
+        volumePage: 'পৃষ্ঠা ৪১ - ৪৫ (শুভ জন্ম ও ধাত্রী মা হালিমা)',
+        referenceDetailBn: 'সহিহ সনদে বর্ণিত বনু সা\'দ প্রান্তরে বরকতের ঘটনা।',
+      },
+      {
+        bookBn: 'সীরাতে ইবনে হিশাম (سيرة ابن هشام)',
+        bookEn: 'Seerat Ibn Hisham',
+        authorBn: 'আবদুল মালিক ইবনে হিশাম (র.)',
+        volumePage: 'খণ্ড ১, পৃষ্ঠা ১৫৫-১৬৩',
+        referenceDetailBn: 'দাদা আবদুল মুত্তালিব কর্তৃক নামকরণ ও কাবা তাওয়াফ।',
+      },
+      {
+        bookBn: 'সহীহ আল-বুখারী (صحيح البخاري)',
+        bookEn: 'Sahih al-Bukhari',
+        authorBn: 'ইমাম মুহাম্মদ ইবনে ইসমাইল আল-বুখারী (র.)',
+        volumePage: 'হাদিস নং ৩৮৮৭ (কিতাবুম মানাকিব)',
+      },
+    ],
+    keySahabaInvolved: [
+      { nameBn: 'আমিনা বিনতে ওয়াহাব (মা)', nameEn: 'Aminah bint Wahb (Mother)', roleBn: 'রত্নগর্ভা প্রথমা জননী', roleEn: 'Noble Mother' },
+      { nameBn: 'হালিমা আস-সাদিয়া (ধাত্রী মা)', nameEn: 'Halima As-Sa\'diyah', roleBn: 'স্নেহময়ী দুধমা', roleEn: 'Foster Mother' },
+      { nameBn: 'আবদুল মুত্তালিব (দাদা)', nameEn: 'Abdul Muttalib', roleBn: 'অভিভাবক ও প্রপিতামহ', roleEn: 'Grandfather & Leader' },
+      { nameBn: 'সুয়াইবা (রা.)', nameEn: 'Thuwaybah (R.A.)', roleBn: 'প্রথম দুগ্ধদানকারী ধাত্রী', roleEn: 'First Wet-nurse' },
+    ],
+    characterTraitsBn: ['সহজাত পবিত্রতা', 'বরকতপূর্ণ শুভাগমন', 'অনুপম গাম্ভীর্য ও সৌন্দর্য'],
+    characterTraitsEn: ['Innate Purity', 'Miraculous Blessing', 'Noble Grace'],
   },
   {
     age: 2,

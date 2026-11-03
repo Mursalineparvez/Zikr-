@@ -24,6 +24,22 @@ export interface SeeratPhaseMeta {
   count: number;
 }
 
+export interface ClassicalSourceRef {
+  bookBn: string;
+  bookEn: string;
+  bookAr?: string;
+  authorBn: string;
+  volumePage?: string;
+  referenceDetailBn?: string;
+}
+
+export interface KeySahabiInvolved {
+  nameBn: string;
+  nameEn: string;
+  roleBn: string;
+  roleEn: string;
+}
+
 export interface SeeratAgeItem {
   age: number; // 1 to 63
   yearCE: number; // 571 to 632
@@ -54,7 +70,12 @@ export interface SeeratAgeItem {
     narrator: string;
     textBn: string;
     textEn: string;
+    hadithNo?: string;
   };
+  classicalSources?: ClassicalSourceRef[];
+  keySahabaInvolved?: KeySahabiInvolved[];
+  characterTraitsBn?: string[];
+  characterTraitsEn?: string[];
   lessonsBn: string[];
   lessonsEn: string[];
 }
@@ -661,6 +682,62 @@ export const SEERAT_UI: Record<string, Record<string, string>> = {
     fa: 'مشاهده روی نقشه',
     de: 'Auf Karte ansehen',
     sw: 'Tazama kwenye Ramani',
+  },
+  classicalRefTitle: {
+    bn: 'প্রামাণ্য সিরাত গ্রন্থ ও মূল রেফারেন্স',
+    en: 'Authentic Classical Seerah Sources & Citations',
+    ar: 'المصادر المعتمدة والمراجع التاريخية للسيرة',
+    ur: 'مستند سیرت کی کتب اور بنیادی حوالہ جات',
+    hi: 'प्रामाणिक सीरत पुस्तकें व मूल संदर्भ',
+  },
+  keySahabaTitle: {
+    bn: 'সংশ্লিষ্ট প্রখ্যাত সাহাবিগণ (রা.)',
+    en: 'Key Noble Companions (R.A.) Involved',
+    ar: 'أبرز الصحابة الكرام المذكورين في هذا العام',
+    ur: 'اس واقعے سے متعلق جلیل القدر صحابہ کرام (رض)',
+    hi: 'संबंधित महान सहाबी (रजि.)',
+  },
+  characterTraitsTitle: {
+    bn: 'নবীজি (সা.)-এর অনুপম চারিত্রিক সুবাস (আখলাকে হাসানা)',
+    en: 'Prophetic Character & Moral Attributes',
+    ar: 'مكارم الأخلاق والشمائل النبوية المباركة',
+    ur: 'رسول اکرم ﷺ کے محاسنِ اخلاق اور عالی شان صفات',
+    hi: 'नबी (स.) के अनुकरणीय गुण व उत्तम चरित्र',
+  },
+  shareChapter: {
+    bn: 'অধ্যায় শেয়ার করুন',
+    en: 'Share Chapter',
+    ar: 'مشاركة الفصل',
+    ur: 'شیئر کریں',
+    hi: 'शेयर करें',
+  },
+  tabBiography: {
+    bn: 'সীরাত পরিক্রমা',
+    en: 'Full Chronicle',
+    ar: 'سيرة السيرة',
+    ur: 'تفصیلی سیرت',
+    hi: 'सीरत विवरण',
+  },
+  tabReferences: {
+    bn: 'ঐশী ও প্রামাণ্য রেফারেন্স',
+    en: 'Divine & Book References',
+    ar: 'الشواهد والمراجع',
+    ur: 'قرآنی و حدیثی سند',
+    hi: 'संदर्भ व प्रमाण',
+  },
+  tabCompanions: {
+    bn: 'সাহাবি ও চারিত্রিক গুণাবলী',
+    en: 'Companions & Virtues',
+    ar: 'الصحابة والفضائل',
+    ur: 'صحابہ کرام اور اخلاق',
+    hi: 'सहाबा व चरित्र',
+  },
+  quickAgeJump: {
+    bn: 'দ্রুত বয়স নেভিগেশন',
+    en: 'Quick Age Jump',
+    ar: 'التنقل السريع للأعمار',
+    ur: 'تیز تر عمر نیویگیشن',
+    hi: 'त्वरित आयु नेविगेशन',
   },
 };
 
