@@ -272,8 +272,156 @@ export const QuranView: React.FC<QuranViewProps> = ({
     }
   }, [activeTafsirAyah?.number, showTafsirModal]);
 
-  // UI Interactive States
   const [copiedAyah, setCopiedAyah] = useState<number | null>(null);
+
+  // Topic Interactive Studio States
+  const [topicToastMsg, setTopicToastMsg] = useState<string | null>(null);
+  const [activeTopicAudioId, setActiveTopicAudioId] = useState<string | null>(null);
+  const [isTopicAudioPlaying, setIsTopicAudioPlaying] = useState<boolean>(false);
+  const topicAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const showTopicToast = (msg: string) => {
+    setTopicToastMsg(msg);
+    setTimeout(() => {
+      setTopicToastMsg((prev) => (prev === msg ? null : prev));
+    }, 2800);
+  };
+
+  const handleCopyTopicAyah = (ayah: TopicAyah) => {
+    const text = `${ayah.arabic}\n\n${ayah.translationBn}\n— ${ayah.surahNameBn} (আয়াত : ${ayah.ayahNumber})\n[পবিত্র আল-কুরআন]`;
+    navigator.clipboard.writeText(text);
+    showTopicToast(`আয়াত ${ayah.surahNameBn}:${ayah.ayahNumber} কপি করা হয়েছে`);
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleCopyHadith = (h: { arabic?: string; narratorBn: string; translationBn: string; referenceBn: string; gradeBn?: string }) => {
+    const parts: string[] = [];
+    if (h.arabic) parts.push(h.arabic);
+    if (h.narratorBn) parts.push(h.narratorBn);
+    parts.push(`"${h.translationBn}"`);
+    parts.push(`— ${h.referenceBn}${h.gradeBn ? ` [মান: ${h.gradeBn}]` : ''}`);
+    navigator.clipboard.writeText(parts.join('\n\n'));
+    showTopicToast('হাদীস শরীফ কপি করা হয়েছে');
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleShareFullTopic = (topic: QuranTopicItem) => {
+    const ayahsText = topic.ayahs.map(a => `${a.arabic}\n${a.translationBn}\n— ${a.surahNameBn} (${a.ayahNumber})`).join('\n\n');
+    const hadithsText = topic.hadiths.map(h => `${h.narratorBn || ''}\n"${h.translationBn}"\n— ${h.referenceBn}${h.gradeBn ? ` (${h.gradeBn})` : ''}`).join('\n\n');
+    const full = `【 বিষয়: ${topic.nameBn} 】\n\n📖 পবিত্র কুরআনের আয়াত:\n${ayahsText}\n\n📜 নির্ভরযোগ্য হাদীস শরীফ:\n${hadithsText}\n\n[পবিত্র কুরআন ও সহীহ হাদীস সংকলন]`;
+    navigator.clipboard.writeText(full);
+    showTopicToast(`${topic.nameBn} বিষয়ের সম্পূর্ণ বিবরণ কপি করা হয়েছে`);
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleOpenTopicAyahTafsir = async (ayah: TopicAyah) => {
+    if (!surahDetail || surahDetail.number !== ayah.surahNumber) {
+      try {
+        const detail = await fetchSurah(ayah.surahNumber);
+        setSurahDetail(detail);
+        setSelectedSurahNumber(ayah.surahNumber);
+        const targetAyah = detail.ayahs.find(a => a.number === ayah.ayahNumber) || {
+          number: ayah.ayahNumber,
+          globalNumber: ayah.globalNumber || 1,
+          arabic: ayah.arabic,
+          translation: ayah.translationBn,
+          transliteration: ayah.transliterationBn || '',
+          juz: 1,
+          page: 1,
+          sajda: false,
+          audioUrl: `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber || 1}.mp3`,
+        };
+        setActiveTafsirAyah(targetAyah);
+        setShowTafsirModal(true);
+        if (soundEnabled) soundHaptics.playTap();
+        return;
+      } catch {}
+    }
+    const synth: QuranAyah = {
+      number: ayah.ayahNumber,
+      globalNumber: ayah.globalNumber || 1,
+      arabic: ayah.arabic,
+      translation: ayah.translationBn,
+      transliteration: ayah.transliterationBn || '',
+      juz: 1,
+      page: 1,
+      sajda: false,
+      audioUrl: `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber || 1}.mp3`,
+    };
+    setActiveTafsirAyah(synth);
+    setShowTafsirModal(true);
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleToggleTopicAyahAudio = (ayah: TopicAyah) => {
+    if (isTopicAudioPlaying && activeTopicAudioId === ayah.id) {
+      if (topicAudioRef.current) {
+        topicAudioRef.current.pause();
+      }
+      setIsTopicAudioPlaying(false);
+      setActiveTopicAudioId(null);
+      return;
+    }
+
+    if (!topicAudioRef.current) {
+      topicAudioRef.current = new Audio();
+    }
+    const a = topicAudioRef.current;
+    const gNum = ayah.globalNumber || 1;
+    a.src = `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${gNum}.mp3`;
+    a.onended = () => {
+      setIsTopicAudioPlaying(false);
+      setActiveTopicAudioId(null);
+    };
+    a.play().then(() => {
+      setIsTopicAudioPlaying(true);
+      setActiveTopicAudioId(ayah.id);
+    }).catch(() => {
+      setIsTopicAudioPlaying(false);
+      setActiveTopicAudioId(null);
+    });
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handlePlayAllTopicAyahs = (ayahList: TopicAyah[], startIndex = 0) => {
+    if (isTopicAudioPlaying && activeTopicAudioId === 'all') {
+      if (topicAudioRef.current) {
+        topicAudioRef.current.pause();
+      }
+      setIsTopicAudioPlaying(false);
+      setActiveTopicAudioId(null);
+      return;
+    }
+
+    const playSequential = (idx: number) => {
+      if (idx >= ayahList.length) {
+        setIsTopicAudioPlaying(false);
+        setActiveTopicAudioId(null);
+        return;
+      }
+      const item = ayahList[idx];
+      const gNum = item.globalNumber || 1;
+      if (!topicAudioRef.current) {
+        topicAudioRef.current = new Audio();
+      }
+      const a = topicAudioRef.current;
+      a.src = `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${gNum}.mp3`;
+      a.onended = () => {
+        playSequential(idx + 1);
+      };
+      a.play().then(() => {
+        setIsTopicAudioPlaying(true);
+        setActiveTopicAudioId('all');
+      }).catch(() => {
+        setIsTopicAudioPlaying(false);
+        setActiveTopicAudioId(null);
+      });
+    };
+
+    playSequential(startIndex);
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
 
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -2805,11 +2953,22 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       ];
 
                   return (
-                    <div className="space-y-4 max-w-3xl mx-auto">
-                      {/* Back button & Breadcrumb */}
-                      <div className="flex items-center justify-between pb-1">
+                    <div className="space-y-5 max-w-3xl mx-auto relative pb-8">
+                      {/* Floating Toast Notification */}
+                      {topicToastMsg && (
+                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-2xl bg-[#006747] text-white text-xs font-bold border border-emerald-400/50 shadow-2xl flex items-center gap-2 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
+                          <span>{topicToastMsg}</span>
+                        </div>
+                      )}
+
+                      {/* Top Header Bar: Back button, Continuous Audio, Share & Breadcrumb */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-200/60 dark:border-teal-900/40">
                         <button
                           onClick={() => {
+                            if (topicAudioRef.current) topicAudioRef.current.pause();
+                            setIsTopicAudioPlaying(false);
+                            setActiveTopicAudioId(null);
                             setSelectedTopicId(null);
                             if (soundEnabled) soundHaptics.playTap();
                           }}
@@ -2818,27 +2977,80 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           <ChevronLeft className="w-4 h-4" />
                           <span>{selectedLanguage === 'bn' ? 'সকল বিষয় (তালিকা)' : 'All Topics'}</span>
                         </button>
-                        <span className="text-[11px] font-mono opacity-60">
-                          {topicIndex + 1} / {QURAN_TOPICS_DATABASE.length}
-                        </span>
+
+                        <div className="flex items-center gap-2 ml-auto">
+                          {/* Continuous Audio Player Button */}
+                          <button
+                            onClick={() => handlePlayAllTopicAyahs(currentTopic.ayahs)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border shadow-xs ${
+                              isTopicAudioPlaying && activeTopicAudioId === 'all'
+                                ? 'bg-emerald-600 text-white border-emerald-500 animate-pulse'
+                                : isDay
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60 hover:bg-emerald-900/60'
+                            }`}
+                            title="এই বিষয়ের সকল আয়াত ধারাবাহিকভাবে তিলাওয়াত শুনুন"
+                          >
+                            {isTopicAudioPlaying && activeTopicAudioId === 'all' ? (
+                              <>
+                                <Pause className="w-3.5 h-3.5" />
+                                <span>অডিও চলছে</span>
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 className="w-3.5 h-3.5" />
+                                <span>সকল আয়াত শুনুন</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Share Full Topic Summary */}
+                          <button
+                            onClick={() => handleShareFullTopic(currentTopic)}
+                            className={`p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                              isDay
+                                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                                : 'bg-[#081e28] hover:bg-[#0e2a36] text-slate-300 border-teal-900/60'
+                            }`}
+                            title="সম্পূর্ণ বিষয় সারসংক্ষেপ কপি করুন"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">বিষয় কপি</span>
+                          </button>
+
+                          <span className="text-[11px] font-mono opacity-60 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-teal-950/40">
+                            {topicIndex + 1} / {QURAN_TOPICS_DATABASE.length}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Main Title Header (Centered, bold serif) */}
-                      <h2 className="text-xl sm:text-2xl font-bold text-center text-slate-900 dark:text-slate-100 my-2">
-                        {currentTopic.nameBn}
-                      </h2>
+                      <div className="text-center space-y-1.5 py-1">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                          <span>{currentTopic.icon}</span>
+                          <span>{currentTopic.categoryBn || 'কুরআনের নির্দেশনা'}</span>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-center text-slate-900 dark:text-slate-100 font-serif">
+                          {currentTopic.nameBn}
+                        </h2>
+                        {currentTopic.descriptionBn && (
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl mx-auto leading-relaxed">
+                            {currentTopic.descriptionBn}
+                          </p>
+                        )}
+                      </div>
 
-                      {/* Grouped Sub-Section Cards */}
+                      {/* Grouped Sub-Section Cards (Exact structure from user screenshot image_2da601e9.png) */}
                       <div className="space-y-4">
                         {sections.map(sec => (
                           <div
                             key={sec.id}
-                            className={`rounded-2xl border p-4 sm:p-5 shadow-xs space-y-4 ${
+                            className={`rounded-2xl border p-4 sm:p-5 shadow-xs space-y-4 transition ${
                               isDay ? 'bg-white border-slate-200/90' : 'bg-[#071920] border-teal-900/60'
                             }`}
                           >
                             {/* Subheading in bold with colon */}
-                            <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">
+                            <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 border-b pb-2 border-slate-100 dark:border-teal-900/30">
                               {sec.subHeadingBn}
                             </h3>
 
@@ -2846,23 +3058,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             <div className="space-y-5">
                               {sec.ayahs.map(ayah => {
                                 const isBookmarked = isAyahBookmarked(ayah.surahNumber, ayah.ayahNumber);
-                                const synthAyah: QuranAyah = {
-                                  number: ayah.ayahNumber,
-                                  globalNumber: ayah.globalNumber || 1,
-                                  arabic: ayah.arabic,
-                                  translation: ayah.translationBn,
-                                  transliteration: ayah.transliterationBn || '',
-                                  juz: 1,
-                                  page: 1,
-                                  sajda: false,
-                                  audioUrl: `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${ayah.globalNumber || 1}.mp3`,
-                                };
-                                const isPlayingThisAyah = isPlaying && currentPlayingAyahNum === ayah.ayahNumber && surahDetail?.number === ayah.surahNumber;
+                                const isPlayingThisAyah = isTopicAudioPlaying && activeTopicAudioId === ayah.id;
 
                                 return (
                                   <div
                                     key={ayah.id}
-                                    className="space-y-2.5 pt-3.5 first:pt-0 border-t first:border-t-0 border-slate-100 dark:border-teal-900/30"
+                                    className={`space-y-2.5 pt-3.5 first:pt-0 border-t first:border-t-0 border-slate-100 dark:border-teal-900/30 rounded-xl transition ${
+                                      isPlayingThisAyah ? 'p-3 bg-emerald-500/10 border-l-4 border-l-emerald-500' : ''
+                                    }`}
                                   >
                                     {/* Arabic Verse (Clean Uthmani right-aligned font) */}
                                     <p className="font-arabic text-right text-lg sm:text-2xl leading-loose font-bold text-slate-900 dark:text-emerald-100 dir-rtl select-text">
@@ -2874,8 +3077,8 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                       {ayah.translationBn}
                                     </p>
 
-                                    {/* Clickable blue link & quick audio/bookmark buttons */}
-                                    <div className="flex items-center justify-between gap-2 pt-1">
+                                    {/* Clickable blue link & quick actions bar */}
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5">
                                       <button
                                         onClick={() => {
                                           setSelectedSurahNumber(ayah.surahNumber);
@@ -2889,18 +3092,44 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                         {ayah.surahNameBn} (আয়াত : {ayah.ayahNumber})
                                       </button>
 
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center gap-1.5 ml-auto">
+                                        {/* Tafsir reader button */}
                                         <button
-                                          onClick={() => playAyahAudio(synthAyah)}
-                                          className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
-                                            isPlayingThisAyah
-                                              ? 'bg-emerald-600 text-white'
-                                              : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-teal-950/40'
+                                          onClick={() => handleOpenTopicAyahTafsir(ayah)}
+                                          className={`px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 transition cursor-pointer border ${
+                                            isDay
+                                              ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+                                              : 'bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 border-amber-700/50'
                                           }`}
-                                          title={isPlayingThisAyah ? 'থামান' : 'তিলাওয়াত শুনুন'}
+                                          title="এই আয়াতের পূর্ণাঙ্গ তাফসীর পড়ুন"
+                                        >
+                                          <BookOpen className="w-3 h-3" />
+                                          <span>তাফসীর</span>
+                                        </button>
+
+                                        {/* Single ayah audio button */}
+                                        <button
+                                          onClick={() => handleToggleTopicAyahAudio(ayah)}
+                                          className={`p-1.5 rounded-lg text-xs transition cursor-pointer border ${
+                                            isPlayingThisAyah
+                                              ? 'bg-emerald-600 text-white border-emerald-600'
+                                              : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-teal-950/40 border-transparent hover:border-emerald-200'
+                                          }`}
+                                          title={isPlayingThisAyah ? 'অডিও থামান' : 'আয়াতের অডিও শুনুন'}
                                         >
                                           {isPlayingThisAyah ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                                         </button>
+
+                                        {/* Copy ayah text */}
+                                        <button
+                                          onClick={() => handleCopyTopicAyah(ayah)}
+                                          className="p-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-teal-900/40 transition cursor-pointer"
+                                          title="আয়াত ও অনুবাদ কপি করুন"
+                                        >
+                                          <Copy className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        {/* Bookmark button */}
                                         <button
                                           onClick={() => toggleBookmark(ayah.surahNumber, ayah.ayahNumber, ayah.arabic, ayah.translationBn)}
                                           className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
@@ -2920,31 +3149,145 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         ))}
                       </div>
 
-                      {/* Related Sahih Hadith (if available) */}
+                      {/* Practical Takeaways / বাস্তব জীবনের আমল ও শিক্ষা */}
+                      {currentTopic.practicalTakeawaysBn && currentTopic.practicalTakeawaysBn.length > 0 && (
+                        <div
+                          className={`rounded-2xl border p-4 sm:p-5 shadow-xs space-y-3 ${
+                            isDay
+                              ? 'bg-gradient-to-br from-emerald-50/70 to-teal-50/40 border-emerald-200 text-slate-900'
+                              : 'bg-gradient-to-br from-[#061e24] to-[#04151b] border-emerald-800/40 text-white'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 font-bold text-sm sm:text-base text-emerald-800 dark:text-emerald-300">
+                            <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <span>বাস্তব জীবনের আমল ও করণীয় শিক্ষা:</span>
+                          </div>
+                          <ul className="space-y-2 text-xs sm:text-sm pl-1">
+                            {currentTopic.practicalTakeawaysBn.map((item, pIdx) => (
+                              <li key={pIdx} className="flex items-start gap-2.5 leading-relaxed">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold shrink-0 mt-0.5">
+                                  {pIdx + 1}
+                                </span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Related Authentic Hadith Collection (Multiple Hadiths with Arabic, Narrator & Full Takhrij) */}
                       {currentTopic.hadiths && currentTopic.hadiths.length > 0 && (
-                        <div className={`p-4 rounded-2xl border space-y-2 ${
-                          isDay ? 'bg-amber-50/60 border-amber-200 text-slate-900' : 'bg-[#071b22] border-amber-500/20 text-white'
-                        }`}>
-                          <div className="flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300">
-                            <span>📜 সম্পর্কিত সহীহ হাদীস</span>
-                            <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400">
-                              {currentTopic.hadiths[0].referenceBn}
+                        <div className="space-y-3 pt-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                              <span>📜</span>
+                              <span>সংশ্লিষ্ট নির্ভরযোগ্য সহীহ হাদীস শরীফ</span>
+                            </h3>
+                            <span className="text-[11px] font-semibold text-slate-500 dark:text-teal-400">
+                              {currentTopic.hadiths.length}টি সহীহ বর্ণনা
                             </span>
                           </div>
-                          <p className="text-xs opacity-75 font-semibold">
-                            {currentTopic.hadiths[0].narratorBn}
-                          </p>
-                          <p className="text-xs sm:text-sm leading-relaxed italic opacity-95">
-                            "{currentTopic.hadiths[0].translationBn}"
-                          </p>
+
+                          <div className="space-y-3">
+                            {currentTopic.hadiths.map((h, hIdx) => (
+                              <div
+                                key={h.id || hIdx}
+                                className={`rounded-2xl border p-4 sm:p-5 shadow-xs space-y-3 transition ${
+                                  isDay
+                                    ? 'bg-amber-50/50 border-amber-200/80 text-slate-900'
+                                    : 'bg-[#091f28] border-amber-500/25 text-white'
+                                }`}
+                              >
+                                {/* Header with Narrator, Grade & Reference */}
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/50 dark:border-amber-500/20 pb-2">
+                                  <div className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                                    <span>🎙️</span>
+                                    <span>{h.narratorBn}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 ml-auto">
+                                    {h.gradeBn && (
+                                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                                        মান: {h.gradeBn}
+                                      </span>
+                                    )}
+                                    <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                                      {h.referenceBn}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Arabic Matn if available */}
+                                {h.arabic && (
+                                  <p className="font-arabic text-right text-base sm:text-lg leading-loose font-bold text-amber-950 dark:text-amber-100 dir-rtl select-text pt-1">
+                                    {h.arabic}
+                                  </p>
+                                )}
+
+                                {/* Bengali Translation */}
+                                <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 italic font-medium">
+                                  "{h.translationBn}"
+                                </p>
+
+                                {/* Bottom Chapter & Copy Action */}
+                                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-amber-200/40 dark:border-amber-500/10">
+                                  <span>{h.chapterBn ? `অধ্যায়: ${h.chapterBn}` : 'সহীহ হাদীস সংকলন'}</span>
+                                  <button
+                                    onClick={() => handleCopyHadith(h)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 font-bold transition cursor-pointer text-[11px]"
+                                    title="হাদীসটি কপি করুন"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                    <span>কপি হাদীস</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Related Topics Interactive Chips */}
+                      {currentTopic.relatedTopics && currentTopic.relatedTopics.length > 0 && (
+                        <div className="pt-2 space-y-2">
+                          <span className="text-xs font-bold text-slate-500 dark:text-teal-400 flex items-center gap-1.5">
+                            <span>🔗</span>
+                            <span>সম্পর্কিত অন্যান্য বিষয়সমূহ:</span>
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {currentTopic.relatedTopics.map(relName => {
+                              const found = QURAN_TOPICS_DATABASE.find(t => t.nameBn === relName);
+                              return (
+                                <button
+                                  key={relName}
+                                  onClick={() => {
+                                    if (found) {
+                                      setSelectedTopicId(found.id);
+                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                      if (soundEnabled) soundHaptics.playTap();
+                                    }
+                                  }}
+                                  className={`px-3 py-1 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                                    isDay
+                                      ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                                      : 'bg-[#091b22] hover:bg-[#0f2832] text-slate-300 border-teal-900/60'
+                                  }`}
+                                >
+                                  {relName}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
 
                       {/* Bottom Navigation Buttons (matching screenshot) */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 pb-6">
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-4 pb-6 border-t border-slate-200/60 dark:border-teal-900/40">
                         {topicIndex > 0 ? (
                           <button
                             onClick={() => {
+                              if (topicAudioRef.current) topicAudioRef.current.pause();
+                              setIsTopicAudioPlaying(false);
+                              setActiveTopicAudioId(null);
                               setSelectedTopicId(QURAN_TOPICS_DATABASE[topicIndex - 1].id);
                               window.scrollTo({ top: 0, behavior: 'smooth' });
                               if (soundEnabled) soundHaptics.playTap();
@@ -2958,6 +3301,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         <div className="flex items-center gap-2 ml-auto">
                           <button
                             onClick={() => {
+                              if (topicAudioRef.current) topicAudioRef.current.pause();
+                              setIsTopicAudioPlaying(false);
+                              setActiveTopicAudioId(null);
                               setSelectedTopicId(null);
                               if (soundEnabled) soundHaptics.playTap();
                             }}
@@ -2969,6 +3315,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           {topicIndex < QURAN_TOPICS_DATABASE.length - 1 && (
                             <button
                               onClick={() => {
+                                if (topicAudioRef.current) topicAudioRef.current.pause();
+                                setIsTopicAudioPlaying(false);
+                                setActiveTopicAudioId(null);
                                 setSelectedTopicId(QURAN_TOPICS_DATABASE[topicIndex + 1].id);
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                 if (soundEnabled) soundHaptics.playTap();
