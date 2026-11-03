@@ -169,24 +169,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       badge: OTHER_HUB_UI.badgeDua[selectedLanguage],
     },
     {
-      id: 'hadith' as OtherSubSection,
-      title: NAV_TRANSLATIONS.hadith[selectedLanguage],
-      arabic: 'الحديث النبوي',
-      desc: OTHER_HUB_UI.hadithDesc[selectedLanguage],
-      icon: <span className="text-2xl">📜</span>,
-      color: 'from-amber-500/15 to-yellow-500/10 border-amber-500/30',
-      badge: OTHER_HUB_UI.badgeHadith[selectedLanguage],
-    },
-    {
-      id: 'kitab' as OtherSubSection,
-      title: NAV_TRANSLATIONS.kitab[selectedLanguage],
-      arabic: 'المكتبة الإسلامية',
-      desc: OTHER_HUB_UI.kitabDesc[selectedLanguage],
-      icon: <BookMarked className="w-6 h-6 text-blue-500" />,
-      color: 'from-blue-500/15 to-cyan-500/10 border-blue-500/30',
-      badge: OTHER_HUB_UI.badgeKitab[selectedLanguage],
-    },
-    {
       id: 'hajj_checklist' as OtherSubSection,
       title: NAV_TRANSLATIONS.hajj_checklist[selectedLanguage],
       arabic: 'دليل الحج والعمرة',
@@ -329,38 +311,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Heart className="w-3.5 h-3.5" />
           <span>{NAV_TRANSLATIONS.dua[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('hadith')}
-          onTouchStart={() => prefetchView('hadith')}
-          onClick={() => handleSelectSub('hadith')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'hadith'
-              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>📜</span>
-          <span>{NAV_TRANSLATIONS.hadith[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('kitab')}
-          onTouchStart={() => prefetchView('kitab')}
-          onClick={() => handleSelectSub('kitab')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'kitab'
-              ? 'bg-blue-600 text-white border-blue-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <BookMarked className="w-3.5 h-3.5" />
-          <span>{NAV_TRANSLATIONS.kitab[selectedLanguage]}</span>
         </button>
 
         <button

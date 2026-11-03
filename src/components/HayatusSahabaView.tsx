@@ -98,6 +98,8 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   };
 
   const [selectedFamilyBioModal, setSelectedFamilyBioModal] = useState<FamilyMemberBio | null>(null);
+  const [showBibliographyModal, setShowBibliographyModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all'>('all');
   const [copiedQuote, setCopiedQuote] = useState(false);
@@ -110,6 +112,21 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     if (!selectedSahabaId) return null;
     return SAHABA_DATABASE.find((s) => s.id === selectedSahabaId) || null;
   }, [selectedSahabaId]);
+
+  const currentIndex = useMemo(() => {
+    if (!selectedSahabaId) return -1;
+    return SAHABA_DATABASE.findIndex((s) => s.id === selectedSahabaId);
+  }, [selectedSahabaId]);
+
+  const prevSahaba = useMemo(() => {
+    if (currentIndex > 0) return SAHABA_DATABASE[currentIndex - 1];
+    return null;
+  }, [currentIndex]);
+
+  const nextSahaba = useMemo(() => {
+    if (currentIndex >= 0 && currentIndex < SAHABA_DATABASE.length - 1) return SAHABA_DATABASE[currentIndex + 1];
+    return null;
+  }, [currentIndex]);
 
   // Group database by category for Book-Style Table of Contents (TOC)
   const sahabaByCategory = useMemo(() => {
@@ -378,12 +395,25 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           {/* SECTION 1: JOURNEY OF EMBRACING ISLAM (DETAILED)                          */}
           {/* ========================================================================= */}
           {activeIslamAcceptance && (
-            <div className={`p-5 rounded-2xl border space-y-2.5 shadow-xs ${isDay ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-[#081a20] border-emerald-500/30 text-emerald-100'}`}>
+            <div className={`p-5 rounded-2xl border space-y-3 shadow-xs ${isDay ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-[#081a20] border-emerald-500/30 text-emerald-100'}`}>
               <h3 className="font-black text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-emerald-500" />
                 <span>{isBn ? 'ইসলাম গ্রহণের ঐতিহাসিক প্রেক্ষাপট ও যাত্রা' : 'The Sacred Journey of Embracing Islam'}</span>
               </h3>
-              <p className="text-xs sm:text-sm leading-relaxed opacity-95 whitespace-pre-line">{activeIslamAcceptance}</p>
+              <div className="space-y-3 text-xs sm:text-sm leading-relaxed opacity-95">
+                {activeIslamAcceptance.split('\n\n').map((paragraph, pIdx) => (
+                  <p
+                    key={pIdx}
+                    className={
+                      pIdx === 0
+                        ? 'first-letter:float-left first-letter:text-3xl first-letter:font-black first-letter:text-emerald-500 first-letter:mr-2.5 first-letter:leading-none'
+                        : ''
+                    }
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             </div>
           )}
 
@@ -567,8 +597,19 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 <BookOpen className="w-4 h-4 text-emerald-500" />
                 <span>{isBn ? 'পূর্ণাঙ্গ বিস্তারিত জীবনচরিত ও ইতিহাস' : 'Comprehensive Life Biography & Historical Chronicles'}</span>
               </h3>
-              <div className="text-xs sm:text-sm leading-relaxed space-y-3 opacity-95 whitespace-pre-line">
-                {activeBiography}
+              <div className="space-y-3 text-xs sm:text-sm leading-relaxed opacity-95">
+                {activeBiography.split('\n\n').map((paragraph, bIdx) => (
+                  <p
+                    key={bIdx}
+                    className={
+                      bIdx === 0
+                        ? 'first-letter:float-left first-letter:text-3xl first-letter:font-black first-letter:text-amber-500 first-letter:mr-2.5 first-letter:leading-none'
+                        : ''
+                    }
+                  >
+                    {paragraph}
+                  </p>
+                ))}
               </div>
             </div>
           )}
@@ -701,6 +742,47 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           )}
         </div>
 
+        {/* Quick Companion Switcher Strip */}
+        <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 shadow-lg ${
+          isDay ? 'bg-white border-emerald-200' : 'bg-[#081a20] border-teal-900/50'
+        }`}>
+          <button
+            disabled={!prevSahaba}
+            onClick={() => prevSahaba && handleSelectSahaba(prevSahaba.id)}
+            className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+              prevSahaba
+                ? (isDay ? 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100' : 'bg-[#0b272f] border-teal-700 text-emerald-300 hover:bg-[#0e333e]')
+                : 'opacity-40 cursor-not-allowed border-transparent'
+            }`}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <div className="text-left hidden sm:block">
+              <div className="text-[10px] text-slate-400 font-normal">{isBn ? 'পূর্ববর্তী সাহাবি' : 'Previous'}</div>
+              <div className="truncate max-w-[120px]">{prevSahaba ? getSahabaName(prevSahaba, selectedLanguage) : ''}</div>
+            </div>
+          </button>
+
+          <span className="text-xs font-black text-amber-500 text-center">
+            #{activeSahaba.rank} / {SAHABA_DATABASE.length}
+          </span>
+
+          <button
+            disabled={!nextSahaba}
+            onClick={() => nextSahaba && handleSelectSahaba(nextSahaba.id)}
+            className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+              nextSahaba
+                ? (isDay ? 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100' : 'bg-[#0b272f] border-teal-700 text-emerald-300 hover:bg-[#0e333e]')
+                : 'opacity-40 cursor-not-allowed border-transparent'
+            }`}
+          >
+            <div className="text-right hidden sm:block">
+              <div className="text-[10px] text-slate-400 font-normal">{isBn ? 'পরবর্তী সাহাবি' : 'Next'}</div>
+              <div className="truncate max-w-[120px]">{nextSahaba ? getSahabaName(nextSahaba, selectedLanguage) : ''}</div>
+            </div>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
         {/* Modal for Family Member Bio */}
         {selectedFamilyBioModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
@@ -768,15 +850,27 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     <div className="space-y-5 pb-24 animate-in fade-in duration-200">
       {/* Top Banner */}
       <div
-        className={`p-5 sm:p-6 rounded-3xl border shadow-xl ${
+        className={`p-5 sm:p-6 rounded-3xl border shadow-xl relative overflow-hidden ${
           isDay
             ? 'bg-gradient-to-r from-[#005a3e] via-[#006747] to-[#007a52] text-white border-emerald-600/40'
             : 'bg-gradient-to-r from-[#07191e] via-[#0b262d] to-[#10363e] text-white border-[#163c46]'
         }`}
       >
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-emerald-100 text-xs font-semibold mb-2 backdrop-blur-md">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          <span>حياة الصحابة رضي الله عنهم • Hayatus Sahaba</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-emerald-100 text-xs font-semibold backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>حياة الصحابة رضي الله عنهم • Hayatus Sahaba</span>
+          </div>
+          <button
+            onClick={() => {
+              setShowBibliographyModal(true);
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className="px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-amber-300" />
+            <span>{isBn ? 'গ্রন্থ পরিচিতি ও উৎস' : 'Book Bibliography'}</span>
+          </button>
         </div>
         <h2 className="text-xl sm:text-2xl font-black tracking-tight">
           {isBn ? 'হায়াতুস সাহাবা (১০৭+ বিশিষ্ট সাহাবির জীবনী)' : 'Hayatus Sahaba (107+ Prominent Biographies)'}
@@ -942,6 +1036,97 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           })}
         </div>
       </div>
+
+      {/* Classical Hayatus Sahaba Bibliography & Book Intro Modal */}
+      {showBibliographyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className={`w-full max-w-2xl rounded-3xl border p-5 sm:p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto ${
+            isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0a1e24] border-teal-900/60 text-white'
+          }`}>
+            <button
+              onClick={() => setShowBibliographyModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-1.5 border-b pb-4 border-amber-500/20 pr-8">
+              <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[11px] font-black uppercase">
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>حياة الصحابة • Classical Bibliography</span>
+              </span>
+              <h3 className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400">
+                {isBn ? 'হায়াতুস সাহাবা (رضي الله عنهم) গ্রন্থ ও উৎসের সবিস্তার বিবরণ' : 'Hayatus Sahaba Master Bibliography & Sources'}
+              </h3>
+              <p className="text-xs opacity-80">
+                {isBn
+                  ? 'রাসূলুল্লাহ (সা.)-এর সুমহান সাহাবিগণের জীবন, ত্যাগ ও চরিত্রভিত্তিক বিশ্ববিখ্যাত প্রামাণ্য বিশ্বকোষ'
+                  : 'An authentic biographical encyclopedia on the noble companions of Prophet Muhammad (PBUH)'}
+              </p>
+            </div>
+
+            <div className="space-y-4 text-xs sm:text-sm leading-relaxed opacity-95">
+              <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-amber-50/60 border-amber-200' : 'bg-[#142322] border-amber-500/30'}`}>
+                <h4 className="font-extrabold text-amber-600 dark:text-amber-300 flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  <span>{isBn ? '১. মূল গ্রন্থ ও সংকলক' : '1. Master Book & Author'}</span>
+                </h4>
+                <p>
+                  {isBn
+                    ? 'প্রখ্যাত হাদিস বিশারদ হযরত মাওলানা মুহাম্মদ ইউসুফ কান্ধলভী (র.) ৩ খণ্ডে আরবি ভাষায় সংকলন করেন ‘হায়াতুস সাহাবা’ (حياة الصحابة)। এই গ্রন্থে বিশুদ্ধ ও গ্রহণযোগ্য সহিহ হাদিস, সীরাত গ্রন্থাবলি ও মুহাদ্দিসগণের সনদের আলোকে সাহাবিদের দাওয়াত, ইবাদত, আখলাক, হিজরত, বীরত্ব ও শাহাদাতের বিরল ঘটনাপ্রবাহ সুবিন্যস্তভাবে সংগৃহীত হয়েছে।'
+                    : 'Compiled in 3 volumes in Arabic by the renowned scholar Shaykh Muhammad Yusuf Kandhlawi (RA), "Hayatus Sahaba" documents the companions\' faith, dawah, worship, sacrifices, and character with authentic chains.'}
+                </p>
+              </div>
+
+              <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#081a1f] border-emerald-500/30'}`}>
+                <h4 className="font-extrabold text-emerald-600 dark:text-emerald-300 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-emerald-500" />
+                  <span>{isBn ? '২. ক্লাসিক্যাল তথ্যসূত্র ও নির্ভরতা' : '2. Classical Reference Works'}</span>
+                </h4>
+                <ul className="space-y-2 text-xs">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-500 font-bold">•</span>
+                    <span><strong>سير أعلام النبلاء (সিয়ারু আ‘লামিন নুবালা):</strong> ইমাম আজ-জাহাবি (র.) কর্তৃক সংকলিত সাহাবি ও তাবেয়িদের প্রামাণ্য জীবনীগ্রন্থ।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-500 font-bold">•</span>
+                    <span><strong>الإصابة في تمييز الصحابة (আল-ইসাবাহ):</strong> হাফেজ ইবনে হাজার আল-আসকালানি (র.)-এর রচিত অনন্য সাহাবি অভিধান।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-500 font-bold">•</span>
+                    <span><strong>الاستيعاب في معرفة الأصحاب (আল-ইস্তিয়াব):</strong> ইমাম ইবনে আবদিল বার (র.)-এর প্রাচীনতম প্রামাণ্য সংকলন।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-500 font-bold">•</span>
+                    <span><strong>হাদিস শরিফ:</strong> সহিহ বুখারি, সহিহ মুসলিম, জামে আত-তিরমিজি, সুনানে আবু দাউদ ও মুসনাদে আহমাদ।</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-blue-50/60 border-blue-200' : 'bg-[#081926] border-blue-500/30'}`}>
+                <h4 className="font-extrabold text-blue-600 dark:text-blue-300 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-blue-500" />
+                  <span>{isBn ? '৩. অ্যাপ অ্যাপ্লেটের মূল বৈশিষ্ট্য' : '3. Key Applet Features'}</span>
+                </h4>
+                <p>
+                  {isBn
+                    ? 'Zikr+ অ্যাপের হায়াতুস সাহাবা বিভাগে মোট ১০৭ জন মর্যাদাবান সাহাবির র‍্যাংকভিত্তিক জীবনচরিত, পরিবার (পিতা, মাতা, সহধর্মিণী ও সন্তানগণ), ইসলাম গ্রহণের আবেগঘন কাহিনী, বীরত্বপূর্ণ অবদান, পবিত্র কুরআনের আয়াত ও সহিহ হাদিসের সুসংবাদ সন্নিবেশিত করা হয়েছে।'
+                    : 'Features comprehensive biographies of 107 companions categorized into Rashidun, Ashara Mubashshara, Pioneers, Commanders, Scholars, Ansar, and Sahabiyyat with full family trees and authentic Hadith praises.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-amber-500/20 text-center">
+              <button
+                onClick={() => setShowBibliographyModal(false)}
+                className="px-6 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-black text-xs shadow-lg transition cursor-pointer"
+              >
+                {isBn ? 'বুঝেছি, পঠন শুরু করুন' : 'Got it, Start Reading'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

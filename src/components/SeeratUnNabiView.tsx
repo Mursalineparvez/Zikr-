@@ -341,6 +341,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
   // Share Card Modal state
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showBibliographyModal, setShowBibliographyModal] = useState(false);
 
   // Reader Settings
   const [fontSizeLevel, setFontSizeLevel] = useState<'normal' | 'large' | 'xl'>('normal');
@@ -958,8 +959,19 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                   )}
                 </div>
 
-                <div className={`${fontClass} text-slate-700 dark:text-emerald-100/90 whitespace-pre-line font-serif space-y-4`}>
-                  {narrative}
+                <div className="space-y-4 font-serif">
+                  {narrative.split('\n\n').map((paragraph, idx) => (
+                    <p
+                      key={idx}
+                      className={`${fontClass} text-slate-700 dark:text-emerald-100/90 leading-relaxed font-serif ${
+                        idx === 0
+                          ? 'first-letter:float-left first-letter:text-3xl sm:first-letter:text-4xl first-letter:font-black first-letter:mr-2.5 first-letter:mt-0.5 first-letter:text-emerald-600 dark:first-letter:text-emerald-400'
+                          : ''
+                      }`}
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1342,6 +1354,22 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                   <span>{isBn ? `সর্বশেষ পঠিত (বয়স ${lastReadAge})` : `Resume (Age ${lastReadAge})`}</span>
                 </button>
               )}
+
+              <button
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setShowBibliographyModal(true);
+                }}
+                className={`px-3.5 py-2 rounded-2xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                  isDay
+                    ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200'
+                    : 'bg-emerald-950/80 text-amber-300 border-emerald-700/60 hover:bg-emerald-900'
+                }`}
+                title="View Classical Seerah Bibliography"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+                <span>{isBn ? 'সীরাত গ্রন্থমালা' : 'Bibliography'}</span>
+              </button>
 
               {onBackToHub && (
                 <button
@@ -1807,6 +1835,116 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                 handleSelectAge(age);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Classical Seerah Bibliography Modal */}
+      {showBibliographyModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in">
+          <div
+            className={`w-full max-w-3xl max-h-[88vh] overflow-y-auto rounded-3xl p-5 sm:p-7 border shadow-2xl space-y-5 relative scrollbar-thin ${
+              isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#08221d] border-emerald-700 text-white'
+            }`}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-emerald-800/60 sticky top-0 z-10 bg-inherit pt-1">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-6 h-6 text-amber-500" />
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-amber-900 dark:text-amber-300">
+                    প্রামাণ্য সীরাত গ্রন্থমালা (Primary Bibliography & Sources)
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-emerald-300/80">
+                    সিরাতুন নবী (সা.) বিশ্বকোষের তথ্যসূত্রে ব্যবহৃত মূল সিরাত গ্রন্থ তালিকা
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBibliographyModal(false)}
+                className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-emerald-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">১. আর-রাহীকুল মাখতূম</h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">বিশ্ববিখ্যাত</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-emerald-200/80">
+                  <strong>লেখক:</strong> আল্লামা সফিউর রহমান মুবারকপুরী (র.)
+                </p>
+                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                  রবেতায়ে আলমে ইসলামী আয়োজিত বিশ্ব সীরাত প্রতিযোগিতা প্রথম স্থান অধিকারী মহাকাব্যিক গ্রন্থ। রসুলুল্লাহ (সা.)-এর শুভ জন্ম থেকে ওফাত পর্যন্ত প্রতিটি ঐতিহাসিক যুদ্ধ, সন্ধি ও দাওয়াতের প্রামাণ্য বিশ্লেষণ।
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">২. সীরাতে ইবনে হিশাম</h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">প্রাচীনতম সীরাত</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-emerald-200/80">
+                  <strong>লেখক:</strong> আল-হাফিজ ইবনে হিশাম (র.) (মূল: ইবনে ইসহাক)
+                </p>
+                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                  ইসলামি ইতিহাসের প্রথম ও সর্বাধিক প্রামাণ্য সীরাত সংকলন। সাহাবি ও তাবেঈদের প্রামাণ্য বিবরণী, মক্কার কুরাইশদের ঘটনাপঞ্জি ও প্রথম সারির যুদ্ধসমূহের নির্ভরযোগ্য বিবরণ।
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">৩. জাদুল মাআদ</h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">ফিকহুস সীরাহ</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-emerald-200/80">
+                  <strong>লেখক:</strong> ইমাম ইবনুল কাইয়্যিম আল-জাওযিয়্যাহ (র.)
+                </p>
+                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                  রসুলুল্লাহ (সা.)-এর ব্যক্তিগত জীবন, ইবাদত, যুদ্ধনীতি, বিচারব্যবস্থা ও দৈনন্দিন জীবনাচরণের বিস্তৃত ফিকহি ব্যাখ্যা ও আত্মিক শিক্ষা সংবলিত মাস্টারপিস গ্রন্থ।
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">৪. আল-বিদায়া ওয়ান নিহায়া</h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">ঐতিহাসিক বিশ্বকোষ</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-emerald-200/80">
+                  <strong>লেখক:</strong> আল-হাফিজ ইবনে কাছীর (র.)
+                </p>
+                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                  সৃষ্টির শুরু থেকে বিশ্ব ইতিহাসের প্রামাণ্য গ্রন্থাবলি। খণ্ড ৩ থেকে ৫ পর্যন্ত নবুওয়াত, মক্কী ও মাদানী যুগের পুঙ্খানুপুঙ্খ বিবরণ ধারণ করে।
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2 col-span-1 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">৫. আস-সহীহাইনি (সহীহ আল-বুখারী ও সহীহ মুসলিম)</h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">বিশুদ্ধতম হাদিস</span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-emerald-200/80">
+                  <strong>সংকলক:</strong> ইমাম মুহাম্মদ ইবনে ইসমাইল আল-বুখারী (র.) ও ইমাম মুসলিম ইবনুল হাজ্জাজ (র.)
+                </p>
+                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                  কুরআনুল কারিমের পর পৃথিবীর সবচেয়ে বিশুদ্ধ কিতাবসমূহ। 'কিতাবুল মাগাজী' (যুদ্ধসমূহ), 'কিতাবুম মানাকিব' (মর্যাদাপূর্ণ গুণাবলী) ও 'কিতাবুল হজ্জ' থেকে প্রতিটি ঐতিহাসিক ঘটনার শতভাগ বিশুদ্ধ সনদ যাচাইকৃত।
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-200 dark:border-emerald-800/60 flex items-center justify-between text-xs">
+              <span className="text-slate-500 dark:text-emerald-300/80 font-medium">
+                পরম শ্রদ্ধাভরে সংকলিত — Zikr+ Apps
+              </span>
+              <button
+                onClick={() => setShowBibliographyModal(false)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
           </div>
         </div>
       )}
