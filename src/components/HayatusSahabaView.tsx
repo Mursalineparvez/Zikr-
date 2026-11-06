@@ -48,6 +48,12 @@ import {
   getEnglishSahabaTitle,
   getEnglishSahabaSummary,
 } from '../data/sahabaEnglishData';
+import {
+  PROPHETIC_SAHABA_TITLES,
+  isPropheticTitleHolder,
+  getPropheticTitleProfile,
+  PropheticSahabaTitle,
+} from '../data/propheticSahabaTitlesData';
 
 interface HayatusSahabaViewProps {
   themeMode?: ThemeMode;
@@ -193,7 +199,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   const [showBibliographyModal, setShowBibliographyModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all'>('all');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all' | 'prophetic_titles'>('all');
   const [copiedQuote, setCopiedQuote] = useState(false);
 
   useEffect(() => {
@@ -204,6 +210,11 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     if (!selectedSahabaId) return null;
     return SAHABA_DATABASE.find((s) => s.id === selectedSahabaId) || null;
   }, [selectedSahabaId]);
+
+  const propheticProfile = useMemo(() => {
+    if (!activeSahaba) return undefined;
+    return getPropheticTitleProfile(activeSahaba.id);
+  }, [activeSahaba]);
 
   const currentIndex = useMemo(() => {
     if (!selectedSahabaId) return -1;
@@ -250,26 +261,43 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   }, []);
 
   const filteredSahaba = useMemo(() => {
-    return SAHABA_DATABASE.filter((s) => {
-      const matchesCategory =
-        activeCategoryFilter === 'all' || s.categoryKey === activeCategoryFilter;
-      const q = searchQuery.trim().toLowerCase();
+    let list = SAHABA_DATABASE;
+
+    if (activeCategoryFilter === 'prophetic_titles') {
+      list = list.filter((s) => isPropheticTitleHolder(s.id));
+      list = [...list].sort((a, b) => {
+        const noA = getPropheticTitleProfile(a.id)?.no || 999;
+        const noB = getPropheticTitleProfile(b.id)?.no || 999;
+        return noA - noB;
+      });
+    } else if (activeCategoryFilter !== 'all') {
+      list = list.filter((s) => s.categoryKey === activeCategoryFilter);
+    }
+
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return list;
+
+    return list.filter((s) => {
       const name = getSahabaName(s, selectedLanguage).toLowerCase();
       const title = getSahabaTitle(s, selectedLanguage).toLowerCase();
       const summary = getSahabaSummary(s, selectedLanguage).toLowerCase();
       const category = getSahabaCategory(s, selectedLanguage).toLowerCase();
+      const pProfile = getPropheticTitleProfile(s.id);
+      const pTitle = pProfile ? pProfile.titleBn.toLowerCase() : '';
+      const pReason = pProfile ? pProfile.reasonBn.toLowerCase() : '';
 
-      const matchesSearch =
-        !q ||
+      return (
         name.includes(q) ||
         s.nameAr.includes(q) ||
         title.includes(q) ||
         summary.includes(q) ||
-        category.includes(q);
-
-      return matchesCategory && matchesSearch;
+        category.includes(q) ||
+        pTitle.includes(q) ||
+        pReason.includes(q)
+      );
     });
   }, [activeCategoryFilter, searchQuery, selectedLanguage]);
+
 
   const handleCopySahabaSummary = () => {
     if (!activeSahaba) return;
@@ -527,10 +555,74 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
               </span>
             </div>
 
+            {/* Prophetic Special Title Highlight Box (From Forty Sahaba Titles Book) */}
+            {propheticProfile && (
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-3.5 shadow-md ${
+                isDay
+                  ? 'bg-gradient-to-r from-amber-50 via-yellow-50/70 to-amber-100/60 border-amber-300 text-amber-950'
+                  : 'bg-gradient-to-r from-[#1c1809] via-[#241e0c] to-[#1a1408] border-amber-500/50 text-amber-100'
+              }`}>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5 border-amber-400/30">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-7 h-7 rounded-lg bg-amber-500 text-black flex items-center justify-center font-black text-xs shadow-xs">
+                      #{propheticProfile.no}
+                    </span>
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                        👑 {isBn ? 'রাসূলুল্লাহ (সা.)-এর দেয়া উপাধি (চল্লিশ সাহাবির উপাধি গ্রন্থ)' : 'Prophetic Title (Forty Sahaba Titles Book)'}
+                      </span>
+                      <h4 className="text-sm sm:text-base font-black text-amber-900 dark:text-amber-300">
+                        {isBn ? propheticProfile.titleBn : propheticProfile.titleEn}
+                      </h4>
+                    </div>
+                  </div>
+                  <span className="font-arabic text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">
+                    {propheticProfile.titleAr}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs sm:text-sm leading-relaxed opacity-95">
+                  <p>
+                    <strong className="text-amber-700 dark:text-amber-300">{isBn ? 'উপাধি লাভের প্রেক্ষাপট ও কারণ:' : 'Historical Context:'}</strong> {propheticProfile.reasonBn}
+                  </p>
+                  <div className={`p-3 rounded-xl border space-y-1.5 ${
+                    isDay ? 'bg-white/90 border-amber-200 shadow-xs' : 'bg-black/40 border-amber-500/30'
+                  }`}>
+                    {propheticProfile.hadithAr && (
+                      <p className="font-arabic text-right text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-300 leading-relaxed">
+                        "{propheticProfile.hadithAr}"
+                      </p>
+                    )}
+                    <p className="text-xs italic opacity-95">
+                      "{propheticProfile.hadithBn}"
+                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-300/30 text-[11px]">
+                      <span className="font-bold text-amber-700 dark:text-amber-400">
+                        📖 {isBn ? 'প্রামাণ্য হাদিস সূত্র:' : 'Sources:'} {propheticProfile.sourcesBn.join(' • ')}
+                      </span>
+                      <button
+                        onClick={() => {
+                          const quote = `👑 রাসূলুল্লাহ (সা.)-এর দেয়া উপাধি:\n"${propheticProfile.titleBn}" (${propheticProfile.titleAr})\n\n📖 হাদিস: "${propheticProfile.hadithBn}"\nসূত্র: ${propheticProfile.sourcesBn.join(', ')}\n\n- Zikr+ App (চল্লিশ সাহাবির উপাধি)`;
+                          navigator.clipboard.writeText(quote);
+                          showToast(isBn ? 'উপাধি ও হাদিস কপি করা হয়েছে' : 'Title & Hadith Copied');
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className="px-2 py-0.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-200 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{isBn ? 'কপি' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <p className={`text-sm sm:text-base leading-relaxed font-medium pt-1 ${isDay ? 'text-slate-800' : 'text-slate-200'}`}>
               {activeSummary}
             </p>
           </div>
+
 
           {/* ========================================================================= */}
           {/* SECTION 1: JOURNEY OF EMBRACING ISLAM (DETAILED)                          */}
@@ -1084,7 +1176,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           </span>
         </div>
         <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-          {isBn ? 'হায়াতুস সাহাবা (১০৭+ বিশিষ্ট সাহাবির জীবনী)' : 'Hayatus Sahaba (107+ Prominent Biographies)'}
+          {isBn ? `হায়াতুস সাহাবা (${totalSahaba}+ বিশিষ্ট সাহাবির জীবনী)` : `Hayatus Sahaba (${totalSahaba}+ Prominent Biographies)`}
         </h2>
         <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
           {isBn
@@ -1093,9 +1185,61 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         </p>
       </div>
 
+      {/* Special 40 Sahaba Prophetic Titles Hero Banner (Based on "চল্লিশ সাহাবির উপাধি" PDF Book) */}
+      <div
+        onClick={() => {
+          setActiveCategoryFilter(activeCategoryFilter === 'prophetic_titles' ? 'all' : 'prophetic_titles');
+          if (soundEnabled) soundHaptics.playTap();
+        }}
+        className={`p-4 sm:p-5 rounded-3xl border transition-all cursor-pointer shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 relative overflow-hidden group ${
+          activeCategoryFilter === 'prophetic_titles'
+            ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-yellow-600 text-white border-amber-400 ring-2 ring-amber-400/50'
+            : isDay
+            ? 'bg-gradient-to-r from-amber-100/90 via-yellow-50 to-amber-100 border-amber-300 hover:border-amber-400 text-amber-950'
+            : 'bg-gradient-to-r from-[#211b0b] via-[#2d230d] to-[#1c1608] border-amber-500/50 hover:border-amber-400 text-amber-200'
+        }`}
+      >
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/25 border border-amber-400/40 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
+            👑
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-500 text-black shadow-xs">
+                {isBn ? 'বিশেষ সংকলন' : 'Special Collection'}
+              </span>
+              <span className="text-xs font-black text-amber-700 dark:text-amber-300">
+                চল্লিশ সাহাবির উপাধি (বই)
+              </span>
+            </div>
+            <h3 className="text-sm sm:text-base font-black mt-1 text-amber-950 dark:text-amber-200">
+              {isBn ? 'রাসূলুল্লাহ (সা.)-এর দেয়া সাহাবীদের উপাধি (৪০ জন সাহাবি)' : 'Prophetically Titled Companions (40 Companions)'}
+            </h3>
+            <p className="text-[11px] opacity-85 mt-0.5 max-w-xl">
+              {isBn
+                ? 'আরিফুল ইসলাম রচিত "চল্লিশ সাহাবির উপাধি" বইয়ের সম্পূর্ণ ৪০ জন সাহাবির বিশেষ নববী উপাধি, পটভূমি ও সহিহ হাদিসের দলিল।'
+                : 'All 40 companions with their Prophet-given honorifics, background context, and authentic Hadith evidence.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <span className="text-xs font-black px-3.5 py-1.5 rounded-xl bg-amber-500 text-black shadow-xs">
+            ৪০ জন
+          </span>
+          <span className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition ${
+            activeCategoryFilter === 'prophetic_titles'
+              ? 'bg-white text-amber-900 border-white'
+              : 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
+          }`}>
+            {activeCategoryFilter === 'prophetic_titles' ? (isBn ? '✓ খোলা রয়েছে' : 'Viewing') : (isBn ? 'খুলুন →' : 'View →')}
+          </span>
+        </div>
+      </div>
+
       {/* Category Summary Badges Grid */}
       <div className={`p-4 sm:p-5 rounded-3xl border shadow-md space-y-3 ${isDay ? 'bg-amber-50/60 border-amber-200/80 text-amber-950' : 'bg-[#18130a] border-amber-500/30 text-amber-100'}`}>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-black text-xs">📖</span>
             <h3 className="text-xs sm:text-sm font-extrabold">
@@ -1103,7 +1247,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             </h3>
           </div>
           <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-500">
-            {isBn ? 'মোট ১০৭ জন মর্যাদাবান সাহাবি ও সহিহ হাদিসের দলিল' : 'Total 107 Honored Companions'}
+            {isBn ? `মোট ${totalSahaba} জন মর্যাদাবান সাহাবি ও সহিহ হাদিসের দলিল` : `Total ${totalSahaba} Honored Companions`}
           </span>
         </div>
         <p className="text-xs leading-relaxed opacity-90">
@@ -1120,7 +1264,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
               <div
                 key={cat.key}
                 onClick={() => {
-                  setActiveCategoryFilter(cat.key);
+                  setActiveCategoryFilter(activeCategoryFilter === cat.key ? 'all' : cat.key);
                   if (soundEnabled) soundHaptics.playTap();
                 }}
                 className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-1 shadow-xs ${
@@ -1152,7 +1296,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isBn ? 'সাহাবিগণের নাম, উপাধি দিয়ে খুঁজুন...' : 'Search Sahaba by name, title...'}
+            placeholder={isBn ? 'সাহাবিগণের নাম, উপাধি (যেমন: যুশ শাহাদাতাইন, ফারায়েয, সাইফুল্লাহ) দিয়ে খুঁজুন...' : 'Search Sahaba by name, title...'}
             className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
               isDay ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500' : 'bg-[#07171c] border-teal-900/60 text-white focus:border-emerald-500'
             }`}
@@ -1166,8 +1310,189 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
+      {/* 40 PROPHETIC TITLES SPECIAL COLLECTION VIEW                                */}
+      {/* ========================================================================= */}
+      {activeCategoryFilter === 'prophetic_titles' && (
+        <div className={`p-5 rounded-3xl border shadow-xl space-y-5 ${
+          isDay ? 'bg-white border-amber-300 text-slate-900' : 'bg-[#0c1f24] border-amber-500/40 text-white'
+        }`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-amber-500/30">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-xl bg-amber-500 text-black flex items-center justify-center font-black">
+                👑
+              </span>
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-300">
+                  {isBn ? 'চল্লিশ সাহাবির উপাধি (বইয়ের ৪০ জন সাহাবি ক্রম অনুসারে)' : 'Forty Sahaba Titles (Complete In Order #1 to #40)'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-amber-200/80">
+                  {isBn ? 'যেকোনো কার্ডে চাপ দিয়ে সাহাবির পূর্ণাঙ্গ জীবনচরিত পড়ুন' : 'Tap any companion card to read full chapter'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setActiveCategoryFilter('all')}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              {isBn ? 'সূচিপত্রে ফিরুন ✕' : 'Back to TOC ✕'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {PROPHETIC_SAHABA_TITLES.map((pt) => {
+              const sahabaItem = SAHABA_DATABASE.find(s => s.id === pt.sahabaId) || SAHABA_DATABASE.find(s => s.id === 'zayd-and-usama');
+              return (
+                <div
+                  key={pt.no}
+                  onClick={() => sahabaItem && handleSelectSahaba(sahabaItem.id)}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2.5 hover:shadow-lg active:scale-98 ${
+                    isDay
+                      ? 'bg-gradient-to-b from-amber-50/50 via-white to-white border-amber-200 hover:border-amber-400 text-slate-900'
+                      : 'bg-gradient-to-b from-[#172224] via-[#0b1c20] to-[#07171a] border-amber-500/30 hover:border-amber-400 text-white'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-6 h-6 rounded-lg bg-amber-500 text-black flex items-center justify-center font-black text-xs shrink-0">
+                        {pt.no}
+                      </span>
+                      <h4 className="font-black text-sm text-emerald-800 dark:text-emerald-300 truncate">
+                        {pt.nameBn}
+                      </h4>
+                    </div>
+                    <span className="font-arabic text-xs font-bold text-amber-500 shrink-0">
+                      {pt.titleAr}
+                    </span>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-800 dark:text-amber-300 text-xs font-black">
+                    <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span>{pt.titleBn}</span>
+                  </div>
+
+                  <p className="text-xs opacity-90 line-clamp-2 leading-relaxed">
+                    {pt.reasonBn}
+                  </p>
+
+                  <div className="pt-2 border-t border-slate-200/50 dark:border-teal-900/50 flex items-center justify-between text-[11px]">
+                    <span className="opacity-75 truncate max-w-[200px]">
+                      📖 {pt.sourcesBn[0]}
+                    </span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                      <span>{isBn ? 'বিস্তারিত পড়ুন' : 'Read'}</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* FILTERED OR SEARCH RESULTS CARD GRID (WHEN SEARCHING OR FILTERING)         */}
+      {/* ========================================================================= */}
+      {(searchQuery.trim() !== '' || (activeCategoryFilter !== 'all' && activeCategoryFilter !== 'prophetic_titles')) && (
+        <div className={`p-5 rounded-3xl border shadow-xl space-y-4 ${
+          isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0b1f24] border-teal-900/50 text-white'
+        }`}>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-teal-900/40">
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400">
+                {searchQuery
+                  ? (isBn ? `অনুসন্ধানের ফলাফল (${filteredSahaba.length} জন)` : `Search Results (${filteredSahaba.length})`)
+                  : (isBn ? `ক্যাটাগরির ফলাফল (${filteredSahaba.length} জন)` : `Category Results (${filteredSahaba.length})`)}
+              </h3>
+              {searchQuery && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  "{searchQuery}" এর জন্য ফলাফল দেখানো হচ্ছে
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setActiveCategoryFilter('all');
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              {isBn ? 'ফিল্টার মুছুন' : 'Clear Filter'}
+            </button>
+          </div>
+
+          {filteredSahaba.length === 0 ? (
+            <div className="py-12 text-center space-y-2">
+              <span className="text-3xl">🔍</span>
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
+                {isBn ? 'কোনো সাহাবি পাওয়া যায়নি' : 'No companions found'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+              {filteredSahaba.map((sahaba) => {
+                const name = getSahabaName(sahaba, selectedLanguage);
+                const title = getSahabaTitle(sahaba, selectedLanguage);
+                const hasProphetic = isPropheticTitleHolder(sahaba.id);
+                const proProfile = getPropheticTitleProfile(sahaba.id);
+
+                return (
+                  <div
+                    key={sahaba.id}
+                    onClick={() => handleSelectSahaba(sahaba.id)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-98 ${
+                      isDay
+                        ? 'bg-white hover:bg-emerald-50/50 border-slate-200 hover:border-emerald-300 text-slate-900'
+                        : 'bg-[#07191d] hover:bg-[#0f2e36] border-teal-900/60 hover:border-emerald-500/50 text-white'
+                    }`}
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-mono font-bold text-amber-500">
+                          #{sahaba.rank}
+                        </span>
+                        <span className="font-arabic font-bold text-slate-400">
+                          {sahaba.nameAr}
+                        </span>
+                      </div>
+
+                      <h4 className="font-black text-sm text-emerald-800 dark:text-emerald-300">
+                        {name}
+                      </h4>
+
+                      {hasProphetic && proProfile && (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-black border border-amber-400/30">
+                          <span>👑</span>
+                          <span className="truncate">{proProfile.titleBn}</span>
+                        </div>
+                      )}
+
+                      <p className="text-xs opacity-80 line-clamp-2 leading-relaxed">
+                        {title}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200/50 dark:border-teal-900/40 flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                      <span>{getSahabaCategory(sahaba, selectedLanguage)}</span>
+                      <span className="flex items-center gap-0.5">
+                        <span>{isBn ? 'পড়ুন' : 'View'}</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* BOOK TABLE OF CONTENTS (TOC) — 8 CATEGORY BOXES WITH NUMBERED LISTS       */}
       {/* ========================================================================= */}
+      {activeCategoryFilter === 'all' && searchQuery.trim() === '' && (
       <div className={`p-5 rounded-3xl border shadow-xl space-y-6 ${isDay ? 'bg-white border-amber-200 text-slate-900' : 'bg-[#0b1f24] border-amber-500/30 text-white'}`}>
         <div className="flex items-center justify-between pb-3 border-b border-amber-500/20">
           <div className="flex items-center gap-2.5">
@@ -1186,6 +1511,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md hover:bg-emerald-500 transition cursor-pointer"
           >
             {isBn ? 'সকল সাহাবি দেখুন' : 'View All'}
+
           </button>
         </div>
 
@@ -1247,6 +1573,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           })}
         </div>
       </div>
+      )}
 
       {/* Classical Hayatus Sahaba Bibliography & Book Intro Modal */}
       {showBibliographyModal && (

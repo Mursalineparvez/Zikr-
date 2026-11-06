@@ -1030,6 +1030,154 @@ export const SAHABA_EN_DATABASE: Record<string, SahabaEnglishProfile> = {
 // Merge all 107 companions into SAHABA_EN_DATABASE
 Object.assign(SAHABA_EN_DATABASE, SAHABA_EN_ALL_107);
 
+// Prophetic title additions
+Object.assign(SAHABA_EN_DATABASE, {
+  'khuzaymah-ibn-thabit': {
+    name: 'Hazrat Khuzaymah ibn Thabit (RA)',
+    title: 'The Bearer of Two Testimonies (Dhudh-Shahadatayn)',
+    category: 'Ansar of Madinah (#108)',
+    birthAndDeath: 'Born: Madinah (Aws tribe) | Martyred: 37 AH (Battle of Siffin)',
+    summary: 'The sole companion whose single witness was decreed equal to two witnesses by Prophet Muhammad (PBUH) in the dispute over the horse purchase, earning the eternal title \'Dhudh-Shahadatayn\'.',
+    islamAcceptance: 'Accepted Islam upon the Prophet\'s migration to Madinah and broke the false idols of his tribe.',
+    keyVirtues: [
+      'Single testimony equated to two witnesses by Prophet Muhammad (PBUH).',
+      'The definitive witness whose parchment verified the last verses of Surah At-Tawbah during Quranic compilation.',
+      'Bearer of his tribe\'s battle standard at the Conquest of Makkah.'
+    ],
+    deathOrMartyrdom: 'Martyred in 37 AH at the Battle of Siffin fighting alongside Ali (RA).',
+    lessons: ['Total conviction in the truthfulness of the Messenger of Allah is the hallmark of supreme faith.'],
+    references: ['Hayatus Sahaba', 'Forty Sahaba Titles (Ariful Islam)', 'Sunan Abi Dawud', 'Siyar A\'lam al-Nubala']
+  },
+  'zayd-ibn-thabit': {
+    name: 'Hazrat Zayd ibn Thabit (RA)',
+    title: 'Most Competent in Inheritance Law (Afrahudhum) & Chief Scribe of Revelation',
+    category: 'Eminent Scholars & Jurists (#109)',
+    birthAndDeath: 'Born: Madinah | Passed: 45 AH Madinah',
+    summary: 'The chief scribe of revelation who memorized and recorded the Quran under the direct supervision of Prophet Muhammad (PBUH), mastered Syriac in 17 days, and served as chief editor for the first official compilation of the Quran.',
+    islamAcceptance: 'Accepted Islam at age 11 in Madinah with Banu Najjar.',
+    keyVirtues: [
+      'Chief official scribe of divine revelation (Katib al-Wahy).',
+      'Chairman of the Quran compilation committee under Caliphs Abu Bakr and Uthman.',
+      'Pronounced by the Prophet as the most expert in inheritance calculations (Fara\'idh).'
+    ],
+    deathOrMartyrdom: 'Passed away in Madinah in 45 AH; deeply mourned by all senior companions.',
+    lessons: ['Youth dedicated to Quranic scholarship preserves the legacy of revelation for all generations.'],
+    references: ['Hayatus Sahaba', 'Jami at-Tirmidhi', 'Forty Sahaba Titles']
+  },
+  'abdullah-ibn-amir-ibn-kurayz': {
+    name: 'Hazrat Abdullah ibn Amir ibn Kurayz (RA)',
+    title: 'The One Who Springs Water (Innahu Lamusqi) & Conqueror of Khurasan',
+    category: 'Commanders & Muhajir Warriors (#110)',
+    birthAndDeath: 'Born: 4 AH Makkah | Passed: 59 AH Makkah/Madinah',
+    summary: 'Blessed by the Prophet\'s tahnik in infancy where the Prophet foretold \'Innahu Lamusqi\' (he shall spring water); later served as governor of Basra and general whose campaigns brought Khurasan, Nishapur, Balkh, and Kabul under Islamic peace.',
+    islamAcceptance: 'Received the Prophet\'s tahnik at the Conquest of Makkah as a young child.',
+    keyVirtues: [
+      'Prophetic prophecy "Innahu Lamusqi" fulfilled wherever he dug wells in the desert.',
+      'Conqueror of Khurasan, Nishapur, Tus, Balkh, and Kabul under Caliph Uthman.',
+      'Created irrigation channels and fresh springs for pilgrims in Arafat and Madinah.'
+    ],
+    deathOrMartyrdom: 'Passed away in Makkah in 59 AH after completing Hajj.',
+    lessons: ['Public service and quenching the thirst of pilgrims brings everlasting reward.'],
+    references: ['Usud al-Ghabah', 'Siyar A\'lam al-Nubala', 'Futuh al-Buldan']
+  },
+  'thabit-ibn-qays': {
+    name: 'Hazrat Thabit ibn Qays (RA)',
+    title: 'Orator of the Prophet & Ansar (Khatib ar-Rasul)',
+    category: 'Ansar of Madinah (#111)',
+    birthAndDeath: 'Born: Madinah (Khazraj) | Martyred: 12 AH (Battle of Yamama)',
+    summary: 'The thunderous orator of Prophet Muhammad (PBUH) who answered Banu Tamim\'s challengers and caused them to embrace Islam; promised Paradise by the Prophet when weeping over Surah Al-Hujurat.',
+    islamAcceptance: 'Embraced Islam early in Madinah through Mus\'ab ibn Umayr.',
+    keyVirtues: [
+      'Official orator (Khatib) representing the Prophet and Islam.',
+      'Promised life of praise, martyrdom, and Paradise directly by Prophet Muhammad (PBUH).',
+      'Heroic standard-bearer martyred at Yamama.'
+    ],
+    deathOrMartyrdom: 'Martyred in 12 AH at the Battle of Yamama fighting Musaylimah the liar.',
+    lessons: ['Humility before Allah\'s commands unlocks divine favor and victory.'],
+    references: ['Sahih Muslim', 'Jami at-Tirmidhi', 'Al-Isabah']
+  },
+  'hanzala-ibn-abi-amir': {
+    name: 'Hazrat Hanzala ibn Abi Amir (RA)',
+    title: 'The One Washed by Angels (Ghasil al-Mala\'ikah)',
+    category: 'Early Believers & Martyrs (#112)',
+    birthAndDeath: 'Born: Madinah (Aws) | Martyred: 3 AH (Battle of Uhud)',
+    summary: 'The heroic companion who left his wedding bed on his morning of marriage without waiting for ghusl upon hearing the call to jihad, fought valiantly at Uhud, and was washed by angels between the heavens and earth.',
+    islamAcceptance: 'Accepted Islam wholeheartedly despite his father\'s hostility.',
+    keyVirtues: [
+      'Sole martyr whose body was washed with cloud-water in silver basins by angels.',
+      'Sacrificed marital intimacy in an instant upon hearing the call to defend truth.',
+      'Water droplets remained sparkling in his hair on the battlefield.'
+    ],
+    deathOrMartyrdom: 'Martyred at Uhud in 3 AH by Shaddad ibn al-Aswad.',
+    lessons: ['Nothing on earth surpasses devotion to Allah and His Messenger.'],
+    references: ['Sunan Ibn Majah', 'Musnad Ahmad', 'Al-Mustadrak']
+  },
+  'abdullah-dhul-bijadayn': {
+    name: 'Hazrat Abdullah Dhul-Bijadayn (RA)',
+    title: 'Possessor of Two Coarse Sheet Pieces (Dhul-Bijadayn)',
+    category: 'Early Believers & Martyrs (#113)',
+    birthAndDeath: 'Born: Muzaynah | Passed: 9 AH (Tabuk Expedition)',
+    summary: 'Stripped of all clothes and wealth by his uncle for accepting Islam, he cut his mother\'s single coarse sheet into two pieces to cover his modesty and journey to the Prophet; the Prophet descended into his grave at Tabuk with tears.',
+    islamAcceptance: 'Endured complete destitution and dispossession by his uncle to embrace Islam.',
+    keyVirtues: [
+      'Given the blessed title "Dhul-Bijadayn" by Prophet Muhammad (PBUH).',
+      'Buried by the hands of the Prophet, Abu Bakr, and Umar in the dead of night at Tabuk.',
+      'The Prophet prayed: "O Allah, I am pleased with him tonight, so be pleased with him!"'
+    ],
+    deathOrMartyrdom: 'Passed away of fever at Tabuk in 9 AH and buried by the Prophet personally.',
+    lessons: ['Sincere sacrifice of all worldly possessions for faith earns eternal divine pleasure.'],
+    references: ['Al-Isabah', 'Siyar A\'lam al-Nubala', 'Sirah Ibn Hisham']
+  },
+  'asma-bint-yazid': {
+    name: 'Hazrat Asma bint Yazid (RA)',
+    title: 'Spokeswoman of Women (Khatibat an-Nisa)',
+    category: 'Eminent Sahabiyyat (#114)',
+    birthAndDeath: 'Born: Madinah | Passed: 30 AH Damascus',
+    summary: 'The eloquent spokeswoman of Muslim women who presented women\'s spiritual rights before the Prophet, receiving timeless tidings of equal rewards for marital righteousness, and slew 9 Roman soldiers with a tent pole at Yarmouk.',
+    islamAcceptance: 'Pledged allegiance among the first Ansar women upon the Prophet\'s arrival.',
+    keyVirtues: [
+      'Appointed spokeswoman and orator representing all Muslim women.',
+      'Narrator of 81 authentic Hadiths from Prophet Muhammad (PBUH).',
+      'Fierce warrior who defeated 9 Roman soldiers at Yarmouk with a tent pole.'
+    ],
+    deathOrMartyrdom: 'Passed away in Damascus in 30 AH during the Caliphate of Uthman.',
+    lessons: ['Intellect, eloquence, and courage are honored virtues of Muslim women in Islam.'],
+    references: ['Sunan Abi Dawud', 'Jami at-Tirmidhi', 'Musnad Ahmad']
+  },
+  'zayd-ibn-harithah': {
+    name: 'Hazrat Zayd ibn Harithah (RA)',
+    title: 'Beloved of the Prophet (Hibbu Rasulillah) & Our Brother and Mawla',
+    category: 'Beloved Companions (#115)',
+    birthAndDeath: 'Born: 47 BH | Martyred: 8 AH (Battle of Mu\'tah)',
+    summary: 'The only companion named in the Holy Quran (Surah Al-Ahzab: 37), who chose remaining with the Prophet over returning with his family, and served as the commander of the vanguard at Mu\'tah.',
+    islamAcceptance: 'First among freed men and slaves to accept Islam on the very first day of prophethood.',
+    keyVirtues: [
+      'Only companion explicitly mentioned by name in the Holy Quran (33:37).',
+      'First appointed commander at the Battle of Mu\'tah.',
+      'Declared "Our brother and our Mawla" and beloved of the Prophet.'
+    ],
+    deathOrMartyrdom: 'Martyred at Mu\'tah in 8 AH under enemy spears.',
+    lessons: ['Loving the Messenger of Allah above all worldly kinship brings ultimate honor.'],
+    references: ['Sahih al-Bukhari', 'Sahih Muslim', 'Forty Sahaba Titles']
+  },
+  'usama-ibn-zayd': {
+    name: 'Hazrat Usama ibn Zayd (RA)',
+    title: 'Beloved Son of the Beloved (Al-Hibbu Ibnul Hibb)',
+    category: 'Beloved Companions (#116)',
+    birthAndDeath: 'Born: 7 BH Makkah | Passed: 54 AH Madinah',
+    summary: 'The beloved son of Zayd, loved like a grandson by Prophet Muhammad (PBUH), appointed commander-in-chief of the Roman expedition at age 17.',
+    islamAcceptance: 'Born and raised in the pure light of Islam in Makkah.',
+    keyVirtues: [
+      'Named "Al-Hibbu Ibnul Hibb" by Prophet Muhammad (PBUH).',
+      'Supreme general of the expedition against the Roman Empire at age 17.',
+      'Accompanied on foot by Caliph Abu Bakr (RA) out of immense respect.'
+    ],
+    deathOrMartyrdom: 'Passed away in 54 AH near Madinah.',
+    lessons: ['Virtue and leadership are determined by character and faith, not age.'],
+    references: ['Sahih al-Bukhari', 'Sahih Muslim', 'Forty Sahaba Titles']
+  }
+});
+
 // Add aliases for legacy keys
 export const SAHABA_ALIAS_KEYS: Record<string, string> = {
   'uthman-ibn-affan': 'uthman-bin-affan',
