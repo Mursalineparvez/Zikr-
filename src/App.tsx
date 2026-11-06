@@ -2057,6 +2057,7 @@ export default function App() {
                 onExportPdf={handleExportPdf}
                 onOpenSettingsModal={() => handleOpenProfileModal('settings')}
                 onNavigateToQuran={() => handleNavigate('quran')}
+                onNavigateToNamaj={() => handleNavigate('namaj')}
                 initialSubSection={
                   activeModule === 'seerat_un_nabi'
                     ? 'seerat_un_nabi'

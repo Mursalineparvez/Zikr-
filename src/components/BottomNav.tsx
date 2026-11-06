@@ -33,7 +33,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   // Modules that map to the "আরও" (Other / Hub) tab
   const otherModules: NavModule[] = [
     'other',
-    'quran',
+    'namaj',
     'dua',
     'hadith',
     'kitab',
@@ -52,7 +52,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   // 5 Bottom Navigation items matching user reference screenshot
   // 1. Zikr (Home icon, green when active)
-  // 2. Namaz (Prayer Guide & rules)
+  // 2. Al-Quran (BookOpen icon)
   // 3. Salat Time (Prayer times schedule)
   // 4. Aamal Tracker (Report/checklist icon)
   // 5. Other (Three dots icon with label "আরও")
@@ -71,30 +71,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       isActive: activeModule === 'zikir_counter',
     },
     {
-      id: 'namaj' as NavModule,
-      label: selectedLanguage === 'bn' ? 'নামাজ' : (NAV_TRANSLATIONS.namaj?.[selectedLanguage] || 'Namaz'),
+      id: 'quran' as NavModule,
+      label: selectedLanguage === 'bn' ? 'আল-কোরআন' : (NAV_TRANSLATIONS.quran[selectedLanguage] || 'Quran'),
       icon: (isActive: boolean) => (
-        // Clean prayer / mosque / book icon
-        <svg
-          viewBox="0 0 24 24"
+        <BookOpen
           className={`w-[22px] h-[22px] sm:w-6 sm:h-6 transition-all duration-200 ${
-            isActive ? 'text-[#006A4E] stroke-[#006A4E] stroke-[2.2]' : 'text-gray-500 dark:text-gray-400 stroke-[1.8]'
+            isActive ? 'text-[#006A4E] stroke-[2.3]' : 'text-gray-500 dark:text-gray-400 stroke-[1.8]'
           }`}
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          {/* Mosque Dome and Minaret Silhouette */}
-          <path d="M3 21h18" />
-          <path d="M5 21V10l3-2v13" />
-          <path d="M19 21V10l-3-2v13" />
-          <path d="M8 21v-7a4 4 0 0 1 8 0v7" />
-          <path d="M12 4c-1.5 2-2.5 3.5-2.5 5h5c0-1.5-1-3-2.5-5z" />
-          <path d="M12 2v2" />
-        </svg>
+        />
       ),
-      isActive: activeModule === 'namaj',
+      isActive: activeModule === 'quran',
     },
     {
       id: 'salat_time' as NavModule,

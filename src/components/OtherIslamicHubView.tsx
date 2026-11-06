@@ -76,6 +76,7 @@ interface OtherIslamicHubViewProps {
   onImportBackupJson?: (file: File) => void;
   onOpenSettingsModal?: () => void;
   onNavigateToQuran?: () => void;
+  onNavigateToNamaj?: () => void;
 }
 
 export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
@@ -95,6 +96,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   onImportBackupJson,
   onOpenSettingsModal,
   onNavigateToQuran,
+  onNavigateToNamaj,
 }) => {
   const isDay = themeMode === 'day';
   const [activeSub, setActiveSub] = useState<OtherSubSection>(initialSubSection);
@@ -112,19 +114,19 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [activeSub]);
 
   const hubItems = [
-    ...(onNavigateToQuran
+    ...(onNavigateToNamaj
       ? [
           {
-            id: 'quran' as any,
-            title: selectedLanguage === 'bn' ? 'আল-কোরআন (পবিত্র কোরআন শরিফ)' : 'The Holy Quran',
-            arabic: 'القرآن الكريم',
+            id: 'namaj' as any,
+            title: selectedLanguage === 'bn' ? 'নামাজ শিক্ষা ও পূর্ণাঙ্গ গাইড' : 'Namaz Guide & Rules',
+            arabic: 'تعليم الصلاة والأحكام',
             desc: selectedLanguage === 'bn'
-              ? '১১৪টি সুরার পূর্ণাঙ্গ আরবী তিলাওয়াত, বাংলা অর্থ, শানে নুযূল, সুরার বিষয়ভিত্তিক ইনসাইট ও অডিও'
-              : 'Complete 114 Surahs with Arabic recitation, authentic translation, themes and audio.',
-            icon: <span className="text-2xl">📖</span>,
-            color: 'from-emerald-600/30 via-teal-500/20 to-emerald-500/10 border-emerald-500/50',
-            badge: selectedLanguage === 'bn' ? '১১৪ সুরা' : '114 Surahs',
-            action: onNavigateToQuran,
+              ? '৫ ওয়াক্ত ফরজ ও নফল নামাজের নিয়ম, ১০টি ধারাবাহিক ধাপ, সকল বৈঠকের দোয়া ও কাজা ক্যালকুলেটর'
+              : 'Complete prayer rules, 5 daily fard/nafl rakats, step-by-step procedure and qaza counter.',
+            icon: <span className="text-2xl">🕌</span>,
+            color: 'from-emerald-700/30 via-teal-600/20 to-emerald-500/10 border-emerald-500/50',
+            badge: selectedLanguage === 'bn' ? 'নামাজ শিক্ষা' : 'Prayer Guide',
+            action: onNavigateToNamaj,
           },
         ]
       : []),
