@@ -75,6 +75,7 @@ interface OtherIslamicHubViewProps {
   onExportBackupJson?: () => void;
   onImportBackupJson?: (file: File) => void;
   onOpenSettingsModal?: () => void;
+  onNavigateToQuran?: () => void;
 }
 
 export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
@@ -93,6 +94,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   onExportBackupJson,
   onImportBackupJson,
   onOpenSettingsModal,
+  onNavigateToQuran,
 }) => {
   const isDay = themeMode === 'day';
   const [activeSub, setActiveSub] = useState<OtherSubSection>(initialSubSection);
@@ -110,6 +112,22 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [activeSub]);
 
   const hubItems = [
+    ...(onNavigateToQuran
+      ? [
+          {
+            id: 'quran' as any,
+            title: selectedLanguage === 'bn' ? 'আল-কোরআন (পবিত্র কোরআন শরিফ)' : 'The Holy Quran',
+            arabic: 'القرآن الكريم',
+            desc: selectedLanguage === 'bn'
+              ? '১১৪টি সুরার পূর্ণাঙ্গ আরবী তিলাওয়াত, বাংলা অর্থ, শানে নুযূল, সুরার বিষয়ভিত্তিক ইনসাইট ও অডিও'
+              : 'Complete 114 Surahs with Arabic recitation, authentic translation, themes and audio.',
+            icon: <span className="text-2xl">📖</span>,
+            color: 'from-emerald-600/30 via-teal-500/20 to-emerald-500/10 border-emerald-500/50',
+            badge: selectedLanguage === 'bn' ? '১১৪ সুরা' : '114 Surahs',
+            action: onNavigateToQuran,
+          },
+        ]
+      : []),
     {
       id: 'seerat_un_nabi' as OtherSubSection,
       title: NAV_TRANSLATIONS.seerat_un_nabi[selectedLanguage] || 'সিরাতুন নবী (সা.)',
@@ -408,7 +426,13 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                 key={item.id}
                 onPointerEnter={() => prefetchView(item.id)}
                 onTouchStart={() => prefetchView(item.id)}
-                onClick={() => handleSelectSub(item.id)}
+                onClick={() => {
+                  if ((item as any).action) {
+                    (item as any).action();
+                  } else {
+                    handleSelectSub(item.id);
+                  }
+                }}
                 className={`p-5 rounded-3xl border shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between gap-4 ${
                   isDay
                     ? 'bg-white border-slate-200 hover:border-emerald-400 hover:shadow-xl'

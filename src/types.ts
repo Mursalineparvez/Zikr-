@@ -76,7 +76,8 @@ export type NavModule =
   | 'history_timeline'
   | 'hayatus_sahaba'
   | 'islamic_history_wars'
-  | 'seerat_un_nabi';
+  | 'seerat_un_nabi'
+  | 'namaj';
 
 
 export type DuaCategory =

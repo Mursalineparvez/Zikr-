@@ -9,6 +9,7 @@ import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES, getTargetForZikrMode } from './util
 import { soundHaptics } from './utils/audioHaptics';
 import { NAV_TRANSLATIONS } from './utils/navTranslations';
 import { Header } from './components/Header';
+import { BottomNav } from './components/BottomNav';
 import { ZikirCounterView } from './components/ZikirCounterView';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
 import type { OtherSubSection } from './components/OtherIslamicHubView';
@@ -17,6 +18,7 @@ import { prefetchView, warmupViewsIdle } from './utils/viewPreloader';
 // Code-split heavy non-initial views and modals to make initial app launch instantaneous
 const QuranView = React.lazy(() => import('./components/QuranView').then((m) => ({ default: m.QuranView })));
 const SalatTimeView = React.lazy(() => import('./components/SalatTimeView').then((m) => ({ default: m.SalatTimeView })));
+const NamajView = React.lazy(() => import('./components/NamajView').then((m) => ({ default: m.NamajView })));
 const AamalTrackerView = React.lazy(() => import('./components/AamalTrackerView').then((m) => ({ default: m.AamalTrackerView })));
 const OtherIslamicHubView = React.lazy(() => import('./components/OtherIslamicHubView').then((m) => ({ default: m.OtherIslamicHubView })));
 const ZikrModal = React.lazy(() => import('./components/ZikrModal').then((m) => ({ default: m.ZikrModal })));
@@ -1898,62 +1900,62 @@ export default function App() {
         onOpenProfile={(tab = 'profile') => handleOpenProfileModal(tab)}
       />
 
-      {/* Top Horizontal Scrollable Category Pills Navigation matching reference screenshot */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 py-2.5 px-3 sm:px-6 sticky top-[82px] z-30 shadow-2xs">
+      {/* Top Horizontal Scrollable Category Pills Navigation */}
+      <div className="bg-white/90 dark:bg-[#081e22]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 py-2.5 px-3 sm:px-6 sticky top-[82px] z-30 shadow-2xs">
         <div className="max-w-5xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5">
-          {/* Tab 1: Zikr Counter */}
+          {/* Tab 1: Zikr */}
           <button
             type="button"
             onClick={() => handleNavigate('zikir_counter')}
-            className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               activeModule === 'zikir_counter'
                 ? 'bg-[#006A4E] text-white shadow-md'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                : 'bg-white dark:bg-[#0b2428] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
             }`}
           >
-            <span>🔍</span>
-            <span>{NAV_TRANSLATIONS.zikir_counter[selectedLanguage] || 'জিকির কাউন্টার'}</span>
+            <span>📿</span>
+            <span>{NAV_TRANSLATIONS.zikir_counter[selectedLanguage] || 'জিকির'}</span>
             <span
-              className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-bold ${
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                 activeModule === 'zikir_counter'
                   ? 'bg-[#004D38] text-emerald-200'
-                  : 'bg-slate-100 text-slate-600 border border-slate-200'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
               }`}
             >
-              {dailyTotal || masterGrandTotal || 1559}
+              {dailyTotal || masterGrandTotal || 0}
             </span>
           </button>
 
-          {/* Tab 2: Al-Quran */}
+          {/* Tab 2: Namaz (Prayer Guide & rules) */}
           <button
             type="button"
-            onPointerEnter={() => prefetchView('quran')}
-            onTouchStart={() => prefetchView('quran')}
-            onClick={() => handleNavigate('quran')}
-            className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
-              activeModule === 'quran'
+            onPointerEnter={() => prefetchView('salat_time')}
+            onTouchStart={() => prefetchView('salat_time')}
+            onClick={() => handleNavigate('namaj')}
+            className={`px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+              activeModule === 'namaj'
                 ? 'bg-[#006A4E] text-white shadow-md'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                : 'bg-white dark:bg-[#0b2428] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
             }`}
           >
-            <span>📖</span>
-            <span>{NAV_TRANSLATIONS.quran[selectedLanguage] || 'আল-কোরআন'}</span>
+            <span>🕌</span>
+            <span>{NAV_TRANSLATIONS.namaj?.[selectedLanguage] || 'নামাজ'}</span>
           </button>
 
-          {/* Tab 3: Namaz Time */}
+          {/* Tab 3: Salat Time */}
           <button
             type="button"
             onPointerEnter={() => prefetchView('salat_time')}
             onTouchStart={() => prefetchView('salat_time')}
             onClick={() => handleNavigate('salat_time')}
-            className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               activeModule === 'salat_time'
                 ? 'bg-[#006A4E] text-white shadow-md'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                : 'bg-white dark:bg-[#0b2428] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
             }`}
           >
-            <span>🕌</span>
-            <span>{NAV_TRANSLATIONS.salat_time[selectedLanguage] || 'নামাজের সময়'}</span>
+            <span>⏰</span>
+            <span>{NAV_TRANSLATIONS.salat_time[selectedLanguage] || 'সালাত টাইম'}</span>
           </button>
 
           {/* Tab 4: Aamal Tracker */}
@@ -1962,17 +1964,33 @@ export default function App() {
             onPointerEnter={() => prefetchView('aamal_tracker')}
             onTouchStart={() => prefetchView('aamal_tracker')}
             onClick={() => handleNavigate('aamal_tracker')}
-            className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               activeModule === 'aamal_tracker'
                 ? 'bg-[#006A4E] text-white shadow-md'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                : 'bg-white dark:bg-[#0b2428] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
             }`}
           >
-            <span>🕋</span>
+            <span>📋</span>
             <span>{NAV_TRANSLATIONS.aamal_tracker[selectedLanguage] || 'আমল ট্র্যাকার'}</span>
           </button>
 
-          {/* Tab 5: Other Islamic Hub */}
+          {/* Tab 5: Al-Quran */}
+          <button
+            type="button"
+            onPointerEnter={() => prefetchView('quran')}
+            onTouchStart={() => prefetchView('quran')}
+            onClick={() => handleNavigate('quran')}
+            className={`px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+              activeModule === 'quran'
+                ? 'bg-[#006A4E] text-white shadow-md'
+                : 'bg-white dark:bg-[#0b2428] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <span>📖</span>
+            <span>{NAV_TRANSLATIONS.quran[selectedLanguage] || 'আল-কোরআন'}</span>
+          </button>
+
+          {/* Tab 6: Other Hub */}
           <button
             type="button"
             onPointerEnter={() => {
@@ -1988,14 +2006,14 @@ export default function App() {
               prefetchView('islamic_history_wars');
             }}
             onClick={() => handleNavigate('other')}
-            className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
               isOtherActive
                 ? 'bg-[#006A4E] text-white shadow-md'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                : 'bg-white dark:bg-[#0b2428] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
             }`}
           >
             <span>📚</span>
-            <span>{NAV_TRANSLATIONS.other[selectedLanguage] || 'অন্যান্য (Other)'}</span>
+            <span>{NAV_TRANSLATIONS.other[selectedLanguage] || 'আরও'}</span>
           </button>
         </div>
       </div>
@@ -2015,7 +2033,7 @@ export default function App() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28 sm:pb-24 space-y-6">
 
         {/* Offline Status Reassurance Banner */}
         {!isOnline && (
@@ -2110,6 +2128,20 @@ export default function App() {
           </div>
         )}
 
+        {/* 3.1 NAMAJ VIEW (NAMAZ GUIDE, 5 PRAYERS BREAKDOWN, STEP-BY-STEP, DUAS & QAZA CALCULATOR) */}
+        {activeModule === 'namaj' && (
+          <div key="namaj" className="animate-view-entrance">
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+              <NamajView
+                soundEnabled={settings.soundEnabled}
+                themeMode={settings.themeMode}
+                selectedLanguage={selectedLanguage}
+                onNavigateToSalatTime={() => handleNavigate('salat_time')}
+              />
+            </React.Suspense>
+          </div>
+        )}
+
         {/* 4. AAMAL TRACKER VIEW */}
         {activeModule === 'aamal_tracker' && (
           <div key="aamal_tracker" className="animate-view-entrance">
@@ -2142,6 +2174,7 @@ export default function App() {
                 onRestoreDefaults={handleRestoreDefaults}
                 onExportPdf={handleExportPdf}
                 onOpenSettingsModal={() => handleOpenProfileModal('settings')}
+                onNavigateToQuran={() => handleNavigate('quran')}
                 initialSubSection={
                   activeModule === 'seerat_un_nabi'
                     ? 'seerat_un_nabi'
@@ -2221,20 +2254,18 @@ export default function App() {
         activeModule={activeModule}
       />
 
-      {/* Floating Add Zikr Button (Only on Zikir Counter module) */}
-      {activeModule === 'zikir_counter' && (
-        <button
-          onClick={() => {
-            setZikrToEdit(null);
-            setIsZikrModalOpen(true);
-          }}
-          className="fixed bottom-6 right-6 z-40 w-13 h-13 rounded-2xl active:scale-95 text-white shadow-2xl flex items-center justify-center transition-all cursor-pointer bg-[#006A4E] hover:bg-[#005439] border border-emerald-400/30"
-          aria-label="Add New Zikr"
-          title="Add New Custom Zikr"
-        >
-          <Plus className="w-7 h-7 stroke-[3]" />
-        </button>
-      )}
+      {/* Bottom Menu Bar matching reference screenshot */}
+      <BottomNav
+        activeModule={activeModule}
+        onModuleChange={handleNavigate}
+        onOpenAddModal={() => {
+          setZikrToEdit(null);
+          setIsZikrModalOpen(true);
+        }}
+        themeMode={settings.themeMode}
+        selectedLanguage={selectedLanguage}
+        counterBadge={dailyTotal || masterGrandTotal || 0}
+      />
 
       <React.Suspense fallback={null}>
         {/* Add / Edit Zikr Modal */}
