@@ -1868,6 +1868,7 @@ export default function App() {
     'tablig',
     'allah_names',
     'history_timeline',
+    'araber_gotro',
   ];
   const isOtherActive = otherModules.includes(activeModule);
 
@@ -2085,6 +2086,8 @@ export default function App() {
                     ? 'allah_names'
                     : activeModule === 'history_timeline'
                     ? 'history_timeline'
+                    : activeModule === 'araber_gotro'
+                    ? 'arober_gotro'
                     : 'hub'
                 }
               />

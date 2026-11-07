@@ -77,6 +77,7 @@ export type NavModule =
   | 'hayatus_sahaba'
   | 'islamic_history_wars'
   | 'seerat_un_nabi'
+  | 'araber_gotro'
   | 'namaj';
 
 

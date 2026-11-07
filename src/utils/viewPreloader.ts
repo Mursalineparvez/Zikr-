@@ -16,6 +16,7 @@ type PreloadableView =
   | 'seerat_un_nabi'
   | 'history_timeline'
   | 'arabian_map'
+  | 'arober_gotro'
   | 'dua'
   | 'hadith'
   | 'kitab'
@@ -37,6 +38,7 @@ const viewLoaders: Record<PreloadableView, () => Promise<any>> = {
   seerat_un_nabi: () => import('../components/SeeratUnNabiView'),
   history_timeline: () => import('../components/HistoryTimelineView'),
   arabian_map: () => import('../components/ArabianIllustratedMapView'),
+  arober_gotro: () => import('../components/AraberGotroByaktittoView'),
   dua: () => import('../components/DuaView'),
   hadith: () => import('../components/HadithView'),
   kitab: () => import('../components/KitabView'),

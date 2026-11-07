@@ -27,6 +27,7 @@ const ArabianIllustratedMapView = React.lazy(() => import('./ArabianIllustratedM
 const IslamicHistoryWarsView = React.lazy(() => import('./IslamicHistoryWarsView').then((m) => ({ default: m.IslamicHistoryWarsView })));
 const HayatusSahabaView = React.lazy(() => import('./HayatusSahabaView').then((m) => ({ default: m.HayatusSahabaView })));
 const SeeratUnNabiView = React.lazy(() => import('./SeeratUnNabiView').then((m) => ({ default: m.SeeratUnNabiView })));
+const AraberGotroByaktittoView = React.lazy(() => import('./AraberGotroByaktittoView').then((m) => ({ default: m.AraberGotroByaktittoView })));
 
 const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
   <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
@@ -47,6 +48,7 @@ export type OtherSubSection =
   | 'hayatus_sahaba'
   | 'islamic_history_wars'
   | 'arabian_map'
+  | 'arober_gotro'
   | 'dua'
   | 'hadith'
   | 'kitab'
@@ -149,6 +151,17 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       icon: <span className="text-2xl">📜</span>,
       color: 'from-emerald-500/20 via-amber-500/15 to-teal-500/10 border-emerald-500/40',
       badge: selectedLanguage === 'bn' ? '১০৭+ সাহাবি' : '107+ Sahaba',
+    },
+    {
+      id: 'arober_gotro' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'আরবের গোত্র ও ব্যক্তিত্ব' : 'Arab Tribes & Personalities',
+      arabic: 'قبائل وشخصيات العرب',
+      desc: selectedLanguage === 'bn'
+        ? 'আবদুল্লাহ ইয়াছিন শরীফী রচিত বইয়ের আলোকে মক্কা, মদিনা ও আরবের ৪০টি গোত্রের বংশপরিচয়, পবিত্র কাবার দায়িত্ব বণ্টন, বংশধারা ও বিশিষ্ট ব্যক্তিবর্গ'
+        : 'Complete study of Arabian tribes, Makkah & Madinah clans, official duties, genealogy trees, and all 40 clans with Sahaba & citations.',
+      icon: <span className="text-2xl">🛡️</span>,
+      color: 'from-amber-600/25 via-emerald-600/20 to-teal-500/10 border-amber-500/40',
+      badge: selectedLanguage === 'bn' ? 'বিশেষ আকর গ্রন্থ' : 'Special Book',
     },
     {
       id: 'islamic_history_wars' as OtherSubSection,
@@ -283,6 +296,22 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <span>📜</span>
           <span>{selectedLanguage === 'bn' ? 'হায়াতুস সাহাবা' : (selectedLanguage === 'ar' ? 'حياة الصحابة' : (selectedLanguage === 'ur' ? 'حیات الصحابہ' : 'Sahaba'))}</span>
+        </button>
+
+        <button
+          onPointerEnter={() => prefetchView('arober_gotro')}
+          onTouchStart={() => prefetchView('arober_gotro')}
+          onClick={() => handleSelectSub('arober_gotro')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'arober_gotro'
+              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>🛡️</span>
+          <span>{selectedLanguage === 'bn' ? 'আরবের গোত্র ও ব্যক্তিত্ব' : 'Arab Tribes'}</span>
         </button>
 
         <button
@@ -508,6 +537,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             themeMode={themeMode}
             selectedLanguage={selectedLanguage}
             soundEnabled={soundEnabled}
+          />
+        )}
+
+        {/* Sub-view: Araber Gotro O Byaktitto */}
+        {activeSub === 'arober_gotro' && (
+          <AraberGotroByaktittoView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+            onBack={() => setActiveSub('hub')}
           />
         )}
 
