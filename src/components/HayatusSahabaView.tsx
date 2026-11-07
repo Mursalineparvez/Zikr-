@@ -1185,58 +1185,6 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         </p>
       </div>
 
-      {/* Special 40 Sahaba Prophetic Titles Hero Banner (Based on "চল্লিশ সাহাবির উপাধি" PDF Book) */}
-      <div
-        onClick={() => {
-          setActiveCategoryFilter(activeCategoryFilter === 'prophetic_titles' ? 'all' : 'prophetic_titles');
-          if (soundEnabled) soundHaptics.playTap();
-        }}
-        className={`p-4 sm:p-5 rounded-3xl border transition-all cursor-pointer shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 relative overflow-hidden group ${
-          activeCategoryFilter === 'prophetic_titles'
-            ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-yellow-600 text-white border-amber-400 ring-2 ring-amber-400/50'
-            : isDay
-            ? 'bg-gradient-to-r from-amber-100/90 via-yellow-50 to-amber-100 border-amber-300 hover:border-amber-400 text-amber-950'
-            : 'bg-gradient-to-r from-[#211b0b] via-[#2d230d] to-[#1c1608] border-amber-500/50 hover:border-amber-400 text-amber-200'
-        }`}
-      >
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/25 border border-amber-400/40 flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform">
-            👑
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-500 text-black shadow-xs">
-                {isBn ? 'বিশেষ সংকলন' : 'Special Collection'}
-              </span>
-              <span className="text-xs font-black text-amber-700 dark:text-amber-300">
-                চল্লিশ সাহাবির উপাধি (বই)
-              </span>
-            </div>
-            <h3 className="text-sm sm:text-base font-black mt-1 text-amber-950 dark:text-amber-200">
-              {isBn ? 'রাসূলুল্লাহ (সা.)-এর দেয়া সাহাবীদের উপাধি (৪০ জন সাহাবি)' : 'Prophetically Titled Companions (40 Companions)'}
-            </h3>
-            <p className="text-[11px] opacity-85 mt-0.5 max-w-xl">
-              {isBn
-                ? 'আরিফুল ইসলাম রচিত "চল্লিশ সাহাবির উপাধি" বইয়ের সম্পূর্ণ ৪০ জন সাহাবির বিশেষ নববী উপাধি, পটভূমি ও সহিহ হাদিসের দলিল।'
-                : 'All 40 companions with their Prophet-given honorifics, background context, and authentic Hadith evidence.'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-          <span className="text-xs font-black px-3.5 py-1.5 rounded-xl bg-amber-500 text-black shadow-xs">
-            ৪০ জন
-          </span>
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition ${
-            activeCategoryFilter === 'prophetic_titles'
-              ? 'bg-white text-amber-900 border-white'
-              : 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30'
-          }`}>
-            {activeCategoryFilter === 'prophetic_titles' ? (isBn ? '✓ খোলা রয়েছে' : 'Viewing') : (isBn ? 'খুলুন →' : 'View →')}
-          </span>
-        </div>
-      </div>
-
       {/* Category Summary Badges Grid */}
       <div className={`p-4 sm:p-5 rounded-3xl border shadow-md space-y-3 ${isDay ? 'bg-amber-50/60 border-amber-200/80 text-amber-950' : 'bg-[#18130a] border-amber-500/30 text-amber-100'}`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
