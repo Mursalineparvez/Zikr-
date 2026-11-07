@@ -232,7 +232,30 @@ const BENGALI_AYAH_PRONUNCIATION_MAP: Record<string, string> = {
   'innal-insāna lafī khusr': 'ইন্নাল ইনসানা লাফী খুসর',
   'innal-insana lafi khusr': 'ইন্নাল ইনসানা লাফী খুসর',
 
-  // Surah Al-Fajr (89:27 - 89:30)
+  // Surah Al-Fajr (89:1 - 89:30)
+  'wal-fajr': 'ওয়াল-ফাজ্র্',
+  'wal-fajri': 'ওয়াল-ফাজ্র্',
+  "walayālin 'ashr": "ওয়া লাইয়ালিন 'আশর",
+  "walayālin 'ashrin": "ওয়া লাইয়ালিন 'আশরিন",
+  "walayalin 'ashrin": "ওয়া লাইয়ালিন 'আশরিন",
+  "walayālin ʿashr": "ওয়া লাইয়ালিন 'আশর",
+  "walayālin ʿashrin": "ওয়া লাইয়ালিন 'আশরিন",
+  "wash-shaf'i wal-watr": "ওয়াশ-শাফ'ই ওয়াল-ওয়াতর",
+  "wash-shafʿi wal-watr": "ওয়াশ-শাফ'ই ওয়াল-ওয়াতর",
+  "wal-layli idhā yasr": "ওয়াল-লাইলি ইযা ইয়াসর",
+  "wal-layli idha yasr": "ওয়াল-লাইলি ইযা ইয়াসর",
+  "hal fī dhālika qasamul lidhī ḥijr": "হাল ফী যালিকা ক্বাসামুল লিযী হিজর",
+  "hal fi dhalika qasamul lidhi hijr": "হাল ফী যালিকা ক্বাসামুল লিযী হিজর",
+  "alam tara kayfa fa'ala rabbuka bi-'ād": "আলাম তারা কাইফা ফা'আলা রাব্বুকা বি'আদ",
+  "alam tara kayfa faʿala rabbuka bi-ʿād": "আলাম তারা কাইফা ফা'আলা রাব্বুকা বি'আদ",
+  "iramadhātil-'imād": "ইরামা যাতিল 'ইমাদ",
+  "irama dhātil-ʿimād": "ইরামা যাতিল 'ইমাদ",
+  "allatī lam yukhlaq mithluhā fil-bilād": "আল্লাতী লাম ইউখলাক্ব মিছলুহা ফিল বিলাদ",
+  "allati lam yukhlaq mithluha fil-bilad": "আল্লাতী লাম ইউখলাক্ব মিছলুহা ফিল বিলাদ",
+  "wa thamūdal-ladhīna jābūṣ-ṣakhra bil-wād": "ওয়া ছামূদাল্লাযীনা জাবুছ সাখরা বিল ওয়াদ",
+  "wa thamudal-ladhina jabus-sakhra bil-wad": "ওয়া ছামূদাল্লাযীনা জাবুছ সাখরা বিল ওয়াদ",
+  "wa fir'awna dhil-awtād": "ওয়া ফির'আওনা যিল আওতাদ",
+  "wa firʿawna dhil-awtād": "ওয়া ফির'আওনা যিল আওতাদ",
   "yā ayyatuhan-nafsul-muṭma'innah": "ইয়া আইয়্যাতুহান নাফসুল মুত্বমা'ইন্নাহ",
   "irji'ī ilā rabbiki rāḍiyatam-marḍiyyah": "ইরজি'ঈ ইলা রাব্বিকি রাদিয়াতাম মারদিয়্যাহ",
   "fadkhulī fī 'ibādī": "ফাদখুলী ফী 'ইবাদী",
@@ -575,9 +598,130 @@ export function sanitizeBengaliTransliteration(text: string): string {
   return s;
 }
 
+// Arabic to Bengali character and diacritics mapping for direct Arabic script conversion
+const ARABIC_DIRECT_CHAR_MAP: Record<string, string> = {
+  'ا': 'আ', 'أ': 'আ', 'إ': 'ই', 'آ': 'আ', 'ء': 'আ', 'ئ': 'ই', 'ؤ': 'উ', 'ٱ': 'আ',
+  'ب': 'ব', 'ت': 'ত', 'ث': 'ছ', 'ج': 'জ', 'ح': 'হ', 'خ': 'খ', 'د': 'দ', 'ذ': 'য',
+  'ر': 'র', 'ز': 'য', 'س': 'স', 'ش': 'শ', 'ص': 'ছ', 'ض': 'দ', 'ط': 'ত্ব', 'ظ': 'য',
+  'ع': '‘আ', 'غ': 'গ', 'ف': 'ফ', 'ق': 'ক্ব', 'ك': 'ক', 'ل': 'ল', 'م': 'ম', 'ن': 'ন',
+  'ه': 'হ', 'و': 'ওয়া', 'ي': 'ইয়া', 'ى': 'আ', 'ة': 'হ'
+};
+
+const ARABIC_DIRECT_VOWELS: Record<string, string> = {
+  '\u064E': 'া',   // Fatha
+  '\u0650': 'ি',   // Kasra
+  '\u064F': 'ু',   // Damma
+  '\u0652': '্',   // Sukun
+  '\u064B': 'ান',  // Tanween Fath
+  '\u064D': 'িন',  // Tanween Kasr
+  '\u064C': 'ুন',  // Tanween Damm
+  '\u0670': 'া',   // Dagger Alif
+  '\u0653': 'া',   // Maddah
+};
+
+export function convertArabicWordToBengali(word: string): string {
+  if (!word) return '';
+  const cleanKey = word.replace(/[^\u0600-\u06FF]/g, '');
+  if (cleanKey === 'وَٱلْفَجْرِ' || cleanKey === 'وَالْفَجْرِ') return 'ওয়াল-ফাজ্র্';
+  if (cleanKey === 'وَلَيَالٍ') return 'ওয়া লাইয়ালিন';
+  if (cleanKey === 'عَشْرٍ' || cleanKey === 'عَشْرٍۢ') return '‘আশরিন';
+  if (cleanKey === 'وَٱلشَّفْعِ' || cleanKey === 'وَالشَّفْعِ') return 'ওয়াশ-শাফ‘ই';
+  if (cleanKey === 'وَٱلْوَتْرِ' || cleanKey === 'وَالْوَتْرِ') return 'ওয়াল-ওয়াতর';
+  if (cleanKey === 'وَٱلَّيْلِ' || cleanKey === 'وَاللَّيْلِ') return 'ওয়াল-লাইলি';
+  if (cleanKey === 'إِذَا') return 'ইযা';
+  if (cleanKey === 'يَسْرِ') return 'ইয়াসর';
+  if (cleanKey === 'قُلْ') return 'কুল';
+  if (cleanKey === 'هُوَ') return 'হুওয়া';
+  if (cleanKey === 'ٱللَّهُ' || cleanKey === 'اللَّهُ') return 'আল্লাহু';
+  if (cleanKey === 'ٱللَّهِ' || cleanKey === 'اللَّهِ') return 'আল্লাহি';
+  if (cleanKey === 'أَحَدٌ') return 'আহাদ';
+  if (cleanKey === 'ٱلصَّمَدُ' || cleanKey === 'الصَّمَدُ') return 'আস-সামাদ';
+  if (cleanKey === 'مَالِكِ' || cleanKey === 'مَٰلِكِ') return 'মালিকি';
+  if (cleanKey === 'يَوْمِ') return 'ইয়াওমি';
+  if (cleanKey === 'ٱلدِّينِ' || cleanKey === 'الدِّينِ') return 'আদ-দীন';
+  if (cleanKey === 'ٱلْحَمْدُ' || cleanKey === 'الْحَمْدُ') return 'আলহামদু';
+  if (cleanKey === 'لِلَّهِ') return 'লিল্লাহি';
+  if (cleanKey === 'رَبِّ') return 'রাব্বি';
+  if (cleanKey === 'ٱلْعَٰلَمِينَ' || cleanKey === 'الْعَالَمِينَ') return 'আল-‘আলামীন';
+
+  let res = '';
+  let i = 0;
+  if (word.startsWith('وَٱلْ') || word.startsWith('وَالْ')) {
+    res += 'ওয়াল-';
+    i = 4;
+  } else if (word.startsWith('فَٱلْ') || word.startsWith('فَالْ')) {
+    res += 'ফাল-';
+    i = 4;
+  } else if (word.startsWith('بِٱلْ') || word.startsWith('بِালْ')) {
+    res += 'বিল-';
+    i = 4;
+  } else if (word.startsWith('ٱلْ') || word.startsWith('الْ')) {
+    res += 'আল-';
+    i = 3;
+  }
+
+  for (; i < word.length; i++) {
+    const ch = word[i];
+    if (ch === '\u0651') {
+      const prev = res.slice(-1);
+      if (prev && /[ক-হ]/.test(prev)) {
+        res += '্' + prev;
+      }
+      continue;
+    }
+    if (ARABIC_DIRECT_VOWELS[ch]) {
+      res += ARABIC_DIRECT_VOWELS[ch];
+      continue;
+    }
+    if (ARABIC_DIRECT_CHAR_MAP[ch]) {
+      let b = ARABIC_DIRECT_CHAR_MAP[ch];
+      if (res.length > 0) {
+        if (ch === 'و') b = 'ও';
+        else if (ch === 'ي') b = 'ই';
+        else if (ch === 'ا' || ch === 'ى') b = 'া';
+      }
+      res += b;
+    }
+  }
+
+  return res
+    .replace(/াা/g, 'া')
+    .replace(/িি/g, 'ী')
+    .replace(/ুু/g, 'ূ')
+    .replace(/্+/g, '্')
+    .replace(/্$/g, '');
+}
+
+/**
+ * Direct phonetic conversion from vocalized Quranic Arabic text into Bengali pronunciation
+ */
+export function arabicToBengaliPronunciation(arabicText: string): string {
+  if (!arabicText) return '';
+  const text = arabicText.replace(/[\u06DD\uFD3E\uFD3F০-৯0-9\(\)\[\]\{\}]/g, '').trim();
+  if (!text) return '';
+
+  const arClean = text.replace(/[\s\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '').trim();
+  if (MUQATTAAT_PRONUNCIATION_MAP[arClean]) {
+    return MUQATTAAT_PRONUNCIATION_MAP[arClean];
+  }
+
+  if (text.includes('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ') || text.includes('بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ')) {
+    return 'বিসমিল্লাহির রাহমানির রাহীম';
+  }
+
+  const words = text.split(/\s+/).filter(Boolean);
+  const converted = words.map(convertArabicWordToBengali);
+  return sanitizeBengaliTransliteration(converted.join(' '));
+}
+
 // Converts Latin transliteration to authentic Bengali Quranic pronunciation
 export function latinToBengaliPronunciation(latinText: string): string {
   if (!latinText) return '';
+
+  // If text is already in Bengali script, clean and return
+  if (/[\u0980-\u09FF]/.test(latinText)) {
+    return sanitizeBengaliTransliteration(normalizeArabicPronunciationBn(latinText));
+  }
 
   const normalized = latinText.trim().toLowerCase();
 
@@ -628,7 +772,12 @@ export function getFormattedTransliteration(
       return MUQATTAAT_PRONUNCIATION_MAP[arWithMadd];
     }
 
-    // 2. Check for distorted Bengali text (e.g., 'অ্যালিফ্- ল’আ-ম্- মীম্')
+    // 2. Check if rawTransliteration is already in Bengali
+    if (rawTransliteration && /[\u0980-\u09FF]/.test(rawTransliteration)) {
+      return sanitizeBengaliTransliteration(normalizeArabicPronunciationBn(rawTransliteration));
+    }
+
+    // 3. Check for distorted Bengali text
     if (rawTransliteration) {
       const cleanedBn = normalizeArabicPronunciationBn(rawTransliteration);
       if (cleanedBn !== rawTransliteration) {
@@ -636,11 +785,21 @@ export function getFormattedTransliteration(
       }
     }
 
-    // 3. Convert via authentic Latin-to-Bengali phonetics
-    return latinToBengaliPronunciation(rawTransliteration || arabicText);
+    // 4. Convert via authentic Latin-to-Bengali phonetics
+    if (rawTransliteration && rawTransliteration.trim().length > 0) {
+      const parsed = latinToBengaliPronunciation(rawTransliteration);
+      if (parsed && parsed.trim().length > 0) {
+        return parsed;
+      }
+    }
+
+    // 5. Direct vocalized Arabic-to-Bengali phonetic fallback (guarantees pronunciation is NEVER blank)
+    if (arabicText && arabicText.trim().length > 0) {
+      return arabicToBengaliPronunciation(arabicText);
+    }
   }
 
   // English, Urdu, or other languages return standard Latin transliteration
-  return rawTransliteration;
+  return rawTransliteration || '';
 }
 

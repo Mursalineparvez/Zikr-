@@ -2,7 +2,13 @@ import { ALL_114_SURAHS, SurahMeta } from './quran114List';
 import { ZikrLanguage } from '../types';
 import { QURAN_EDITIONS } from './appTranslations';
 import { OFFLINE_FALLBACK_SURAHS } from './offlineQuranSurahs';
-import { normalizeArabicPronunciationBn } from './transliterationHelper';
+import {
+  normalizeArabicPronunciationBn,
+  latinToBengaliPronunciation,
+  arabicToBengaliPronunciation,
+  convertArabicWordToBengali,
+  getFormattedTransliteration,
+} from './transliterationHelper';
 
 export interface QuranWord {
   id?: number;
@@ -242,13 +248,40 @@ function cleanVerse1Arabic(surahNumber: number, verseNumber: number, text: strin
 
 const memorySurahCache = new Map<string, QuranSurahDetail>();
 
+function healAyahs(ayahs: QuranAyah[], language: ZikrLanguage): QuranAyah[] {
+  return ayahs.map((ayah) => {
+    let translit = ayah.transliteration;
+    if (!translit || translit.trim() === '') {
+      const raw = ayah.words ? ayah.words.map((w) => w.transliteration).filter(Boolean).join(' ') : '';
+      translit = getFormattedTransliteration(raw, ayah.arabic, language);
+    }
+    return {
+      ...ayah,
+      transliteration: translit,
+    };
+  });
+}
+
+function isCachedSurahValid(detail: QuranSurahDetail | null | undefined): boolean {
+  if (!detail || !detail.ayahs || detail.ayahs.length === 0) return false;
+  const first = detail.ayahs[0];
+  if (!first) return false;
+  if (first.translation?.includes('অফলাইন মোড') || first.translation?.includes('Offline Mode')) {
+    return false;
+  }
+  if (!first.translation && (!first.translations || first.translations.length === 0)) {
+    return false;
+  }
+  return true;
+}
+
 export function getCachedSurah(surahNumber: number, reciterId: string = 'ar.alafasy', language: ZikrLanguage = 'bn'): QuranSurahDetail | null {
   const memKey = `${language}_${surahNumber}`;
 
   // 1. Ultra-fast In-Memory RAM cache (0 milliseconds)
   const inMem = memorySurahCache.get(memKey);
-  if (inMem && inMem.ayahs && inMem.ayahs.length > 0) {
-    const updatedAyahs = inMem.ayahs.map((ayah) => ({
+  if (inMem && isCachedSurahValid(inMem)) {
+    const updatedAyahs = healAyahs(inMem.ayahs, language).map((ayah) => ({
       ...ayah,
       audioUrl: getReciterAudioUrls(reciterId, surahNumber, ayah.number, ayah.globalNumber).primary,
     }));
@@ -269,18 +302,23 @@ export function getCachedSurah(surahNumber: number, reciterId: string = 'ar.alaf
       const raw = localStorage.getItem(rawKey);
       if (raw) {
         const parsed = JSON.parse(raw) as QuranSurahDetail;
-        if (parsed && parsed.ayahs && parsed.ayahs.length > 0) {
-          memorySurahCache.set(memKey, parsed);
-          const updatedAyahs = parsed.ayahs.map((ayah) => ({
+        if (parsed && isCachedSurahValid(parsed)) {
+          const healedAyahs = healAyahs(parsed.ayahs, language);
+          const healedDetail = { ...parsed, ayahs: healedAyahs };
+          memorySurahCache.set(memKey, healedDetail);
+          const updatedAyahs = healedAyahs.map((ayah) => ({
             ...ayah,
             audioUrl: getReciterAudioUrls(reciterId, surahNumber, ayah.number, ayah.globalNumber).primary,
           }));
           return {
-            ...parsed,
+            ...healedDetail,
             audioUrl: getReciterAudioUrls(reciterId, surahNumber, 1, 1).primary,
             ayahs: updatedAyahs,
             language,
           };
+        } else if (raw) {
+          // Invalidate stale or placeholder cache entry
+          localStorage.removeItem(rawKey);
         }
       }
     } catch {}
@@ -389,6 +427,33 @@ const COMMON_WORD_DICTIONARY: Record<string, { bn: string; en: string }> = {
   'ٱلْمَغْضُوبِ': { bn: 'অভিশপ্ত', en: 'of those who evoked anger' },
   'وَلَا': { bn: 'এবং না', en: 'and not' },
   'ٱلضَّآلِّينَ': { bn: 'পথভ্রষ্ট', en: 'of those who are astray' },
+  // High-frequency Surah words (including Al-Fajr & Juz Amma)
+  'وَٱلْفَجْرِ': { bn: 'শপথ উষার', en: 'By the dawn' },
+  'وَلَيَالٍ': { bn: 'শপথ রাতের', en: 'And ten nights' },
+  'عَشْرٍ': { bn: 'দশ', en: 'ten' },
+  'عَشْرٍۢ': { bn: 'দশ', en: 'ten' },
+  'وَٱلشَّفْعِ': { bn: 'জোড়', en: 'And the even' },
+  'وَٱلْوَتْرِ': { bn: 'বিজোড়', en: 'and the odd' },
+  'وَٱلَّيْلِ': { bn: 'শপথ রাতের', en: 'And by the night' },
+  'إِذَا': { bn: 'যখন', en: 'when' },
+  'يَسْرِ': { bn: 'গত হতে থাকে', en: 'it passes' },
+  'فِي': { bn: 'মধ্যে', en: 'in' },
+  'فِى': { bn: 'মধ্যে', en: 'in' },
+  'عَلَىٰ': { bn: 'উপর', en: 'upon' },
+  'إِنَّ': { bn: 'নিশ্চয়ই', en: 'Indeed' },
+  'إِلَىٰ': { bn: 'দিকে', en: 'to' },
+  'كُلِّ': { bn: 'প্রত্যেক', en: 'every' },
+  'يَوْمِئِذٍ': { bn: 'সেদিন', en: 'that Day' },
+  'جَنَّةٍ': { bn: 'জান্নাত', en: 'Paradise' },
+  'نَارٍ': { bn: 'আগুন', en: 'Fire' },
+  'عَذَابٍ': { bn: 'শাস্তি', en: 'punishment' },
+  'رَحْمَةٍ': { bn: 'রহমত', en: 'mercy' },
+  'قَالَ': { bn: 'বললেন', en: 'He said' },
+  'قَالُوا۟': { bn: 'তারা বলল', en: 'they said' },
+  'كَانَ': { bn: 'ছিল', en: 'was' },
+  'آمَنُوا۟': { bn: 'ঈমান এনেছে', en: 'believed' },
+  'يَٰٓأَيُّهَا': { bn: 'হে', en: 'O' },
+  'ٱلنَّاسُ': { bn: 'মানবমণ্ডলী', en: 'mankind' },
 };
 
 function generateFallbackWords(arabicText: string, englishText: string, language: ZikrLanguage = 'bn'): QuranWord[] {
@@ -403,11 +468,12 @@ function generateFallbackWords(arabicText: string, englishText: string, language
     } else {
       translation = enTokens[idx] || (language === 'bn' ? `শব্দ ${idx + 1}` : `Word ${idx + 1}`);
     }
+    const wordTranslit = language === 'bn' ? convertArabicWordToBengali(ar) : '';
     return {
       position: idx + 1,
       arabic: ar,
       translation,
-      transliteration: '',
+      transliteration: wordTranslit,
     };
   });
 }
@@ -462,7 +528,7 @@ export async function fetchSurah(
     const recitationsUrl = `https://api.quran.com/api/v4/chapter_recitations/${qdcReciterId}/${surahNumber}?segments=true`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 1800);
+    const timeout = setTimeout(() => controller.abort(), 7000);
 
     // Fire recitations in background without blocking the main verses display at all
     const recPromise = fetch(recitationsUrl)
@@ -475,7 +541,7 @@ export async function fetchSurah(
 
     if (!qcRes || !qcRes.ok) {
       const fallbackController = new AbortController();
-      const fallbackTimeout = setTimeout(() => fallbackController.abort(), 2000);
+      const fallbackTimeout = setTimeout(() => fallbackController.abort(), 5000);
       qcRes = await fetch(fallbackOriginUrl, { signal: fallbackController.signal }).catch(() => null);
       clearTimeout(fallbackTimeout);
     }
@@ -535,13 +601,28 @@ export async function fetchSurah(
                   endMs = Math.max(0, seg[2] - baseOffset);
                 }
               }
-              let wTranslation = w.translation?.text || '';
+              let wTranslation = (w.translation?.text || '').replace(/<[^>]*>?/gm, '').trim();
+              let wTranslit = (w.transliteration?.text || '').trim();
+
+              // Word meaning fallback dictionary if API returns empty
+              if (!wTranslation) {
+                const cleanAr = (w.text_uthmani || w.text || '').replace(/[^\u0600-\u06FF]/g, '');
+                const dict = COMMON_WORD_DICTIONARY[w.text_uthmani] || COMMON_WORD_DICTIONARY[cleanAr];
+                if (dict) {
+                  wTranslation = language === 'bn' ? dict.bn : dict.en;
+                }
+              }
+
+              if (!wTranslit && language === 'bn') {
+                wTranslit = convertArabicWordToBengali(w.text_uthmani || w.text || '');
+              }
+
               return {
                 id: w.id,
                 position: w.position,
                 arabic: w.text_uthmani || w.text || '',
                 translation: wTranslation,
-                transliteration: '',
+                transliteration: wTranslit,
                 startMs,
                 endMs,
               };
@@ -552,6 +633,7 @@ export async function fetchSurah(
             v.translations.forEach((t: any) => {
               const resId = String(t.resource_id || t.id || '');
               let cleanText = (t.text || '').replace(/<[^>]*>?/gm, '').trim();
+              if (!cleanText) return;
               const nameObj = TRANSLATOR_NAMES_MAP[resId];
               const translatorLabel = nameObj
                 ? (language === 'bn' ? nameObj.bn : nameObj.en)
@@ -565,13 +647,30 @@ export async function fetchSurah(
             });
           }
 
-          let primaryTrans = translationsList[0]?.text || '';
+          let primaryTrans = translationsList.find(t => t.text && t.text.trim().length > 0)?.text || '';
+          if (!primaryTrans && v.translation?.text) {
+            primaryTrans = (v.translation.text || '').replace(/<[^>]*>?/gm, '').trim();
+          }
+          if (translationsList.length === 0 && primaryTrans) {
+            translationsList.push({
+              translator: language === 'bn' ? 'তাফসীরে তাওযীহুল কুরআন - মুফতী তাকী ওসমানী' : 'Mufti Taqi Usmani',
+              text: primaryTrans,
+            });
+          }
+
           const rawArabic = v.text_uthmani || words.map(w => w.arabic).join(' ');
           const cleanArabic = cleanVerse1Arabic(surahNumber, verseNum, rawArabic);
 
-          let verseTransliteration = v.transliteration?.text || words.map(w => w.transliteration).filter(Boolean).join(' ');
-          if (language === 'bn' && verseTransliteration) {
-            verseTransliteration = normalizeArabicPronunciationBn(verseTransliteration);
+          let verseTransliteration = (v.transliteration?.text || '').trim();
+          if (!verseTransliteration) {
+            verseTransliteration = words.map(w => w.transliteration).filter(Boolean).join(' ');
+          }
+          if (language === 'bn') {
+            if (verseTransliteration) {
+              verseTransliteration = latinToBengaliPronunciation(verseTransliteration);
+            } else {
+              verseTransliteration = arabicToBengaliPronunciation(cleanArabic);
+            }
           }
 
           return {
@@ -608,7 +707,7 @@ export async function fetchSurah(
     const editionCode = QURAN_EDITIONS[language] || 'bn.bengali';
     const apiUrl = `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,${editionCode},en.transliteration,en.sahih`;
     const alquranController = new AbortController();
-    const alquranTimeout = setTimeout(() => alquranController.abort(), 2200);
+    const alquranTimeout = setTimeout(() => alquranController.abort(), 6000);
     const response = await fetch(apiUrl, { signal: alquranController.signal }).catch(() => null);
     clearTimeout(alquranTimeout);
     if (!response || !response.ok) {
@@ -625,15 +724,19 @@ export async function fetchSurah(
       const verseNum = arAyah.numberInSurah;
       const globalNum = arAyah.number;
       const translation = translationData.ayahs[index]?.text || '';
-      const transliteration = transliterationData.ayahs[index]?.text || '';
+      let transliteration = transliterationData.ayahs[index]?.text || '';
       const englishTrans = englishData.ayahs[index]?.text || '';
       const rawArabic = arAyah.text || '';
       const cleanArabic = cleanVerse1Arabic(surahNumber, verseNum, rawArabic);
 
+      if (language === 'bn') {
+        transliteration = getFormattedTransliteration(transliteration, cleanArabic, 'bn');
+      }
+
       const words = generateFallbackWords(cleanArabic, englishTrans, language);
 
       const translationsList: QuranAyahTranslation[] = [
-        { translator: 'Zikr+', text: translation },
+        { translator: language === 'bn' ? 'মুহিউদ্দীন খান (অনুবাদ)' : 'Saheeh International', text: translation },
       ];
 
       return {

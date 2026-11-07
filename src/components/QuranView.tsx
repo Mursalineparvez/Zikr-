@@ -2485,75 +2485,114 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       )}
 
                       {/* Transliteration (Pronunciation) - Formatted according to user's selected language */}
-                      {showTransliteration && (
-                        <div className="pt-2">
-                          {tajweedColorMode ? (
-                            <div className="space-y-1.5">
-                              <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                <span>📖</span>
-                                <span>
-                                  {selectedLanguage === 'bn' ? 'বাংলা উচ্চারণ (তাজবীদ কালার ও সংকেতচিহ্নসহ):' : 'Pronunciation (Color & Tajweed Coded):'}
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-relaxed">
-                                {getColoredPronunciationTokens(
-                                  getFormattedTransliteration(ayah.transliteration, ayah.arabic, selectedLanguage),
-                                  ayah.words,
-                                  isDay
-                                ).map((token, tIdx) => (
-                                  <span
-                                    key={tIdx}
-                                    className={`relative group px-2.5 py-1 rounded-xl border text-xs sm:text-sm font-black transition-all duration-150 inline-flex flex-wrap items-baseline gap-x-0.5 gap-y-0.5 shadow-2xs ${
-                                      isDay
-                                        ? `${token.style.dayText} ${token.style.dayBg} ${token.style.dayBorder}`
-                                        : `${token.style.nightText} ${token.style.nightBg} ${token.style.nightBorder}`
-                                    }`}
-                                  >
-                                    {selectedLanguage === 'bn' && token.syllables && token.syllables.length > 0 ? (
-                                      token.syllables.map((syl, sIdx) => (
-                                        <span key={sIdx} className="inline-flex items-baseline">
-                                          <span>{syl.text}</span>
-                                          {syl.badges && syl.badges.map((b, bIdx) => (
-                                            <sup
-                                              key={bIdx}
-                                              title={b.labelBn}
-                                              className={`mx-[1px] px-0.5 py-0 rounded text-[9px] font-black leading-none border align-super select-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
-                                            >
-                                              {b.symbol}
-                                            </sup>
-                                          ))}
-                                        </span>
-                                      ))
-                                    ) : (
-                                      <span>{token.text}</span>
-                                    )}
+                      {showTransliteration && (() => {
+                        const rawTranslit = ayah.transliteration || (ayah.words ? ayah.words.map((w) => w.transliteration).filter(Boolean).join(' ') : '');
+                        const translitText = getFormattedTransliteration(rawTranslit, ayah.arabic, selectedLanguage);
+                        if (!translitText) return null;
+
+                        const tokens = getColoredPronunciationTokens(
+                          translitText,
+                          ayah.words,
+                          isDay
+                        );
+
+                        return (
+                          <div className="pt-2">
+                            {tajweedColorMode && tokens.length > 0 ? (
+                              <div className="space-y-1.5">
+                                <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                  <span>📖</span>
+                                  <span>
+                                    {selectedLanguage === 'bn' ? 'বাংলা উচ্চারণ (তাজবীদ কালার ও সংকেতচিহ্নসহ):' : 'Pronunciation (Color & Tajweed Coded):'}
                                   </span>
-                                ))}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 leading-relaxed">
+                                  {tokens.map((token, tIdx) => (
+                                    <span
+                                      key={tIdx}
+                                      className={`relative group px-2.5 py-1 rounded-xl border text-xs sm:text-sm font-black transition-all duration-150 inline-flex flex-wrap items-baseline gap-x-0.5 gap-y-0.5 shadow-2xs ${
+                                        isDay
+                                          ? `${token.style.dayText} ${token.style.dayBg} ${token.style.dayBorder}`
+                                          : `${token.style.nightText} ${token.style.nightBg} ${token.style.nightBorder}`
+                                      }`}
+                                    >
+                                      {selectedLanguage === 'bn' && token.syllables && token.syllables.length > 0 ? (
+                                        token.syllables.map((syl, sIdx) => (
+                                          <span key={sIdx} className="inline-flex items-baseline">
+                                            <span>{syl.text}</span>
+                                            {syl.badges && syl.badges.map((b, bIdx) => (
+                                              <sup
+                                                key={bIdx}
+                                                title={b.labelBn}
+                                                className={`mx-[1px] px-0.5 py-0 rounded text-[9px] font-black leading-none border align-super select-none ${b.bgClass} ${b.colorClass} ${b.borderClass} shadow-2xs`}
+                                              >
+                                                {b.symbol}
+                                              </sup>
+                                            ))}
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <span>{token.text}</span>
+                                      )}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            <div
-                              className={`text-xs sm:text-sm italic font-sans leading-relaxed pt-1 font-semibold ${
-                                isDay ? 'text-[#006747]' : 'text-[#10b981]'
-                              }`}
-                            >
-                              {getFormattedTransliteration(ayah.transliteration, ayah.arabic, selectedLanguage)}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            ) : (
+                              <div
+                                className={`text-xs sm:text-sm italic font-sans leading-relaxed pt-1 font-semibold ${
+                                  isDay ? 'text-[#006747]' : 'text-[#10b981]'
+                                }`}
+                              >
+                                {translitText}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* MULTIPLE TRANSLATIONS BELOW ARABIC */}
-                      {showTranslation && (
-                        <div
-                          className={`space-y-3 pt-3 border-t ${
-                            isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
-                          }`}
-                        >
-                          {ayah.translations && ayah.translations.length > 0 ? (
-                            ayah.translations.map((trans, tIdx) => (
+                      {showTranslation && (() => {
+                        const validTranslations = (ayah.translations || []).filter(
+                          (t) => t.text && t.text.trim().length > 0
+                        );
+                        const fallbackText = ayah.translation?.trim() || '';
+
+                        return (
+                          <div
+                            className={`space-y-3 pt-3 border-t ${
+                              isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
+                            }`}
+                          >
+                            {validTranslations.length > 0 ? (
+                              validTranslations.map((trans, tIdx) => (
+                                <div
+                                  key={tIdx}
+                                  className={`p-3 rounded-2xl border space-y-1.5 transition-colors ${
+                                    isDay
+                                      ? 'bg-emerald-50/60 border-emerald-100/90'
+                                      : 'bg-[#0b1a24] border-[#162d3b]'
+                                  }`}
+                                >
+                                  <div
+                                    className={`text-[11px] font-extrabold flex items-center gap-1.5 ${
+                                      isDay ? 'text-[#006747]' : 'text-[#10b981]'
+                                    }`}
+                                  >
+                                    <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0" />
+                                    <span>{trans.translator}</span>
+                                  </div>
+                                  <div
+                                    className={`text-xs sm:text-sm leading-relaxed font-sans font-medium ${
+                                      isDay ? 'text-slate-800' : 'text-slate-100'
+                                    }`}
+                                  >
+                                    {trans.text}
+                                  </div>
+                                </div>
+                              ))
+                            ) : fallbackText ? (
                               <div
-                                key={tIdx}
                                 className={`p-3 rounded-2xl border space-y-1.5 transition-colors ${
                                   isDay
                                     ? 'bg-emerald-50/60 border-emerald-100/90'
@@ -2566,48 +2605,34 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   }`}
                                 >
                                   <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0" />
-                                  <span>{trans.translator}</span>
+                                  <span>
+                                    {selectedLanguage === 'bn'
+                                      ? 'তাফসীরে তাওযীহুল কুরআন - মুফতী তাকী ওসমানী'
+                                      : 'Tawzeeh-ul-Quran - Mufti Taqi Usmani'}
+                                  </span>
                                 </div>
                                 <div
                                   className={`text-xs sm:text-sm leading-relaxed font-sans font-medium ${
                                     isDay ? 'text-slate-800' : 'text-slate-100'
                                   }`}
                                 >
-                                  {trans.text}
+                                  {fallbackText}
                                 </div>
                               </div>
-                            ))
-                          ) : (
-                            <div
-                              className={`p-3 rounded-2xl border space-y-1.5 transition-colors ${
-                                isDay
-                                  ? 'bg-emerald-50/60 border-emerald-100/90'
-                                  : 'bg-[#0b1a24] border-[#162d3b]'
-                              }`}
-                            >
-                              <div
-                                className={`text-[11px] font-extrabold flex items-center gap-1.5 ${
-                                  isDay ? 'text-[#006747]' : 'text-[#10b981]'
-                                }`}
-                              >
-                                <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0" />
-                                <span>
-                                  {selectedLanguage === 'bn'
-                                    ? 'তাফসীরে তাওযীহুল কুরআন - মুফতী তাকী ওসমানী'
-                                    : 'Tawzeeh-ul-Quran - Mufti Taqi Usmani'}
-                                </span>
+                            ) : (
+                              <div className="p-3 rounded-2xl border border-dashed border-emerald-300 dark:border-emerald-800 text-xs text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
+                                <span>{selectedLanguage === 'bn' ? 'অনুবাদ প্রস্তুত হচ্ছে...' : 'Loading translation...'}</span>
+                                <button
+                                  onClick={() => selectedSurahNumber && loadSurah(selectedSurahNumber)}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700"
+                                >
+                                  {selectedLanguage === 'bn' ? 'পুনরায় লোড করুন' : 'Reload'}
+                                </button>
                               </div>
-                              <div
-                                className={`text-xs sm:text-sm leading-relaxed font-sans font-medium ${
-                                  isDay ? 'text-slate-800' : 'text-slate-100'
-                                }`}
-                              >
-                                {ayah.translation}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 );
