@@ -254,6 +254,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
   const [selectedTocTopicId, setSelectedTocTopicId] = useState<string>('all');
   const [collapsedTopics, setCollapsedTopics] = useState<Record<string, boolean>>({});
+  const [isTocDrawerOpen, setIsTocDrawerOpen] = useState<boolean>(false);
+  const [tocSearchQuery, setTocSearchQuery] = useState<string>('');
+  const [qurayshRoleFilter, setQurayshRoleFilter] = useState<'all' | 'kaba_service' | 'military' | 'judiciary' | 'parliament'>('all');
+  const [hashimTreeBranch, setHashimTreeBranch] = useState<'all' | 'prophet' | 'martyrs_caliphs' | 'uncles'>('all');
+  const [ansarTab, setAnsarTab] = useState<'tree' | 'comparison' | 'virtues'>('tree');
+  const [statsSort, setStatsSort] = useState<'highest' | 'alphabetical'>('highest');
 
   const toggleTopicCollapse = (topicId: string) => {
     if (soundEnabled) soundHaptics.playTap();
@@ -361,7 +367,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       if (selectedTocTopicId !== 'all' && topic.id !== selectedTocTopicId) {
         return false;
       }
-      const q = searchQuery.toLowerCase().trim();
+      const q = (tocSearchQuery || searchQuery).toLowerCase().trim();
       if (!q) return true;
 
       const matchTopic = topic.topicTitleBn.toLowerCase().includes(q) ||
@@ -378,7 +384,25 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
       return matchTopic || matchSubs;
     });
-  }, [selectedTocTopicId, searchQuery]);
+  }, [selectedTocTopicId, searchQuery, tocSearchQuery]);
+
+  // Filtered Responsibilities for Chart 1
+  const filteredResponsibilities = useMemo(() => {
+    if (qurayshRoleFilter === 'all') return MAKKAH_RESPONSIBILITIES;
+    return MAKKAH_RESPONSIBILITIES.filter((r) => r.category === qurayshRoleFilter);
+  }, [qurayshRoleFilter]);
+
+  // Sorted statistics for Chart 5
+  const sortedStatistics = useMemo(() => {
+    const list = [...TRIBE_STATISTICS];
+    if (statsSort === 'highest') {
+      return list.sort((a, b) => b.count - a.count);
+    }
+    if (statsSort === 'alphabetical') {
+      return list.sort((a, b) => a.nameBn.localeCompare(b.nameBn));
+    }
+    return list;
+  }, [statsSort]);
 
   // Filtered Clans for Directory Mode
   const filteredClans = useMemo(() => {
@@ -725,6 +749,30 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <p className="text-xs sm:text-sm opacity-80 max-w-2xl leading-relaxed">
                   কাবার প্রশাসনিক দায়িত্ব, নববি রক্তধারা, মদিনার আনসার ভ্রাতৃত্ব, বৃহত্তর আরবের আঞ্চলিক শক্তি ও ৪০টি গোত্রের বিস্তৃত ইতিহাস অনুযায়ী শ্রেণিভুক্ত সূচি। যেকোনো বিষয়ে চাপ দিয়ে সরাসরি পাঠ শুরু করুন।
                 </p>
+
+                {/* Instant Search in TOC */}
+                <div className="relative mt-3 max-w-md">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
+                  <input
+                    type="text"
+                    value={tocSearchQuery}
+                    onChange={(e) => setTocSearchQuery(e.target.value)}
+                    placeholder="সূচিপত্রে খুঁজুন (যেমন: খালিদ, আলী, উমর, জমজম, কাবার চাবি, বদর, তায়েফ...)"
+                    className={`w-full pl-10 pr-8 py-2 rounded-xl text-xs sm:text-sm border outline-none transition ${
+                      isDay
+                        ? 'bg-white border-slate-300 focus:border-teal-600 text-slate-800 placeholder-slate-400 shadow-sm'
+                        : 'bg-[#041417]/90 border-[#153e46] focus:border-emerald-500 text-emerald-100 placeholder-emerald-400/50 shadow-inner'
+                    }`}
+                  />
+                  {tocSearchQuery && (
+                    <button
+                      onClick={() => setTocSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-rose-500 font-bold cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Action Buttons: Expand All / Collapse All */}
@@ -754,8 +802,40 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               </div>
             </div>
 
+            {/* Quick Metrics Strip */}
+            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-black/5 dark:bg-black/25 border border-black/5 dark:border-white/5 flex items-center gap-2.5">
+                <span className="text-xl">📚</span>
+                <div>
+                  <span className="text-[10px] opacity-70 block">মূল বিষয়বস্তু</span>
+                  <strong className="text-emerald-600 dark:text-emerald-400 font-bold">৫টি পূর্ণাঙ্গ বিষয়</strong>
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-black/5 dark:bg-black/25 border border-black/5 dark:border-white/5 flex items-center gap-2.5">
+                <span className="text-xl">🕋</span>
+                <div>
+                  <span className="text-[10px] opacity-70 block">কাবার শাসন</span>
+                  <strong className="text-amber-500 font-bold">১০টি কুরাইশ দায়িত্ব</strong>
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-black/5 dark:bg-black/25 border border-black/5 dark:border-white/5 flex items-center gap-2.5">
+                <span className="text-xl">🛡️</span>
+                <div>
+                  <span className="text-[10px] opacity-70 block">আরবের গোত্রকোষ</span>
+                  <strong className="text-teal-500 font-bold">৪০টি প্রধান বংশধারা</strong>
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-black/5 dark:bg-black/25 border border-black/5 dark:border-white/5 flex items-center gap-2.5">
+                <span className="text-xl">📊</span>
+                <div>
+                  <span className="text-[10px] opacity-70 block">ভিজ্যুয়াল চিত্র</span>
+                  <strong className="text-indigo-400 font-bold">৫টি বিশেষ চার্ট</strong>
+                </div>
+              </div>
+            </div>
+
             {/* Quick Topic Filter Selector Tabs */}
-            <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
               <span className="text-xs font-bold opacity-70 whitespace-nowrap">বিষয় ফিল্টার:</span>
               <button
                 onClick={() => {
@@ -1894,68 +1974,152 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
           {/* Chart 1: Quraish Roles */}
           {activeChartTab === 'quraysh_roles' && (
-            <div className="space-y-4">
-              <div className={`p-5 rounded-2xl border space-y-1.5 ${
-                isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
+            <div className="space-y-6">
+              {/* Header & Historical Context */}
+              <div className={`p-6 sm:p-7 rounded-3xl border relative overflow-hidden ${
+                isDay ? 'bg-gradient-to-br from-teal-50/70 via-white to-amber-50/40 border-teal-200/80 shadow-sm' : 'bg-gradient-to-br from-[#061d21] via-[#082226] to-[#041417] border-[#153e46]'
               }`}>
-                <h3 className="text-base font-black text-amber-500 flex items-center gap-2">
-                  <Building className="w-5 h-5" />
-                  <span>এক নজরে : কুরাইশ শাখাগুলোর দায়িত্ব ও প্রশাসনিক ভূমিকা</span>
-                </h3>
-                <p className="text-xs sm:text-sm opacity-80 leading-relaxed">
-                  প্রাক-ইসলামী যুগে পবিত্র কাবা শরিফ ও মক্কার প্রশাসন সুশৃঙ্খলভাবে পরিচালনার জন্য কুরাইশদের শীর্ষ ১০টি শাখার মধ্যে বিভিন্ন সেবামূলক ও সামরিক দায়িত্ব বণ্টন করা হয়েছিল।
-                </p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1.5 max-w-2xl">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                        মক্কার ১০টি প্রশাসনিক দায়িত্ব
+                      </span>
+                      <span className="text-xs opacity-60 font-semibold">• কুসাঈ ইবনে কিলাব কর্তৃক প্রতিষ্ঠিত ব্যবস্থা</span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black flex items-center gap-2.5">
+                      <Building className="w-6 h-6 text-amber-500 shrink-0" />
+                      <span>কুরাইশ শাখাগুলোর দায়িত্ব বণ্টন ও ঐতিহাসিক রূপরেখা</span>
+                    </h3>
+                    <p className="text-xs sm:text-sm opacity-85 leading-relaxed">
+                      হজ পালনকারীদের সেবা, কাবার পবিত্রতা রক্ষা, নগর প্রতিরক্ষা ও আন্তর্জাতিক কূটনীতি পরিচালনার জন্য কুরাইশদের শীর্ষ ১০টি শাখার মাঝে বিশেষ দপ্তর অর্পিত ছিল।
+                    </p>
+                  </div>
+
+                  <div className={`p-4 rounded-2xl border text-xs max-w-xs shrink-0 ${
+                    isDay ? 'bg-amber-50/70 border-amber-200 text-amber-950' : 'bg-[#041417]/80 border-amber-500/30 text-amber-200'
+                  }`}>
+                    <div className="font-bold flex items-center gap-1.5 text-amber-500 mb-1">
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      <span>মক্কা বিজয়ের ঐতিহাসিক বিধান</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed opacity-90">
+                      রাসুলুল্লাহ ﷺ ইরশাদ করেন: &ldquo;অতীতের জাহেলি প্রথা সমাপ্ত, কেবল কাবা শরিফের খিদমত (সিদানাহ) ও হাজিদের পানি পান (সিকায়াহ) ব্যতীত।&rdquo;
+                    </p>
+                  </div>
+                </div>
+
+                {/* Domain Filter Tabs */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-5 border-t border-slate-200/60 dark:border-slate-800/80 scrollbar-none">
+                  {[
+                    { id: 'all', label: 'সকল দায়িত্ব (১০)', icon: '🏛️' },
+                    { id: 'kaba_service', label: 'কাবার পবিত্র সেবা (৩)', icon: '💧' },
+                    { id: 'military', label: 'যুদ্ধ ও সেনাপতিত্ব (২)', icon: '🛡️' },
+                    { id: 'judiciary', label: 'বিচার ও সালিশি (২)', icon: '⚖️' },
+                    { id: 'parliament', label: 'সংসদ ও অর্থব্যবস্থা (৩)', icon: '📜' },
+                  ].map((filterTab) => (
+                    <button
+                      key={filterTab.id}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setQurayshRoleFilter(filterTab.id as any);
+                      }}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border flex items-center gap-1.5 ${
+                        qurayshRoleFilter === filterTab.id
+                          ? isDay ? 'bg-teal-700 text-white border-teal-700 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+                          : isDay ? 'bg-white/80 text-slate-700 border-slate-200 hover:bg-white' : 'bg-[#041417]/60 text-slate-300 border-[#153e46] hover:bg-[#072428]'
+                      }`}
+                    >
+                      <span>{filterTab.icon}</span>
+                      <span>{filterTab.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {MAKKAH_RESPONSIBILITIES.map((resp, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      if (soundEnabled) soundHaptics.playTap();
-                      setSelectedResponsibility(resp);
-                    }}
-                    className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
-                      isDay
-                        ? 'bg-white border-slate-200 hover:border-teal-500 shadow-sm hover:shadow'
-                        : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-                          isDay ? 'bg-teal-50 border-teal-200' : 'bg-[#041417] border-emerald-500/30'
+              {/* Grid of Responsibility Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredResponsibilities.map((resp, idx) => {
+                  const roleNumber = MAKKAH_RESPONSIBILITIES.findIndex(r => r.clanBn === resp.clanBn) + 1;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setSelectedResponsibility(resp);
+                      }}
+                      className={`p-5 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all cursor-pointer flex flex-col justify-between gap-4 group ${
+                        isDay
+                          ? 'bg-white border-slate-200 hover:border-teal-500 shadow-sm hover:shadow-md'
+                          : 'bg-[#082226] border-[#153e46] hover:border-emerald-500/80 hover:bg-[#09292e]'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border shadow-inner transition-transform group-hover:scale-105 ${
+                              isDay ? 'bg-teal-50 border-teal-200 text-teal-800' : 'bg-[#041417] border-emerald-500/30 text-emerald-400'
+                            }`}>
+                              {renderResponsibilityIcon(resp.iconName)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-base sm:text-lg font-black group-hover:text-emerald-500 transition-colors">
+                                  {resp.clanBn}
+                                </h4>
+                                {resp.responsibilityAr && (
+                                  <span className="text-[11px] font-arabic opacity-70 text-amber-500 hidden sm:inline" dir="rtl">
+                                    {resp.responsibilityAr}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs font-semibold text-amber-500 flex items-center gap-1.5 mt-0.5">
+                                <span>{resp.responsibilityBn}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border shrink-0 ${
+                            isDay ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
+                          }`}>
+                            দপ্তর #{roleNumber}
+                          </span>
+                        </div>
+
+                        <p className="text-xs sm:text-sm opacity-85 leading-relaxed pt-1">
+                          {resp.detailsBn}
+                        </p>
+
+                        {/* Dual-Era Leadership Pill Box */}
+                        <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs rounded-xl p-3 border ${
+                          isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#041417]/70 border-[#153e46]'
                         }`}>
-                          {renderResponsibilityIcon(resp.iconName)}
-                        </div>
-                        <div>
-                          <h4 className="text-base font-black">{resp.clanBn}</h4>
-                          <span className="text-xs opacity-60">কুরাইশ শাখা {idx + 1}</span>
+                          {resp.preIslamicHolder && (
+                            <div>
+                              <span className="text-[10px] font-bold opacity-60 block uppercase">🏛️ জাহেলিয়াত যুগে নেতৃত্ব</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                                {resp.preIslamicHolder}
+                              </span>
+                            </div>
+                          )}
+                          {resp.islamicHolder && (
+                            <div>
+                              <span className="text-[10px] font-bold text-emerald-500 block uppercase">☪️ ইসলামের যুগে অবস্থান</span>
+                              <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
+                                {resp.islamicHolder}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                        isDay ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
-                      }`}>
-                        দায়িত্ব নং {idx + 1}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="text-xs font-bold text-amber-500">
-                        {resp.responsibilityBn}
+                      <div className="pt-3 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-bold group-hover:text-amber-500 transition-colors">
+                        <span>বিস্তারিত ঐতিহাসিক তথ্য ও সংশ্লিষ্ট ব্যক্তিত্ব দেখুন</span>
+                        <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                       </div>
-                      <p className="text-xs opacity-85 leading-relaxed">
-                        {resp.detailsBn}
-                      </p>
                     </div>
-
-                    <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-                      <span>গোত্রের বিস্তারিত পাঠ দেখুন</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1965,75 +2129,158 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             <div className={`p-6 sm:p-8 rounded-3xl border shadow-sm space-y-6 ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
             }`}>
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">ঐতিহাসিক শাজারা শরীফ</span>
-                <h3 className="text-xl sm:text-2xl font-black">বনু হাশিমের সংক্ষিপ্ত বংশধারা চিত্র</h3>
-                <p className="text-xs sm:text-sm opacity-80">
-                  হাশিম ইবনে আবদে মানাফ থেকে আবদুল মুত্তালিব, রাসূলুল্লাহ ﷺ, খুলাফায়ে রাশিদিন ও আহলে বাইত
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                      শাজারা শরীফ
+                    </span>
+                    <span className="text-xs opacity-60">• বিশুদ্ধ কুরাইশি বংশধারা</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black">বনু হাশিমের পবিত্র ঐতিহাসিক বংশলতিকা চিত্র</h3>
+                  <p className="text-xs sm:text-sm opacity-80">
+                    হাশিম ইবনে আবদে মানাফ থেকে আবদুল মুত্তালিব, বিশ্বনবী হযরত মুহাম্মদ ﷺ এবং আহলে বাইতের গৌরবময় শাখা
+                  </p>
+                </div>
+
+                {/* Branch Selector */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {[
+                    { id: 'all', label: 'সকল শাখা' },
+                    { id: 'prophet', label: 'নবীজি ﷺ ও আহলে বাইত' },
+                    { id: 'martyrs_caliphs', label: 'বীর শহীদ ও খুলাফা' },
+                    { id: 'uncles', label: 'অন্যান্য পিতৃব্য' },
+                  ].map((branch) => (
+                    <button
+                      key={branch.id}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setHashimTreeBranch(branch.id as any);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+                        hashimTreeBranch === branch.id
+                          ? isDay ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-sm' : 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-md'
+                          : isDay ? 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' : 'bg-[#041417] text-slate-300 border-[#153e46] hover:bg-[#072428]'
+                      }`}
+                    >
+                      {branch.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Hadith Crest */}
+              <div className={`p-4 rounded-2xl border text-center text-xs sm:text-sm leading-relaxed ${
+                isDay ? 'bg-teal-50/70 border-teal-200 text-teal-900' : 'bg-[#041417]/90 border-emerald-500/30 text-emerald-200'
+              }`}>
+                <p className="font-semibold">
+                  রাসুলুল্লাহ ﷺ বলেন: <span className="text-amber-500 font-bold">&ldquo;আল্লাহ তায়ালা ইবরাহিম (আ.)-এর বংশ থেকে ইসমাইল (আ.)-কে, তাঁর বংশ থেকে কিনানাহকে, কিনানাহ থেকে কুরাইশকে, কুরাইশ থেকে বনু হাশিমকে এবং বনু হাশিম থেকে আমাকে মনোনীত করেছেন।&rdquo;</span> — (সহিহ মুসলিম)
                 </p>
               </div>
 
+              {/* Interactive Royal Family Tree Layout */}
               <div className="space-y-4 pt-2">
-                <div className="flex justify-center">
-                  <div className="px-6 py-2.5 rounded-2xl bg-amber-500 text-slate-950 font-black text-sm text-center shadow-md">
-                    {BANU_HASHIM_GENEALOGY.rootName}
+                {/* Level 1: Root - Hashim */}
+                <div className="flex flex-col items-center">
+                  <div className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-base text-center shadow-lg border border-amber-300 ring-4 ring-amber-500/20">
+                    <div className="text-[11px] font-bold uppercase tracking-widest text-slate-900/70">বংশের মূল প্রতিষ্ঠাতা</div>
+                    <div>{BANU_HASHIM_GENEALOGY.rootName}</div>
+                    {BANU_HASHIM_GENEALOGY.rootNameAr && (
+                      <div className="text-xs font-arabic mt-0.5 font-normal" dir="rtl">{BANU_HASHIM_GENEALOGY.rootNameAr}</div>
+                    )}
                   </div>
+                  <div className="w-0.5 h-6 bg-gradient-to-b from-amber-500 to-emerald-500" />
                 </div>
-                <div className="w-0.5 h-4 bg-amber-500/50 mx-auto" />
 
-                <div className="flex justify-center">
-                  <div className={`px-6 py-3 rounded-2xl border text-center shadow ${
-                    isDay ? 'bg-teal-50 border-teal-300 text-teal-900' : 'bg-[#041417] border-emerald-500/50 text-emerald-100'
+                {/* Level 2: Abdul Muttalib */}
+                <div className="flex flex-col items-center">
+                  <div className={`px-8 py-4 rounded-3xl border text-center shadow-md max-w-md w-full ${
+                    isDay ? 'bg-teal-50 border-teal-300 text-teal-950' : 'bg-[#041417] border-emerald-500/60 text-emerald-100 ring-2 ring-emerald-500/20'
                   }`}>
-                    <div className="font-black text-base">{BANU_HASHIM_GENEALOGY.son.name}</div>
-                    <div className="text-[11px] opacity-75">{BANU_HASHIM_GENEALOGY.son.title}</div>
+                    <div className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">মক্কার অভিভাবক ও সর্দার</div>
+                    <div className="font-black text-lg sm:text-xl">{BANU_HASHIM_GENEALOGY.son.name}</div>
+                    <div className="text-xs opacity-80 mt-0.5">{BANU_HASHIM_GENEALOGY.son.title}</div>
                   </div>
+                  <div className="w-0.5 h-6 bg-emerald-500/60" />
                 </div>
-                <div className="w-0.5 h-4 bg-emerald-500/50 mx-auto" />
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-2">
-                  {BANU_HASHIM_GENEALOGY.son.sons.map((son, sIdx) => (
-                    <div
-                      key={sIdx}
-                      className={`p-3.5 rounded-2xl border text-center space-y-1.5 ${
-                        son.name === 'আব্দুল্লাহ'
-                          ? 'border-amber-500 bg-amber-500/10 shadow'
-                          : son.name === 'আবু লাহাব'
-                          ? 'border-rose-500/40 bg-rose-500/5'
-                          : isDay ? 'border-slate-200 bg-slate-50' : 'border-[#153e46] bg-[#041417]'
-                      }`}
-                    >
-                      <div className="font-bold text-xs sm:text-sm">{son.name}</div>
-                      <div className="text-[10px] opacity-75">{son.desc}</div>
+                {/* Level 3: Sons & Branches */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
+                  {BANU_HASHIM_GENEALOGY.son.sons
+                    .filter(son => {
+                      if (hashimTreeBranch === 'all') return true;
+                      if (hashimTreeBranch === 'prophet') return son.name === 'আব্দুল্লাহ';
+                      if (hashimTreeBranch === 'martyrs_caliphs') return son.name === 'আবু তালিব' || son.name === 'হামযা (রা.)';
+                      if (hashimTreeBranch === 'uncles') return son.name === 'আব্বাস (রা.)' || son.name === 'আবু লাহাব';
+                      return true;
+                    })
+                    .map((son, sIdx) => {
+                      const isProphetBranch = son.name === 'আব্দুল্লাহ';
+                      const isMartyrBranch = son.name === 'হামযা (রা.)';
+                      const isEnemyBranch = son.name === 'আবু লাহাব';
 
-                      {son.children && son.children.length > 0 && (
-                        <div className="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700 space-y-1">
-                          {son.children.map((child: any, cIdx: number) => (
-                            <div
-                              key={cIdx}
-                              className={`p-1.5 rounded-xl text-[10px] font-bold ${
-                                child.isProphet
-                                  ? 'bg-emerald-600 text-white shadow-sm'
-                                  : 'bg-black/5 dark:bg-white/5 text-amber-500'
-                              }`}
-                            >
-                              {child.name}
-                              {child.marriageTo && (
-                                <div className="text-[9px] opacity-80 font-normal mt-0.5 text-pink-300">
-                                  বিবাহ: {child.marriageTo}
+                      return (
+                        <div
+                          key={sIdx}
+                          className={`p-4 rounded-2xl border text-center flex flex-col justify-between transition-all ${
+                            isProphetBranch
+                              ? isDay
+                                ? 'border-amber-400 bg-gradient-to-b from-amber-50/80 to-white shadow-md ring-2 ring-amber-400/40'
+                                : 'border-amber-500/70 bg-gradient-to-b from-[#0d2a23] to-[#041417] shadow-xl ring-2 ring-amber-500/30'
+                              : isMartyrBranch
+                              ? isDay
+                                ? 'border-teal-300 bg-teal-50/50 shadow-sm'
+                                : 'border-emerald-500/40 bg-[#072428] shadow'
+                              : isEnemyBranch
+                              ? 'border-rose-500/40 bg-rose-500/5 opacity-80'
+                              : isDay ? 'border-slate-200 bg-slate-50' : 'border-[#153e46] bg-[#041417]'
+                          }`}
+                        >
+                          <div className="space-y-1.5 pb-2">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md inline-block uppercase bg-black/5 dark:bg-white/5 text-amber-500">
+                              আবদুল মুত্তালিবের পুত্র
+                            </span>
+                            <div className="font-black text-sm sm:text-base">{son.name}</div>
+                            <div className="text-[11px] opacity-80 leading-snug">{son.desc}</div>
+                          </div>
+
+                          {son.children && son.children.length > 0 && (
+                            <div className="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700/80 space-y-2 mt-2">
+                              {son.children.map((child: any, cIdx: number) => (
+                                <div
+                                  key={cIdx}
+                                  className={`p-2.5 rounded-xl text-left border ${
+                                    child.isProphet
+                                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border-emerald-400'
+                                      : isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#082226] border-[#153e46] text-slate-200'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="font-black text-xs">{child.name}</span>
+                                    {child.isProphet && (
+                                      <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded">
+                                        সর্বশেষ নবী
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {child.marriageTo && (
+                                    <div className="text-[10px] opacity-85 mt-1 text-pink-300 font-medium">
+                                      বিবাহ: {child.marriageTo}
+                                    </div>
+                                  )}
+                                  {child.sons && (
+                                    <div className="text-[10px] opacity-90 mt-1 text-amber-300 font-medium">
+                                      সন্তান: {child.sons.join(', ')}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                              {child.sons && (
-                                <div className="text-[9px] opacity-80 font-normal mt-0.5 text-amber-300">
-                                  ↓ {child.sons.join(' ও ')}
-                                </div>
-                              )}
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
               </div>
             </div>
@@ -2044,92 +2291,215 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             <div className={`p-6 sm:p-8 rounded-3xl border shadow-sm space-y-6 ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
             }`}>
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-teal-500 uppercase tracking-wider">মদিনার পবিত্র বংশধারা</span>
-                <h3 className="text-xl sm:text-2xl font-black">মদিনার আনসার গোত্র ও তাদের উপশাখা চিত্র</h3>
-                <p className="text-xs sm:text-sm opacity-80">
-                  ইয়েমেনের প্রাচীন ‘আজদ’ বংশ থেকে আওস ও খাযরাজ গোত্রের শাখা বিন্যাস ও দলপতি
-                </p>
-              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-5">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-teal-500 uppercase tracking-wider px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/20">
+                      মদিনাতুল মুনাওয়ারার আনসার
+                    </span>
+                    <span className="text-xs opacity-60">• ইয়াসরিবের আদি বংশধারা</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black">আওস ও খাযরাজ গোত্রের উপশাখা চিত্র</h3>
+                  <p className="text-xs sm:text-sm opacity-80">
+                    ইয়েমেনের প্রাচীন কাহতানি &lsquo;আজদ&rsquo; বংশ থেকে হিজরত করে মদিনায় বসতি স্থাপনকারী দুই ভ্রাতৃপ্রতিম গোত্র
+                  </p>
+                </div>
 
-              <div className="flex justify-center">
-                <div className="px-6 py-2.5 rounded-2xl bg-teal-600 text-white font-black text-sm text-center shadow-md">
-                  {ANSAR_GENEALOGY.ancestor}
+                {/* Sub Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {[
+                    { id: 'tree', label: 'বংশলতিকা ও উপশাখা চিত্র' },
+                    { id: 'comparison', label: 'খাযরাজ বনাম আওস তুলনা' },
+                    { id: 'virtues', label: 'আনসারদের মর্যাদা ও হাদিস' },
+                  ].map((subTab) => (
+                    <button
+                      key={subTab.id}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setAnsarTab(subTab.id as any);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+                        ansarTab === subTab.id
+                          ? isDay ? 'bg-teal-700 text-white border-teal-700 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+                          : isDay ? 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' : 'bg-[#041417] text-slate-300 border-[#153e46] hover:bg-[#072428]'
+                      }`}
+                    >
+                      {subTab.label}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <div className="w-0.5 h-4 bg-teal-500/50 mx-auto" />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {ANSAR_GENEALOGY.branches.map((branch, bIdx) => (
-                  <div
-                    key={bIdx}
-                    className={`p-5 rounded-2xl border space-y-3 ${
-                      isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#041417] border-[#153e46]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                      <h4 className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                        {branch.name}
-                      </h4>
-                      <span className="text-xs opacity-75 font-bold">{branch.subClans.length}টি প্রধান উপশাখা</span>
+              {ansarTab === 'tree' && (
+                <div className="space-y-6">
+                  {/* Root Origin */}
+                  <div className="flex flex-col items-center">
+                    <div className="px-8 py-3 rounded-2xl bg-teal-700 text-white font-black text-sm sm:text-base text-center shadow-lg border border-teal-500 ring-4 ring-teal-500/20">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-teal-200">আদি কাহতানি পূর্বপুরুষ</div>
+                      <div>{ANSAR_GENEALOGY.ancestor}</div>
                     </div>
+                    <div className="w-0.5 h-6 bg-teal-500/50" />
+                  </div>
 
-                    <div className="space-y-2">
-                      {branch.subClans.map((sub, sIdx) => (
+                  {/* Two Main Clans */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {ANSAR_GENEALOGY.branches.map((branch, bIdx) => {
+                      const isKhazraj = branch.name.includes('খাযরাজ');
+                      return (
                         <div
-                          key={sIdx}
-                          className={`p-3 rounded-xl border flex items-center justify-between gap-2 ${
-                            isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
+                          key={bIdx}
+                          className={`p-6 rounded-3xl border space-y-4 ${
+                            isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#041417] border-[#153e46]'
                           }`}
                         >
-                          <div>
-                            <div className="text-xs font-bold">{sub.name}</div>
-                            <div className="text-[11px] opacity-75">{sub.note}</div>
+                          <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                                isKhazraj ? 'bg-amber-500/15 text-amber-500' : 'bg-teal-500/15 text-teal-500'
+                              }`}>
+                                {isKhazraj ? 'বৃহত্তম আনসার গোত্র (মদিনার সিংহভাগ)' : 'প্রভাবশালী যুদ্ধবাজ আনসার গোত্র'}
+                              </span>
+                              <h4 className="text-lg sm:text-xl font-black mt-1 text-emerald-600 dark:text-emerald-400">
+                                {branch.name}
+                              </h4>
+                            </div>
+                            <span className="text-xs opacity-75 font-bold px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/5">
+                              {branch.subClans.length}টি প্রধান উপশাখা
+                            </span>
                           </div>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-500">
-                            {sub.leader}
-                          </span>
+
+                          <div className="space-y-2.5">
+                            {branch.subClans.map((sub, sIdx) => (
+                              <div
+                                key={sIdx}
+                                className={`p-3.5 rounded-2xl border transition-all ${
+                                  isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <div className="font-bold text-xs sm:text-sm">{sub.name}</div>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-500 shrink-0">
+                                    দলপতি: {sub.leader}
+                                  </span>
+                                </div>
+                                <div className="text-xs opacity-80 leading-relaxed">{sub.note}</div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {ansarTab === 'comparison' && (
+                <div className="space-y-4">
+                  <div className={`overflow-x-auto rounded-2xl border ${
+                    isDay ? 'bg-white border-slate-200' : 'bg-[#041417] border-[#153e46]'
+                  }`}>
+                    <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                      <thead>
+                        <tr className={`border-b ${isDay ? 'bg-slate-100 text-slate-800' : 'bg-[#082226] text-emerald-300'}`}>
+                          <th className="p-3.5 font-black">তুলনার বিষয়</th>
+                          <th className="p-3.5 font-black text-amber-500">বনু খাযরাজ গোত্র</th>
+                          <th className="p-3.5 font-black text-teal-400">বনু আওস গোত্র</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                        <tr>
+                          <td className="p-3.5 font-bold opacity-70">জনসংখ্যা ও আকার</td>
+                          <td className="p-3.5">মদিনার আনসারদের প্রায় তিন-চতুর্থাংশ (সংখ্যাধিক্য)</td>
+                          <td className="p-3.5">সংখ্যায় কিছুটা কম তবে অত্যন্ত শক্তিশালী ও বীরযোদ্ধা</td>
+                        </tr>
+                        <tr>
+                          <td className="p-3.5 font-bold opacity-70">আকাবার প্রথম ও দ্বিতীয় বায়াত</td>
+                          <td className="p-3.5">প্রথম বায়াতের ১২ জনের মধ্যে বেশিরভাগ এবং দ্বিতীয় বায়াতেও আধিক্য</td>
+                          <td className="p-3.5">সা&lsquo;দ ইবনে মু&lsquo;আজ (রা.)-এর নেতৃত্বে ব্যাপক ইসলাম গ্রহণ</td>
+                        </tr>
+                        <tr>
+                          <td className="p-3.5 font-bold opacity-70">প্রধান দলপতি</td>
+                          <td className="p-3.5">সা&lsquo;দ ইবনে উবাদাহ (রা.) ও আস&lsquo;আদ ইবনে যুরারাহ (রা.)</td>
+                          <td className="p-3.5">সা&lsquo;দ ইবনে মু&lsquo;আজ (রা.) ও উসাইদ ইবনে হুদাইর (রা.)</td>
+                        </tr>
+                        <tr>
+                          <td className="p-3.5 font-bold opacity-70">কুরআন সংকলনে ভূমিকা</td>
+                          <td className="p-3.5">যায়েদ ইবনে সাবিত (রা.), উবাই ইবনে কা&lsquo;ব (রা.)</td>
+                          <td className="p-3.5">বদর ও উহুদে শীর্ষ যোদ্ধা ও অকুতোভয় সেনাদল</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {ansarTab === 'virtues' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`p-5 rounded-2xl border space-y-2 ${
+                    isDay ? 'bg-teal-50 border-teal-200' : 'bg-[#041417] border-[#153e46]'
+                  }`}>
+                    <h4 className="font-black text-sm text-amber-500 flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4" />
+                      <span>ঈমানের মাপকাঠি আনসারদের ভালোবাসা</span>
+                    </h4>
+                    <p className="text-xs sm:text-sm leading-relaxed opacity-90">
+                      রাসুলুল্লাহ ﷺ বলেন: &ldquo;আনসারদের ভালোবাসা খাঁটি ঈমানের লক্ষণ, আর তাদের প্রতি বিদ্বেষ মুনাফিকির আলামত। যে তাদের ভালোবাসে, আল্লাহ তাকে ভালোবাসেন।&rdquo; (সহিহ বুখারি)
+                    </p>
+                  </div>
+
+                  <div className={`p-5 rounded-2xl border space-y-2 ${
+                    isDay ? 'bg-amber-50/60 border-amber-200' : 'bg-[#041417] border-[#153e46]'
+                  }`}>
+                    <h4 className="font-black text-sm text-emerald-500 flex items-center gap-1.5">
+                      <Heart className="w-4 h-4" />
+                      <span>আনসারদের উপত্যকা ও হিজরতের মর্যাদা</span>
+                    </h4>
+                    <p className="text-xs sm:text-sm leading-relaxed opacity-90">
+                      রাসুলুল্লাহ ﷺ বলেন: &ldquo;যদি সমগ্র মানুষ এক উপত্যকায় গমন করে আর আনসাররা অন্য উপত্যকায় গমন করে, তবে আমি আনসারদের উপত্যকাতেই অবস্থান করব।&rdquo; (সহিহ বুখারি)
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* Chart 4: Greater Arab Overview */}
           {activeChartTab === 'arab_map' && (
-            <div className={`p-6 sm:p-8 rounded-3xl border shadow-sm space-y-5 ${
+            <div className={`p-6 sm:p-8 rounded-3xl border shadow-sm space-y-6 ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
             }`}>
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-orange-500 uppercase tracking-wider">অঞ্চলভিত্তিক গোত্র বিন্যাস</span>
-                <h3 className="text-xl sm:text-2xl font-black">বৃহত্তর আরবের প্রধান গোত্রসমূহের ওভারভিউ চার্ট</h3>
+              <div className="space-y-1 border-b border-slate-200/80 dark:border-slate-800/80 pb-4">
+                <span className="text-xs font-bold text-orange-500 uppercase tracking-wider px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20">
+                  অঞ্চলভিত্তিক গোত্র বিন্যাস
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black">বৃহত্তর আরবের প্রধান গোত্রসমূহের সামগ্রিক ভৌগোলিক চার্ট</h3>
                 <p className="text-xs sm:text-sm opacity-80">
-                  নজদ, তায়েফ, হিজাজ ও আরব সীমান্তের ১১টি পরাক্রমশালী গোত্র ও তাদের বৈশিষ্ট্য
+                  নজদ, তায়েফ, হিজাজ ও আরব সীমান্তের পরাক্রমশালী গোত্রসমূহ ও তাদের রাজনৈতিক ভূমিকা
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* 6 Strategic Geopolitical Regions Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {CHAPTER3_OVERVIEW.map((item, idx) => (
                   <div
                     key={idx}
-                    className={`p-4 rounded-2xl border space-y-1.5 ${
-                      isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#041417] border-[#153e46]'
+                    className={`p-5 rounded-2xl border space-y-3 transition-all hover:border-amber-500/60 ${
+                      isDay ? 'bg-slate-50 border-slate-200 hover:bg-white' : 'bg-[#041417] border-[#153e46] hover:bg-[#072428]'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <h4 className="font-black text-sm text-emerald-400">{item.clanBn}</h4>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                      <h4 className="font-black text-base text-emerald-500">{item.clanBn}</h4>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         {item.sectionCode}
                       </span>
                     </div>
-                    <p className="text-xs text-amber-500 flex items-center gap-1 font-semibold">
-                      <MapPin className="w-3 h-3" />
+
+                    <p className="text-xs text-amber-500 flex items-center gap-1.5 font-bold">
+                      <MapPin className="w-3.5 h-3.5 shrink-0" />
                       <span>{item.locationBn}</span>
                     </p>
-                    <p className="text-xs opacity-80 leading-relaxed">{item.noteBn}</p>
+
+                    <p className="text-xs opacity-85 leading-relaxed">{item.noteBn}</p>
                   </div>
                 ))}
               </div>
@@ -2141,30 +2511,89 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             <div className={`p-6 sm:p-8 rounded-3xl border shadow-sm space-y-6 ${
               isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
             }`}>
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">তুলনামূলক পরিসংখ্যান</span>
-                <h3 className="text-xl sm:text-2xl font-black">তালিকায় উল্লিখিত ব্যক্তিত্বের তুলনামূলক বার চার্ট</h3>
-                <p className="text-xs sm:text-sm opacity-80">
-                  ১ থেকে ১৩ নম্বর মূল তালিকা অনুযায়ী আরবের শীর্ষ গোত্রগুলোতে বিশিষ্ট ব্যক্তিত্বের সংখ্যা
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-4">
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                    তুলনামূলক পরিসংখ্যান
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-black">তালিকায় উল্লিখিত ব্যক্তিত্বের তুলনামূলক বার চার্ট</h3>
+                  <p className="text-xs sm:text-sm opacity-80">
+                    ১ থেকে ১৩ নম্বর মূল অধ্যায় অনুযায়ী আরবের শীর্ষ গোত্রগুলোতে বিশিষ্ট সাহাবি ও ব্যক্তিত্বের সংখ্যা
+                  </p>
+                </div>
+
+                {/* Sort Bar */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs opacity-60 font-semibold">ক্রমানুসার:</span>
+                  <div className="flex items-center gap-1 rounded-xl p-1 border bg-black/5 dark:bg-white/5">
+                    {[
+                      { id: 'highest', label: 'সর্বোচ্চ ব্যক্তিত্ব' },
+                      { id: 'alphabetical', label: 'নামানুসারে' },
+                    ].map((sortOption) => (
+                      <button
+                        key={sortOption.id}
+                        onClick={() => {
+                          if (soundEnabled) soundHaptics.playTap();
+                          setStatsSort(sortOption.id as any);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          statsSort === sortOption.id
+                            ? isDay ? 'bg-teal-700 text-white shadow-sm' : 'bg-emerald-600 text-white shadow'
+                            : 'opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        {sortOption.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4 pt-2">
-                {TRIBE_STATISTICS.map((stat, idx) => {
+              {/* Progress Bars */}
+              <div className="space-y-3.5 pt-1">
+                {sortedStatistics.map((stat, idx) => {
                   const maxCount = 25;
-                  const percentage = Math.round((stat.count / maxCount) * 100);
+                  const percentage = Math.min(100, Math.round((stat.count / maxCount) * 100));
 
                   return (
-                    <div key={idx} className="space-y-1.5">
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        const matchingTribe = ARABER_GOTRO_DATABASE.find(
+                          (t) => t.tribeNameBn.includes(stat.nameBn) || stat.nameBn.includes(t.tribeNameBn)
+                        );
+                        if (matchingTribe) {
+                          openClanInReader(matchingTribe.id);
+                        } else {
+                          setSearchQuery(stat.nameBn);
+                          setViewMode('reader');
+                        }
+                      }}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer group space-y-2 ${
+                        isDay ? 'bg-slate-50 border-slate-200 hover:border-teal-500 hover:bg-white' : 'bg-[#041417] border-[#153e46] hover:border-emerald-500 hover:bg-[#082226]'
+                      }`}
+                    >
                       <div className="flex items-center justify-between text-xs sm:text-sm font-bold">
-                        <span className="truncate pr-2">{stat.nameBn}</span>
-                        <span className="tabular-nums text-emerald-600 dark:text-emerald-400 font-black">
-                          {stat.count} জন
-                        </span>
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black bg-emerald-500/10 text-emerald-400">
+                            {idx + 1}
+                          </span>
+                          <span className="truncate group-hover:text-emerald-500 transition-colors">{stat.nameBn}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[11px] opacity-75 hidden sm:inline text-amber-500">
+                            {stat.chapter}
+                          </span>
+                          <span className="tabular-nums text-emerald-600 dark:text-emerald-400 font-black px-2 py-0.5 rounded-md bg-emerald-500/10">
+                            মোট {stat.count} জন
+                          </span>
+                        </div>
                       </div>
-                      <div className="w-full h-3 rounded-full bg-black/5 dark:bg-black/30 overflow-hidden">
+
+                      <div className="w-full h-3 rounded-full bg-black/10 dark:bg-black/40 overflow-hidden p-0.5">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 transition-all duration-500"
+                          className="h-full rounded-full bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-500 transition-all duration-700"
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -2449,46 +2878,82 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       {selectedResponsibility && (
         <div
           onClick={() => setSelectedResponsibility(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-md rounded-3xl p-6 border shadow-2xl relative space-y-4 ${
+            className={`w-full max-w-lg rounded-3xl p-6 sm:p-7 border shadow-2xl relative space-y-4 ${
               isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#082226] border-[#153e46] text-emerald-100'
             }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
-                  isDay ? 'bg-teal-50 border-teal-200' : 'bg-[#041417] border-emerald-500/30'
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-inner ${
+                  isDay ? 'bg-teal-50 border-teal-200 text-teal-800' : 'bg-[#041417] border-emerald-500/30 text-emerald-400'
                 }`}>
                   {renderResponsibilityIcon(selectedResponsibility.iconName)}
                 </div>
                 <div>
-                  <h4 className="text-lg font-black">{selectedResponsibility.clanBn}</h4>
-                  <span className="text-xs opacity-60">কুরাইশ প্রশাসন</span>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xl font-black">{selectedResponsibility.clanBn}</h4>
+                    {selectedResponsibility.responsibilityAr && (
+                      <span className="text-xs font-arabic text-amber-500 opacity-80" dir="rtl">
+                        {selectedResponsibility.responsibilityAr}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs opacity-60">কুরাইশের ঐতিহাসিক প্রশাসনিক দপ্তর</span>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedResponsibility(null)}
-                className="p-2 rounded-xl border text-xs font-bold cursor-pointer"
+                className="p-2 rounded-xl border text-xs font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition"
               >
                 ✕
               </button>
             </div>
 
-            <div className={`p-4 rounded-xl border space-y-2 ${
+            <div className={`p-4 rounded-2xl border space-y-2.5 ${
               isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#041417] border-[#153e46]'
             }`}>
-              <div className="text-xs font-bold text-amber-500">
-                {selectedResponsibility.responsibilityBn}
+              <div className="text-sm font-black text-amber-500 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" />
+                <span>দায়িত্ব: {selectedResponsibility.responsibilityBn}</span>
               </div>
-              <p className="text-xs leading-relaxed opacity-90">
+              <p className="text-xs sm:text-sm leading-relaxed opacity-90">
                 {selectedResponsibility.detailsBn}
               </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            {/* Dual Era Insight */}
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs p-3.5 rounded-2xl border ${
+              isDay ? 'bg-amber-50/50 border-amber-200/60' : 'bg-[#051a1e] border-[#18464f]'
+            }`}>
+              {selectedResponsibility.preIslamicHolder && (
+                <div>
+                  <span className="text-[10px] font-bold opacity-60 block uppercase">🏛️ জাহেলিয়াত যুগে নেতৃত্ব</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                    {selectedResponsibility.preIslamicHolder}
+                  </span>
+                </div>
+              )}
+              {selectedResponsibility.islamicHolder && (
+                <div>
+                  <span className="text-[10px] font-bold text-emerald-500 block uppercase">☪️ ইসলামের যুগে অবস্থান</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs">
+                    {selectedResponsibility.islamicHolder}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+              <button
+                onClick={() => setSelectedResponsibility(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold opacity-75 hover:opacity-100 cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
               <button
                 onClick={() => {
                   setSelectedResponsibility(null);
@@ -2502,9 +2967,182 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     selectedResponsibility.clanBn.includes('যোহরা') ? 'banu-zuhrah' : 'quraysh-other-branches';
                   openClanInReader(targetId);
                 }}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white cursor-pointer shadow"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-md transition"
               >
-                গোত্রের সীরাত পাঠ দেখুন
+                গোত্রের পূর্ণ সীরাত পাঠ দেখুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Quick-TOC Button */}
+      <button
+        onClick={() => {
+          if (soundEnabled) soundHaptics.playTap();
+          setIsTocDrawerOpen(true);
+        }}
+        className="fixed bottom-20 right-4 sm:right-6 z-40 px-4 py-2.5 rounded-full shadow-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 border-2 border-amber-300 ring-4 ring-amber-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+        title="সম্পূর্ণ বিষয়ভিত্তিক সূচিপত্র খুলুন"
+      >
+        <BookOpen className="w-4 h-4" />
+        <span>📑 দ্রুত সূচিপত্র</span>
+      </button>
+
+      {/* Sliding Quick-TOC Drawer Modal */}
+      {isTocDrawerOpen && (
+        <div
+          onClick={() => setIsTocDrawerOpen(false)}
+          className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-md h-full overflow-y-auto p-5 sm:p-6 border-l shadow-2xl space-y-5 animate-in slide-in-from-right duration-300 ${
+              isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#05191c] border-[#153e46] text-emerald-100'
+            }`}
+          >
+            {/* Drawer Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-black uppercase text-amber-500 tracking-wider">
+                  বিষয়ভিত্তিক পরিচ্ছেদ তালিকা
+                </span>
+                <h3 className="text-lg font-black flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-amber-500" />
+                  <span>সম্পূর্ণ বিষয়ভিত্তিক সূচিপত্র</span>
+                </h3>
+                <p className="text-xs opacity-70">
+                  ৩টি অধ্যায় • ১৩টি সীরাত পরিচ্ছেদ • ৫টি ঐতিহাসিক চার্ট
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsTocDrawerOpen(false)}
+                className="p-2 rounded-xl border text-xs font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Instant Search Inside Drawer */}
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+              <input
+                type="text"
+                value={tocSearchQuery}
+                onChange={(e) => setTocSearchQuery(e.target.value)}
+                placeholder="যেকোনো গোত্র বা চার্টের নাম খুঁজুন..."
+                className={`w-full pl-9 pr-8 py-2 rounded-xl text-xs border outline-none transition ${
+                  isDay
+                    ? 'bg-slate-50 border-slate-200 focus:border-teal-500 text-slate-800'
+                    : 'bg-[#082226] border-[#153e46] focus:border-emerald-500 text-emerald-100'
+                }`}
+              />
+              {tocSearchQuery && (
+                <button
+                  onClick={() => setTocSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs opacity-60 hover:opacity-100"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Visual Chapters & Sections from Topic Wise TOC */}
+            <div className="space-y-5">
+              {TOPIC_WISE_TOC_DATA
+                .filter(topic => {
+                  if (!tocSearchQuery.trim()) return true;
+                  const q = tocSearchQuery.toLowerCase();
+                  return (
+                    topic.topicTitleBn.toLowerCase().includes(q) ||
+                    topic.subsections.some(s => s.titleBn.toLowerCase().includes(q) || s.subtitleBn.toLowerCase().includes(q))
+                  );
+                })
+                .map((topic, tIdx) => {
+                  const filteredSubs = topic.subsections.filter(s =>
+                    !tocSearchQuery.trim() ||
+                    s.titleBn.toLowerCase().includes(tocSearchQuery.toLowerCase()) ||
+                    s.subtitleBn.toLowerCase().includes(tocSearchQuery.toLowerCase())
+                  );
+
+                  return (
+                    <div key={tIdx} className="space-y-2">
+                      <div className="flex items-center justify-between pb-1 border-b border-dashed border-slate-200 dark:border-slate-800">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span>{topic.icon}</span>
+                          <span className="text-xs font-black text-amber-500 truncate">{topic.topicTitleBn}</span>
+                        </div>
+                        <span className="text-[10px] font-bold opacity-60 shrink-0">{filteredSubs.length}টি বিষয়</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        {filteredSubs.map((sub, sIdx) => {
+                          const isChart = sub.type === 'chart';
+                          return (
+                            <button
+                              key={sIdx}
+                              onClick={() => {
+                                if (soundEnabled) soundHaptics.playTap();
+                                setIsTocDrawerOpen(false);
+                                if (isChart && sub.chartKey) {
+                                  setActiveChartTab(sub.chartKey);
+                                  setViewMode('charts_gallery');
+                                } else {
+                                  openClanInReader(sub.id);
+                                }
+                              }}
+                              className={`w-full text-left p-2.5 rounded-xl border text-xs transition cursor-pointer flex items-center justify-between gap-2 ${
+                                isChart
+                                  ? isDay ? 'bg-amber-50/70 border-amber-200 hover:bg-amber-100/80 font-bold text-amber-900' : 'bg-[#082226] border-amber-500/30 hover:border-amber-400 font-bold text-amber-300'
+                                  : isDay ? 'bg-slate-50 border-slate-200 hover:border-teal-500 text-slate-800' : 'bg-[#041417] border-[#153e46] hover:border-emerald-500 text-slate-200'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-black shrink-0 ${
+                                  isChart ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/10 text-emerald-400'
+                                }`}>
+                                  {isChart ? 'চার্ট' : 'পাঠ'}
+                                </span>
+                                <span className="truncate">{sub.titleBn}</span>
+                              </div>
+                              <ChevronRight className="w-3.5 h-3.5 opacity-60 shrink-0" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+              {/* Appendix 40 Tribes Option */}
+              <button
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setIsTocDrawerOpen(false);
+                  setViewMode('appendix40');
+                }}
+                className={`w-full text-left p-3 rounded-2xl border text-xs font-bold transition cursor-pointer flex items-center justify-between gap-2 ${
+                  isDay
+                    ? 'bg-amber-50/80 border-amber-200 text-amber-950 hover:bg-amber-100'
+                    : 'bg-[#082226] border-amber-500/30 text-amber-300 hover:border-amber-400'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span>📜</span>
+                  <span>সংযুক্তি : আরবের পূর্ণাঙ্গ ৪০টি গোত্রের এনসাইক্লোপিডিয়া</span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-75" />
+              </button>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+              <button
+                onClick={() => setIsTocDrawerOpen(false)}
+                className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow transition"
+              >
+                সূচিপত্র বন্ধ করুন
               </button>
             </div>
           </div>
