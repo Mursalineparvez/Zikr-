@@ -157,7 +157,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       title: selectedLanguage === 'bn' ? 'আরবের গোত্র ও ব্যক্তিত্ব' : 'Arab Tribes & Personalities',
       arabic: 'قبائل وشخصيات العرب',
       desc: selectedLanguage === 'bn'
-        ? 'আবদুল্লাহ ইয়াছিন শরীফী রচিত বইয়ের আলোকে মক্কা, মদিনা ও আরবের ৪০টি গোত্রের বংশপরিচয়, পবিত্র কাবার দায়িত্ব বণ্টন, বংশধারা ও বিশিষ্ট ব্যক্তিবর্গ'
+        ? 'মক্কা, মদিনা ও সমগ্র আরবের ৪০টি ঐতিহাসিক গোত্রের বংশপরিচয়, পবিত্র কাবার দায়িত্ব বণ্টন, বংশধারা ও বিশিষ্ট ব্যক্তিবর্গের পূর্ণাঙ্গ সংকলন'
         : 'Complete study of Arabian tribes, Makkah & Madinah clans, official duties, genealogy trees, and all 40 clans with Sahaba & citations.',
       icon: <span className="text-2xl">🛡️</span>,
       color: 'from-amber-600/25 via-emerald-600/20 to-teal-500/10 border-amber-500/40',
