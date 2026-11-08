@@ -10,6 +10,8 @@ import {
   BANU_HASHIM_GENEALOGY,
   ANSAR_GENEALOGY,
   CHAPTER3_OVERVIEW,
+  TOPIC_WISE_TOC_DATA,
+  TopicTocItem,
   TribePersonality,
   TribeSection,
   AppendixTribe,
@@ -62,7 +64,7 @@ interface AraberGotroByaktittoViewProps {
   soundEnabled: boolean;
 }
 
-type ViewMode = 'directory' | 'reader' | 'who_is_who' | 'charts_gallery' | 'appendix40' | 'bookmarks';
+type ViewMode = 'topic_toc' | 'directory' | 'reader' | 'who_is_who' | 'charts_gallery' | 'appendix40' | 'bookmarks';
 type ChapterFilter = 'all' | 1 | 2 | 3;
 
 interface ClanVisualMeta {
@@ -238,7 +240,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   soundEnabled,
 }) => {
   const isDay = themeMode === 'day';
-  const [viewMode, setViewMode] = useState<ViewMode>('directory');
+  const [viewMode, setViewMode] = useState<ViewMode>('topic_toc');
   const [chapterFilter, setChapterFilter] = useState<ChapterFilter>('all');
   const [activeClanId, setActiveClanId] = useState<string>('banu-hashim');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -249,6 +251,47 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   const [selectedResponsibility, setSelectedResponsibility] = useState<ClanResponsibility | null>(null);
   const [fontSizeLevel, setFontSizeLevel] = useState<'normal' | 'large'>('normal');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const [selectedTocTopicId, setSelectedTocTopicId] = useState<string>('all');
+  const [collapsedTopics, setCollapsedTopics] = useState<Record<string, boolean>>({});
+
+  const toggleTopicCollapse = (topicId: string) => {
+    if (soundEnabled) soundHaptics.playTap();
+    setCollapsedTopics(prev => ({
+      ...prev,
+      [topicId]: !prev[topicId]
+    }));
+  };
+
+  const expandAllTopics = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    setCollapsedTopics({});
+  };
+
+  const collapseAllTopics = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    const allCollapsed: Record<string, boolean> = {};
+    TOPIC_WISE_TOC_DATA.forEach(t => {
+      allCollapsed[t.id] = true;
+    });
+    setCollapsedTopics(allCollapsed);
+  };
+
+  const openChart = (chartKey?: 'quraysh_roles' | 'hashim_tree' | 'ansar_tree' | 'arab_map' | 'statistics') => {
+    if (chartKey) {
+      if (soundEnabled) soundHaptics.playTap();
+      setActiveChartTab(chartKey);
+      setViewMode('charts_gallery');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const openAppendixCategory = (filterText: string) => {
+    if (soundEnabled) soundHaptics.playTap();
+    setAppendixFilter(filterText);
+    setViewMode('appendix40');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Bookmarks persistence
   const [bookmarks, setBookmarks] = useState<Record<string, boolean>>(() => {
@@ -311,6 +354,31 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  // Filtered Topic TOC list
+  const filteredTopicToc = useMemo(() => {
+    return TOPIC_WISE_TOC_DATA.filter((topic) => {
+      if (selectedTocTopicId !== 'all' && topic.id !== selectedTocTopicId) {
+        return false;
+      }
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+
+      const matchTopic = topic.topicTitleBn.toLowerCase().includes(q) ||
+        (topic.topicTitleAr && topic.topicTitleAr.toLowerCase().includes(q)) ||
+        topic.summaryBn.toLowerCase().includes(q) ||
+        topic.themeBadgeBn.toLowerCase().includes(q);
+
+      const matchSubs = topic.subsections.some((sub) =>
+        sub.titleBn.toLowerCase().includes(q) ||
+        sub.subtitleBn.toLowerCase().includes(q) ||
+        sub.badgeBn.toLowerCase().includes(q) ||
+        sub.figuresPreview?.some((fig) => fig.toLowerCase().includes(q))
+      );
+
+      return matchTopic || matchSubs;
+    });
+  }, [selectedTocTopicId, searchQuery]);
 
   // Filtered Clans for Directory Mode
   const filteredClans = useMemo(() => {
@@ -473,6 +541,21 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
         <button
           onClick={() => {
             if (soundEnabled) soundHaptics.playTap();
+            setViewMode('topic_toc');
+          }}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+            viewMode === 'topic_toc'
+              ? isDay ? 'bg-white text-teal-800 shadow-sm' : 'bg-emerald-600 text-white shadow-md'
+              : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
+          }`}
+        >
+          <Layers className="w-4 h-4 text-amber-400" />
+          <span>বিষয়ভিত্তিক সূচিপত্র</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (soundEnabled) soundHaptics.playTap();
             setViewMode('directory');
           }}
           className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
@@ -615,6 +698,273 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       </div>
 
       {/* =====================================================================
+          VIEW MODE 0: TOPIC-WISE INDEX (বিষয়ভিত্তিক সূচিপত্র)
+          Comprehensive Thematic Table of Contents with zero page numbers
+          ===================================================================== */}
+      {viewMode === 'topic_toc' && (
+        <div className="space-y-6">
+          {/* Hero Thematic Index Banner */}
+          <div className={`p-6 sm:p-7 rounded-3xl border shadow-lg relative overflow-hidden ${
+            isDay
+              ? 'bg-gradient-to-br from-teal-50 via-white to-emerald-50/50 border-teal-200'
+              : 'bg-gradient-to-br from-[#082226] via-[#051a1d] to-[#041417] border-emerald-500/30'
+          }`}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    বিষয়ভিত্তিক সূচিপত্র
+                  </span>
+                  <span className="text-xs font-serif text-emerald-400 opacity-80 font-bold">
+                    فهرس الموضوعات الشامل
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-3xl font-black tracking-tight">
+                  পবিত্র সীরাত ও আরবের গোত্রকোষ সূচি
+                </h2>
+                <p className="text-xs sm:text-sm opacity-80 max-w-2xl leading-relaxed">
+                  কাবার প্রশাসনিক দায়িত্ব, নববি রক্তধারা, মদিনার আনসার ভ্রাতৃত্ব, বৃহত্তর আরবের আঞ্চলিক শক্তি ও ৪০টি গোত্রের বিস্তৃত ইতিহাস অনুযায়ী শ্রেণিভুক্ত সূচি। যেকোনো বিষয়ে চাপ দিয়ে সরাসরি পাঠ শুরু করুন।
+                </p>
+              </div>
+
+              {/* Action Buttons: Expand All / Collapse All */}
+              <div className="flex items-center gap-2 self-start md:self-center shrink-0">
+                <button
+                  onClick={expandAllTopics}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                    isDay
+                      ? 'bg-white hover:bg-slate-100 text-teal-800 border-slate-200 shadow-sm'
+                      : 'bg-[#061e22] hover:bg-[#0c3137] text-emerald-300 border-[#153e46]'
+                  }`}
+                >
+                  <ChevronDown className="w-3.5 h-3.5 text-amber-400" />
+                  <span>সব প্রসারিত করুন</span>
+                </button>
+                <button
+                  onClick={collapseAllTopics}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                    isDay
+                      ? 'bg-white hover:bg-slate-100 text-teal-800 border-slate-200 shadow-sm'
+                      : 'bg-[#061e22] hover:bg-[#0c3137] text-emerald-300 border-[#153e46]'
+                  }`}
+                >
+                  <ChevronUp className="w-3.5 h-3.5 text-amber-400" />
+                  <span>সব সংক্ষেপ করুন</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Topic Filter Selector Tabs */}
+            <div className="mt-5 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <span className="text-xs font-bold opacity-70 whitespace-nowrap">বিষয় ফিল্টার:</span>
+              <button
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setSelectedTocTopicId('all');
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+                  selectedTocTopicId === 'all'
+                    ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow' : 'bg-emerald-600 text-white border-emerald-500 shadow'
+                    : isDay ? 'bg-white text-slate-700 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
+                }`}
+              >
+                সকল বিষয় (৫টি)
+              </button>
+              {TOPIC_WISE_TOC_DATA.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setSelectedTocTopicId(t.id);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 border ${
+                    selectedTocTopicId === t.id
+                      ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow' : 'bg-emerald-600 text-white border-emerald-500 shadow'
+                      : isDay ? 'bg-white text-slate-700 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
+                  }`}
+                >
+                  <span>{t.icon}</span>
+                  <span>বিষয় {t.topicNumber}: {t.themeBadgeBn}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Master 5 Topic Accordion Cards */}
+          <div className="space-y-5">
+            {filteredTopicToc.map((topic) => {
+              const isCollapsed = !!collapsedTopics[topic.id];
+
+              return (
+                <div
+                  key={topic.id}
+                  className={`rounded-3xl border transition-all duration-300 overflow-hidden shadow-sm ${
+                    isDay
+                      ? `bg-gradient-to-br ${topic.gradientDay} ${topic.borderDay}`
+                      : `bg-gradient-to-br ${topic.gradientNight} ${topic.borderNight}`
+                  }`}
+                >
+                  {/* Topic Header Clickable */}
+                  <div
+                    onClick={() => toggleTopicCollapse(topic.id)}
+                    className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer select-none transition"
+                  >
+                    <div className="flex items-start sm:items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl bg-white/30 dark:bg-black/40 backdrop-blur-md border border-white/40 dark:border-white/10 shrink-0 shadow-sm">
+                        {topic.icon}
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-md ${
+                            isDay ? 'bg-teal-700 text-white' : 'bg-emerald-500 text-slate-950 font-black'
+                          }`}>
+                            বিষয় {topic.topicNumber.toString().padStart(2, '০')}
+                          </span>
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-white/40 dark:bg-white/10 text-slate-700 dark:text-emerald-300 border border-black/5 dark:border-white/10">
+                            {topic.themeBadgeBn}
+                          </span>
+                          {topic.topicTitleAr && (
+                            <span className="text-xs font-serif text-amber-500 font-bold hidden md:inline">
+                              ({topic.topicTitleAr})
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="text-lg sm:text-2xl font-black tracking-tight mt-1">
+                          {topic.topicTitleBn}
+                        </h3>
+
+                        <p className="text-xs sm:text-sm opacity-85 max-w-3xl leading-relaxed">
+                          {topic.summaryBn}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-black/10 dark:border-white/10">
+                      <span className="text-xs font-bold opacity-75">
+                        {topic.subsections.length}টি বিষয় ও চার্ট
+                      </span>
+                      <div className="w-8 h-8 rounded-xl bg-black/10 dark:bg-white/10 flex items-center justify-center shrink-0">
+                        {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Subsections Content */}
+                  {!isCollapsed && (
+                    <div className="p-5 sm:p-6 pt-0 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        {topic.subsections.map((sub, sIdx) => {
+                          const isChart = sub.type === 'chart';
+
+                          return (
+                            <div
+                              key={sIdx}
+                              onClick={() => {
+                                if (soundEnabled) soundHaptics.playTap();
+                                if (isChart) {
+                                  openChart(sub.chartKey);
+                                } else if (sub.id.startsWith('appendix-')) {
+                                  openAppendixCategory(sub.titleBn.split(' ')[0]);
+                                } else {
+                                  openClanInReader(sub.id);
+                                }
+                              }}
+                              className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 group hover:scale-[1.01] shadow-sm ${
+                                isChart
+                                  ? isDay
+                                    ? 'bg-amber-50/90 border-amber-300 hover:border-amber-500 shadow-md ring-1 ring-amber-400/20'
+                                    : 'bg-amber-950/20 border-amber-500/40 hover:border-amber-400 shadow-md ring-1 ring-amber-400/20'
+                                  : isDay
+                                    ? 'bg-white/95 hover:bg-white border-slate-200/90 hover:border-teal-400'
+                                    : 'bg-[#041417]/90 hover:bg-[#071f23] border-[#153e46] hover:border-emerald-400'
+                              }`}
+                            >
+                              <div className="space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${
+                                        isChart
+                                          ? 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+                                          : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                      }`}>
+                                        {sub.badgeBn}
+                                      </span>
+                                    </div>
+                                    <h4 className="text-base font-black tracking-tight group-hover:text-amber-400 transition flex items-center gap-2">
+                                      {isChart && <span>📊</span>}
+                                      <span>{sub.titleBn}</span>
+                                    </h4>
+                                  </div>
+
+                                  <div className="w-7 h-7 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition">
+                                    <ChevronRight className="w-4 h-4 text-emerald-500" />
+                                  </div>
+                                </div>
+
+                                <p className="text-xs opacity-80 leading-relaxed">
+                                  {sub.subtitleBn}
+                                </p>
+
+                                {/* Prominent Personalities Preview */}
+                                {sub.figuresPreview && sub.figuresPreview.length > 0 && (
+                                  <div className="pt-2 border-t border-dashed border-black/10 dark:border-white/10 flex flex-wrap gap-1.5 items-center">
+                                    <span className="text-[10px] font-bold opacity-60">ব্যক্তিত্ব:</span>
+                                    {sub.figuresPreview.map((fig, fIdx) => (
+                                      <span
+                                        key={fIdx}
+                                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5"
+                                      >
+                                        {fig}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="pt-2 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                                <span>
+                                  {isChart ? 'চার্টটি বড় করে দেখুন →' : 'সরাসরি সীরাত ও জীবনী পড়ুন →'}
+                                </span>
+                                <span className="opacity-60 font-normal">ক্লিক করুন</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Topic Footer Quick Action */}
+                      {topic.relatedChartKey && (
+                        <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 flex-wrap ${
+                          isDay ? 'bg-white/60 border-slate-200' : 'bg-black/20 border-white/10'
+                        }`}>
+                          <div className="flex items-center gap-2 text-xs">
+                            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>এই বিষয়ের মূল ভিজ্যুয়াল চার্ট:</span>
+                            <strong className="text-amber-500">{topic.relatedChartTitleBn}</strong>
+                          </div>
+
+                          <button
+                            onClick={() => openChart(topic.relatedChartKey)}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                          >
+                            <span>চার্টটি দেখুন</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
           VIEW MODE 1: ATTRACTIVE GOTRO DIRECTORY (REPLACING THE OLD TEXT TOC)
           ===================================================================== */}
       {viewMode === 'directory' && (
@@ -637,7 +987,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span className={`font-bold px-2.5 py-0.5 rounded-lg ${
                     chapterFilter === 1 ? 'bg-white/20 text-white' : 'bg-amber-500/15 text-amber-500 font-black'
                   }`}>
-                    অধ্যায় ০১
+                    বিষয় ০১
                   </span>
                   <span className="text-xl">🏛️</span>
                 </div>
@@ -673,7 +1023,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span className={`font-bold px-2.5 py-0.5 rounded-lg ${
                     chapterFilter === 2 ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-400 font-black'
                   }`}>
-                    অধ্যায় ০২
+                    বিষয় ০২
                   </span>
                   <span className="text-xl">🌴</span>
                 </div>
@@ -709,7 +1059,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span className={`font-bold px-2.5 py-0.5 rounded-lg ${
                     chapterFilter === 3 ? 'bg-white/20 text-white' : 'bg-orange-500/15 text-orange-400 font-black'
                   }`}>
-                    অধ্যায় ০৩
+                    বিষয় ০৩
                   </span>
                   <span className="text-xl">🧭</span>
                 </div>

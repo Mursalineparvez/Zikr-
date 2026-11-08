@@ -161,7 +161,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         : 'Complete study of Arabian tribes, Makkah & Madinah clans, official duties, genealogy trees, and all 40 clans with Sahaba & citations.',
       icon: <span className="text-2xl">🛡️</span>,
       color: 'from-amber-600/25 via-emerald-600/20 to-teal-500/10 border-amber-500/40',
-      badge: selectedLanguage === 'bn' ? 'বিশেষ আকর গ্রন্থ' : 'Special Book',
+      badge: selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক সূচিপত্র' : 'Topic-Wise Index',
     },
     {
       id: 'islamic_history_wars' as OtherSubSection,

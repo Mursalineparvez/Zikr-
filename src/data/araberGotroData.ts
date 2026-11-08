@@ -137,32 +137,407 @@ export const CHAPTER3_OVERVIEW: Chapter3OverviewItem[] = [
 export const ARABER_GOTRO_CHAPTERS = [
   {
     no: 1,
-    titleBn: "অধ্যায় ১ : মক্কার গোত্রসমূহ (কুরাইশ ও অন্যান্য)",
-    subtitleBn: "বনু হাশিম থেকে কুরাইশের অন্যান্য গুরুত্বপূর্ণ শাখা ও কাবার দায়িত্ব বণ্টন",
+    titleBn: "বিষয় ১ : মক্কার কুরাইশ প্রশাসন ও কাবার খেদমত",
+    subtitleBn: "বনু হাশিম থেকে কুরাইশের ১০টি প্রশাসনিক দায়িত্ব ও অভিজাত শাখাসমূহ",
     sectionsCount: 8,
-    pageRange: "৪–৩০"
+    topicBadgeBn: "পবিত্র কাবার প্রশাসন ও দায়িত্ব"
   },
   {
     no: 2,
-    titleBn: "অধ্যায় ২ : মদিনার গোত্রসমূহ (আনসার ও অন্যান্য)",
-    subtitleBn: "খাযরাজ, আওস এবং মদিনার ইহুদি গোত্রসমূহ (কায়নুকা, নাদির, কুরাইজা)",
+    titleBn: "বিষয় ২ : মদিনার আনসার ভ্রাতৃত্ব ও ইয়াসরিবের গোত্রসমূহ",
+    subtitleBn: "খাযরাজ ও আওস আনসার শাখা এবং মদিনার ইহুদি গোত্রসমূহ (কায়নুকা, নাদির, কুরাইজা)",
     sectionsCount: 3,
-    pageRange: "৩১–৪৩"
+    topicBadgeBn: "আনসার ভ্রাতৃত্ব ও মদিনা সনদ"
   },
   {
     no: 3,
-    titleBn: "অধ্যায় ৩ : আরবের অন্যান্য উল্লেখযোগ্য গোত্র",
+    titleBn: "বিষয় ৩ : বৃহত্তর আরবের আঞ্চলিক শক্তিসমূহ ও ঐতিহাসিক সন্ধি",
     subtitleBn: "তায়েফ, হাওয়াযিন, খুযাআ, গিফার, দাওস, তামিম, কালব, গাতফান ও হানিফা",
     sectionsCount: 6,
-    pageRange: "৪৪–৬৩"
+    topicBadgeBn: "আঞ্চলিক শক্তি ও ঐতিহাসিক যুদ্ধ"
   },
   {
     no: 4,
-    titleBn: "সংযুক্তি : গোত্রভিত্তিক ঐতিহাসিক ব্যক্তিত্বের বিস্তৃত তালিকা",
+    titleBn: "বিষয় ৪ : আরবের ৪০টি গোত্রের ঐতিহাসিক ব্যক্তিত্বকোষ (সংযুক্তি)",
     subtitleBn: "১ থেকে ৪০টি গোত্রের সাহাবি, ঐতিহাসিক চরিত্র ও ব্যক্তিত্বের পরিসংখ্যান",
     sectionsCount: 40,
-    pageRange: "৬৪–৮৩"
+    topicBadgeBn: "৪০টি গোত্রকোষ ও এনসাইক্লোপিডিয়া"
   },
+];
+
+export interface TopicTocItem {
+  id: string;
+  topicNumber: number;
+  topicTitleBn: string;
+  topicTitleAr?: string;
+  themeBadgeBn: string;
+  icon: string;
+  gradientDay: string;
+  gradientNight: string;
+  borderDay: string;
+  borderNight: string;
+  accentColor: string;
+  summaryBn: string;
+  subsections: {
+    id: string;
+    titleBn: string;
+    subtitleBn: string;
+    type: 'clan' | 'chart';
+    chartKey?: 'quraysh_roles' | 'hashim_tree' | 'ansar_tree' | 'arab_map' | 'statistics';
+    badgeBn: string;
+    figuresPreview?: string[];
+  }[];
+  relatedChartKey?: 'quraysh_roles' | 'hashim_tree' | 'ansar_tree' | 'arab_map' | 'statistics';
+  relatedChartTitleBn?: string;
+}
+
+export const TOPIC_WISE_TOC_DATA: TopicTocItem[] = [
+  {
+    id: 'topic-kaba-admin',
+    topicNumber: 1,
+    topicTitleBn: "পবিত্র কাবার খেদমত ও কুরাইশ প্রশাসন (১০টি প্রশাসনিক দায়িত্ব)",
+    topicTitleAr: "إدارة الكعبة ومهام قريش العشر",
+    themeBadgeBn: "কাবার প্রশাসন ও দশ অভিজাত শাখা",
+    icon: "🕋",
+    gradientDay: "from-amber-500/15 via-emerald-500/10 to-teal-500/5",
+    gradientNight: "from-amber-500/20 via-emerald-950/40 to-[#04191d]",
+    borderDay: "border-amber-400/60",
+    borderNight: "border-amber-500/40",
+    accentColor: "text-amber-500",
+    summaryBn: "জাহেলিয়াত ও প্রাক-ইসলামী যুগে পবিত্র কাবা শরিফ ও মক্কার প্রশাসন সুশৃঙ্খল পরিচালনার জন্য কুরাইশদের ১০টি অভিজাত বংশের মধ্যে বণ্টিত দায়িত্বসমূহ।",
+    subsections: [
+      {
+        id: 'banu-hashim',
+        titleBn: "বনু হাশিম",
+        subtitleBn: "হাজীদের পানি পান করানো (সিকায়া) ও খাদ্য সরবরাহ (রিফাদা)",
+        type: 'clan',
+        badgeBn: "প্রশাসনিক দায়িত্ব ১",
+        figuresPreview: ["রাসূলুল্লাহ ﷺ", "আলী (রা.)", "হামযা (রা.)", "আব্বাস (রা.)"]
+      },
+      {
+        id: 'banu-umayya',
+        titleBn: "বনু আবদে শামস / বনু উমাইয়া",
+        subtitleBn: "রণপতাকা 'আল-উকাব' বহন ও যুদ্ধের সেনাপতিত্ব",
+        type: 'clan',
+        badgeBn: "প্রশাসনিক দায়িত্ব ২",
+        figuresPreview: ["উসমান ইবনে আফফান (রা.)", "আবু সুফিয়ান (রা.)", "মুয়াবিয়া (রা.)"]
+      },
+      {
+        id: 'banu-makhzum',
+        titleBn: "বনু মাখযুম",
+        subtitleBn: "অশ্বারোহী বাহিনী (আল-আ'ইন্নাহ) ও সমর শিবির (আল-কুব্বাহ) তদারকি",
+        type: 'clan',
+        badgeBn: "প্রশাসনিক দায়িত্ব ৩",
+        figuresPreview: ["খালিদ বিন ওয়ালিদ (রা.)", "উম্মে সালামাহ (রা.)", "আবু জাহল"]
+      },
+      {
+        id: 'banu-adi',
+        titleBn: "বনু আদি",
+        subtitleBn: "কূটনীতি, আস-সিফারাহ, দূত ও বৈদেশিক সালিশি",
+        type: 'clan',
+        badgeBn: "প্রশাসনিক দায়িত্ব ৪",
+        figuresPreview: ["উমর ইবনুল খাত্তাব (রা.)", "সাঈদ ইবনে যায়দ (রা.)", "হাফসা (রা.)"]
+      },
+      {
+        id: 'banu-taym',
+        titleBn: "বনু তাইম",
+        subtitleBn: "রক্তপণ (দিয়াত) ও ক্ষতিপূরণ বিচার ব্যবস্থাপনা",
+        type: 'clan',
+        badgeBn: "প্রশাসনিক দায়িত্ব ৫",
+        figuresPreview: ["আবু বকর সিদ্দিক (রা.)", "তালহা ইবনে উবাইদুল্লাহ (রা.)", "আয়েশা (রা.)"]
+      },
+      {
+        id: 'banu-asad-quraysh',
+        titleBn: "বনু আসাদ (কুরাইশ)",
+        subtitleBn: "দারুন নাদওয়াহ সংসদ ভবন পরিচালনা ও বৈশ্বিক বাণিজ্য কাফেলা",
+        type: 'clan',
+        badgeBn: "প্রশাসনিক দায়িত্ব ৬",
+        figuresPreview: ["খাদিজা বিনতে খুওয়াইলিদ (রা.)", "যুবাইর ইবনুল আওয়াম (রা.)"]
+      },
+      {
+        id: 'banu-zuhrah',
+        titleBn: "বনু যাহরা",
+        subtitleBn: "রাসূলুল্লাহ ﷺ-এর মাতামহ বংশ ও বায়তুল মাল তদারকি",
+        type: 'clan',
+        badgeBn: "প্রশাসনিক দায়িত্ব ৭",
+        figuresPreview: ["আমিনা বিনতে ওয়াহাব", "সা'দ ইবনে আবি ওয়াক্কাস (রা.)", "আব্দুর রহমান ইবনে আউফ (রা.)"]
+      },
+      {
+        id: 'quraysh-other-branches',
+        titleBn: "বনু আবদুদ দার, জুমাহ ও সাহম",
+        subtitleBn: "কাবার চাবি (হিজাবাহ), যুদ্ধপতাকা (লিওয়া), ভাগ্যনির্ধারক তীর (আযলাম) ও মানত সম্পদ",
+        type: 'clan',
+        badgeBn: "প্রশাসনিক দায়িত্ব ৮, ৯ ও ১০",
+        figuresPreview: ["মুস'আব ইবনে উমায়ের (রা.)", "উসমান ইবনে তালহা (রা.)", "আমর ইবনুল আস (রা.)"]
+      },
+      {
+        id: 'chart-quraysh-roles',
+        titleBn: "কুরাইশ দায়িত্ব বণ্টন পূর্ণাঙ্গ চার্ট",
+        subtitleBn: "১০টি কুরাইশ শাখার ভূমিকা, কাজ ও বিস্তারিত দায়িত্বের একনজর টেবিল",
+        type: 'chart',
+        chartKey: 'quraysh_roles',
+        badgeBn: "ভিজ্যুয়াল চার্ট"
+      }
+    ],
+    relatedChartKey: 'quraysh_roles',
+    relatedChartTitleBn: "কুরাইশ দায়িত্ব বণ্টন চার্ট"
+  },
+  {
+    id: 'topic-prophetic-lineage',
+    topicNumber: 2,
+    topicTitleBn: "রাসূলুল্লাহ ﷺ-এর রক্তধারা ও পবিত্র আহলে বাইতের বংশলতিকা",
+    topicTitleAr: "نسب النبي ﷺ الشريف وشجرة آل البيت",
+    themeBadgeBn: "নবুওয়াত, আহলে বাইত ও শাজারা শরীফ",
+    icon: "👑",
+    gradientDay: "from-emerald-500/15 via-teal-500/10 to-amber-500/5",
+    gradientNight: "from-emerald-600/20 via-[#072428] to-[#041417]",
+    borderDay: "border-emerald-400/60",
+    borderNight: "border-emerald-500/40",
+    accentColor: "text-emerald-400",
+    summaryBn: "হাশিম ইবনে আবদে মানাফ থেকে সাইয়্যিদুল মুরসালীন মুহাম্মাদুর রাসূলুল্লাহ ﷺ, খুলাফায়ে রাশিদিন এবং আহলে বাইতের সম্মানিত বংশলতিকা ও আত্মত্যাগ।",
+    subsections: [
+      {
+        id: 'banu-hashim',
+        titleBn: "সাইয়্যিদুল মুরসালীন হযরত মুহাম্মাদ মুস্তফা ﷺ",
+        subtitleBn: "আখেরি নবী ও মানবতার মুক্তিদূত, কাবার পুনর্গঠক ও বিশ্বনবী",
+        type: 'clan',
+        badgeBn: "নবীজির নসবনামা",
+        figuresPreview: ["রাসূলুল্লাহ ﷺ"]
+      },
+      {
+        id: 'banu-hashim',
+        titleBn: "সাইয়্যিদুনা হযরত আলী ও ফাতিমাতুয যাহরা (রা.)",
+        subtitleBn: "আসাদুল্লাহিল গালিব, চতুর্থ খলিফা এবং জান্নাতবাসী নারীদের সর্দারিনী",
+        type: 'clan',
+        badgeBn: "আহলে বাইত",
+        figuresPreview: ["আলী (রা.)", "ফাতিমা (রা.)"]
+      },
+      {
+        id: 'banu-hashim',
+        titleBn: "ইমাম হাসান ও ইমাম হুসাইন (রা.)",
+        subtitleBn: "জান্নাতের যুবকদের সর্দার এবং নবীজির নয়নের মণি",
+        type: 'clan',
+        badgeBn: "আহলে বাইত",
+        figuresPreview: ["ইমাম হাসান (রা.)", "ইমাম হুসাইন (রা.)"]
+      },
+      {
+        id: 'banu-hashim',
+        titleBn: "সাইয়্যিদুশ শুহাদা হযরত হামযা ও জাফর ইবনে আবি তালিব (রা.)",
+        subtitleBn: "আল্লাহ ও তাঁর রাসূলের সিংহ, বদরের অকুতোভয় বীর এবং মুতার শহীদ যুল-জানাহাইন",
+        type: 'clan',
+        badgeBn: "বীর শহীদ",
+        figuresPreview: ["হামযা (রা.)", "জাফর ইবনে আবি তালিব (রা.)"]
+      },
+      {
+        id: 'banu-hashim',
+        titleBn: "হযরত আব্বাস ইবনে আব্দুল মুত্তালিব ও আব্দুল্লাহ ইবনে আব্বাস (রা.)",
+        subtitleBn: "নবীজির পিতৃব্য ও রইসুল মুফাসসিরীন রইসুল উম্মাহ",
+        type: 'clan',
+        badgeBn: "ইলম ও খিলাফত",
+        figuresPreview: ["আব্বাস (রা.)", "ইবনে আব্বাস (রা.)"]
+      },
+      {
+        id: 'chart-hashim-tree',
+        titleBn: "বনু হাশিম বংশলতিকা (শাজারা শরীফ) চিত্র",
+        subtitleBn: "হাশিম থেকে আব্দুল মুত্তালিব ও রাসূলুল্লাহ ﷺ-এর পবিত্র বংশধারা ট্রি",
+        type: 'chart',
+        chartKey: 'hashim_tree',
+        badgeBn: "ভিজ্যুয়াল বংশলতিকা"
+      }
+    ],
+    relatedChartKey: 'hashim_tree',
+    relatedChartTitleBn: "বনু হাশিম বংশলতিকা চিত্র"
+  },
+  {
+    id: 'topic-ansar-madinah',
+    topicNumber: 3,
+    topicTitleBn: "মদিনার আনসার ভ্রাতৃত্ব ও ইয়াসরিবের গোত্রসমূহ",
+    topicTitleAr: "أنصار المدينة والقبائل اليهودية بيثرب",
+    themeBadgeBn: "আওস, খাযরাজ, আনসার ও মদিনা সনদ",
+    icon: "🌴",
+    gradientDay: "from-teal-500/15 via-emerald-500/10 to-lime-500/5",
+    gradientNight: "from-teal-900/30 via-[#061e22] to-[#041417]",
+    borderDay: "border-teal-400/60",
+    borderNight: "border-teal-500/40",
+    accentColor: "text-teal-400",
+    summaryBn: "ইয়েমেনের আজদ বংশোদ্ভূত বনু কায়লাহ (আওস ও খাযরাজ), হিজরতের পর তাদের নিঃস্বার্থ আনসার ভ্রাতৃত্ব এবং মদিনার ইহুদি গোত্রসমূহের মদিনা সনদ ও ঐতিহাসিক পটভূমি।",
+    subsections: [
+      {
+        id: 'khazraj-tribe',
+        titleBn: "খাযরাজ গোত্র (মদিনার বৃহত্তম আনসার শাখা)",
+        subtitleBn: "বনু নাজ্জার, বনু সালামাহ, বনু সা'ইদা ও বনু জুরাইকের বিস্তারিত ইতিহাস ও বীরত্ব",
+        type: 'clan',
+        badgeBn: "আনসার খাযরাজ",
+        figuresPreview: ["আবু আইয়ুব আনসারি (রা.)", "জাবির ইবনে আব্দুল্লাহ (রা.)", "সা'দ ইবনে উবাদাহ (রা.)"]
+      },
+      {
+        id: 'aws-tribe',
+        titleBn: "আওস গোত্র (অনমনীয় আনসার শাখা)",
+        subtitleBn: "বনু আব্দুল আশহাল, বনু জাফর ও বনু আওফের বীরত্বগাঁথা ও বদরি সাহাবিগণ",
+        type: 'clan',
+        badgeBn: "আনসার আওস",
+        figuresPreview: ["সা'দ ইবনে মু'আজ (রা.)", "উসাইদ ইবনে হুদাইর (রা.)", "হানযালা (রা.)"]
+      },
+      {
+        id: 'madinah-jewish-tribes',
+        titleBn: "মদিনার ইহুদি গোত্রসমূহ (কায়নুকা, নাদির ও কুরাইজা)",
+        subtitleBn: "মদিনা সনদ, শক্তিশালী দুর্গসমূহ, বিশ্বাসঘাতকতা ও ঐতিহাসিক যুদ্ধসমূহ",
+        type: 'clan',
+        badgeBn: "ঐতিহাসিক চুক্তি ও দুর্গ",
+        figuresPreview: ["হুয়াই ইবনে আখতাব", "কা'ব ইবনুল আশরাফ", "সাফিয়্যা বিনতে হুয়াই (রা.)"]
+      },
+      {
+        id: 'chart-ansar-tree',
+        titleBn: "আনসার গোত্র উপশাখা চার্ট",
+        subtitleBn: "আজদ ও কায়লাহ থেকে খাযরাজ ও আওসের ৭টি মূল শাখার পূর্ণাঙ্গ বংশচিত্র",
+        type: 'chart',
+        chartKey: 'ansar_tree',
+        badgeBn: "ভিজ্যুয়াল চার্ট"
+      }
+    ],
+    relatedChartKey: 'ansar_tree',
+    relatedChartTitleBn: "আনসার গোত্র উপশাখা চার্ট"
+  },
+  {
+    id: 'topic-regional-arab',
+    topicNumber: 4,
+    topicTitleBn: "আরবের আঞ্চলিক শক্তিসমূহ, যুদ্ধ ও ঐতিহাসিক সন্ধি",
+    topicTitleAr: "قوى العرب الإقليمية والحروب والمعاهدات",
+    themeBadgeBn: "তায়েফ, নজদ, হুদাইবিয়া ও সীমান্ত",
+    icon: "⚔️",
+    gradientDay: "from-orange-500/15 via-amber-500/10 to-red-500/5",
+    gradientNight: "from-orange-900/25 via-[#061e22] to-[#041417]",
+    borderDay: "border-orange-400/60",
+    borderNight: "border-orange-500/40",
+    accentColor: "text-orange-400",
+    summaryBn: "মক্কা ও মদিনার বাইরে তায়েফ, নজদ, তিহামাহ ও শাম সীমান্তবর্তী শক্তিশালী গোত্রসমূহ; তাদের যুদ্ধ, সন্ধি এবং পরবর্তীতে ইসলামের পতাকাতলে আগমন।",
+    subsections: [
+      {
+        id: 'banu-thaqif',
+        titleBn: "বনু সাকীফ (তায়েফ নগরী)",
+        subtitleBn: "লাত দেবীর মন্দির, হুনাইন ও তায়েফ অবরোধ এবং ইসলামের কাছে আত্মসমর্পণ",
+        type: 'clan',
+        badgeBn: "তায়েফ প্রশাসন",
+        figuresPreview: ["উরওয়া ইবনে মাসউদ (রা.)", "মুগীরা ইবনে শু'বা (রা.)"]
+      },
+      {
+        id: 'banu-hawazin-saad',
+        titleBn: "বনু হাওয়াযিন ও বনু সা’দ",
+        subtitleBn: "নবীজির দুধমাতা হালিমা আস-সা'দিয়া, শুদ্ধতম আরবি ভাষা ও হুনাইনের যুদ্ধ",
+        type: 'clan',
+        badgeBn: "দুধমাতার গোত্র",
+        figuresPreview: ["হালিমা আস-সা'দিয়া", "মালেক ইবনে আওফ (রা.)", "শায়মা"]
+      },
+      {
+        id: 'banu-khuzaa-bakr',
+        titleBn: "বনু খুযাআ ও বনু বকর",
+        subtitleBn: "হুদাইবিয়ার ঐতিহাসিক চুক্তির মিত্রতা এবং মক্কা বিজয়ের প্রত্যক্ষ পটভূমি",
+        type: 'clan',
+        badgeBn: "হুদাইবিয়ার মিত্র",
+        figuresPreview: ["আমর ইবনে সালিম (রা.)", "বুদাইল ইবনে ওয়ারকা (রা.)"]
+      },
+      {
+        id: 'banu-ghifar-daws',
+        titleBn: "বনু গিফার ও বনু দাওস",
+        subtitleBn: "বাণিজ্যপথের অকুতোভয় তাওহিদপ্রেমী আবু যার এবং হাদিসের বিশ্বস্ত সংরক্ষক আবু হুরায়রা (রা.)",
+        type: 'clan',
+        badgeBn: "বাণিজ্যপথ ও দক্ষিণ আরব",
+        figuresPreview: ["আবু যার গিফারী (রা.)", "আবু হুরায়রা (রা.)", "তুফায়েল ইবনে আমর (রা.)"]
+      },
+      {
+        id: 'banu-tamim-kalb',
+        titleBn: "বনু তামিম ও বনু কালব",
+        subtitleBn: "নজদের অপরাজেয় মুজাহিদ খাব্বাব এবং যায়েদ ইবনে হারিসা ও দিহইয়া কালবী (রা.)",
+        type: 'clan',
+        badgeBn: "নজদ ও শাম সীমান্ত",
+        figuresPreview: ["খাব্বাব ইবনুল আরাত (রা.)", "যায়েদ ইবনে হারিসা (রা.)", "দিহইয়া কালবী (রা.)"]
+      },
+      {
+        id: 'banu-ghatfan-hanifa',
+        titleBn: "বনু গাতফান ও বনু হানিফা",
+        subtitleBn: "খন্দকের যুদ্ধে কুরাইশের এক হাজার অশ্বারোহী এবং ইয়ামামার যুদ্ধে মুসায়লামা কাযযাবের পতন",
+        type: 'clan',
+        badgeBn: "খন্দক ও ইয়ামামাহ",
+        figuresPreview: ["নুয়াইম ইবনে মাসউদ (রা.)", "সুওয়াইদ ইবনে সামিত", "মুসায়লামা কাযযাব"]
+      },
+      {
+        id: 'chart-arab-map',
+        titleBn: "বৃহত্তর আরব গোত্র ওভারভিউ চার্ট",
+        subtitleBn: "৬টি আঞ্চলিক অঞ্চলের ১১টি প্রধান গোত্রের অবস্থান, পটভূমি ও ঐতিহাসিক তথ্য",
+        type: 'chart',
+        chartKey: 'arab_map',
+        badgeBn: "ভিজ্যুয়াল ওভারভিউ"
+      }
+    ],
+    relatedChartKey: 'arab_map',
+    relatedChartTitleBn: "বৃহত্তর আরব গোত্র চার্ট"
+  },
+  {
+    id: 'topic-appendix40',
+    topicNumber: 5,
+    topicTitleBn: "আরবের ৪০টি গোত্রের ঐতিহাসিক ব্যক্তিত্বকোষ (সংযুক্তি ১–৪০)",
+    topicTitleAr: "معجم الأربعين قبيلة العربية وشخصياتها التاريخية",
+    themeBadgeBn: "৪০টি গোত্রের বিস্তৃত এনসাইক্লোপিডিয়া",
+    icon: "📜",
+    gradientDay: "from-indigo-500/15 via-sky-500/10 to-teal-500/5",
+    gradientNight: "from-indigo-900/25 via-[#061e22] to-[#041417]",
+    borderDay: "border-indigo-400/60",
+    borderNight: "border-indigo-500/40",
+    accentColor: "text-indigo-400",
+    summaryBn: "আল-ইসাবাহ, উসুদুল গাবাহ ও ইবনে হিশামের প্রামাণ্য নথির ভিত্তিতে আরবের ৪০টি প্রধান গোত্র, ভৌগোলিক অবস্থান এবং উল্লেখযোগ্য সাহাবি ও চরিত্রসমূহের পূর্ণাঙ্গ এনসাইক্লোপিডিয়া।",
+    subsections: [
+      {
+        id: 'appendix-quraysh-hijaz',
+        titleBn: "কুরাইশ ও মক্কার হিজাজি গোত্রসমূহ",
+        subtitleBn: "বনু হাশিম, বনু উমাইয়া, মাখযুম, আদি, তাইম, আসাদ, যাহরা, জুমা, সাহম, আবদুদ দার",
+        type: 'clan',
+        badgeBn: "১০টি কুরাইশ গোত্র",
+        figuresPreview: ["খুলাফায়ে রাশিদিন", "আশারা মুবাশশারা", "উম্মাহাতুল মুমিনীন"]
+      },
+      {
+        id: 'appendix-madinah-ansar',
+        titleBn: "মদিনাতুল মুনাওয়ারার আনসার ও পার্শ্ববর্তী মিত্র গোত্রসমূহ",
+        subtitleBn: "খাযরাজ, আওস, জুহাইনা, মুযাইনা, আশজা ও মিত্র শাখাসমূহ",
+        type: 'clan',
+        badgeBn: "আনসার ও মিত্র",
+        figuresPreview: ["সা'দ ইবনে মু'আজ", "আবু আইয়ুব", "আব্দুল্লাহ ইবনে আমর"]
+      },
+      {
+        id: 'appendix-najd-central',
+        titleBn: "মধ্য আরব ও নজদের গোত্রসমূহ",
+        subtitleBn: "তামিম, হাওয়াযিন, গাতফান, বনু সা'দ, সুলাইম, বাহিলা ও মধ্য আরবের বেদুইন দল",
+        type: 'clan',
+        badgeBn: "নজদ ও তিহামাহ",
+        figuresPreview: ["খাব্বাব ইবনুল আরাত", "আল-আকরা ইবনে হাবিস", "আব্বাস ইবনে মিরদাস"]
+      },
+      {
+        id: 'appendix-south-yemen',
+        titleBn: "দক্ষিণ আরব ও ইয়েমেনি গোত্রসমূহ",
+        subtitleBn: "দাওস, আসলাম, আশ'আরী, হামদান, বাজিলা, খাস'আম, কিন্দি ও দক্ষিণ উপদ্বীপ",
+        type: 'clan',
+        badgeBn: "ইয়েমেন ও দক্ষিণ আরব",
+        figuresPreview: ["আবু হুরায়রা", "আবু মুসা আশ'আরী", "জরীর ইবনে আব্দুল্লাহ"]
+      },
+      {
+        id: 'appendix-north-sham',
+        titleBn: "উত্তর আরব ও শাম সীমান্তবর্তী গোত্রসমূহ",
+        subtitleBn: "কালব, খুযা'আ, জুযাম, বালি, কদ্বা'আ, তাইয়ি ও সিরিয়া সীমান্ত",
+        type: 'clan',
+        badgeBn: "উত্তর আরব ও শাম",
+        figuresPreview: ["যায়েদ ইবনে হারিসা", "দিহইয়া কালবী", "আদী ইবনে হাতিম তাইয়ী"]
+      },
+      {
+        id: 'chart-statistics',
+        titleBn: "ব্যক্তিত্বের তুলনামূলক বার চার্ট",
+        subtitleBn: "৪০টি গোত্রের সাহাবি ও ঐতিহাসিক চরিত্রের সংখ্যাভিত্তিক তুলনামূলক গ্রাফিক্যাল চিত্র",
+        type: 'chart',
+        chartKey: 'statistics',
+        badgeBn: "পরিসংখ্যান চার্ট"
+      }
+    ],
+    relatedChartKey: 'statistics',
+    relatedChartTitleBn: "ব্যক্তিত্বের বার চার্ট"
+  }
 ];
 
 // Page 4: এক নজরে কুরাইশ শাখাগুলোর দায়িত্ব ও ভূমিকা
