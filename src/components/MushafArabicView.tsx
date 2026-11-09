@@ -31,6 +31,11 @@ import {
   ArrowRight,
   Info,
 } from 'lucide-react';
+import {
+  getLocalizedSurahName,
+  getBareSurahName,
+  getLocalizedSurahMeaning,
+} from '../utils/surahNamesMultiLang';
 
 // Exact standard 604-page Madani Mushaf page start mapping for all 114 surahs
 export const MADANI_SURAH_PAGES: Record<number, number> = {
@@ -327,7 +332,9 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
         s.number.toString().includes(q) ||
         s.englishName.toLowerCase().includes(q) ||
         s.name.includes(q) ||
-        s.englishNameTranslation.toLowerCase().includes(q)
+        s.englishNameTranslation.toLowerCase().includes(q) ||
+        getLocalizedSurahName(s.number, 'bn').toLowerCase().includes(q) ||
+        getLocalizedSurahMeaning(s.number, 'bn').toLowerCase().includes(q)
     );
   }, [surahPickerSearch]);
 
@@ -394,9 +401,9 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               {startPage}
             </span>
 
-            {/* Right: Surah Number and English Name badge */}
-            <span className="font-extrabold tracking-wide uppercase flex items-center gap-1 truncate max-w-[140px] sm:max-w-none">
-              <span>{surahDetail.number} {surahDetail.englishName}</span>
+            {/* Right: Surah Number and Localized Name badge */}
+            <span className="font-extrabold tracking-wide uppercase flex items-center gap-1 truncate max-w-[150px] sm:max-w-none">
+              <span>{surahDetail.number} {getBareSurahName(surahDetail.number, selectedLanguage)}</span>
             </span>
           </div>
 
@@ -667,16 +674,16 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
         {/* Mushaf Page Footer Strip */}
         <div className="pt-6 mt-6 border-t border-slate-300/80 dark:border-emerald-800/40 flex flex-wrap items-center justify-between gap-3 text-xs font-bold opacity-80">
           <div className="flex items-center gap-2">
-            <span>সূরা {surahDetail.englishName} ({surahDetail.name})</span>
+            <span>{getLocalizedSurahName(surahDetail.number, selectedLanguage)} ({surahDetail.name})</span>
             <span>•</span>
-            <span>{surahDetail.numberOfAyahs} টি আয়াত</span>
+            <span>{selectedLanguage === 'bn' ? `${surahDetail.numberOfAyahs}টি আয়াত` : `${surahDetail.numberOfAyahs} Ayahs`}</span>
             <span>•</span>
-            <span>জুয {juzNumber}</span>
+            <span>{selectedLanguage === 'bn' ? `পারা ${juzNumber}` : `Juz ${juzNumber}`}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-black">
-              📖 শুধু আরবি পবিত্র কুরআন
+              📖 {selectedLanguage === 'bn' ? 'শুধু আরবি পবিত্র কুরআন' : 'Pure Arabic Noble Quran'}
             </span>
           </div>
         </div>
@@ -700,8 +707,8 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             <ChevronLeft className="w-4 h-4" />
             <span>
               {surahDetail.number > 1
-                ? `পূর্ববর্তী: ${ALL_114_SURAHS[surahDetail.number - 2]?.englishName}`
-                : 'শুরুর সূরা'}
+                ? (selectedLanguage === 'bn' ? `পূর্ববর্তী: ${getBareSurahName(surahDetail.number - 1, selectedLanguage)}` : `Previous: ${getBareSurahName(surahDetail.number - 1, selectedLanguage)}`)
+                : (selectedLanguage === 'bn' ? 'প্রথম সূরা' : 'First Surah')}
             </span>
           </button>
 
@@ -721,8 +728,8 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
           >
             <span>
               {surahDetail.number < 114
-                ? `পরবর্তী: ${ALL_114_SURAHS[surahDetail.number]?.englishName}`
-                : 'শেষ সূরা'}
+                ? (selectedLanguage === 'bn' ? `পরবর্তী: ${getBareSurahName(surahDetail.number + 1, selectedLanguage)}` : `Next: ${getBareSurahName(surahDetail.number + 1, selectedLanguage)}`)
+                : (selectedLanguage === 'bn' ? 'শেষ সূরা' : 'Last Surah')}
             </span>
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -901,9 +908,9 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                         {surah.number}
                       </span>
                       <div>
-                        <div className="font-extrabold text-sm">{surah.englishName}</div>
+                        <div className="font-extrabold text-sm">{getLocalizedSurahName(surah.number, selectedLanguage)}</div>
                         <div className={`text-[11px] ${isSelected ? 'text-emerald-100' : 'text-slate-500 dark:text-emerald-400'}`}>
-                          {surah.englishNameTranslation} • {surah.numberOfAyahs} আয়াত • জুয {surah.startJuz}
+                          {getLocalizedSurahMeaning(surah.number, selectedLanguage)} • {selectedLanguage === 'bn' ? `${surah.numberOfAyahs} আয়াত • পারা ${surah.startJuz}` : `${surah.numberOfAyahs} Ayahs • Juz ${surah.startJuz}`}
                         </div>
                       </div>
                     </div>
