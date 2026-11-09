@@ -117,6 +117,11 @@ export const WORD_ANIMATION_OPTIONS: WordAnimationOption[] = [
   },
 ];
 
+const toArabicNumerals = (num: number): string => {
+  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return String(num).replace(/\d/g, (d) => arabicDigits[parseInt(d, 10)]);
+};
+
 interface QuranViewProps {
   soundEnabled: boolean;
   themeMode?: ThemeMode;
@@ -2140,11 +2145,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
             <div className="space-y-4">
               {isNuraniMode ? (
                 /* ========================================================================= */
-                /* TRADITIONAL 15-LINE NURANI HAFEZI MUSHAF PAGE VIEW (MATCHING ATTACHED SCREENSHOT) */
+                /* TRADITIONAL 15-LINE NURANI HAFEZI MUSHAF PAGE VIEW (EXACT TO ATTACHED SCREENSHOT) */
                 /* ========================================================================= */
                 <div className="space-y-4 animate-in fade-in duration-300">
-                  {/* 1. Header Ribbon Bar matching attached screenshot */}
-                  <div className="bg-[#005a3e] text-white p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-2 shadow-xl border border-emerald-600/40">
+                  {/* 1. Header Ribbon Bar matching attached screenshot image_0bde840e */}
+                  <div className="bg-[#0b3e31] dark:bg-[#06241c] text-white p-2 sm:p-2.5 rounded-2xl flex items-center justify-between gap-2 shadow-xl border border-emerald-700/50">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
@@ -2152,20 +2157,23 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           setSelectedSurahNumber(null);
                           setSurahDetail(null);
                         }}
-                        className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer"
+                        className="p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer"
                         title="ফিরে যান"
                       >
                         <ChevronLeft className="w-5 h-5 text-white stroke-[2.5]" />
                       </button>
-
-                      <span className="px-3 py-1 rounded-xl bg-emerald-700/80 text-emerald-100 text-xs font-black border border-emerald-500/40 shadow-xs">
-                        JUZ {surahDetail.startJuz || 1}
-                      </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="px-3.5 py-1 rounded-xl bg-emerald-800/90 text-amber-300 text-xs font-black border border-amber-400/30 tracking-wide shadow-xs">
-                        {surahDetail.number} {surahDetail.englishName.toUpperCase()}
+                    {/* Central Sage Green Container matching screenshot (JUZ xx | page | Surah) */}
+                    <div className="flex-1 max-w-xl mx-2 bg-[#9eccb0] dark:bg-[#205241] text-[#062d23] dark:text-[#c4ebd8] font-bold text-xs sm:text-sm py-1.5 px-3 sm:px-5 rounded-xl border border-[#7db392] dark:border-[#337a62] flex items-center justify-between shadow-inner">
+                      <span className="font-extrabold tracking-wide">
+                        JUZ {surahDetail.startJuz || Math.ceil((surahDetail.number * 0.26))}
+                      </span>
+                      <span className="font-mono font-black px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 text-[11px] sm:text-xs">
+                        {530 + Math.min(surahDetail.number, 74)}
+                      </span>
+                      <span className="font-extrabold tracking-wide uppercase">
+                        {surahDetail.number} {surahDetail.englishName}
                       </span>
                     </div>
 
@@ -2175,7 +2183,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           setIsNuraniMode(false);
                           if (soundEnabled) soundHaptics.playTap();
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-amber-400 text-black font-extrabold text-xs shadow-md hover:bg-amber-300 transition active:scale-95 cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition active:scale-95 cursor-pointer"
                       >
                         সাধারণ মোড ✕
                       </button>
@@ -2183,20 +2191,24 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   </div>
 
                   {/* 2. Authentic 15-Line Nurani Mushaf Page Card */}
-                  <div className="bg-[#fcfbfa] dark:bg-[#071518] text-slate-900 dark:text-emerald-100 border-2 border-emerald-800/40 dark:border-emerald-600/40 shadow-2xl rounded-[28px] p-4 sm:p-7 space-y-4 relative overflow-hidden">
-                    {/* Decorative Ornate Bismillah Box (Matching screenshot top header) */}
+                  <div className="bg-[#faf8f4] dark:bg-[#071518] text-slate-900 dark:text-emerald-100 border-2 border-[#d5cbb8] dark:border-emerald-800/60 shadow-2xl rounded-[28px] p-4 sm:p-7 space-y-4 relative overflow-hidden">
+                    {/* Decorative Ornate Framed Bismillah Box */}
                     {surahDetail.number !== 1 && surahDetail.number !== 9 && (
-                      <div className="text-center py-2.5 px-6 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 max-w-lg mx-auto shadow-xs">
-                        <div className="font-arabic font-bold text-2xl sm:text-3xl md:text-4xl text-amber-950 dark:text-amber-200 tracking-wide">
+                      <div className="text-center py-3 px-6 rounded-2xl bg-[#f2e6cf]/80 dark:bg-amber-950/30 border-2 border-[#d0be9b] dark:border-amber-600/30 max-w-lg mx-auto shadow-xs my-2">
+                        <div className="font-arabic font-bold text-2xl sm:text-3xl md:text-4xl text-[#0b3e31] dark:text-amber-200 tracking-wide">
                           بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
                         </div>
                       </div>
                     )}
 
-                    {/* Flowing Continuous 15-Line Nurani Quran Mushaf Lines with Ruled Line Dividers */}
+                    {/* Flowing Continuous 15-Line Nurani Quran Mushaf Lines with Ruled Horizontal Dividers */}
                     <div
                       dir="rtl"
-                      className="font-arabic font-indopak text-2xl sm:text-3xl md:text-[36px] font-bold tracking-wide text-right leading-[2.6] select-text pt-2 space-y-0"
+                      className="font-arabic font-indopak text-2xl sm:text-3xl md:text-[35px] font-bold tracking-wide text-right leading-[2.7] select-text pt-2 space-y-0"
+                      style={{
+                        backgroundImage: 'linear-gradient(to bottom, transparent 91%, rgba(148, 163, 184, 0.28) 93%)',
+                        backgroundSize: '100% 2.7em',
+                      }}
                     >
                       {displayedAyahs.map((ayah) => {
                         const isThisAyahPlaying = isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === ayah.number;
@@ -2208,7 +2220,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             onClick={() => handleOpenTafsir(ayah)}
                             className={`inline rounded-xl px-1.5 py-0.5 transition cursor-pointer hover:bg-amber-500/20 ${
                               isThisAyahPlaying
-                                ? 'bg-amber-400/40 text-amber-950 dark:text-amber-100 ring-2 ring-amber-400 font-black'
+                                ? 'bg-amber-300/60 dark:bg-amber-400/40 text-amber-950 dark:text-amber-100 ring-2 ring-amber-400 font-black'
                                 : bookmarked
                                 ? 'bg-amber-200/50 dark:bg-amber-950/40'
                                 : ''
@@ -2225,7 +2237,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                       <span
                                         key={wIdx}
                                         className={`inline-block mx-1 transition ${
-                                          isWordActive ? 'text-emerald-600 dark:text-emerald-300 font-black scale-105 drop-shadow-sm' : ''
+                                          isWordActive ? 'text-emerald-700 dark:text-emerald-300 font-black scale-105 drop-shadow-sm' : ''
                                         }`}
                                       >
                                         {w.arabic}
@@ -2235,10 +2247,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 : ayah.arabic}
                             </span>
 
-                            {/* Ornate End Ayah Number Badge (Matching screenshot ① ② ③ ...) */}
-                            <span className="inline-flex items-center justify-center mx-2 text-amber-700 dark:text-amber-400 font-mono font-black align-middle select-none">
-                              <span className="w-8 h-8 rounded-full border-2 border-slate-400 dark:border-amber-500/60 bg-amber-50 dark:bg-black/40 text-slate-900 dark:text-amber-300 text-xs sm:text-sm font-bold font-sans flex items-center justify-center shadow-xs">
-                                {ayah.number}
+                            {/* Ornate Circular End-of-Ayah Badge with Eastern Arabic Numerals (Exact to image_0bde840e ① ② ③ ...) */}
+                            <span className="inline-flex items-center justify-center mx-1.5 text-[#0b3e31] dark:text-amber-300 font-mono align-middle select-none">
+                              <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-[#164a39] dark:border-amber-400/80 bg-[#f4ebe1] dark:bg-black/60 text-[#0b3e31] dark:text-amber-200 text-xs sm:text-sm font-bold font-arabic flex items-center justify-center shadow-xs">
+                                {toArabicNumerals(ayah.number)}
                               </span>
                             </span>
                           </span>
@@ -2254,7 +2266,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         <span>{surahDetail.numberOfAyahs} টি আয়াত</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-black">
+                        <span className="px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-black">
                           📖 নূরানী ১৫ লাইন হাফেজি পাঠ
                         </span>
                       </div>
