@@ -11,11 +11,17 @@ import {
   ANSAR_GENEALOGY,
   CHAPTER3_OVERVIEW,
   TOPIC_WISE_TOC_DATA,
+  QURAYSH_CONVERGENCE_TREE,
+  ARABIAN_TRIBAL_GEO_REGIONS,
+  SPECIAL_HISTORICAL_CROSS_INDEX,
   TopicTocItem,
   TribePersonality,
   TribeSection,
   AppendixTribe,
-  ClanResponsibility
+  ClanResponsibility,
+  QurayshConvergenceNode,
+  ArabianRegionGeo,
+  SpecialCategoryCrossItem
 } from '../data/araberGotroData';
 import {
   BookOpen,
@@ -53,9 +59,11 @@ import {
   CheckCircle2,
   X,
   Flame,
-  RotateCcw
+  RotateCcw,
+  Volume2,
+  Share2
 } from 'lucide-react';
-import { soundHaptics } from '../utils/audioHaptics';
+import { soundHaptics, playArabicVoice } from '../utils/audioHaptics';
 
 interface AraberGotroByaktittoViewProps {
   themeMode?: ThemeMode;
@@ -244,7 +252,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   const [chapterFilter, setChapterFilter] = useState<ChapterFilter>('all');
   const [activeClanId, setActiveClanId] = useState<string>('banu-hashim');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [activeChartTab, setActiveChartTab] = useState<'quraysh_roles' | 'hashim_tree' | 'ansar_tree' | 'arab_map' | 'statistics'>('quraysh_roles');
+  const [activeChartTab, setActiveChartTab] = useState<'quraysh_roles' | 'quraysh_convergence' | 'hashim_tree' | 'ansar_tree' | 'arab_map' | 'statistics'>('quraysh_roles');
+  const [selectedSpecialCategory, setSelectedSpecialCategory] = useState<'all' | 'ashara_mubashshara' | 'mothers_of_believers' | 'caliphs'>('all');
+  const [activeGeoRegionId, setActiveGeoRegionId] = useState<string>('geo-makkah');
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
   const [appendixFilter, setAppendixFilter] = useState<string>('all');
   const [activePersonalityModal, setActivePersonalityModal] = useState<TribePersonality | null>(null);
@@ -260,6 +271,15 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   const [hashimTreeBranch, setHashimTreeBranch] = useState<'all' | 'prophet' | 'martyrs_caliphs' | 'uncles'>('all');
   const [ansarTab, setAnsarTab] = useState<'tree' | 'comparison' | 'virtues'>('tree');
   const [statsSort, setStatsSort] = useState<'highest' | 'alphabetical'>('highest');
+
+  const handlePlayVoice = (text: string, voiceKey: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (soundEnabled) soundHaptics.playTap();
+    setPlayingVoiceId(voiceKey);
+    playArabicVoice(text, 'male', () => {
+      setPlayingVoiceId(null);
+    });
+  };
 
   const toggleTopicCollapse = (topicId: string) => {
     if (soundEnabled) soundHaptics.playTap();
@@ -283,7 +303,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
     setCollapsedTopics(allCollapsed);
   };
 
-  const openChart = (chartKey?: 'quraysh_roles' | 'hashim_tree' | 'ansar_tree' | 'arab_map' | 'statistics') => {
+  const openChart = (chartKey?: 'quraysh_roles' | 'quraysh_convergence' | 'hashim_tree' | 'ansar_tree' | 'arab_map' | 'statistics') => {
     if (chartKey) {
       if (soundEnabled) soundHaptics.playTap();
       setActiveChartTab(chartKey);
@@ -1659,105 +1679,237 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           ===================================================================== */}
       {viewMode === 'who_is_who' && (
         <div className="space-y-6">
-          <div className={`p-5 sm:p-6 rounded-2xl border leading-relaxed space-y-3 ${
+          <div className={`p-5 sm:p-6 rounded-2xl border leading-relaxed space-y-4 ${
             isDay ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#082226] border-[#153e46]'
           }`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <h3 className="text-base sm:text-lg font-black text-amber-500 flex items-center gap-2">
                   <Users className="w-5 h-5" />
                   <span>কোন গোত্রে কে কে : গোত্র ও ব্যক্তিত্বের পূর্ণাঙ্গ ম্যাপিং চার্ট</span>
                 </h3>
                 <p className="text-xs sm:text-sm opacity-80 leading-relaxed mt-1">
-                  আরবের প্রতিটি প্রধান গোত্র অনুযায়ী কে কোন গোত্রের সন্তান, ইসলাম গ্রহণকারী সাহাবায়ে কেরাম (রা.), ঐতিহাসিক গোত্রপতি ও প্রতিপক্ষদের সুবিন্যস্ত চিত্র।
+                  আরবের প্রতিটি প্রধান গোত্র অনুযায়ী কে কোন গোত্রের সন্তান, ইসলাম গ্রহণকারী সাহাবায়ে কেরাম (রা.), উম্মাহাতুল মুমিনীন ও ঐতিহাসিক ব্যক্তিত্বের সুবিন্যস্ত চিত্র।
                 </p>
               </div>
 
-              {/* Category Filter Buttons */}
+              {/* Special Cross-Category Quick Tabs */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {[
-                  { id: 'all', label: 'সকল গোত্র' },
-                  { id: 1, label: 'কুরাইশ (মক্কা)' },
-                  { id: 2, label: 'আনসার (মদিনা)' },
-                  { id: 3, label: 'বৃহত্তর আরব' },
-                ].map((cat) => (
+                  { id: 'all', label: 'সকল গোত্রীয় তালিকা', icon: '📜' },
+                  { id: 'ashara_mubashshara', label: 'আশারায়ে মুবাশশারা (১০ জান্নাতী)', icon: '🌟' },
+                  { id: 'mothers_of_believers', label: 'উম্মাহাতুল মুমিনীন (সহধর্মিনী)', icon: '🌸' },
+                ].map((specCat) => (
                   <button
-                    key={cat.id}
+                    key={specCat.id}
                     onClick={() => {
                       if (soundEnabled) soundHaptics.playTap();
-                      setChapterFilter(cat.id as any);
+                      setSelectedSpecialCategory(specCat.id as any);
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                      chapterFilter === cat.id
-                        ? isDay ? 'bg-teal-700 text-white border-teal-600' : 'bg-emerald-600 text-white border-emerald-500'
-                        : isDay ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border flex items-center gap-1.5 ${
+                      selectedSpecialCategory === specCat.id
+                        ? isDay
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm font-black'
+                          : 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black'
+                        : isDay
+                        ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                        : 'bg-[#041417] hover:bg-[#072428] text-emerald-300 border-[#153e46]'
                     }`}
                   >
-                    {cat.label}
+                    <span>{specCat.icon}</span>
+                    <span>{specCat.label}</span>
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Standard Chapter Filter when 'all' is selected */}
+            {selectedSpecialCategory === 'all' && (
+              <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs font-bold opacity-60">অধ্যায় অনুযায়ী ফিল্টার:</span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { id: 'all', label: 'সকল অধ্যায়' },
+                    { id: 1, label: '১ম অধ্যায়: কুরাইশ (মক্কা)' },
+                    { id: 2, label: '২য় অধ্যায়: আনসার (মদিনা)' },
+                    { id: 3, label: '৩য় অধ্যায়: বৃহত্তর আরব' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setChapterFilter(cat.id as any);
+                      }}
+                      className={`px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                        chapterFilter === cat.id
+                          ? isDay ? 'bg-teal-700 text-white border-teal-600' : 'bg-emerald-600 text-white border-emerald-500'
+                          : isDay ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Visual Clan Cards Listing "Who is in which clan" */}
-          <div className="space-y-4">
-            {filteredClans.map((clan) => {
-              const sahaba = clan.personalities.filter(p => p.category === 'sahabi');
-              const historical = clan.personalities.filter(p => p.category === 'historical' || p.category === 'historical_hanif');
-              const negative = clan.personalities.filter(p => p.category === 'negative');
+          {/* DEDICATED SHOWCASE: When 'ashara_mubashshara' or 'mothers_of_believers' is selected */}
+          {selectedSpecialCategory !== 'all' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-black text-amber-500 flex items-center gap-2">
+                  <span>{selectedSpecialCategory === 'ashara_mubashshara' ? '🌟' : '🌸'}</span>
+                  <span>
+                    {selectedSpecialCategory === 'ashara_mubashshara'
+                      ? '১০ জান্নাতী সাহাবি (আশারায়ে মুবাশশারা)-এর গোত্র ও বংশমিলন নির্দেশিকা'
+                      : 'উম্মাহাতুল মুমিনীন (নবীজি ﷺ-এর সহধর্মিনীগণ)-এর গোত্র ও বংশতালিকা'}
+                  </span>
+                </h4>
+                <span className="text-xs font-bold opacity-70">
+                  {SPECIAL_HISTORICAL_CROSS_INDEX.filter(item => item.categoryType === selectedSpecialCategory).length} জন মহীয়ান ব্যক্তিত্ব
+                </span>
+              </div>
 
-              return (
-                <div
-                  key={clan.id}
-                  className={`rounded-2xl border overflow-hidden transition-all shadow-sm ${
-                    isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
-                  }`}
-                >
-                  {/* Clan Header */}
-                  <div className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b ${
-                    isDay ? 'bg-slate-50 border-slate-100' : 'bg-[#041417]/70 border-[#153e46]'
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{CLAN_VISUAL_MAP[clan.id]?.icon || '🛡️'}</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base sm:text-lg font-black tracking-tight">{clan.tribeNameBn}</h4>
-                          {clan.tribeNameAr && (
-                            <span className="text-xs font-serif text-amber-500 font-bold">({clan.tribeNameAr})</span>
-                          )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {SPECIAL_HISTORICAL_CROSS_INDEX
+                  .filter(item => item.categoryType === selectedSpecialCategory)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-5 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
+                        isDay ? 'bg-white border-amber-300/80 shadow-xs' : 'bg-[#082226] border-amber-500/30 shadow-md'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h5 className="font-black text-base text-emerald-600 dark:text-emerald-400">
+                                {item.nameBn}
+                              </h5>
+                              <button
+                                onClick={(e) => handlePlayVoice(item.nameAr, `voice-${item.id}`, e)}
+                                title="আরবি উচ্চারণ শুনুন"
+                                className={`p-1 rounded-lg border transition ${
+                                  playingVoiceId === `voice-${item.id}`
+                                    ? 'bg-amber-500 text-white animate-pulse'
+                                    : 'bg-black/5 dark:bg-white/5 opacity-70 hover:opacity-100'
+                                }`}
+                              >
+                                <Volume2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <span className="text-xs font-arabic text-amber-500 font-semibold block mt-0.5" dir="rtl">
+                              {item.nameAr}
+                            </span>
+                          </div>
+
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30 shrink-0">
+                            {item.ancestorIntersectionBn}
+                          </span>
                         </div>
-                        <p className="text-xs opacity-75 mt-0.5">{clan.locationOrContextBn}</p>
+
+                        {/* Clan badge */}
+                        <div className="p-2 rounded-xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-700 dark:text-slate-300">
+                            🏛️ গোত্র: <strong className="text-amber-500">{item.clanBn}</strong>
+                          </span>
+                          <span className="text-[11px] opacity-75">
+                            মিলন: {item.ancestorIntersectionBn}
+                          </span>
+                        </div>
+
+                        <p className="text-xs leading-relaxed opacity-90 pt-1">
+                          {item.significanceBn}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                        <button
+                          onClick={() => openClanInReader(item.clanId)}
+                          className="font-bold text-emerald-600 dark:text-emerald-400 hover:text-amber-500 flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>এই গোত্রের সীরাত বিবরণী পড়ুন</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
-                    <div className="flex items-center gap-3 self-end sm:self-center">
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400">
-                        মোট ব্যক্তিত্ব: {clan.personalities.length} জন
-                      </span>
-                      <button
-                        onClick={() => openClanInReader(clan.id)}
-                        className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>সীরাত আকারে পড়ুন</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
+          {/* STANDARD CLAN LIST: When 'all' is selected */}
+          {selectedSpecialCategory === 'all' && (
+            <div className="space-y-4">
+              {filteredClans.map((clan) => {
+                const sahaba = clan.personalities.filter(p => p.category === 'sahabi');
+                const historical = clan.personalities.filter(p => p.category === 'historical' || p.category === 'historical_hanif');
+                const negative = clan.personalities.filter(p => p.category === 'negative');
 
-                  <div className="p-5 space-y-4">
-                    {/* Responsibility or Role */}
-                    <div className={`p-3 rounded-xl border text-xs flex items-center gap-2.5 ${
-                      isDay ? 'bg-teal-50/50 border-teal-200 text-teal-900' : 'bg-[#04191d] border-emerald-500/20 text-emerald-200'
+                return (
+                  <div
+                    key={clan.id}
+                    className={`rounded-2xl border overflow-hidden transition-all shadow-sm ${
+                      isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
+                    }`}
+                  >
+                    {/* Clan Header */}
+                    <div className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b ${
+                      isDay ? 'bg-slate-50 border-slate-100' : 'bg-[#041417]/70 border-[#153e46]'
                     }`}>
-                      <Building className="w-4 h-4 text-amber-400 shrink-0" />
-                      <div>
-                        <strong className="text-amber-500">দায়িত্ব ও ভূমিকা:</strong> {clan.responsibilityOrRoleBn}
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{CLAN_VISUAL_MAP[clan.id]?.icon || '🛡️'}</span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-base sm:text-lg font-black tracking-tight">{clan.tribeNameBn}</h4>
+                            {clan.tribeNameAr && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs font-serif text-amber-500 font-bold">({clan.tribeNameAr})</span>
+                                <button
+                                  onClick={(e) => handlePlayVoice(clan.tribeNameAr!, `clan-${clan.id}`, e)}
+                                  title="আরবি নাম শুনুন"
+                                  className={`p-1 rounded-md border text-xs transition ${
+                                    playingVoiceId === `clan-${clan.id}` ? 'bg-amber-500 text-white animate-pulse' : 'opacity-60 hover:opacity-100'
+                                  }`}
+                                >
+                                  <Volume2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs opacity-75 mt-0.5">{clan.locationOrContextBn}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-center">
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400">
+                          মোট ব্যক্তিত্ব: {clan.personalities.length} জন
+                        </span>
+                        <button
+                          onClick={() => openClanInReader(clan.id)}
+                          className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>সীরাত আকারে পড়ুন</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
 
-                    {/* Classified Personalities Matrix */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <div className="p-5 space-y-4">
+                      {/* Responsibility or Role */}
+                      <div className={`p-3 rounded-xl border text-xs flex items-center gap-2.5 ${
+                        isDay ? 'bg-teal-50/50 border-teal-200 text-teal-900' : 'bg-[#04191d] border-emerald-500/20 text-emerald-200'
+                      }`}>
+                        <Building className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div>
+                          <strong className="text-amber-500">দায়িত্ব ও ভূমিকা:</strong> {clan.responsibilityOrRoleBn}
+                        </div>
+                      </div>
+
+                      {/* Classified Personalities Matrix */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                       {/* Sahaba Category */}
                       {sahaba.length > 0 && (
                         <div className={`p-4 rounded-xl border space-y-2 ${
@@ -1865,8 +2017,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
+
 
       {/* =====================================================================
           VIEW MODE 4: CHARTS & VISUAL GENEALOGY GALLERY
@@ -1889,6 +2043,17 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             </button>
 
             <button
+              onClick={() => setActiveChartTab('quraysh_convergence')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                activeChartTab === 'quraysh_convergence'
+                  ? isDay ? 'bg-white text-teal-800 shadow' : 'bg-emerald-600 text-white shadow'
+                  : 'opacity-70 hover:opacity-100'
+              }`}
+            >
+              🌳 কুরাইশ মিলনরেখা (Convergence)
+            </button>
+
+            <button
               onClick={() => setActiveChartTab('hashim_tree')}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                 activeChartTab === 'hashim_tree'
@@ -1896,7 +2061,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70 hover:opacity-100'
               }`}
             >
-              🌳 বনু হাশিম বংশলতিকা চিত্র
+              👑 বনু হাশিম বংশলতিকা চিত্র
             </button>
 
             <button
@@ -2103,6 +2268,130 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Chart 1.5: Quraysh Lineage Convergence Tree (মিলনরেখা) */}
+          {activeChartTab === 'quraysh_convergence' && (
+            <div className={`p-6 sm:p-8 rounded-3xl border shadow-sm space-y-6 ${
+              isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
+            }`}>
+              <div className="space-y-2 border-b border-slate-200/80 dark:border-slate-800/80 pb-5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                    বংশমিলন নকশা (Genealogy Convergence)
+                  </span>
+                  <span className="text-xs opacity-60">• বিশ্বনবী ﷺ ও সহচরগণের কুরাইশি পূর্বপুরুষ</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black">সাহাবায়ে কেরাম ও বিশ্বনবী ﷺ-এর কুরাইশি বংশমিলন রেখা</h3>
+                <p className="text-xs sm:text-sm opacity-85 leading-relaxed">
+                  রাসূলুল্লাহ ﷺ-এর থেকে কততম বংশস্তরে (Generation) ইসলামের কোন মহান সাহাবি, খলিফা ও উম্মাহাতুল মুমিনীন তাঁর আদি কুরাইশি রক্তধারায় মিলিত হয়েছেন তার নিখুঁত ও বিশুদ্ধ চিত্রপ্রদর্শন।
+                </p>
+              </div>
+
+              {/* Hadith Note */}
+              <div className={`p-4 rounded-2xl border text-xs sm:text-sm leading-relaxed ${
+                isDay ? 'bg-amber-50/70 border-amber-300 text-amber-950' : 'bg-amber-950/20 border-amber-500/30 text-amber-200'
+              }`}>
+                <p className="font-semibold">
+                  💡 <strong className="text-amber-500">বংশবিজ্ঞান দ্রষ্টব্য:</strong> কুরাইশ গোত্রের সকল শাখা ফিহর ইবনে মালিকের সন্তান। ১ থেকে ১০ম প্রজন্মের মধ্যে চার খলিফা, আশারায়ে মুবাশশারা এবং উম্মাহাতুল মুমিনীন সকলেই বিশ্বনবী ﷺ-এর পরিবারের সাথে একই পবিত্র শিকড়ে সংযুক্ত।
+                </p>
+              </div>
+
+              {/* Generation Nodes list */}
+              <div className="space-y-6 pt-2">
+                {QURAYSH_CONVERGENCE_TREE.map((node, nIdx) => (
+                  <div
+                    key={nIdx}
+                    className={`p-5 sm:p-6 rounded-3xl border relative transition-all shadow-sm ${
+                      isDay
+                        ? 'bg-gradient-to-br from-slate-50 via-white to-amber-50/30 border-slate-200 hover:border-amber-400'
+                        : 'bg-gradient-to-br from-[#041417] via-[#082226] to-[#04191d] border-[#153e46] hover:border-emerald-500/70'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-dashed border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-500 font-black flex items-center justify-center text-xs shrink-0 shadow-inner">
+                          {node.generationNumber}ম স্তর
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400">
+                              {node.ancestorNameBn}
+                            </h4>
+                            <button
+                              onClick={(e) => handlePlayVoice(node.ancestorNameAr, `anc-${nIdx}`, e)}
+                              title="উচ্চারণ শুনুন"
+                              className={`p-1 rounded-md border text-xs transition ${
+                                playingVoiceId === `anc-${nIdx}` ? 'bg-amber-500 text-white animate-pulse' : 'opacity-60 hover:opacity-100'
+                              }`}
+                            >
+                              <Volume2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <span className="text-xs font-serif text-amber-500 font-semibold" dir="rtl">
+                            {node.ancestorNameAr}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 self-start sm:self-center">
+                        {node.connectedBranches.length}টি প্রধান বংশধারা মিলিত
+                      </span>
+                    </div>
+
+                    <p className="text-xs sm:text-sm opacity-85 leading-relaxed pt-2">
+                      {node.significanceBn}
+                    </p>
+
+                    {/* Connected Clan Branches */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
+                      {node.connectedBranches.map((branch, bIdx) => (
+                        <div
+                          key={bIdx}
+                          onClick={() => openClanInReader(branch.clanId)}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer group space-y-2 ${
+                            isDay
+                              ? 'bg-white hover:bg-emerald-50/50 border-slate-200 hover:border-teal-400 shadow-xs'
+                              : 'bg-[#061e22] hover:bg-[#07252b] border-[#153e46] hover:border-emerald-500'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <h5 className="font-extrabold text-xs sm:text-sm text-amber-500 group-hover:text-amber-400 transition">
+                              {branch.clanNameBn}
+                            </h5>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/5 dark:bg-white/5 opacity-80">
+                              {branch.roleTitleBn}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
+                              এই পূর্বপুরুষের সন্তান ও সাহাবিগণ:
+                            </span>
+                            <div className="flex flex-wrap gap-1">
+                              {branch.prominentSahaba.map((sahabi, sIdx) => (
+                                <span
+                                  key={sIdx}
+                                  className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5"
+                                >
+                                  {sahabi}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {node.hadithOrHistoryNoteBn && (
+                      <div className="pt-2 text-[11px] text-amber-500 opacity-90 font-medium italic">
+                        📜 {node.hadithOrHistoryNoteBn}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -2484,11 +2773,133 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <span className="text-xs font-bold text-orange-500 uppercase tracking-wider px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20">
                   অঞ্চলভিত্তিক গোত্র বিন্যাস
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black">বৃহত্তর আরবের প্রধান গোত্রসমূহের সামগ্রিক ভৌগোলিক চার্ট</h3>
+                <h3 className="text-xl sm:text-2xl font-black">বৃহত্তর আরবের ১০টি প্রধান ভৌগোলিক অঞ্চল ও গোত্র চিত্র</h3>
                 <p className="text-xs sm:text-sm opacity-80">
-                  নজদ, তায়েফ, হিজাজ ও আরব সীমান্তের পরাক্রমশালী গোত্রসমূহ ও তাদের রাজনৈতিক ভূমিকা
+                  মক্কা, মদিনা, তায়েফ, নজদ, ইয়ামামাহ, ইয়েমেন ও সিরিয়া সীমান্তের ভূ-রাজনৈতিক রূপরেখা
                 </p>
               </div>
+
+              {/* Interactive SVG Geographical Map Preview Container */}
+              <div className={`relative w-full h-80 sm:h-96 rounded-3xl overflow-hidden border shadow-inner ${
+                isDay ? 'bg-gradient-to-br from-amber-100/50 via-teal-50 to-slate-100 border-amber-300' : 'bg-gradient-to-br from-[#041518] via-[#062024] to-[#0a3138] border-[#153e46]'
+              }`}>
+                {/* Background Compass & Topographic Accent */}
+                <div className="absolute left-4 top-4 opacity-20 pointer-events-none">
+                  <Compass className="w-24 h-24 text-amber-500" />
+                </div>
+                <div className="absolute right-4 bottom-4 opacity-20 pointer-events-none text-right font-serif text-xs text-amber-500">
+                  خريطة شبه الجزيرة العربية
+                </div>
+
+                {/* Map Title & Legend Overlay */}
+                <div className="absolute top-3 right-3 z-10 p-2.5 rounded-2xl bg-black/40 backdrop-blur-md text-white border border-white/10 text-[11px] font-bold space-y-1">
+                  <div className="flex items-center gap-1.5 text-amber-300">
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>মানচিত্রের পিন স্পর্শ করুন</span>
+                  </div>
+                  <div className="text-[10px] opacity-80">১০টি কৌশলগত আরব এলাকা</div>
+                </div>
+
+                {/* Hotspot Pins on SVG Overlay */}
+                {ARABIAN_TRIBAL_GEO_REGIONS.map((reg) => {
+                  const isSelected = reg.id === activeGeoRegionId;
+                  return (
+                    <button
+                      key={reg.id}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setActiveGeoRegionId(reg.id);
+                      }}
+                      style={{ left: `${reg.xPercent}%`, top: `${reg.yPercent}%` }}
+                      className={`absolute -translate-x-1/2 -translate-y-1/2 z-20 group transition-all duration-300 cursor-pointer ${
+                        isSelected ? 'scale-125 z-30' : 'hover:scale-110'
+                      }`}
+                    >
+                      <div className={`relative flex items-center justify-center p-2 rounded-full shadow-lg border backdrop-blur-md ${
+                        isSelected
+                          ? 'bg-amber-500 text-slate-950 border-amber-300 ring-4 ring-amber-500/30'
+                          : 'bg-emerald-600 text-white border-emerald-400'
+                      }`}>
+                        <MapPin className="w-4 h-4 fill-current" />
+                        <span className={`absolute left-1/2 -bottom-6 -translate-x-1/2 whitespace-nowrap text-[10px] font-black px-2 py-0.5 rounded-md border shadow ${
+                          isSelected
+                            ? 'bg-amber-400 text-slate-950 border-amber-300'
+                            : 'bg-black/70 text-white border-white/20'
+                        }`}>
+                          {reg.nameBn.split(' ')[0]}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active Geo Region Detailed Showcase Card */}
+              {(() => {
+                const activeReg = ARABIAN_TRIBAL_GEO_REGIONS.find(r => r.id === activeGeoRegionId) || ARABIAN_TRIBAL_GEO_REGIONS[0];
+                return (
+                  <div className={`p-6 rounded-3xl border space-y-4 shadow-md ${
+                    isDay ? 'bg-gradient-to-r from-amber-50/70 via-white to-teal-50/50 border-amber-300' : 'bg-gradient-to-r from-[#04161a] via-[#082226] to-[#0b2d33] border-emerald-500/40 text-emerald-100'
+                  }`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                            নির্বাচিত অঞ্চল
+                          </span>
+                          <h4 className="text-lg sm:text-xl font-black">{activeReg.nameBn}</h4>
+                          <button
+                            onClick={(e) => handlePlayVoice(activeReg.nameAr, `geo-voice-${activeReg.id}`, e)}
+                            title="আরবি উচ্চারণ শুনুন"
+                            className={`p-1 rounded-lg border transition ${
+                              playingVoiceId === `geo-voice-${activeReg.id}` ? 'bg-amber-500 text-white animate-pulse' : 'opacity-60 hover:opacity-100'
+                            }`}
+                          >
+                            <Volume2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <span className="text-xs font-serif text-amber-500 font-bold block mt-0.5" dir="rtl">
+                          {activeReg.nameAr} ({activeReg.nameEn})
+                        </span>
+                      </div>
+
+                      {activeReg.targetClanId && (
+                        <button
+                          onClick={() => openClanInReader(activeReg.targetClanId!)}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow cursor-pointer self-start sm:self-center flex items-center gap-1"
+                        >
+                          <span>এই অঞ্চলের সীরাত পাঠ দেখুন</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <p className="text-xs sm:text-sm leading-relaxed opacity-90">
+                      {activeReg.detailsBn}
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs">
+                      {/* Dominant Tribes */}
+                      <div className="p-3 rounded-2xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 space-y-1">
+                        <span className="text-[10px] font-bold text-amber-500 uppercase block">🛡️ প্রভাবশালী গোত্রসমূহ</span>
+                        <div className="font-semibold">{activeReg.dominantTribesBn.join(', ')}</div>
+                      </div>
+
+                      {/* Historical Events */}
+                      <div className="p-3 rounded-2xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 space-y-1">
+                        <span className="text-[10px] font-bold text-emerald-500 uppercase block">📜 ঐতিহাসিক ঘটনাবলী</span>
+                        <div className="font-semibold">{activeReg.historicalEventsBn.join(' • ')}</div>
+                      </div>
+
+                      {/* Prominent Sahaba */}
+                      <div className="p-3 rounded-2xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 space-y-1">
+                        <span className="text-[10px] font-bold text-teal-400 uppercase block">🌿 শীর্ষ সাহাবি ও ব্যক্তিত্ব</span>
+                        <div className="font-semibold">{activeReg.prominentSahabaList.join(', ')}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 6 Strategic Geopolitical Regions Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

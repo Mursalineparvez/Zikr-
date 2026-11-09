@@ -2679,3 +2679,618 @@ export const ANSAR_GENEALOGY = {
     }
   ]
 };
+
+// ============================================================================
+// ১. কুরাইশ বংশমিলন বৃক্ষ (Sahaba Lineage Convergence Tree to Prophet ﷺ)
+// বিশ্বনবী ﷺ ও শীর্ষ সাহাবায়ে কেরামের আদি কুরাইশি পূর্বপুরুষে মিলনরেখা
+// ============================================================================
+export interface QurayshConvergenceNode {
+  generationNumber: number;
+  ancestorNameBn: string;
+  ancestorNameAr: string;
+  significanceBn: string;
+  connectedBranches: {
+    clanNameBn: string;
+    clanId: string;
+    prominentSahaba: string[];
+    roleTitleBn: string;
+    badgeColor: string;
+  }[];
+  hadithOrHistoryNoteBn?: string;
+}
+
+export const QURAYSH_CONVERGENCE_TREE: QurayshConvergenceNode[] = [
+  {
+    generationNumber: 1,
+    ancestorNameBn: "আবদুল মুত্তালিব (শায়বাতুল হামদ)",
+    ancestorNameAr: "شيبة الحمد عبد المطلب بن هاشم",
+    significanceBn: "পবিত্র জমজম কূপ পুনঃখননকারী ও হস্তিবাহিনীর বছর কাবার অভিভাবক",
+    connectedBranches: [
+      {
+        clanNameBn: "বনু হাশিম (পবিত্র আহলে বাইত)",
+        clanId: "banu-hashim",
+        prominentSahaba: [
+          "হযরত মুহাম্মদ ﷺ (সাইয়্যিদুল মুরসালীন)",
+          "হযরত আলী ইবনে আবি তালিব (রা.) [৪র্থ খলিফা]",
+          "হযরত হামযা ইবনে আবদুল মুত্তালিব (রা.) [সাইয়্যিদুশ শুহাদা]",
+          "হযরত জাফর ইবনে আবি তালিব (রা.) [শহীদে মুতা]",
+          "হযরত আব্বাস ইবনে আবদুল মুত্তালিব (রা.) [নবীজির পিতৃব্য]"
+        ],
+        roleTitleBn: "নবুওয়াত, আহলে বাইত ও সিকায়াহ (পানি সরবরাহ)",
+        badgeColor: "amber"
+      }
+    ],
+    hadithOrHistoryNoteBn: "আবদুল মুত্তালিবের পুত্র আব্দুল্লাহর ঔরসে বিশ্বনবী ﷺ এবং আবু তালিবের ঔরসে হযরত আলী ও জাফর (রা.) জন্মগ্রহণ করেন।"
+  },
+  {
+    generationNumber: 2,
+    ancestorNameBn: "আবদে মানাফ ইবনে কুসাঈ",
+    ancestorNameAr: "عبد مناف بن قصي",
+    significanceBn: "কুরাইশের শ্রেষ্ঠ দানশীল ও অভিজাত পুরুষ (আসল নাম: আল-মুগীরা)",
+    connectedBranches: [
+      {
+        clanNameBn: "বনু উমাইয়া / বনু আবদে শামস",
+        clanId: "banu-umayya",
+        prominentSahaba: [
+          "হযরত উসমান ইবনে আফফান (রা.) [৩য় খলিফা ও যুন-নুরাইন]",
+          "উম্মুল মুমিনীন হযরত উম্মে হাবিবা (রা.)",
+          "হযরত আবু সুফিয়ান ইবনে হারব (রা.)",
+          "হযরত মুয়াবিয়া ইবনে আবি সুফিয়ান (রা.)"
+        ],
+        roleTitleBn: "রণপতাকা আল-উকাব বহন ও সামরিক নেতৃত্ব",
+        badgeColor: "emerald"
+      },
+      {
+        clanNameBn: "বনু মুত্তালিব ইবনে আবদে মানাফ",
+        clanId: "banu-hashim",
+        prominentSahaba: [
+          "হযরত উবাইদাহ ইবনুল হারিস (রা.) [বদরের প্রথম শহীদ]",
+          "ইমাম শাফেয়ী (রহ.)-এর পিতৃগোত্র"
+        ],
+        roleTitleBn: "শিয়াবে আবি তালিবে বনু হাশিমের সাথে আজীবন বিশ্বস্ত মিত্র",
+        badgeColor: "teal"
+      },
+      {
+        clanNameBn: "বনু নাওফাল ইবনে আবদে মানাফ",
+        clanId: "quraysh-other-branches",
+        prominentSahaba: [
+          "হযরত জুবায়ের ইবনে মুত'ইম (রা.) [প্রখ্যাত সাহাবি ও আরব বংশবিদ]",
+          "মুত'ইম ইবনে আদি [তায়েফ থেকে ফেরার পথে নবীজিকে মক্কায় নিরাপত্তা দানকারী]"
+        ],
+        roleTitleBn: "কুরাইশের কূটনৈতিক ও আন্তর্জাতিক বাণিজ্য চুক্তি",
+        badgeColor: "cyan"
+      }
+    ],
+    hadithOrHistoryNoteBn: "হযরত উসমান (রা.)-এর বংশধারা আবদে শামস ইবনে আবদে মানাফ হয়ে দ্বিতীয় স্তরেই রাসূলুল্লাহ ﷺ-এর বংশে মিলিত হয়।"
+  },
+  {
+    generationNumber: 4,
+    ancestorNameBn: "কুসাঈ ইবনে কিলাব (জায়েদ)",
+    ancestorNameAr: "قصي بن كلاب (مُجَمِّع)",
+    significanceBn: "কুরাইশকে মক্কায় ঐক্যবদ্ধকারী (আল-মুজাম্মি') ও দারুন নাদওয়াহর প্রতিষ্ঠাতা",
+    connectedBranches: [
+      {
+        clanNameBn: "বনু আসাদ ইবনে আবদিল উজ্জা",
+        clanId: "banu-asad-quraysh",
+        prominentSahaba: [
+          "উম্মুল মুমিনীন হযরত খাদিজাতুল কুবরা (রা.) [ইসলামের প্রথম বিশ্বাসী]",
+          "হযরত যুবাইর ইবনুল আওয়াম (রা.) [হাওয়ারিয়্যু রাসূলিল্লাহ ও জান্নাতের সুসংবাদপ্রাপ্ত]",
+          "ওরাকা ইবনে নাওফাল [হানিফ ও তৌরাতের প্রাজ্ঞ পণ্ডিত]"
+        ],
+        roleTitleBn: "দারুন নাদওয়াহর পরামর্শ ও অভিজাত নেতৃত্ব",
+        badgeColor: "purple"
+      },
+      {
+        clanNameBn: "বনু আবদুদ দার ইবনে কুসাঈ",
+        clanId: "quraysh-other-branches",
+        prominentSahaba: [
+          "হযরত মুস'আব ইবনে উমায়ের (রা.) [মদিনার প্রথম দাঈ ও বদরের পতাকাবাহী]",
+          "হযরত উসমান ইবনে তালহা (রা.) [কাবার চাবি রক্ষক সাহাবি]"
+        ],
+        roleTitleBn: "কাবার চাবি (সিদানাহ) ও রণপতাকা (লিওয়া)",
+        badgeColor: "orange"
+      }
+    ],
+    hadithOrHistoryNoteBn: "উম্মুল মুমিনীন খাদিজা (রা.) ও বীর সেনানী হযরত যুবাইর (রা.) কুসাঈ ইবনে কিলাবের মাধ্যমে চতুর্থ স্তরে নবীজির রক্তধারায় সম্পর্কিত।"
+  },
+  {
+    generationNumber: 5,
+    ancestorNameBn: "কিলাব ইবনে মুররাহ (হাকিম)",
+    ancestorNameAr: "كلاب بن مرة",
+    significanceBn: "শিকারপ্রিয় বীর নেতা; কুরাইশ অভিজাত ধারার প্রধান কেন্দ্রবিন্দু",
+    connectedBranches: [
+      {
+        clanNameBn: "বনু জুহরাহ ইবনে কিলাব",
+        clanId: "banu-zuhrah",
+        prominentSahaba: [
+          "হযরত সা'দ ইবনে আবি ওয়াক্কাস (রা.) [প্রথম তীর নিক্ষেপকারী ও জান্নাতের সুসংবাদপ্রাপ্ত]",
+          "হযরত আব্দুর রহমান ইবনে আউফ (রা.) [শ্রেষ্ঠ দানবীর ও জান্নাতের সুসংবাদপ্রাপ্ত]",
+          "সাইয়্যিদাহ আমিনা বিনতে ওহাব [রাসূলুল্লাহ ﷺ-এর সম্মানিত মাতা]"
+        ],
+        roleTitleBn: "রাসূলুল্লাহ ﷺ-এর মাতুল বংশ (নবীজির মামার বংশ)",
+        badgeColor: "rose"
+      }
+    ],
+    hadithOrHistoryNoteBn: "রাসূলুল্লাহ ﷺ বলেন: 'সা'দ হলেন আমার মামা, কারও এমন মামা থাকলে আমাকে দেখাক!' (জামে তিরমিযী)"
+  },
+  {
+    generationNumber: 6,
+    ancestorNameBn: "মুররাহ ইবনে কা'ব",
+    ancestorNameAr: "مرة بن كعب",
+    significanceBn: "কুরাইশের সুবিশাল শাখাগুলোর মিলনস্থল; ইসলামের দুই মহান স্তম্ভের বংশকেন্দ্র",
+    connectedBranches: [
+      {
+        clanNameBn: "বনু তাইম ইবনে মুররাহ",
+        clanId: "banu-taym",
+        prominentSahaba: [
+          "হযরত আবু বকর সিদ্দিক (রা.) [১ম খলিফা ও শ্রেষ্ঠ মানব]",
+          "হযরত তালহা ইবনে উবাইদুল্লাহ (রা.) [উহুদের জীবন্ত শহীদ ও জান্নাতের সুসংবাদপ্রাপ্ত]",
+          "উম্মুল মুমিনীন হযরত আয়িশা সিদ্দিকা (রা.)"
+        ],
+        roleTitleBn: "দিয়াত (রক্তপণ) ও অর্থনৈতিক বিচার ব্যবস্থাপনা",
+        badgeColor: "sky"
+      },
+      {
+        clanNameBn: "বনু মাখযুম ইবনে ইয়াকাজা ইবনে মুররাহ",
+        clanId: "banu-makhzum",
+        prominentSahaba: [
+          "হযরত খালিদ বিন ওয়ালিদ (রা.) [সাইফুল্লাহ বা আল্লাহর উন্মুক্ত তরবারি]",
+          "উম্মুল মুমিনীন হযরত উম্মে সালামাহ (রা.)",
+          "হযরত ইকরামা ইবনে আবি জাহল (রা.) [ইয়ারমুকের বীর মুজাহিদ]"
+        ],
+        roleTitleBn: "অশ্বারোহী বাহিনী (কুব্বাহ ও আ'ইন্নাহ) পরিচালনা",
+        badgeColor: "indigo"
+      }
+    ],
+    hadithOrHistoryNoteBn: "হযরত আবু বকর (রা.), হযরত তালহা (রা.) এবং হযরত খালিদ বিন ওয়ালিদ (রা.) ৬ষ্ঠ স্তরে মুররাহ ইবনে কা'বের ঘরে নবীজির সাথে মিলিত হন।"
+  },
+  {
+    generationNumber: 7,
+    ancestorNameBn: "কা'ব ইবনে লুআই",
+    ancestorNameAr: "كعب بن لؤي",
+    significanceBn: "কুরাইশদের মধ্যে সর্বপ্রথম যিনি শুক্রবার (ইয়াওমুল আরুবা) সাধারণ সভা ডাকতেন এবং নবীজির আগমনের সুসংবাদ দিতেন",
+    connectedBranches: [
+      {
+        clanNameBn: "বনু আদি ইবনে কা'ব",
+        clanId: "banu-adi",
+        prominentSahaba: [
+          "হযরত উমর ইবনুল খাত্তাব (রা.) [২য় খলিফা ও আল-ফারুক]",
+          "হযরত সাঈদ ইবনে যায়দ (রা.) [আশারায়ে মুবাশশারা]",
+          "উম্মুল মুমিনীন হযরত হাফসা বিনতে উমর (রা.)",
+          "হযরত আব্দুল্লাহ ইবনে উমর (রা.) [প্রখ্যাত ফকীহ]"
+        ],
+        roleTitleBn: "দূতিয়ালি (আস-সিফারাহ), আন্তর্জাতিক মধ্যস্থতা ও সালিশি",
+        badgeColor: "teal"
+      }
+    ],
+    hadithOrHistoryNoteBn: "হযরত উমর ফারুক (রা.) এবং আশারায়ে মুবাশশারার অন্তর্ভুক্ত সাঈদ ইবনে যায়দ (রা.) ৭ম স্তরে কা'ব ইবনে লুআই-এ নবীজির বংশে মিলিত হন।"
+  },
+  {
+    generationNumber: 8,
+    ancestorNameBn: "লুআই ইবনে গালিব",
+    ancestorNameAr: "لؤي بن غالب",
+    significanceBn: "মক্কার প্রাচীন অভিভাবক; এখান থেকে সাহম, জুমাহ ও আমির বংশের উদ্ভব",
+    connectedBranches: [
+      {
+        clanNameBn: "বনু সাহম ইবনে আমর ইবনে হুসাইস ইবনে কা'ব ইবনে লুআই",
+        clanId: "quraysh-other-branches",
+        prominentSahaba: [
+          "হযরত আমর ইবনুল আস (রা.) [মিশর বিজয়ী বীর সেনাপতি]",
+          "হযরত আব্দুল্লাহ ইবনে আমর ইবনুল আস (রা.) [সহীফাহ আস-সাদিকাহ প্রণেতা]"
+        ],
+        roleTitleBn: "মুকাওয়াহা (মক্কার সরকারি কোষাগার ও সম্পদ ব্যবস্থাপনা)",
+        badgeColor: "stone"
+      },
+      {
+        clanNameBn: "বনু জুমাহ ইবনে আমর",
+        clanId: "quraysh-other-branches",
+        prominentSahaba: [
+          "হযরত উসমান ইবনে মাযউন (রা.) [জান্নাতুল বাকিতে দাফনকৃত ১ম মুহাজির]",
+          "হযরত খুবাইব ইবনে আদি (রা.)"
+        ],
+        roleTitleBn: "ভাগ্য পরীক্ষা ও তীর নিক্ষেপ সংক্রান্ত দপ্তর (আল-আযলাম)",
+        badgeColor: "amber"
+      },
+      {
+        clanNameBn: "বনু আমির ইবনে লুআই",
+        clanId: "quraysh-other-branches",
+        prominentSahaba: [
+          "হযরত সুহায়েল ইবনে আমর (রা.) [হুদাইবিয়ার মুখপাত্র ও পরবর্তী মহান সাহাবি]",
+          "উম্মুল মুমিনীন হযরত সাওদা বিনতে জাম'আ (রা.)"
+        ],
+        roleTitleBn: "মক্কার শীর্ষ বাগ্মী ও রাজনৈতিক বক্তা",
+        badgeColor: "emerald"
+      }
+    ]
+  },
+  {
+    generationNumber: 10,
+    ancestorNameBn: "ফিহর ইবনে মালিক (যাঁর উপাধি 'কুরাইশ')",
+    ancestorNameAr: "فهر بن مالك (قريش)",
+    significanceBn: "কুরাইশ জাতির মূল পুরুষ; যাঁর বংশধরদেরই ঐতিহাসিক ও ধর্মীয়ভাবে কুরাইশি বলা হয়",
+    connectedBranches: [
+      {
+        clanNameBn: "বনু হারিস ইবনে ফিহর",
+        clanId: "quraysh-other-branches",
+        prominentSahaba: [
+          "হযরত আবু উবাইদাহ ইবনুল জাররাহ (রা.) [আমীনুল উম্মাহ ও জান্নাতের সুসংবাদপ্রাপ্ত]",
+          "হযরত ইয়াদ ইবনে গানম (রা.) [সিরিয়া ও মেসোপটেমিয়ার বিজয়ী সেনাপতি]"
+        ],
+        roleTitleBn: "সেনাপতিত্ব ও উম্মতের আমানতদারিতা",
+        badgeColor: "amber"
+      }
+    ],
+    hadithOrHistoryNoteBn: "আশারায়ে মুবাশশারার অন্যতম মহান ব্যক্তিত্ব আবু উবাইদাহ ইবনুল জাররাহ (রা.) ১০ম স্তরে স্বয়ং 'ফিহর' (কুরাইশ)-এ নবীজির বংশে মিলিত হন।"
+  }
+];
+
+// ============================================================================
+// ২. অঞ্চলভিত্তিক আরবের গোত্র মানচিত্রের ভৌগোলিক ডেটা (Interactive SVG Map Data)
+// ============================================================================
+export interface ArabianRegionGeo {
+  id: string;
+  nameBn: string;
+  nameAr: string;
+  nameEn: string;
+  xPercent: number; // 0 - 100 on map
+  yPercent: number; // 0 - 100 on map
+  terrainType: 'holy_valley' | 'oasis' | 'mountain' | 'desert_steppe' | 'coastal' | 'fertile_south';
+  dominantTribesBn: string[];
+  historicalEventsBn: string[];
+  prominentSahabaList: string[];
+  targetClanId?: string;
+  detailsBn: string;
+}
+
+export const ARABIAN_TRIBAL_GEO_REGIONS: ArabianRegionGeo[] = [
+  {
+    id: "geo-makkah",
+    nameBn: "মক্কা আল-মুকাররামা ও হারাম শরিফ",
+    nameAr: "مَكَّةُ المُكَرَّمَةُ",
+    nameEn: "Makkah / Hijaz",
+    xPercent: 32,
+    yPercent: 55,
+    terrainType: "holy_valley",
+    dominantTribesBn: ["কুরাইশ (বনু হাশিম, উমাইয়া, মাখযুম, আদি, তাইম, জুহরাহ, আসাদ)"],
+    historicalEventsBn: ["কাবা গৃহ প্রতিষ্ঠা", "নবীজি ﷺ-এর জন্ম ও নবুওয়াত লাভ", "হিলফুল ফুজুল", "মক্কা বিজয় (৮ হিজরি)"],
+    prominentSahabaList: ["রাসূলুল্লাহ ﷺ", "আবু বকর (রা.)", "উমর (রা.)", "উসমান (রা.)", "আলী (রা.)", "খাদিজা (রা.)"],
+    targetClanId: "banu-hashim",
+    detailsBn: "আরব উপদ্বীপের আধ্যাত্মিক ও বাণিজ্যিক কেন্দ্র। কাবা শরিফকে কেন্দ্র করে কুরাইশের ১০টি শাখা প্রশাসনিক দায়িত্ব পালন করত।"
+  },
+  {
+    id: "geo-madinah",
+    nameBn: "মদিনাতুল মুনাওয়ারা (ইয়াসরিব)",
+    nameAr: "المَدِينَةُ المُنَوَّرَةُ",
+    nameEn: "Madinah / Yathrib",
+    xPercent: 31,
+    yPercent: 41,
+    terrainType: "oasis",
+    dominantTribesBn: ["বনু খাযরাজ", "বনু আওস (আনসার)", "বনু কায়নুকা", "বনু নাদির", "বনু কুরাইজা"],
+    historicalEventsBn: ["হিজরত (৬২২ খ্রি.)", "মদিনা সনদ", "মসজিদে নববী নির্মাণ", "বদর, ওহুদ ও খন্দকের প্রতিরক্ষা"],
+    prominentSahabaList: ["সা'দ ইবনে মুআয (রা.)", "সা'দ ইবনে উবাদা (রা.)", "আবু আইয়ুব আনসারি (রা.)", "জাবির (রা.)"],
+    targetClanId: "khazraj-tribe",
+    detailsBn: "খেজুরের উর্বর মরূদ্যান বেষ্টিত শহর। ইয়েমেন থেকে আসা আজদ বংশীয় আওস ও খাযরাজ গোত্র ইসলাম গ্রহণ করে 'আনসার' উপাধিতে ধন্য হন।"
+  },
+  {
+    id: "geo-taif",
+    nameBn: "তায়েফ (ওয়াদি ওয়াজ)",
+    nameAr: "الطَّائِفُ",
+    nameEn: "Ta'if",
+    xPercent: 36,
+    yPercent: 58,
+    terrainType: "mountain",
+    dominantTribesBn: ["বনু সাকীফ (আহলাফ ও বানু মালিক)"],
+    historicalEventsBn: ["নবীজির তায়েফ সফর", "লাত দেবীর মন্দির", "তায়েফ অবরোধ (৮ হিজরি)", "উরওয়া ইবনে মাসউদের দাওয়াত"],
+    prominentSahabaList: ["উরওয়া ইবনে মাসউদ (রা.)", "মুগীরা ইবনে শু'বা (রা.)", "উসমান ইবনে আবি আল-আস (রা.)"],
+    targetClanId: "banu-thaqif",
+    detailsBn: "মক্কার অদূরে অবস্থিত পাহাড়ি ঠাণ্ডা ও মনোরম ফলমূলের শহর। কুরাইশদের গ্রীষ্মকালীন অবকাশ কেন্দ্র ও বনু সাকীফের শক্তিশালী দুর্গ।"
+  },
+  {
+    id: "geo-hawazin",
+    nameBn: "হাওয়াযিন ও ওয়াদি হুনাইন",
+    nameAr: "هَوَازِن وَحُنَيْن",
+    nameEn: "Hawazin & Hunayn",
+    xPercent: 40,
+    yPercent: 53,
+    terrainType: "desert_steppe",
+    dominantTribesBn: ["বনু হাওয়াযিন", "বনু সা'দ ইবনে বকর", "বনু নসর"],
+    historicalEventsBn: ["নবীজির শৈশব ও বনু সা'দে লালন-পালন", "হুনাইনের ঐতিহাসিক যুদ্ধ (৮ হিজরি)"],
+    prominentSahabaList: ["হালীমা আস-সা'দিয়া (রা.) [দুধমাতা]", "শায়মা বিনতে হারিস (রা.)", "মালিক ইবনে আওফ (রা.)"],
+    targetClanId: "banu-hawazin-saad",
+    detailsBn: "বিশুদ্ধতম আরবি ভাষার ধারক গোত্র। হুনাইনের যুদ্ধে প্রাথমিকভাবে কুরাইশের ওপর আক্রমণ চালালেও পরবর্তীতে সকলে ইসলাম গ্রহণ করে।"
+  },
+  {
+    id: "geo-najd",
+    nameBn: "নজদ ও মধ্য আরব মালভূমি",
+    nameAr: "نَجْد",
+    nameEn: "Najd Plateau",
+    xPercent: 52,
+    yPercent: 42,
+    terrainType: "desert_steppe",
+    dominantTribesBn: ["বনু তামিম", "বনু গাতফান", "বনু আসাদ ইবনে খুযাইমাহ", "বনু আবস ও জুবইয়ান"],
+    historicalEventsBn: ["খন্দক যুদ্ধে আহযাব জোটের অংশগ্রহণ", "রিদ্দার যুদ্ধ ও যাযাবর বেদুইনদের দমন"],
+    prominentSahabaList: ["খাব্বাব ইবনুল আরাত (রা.)", "আল-আকরা ইবনে হাবিস (রা.)", "হুযাইফা ইবনুল ইয়ামান (রা.)"],
+    targetClanId: "banu-tamim-kalb",
+    detailsBn: "আরব উপদ্বীপের সবচেয়ে জনসংখ্যাবহুল ও পরাক্রমশালী যোদ্ধা এলাকা। আরবের কবি ও বিখ্যাত তীরন্দাজদের কেন্দ্রভূমি।"
+  },
+  {
+    id: "geo-yamama",
+    nameBn: "ইয়ামামাহ অঞ্চল",
+    nameAr: "اليَمَامَة",
+    nameEn: "Al-Yamamah",
+    xPercent: 62,
+    yPercent: 48,
+    terrainType: "oasis",
+    dominantTribesBn: ["বনু হানিফা"],
+    historicalEventsBn: ["ভণ্ড নবী মুসায়লামা কাযযাবের আবির্ভাব", "ইয়ামামার ঐতিহাসিক ভয়াবহ যুদ্ধ (১২ হিজরি)", "শত শত হাফেজে কুরআনের শাহাদাত"],
+    prominentSahabaList: ["সুসামাহ ইবনে উসাল (রা.) [মক্কার গম সরবরাহকারী সাহাবি]"],
+    targetClanId: "banu-ghatfan-hanifa",
+    detailsBn: "পূর্ব-মধ্য আরবের উর্বর খাদ্যশস্য ভাণ্ডার। মুসায়লামা কাযযাবের বিদ্রোহ দমনে আবু বকর (রা.) খালিদ বিন ওয়ালিদের নেতৃত্বে বাহিনী পাঠান।"
+  },
+  {
+    id: "geo-tihamah",
+    nameBn: "তিহামাহ ও লোহিত সাগর উপকূল",
+    nameAr: "تِهَامَة وَسَاحِل البَحْرِ الأَحْمَر",
+    nameEn: "Tihamah Coastal Strip",
+    xPercent: 26,
+    yPercent: 50,
+    terrainType: "coastal",
+    dominantTribesBn: ["বনু গিফার", "বনু কিনানাহ", "বনু খুযাআ", "বনু আশজা"],
+    historicalEventsBn: ["সিরিয়াগামী বাণিজ্যিক কাফেলার পথ রোধ", "হুদাইবিয়ার সন্ধিতে খুযা'আর মিত্রতা", "মক্কা বিজয়ের প্রস্তুতি"],
+    prominentSahabaList: ["আবু যার গিফারী (রা.) [যাহিদ সাহাবি]", "বুরাইদাহ আল-আসলামী (রা.)"],
+    targetClanId: "banu-ghifar-daws",
+    detailsBn: "লোহিত সাগর উপকূলবর্তী পাহাড়ি পথ। বনু গিফার বাণিজ্যপথ নিয়ন্ত্রণ করত এবং পুরো গোত্র একযোগে মদিনায় এসে ইসলাম গ্রহণ করে।"
+  },
+  {
+    id: "geo-yemen",
+    nameBn: "ইয়েমেন ও দক্ষিণ আরব (হাদরামাউত)",
+    nameAr: "اليَمَن وَحَضْرَمَوْت",
+    nameEn: "Yemen & South Arabia",
+    xPercent: 48,
+    yPercent: 82,
+    terrainType: "fertile_south",
+    dominantTribesBn: ["বনু দাওস", "হিমইয়ার", "বনু বাজিলা", "মাযহিজ", "কিনদাহ", "আশ'আরিয়্যুন"],
+    historicalEventsBn: ["মুয়ায ইবনে জাবাল (রা.) ও আলী (রা.)-এর দাওয়াত", "যুল-খালাসা মন্দির ধ্বংস", "রাসূলুল্লাহ ﷺ-এর দোয়া"],
+    prominentSahabaList: ["আবু হুরায়রা (রা.) [সর্বাধিক হাদিস বর্ণনাকারী]", "তুফায়েল ইবনে আমর আদ-দাওসী (রা.)", "জারীর ইবনে আব্দুল্লাহ (রা.)", "আবু মুসা আশ'আরী (রা.)"],
+    targetClanId: "banu-ghifar-daws",
+    detailsBn: "জ্ঞানের পুণ্যভূমি ও প্রাচীন সভ্যতার লীলাভূমি। রাসূলুল্লাহ ﷺ বলেন: 'ঈমান তো ইয়েমেনের, আর প্রজ্ঞা তো ইয়েমেনের!' (সহিহ বুখারি)"
+  },
+  {
+    id: "geo-north-sham",
+    nameBn: "সিরিয়া সীমান্ত ও দুমাতুল জান্দাল",
+    nameAr: "دُومَة الجَنْدَل وَبَادِيَة الشَّام",
+    nameEn: "Northern Frontier / Sham",
+    xPercent: 32,
+    yPercent: 20,
+    terrainType: "desert_steppe",
+    dominantTribesBn: ["বনু কালব", "গাসসানিয়্যাহ", "লাখমি"],
+    historicalEventsBn: ["দুমাতুল জান্দাল অভিযান", "তাবুক অভিযান (৯ হিজরি)", "মুতার যুদ্ধ ও ইয়ারমুক বিজয়"],
+    prominentSahabaList: ["যায়েদ ইবনে হারিসা (রা.)", "উসামা ইবনে যায়েদ (রা.)", "দিহইয়া কালবী (রা.) [যাঁর আকৃতিতে জিবরাইল আ. আসতেন]"],
+    targetClanId: "banu-tamim-kalb",
+    detailsBn: "বাইজান্টাইন রোমান সাম্রাজ্য সংলগ্ন উত্তর আরবের কৌশলগত সীমান্ত। ইসলামের আন্তর্জাতিক বিস্তৃতির প্রধান প্রবেশদ্বার।"
+  },
+  {
+    id: "geo-khaybar",
+    nameBn: "খায়বার ও ফাদাক",
+    nameAr: "خَيْبَر وَفَدَك",
+    nameEn: "Khaybar Oasis",
+    xPercent: 28,
+    yPercent: 32,
+    terrainType: "oasis",
+    dominantTribesBn: ["খায়বারের ইহুদি গোত্রসমূহ", "বনু নাদিরের অবশিষ্ট দল"],
+    historicalEventsBn: ["খায়বার যুদ্ধ (৭ হিজরি)", "কামুস দুর্গ বিজয়", "হযরত আলীর বীরত্ব ও খায়বারের তোরণ উত্তোলন"],
+    prominentSahabaList: ["হযরত আলী (রা.)", "উম্মুল মুমিনীন হযরত সাফিয়্যা বিনতে হুয়াই (রা.)"],
+    targetClanId: "madinah-jewish-tribes",
+    detailsBn: "দুর্ভেদ্য পাথুরে দুর্গ ও খেজুরের অফুরন্ত বাগানে সমৃদ্ধ ইহুদি কেন্দ্র। ৭ম হিজরিতে মুসলিমদের হস্তগত হয়।"
+  }
+];
+
+// ============================================================================
+// ৩. বিশেষ ক্যাটাগরি ম্যাপিং (Cross-Index: Promised Paradise, Caliphs, Mothers of Believers)
+// ============================================================================
+export interface SpecialCategoryCrossItem {
+  id: string;
+  nameBn: string;
+  nameAr: string;
+  categoryType: 'ashara_mubashshara' | 'caliphs' | 'mothers_of_believers' | 'commanders' | 'quran_scholars';
+  clanBn: string;
+  clanId: string;
+  ancestorIntersectionBn: string;
+  significanceBn: string;
+}
+
+export const SPECIAL_HISTORICAL_CROSS_INDEX: SpecialCategoryCrossItem[] = [
+  // আশারায়ে মুবাশশারা (১০ জান্নাতী সাহাবি)
+  {
+    id: "ash-1",
+    nameBn: "হযরত আবু বকর সিদ্দিক (রা.)",
+    nameAr: "سيدنا أبو بكر الصديق",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু তাইম ইবনে মুররাহ",
+    clanId: "banu-taym",
+    ancestorIntersectionBn: "মুররাহ ইবনে কা'ব (৬ষ্ঠ স্তর)",
+    significanceBn: "উম্মতের সর্বশ্রেষ্ঠ মানব, ইসলামের প্রথম খলিফা এবং গুহার বিশ্বস্ত সঙ্গী।"
+  },
+  {
+    id: "ash-2",
+    nameBn: "হযরত উমর ইবনুল খাত্তাব (রা.)",
+    nameAr: "سيدنا عمر بن الخطاب الفاروق",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু আদি ইবনে কা'ব",
+    clanId: "banu-adi",
+    ancestorIntersectionBn: "কা'ব ইবনে লুআই (৭ম স্তর)",
+    significanceBn: "আমীরুল মুমিনীন আল-ফারুক, যাঁর পদচারণায় শয়তান পথ পরিবর্তন করত।"
+  },
+  {
+    id: "ash-3",
+    nameBn: "হযরত উসমান ইবনে আফফান (রা.)",
+    nameAr: "سيدنا عثمان بن عفان ذو النورين",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু উমাইয়া / আবদে শামস",
+    clanId: "banu-umayya",
+    ancestorIntersectionBn: "আবদে মানাফ (২য় স্তর)",
+    significanceBn: "যুন-নুরাইন (দুই নূরের অধিকারী), কুরআন সংকলনকারী ও শ্রেষ্ঠ দানশীল খলিফা।"
+  },
+  {
+    id: "ash-4",
+    nameBn: "হযরত আলী ইবনে আবি তালিব (রা.)",
+    nameAr: "سيدنا علي بن أبي طالب المرتضى",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু হাশিম (আহলে বাইত)",
+    clanId: "banu-hashim",
+    ancestorIntersectionBn: "আবদুল মুত্তালিব (১ম স্তর)",
+    significanceBn: "আসাদুল্লাহিল গালিব (আল্লাহর অপরাজেয় সিংহ), বাবে ইলম ও ৪র্থ খলিফা।"
+  },
+  {
+    id: "ash-5",
+    nameBn: "হযরত তালহা ইবনে উবাইদুল্লাহ (রা.)",
+    nameAr: "سيدنا طلحة بن عبيد الله",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু তাইম ইবনে মুররাহ",
+    clanId: "banu-taym",
+    ancestorIntersectionBn: "মুররাহ ইবনে কা'ব (৬ষ্ঠ স্তর)",
+    significanceBn: "উহুদ যুদ্ধে নবীজিকে রক্ষায় নিজের হাত পঙ্গু করে দেওয়া 'জীবন্ত শহীদ'।"
+  },
+  {
+    id: "ash-6",
+    nameBn: "হযরত যুবাইর ইবনুল আওয়াম (রা.)",
+    nameAr: "سيدنا الزبير بن العوام",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু আসাদ ইবনে আবদিল উজ্জা",
+    clanId: "banu-asad-quraysh",
+    ancestorIntersectionBn: "কুসাঈ ইবনে কিলাব (৪র্থ স্তর)",
+    significanceBn: "রাসূলুল্লাহ ﷺ-এর পরম হাওয়ারী (নিবেদিতপ্রাণ সহচর) ও সাফিয়্যার সুযোগ্য সন্তান।"
+  },
+  {
+    id: "ash-7",
+    nameBn: "হযরত আব্দুর রহমান ইবনে আউফ (রা.)",
+    nameAr: "سيدنا عبد الرحمن بن عوف",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু জুহরাহ ইবনে কিলাব",
+    clanId: "banu-zuhrah",
+    ancestorIntersectionBn: "কিলাব ইবনে মুররাহ (৫ম স্তর)",
+    significanceBn: "ইসলামের ইতিহাসে শ্রেষ্ঠ দানবীর ও মুত্তাকী ব্যবসায়ী যিনি অকাতরে সম্পদ বিলিয়েছেন।"
+  },
+  {
+    id: "ash-8",
+    nameBn: "হযরত সা'দ ইবনে আবি ওয়াক্কাস (রা.)",
+    nameAr: "سيدنا سعد بن أبي وقاص",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু জুহরাহ ইবনে কিলাব",
+    clanId: "banu-zuhrah",
+    ancestorIntersectionBn: "কিলাব ইবনে মুররাহ (৫ম স্তর)",
+    significanceBn: "ইসলামের প্রথম তীর নিক্ষেপকারী, মুস্তাজাবুদ দাওয়াত ও কাদেসিয়ার মহান সেনাপতি।"
+  },
+  {
+    id: "ash-9",
+    nameBn: "হযরত সাঈদ ইবনে যায়দ (রা.)",
+    nameAr: "سيدنا سعيد بن زيد",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু আদি ইবনে কা'ব",
+    clanId: "banu-adi",
+    ancestorIntersectionBn: "কা'ব ইবনে লুআই (৭ম স্তর)",
+    significanceBn: "হানিফ যায়দ ইবনে আমরের পুত্র এবং দামেস্ক বিজয়ের অগ্রনায়ক মুজাহিদ।"
+  },
+  {
+    id: "ash-10",
+    nameBn: "হযরত আবু উবাইদাহ ইবনুল জাররাহ (রা.)",
+    nameAr: "سيدنا أبو عبيدة عامر بن الجراح",
+    categoryType: "ashara_mubashshara",
+    clanBn: "বনু হারিস ইবনে ফিহর",
+    clanId: "quraysh-other-branches",
+    ancestorIntersectionBn: "ফিহর ইবনে মালিক (১০ম স্তর)",
+    significanceBn: "রাসূলুল্লাহ ﷺ কর্তৃক ভূষিত 'আমীনুল উম্মাহ' (এই উম্মতের সবচেয়ে বিশ্বস্ত আমানতদার)।"
+  },
+
+  // উম্মাহাতুল মুমিনীন (নবীজির সহধর্মিনীগণ)
+  {
+    id: "umm-1",
+    nameBn: "উম্মুল মুমিনীন হযরত খাদিজাতুল কুবরা (রা.)",
+    nameAr: "أم المؤمنين خديجة بنت خويلد",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু আসাদ ইবনে আবদিল উজ্জা",
+    clanId: "banu-asad-quraysh",
+    ancestorIntersectionBn: "কুসাঈ ইবনে কিলাব (৪র্থ স্তর)",
+    significanceBn: "নবীজির প্রথম জীবনসঙ্গিনী, ইসলামের প্রথম বিশ্বাসী ও সাইয়্যিদাতু নিসায়িল আলামিন।"
+  },
+  {
+    id: "umm-2",
+    nameBn: "উম্মুল মুমিনীন হযরত সাওদা বিনতে জাম'আ (রা.)",
+    nameAr: "أم المؤمنين سودة بنت زمعة",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু আমির ইবনে লুআই",
+    clanId: "quraysh-other-branches",
+    ancestorIntersectionBn: "লুআই ইবনে গালিব (৮ম স্তর)",
+    significanceBn: "হিজরতের পূর্বে মক্কায় নবীজির সংসারে আগমনকারী নিবেদিতপ্রাণা মহীয়সী নারী।"
+  },
+  {
+    id: "umm-3",
+    nameBn: "উম্মুল মুমিনীন হযরত আয়িশা সিদ্দিকা (রা.)",
+    nameAr: "أم المؤمنين عائشة الصديقة بنت أبي بكر",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু তাইম ইবনে মুররাহ",
+    clanId: "banu-taym",
+    ancestorIntersectionBn: "মুররাহ ইবনে কা'ব (৬ষ্ঠ স্তর)",
+    significanceBn: "উম্মতের শ্রেষ্ঠ মহিলা ফকীহ ও আলেমা, যাঁর মাধ্যমে দ্বীনের এক-চতুর্থাংশ বর্ণিত হয়েছে।"
+  },
+  {
+    id: "umm-4",
+    nameBn: "উম্মুল মুমিনীন হযরত হাফসা বিনতে উমর (রা.)",
+    nameAr: "أم المؤمنين حفصة بنت عمر بن الخطاب",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু আদি ইবনে কা'ব",
+    clanId: "banu-adi",
+    ancestorIntersectionBn: "কা'ব ইবনে লুআই (৭ম স্তর)",
+    significanceBn: "কুরআনের মূল হস্তলিখিত প্রামাণ্য নুসখা (মুসহাফে হাফসা)-এর সম্মানিত হেফাজতকারী।"
+  },
+  {
+    id: "umm-5",
+    nameBn: "উম্মুল মুমিনীন হযরত উম্মে সালামাহ হিন্দা (রা.)",
+    nameAr: "أم المؤمنين أم سلمة هند بنت أبي أمية",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু মাখযুম ইবনে ইয়াকাজা",
+    clanId: "banu-makhzum",
+    ancestorIntersectionBn: "মুররাহ ইবনে কা'ব (৬ষ্ঠ স্তর)",
+    significanceBn: "হুদাইবিয়ার সংকটকালীন সন্ধিক্ষণে নবীজিকে পরামর্শ দানকারী বুদ্ধিমতী মাতা।"
+  },
+  {
+    id: "umm-6",
+    nameBn: "উম্মুল মুমিনীন হযরত উম্মে হাবিবা রামলা (রা.)",
+    nameAr: "أم المؤمنين أم حبيبة رملة بنت أبي سفيان",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু উমাইয়া / আবদে শামস",
+    clanId: "banu-umayya",
+    ancestorIntersectionBn: "আবদে মানাফ (২য় স্তর)",
+    significanceBn: "হাবশায় সুদূর হিজরতে অটল বিশ্বাসী এবং আবু সুফিয়ানের ঘরে ইসলামের পতাকা।"
+  },
+  {
+    id: "umm-7",
+    nameBn: "উম্মুল মুমিনীন হযরত জুওয়াইরিয়া বিনতে হারিস (রা.)",
+    nameAr: "أم المؤمنين جويرية بنت الحارث",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু মুসতালিক (বনু খুযাআ শাখা)",
+    clanId: "banu-khuzaa-bakr",
+    ancestorIntersectionBn: "খুযা'আ গোত্র",
+    significanceBn: "যাঁর বিবাহের বরকতে এক মুহূর্তে তাঁর সমগ্র গোত্রের শত শত বন্দী মুক্তি লাভ করে।"
+  },
+  {
+    id: "umm-8",
+    nameBn: "উম্মুল মুমিনীন হযরত সাফিয়্যা বিনতে হুয়াই (রা.)",
+    nameAr: "أم المؤمنين صفية بنت حيي بن أخطب",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু নাদির ও হযরত হারুন (আ.)-এর বংশধর",
+    clanId: "madinah-jewish-tribes",
+    ancestorIntersectionBn: "বনু ইসরাইল (হারুন আ.)",
+    significanceBn: "খায়বার বিজয়ের পর নবীজির পুণ্য সান্নিধ্যে এসে উম্মতের মাতার মর্যাদায় ভূষিত হন।"
+  },
+  {
+    id: "umm-9",
+    nameBn: "উম্মুল মুমিনীন হযরত মাইমুনা বিনতে হারিস (রা.)",
+    nameAr: "أم المؤمنين ميمونة بنت الحارث",
+    categoryType: "mothers_of_believers",
+    clanBn: "বনু হিলাল ইবনে আমির",
+    clanId: "quraysh-other-branches",
+    ancestorIntersectionBn: "বনু হিলাল",
+    significanceBn: "উমরাতুল কাযার সফরে সারফে বিবাহবন্ধনে আবদ্ধ হওয়া সর্বশেষ উম্মুল মুমিনীন।"
+  }
+];
