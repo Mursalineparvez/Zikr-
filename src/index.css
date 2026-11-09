@@ -16,7 +16,19 @@
 }
 
 .font-arabic {
-  font-family: 'Amiri', 'Traditional Arabic', serif;
+  font-family: 'Amiri Quran', 'Amiri', 'Traditional Arabic', serif;
+}
+
+.font-quran {
+  font-family: 'Amiri Quran', 'Amiri', 'Traditional Arabic', serif;
+}
+
+.font-naskh {
+  font-family: 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+}
+
+.font-indopak {
+  font-family: 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
 }
 
 /* Day Mode (Clean White Canvas & Deep Teal Accents matching reference image) */
