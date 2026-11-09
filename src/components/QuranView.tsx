@@ -195,6 +195,22 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [autoScroll, setAutoScroll] = useState<boolean>(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState<'normal' | 'slow' | 'fast'>('normal');
 
+  // Nurani Quran Mode state (traditional South Asian / IndoPak Hafezi Mushaf mode)
+  const [isNuraniMode, setIsNuraniMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_nurani_mode');
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_nurani_mode', String(isNuraniMode));
+    } catch {}
+  }, [isNuraniMode]);
+
   // Audio Playback State
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playingMode, setPlayingMode] = useState<'surah' | 'ayah' | null>(null);
@@ -1374,8 +1390,26 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </span>
             </div>
 
-            {/* Right: Reciter, Language Picker & Search Icons */}
+            {/* Right: Nurani Quran Mode, Reciter, Language Picker & Search Icons */}
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  setIsNuraniMode(!isNuraniMode);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`px-2.5 py-1.5 rounded-xl font-extrabold text-[11px] transition cursor-pointer flex items-center gap-1 border shadow-xs ${
+                  isNuraniMode
+                    ? 'bg-amber-400 text-black border-amber-300 shadow-md ring-2 ring-amber-400/40'
+                    : 'bg-white/10 hover:bg-white/20 text-amber-300 border-amber-400/40'
+                }`}
+                title={selectedLanguage === 'bn' ? 'নূরানী কুরআন তিলাওয়াত মোড' : 'Nurani Hafezi Mode'}
+              >
+                <span>📖</span>
+                <span className="hidden xs:inline sm:inline">
+                  {isNuraniMode ? (selectedLanguage === 'bn' ? 'নূরানী অন' : 'Nurani ON') : (selectedLanguage === 'bn' ? 'নূরানী কুরআন' : 'Nurani Mode')}
+                </span>
+              </button>
+
               <button
                 onClick={() => {
                   setShowReciterPicker(!showReciterPicker);
@@ -1649,6 +1683,31 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <BookOpen className="w-4 h-4" />
               </div>
               <span className="text-[10px] font-bold">Tafsir</span>
+            </button>
+
+            {/* 1.5 Nurani Quran Mode Toggle */}
+            <button
+              onClick={() => {
+                setIsNuraniMode(!isNuraniMode);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              title={selectedLanguage === 'bn' ? 'নূরানী হাফেজি কুরআন পঠন মোড অন/অফ করুন' : 'Toggle Nurani Hafezi Quran Mode'}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[68px] ${
+                isNuraniMode
+                  ? isDay ? 'text-amber-800 font-extrabold' : 'text-amber-300 font-extrabold'
+                  : isDay ? 'hover:bg-amber-50 text-amber-900' : 'hover:bg-[#1a170e] text-amber-400/80'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center relative ${
+                isNuraniMode
+                  ? 'bg-amber-400 text-black shadow-md ring-2 ring-amber-400/40 font-black'
+                  : isDay ? 'bg-amber-100 text-amber-800' : 'bg-amber-500/15 text-amber-300'
+              }`}>
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                {selectedLanguage === 'bn' ? (isNuraniMode ? 'নূরানী কুরআন ON' : 'নূরানী কুরআন') : (isNuraniMode ? 'Nurani ON' : 'Nurani Mode')}
+              </span>
             </button>
 
             {/* 2. Word-by-Word Toggle */}
@@ -2079,6 +2138,50 @@ export const QuranView: React.FC<QuranViewProps> = ({
           {/* ======================================================== */}
           {surahDetail && !isLoadingSurah && (
             <div className="space-y-4">
+              {/* Special Nurani Hafezi Quran Banner */}
+              {isNuraniMode && (
+                <div
+                  className={`p-4 rounded-[22px] border-2 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
+                    isDay
+                      ? 'bg-gradient-to-r from-amber-500/15 via-amber-100/70 to-emerald-50/80 border-amber-500/60 text-amber-950'
+                      : 'bg-gradient-to-r from-[#1b1509] via-[#241c0e] to-[#0c1f1c] border-amber-500/50 text-amber-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-500/25 text-amber-500 flex items-center justify-center font-black text-xl border border-amber-500/40 shadow-xs shrink-0">
+                      📖
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/30">
+                          ঐতিহ্যবাহী কোলকাতা ও ইন্দো-পাক নূরানী তিলাওয়াত পাঠ
+                        </span>
+                      </div>
+                      <h4 className="text-sm font-black text-amber-800 dark:text-amber-300 mt-0.5">
+                        {selectedLanguage === 'bn'
+                          ? 'নূরানী হাফেজি কুরআন মোড সক্রিয় রয়েছে'
+                          : 'Nurani Hafezi Quran Mode Active'}
+                      </h4>
+                      <p className="text-[11px] opacity-85 leading-tight">
+                        {selectedLanguage === 'bn'
+                          ? 'পরিষ্কার হরকত, সুস্পষ্ট তাজবীদ সংকেত ও হাফেজি পাঠের ঐতিহ্যবাহী ফ্রেম সহ তিলাওয়াত করুন।'
+                          : 'Classical IndoPak Tajweed Quran layout for effortless reading and memorization.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setIsNuraniMode(false);
+                      if (soundEnabled) soundHaptics.playTap();
+                    }}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-500/40 transition active:scale-95 cursor-pointer whitespace-nowrap self-end sm:self-center"
+                  >
+                    সাধারণ মোড (Normal Mode) ✕
+                  </button>
+                </div>
+              )}
+
               {/* Tajweed Color & Sign Legend Bar (Matching Physical Quran Color & Sign Coding) */}
               {tajweedColorMode && (
                 <div
@@ -2158,6 +2261,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         ? isDay
                           ? 'bg-[#eef8f7] border-2 border-[#006747] shadow-xl ring-2 ring-[#006747]/20'
                           : 'bg-[#122836] border-2 border-[#10b981] shadow-xl ring-2 ring-[#10b981]/25'
+                        : isNuraniMode
+                        ? isDay
+                          ? 'bg-[#fffdf7] border-2 border-amber-400 shadow-lg ring-1 ring-amber-400/20'
+                          : 'bg-[#0f2124] border-2 border-amber-500/50 shadow-xl ring-1 ring-amber-500/20'
                         : bookmarked
                         ? isDay
                           ? 'bg-[#fffdf7] border-amber-300 shadow-md'
