@@ -2909,65 +2909,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
             </div>
           </div>
 
-          {/* Prominent Dedicated Nurani Quran Mode Banner Card */}
-          <div
-            className={`p-4 sm:p-5 rounded-[24px] border-2 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 transition-all ${
-              isNuraniMode
-                ? isDay
-                  ? 'bg-gradient-to-r from-amber-500/20 via-amber-100/80 to-emerald-50 border-amber-500/80 text-amber-950 shadow-amber-500/10'
-                  : 'bg-gradient-to-r from-[#221809] via-[#2a1e0b] to-[#0c1f1c] border-amber-500/70 text-amber-200 shadow-black/60'
-                : isDay
-                ? 'bg-amber-50/90 border-amber-300 text-amber-950 hover:border-amber-400'
-                : 'bg-[#141007] border-amber-500/40 text-amber-200 hover:border-amber-500/60'
-            }`}
-          >
-            <div className="flex items-center gap-3.5">
-              <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border shadow-sm shrink-0 ${
-                  isNuraniMode
-                    ? 'bg-amber-400 text-black border-amber-300'
-                    : 'bg-amber-500/25 text-amber-500 border-amber-500/40'
-                }`}
-              >
-                📖
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
-                    রেফারেন্স স্ক্রিনশটের মতো শুধু আরবি তিলাওয়াত
-                  </span>
-                  {isNuraniMode && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500 text-white animate-pulse">
-                      শুধু আরবি মোড চালু ✓
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-sm sm:text-base font-black text-[#0b3e31] dark:text-emerald-300 mt-0.5">
-                  {selectedLanguage === 'bn' ? '📖 শুধু আরবি কুরআন (মুসহাফ তিলাওয়াত মোড)' : '📖 Pure Arabic Quran (Mushaf Mode)'}
-                </h3>
-                <p className="text-xs opacity-90 leading-relaxed max-w-xl text-slate-700 dark:text-slate-300">
-                  {selectedLanguage === 'bn'
-                    ? 'অনুবাদ ও বাড়তি বিবরণ ছাড়া খাতাসদৃশ মার্জিত দাগসহ সম্পূর্ণ ১১৪টি সূরার মূল আরবি হরফে নিরবচ্ছিন্ন তিলাওয়াত।'
-                    : 'Read the complete 114 Surahs purely in Arabic script with ruled lines and authentic Mushaf styling.'}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                setIsNuraniMode(!isNuraniMode);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all active:scale-95 cursor-pointer whitespace-nowrap shadow-md flex items-center gap-1.5 self-end sm:self-center shrink-0 ${
-                isNuraniMode
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500 shadow-emerald-900/30 ring-2 ring-emerald-400/40'
-                  : 'bg-amber-400 hover:bg-amber-300 text-slate-950 border border-amber-300'
-              }`}
-            >
-              <span>{isNuraniMode ? '✓ শুধু আরবি মোড চালু রয়েছে' : '📖 শুধু আরবি মোড চালু করুন'}</span>
-            </button>
-          </div>
-
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#10b981]" />
