@@ -2811,102 +2811,95 @@ export const QuranView: React.FC<QuranViewProps> = ({
         /* 2. SURAH INDEX DIRECTORY (MATCHING HOME PAGE THEME)       */
         /* ======================================================== */
         <div className="space-y-4">
-          {/* Majestic Hero Banner */}
+          {/* Slim Sleek Hero Header */}
           <div
-            className={`relative overflow-hidden rounded-[28px] border p-5 sm:p-6 shadow-xl text-white ${
+            className={`relative overflow-hidden rounded-2xl border p-3.5 sm:p-4 shadow-md text-white ${
               isDay
-                ? 'bg-[#006747] border-emerald-600/40 shadow-[#006747]/20'
+                ? 'bg-[#006747] border-emerald-600/40 shadow-[#006747]/15'
                 : 'bg-gradient-to-b from-[#0e1c26] to-[#071018] border-[#1a3342] shadow-black/50'
             }`}
           >
-            <div className="space-y-3">
-              {/* Pill badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-[#10b981] text-xs font-semibold tracking-wide backdrop-blur-md">
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>الْقُرْآنُ الْكَرِيمُ • The Noble Qur'an</span>
+            {/* Top row: Title + Inline Stats on left, Quick Actions on right */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+                  <BookOpen className="w-4 h-4 text-emerald-300" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base sm:text-lg font-black text-white tracking-tight leading-none">
+                      {selectedLanguage === 'bn' ? 'আল-কুরআনুল কারীম' : 'The Noble Quran'}
+                    </h2>
+                    <span className="text-[11px] font-semibold text-emerald-200/90 font-arabic hidden xs:inline">
+                      الْقُرْآنُ الْكَرِيمُ
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-100/75 leading-tight mt-0.5">
+                    {selectedLanguage === 'bn' ? '১১৪টি সূরা • মাক্কী ৮৬ • মাদানী ২৮' : '114 Surahs • 86 Meccan • 28 Medinan'}
+                  </p>
+                </div>
               </div>
 
-              {/* Title & Subtitle */}
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                  The Noble Quran
-                </h2>
-                <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed mt-1">
-                  Complete 114 Surahs with Arabic Uthmani text, verified translations, and crystal-clear recitations
-                </p>
-              </div>
-
-              {/* Stats Chips & Nurani Mode Button */}
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+              {/* Action Buttons: Pure Arabic & Topics */}
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 <button
                   onClick={() => {
                     setIsNuraniMode(!isNuraniMode);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm ${
+                  className={`px-3 py-1.5 rounded-xl border text-[11px] font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm ${
                     isNuraniMode
-                      ? 'bg-amber-400 text-black border-amber-300 shadow-md ring-2 ring-amber-400/40'
-                      : 'bg-emerald-500/25 hover:bg-emerald-500/40 border-emerald-400/50 text-emerald-300'
+                      ? 'bg-amber-400 text-black border-amber-300 ring-2 ring-amber-400/40'
+                      : 'bg-white/10 hover:bg-white/20 border-white/20 text-emerald-100'
                   }`}
                   title={selectedLanguage === 'bn' ? 'শুধু আরবি মুসহাফ মোড চালু/বন্ধ' : 'Toggle Pure Arabic Mushaf Mode'}
                 >
                   <span>📖</span>
                   <span>
                     {selectedLanguage === 'bn'
-                      ? (isNuraniMode ? 'শুধু আরবি মুসহাফ চালু ✓' : '📖 শুধু আরবি (মুসহাফ মোড)')
-                      : (isNuraniMode ? 'Pure Arabic Mushaf (ON)' : '📖 Only Arabic (Mushaf)')}
+                      ? (isNuraniMode ? 'শুধু আরবি চালু ✓' : 'শুধু আরবি')
+                      : (isNuraniMode ? 'Mushaf ON ✓' : 'Pure Arabic')}
                   </span>
                 </button>
 
-                <span className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white font-medium">
-                  114 All Surahs (114)
-                </span>
-                <span className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-[#10b981] font-medium">
-                  86 Meccan • 28 Medinan
-                </span>
                 <button
                   onClick={() => {
                     setActiveTab('topics');
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/40 text-amber-300 font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/40 text-amber-200 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  <span>{selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক আয়াত (জান্নাত, সালাত, তওবা...)' : 'Topic-wise Verses'}</span>
+                  <span>{selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক' : 'Topics'}</span>
                 </button>
               </div>
-
-              {/* Nested Continue Reading Card */}
-              {lastRead && (
-                <div
-                  className={`mt-3 rounded-2xl border p-4 space-y-2 shadow-inner ${
-                    isDay
-                      ? 'bg-black/25 border-white/20'
-                      : 'bg-[#060d13]/90 border-[#1a3342]'
-                  }`}
-                >
-                  <div className="text-[10px] uppercase font-bold tracking-wider text-[#10b981] flex items-center gap-1.5">
-                    <RotateCcw className="w-3 h-3 text-[#10b981]" />
-                    <span>{selectedLanguage === 'bn' ? 'সর্বশেষ পঠিত' : 'CONTINUE READING'}</span>
-                  </div>
-                  <div>
-                    <h4 className="text-base font-bold text-white">
-                      {getLocalizedSurahName(lastRead.surahNumber, selectedLanguage)}
-                    </h4>
-                    <p className="text-xs text-[#94a3b8] font-medium">
-                      {selectedLanguage === 'bn' ? `আয়াত ${lastRead.ayahNumber}` : `Ayah ${lastRead.ayahNumber}`} • {lastRead.surahName} • {getLocalizedSurahMeaning(lastRead.surahNumber, selectedLanguage)}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => loadSurah(lastRead.surahNumber, lastRead.ayahNumber)}
-                    className="w-full py-2.5 px-4 rounded-xl bg-[#009b68] hover:bg-[#00ab73] active:scale-98 text-white text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer mt-1 border border-white/20"
-                  >
-                    <span>{selectedLanguage === 'bn' ? `পড়া শুরু করুন (আয়াত ${lastRead.ayahNumber})` : `Resume Ayah ${lastRead.ayahNumber}`}</span>
-                    <ChevronRight className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              )}
             </div>
+
+            {/* Slim Horizontal Continue Reading Strip */}
+            {lastRead && (
+              <div
+                onClick={() => loadSurah(lastRead.surahNumber, lastRead.ayahNumber)}
+                className="mt-2.5 px-3 py-2 rounded-xl bg-black/25 hover:bg-black/35 border border-white/15 flex items-center justify-between gap-3 cursor-pointer transition active:scale-[0.99] group shadow-inner"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <RotateCcw className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300 shrink-0">
+                    {selectedLanguage === 'bn' ? 'সর্বশেষ:' : 'LAST:'}
+                  </span>
+                  <span className="text-xs font-bold text-white truncate">
+                    {getLocalizedSurahName(lastRead.surahNumber, selectedLanguage)}
+                  </span>
+                  <span className="text-[11px] text-emerald-100/75 shrink-0 hidden sm:inline">
+                    • {selectedLanguage === 'bn' ? `আয়াত ${lastRead.ayahNumber}` : `Ayah ${lastRead.ayahNumber}`}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-300 group-hover:text-white shrink-0 bg-emerald-600/50 group-hover:bg-emerald-600 px-2.5 py-1 rounded-lg border border-emerald-400/30 transition">
+                  <span>{selectedLanguage === 'bn' ? `পড়া শুরু করুন (আয়াত ${lastRead.ayahNumber})` : `Resume (${lastRead.ayahNumber})`}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Search Bar */}
