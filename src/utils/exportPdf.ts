@@ -1,5 +1,6 @@
 import { ZikrItem, UserProfile } from '../types';
 import { AamalDayLog } from '../types';
+import { sanitizeClonedDocForHtml2Canvas } from './html2canvasSanitizer';
 
 export type HistoryPeriodRange = '1day' | '1month' | '4months' | '1year' | '10years';
 
@@ -484,6 +485,9 @@ export async function generateComprehensiveHistoryPdfReport(
         useCORS: true,
         logging: false,
         scrollY: 0,
+        onclone: (clonedDoc: Document) => {
+          sanitizeClonedDocForHtml2Canvas(clonedDoc);
+        },
       },
       jsPDF: {
         unit: 'mm',

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { sanitizeClonedDocForHtml2Canvas } from '../utils/html2canvasSanitizer';
 import { QuranAyah } from '../utils/quranService';
 import { ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -76,6 +77,9 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
         allowTaint: true,
         backgroundColor: null,
         logging: false,
+        onclone: (clonedDoc) => {
+          sanitizeClonedDocForHtml2Canvas(clonedDoc);
+        },
       });
 
       const image = canvas.toDataURL('image/png', 1.0);
@@ -96,10 +100,12 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
     }
   };
 
-  // Web Share API or download & share
+  // Web Share API: Launches device's native share modal showing all installed apps (WhatsApp, Messenger, Facebook, IMO, Telegram, etc.)
   const handleShareCard = async () => {
     if (!cardRef.current) return;
     setIsGenerating(true);
+    if (soundEnabled) soundHaptics.playTap();
+
     try {
       const canvas = await html2canvas(cardRef.current, {
         scale: 2.5,
@@ -107,34 +113,68 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
         allowTaint: true,
         backgroundColor: null,
         logging: false,
+        onclone: (clonedDoc) => {
+          sanitizeClonedDocForHtml2Canvas(clonedDoc);
+        },
       });
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          setIsGenerating(false);
-          return;
-        }
-        const file = new File([blob], `Quran-${surahEnglishName}-${ayah.number}.png`, { type: 'image/png' });
-        
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: `সূরা ${surahEnglishName} - আয়াত ${ayah.number}`,
-              text: `${ayah.arabic}\n\n"${ayah.translation}"\n\n- Zikr+ App (zikrplus.app)`,
-              files: [file],
-            });
-            setIsGenerating(false);
-            return;
-          } catch {}
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/png', 1.0)
+      );
+
+      const shareTitle = `সূরা ${surahName} (${surahEnglishName}) - আয়াত ${ayah.number}`;
+      const shareText = `${ayah.arabic}\n\n"${ayah.translation}"\n\n[সূরা ${surahName} (${surahEnglishName}) : আয়াত ${ayah.number}]\n- Zikr+ App (zikrplus.app)`;
+
+      if (navigator.share) {
+        if (blob) {
+          const file = new File([blob], `Quran-Ayah-${surahEnglishName}-${ayah.number}.png`, {
+            type: 'image/png',
+          });
+
+          // 1. Try native share with PNG image file
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                title: shareTitle,
+                text: shareText,
+                files: [file],
+              });
+              setIsGenerating(false);
+              return;
+            } catch (err: any) {
+              if (err?.name === 'AbortError') {
+                setIsGenerating(false);
+                return;
+              }
+            }
+          }
         }
 
-        // Fallback: Download image and copy text
-        handleDownloadHighResPng();
-        handleCopyCardText();
-      }, 'image/png', 1.0);
-    } catch {
-      setIsGenerating(false);
+        // 2. Fallback to native share with text & link
+        try {
+          await navigator.share({
+            title: shareTitle,
+            text: shareText,
+            url: window.location.href || 'https://zikrplus.app',
+          });
+          setIsGenerating(false);
+          return;
+        } catch (err: any) {
+          if (err?.name === 'AbortError') {
+            setIsGenerating(false);
+            return;
+          }
+        }
+      }
+
+      // 3. Fallback for desktop browsers without Web Share API
       handleDownloadHighResPng();
+      handleCopyCardText();
+    } catch (err) {
+      console.error('Error sharing card:', err);
+      handleDownloadHighResPng();
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -347,8 +387,11 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
             <div className="py-6 text-center space-y-4">
               <div
                 dir="rtl"
-                className="font-arabic text-3xl sm:text-4xl md:text-[42px] font-bold leading-[2.5] tracking-wide drop-shadow-sm"
-                style={{ color: themeStyles.arabicText }}
+                className="font-arabic text-3xl sm:text-4xl md:text-[42px] font-bold leading-[2.5] tracking-wide"
+                style={{
+                  color: themeStyles.arabicText,
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.25)',
+                }}
               >
                 {ayah.arabic}
               </div>
@@ -375,7 +418,13 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
               style={{ borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}
             >
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-emerald-500 text-white font-black flex items-center justify-center text-xs shadow-md">
+                <div
+                  className="w-6 h-6 rounded-lg text-white font-black flex items-center justify-center text-xs"
+                  style={{
+                    backgroundColor: '#10b981',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                  }}
+                >
                   Z+
                 </div>
                 <div className="leading-tight">

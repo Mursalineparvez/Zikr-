@@ -513,73 +513,91 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
     <div className={`min-h-screen pb-24 transition-colors duration-200 ${
       isDay ? 'text-slate-800' : 'text-[#e6f4f2]'
     }`}>
-      {/* 1. Header Banner (Clean, scholarly, free from author and external web links) */}
-      <div className={`relative overflow-hidden rounded-3xl p-6 sm:p-8 mb-6 shadow-xl border ${
+      {/* 1. Header Banner (Single Unified, Compact, Ultra-Attractive, High-Density) */}
+      <div className={`relative overflow-hidden rounded-xl p-3 sm:p-4 mb-3 shadow-sm border ${
         isDay
-          ? 'bg-gradient-to-br from-teal-800 via-emerald-800 to-teal-900 text-white border-teal-700'
-          : 'bg-gradient-to-br from-[#072428] via-[#0b333a] to-[#041518] text-white border-emerald-500/30'
+          ? 'bg-gradient-to-r from-teal-900 via-emerald-850 to-teal-950 text-white border-teal-700/60'
+          : 'bg-gradient-to-r from-[#061e22] via-[#092a30] to-[#041518] text-white border-emerald-500/30'
       }`}>
-        <div className="absolute -right-8 -bottom-8 opacity-10 pointer-events-none">
-          <Shield className="w-72 h-72 text-emerald-300" />
+        <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+          <Shield className="w-36 h-36 text-emerald-300" />
         </div>
 
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="relative z-10 space-y-2">
+          {/* Top Bar inside Banner */}
+          <div className="flex items-center justify-between gap-2 flex-wrap text-[11px]">
             {onBack && (
               <button
                 onClick={() => {
                   if (soundEnabled) soundHaptics.playTap();
                   onBack();
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 backdrop-blur-md transition cursor-pointer text-white border border-white/20 shadow-sm"
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-white/10 hover:bg-white/20 backdrop-blur-md transition cursor-pointer text-white border border-white/20 shadow-2xs"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>ইসলামিক লাইব্রেরিতে ফিরুন</span>
+                <ArrowLeft className="w-3 h-3" />
+                <span>লাইব্রেরিতে ফিরুন</span>
               </button>
             )}
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-serif opacity-80">{BOOK_METADATA.titleAr}</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold">
-                সীরাত ও ইতিহাস কোষগ্রন্থ
+            <div className="flex items-center gap-2 ml-auto">
+              <span className="text-[10px] font-serif text-emerald-200/90 tracking-wide font-medium">
+                {BOOK_METADATA.titleAr}
+              </span>
+              <span className="text-[9px] px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold whitespace-nowrap">
+                প্রামাণ্য ঐতিহাসিক সীরাত কোষ
               </span>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight flex items-center gap-3">
-              <span>🛡️</span>
-              <span>{BOOK_METADATA.titleBn}</span>
-            </h1>
-            <p className="text-sm sm:text-base text-emerald-100/90 max-w-3xl leading-relaxed">
-              {BOOK_METADATA.summaryBn}
-            </p>
+          {/* Banner Title & Description */}
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+            <div>
+              <h1 className="text-base sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5">
+                <span className="text-lg">🛡️</span>
+                <span>{BOOK_METADATA.titleBn} (প্রামাণ্য ঐতিহাসিক সীরাত কোষ)</span>
+              </h1>
+              <p className="text-[11px] sm:text-xs text-emerald-100/90 leading-relaxed max-w-3xl mt-0.5">
+                প্রাক-ইসলামী ও সীরাত যুগে মক্কার কাবার প্রশাসনিক দায়িত্ব, মদিনার আনসার ভ্রাতৃত্ব এবং সমগ্র আরব উপদ্বীপের শীর্ষ গোত্র ও ব্যক্তিত্বের প্রামাণ্য ইতিহাস।
+              </p>
+            </div>
           </div>
 
-          {/* Clean Academic Badges (No page numbers, no author name, no website links) */}
-          <div className="pt-3 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="space-y-0.5">
-              <span className="text-emerald-200/70 block">মূল পরিমণ্ডল</span>
-              <span className="font-bold text-white">মক্কা, মদিনা ও বৃহত্তর আরব</span>
+          {/* Compact 4-Metric Strip */}
+          <div className="pt-2 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[10px]">
+            <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
+              <span className="text-xs">🗺️</span>
+              <div>
+                <span className="text-emerald-200/70 block text-[9px]">মূল পরিমণ্ডল</span>
+                <span className="font-bold text-white truncate block">মক্কা, মদিনা ও আরব</span>
+              </div>
             </div>
-            <div className="space-y-0.5">
-              <span className="text-emerald-200/70 block">কাবার শাসন বণ্টন</span>
-              <span className="font-bold text-white">১০টি প্রধান কুরাইশ দায়িত্ব</span>
+            <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
+              <span className="text-xs">🕋</span>
+              <div>
+                <span className="text-emerald-200/70 block text-[9px]">কাবার শাসন</span>
+                <span className="font-bold text-white truncate block">১০টি কুরাইশ দপ্তর</span>
+              </div>
             </div>
-            <div className="space-y-0.5">
-              <span className="text-emerald-200/70 block">গোত্র কোষ</span>
-              <span className="font-bold text-white">৪০টি ঐতিহাসিক গোত্র ও বংশধারা</span>
+            <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
+              <span className="text-xs">📜</span>
+              <div>
+                <span className="text-emerald-200/70 block text-[9px]">গোত্র কোষ</span>
+                <span className="font-bold text-amber-300 truncate block">৪০টি ঐতিহাসিক গোত্র</span>
+              </div>
             </div>
-            <div className="space-y-0.5">
-              <span className="text-emerald-200/70 block">তথ্যসূত্র</span>
-              <span className="font-bold text-amber-300">ইবনে হিশাম, আল-ইসাবাহ ও সীরাত</span>
+            <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
+              <span className="text-xs">📊</span>
+              <div>
+                <span className="text-emerald-200/70 block text-[9px]">তথ্যসূত্র</span>
+                <span className="font-bold text-emerald-200 truncate block">ইবনে হিশাম ও সীরাত</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. Primary Navigation Mode Bar (Zero-Pill Restrained Design) */}
-      <div className={`p-1.5 rounded-2xl border mb-6 flex items-center gap-1.5 overflow-x-auto scrollbar-none ${
+      {/* 2. Primary Navigation Mode Bar (Compact, High Density) */}
+      <div className={`p-1 rounded-xl border mb-4 flex items-center gap-1 overflow-x-auto scrollbar-none ${
         isDay ? 'bg-slate-100 border-slate-200' : 'bg-[#061e22] border-[#133c44]'
       }`}>
         <button
@@ -587,13 +605,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             if (soundEnabled) soundHaptics.playTap();
             setViewMode('topic_toc');
           }}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             viewMode === 'topic_toc'
-              ? isDay ? 'bg-white text-teal-800 shadow-sm' : 'bg-emerald-600 text-white shadow-md'
+              ? isDay ? 'bg-white text-teal-800 shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
               : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
           }`}
         >
-          <Layers className="w-4 h-4 text-amber-400" />
+          <Layers className="w-3.5 h-3.5 text-amber-400" />
           <span>বিষয়ভিত্তিক সূচিপত্র</span>
         </button>
 
@@ -602,13 +620,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             if (soundEnabled) soundHaptics.playTap();
             setViewMode('directory');
           }}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             viewMode === 'directory'
-              ? isDay ? 'bg-white text-teal-800 shadow-sm' : 'bg-emerald-600 text-white shadow-md'
+              ? isDay ? 'bg-white text-teal-800 shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
               : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
           }`}
         >
-          <BookOpen className="w-4 h-4" />
+          <BookOpen className="w-3.5 h-3.5" />
           <span>গোত্র ডিরেক্টরি</span>
         </button>
 
@@ -617,14 +635,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             if (soundEnabled) soundHaptics.playTap();
             setViewMode('reader');
           }}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             viewMode === 'reader'
-              ? isDay ? 'bg-white text-teal-800 shadow-sm' : 'bg-emerald-600 text-white shadow-md'
+              ? isDay ? 'bg-white text-teal-800 shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
               : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
           }`}
         >
-          <BookMarked className="w-4 h-4 text-amber-400" />
-          <span>গোত্র পাঠ (সীরাত স্টাইল)</span>
+          <BookMarked className="w-3.5 h-3.5 text-amber-400" />
+          <span>গোত্র পাঠ (সীরাত)</span>
         </button>
 
         <button
@@ -632,14 +650,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             if (soundEnabled) soundHaptics.playTap();
             setViewMode('who_is_who');
           }}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             viewMode === 'who_is_who'
-              ? isDay ? 'bg-white text-teal-800 shadow-sm' : 'bg-emerald-600 text-white shadow-md'
+              ? isDay ? 'bg-white text-teal-800 shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
               : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
           }`}
         >
-          <Users className="w-4 h-4 text-teal-400" />
-          <span>কোন গোত্রে কে কে (ম্যাপিং চার্ট)</span>
+          <Users className="w-3.5 h-3.5 text-teal-400" />
+          <span>কোন গোত্রে কে কে (ম্যাপিং)</span>
         </button>
 
         <button
@@ -647,14 +665,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             if (soundEnabled) soundHaptics.playTap();
             setViewMode('charts_gallery');
           }}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             viewMode === 'charts_gallery'
-              ? isDay ? 'bg-white text-teal-800 shadow-sm' : 'bg-emerald-600 text-white shadow-md'
+              ? isDay ? 'bg-white text-teal-800 shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
               : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
           }`}
         >
-          <GitFork className="w-4 h-4 text-emerald-400" />
-          <span>চার্ট ও বংশধারা গ্যালারি</span>
+          <GitFork className="w-3.5 h-3.5 text-emerald-400" />
+          <span>চার্ট ও বংশধারা</span>
         </button>
 
         <button
@@ -662,13 +680,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             if (soundEnabled) soundHaptics.playTap();
             setViewMode('appendix40');
           }}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             viewMode === 'appendix40'
-              ? isDay ? 'bg-white text-teal-800 shadow-sm' : 'bg-emerald-600 text-white shadow-md'
+              ? isDay ? 'bg-white text-teal-800 shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
               : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
           }`}
         >
-          <Scroll className="w-4 h-4" />
+          <Scroll className="w-3.5 h-3.5" />
           <span>৪০টি গোত্র কোষ</span>
         </button>
 
@@ -677,29 +695,29 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             if (soundEnabled) soundHaptics.playTap();
             setViewMode('bookmarks');
           }}
-          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
             viewMode === 'bookmarks'
-              ? isDay ? 'bg-white text-teal-800 shadow-sm' : 'bg-emerald-600 text-white shadow-md'
+              ? isDay ? 'bg-white text-teal-800 shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
               : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-300/80 hover:text-white'
           }`}
         >
-          <Bookmark className="w-4 h-4" />
+          <Bookmark className="w-3.5 h-3.5" />
           <span>বুকমার্ক ({bookmarkedPersonalities.length})</span>
         </button>
       </div>
 
       {/* 3. Global Search & Font Size Controls */}
-      <div className={`p-4 rounded-2xl border mb-6 flex flex-col sm:flex-row items-center gap-3 justify-between ${
-        isDay ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#082226] border-[#153e46]'
+      <div className={`p-2.5 sm:p-3 rounded-xl border mb-4 flex flex-col sm:flex-row items-center gap-2.5 justify-between ${
+        isDay ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#082226] border-[#153e46]'
       }`}>
-        <div className="relative w-full sm:w-96">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="গোত্র, সাহাবি, উপাধি বা হাদিস সূত্র অনুসন্ধান..."
-            className={`w-full pl-10 pr-4 py-2 rounded-xl text-xs sm:text-sm border outline-none transition ${
+            className={`w-full pl-9 pr-7 py-1.5 rounded-lg text-xs border outline-none transition ${
               isDay
                 ? 'bg-slate-50 border-slate-200 focus:border-teal-600 text-slate-800'
                 : 'bg-[#041417] border-[#153e46] focus:border-emerald-500 text-emerald-100 placeholder-emerald-400/50'
@@ -708,7 +726,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-rose-500 font-bold"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-rose-500 font-bold"
             >
               ✕
             </button>
@@ -716,26 +734,26 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end text-xs font-semibold">
-          <div className="flex items-center gap-1 border rounded-xl p-1 bg-black/5 dark:bg-black/20 border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-black/5 dark:bg-black/20 border-slate-200 dark:border-slate-800">
             <button
               onClick={() => setFontSizeLevel('normal')}
-              className={`px-2.5 py-1 rounded-lg transition ${
+              className={`px-2 py-0.5 rounded text-[11px] transition ${
                 fontSizeLevel === 'normal'
-                  ? isDay ? 'bg-white shadow text-teal-800 font-bold' : 'bg-emerald-600 text-white font-bold'
+                  ? isDay ? 'bg-white shadow-xs text-teal-800 font-bold' : 'bg-emerald-600 text-white font-bold'
                   : 'opacity-70'
               }`}
             >
-              স্বাভাবিক ফন্ট
+              স্বাভাবিক
             </button>
             <button
               onClick={() => setFontSizeLevel('large')}
-              className={`px-2.5 py-1 rounded-lg transition ${
+              className={`px-2 py-0.5 rounded text-[11px] transition ${
                 fontSizeLevel === 'large'
-                  ? isDay ? 'bg-white shadow text-teal-800 font-bold' : 'bg-emerald-600 text-white font-bold'
+                  ? isDay ? 'bg-white shadow-xs text-teal-800 font-bold' : 'bg-emerald-600 text-white font-bold'
                   : 'opacity-70'
               }`}
             >
-              বড় ফন্ট (A+)
+              বড় (A+)
             </button>
           </div>
         </div>
@@ -750,59 +768,25 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           Book Table of Contents with category summary cards and numbered lists
           ===================================================================== */}
       {viewMode === 'topic_toc' && (
-        <div className="space-y-6">
-          {/* 1. Hero Book Banner (Like Hayatus Sahaba) */}
-          <div
-            className={`p-6 sm:p-7 rounded-3xl border shadow-xl relative overflow-hidden ${
-              isDay
-                ? 'bg-gradient-to-r from-[#005a3e] via-[#006747] to-[#007a52] text-white border-emerald-600/40'
-                : 'bg-gradient-to-r from-[#07191e] via-[#0b262d] to-[#10363e] text-white border-[#163c46]'
-            }`}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-emerald-100 text-xs font-semibold backdrop-blur-md">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>قبائل وشخصيات العرب • Araber Gotro O Byaktitto</span>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30">
-                  ৪০টি গোত্রকোষ
-                </span>
-                <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-400/30">
-                  ৫টি ঐতিহাসিক চার্ট
-                </span>
-              </div>
-            </div>
-
-            <h2 className="text-xl sm:text-3xl font-black tracking-tight">
-              আরবের গোত্র ও ব্যক্তিত্ব (প্রামাণ্য ঐতিহাসিক সীরাত কোষ)
-            </h2>
-            <p className="text-xs sm:text-sm text-emerald-100/90 mt-1.5 max-w-2xl leading-relaxed">
-              প্রাক-ইসলামী ও সীরাত যুগে মক্কা, মদিনা ও সমগ্র আরব উপদ্বীপের শীর্ষ গোত্রসমূহের উৎপত্তি, কাবার প্রশাসনিক দায়িত্ব, বিশিষ্ট সাহাবি এবং ঐতিহাসিক চরিত্রসমূহের বিশদ আকর গ্রন্থ।
-            </p>
-          </div>
-
-          {/* 2. Category Summary Badges Grid (Matching Hayatus Sahaba Category Summary) */}
-          <div className={`p-4 sm:p-5 rounded-3xl border shadow-md space-y-3 ${
+        <div className="space-y-3">
+          {/* 1. Category Summary Badges Grid (Ultra Compact & Slim) */}
+          <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2.5 ${
             isDay ? 'bg-amber-50/60 border-amber-200/80 text-amber-950' : 'bg-[#18130a] border-amber-500/30 text-amber-100'
           }`}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-black text-xs">📖</span>
-                <h3 className="text-xs sm:text-sm font-extrabold">
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center font-black text-xs">📖</span>
+                <h3 className="text-xs font-extrabold">
                   বিষয়ভিত্তিক সীরাত ও গোত্রকোষ সারসংক্ষেপ
                 </h3>
               </div>
-              <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-500">
-                মোট ৫টি মূল অধ্যায় ও ৪০টি গোত্র তালিকা
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
+                ৫টি অধ্যায় ও ৪০টি গোত্র তালিকা
               </span>
             </div>
-            <p className="text-xs leading-relaxed opacity-90">
-              যেকোনো ক্যাটাগরি বা সূচিপত্রের লিংকে চাপ দিলে সরাসরি সম্পূর্ণ পৃষ্ঠাজুড়ে বিস্তারিত বংশপরিচয়, ঐতিহাসিক দায়িত্ব, বিশিষ্ট সাহাবি ও সহিহ দলিলসমূহ পড়তে পারবেন।
-            </p>
 
             {/* 5 Topic Quick Summary Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-1">
               {[
                 { id: 'topic-kaba-admin', icon: '🕋', title: 'কাবার প্রশাসন ও কুরাইশ', count: '১০টি দপ্তর' },
                 { id: 'topic-prophetic-lineage', icon: '👑', title: 'বনু হাশিম ও আহলে বাইত', count: 'পবিত্র বংশলতিকা' },
@@ -816,21 +800,21 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     if (soundEnabled) soundHaptics.playTap();
                     setSelectedTocTopicId(selectedTocTopicId === cat.id ? 'all' : cat.id);
                   }}
-                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-1 shadow-xs ${
+                  className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1 shadow-2xs ${
                     selectedTocTopicId === cat.id
-                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-500/30'
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm ring-1 ring-emerald-500/30'
                       : isDay
                       ? 'bg-white border-amber-200 hover:border-emerald-400'
                       : 'bg-[#0c2227] border-teal-900/50 hover:border-emerald-500'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xl">{cat.icon}</span>
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
+                    <span className="text-base">{cat.icon}</span>
+                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-500">
                       {cat.count}
                     </span>
                   </div>
-                  <div className="text-xs font-bold truncate mt-1">
+                  <div className="text-[11px] font-bold truncate mt-0.5">
                     {cat.title}
                   </div>
                 </div>
@@ -839,15 +823,15 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           </div>
 
           {/* 3. Search Bar with Instant Reset */}
-          <div className={`p-4 rounded-3xl border shadow-md ${isDay ? 'bg-white border-slate-200' : 'bg-[#0b2228] border-[#16424b]'}`}>
+          <div className={`p-2.5 sm:p-3 rounded-xl border shadow-xs ${isDay ? 'bg-white border-slate-200' : 'bg-[#0b2228] border-[#16424b]'}`}>
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
                 type="text"
                 value={tocSearchQuery}
                 onChange={(e) => setTocSearchQuery(e.target.value)}
                 placeholder="সূচিপত্রে খুঁজুন (যেমন: হাশিম, উমর, খালিদ, কাবার চাবি, সিকায়া, খাযরাজ, বদর, তায়েফ...)"
-                className={`w-full pl-10 pr-8 py-2.5 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
+                className={`w-full pl-9 pr-7 py-1.5 rounded-lg border text-xs font-semibold transition focus:outline-none ${
                   isDay
                     ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500'
                     : 'bg-[#07171c] border-teal-900/60 text-white focus:border-emerald-500'
@@ -856,7 +840,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {tocSearchQuery && (
                 <button
                   onClick={() => setTocSearchQuery('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer text-xs"
                 >
                   ✕
                 </button>
@@ -864,35 +848,35 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             </div>
           </div>
 
-          {/* 4. BOOK TABLE OF CONTENTS (TOC) — 5 CATEGORY BOXES WITH NUMBERED LISTS (HAYATUS SAHABA STYLE) */}
-          <div className={`p-5 rounded-3xl border shadow-xl space-y-6 ${
+          {/* 4. BOOK TABLE OF CONTENTS (TOC) — 5 CATEGORY BOXES WITH NUMBERED LISTS (COMPACT) */}
+          <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-md space-y-4 ${
             isDay ? 'bg-white border-amber-200 text-slate-900' : 'bg-[#0b1f24] border-amber-500/30 text-white'
           }`}>
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-amber-500/20">
-              <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-amber-500/20">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-xs">
                   📖
                 </span>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400">
+                  <h3 className="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400">
                     বইয়ের মূল সূচিপত্র (Table of Contents)
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-teal-300">
+                  <p className="text-[10px] text-slate-500 dark:text-teal-300">
                     যেকোনো গোত্র বা চার্টে স্পর্শ করে সরাসরি সম্পূর্ণ অধ্যায় পড়ুন
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {selectedTocTopicId !== 'all' && (
                   <button
                     onClick={() => {
                       if (soundEnabled) soundHaptics.playTap();
                       setSelectedTocTopicId('all');
                     }}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 transition cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 transition cursor-pointer"
                   >
-                    সকল বিষয় দেখুন ✕
+                    সকল বিষয় ✕
                   </button>
                 )}
                 <button
@@ -901,15 +885,15 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     setActiveChartTab('quraysh_roles');
                     setViewMode('charts_gallery');
                   }}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-md hover:bg-emerald-500 transition cursor-pointer flex items-center gap-1.5"
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 text-white shadow-xs hover:bg-emerald-500 transition cursor-pointer flex items-center gap-1"
                 >
-                  <span>📊 সকল চার্ট দেখুন</span>
+                  <span>📊 সকল চার্ট</span>
                 </button>
               </div>
             </div>
 
-            {/* Category Boxes Grid with Numbered Lists inside (Like Hayatus Sahaba) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
+            {/* Category Boxes Grid with Numbered Lists inside */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {TOPIC_WISE_TOC_DATA
                 .filter(topic => selectedTocTopicId === 'all' || topic.id === selectedTocTopicId)
                 .map((topic) => {
@@ -926,32 +910,32 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   return (
                     <div
                       key={topic.id}
-                      className={`p-4 sm:p-5 rounded-2xl border shadow-md space-y-3 flex flex-col justify-between ${
+                      className={`p-3 sm:p-3.5 rounded-xl border shadow-xs space-y-2 flex flex-col justify-between ${
                         isDay
                           ? 'bg-gradient-to-b from-amber-50/40 via-white to-white border-amber-200/80 text-slate-900'
                           : 'bg-gradient-to-b from-[#0f282e] via-[#091a1e] to-[#071518] border-teal-800/50 text-white'
                       }`}
                     >
                       {/* Category Header Box */}
-                      <div className="flex items-center justify-between pb-2 border-b border-amber-500/20">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xl shrink-0">{topic.icon}</span>
+                      <div className="flex items-center justify-between pb-1.5 border-b border-amber-500/20">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-base shrink-0">{topic.icon}</span>
                           <div>
-                            <span className="text-[10px] font-bold uppercase text-amber-500 block">
+                            <span className="text-[9px] font-bold uppercase text-amber-500 block">
                               বিষয় {topic.topicNumber}
                             </span>
-                            <h4 className="font-extrabold text-xs sm:text-sm text-amber-700 dark:text-amber-300 truncate">
+                            <h4 className="font-extrabold text-xs text-amber-700 dark:text-amber-300 truncate">
                               {topic.themeBadgeBn}
                             </h4>
                           </div>
                         </div>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
+                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
                           {filteredSubs.length}টি বিষয়
                         </span>
                       </div>
 
-                      {/* Numbered List of Chapters/Subsections (Hayatus Sahaba Style) */}
-                      <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+                      {/* Numbered List of Chapters/Subsections */}
+                      <div className="space-y-1 max-h-60 overflow-y-auto pr-0.5 scrollbar-thin">
                         {filteredSubs.map((sub, sIdx) => {
                           const isChart = sub.type === 'chart';
                           return (
@@ -967,7 +951,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                   openClanInReader(sub.id);
                                 }
                               }}
-                              className={`p-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer flex items-center justify-between gap-2 ${
+                              className={`p-2 rounded-lg border text-xs font-semibold transition cursor-pointer flex items-center justify-between gap-1.5 ${
                                 isChart
                                   ? isDay
                                     ? 'bg-amber-100/70 hover:bg-amber-100 border-amber-300 text-amber-950 font-bold'
@@ -977,25 +961,25 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                   : 'bg-[#07181c] hover:bg-[#0f323a] border-teal-900/50 text-slate-200 hover:border-emerald-500/50'
                               }`}
                             >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="font-mono text-[11px] text-amber-500 font-bold shrink-0">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="font-mono text-[10px] text-amber-500 font-bold shrink-0">
                                   {isChart ? '📊' : `${sIdx + 1}.`}
                                 </span>
                                 <div className="truncate">
-                                  <div className="truncate">{sub.titleBn}</div>
-                                  <div className="text-[10px] opacity-70 truncate font-normal">
+                                  <div className="truncate text-[11px]">{sub.titleBn}</div>
+                                  <div className="text-[9px] opacity-70 truncate font-normal">
                                     {sub.subtitleBn}
                                   </div>
                                 </div>
                               </div>
 
                               <div className="flex items-center gap-1 shrink-0">
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-black hidden sm:inline ${
+                                <span className={`text-[8px] px-1 py-0.2 rounded font-black hidden sm:inline ${
                                   isChart ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/10 text-emerald-400'
                                 }`}>
                                   {isChart ? 'চার্ট' : 'পাঠ'}
                                 </span>
-                                <ChevronRight className="w-3.5 h-3.5 text-emerald-500" />
+                                <ChevronRight className="w-3 h-3 text-emerald-500" />
                               </div>
                             </div>
                           );
@@ -1004,16 +988,16 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
                       {/* Topic Footer Quick Link */}
                       {topic.relatedChartKey && (
-                        <div className="pt-2 border-t border-slate-200/40 dark:border-slate-800/60 flex items-center justify-between text-[11px]">
-                          <span className="opacity-75 truncate max-w-[170px] text-amber-500 font-medium">
+                        <div className="pt-1.5 border-t border-slate-200/40 dark:border-slate-800/60 flex items-center justify-between text-[10px]">
+                          <span className="opacity-75 truncate max-w-[150px] text-amber-500 font-medium">
                             📊 {topic.relatedChartTitleBn}
                           </span>
                           <button
                             onClick={() => openChart(topic.relatedChartKey)}
                             className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
                           >
-                            <span>চার্ট খুলুন</span>
-                            <ChevronRight className="w-3 h-3" />
+                            <span>চার্ট</span>
+                            <ChevronRight className="w-2.5 h-2.5" />
                           </button>
                         </div>
                       )}
@@ -1026,44 +1010,44 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       )}
 
       {/* =====================================================================
-          VIEW MODE 1: ATTRACTIVE GOTRO DIRECTORY (REPLACING THE OLD TEXT TOC)
+          VIEW MODE 1: ATTRACTIVE GOTRO DIRECTORY (COMPACT)
           ===================================================================== */}
       {viewMode === 'directory' && (
-        <div className="space-y-6">
-          {/* 3 Major Era/Chapter Showcase Cards (Like Seerah & Hayatus Sahaba) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="space-y-4">
+          {/* 3 Major Era/Chapter Showcase Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div
               onClick={() => {
                 if (soundEnabled) soundHaptics.playTap();
                 setChapterFilter(chapterFilter === 1 ? 'all' : 1);
               }}
-              className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 relative overflow-hidden ${
+              className={`p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2 relative overflow-hidden ${
                 chapterFilter === 1
-                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-md ring-2 ring-teal-500/20' : 'bg-emerald-600 text-white border-emerald-500 shadow-lg ring-2 ring-emerald-400/30'
-                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400 shadow-sm' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
+                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
               }`}
             >
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className={`font-bold px-2.5 py-0.5 rounded-lg ${
+                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
                     chapterFilter === 1 ? 'bg-white/20 text-white' : 'bg-amber-500/15 text-amber-500 font-black'
                   }`}>
                     বিষয় ০১
                   </span>
-                  <span className="text-xl">🏛️</span>
+                  <span className="text-base">🏛️</span>
                 </div>
-                <h3 className="text-base sm:text-lg font-black tracking-tight mt-1">
+                <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
                   মক্কার কুরাইশ গোত্রসমূহ
                 </h3>
-                <p className={`text-xs leading-relaxed line-clamp-2 ${chapterFilter === 1 ? 'text-white/80' : 'opacity-70'}`}>
+                <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 1 ? 'text-white/80' : 'opacity-70'}`}>
                   পবিত্র কাবার খেদমত, ১০টি প্রধান কুরাইশ দায়িত্ব বণ্টন ও অভিজাত বংশসমূহ
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold">
+              <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
                 <span>৮টি মূল শাখা</span>
                 <span className={chapterFilter === 1 ? 'text-amber-200' : 'text-emerald-500'}>
-                  {chapterFilter === 1 ? 'নির্বাচিত ✓' : 'ফিল্টার করুন →'}
+                  {chapterFilter === 1 ? 'নির্বাচিত ✓' : 'ফিল্টার →'}
                 </span>
               </div>
             </div>
@@ -1073,33 +1057,33 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 if (soundEnabled) soundHaptics.playTap();
                 setChapterFilter(chapterFilter === 2 ? 'all' : 2);
               }}
-              className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 relative overflow-hidden ${
+              className={`p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2 relative overflow-hidden ${
                 chapterFilter === 2
-                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-md ring-2 ring-teal-500/20' : 'bg-emerald-600 text-white border-emerald-500 shadow-lg ring-2 ring-emerald-400/30'
-                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400 shadow-sm' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
+                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
               }`}
             >
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className={`font-bold px-2.5 py-0.5 rounded-lg ${
+                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
                     chapterFilter === 2 ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-400 font-black'
                   }`}>
                     বিষয় ০২
                   </span>
-                  <span className="text-xl">🌴</span>
+                  <span className="text-base">🌴</span>
                 </div>
-                <h3 className="text-base sm:text-lg font-black tracking-tight mt-1">
+                <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
                   মদিনার আনসার ও অন্যান্য
                 </h3>
-                <p className={`text-xs leading-relaxed line-clamp-2 ${chapterFilter === 2 ? 'text-white/80' : 'opacity-70'}`}>
+                <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 2 ? 'text-white/80' : 'opacity-70'}`}>
                   ইয়েমেনের আজদ বংশ, খাযরাজ ও আওস ভ্রাতৃত্ব এবং মদিনার ইহুদি গোত্রসমূহ
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold">
+              <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
                 <span>আওস, খাযরাজ ও ইহুদি</span>
                 <span className={chapterFilter === 2 ? 'text-amber-200' : 'text-teal-400'}>
-                  {chapterFilter === 2 ? 'নির্বাচিত ✓' : 'ফিল্টার করুন →'}
+                  {chapterFilter === 2 ? 'নির্বাচিত ✓' : 'ফিল্টার →'}
                 </span>
               </div>
             </div>
@@ -1109,56 +1093,56 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 if (soundEnabled) soundHaptics.playTap();
                 setChapterFilter(chapterFilter === 3 ? 'all' : 3);
               }}
-              className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 relative overflow-hidden ${
+              className={`p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2 relative overflow-hidden ${
                 chapterFilter === 3
-                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-md ring-2 ring-teal-500/20' : 'bg-emerald-600 text-white border-emerald-500 shadow-lg ring-2 ring-emerald-400/30'
-                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400 shadow-sm' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
+                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
               }`}
             >
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className={`font-bold px-2.5 py-0.5 rounded-lg ${
+                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
                     chapterFilter === 3 ? 'bg-white/20 text-white' : 'bg-orange-500/15 text-orange-400 font-black'
                   }`}>
                     বিষয় ০৩
                   </span>
-                  <span className="text-xl">🧭</span>
+                  <span className="text-base">🧭</span>
                 </div>
-                <h3 className="text-base sm:text-lg font-black tracking-tight mt-1">
-                  আরবের অন্যান্য উল্লেখযোগ্য গোত্র
+                <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
+                  আরবের অন্যান্য গোত্র
                 </h3>
-                <p className={`text-xs leading-relaxed line-clamp-2 ${chapterFilter === 3 ? 'text-white/80' : 'opacity-70'}`}>
+                <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 3 ? 'text-white/80' : 'opacity-70'}`}>
                   তায়েফের সাকীফ, নজদের হাওয়াযিন, হুদাইবিয়ার খুযা'আ, গিফার ও তামিম
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold">
-                <span>১১টি অঞ্চলভিত্তিক গোত্র</span>
+              <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
+                <span>১১টি গোত্র</span>
                 <span className={chapterFilter === 3 ? 'text-amber-200' : 'text-orange-400'}>
-                  {chapterFilter === 3 ? 'নির্বাচিত ✓' : 'ফিল্টার করুন →'}
+                  {chapterFilter === 3 ? 'নির্বাচিত ✓' : 'ফিল্টার →'}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Quick Shortcuts to Visual Charts */}
-          <div className={`p-4 rounded-2xl border flex items-center justify-between gap-2 overflow-x-auto scrollbar-none ${
+          <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 overflow-x-auto scrollbar-none ${
             isDay ? 'bg-teal-50/70 border-teal-200' : 'bg-[#051e22] border-emerald-500/20'
           }`}>
-            <span className="text-xs font-bold text-amber-500 flex items-center gap-1.5 whitespace-nowrap">
-              <Sparkles className="w-4 h-4" />
-              <span>গুরুত্বপূর্ণ ভিজ্যুয়াল চার্টসমূহ:</span>
+            <span className="text-[11px] font-bold text-amber-500 flex items-center gap-1 whitespace-nowrap">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>গুরুত্বপূর্ণ চার্টসমূহ:</span>
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => {
                   setViewMode('charts_gallery');
                   setActiveChartTab('quraysh_roles');
                 }}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 whitespace-nowrap transition cursor-pointer"
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 whitespace-nowrap transition cursor-pointer"
               >
-                🏛️ কুরাইশ দায়িত্ব বণ্টন চার্ট
+                🏛️ কুরাইশ দায়িত্ব চার্ট
               </button>
 
               <button
@@ -1166,9 +1150,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   setViewMode('charts_gallery');
                   setActiveChartTab('hashim_tree');
                 }}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 whitespace-nowrap transition cursor-pointer"
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 whitespace-nowrap transition cursor-pointer"
               >
-                🌳 বনু হাশিম বংশলতিকা চিত্র
+                🌳 বনু হাশিম বংশলতিকা
               </button>
 
               <button
@@ -1176,9 +1160,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   setViewMode('charts_gallery');
                   setActiveChartTab('ansar_tree');
                 }}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30 hover:bg-teal-500/25 whitespace-nowrap transition cursor-pointer"
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30 hover:bg-teal-500/25 whitespace-nowrap transition cursor-pointer"
               >
-                🌿 আনসার গোত্র শাখা চিত্র
+                🌿 আনসার গোত্র শাখা
               </button>
 
               <button
@@ -1186,15 +1170,15 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   setViewMode('charts_gallery');
                   setActiveChartTab('statistics');
                 }}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/25 whitespace-nowrap transition cursor-pointer"
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/25 whitespace-nowrap transition cursor-pointer"
               >
-                📊 ব্যক্তিত্বের বার চার্ট
+                📊 ব্যক্তিত্ব বার চার্ট
               </button>
             </div>
           </div>
 
-          {/* Attractive Clan Cards Grid (Replacing boring text page numbers) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Compact Clan Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredClans.map((sec) => {
               const meta = CLAN_VISUAL_MAP[sec.id] || {
                 icon: '🛡️',
@@ -1215,43 +1199,43 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div
                   key={sec.id}
                   onClick={() => openClanInReader(sec.id)}
-                  className={`p-5 rounded-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 group hover:scale-[1.01] shadow-sm hover:shadow-md ${
+                  className={`p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 group hover:scale-[1.01] shadow-2xs hover:shadow-xs ${
                     isDay
                       ? `bg-gradient-to-br ${meta.gradientDay} ${meta.borderDay} hover:border-teal-500`
                       : `bg-gradient-to-br ${meta.gradientNight} ${meta.borderNight} hover:border-emerald-400`
                   }`}
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-white/20 dark:bg-black/30 backdrop-blur-sm border border-white/30 dark:border-white/10 shrink-0 shadow-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-white/20 dark:bg-black/30 backdrop-blur-sm border border-white/30 dark:border-white/10 shrink-0 shadow-2xs">
                           {meta.icon}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-base sm:text-lg font-black tracking-tight group-hover:text-amber-400 transition">
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="text-sm font-black tracking-tight group-hover:text-amber-400 transition">
                               {sec.tribeNameBn}
                             </h4>
                             {sec.tribeNameAr && (
-                              <span className="text-xs font-serif text-amber-500/80 font-bold hidden sm:inline">
+                              <span className="text-[10px] font-serif text-amber-500/80 font-bold hidden sm:inline">
                                 ({sec.tribeNameAr})
                               </span>
                             )}
                           </div>
-                          <span className="text-xs opacity-75 block mt-0.5">
+                          <span className="text-[10px] opacity-75 block mt-0.5">
                             {sec.locationOrContextBn}
                           </span>
                         </div>
                       </div>
 
-                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 shrink-0">
-                        {sec.personalities.length} জন ব্যক্তিত্ব
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 shrink-0">
+                        {sec.personalities.length} জন
                       </span>
                     </div>
 
                     {/* Role / Responsibility Badge */}
-                    <div className="p-2.5 rounded-xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 text-xs">
-                      <span className="font-bold text-amber-500 block mb-0.5">দায়িত্ব ও ঐতিহাসিক ভূমিকা:</span>
+                    <div className="p-2 rounded-lg bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 text-[11px]">
+                      <span className="font-bold text-amber-500 block mb-0.5">দায়িত্ব ও ভূমিকা:</span>
                       <p className="leading-relaxed opacity-90 line-clamp-2">
                         {sec.responsibilityOrRoleBn}
                       </p>
@@ -1260,20 +1244,20 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     {/* Prominent Personalities Preview */}
                     {prominentSahaba.length > 0 && (
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                           উল্লেখযোগ্য ব্যক্তিত্ব:
                         </span>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-1">
                           {prominentSahaba.map((name, nIdx) => (
                             <span
                               key={nIdx}
-                              className="text-[11px] font-medium px-2 py-0.5 rounded-lg bg-white/40 dark:bg-white/5 border border-black/5 dark:border-white/5"
+                              className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-white/40 dark:bg-white/5 border border-black/5 dark:border-white/5"
                             >
                               {name}
                             </span>
                           ))}
                           {sec.personalities.length > 3 && (
-                            <span className="text-[10px] font-bold opacity-60 self-center">
+                            <span className="text-[9px] font-bold opacity-60 self-center">
                               +{sec.personalities.length - 3} জন
                             </span>
                           )}
@@ -1282,13 +1266,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-dashed border-black/10 dark:border-white/10 flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                    <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                      <span>সম্পূর্ণ সীরাত ও জীবনী পড়ুন</span>
-                      <ChevronRight className="w-4 h-4" />
+                  <div className="pt-2 border-t border-dashed border-black/10 dark:border-white/10 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="flex items-center gap-1 group-hover:translate-x-0.5 transition">
+                      <span>সীরাত বিবরণী পড়ুন</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </span>
-                    <span className="text-[10px] opacity-70">
-                      {sec.subClans ? `${sec.subClans.length}টি উপশাখা` : 'মূল বংশধারা'}
+                    <span className="text-[9px] opacity-70">
+                      {sec.subClans ? `${sec.subClans.length} উপশাখা` : 'মূল বংশ'}
                     </span>
                   </div>
                 </div>
@@ -1333,66 +1317,66 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           </div>
 
           {/* Active Clan Hero Showcase */}
-          <div className={`p-6 sm:p-8 rounded-3xl border shadow-lg space-y-6 ${
+          <div className={`p-4 sm:p-5 rounded-2xl border shadow-md space-y-4 ${
             isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
           }`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-3xl flex items-center justify-center text-3xl bg-amber-500/15 border border-amber-500/30 shadow-md shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl bg-amber-500/15 border border-amber-500/30 shadow-xs shrink-0">
                   {CLAN_VISUAL_MAP[activeClan.id]?.icon || '🛡️'}
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-400">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400">
                       {activeClan.sectionCode}
                     </span>
-                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight">{activeClan.tribeNameBn}</h2>
+                    <h2 className="text-lg sm:text-xl font-black tracking-tight">{activeClan.tribeNameBn}</h2>
                     {activeClan.tribeNameAr && (
-                      <span className="text-sm font-serif text-amber-500 font-bold">
+                      <span className="text-xs font-serif text-amber-500 font-bold">
                         ({activeClan.tribeNameAr})
                       </span>
                     )}
                   </div>
-                  <p className="text-xs sm:text-sm text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5" />
+                  <p className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                    <MapPin className="w-3 h-3" />
                     <span>{activeClan.locationOrContextBn}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 self-end sm:self-center">
+              <div className="flex items-center gap-1.5 self-end sm:self-center">
                 <button
                   disabled={!hasPrevClan}
                   onClick={handlePrevClan}
-                  className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition ${
                     hasPrevClan ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : 'opacity-40 cursor-not-allowed'
                   }`}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">পূর্ববর্তী গোত্র</span>
                 </button>
                 <button
                   disabled={!hasNextClan}
                   onClick={handleNextClan}
-                  className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition ${
                     hasNextClan ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : 'opacity-40 cursor-not-allowed'
                   }`}
                 >
                   <span className="hidden sm:inline">পরবর্তী গোত্র</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
             {/* Responsibility / Role Card */}
-            <div className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 ${
+            <div className={`p-3 rounded-xl border space-y-1 ${
               isDay ? 'bg-amber-50/80 border-amber-300' : 'bg-[#051e22] border-amber-500/30'
             }`}>
-              <div className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                <Crown className="w-4 h-4" />
+              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <Crown className="w-3.5 h-3.5" />
                 <span>মক্কার ঐতিহাসিক দায়িত্ব ও মর্যাদা</span>
               </div>
-              <p className="text-sm sm:text-base font-bold leading-relaxed">
+              <p className="text-xs sm:text-sm font-bold leading-relaxed">
                 {activeClan.responsibilityOrRoleBn}
               </p>
             </div>
