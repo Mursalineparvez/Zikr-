@@ -2138,49 +2138,132 @@ export const QuranView: React.FC<QuranViewProps> = ({
           {/* ======================================================== */}
           {surahDetail && !isLoadingSurah && (
             <div className="space-y-4">
-              {/* Special Nurani Hafezi Quran Banner */}
-              {isNuraniMode && (
-                <div
-                  className={`p-4 rounded-[22px] border-2 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
-                    isDay
-                      ? 'bg-gradient-to-r from-amber-500/15 via-amber-100/70 to-emerald-50/80 border-amber-500/60 text-amber-950'
-                      : 'bg-gradient-to-r from-[#1b1509] via-[#241c0e] to-[#0c1f1c] border-amber-500/50 text-amber-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-amber-500/25 text-amber-500 flex items-center justify-center font-black text-xl border border-amber-500/40 shadow-xs shrink-0">
-                      📖
+              {isNuraniMode ? (
+                /* ========================================================================= */
+                /* TRADITIONAL 15-LINE NURANI HAFEZI MUSHAF PAGE VIEW (MATCHING ATTACHED SCREENSHOT) */
+                /* ========================================================================= */
+                <div className="space-y-4 animate-in fade-in duration-300">
+                  {/* 1. Header Ribbon Bar matching attached screenshot */}
+                  <div className="bg-[#005a3e] text-white p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-2 shadow-xl border border-emerald-600/40">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          stopAudio();
+                          setSelectedSurahNumber(null);
+                          setSurahDetail(null);
+                        }}
+                        className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer"
+                        title="ফিরে যান"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-white stroke-[2.5]" />
+                      </button>
+
+                      <span className="px-3 py-1 rounded-xl bg-emerald-700/80 text-emerald-100 text-xs font-black border border-emerald-500/40 shadow-xs">
+                        JUZ {surahDetail.startJuz || 1}
+                      </span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/30">
-                          ঐতিহ্যবাহী কোলকাতা ও ইন্দো-পাক নূরানী তিলাওয়াত পাঠ
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-black text-amber-800 dark:text-amber-300 mt-0.5">
-                        {selectedLanguage === 'bn'
-                          ? 'নূরানী হাফেজি কুরআন মোড সক্রিয় রয়েছে'
-                          : 'Nurani Hafezi Quran Mode Active'}
-                      </h4>
-                      <p className="text-[11px] opacity-85 leading-tight">
-                        {selectedLanguage === 'bn'
-                          ? 'পরিষ্কার হরকত, সুস্পষ্ট তাজবীদ সংকেত ও হাফেজি পাঠের ঐতিহ্যবাহী ফ্রেম সহ তিলাওয়াত করুন।'
-                          : 'Classical IndoPak Tajweed Quran layout for effortless reading and memorization.'}
-                      </p>
+
+                    <div className="flex items-center gap-2">
+                      <span className="px-3.5 py-1 rounded-xl bg-emerald-800/90 text-amber-300 text-xs font-black border border-amber-400/30 tracking-wide shadow-xs">
+                        {surahDetail.number} {surahDetail.englishName.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setIsNuraniMode(false);
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-amber-400 text-black font-extrabold text-xs shadow-md hover:bg-amber-300 transition active:scale-95 cursor-pointer"
+                      >
+                        সাধারণ মোড ✕
+                      </button>
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setIsNuraniMode(false);
-                      if (soundEnabled) soundHaptics.playTap();
-                    }}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-500/40 transition active:scale-95 cursor-pointer whitespace-nowrap self-end sm:self-center"
-                  >
-                    সাধারণ মোড (Normal Mode) ✕
-                  </button>
+                  {/* 2. Authentic 15-Line Nurani Mushaf Page Card */}
+                  <div className="bg-[#fcfbfa] dark:bg-[#071518] text-slate-900 dark:text-emerald-100 border-2 border-emerald-800/40 dark:border-emerald-600/40 shadow-2xl rounded-[28px] p-4 sm:p-7 space-y-4 relative overflow-hidden">
+                    {/* Decorative Ornate Bismillah Box (Matching screenshot top header) */}
+                    {surahDetail.number !== 1 && surahDetail.number !== 9 && (
+                      <div className="text-center py-2.5 px-6 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 max-w-lg mx-auto shadow-xs">
+                        <div className="font-arabic font-bold text-2xl sm:text-3xl md:text-4xl text-amber-950 dark:text-amber-200 tracking-wide">
+                          بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Flowing Continuous 15-Line Nurani Quran Mushaf Lines with Ruled Line Dividers */}
+                    <div
+                      dir="rtl"
+                      className="font-arabic font-indopak text-2xl sm:text-3xl md:text-[36px] font-bold tracking-wide text-right leading-[2.6] select-text pt-2 space-y-0"
+                    >
+                      {displayedAyahs.map((ayah) => {
+                        const isThisAyahPlaying = isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === ayah.number;
+                        const bookmarked = isAyahBookmarked(surahDetail.number, ayah.number);
+
+                        return (
+                          <span
+                            key={ayah.number}
+                            onClick={() => handleOpenTafsir(ayah)}
+                            className={`inline rounded-xl px-1.5 py-0.5 transition cursor-pointer hover:bg-amber-500/20 ${
+                              isThisAyahPlaying
+                                ? 'bg-amber-400/40 text-amber-950 dark:text-amber-100 ring-2 ring-amber-400 font-black'
+                                : bookmarked
+                                ? 'bg-amber-200/50 dark:bg-amber-950/40'
+                                : ''
+                            }`}
+                            title={`আয়াত ${ayah.number} - তাফসীর, অনুবাদ ও তিলাওয়াতের জন্য ক্লিক করুন`}
+                          >
+                            {/* Ayah Words */}
+                            <span className="inline">
+                              {ayah.words && ayah.words.length > 0
+                                ? ayah.words.map((w, wIdx) => {
+                                    const isWordActive =
+                                      isThisAyahPlaying && audioProgress > 0 && Math.floor((audioProgress / 100) * ayah.words!.length) === wIdx;
+                                    return (
+                                      <span
+                                        key={wIdx}
+                                        className={`inline-block mx-1 transition ${
+                                          isWordActive ? 'text-emerald-600 dark:text-emerald-300 font-black scale-105 drop-shadow-sm' : ''
+                                        }`}
+                                      >
+                                        {w.arabic}
+                                      </span>
+                                    );
+                                  })
+                                : ayah.arabic}
+                            </span>
+
+                            {/* Ornate End Ayah Number Badge (Matching screenshot ① ② ③ ...) */}
+                            <span className="inline-flex items-center justify-center mx-2 text-amber-700 dark:text-amber-400 font-mono font-black align-middle select-none">
+                              <span className="w-8 h-8 rounded-full border-2 border-slate-400 dark:border-amber-500/60 bg-amber-50 dark:bg-black/40 text-slate-900 dark:text-amber-300 text-xs sm:text-sm font-bold font-sans flex items-center justify-center shadow-xs">
+                                {ayah.number}
+                              </span>
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
+
+                    {/* Bottom Mushaf Page Footer Strip */}
+                    <div className="pt-4 border-t-2 border-slate-300/80 dark:border-emerald-800/40 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-600 dark:text-teal-300">
+                      <div className="flex items-center gap-2">
+                        <span>সূরা {surahDetail.englishName} ({surahDetail.name})</span>
+                        <span>•</span>
+                        <span>{surahDetail.numberOfAyahs} টি আয়াত</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-black">
+                          📖 নূরানী ১৫ লাইন হাফেজি পাঠ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
+              ) : (
+                /* STANDARD CARD-BY-CARD VIEW */
+                <>
 
               {/* Tajweed Color & Sign Legend Bar (Matching Physical Quran Color & Sign Coding) */}
               {tajweedColorMode && (
@@ -2782,6 +2865,8 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -2815,8 +2900,27 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 </p>
               </div>
 
-              {/* Stats Chips */}
+              {/* Stats Chips & Nurani Mode Button */}
               <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                <button
+                  onClick={() => {
+                    setIsNuraniMode(!isNuraniMode);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm ${
+                    isNuraniMode
+                      ? 'bg-amber-400 text-black border-amber-300 shadow-md ring-2 ring-amber-400/40'
+                      : 'bg-amber-500/25 hover:bg-amber-500/40 border-amber-400/50 text-amber-300'
+                  }`}
+                >
+                  <span>📖</span>
+                  <span>
+                    {selectedLanguage === 'bn'
+                      ? (isNuraniMode ? 'নূরানী কুরআন মোড (চালু)' : 'নূরানী হাফেজি কুরআন মোড')
+                      : (isNuraniMode ? 'Nurani Mode (ON)' : 'Nurani Hafezi Mode')}
+                  </span>
+                </button>
+
                 <span className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 text-white font-medium">
                   114 All Surahs (114)
                 </span>
@@ -2866,6 +2970,65 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Prominent Dedicated Nurani Quran Mode Banner Card */}
+          <div
+            className={`p-4 sm:p-5 rounded-[24px] border-2 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 transition-all ${
+              isNuraniMode
+                ? isDay
+                  ? 'bg-gradient-to-r from-amber-500/20 via-amber-100/80 to-emerald-50 border-amber-500/80 text-amber-950 shadow-amber-500/10'
+                  : 'bg-gradient-to-r from-[#221809] via-[#2a1e0b] to-[#0c1f1c] border-amber-500/70 text-amber-200 shadow-black/60'
+                : isDay
+                ? 'bg-amber-50/90 border-amber-300 text-amber-950 hover:border-amber-400'
+                : 'bg-[#141007] border-amber-500/40 text-amber-200 hover:border-amber-500/60'
+            }`}
+          >
+            <div className="flex items-center gap-3.5">
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border shadow-sm shrink-0 ${
+                  isNuraniMode
+                    ? 'bg-amber-400 text-black border-amber-300'
+                    : 'bg-amber-500/25 text-amber-500 border-amber-500/40'
+                }`}
+              >
+                📖
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    ঐতিহ্যবাহী কোলকাতা ও ইন্দো-পাক নূরানী তিলাওয়াত
+                  </span>
+                  {isNuraniMode && (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500 text-white animate-pulse">
+                      মোড চালু রয়েছে ✓
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-sm sm:text-base font-black text-amber-900 dark:text-amber-300 mt-0.5">
+                  {selectedLanguage === 'bn' ? 'নূরানী হাফেজি কুরআন পঠন মোড' : 'Nurani Hafezi Quran Reading Mode'}
+                </h3>
+                <p className="text-xs opacity-90 leading-relaxed max-w-xl">
+                  {selectedLanguage === 'bn'
+                    ? 'সহজ ও স্পষ্ট হরকতে সাবলীল তিলাওয়াতের জন্য নূরানী হাফেজি কুরআন মোড চালু করুন।'
+                    : 'Toggle traditional IndoPak Hafezi Quran script and clear diacritics.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setIsNuraniMode(!isNuraniMode);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all active:scale-95 cursor-pointer whitespace-nowrap shadow-md flex items-center gap-1.5 self-end sm:self-center shrink-0 ${
+                isNuraniMode
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500'
+                  : 'bg-amber-500 hover:bg-amber-600 text-black border border-amber-400'
+              }`}
+            >
+              <span>{isNuraniMode ? '✓ নূরানী মোড বন্ধ করুন' : '📖 নূরানী মোড চালু করুন'}</span>
+            </button>
           </div>
 
           {/* Search Bar */}
