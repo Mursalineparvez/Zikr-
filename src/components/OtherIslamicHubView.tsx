@@ -450,53 +450,97 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             </p>
           </div>
 
-          {/* Feature Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {hubItems.map((item) => (
-              <div
-                key={item.id}
-                onPointerEnter={() => prefetchView(item.id)}
-                onTouchStart={() => prefetchView(item.id)}
-                onClick={() => {
-                  if ((item as any).action) {
-                    (item as any).action();
-                  } else {
-                    handleSelectSub(item.id);
-                  }
-                }}
-                className={`p-5 rounded-3xl border shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between gap-4 ${
-                  isDay
-                    ? 'bg-white border-slate-200 hover:border-emerald-400 hover:shadow-xl'
-                    : 'bg-[#0a242a] border-[#16444e] hover:border-teal-500/50 hover:shadow-teal-950/50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className={`p-3 rounded-2xl bg-gradient-to-br border ${item.color}`}>
+          {/* Feature Cards Grid matching user uploaded reference image */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5">
+            {hubItems.map((item) => {
+              const actionText =
+                item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'tablig'
+                  ? selectedLanguage === 'bn' ? 'পড়ুন >' : 'Read >'
+                  : item.id === 'namaj'
+                  ? selectedLanguage === 'bn' ? 'সময় দেখুন >' : 'View >'
+                  : item.id === 'settings'
+                  ? selectedLanguage === 'bn' ? 'সেট করুন >' : 'Set >'
+                  : selectedLanguage === 'bn' ? 'দেখুন >' : 'View >';
+
+              const subText =
+                item.id === 'seerat_un_nabi'
+                  ? selectedLanguage === 'bn' ? '১ থেকে ৬৩ বছর' : 'Ages 1 to 63'
+                  : item.id === 'hayatus_sahaba'
+                  ? selectedLanguage === 'bn' ? 'সাহাবি জীবনী' : 'Sahaba Stories'
+                  : item.id === 'arober_gotro'
+                  ? selectedLanguage === 'bn' ? 'আরবের গোত্র' : 'Arab Clans'
+                  : item.id === 'islamic_history_wars'
+                  ? selectedLanguage === 'bn' ? 'ঐতিহাসিক যুদ্ধ' : 'Battles'
+                  : item.id === 'history_timeline'
+                  ? selectedLanguage === 'bn' ? 'ইতিহাসের মানচিত্র' : 'History Map'
+                  : item.id === 'arabian_map'
+                  ? selectedLanguage === 'bn' ? 'সচিত্র মানচিত্র' : 'Pictorial Map'
+                  : item.id === 'dua'
+                  ? selectedLanguage === 'bn' ? 'সহিহ দোয়াসমূহ' : 'Authentic Duas'
+                  : item.id === 'namaj'
+                  ? selectedLanguage === 'bn' ? 'নামাজের সময়' : 'Prayer Rules'
+                  : item.id === 'hajj_checklist'
+                  ? selectedLanguage === 'bn' ? 'হজ ও ওমরাহ' : 'Hajj & Umrah'
+                  : item.id === 'tablig'
+                  ? selectedLanguage === 'bn' ? 'দাওয়াত ও আমল' : 'Dawah & Amal'
+                  : item.id === 'allah_names'
+                  ? selectedLanguage === 'bn' ? '৯৯টি নাম ও জিকির' : '99 Names'
+                  : selectedLanguage === 'bn' ? 'অ্যাপ সেটিংস' : 'App Settings';
+
+              return (
+                <div
+                  key={item.id}
+                  onPointerEnter={() => prefetchView(item.id)}
+                  onTouchStart={() => prefetchView(item.id)}
+                  onClick={() => {
+                    if ((item as any).action) {
+                      (item as any).action();
+                    } else {
+                      handleSelectSub(item.id);
+                    }
+                  }}
+                  className={`p-4 sm:p-5 rounded-[26px] border shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col items-center justify-between text-center min-h-[175px] cursor-pointer group ${
+                    isDay
+                      ? 'bg-white border-slate-200/90 hover:border-emerald-400'
+                      : 'bg-[#0a2026] border-[#143b44] hover:border-emerald-500/50'
+                  }`}
+                >
+                  {/* Centered Top Icon */}
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-1.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                      isDay ? 'bg-[#f0f7f4] text-[#005a3e]' : 'bg-[#123138] text-emerald-300'
+                    }`}
+                  >
                     {item.icon}
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 text-[10px] font-bold">
-                    {item.badge}
-                  </span>
-                </div>
 
-                <div>
-                  <div className="font-arabic text-xs text-amber-600 dark:text-amber-400 font-bold mb-1">
-                    {item.arabic}
+                  {/* Title & Subtitle */}
+                  <div className="space-y-0.5 my-auto">
+                    <h3
+                      className={`text-sm sm:text-base font-black transition-colors ${
+                        isDay ? 'text-slate-900 group-hover:text-[#005a3e]' : 'text-white group-hover:text-emerald-400'
+                      }`}
+                    >
+                      {item.title}
+                    </h3>
+                    <p className={`text-[11px] font-medium ${isDay ? 'text-slate-400' : 'text-slate-400'}`}>
+                      {subText}
+                    </p>
                   </div>
-                  <h3 className={`text-base font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    {item.title}
-                  </h3>
-                  <p className={`text-xs mt-1 leading-relaxed ${isDay ? 'text-slate-500' : 'text-emerald-200/80'}`}>
-                    {item.desc}
-                  </p>
-                </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-teal-900/30 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  <span>{OTHER_HUB_UI.openCard[selectedLanguage]}</span>
-                  <ChevronRight className="w-4 h-4" />
+                  {/* Bottom Action Pill Button */}
+                  <div
+                    className={`mt-2.5 px-4 py-1.5 rounded-full border text-xs font-bold flex items-center justify-center gap-1 shadow-2xs transition-all ${
+                      isDay
+                        ? 'border-slate-200 bg-white group-hover:bg-[#edf7f4] text-[#005a3e]'
+                        : 'border-[#1c4750] bg-[#07171c] group-hover:bg-[#102d35] text-emerald-400'
+                    }`}
+                  >
+                    <span>{actionText}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
