@@ -37,14 +37,19 @@ export interface SahabaFamily {
   tribeOrClanEn?: string;
   wivesBn?: string[];
   wivesEn?: string[];
+  husbandsBn?: string[];
+  husbandBn?: string;
   sonsBn?: string[];
   sonsEn?: string[];
   daughtersBn?: string[];
   daughtersEn?: string[];
+  brotherBn?: string;
+  sisterBn?: string;
   keyRelativesBn?: string[];
   keyRelativesEn?: string[];
   overviewBn?: string;
   overviewEn?: string;
+  [key: string]: any;
 }
 
 export interface SahabaItem {
@@ -177,6 +182,7 @@ export const SAHABA_CATEGORIES: CategoryMeta[] = [
 ];
 
 import { SAHABA_DATABASE_PART2 } from './sahabaDataPart2';
+import { SAHABA_DATABASE_PART3 } from './sahabaDataPart3';
 
 const SAHABA_DATABASE_PART1: SahabaItem[] = [
   {
@@ -2915,4 +2921,5 @@ const SAHABA_DATABASE_PART1: SahabaItem[] = [
 export const SAHABA_DATABASE: SahabaItem[] = [
   ...SAHABA_DATABASE_PART1,
   ...SAHABA_DATABASE_PART2,
+  ...SAHABA_DATABASE_PART3,
 ];

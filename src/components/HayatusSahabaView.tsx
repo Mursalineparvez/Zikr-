@@ -64,16 +64,19 @@ interface HayatusSahabaViewProps {
 
 function getSahabaName(item: SahabaItem, lang: ZikrLanguage): string {
   if (lang === 'bn') return item.nameBn;
+  if (item.nameEn) return item.nameEn;
   return getEnglishSahabaName(item.id, item.nameBn);
 }
 
 function getSahabaTitle(item: SahabaItem, lang: ZikrLanguage): string {
   if (lang === 'bn') return item.titleBn;
+  if (item.titleEn) return item.titleEn;
   return getEnglishSahabaTitle(item.id, item.titleBn);
 }
 
 function getSahabaSummary(item: SahabaItem, lang: ZikrLanguage): string {
   if (lang === 'bn') return item.summaryBn;
+  if (item.summaryEn) return item.summaryEn;
   return getEnglishSahabaSummary(item.id, item.summaryBn);
 }
 
