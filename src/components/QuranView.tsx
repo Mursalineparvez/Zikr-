@@ -861,7 +861,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
   // Continuous Ultra-Smooth Auto-scroll Engine for Reading Pace when Audio is not active
   useEffect(() => {
-    if (!autoScroll || selectedSurahNumber === null || isPlaying || !surahDetail) {
+    if (!autoScroll || selectedSurahNumber === null || isPlaying) {
       return;
     }
 
@@ -870,84 +870,52 @@ export const QuranView: React.FC<QuranViewProps> = ({
     let isUserInteracting = false;
     let interactionTimeout: ReturnType<typeof setTimeout>;
 
-    // Target sub-pixel scroll position tracker for 100% hardware-accelerated smooth gliding
-    let targetY = window.scrollY;
+    // Calibrated baseline pixel gliding speeds per second for 60fps smooth scrolling
+    // slow = 28 px/s (relaxed reading), normal = 65 px/s (standard reading), fast = 135 px/s (quick scanning)
+    const speedPxPerSec = autoScrollSpeed === 'slow' ? 28 : autoScrollSpeed === 'fast' ? 135 : 65;
 
-    // Temporarily pause auto-scroll if user manually drags or touches the screen
+    // Sub-pixel scroll accumulator tracker
+    let accumulatedY = window.scrollY;
+
     const handleUserInteraction = () => {
       isUserInteracting = true;
-      targetY = window.scrollY;
+      accumulatedY = window.scrollY;
       clearTimeout(interactionTimeout);
       interactionTimeout = setTimeout(() => {
         isUserInteracting = false;
-        targetY = window.scrollY;
-      }, 1800); // Resume auto-scrolling 1.8s after user stops touching/scrolling
+        accumulatedY = window.scrollY;
+      }, 1200); // Gracefully resume auto-scroll 1.2s after user stops dragging/touching
     };
 
     window.addEventListener('wheel', handleUserInteraction, { passive: true });
     window.addEventListener('touchstart', handleUserInteraction, { passive: true });
     window.addEventListener('touchmove', handleUserInteraction, { passive: true });
-
-    // Seconds required per Arabic word based on speed setting (slower pace for relaxed reading)
-    const secPerWord = autoScrollSpeed === 'slow' ? 4.0 : autoScrollSpeed === 'fast' ? 1.2 : 2.5;
-
-    let currentSpeed = 12; // base px/s
-    let lastSpeedCheckTime = 0;
-
-    // Throttle DOM measuring to once every 600ms to completely prevent 60fps layout thrashing & jitter
-    const updateVerseSpeed = (now: number) => {
-      if (now - lastSpeedCheckTime < 600) return;
-      lastSpeedCheckTime = now;
-
-      if (!surahDetail || !surahDetail.ayahs || surahDetail.ayahs.length === 0) return;
-
-      const viewportCenter = window.scrollY + window.innerHeight * 0.35;
-      let activeAyah = surahDetail.ayahs[0];
-
-      for (const ayah of surahDetail.ayahs) {
-        const el = ayahRefs.current.get(ayah.number);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          const topInDoc = rect.top + window.scrollY;
-          const bottomInDoc = rect.bottom + window.scrollY;
-          if (viewportCenter >= topInDoc && viewportCenter <= bottomInDoc) {
-            activeAyah = ayah;
-            break;
-          }
-        }
+    window.addEventListener('scroll', () => {
+      if (Math.abs(window.scrollY - accumulatedY) > 20) {
+        accumulatedY = window.scrollY;
       }
-
-      const el = ayahRefs.current.get(activeAyah.number);
-      const height = el ? Math.max(100, el.offsetHeight) : 140;
-      const wordCount = activeAyah.words?.length || activeAyah.arabic.split(' ').filter(Boolean).length || 8;
-      const totalTimeSec = Math.max(2, wordCount * secPerWord);
-
-      currentSpeed = Math.min(35, Math.max(4, height / totalTimeSec));
-    };
+    }, { passive: true });
 
     const scrollStep = (now: number) => {
       const delta = (now - lastTime) / 1000;
       lastTime = now;
 
       if (!isUserInteracting && delta > 0 && delta < 0.2) {
-        updateVerseSpeed(now);
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
 
-        // Keep targetY in sync if user manually scrolled away
-        if (Math.abs(targetY - window.scrollY) > 25) {
-          targetY = window.scrollY;
+        if (window.scrollY >= maxScroll - 2) {
+          setAutoScroll(false);
+          return;
         }
 
-        targetY += currentSpeed * delta;
-        const maxScrollTop = document.documentElement.scrollHeight - window.innerHeight;
-
-        if (targetY < maxScrollTop - 5) {
-          window.scrollTo(0, targetY);
-        } else {
-          targetY = maxScrollTop;
-          window.scrollTo(0, targetY);
+        accumulatedY += speedPxPerSec * delta;
+        if (accumulatedY > maxScroll) {
+          accumulatedY = maxScroll;
         }
+
+        window.scrollTo(0, accumulatedY);
       } else {
-        targetY = window.scrollY;
+        accumulatedY = window.scrollY;
       }
 
       animFrameId = requestAnimationFrame(scrollStep);
@@ -962,7 +930,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       window.removeEventListener('touchstart', handleUserInteraction);
       window.removeEventListener('touchmove', handleUserInteraction);
     };
-  }, [autoScroll, autoScrollSpeed, selectedSurahNumber, isPlaying, surahDetail]);
+  }, [autoScroll, autoScrollSpeed, selectedSurahNumber, isPlaying]);
 
   // Handle clicking on any word in word-by-word mode to pronounce ONLY that single word
   const handleWordClick = (ayah: QuranAyah, wordIndex: number) => {
@@ -1773,12 +1741,18 @@ export const QuranView: React.FC<QuranViewProps> = ({
               {autoScroll && (
                 <button
                   onClick={() => {
-                    const next = autoScrollSpeed === 'normal' ? 'slow' : autoScrollSpeed === 'slow' ? 'fast' : 'normal';
+                    const next = autoScrollSpeed === 'normal' ? 'fast' : autoScrollSpeed === 'fast' ? 'slow' : 'normal';
                     setAutoScrollSpeed(next);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className="mt-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-[#10b981] text-[9px] font-extrabold transition active:scale-95 cursor-pointer border border-emerald-500/30"
-                  title={selectedLanguage === 'bn' ? 'গতি পরিবর্তন করুন' : 'Change Speed'}
+                  className={`mt-0.5 px-2 py-0.5 rounded-full text-[9.5px] font-extrabold transition active:scale-95 cursor-pointer border shadow-2xs flex items-center gap-1 ${
+                    autoScrollSpeed === 'slow'
+                      ? 'bg-sky-500/15 border-sky-400/40 text-sky-600 dark:text-sky-300 hover:bg-sky-500/25'
+                      : autoScrollSpeed === 'fast'
+                      ? 'bg-amber-500/15 border-amber-400/40 text-amber-600 dark:text-amber-300 hover:bg-amber-500/25'
+                      : 'bg-emerald-500/15 border-emerald-400/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25'
+                  }`}
+                  title={selectedLanguage === 'bn' ? 'গতি পরিবর্তন করুন (ধীর / স্বাভাবিক / দ্রুত)' : 'Change Speed (Slow / Normal / Fast)'}
                 >
                   {autoScrollSpeed === 'slow'
                     ? (selectedLanguage === 'bn' ? '🐢 ধীর' : 'Slow')
