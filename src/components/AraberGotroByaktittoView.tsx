@@ -859,7 +859,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 </span>
                 <div>
                   <h3 className="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400">
-                    বইয়ের মূল সূচিপত্র (Table of Contents)
+                    সূচিপত্র (Table of Contents)
                   </h3>
                   <p className="text-[10px] text-slate-500 dark:text-teal-300">
                     যেকোনো গোত্র বা চার্টে স্পর্শ করে সরাসরি সম্পূর্ণ অধ্যায় পড়ুন

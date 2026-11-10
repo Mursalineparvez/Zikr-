@@ -695,7 +695,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               onClick={() => handleSelectWar(null)}
               className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
             >
-              {isBn ? 'বইয়ের মূল সূচিপত্র' : 'Table of Contents'}
+              {isBn ? 'সূচিপত্র' : 'Table of Contents'}
             </button>
 
             <button
@@ -793,7 +793,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             className="px-3.5 py-1.5 rounded-xl bg-amber-500/30 hover:bg-amber-500/40 text-amber-200 border border-amber-400/40 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition shadow-sm active:scale-95"
           >
             <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-            <span>{showTocIndex ? (isBn ? 'সূচিপত্র লুকান' : 'Hide TOC') : (isBn ? 'বইয়ের মূল সূচিপত্র' : 'Table of Contents')}</span>
+            <span>{showTocIndex ? (isBn ? 'সূচিপত্র লুকান' : 'Hide TOC') : (isBn ? 'সূচিপত্র' : 'Table of Contents')}</span>
           </button>
         </div>
 
@@ -824,7 +824,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               </span>
               <div>
                 <h3 className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-400 leading-tight">
-                  {isBn ? 'বইয়ের মূল সূচিপত্র (Table of Contents)' : 'Master Table of Contents (Chronological)'}
+                  {isBn ? 'সূচিপত্র (Table of Contents)' : 'Master Table of Contents (Chronological)'}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   {isBn ? 'যেকোনো যুদ্ধে স্পর্শ করে সম্পূর্ণ অধ্যায় পড়ুন' : 'Tap any battle to read the full chapter & strategic account'}

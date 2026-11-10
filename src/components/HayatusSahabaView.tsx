@@ -1468,7 +1468,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">📖</span>
             <div>
               <h3 className="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400">
-                {isBn ? 'বইয়ের মূল সূচিপত্র (Table of Contents)' : 'Book Table of Contents (TOC)'}
+                {isBn ? 'সূচিপত্র (Table of Contents)' : 'Table of Contents (TOC)'}
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-teal-300">
                 {isBn ? 'যেকোনো সাহাবি স্পর্শ করে সম্পূর্ণ অধ্যায় পড়ুন' : 'Tap any companion to read full chapter'}

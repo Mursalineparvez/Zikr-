@@ -220,8 +220,8 @@ export const SEERAT_UI: Record<string, Record<string, string>> = {
     sw: 'Mwongozo sahihi wa kihistoria kwa kila mwaka wa maisha ya Mtume (miaka 1 hadi 63) na marejeo ya Qurani na Hadithi.',
   },
   tocTitle: {
-    bn: 'বইয়ের মূল সূচিপত্র (Table of Contents)',
-    en: 'Book Table of Contents (TOC)',
+    bn: 'সূচিপত্র (Table of Contents)',
+    en: 'Table of Contents (TOC)',
     ar: 'فهرس فصول السيرة الشريفة',
     ur: 'کتاب کی اصل فہرست مضامین (সূচিপত্র)',
     hi: 'किताब की मूल अनुक्रमणिका (TOC)',
