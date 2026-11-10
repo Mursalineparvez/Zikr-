@@ -180,6 +180,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     return 'glow';
   });
   const [showAnimationModal, setShowAnimationModal] = useState<boolean>(false);
+  const [showOthersModal, setShowOthersModal] = useState<boolean>(false);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -1676,33 +1677,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 : 'bg-[#0e1c26] border-[#1a3342] text-slate-200'
             }`}
           >
-            {/* 1. Tafsir Button */}
-            <button
-              onClick={() => {
-                const firstAyah = displayedAyahs[0] || surahDetail?.ayahs[0];
-                if (firstAyah) handleOpenTafsir(firstAyah);
-              }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
-                isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDay ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/15 text-amber-400'}`}>
-                <BookOpen className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] font-bold">Tafsir</span>
-            </button>
-
-            {/* 1.5 Nurani Quran Mode Toggle */}
+            {/* 1. Nurani Quran Mode Toggle */}
             <button
               onClick={() => {
                 setIsNuraniMode(!isNuraniMode);
                 if (soundEnabled) soundHaptics.playTap();
               }}
               title={selectedLanguage === 'bn' ? 'নূরানী হাফেজি কুরআন পঠন মোড অন/অফ করুন' : 'Toggle Nurani Hafezi Quran Mode'}
-              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[68px] ${
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
                 isNuraniMode
                   ? isDay ? 'text-amber-800 font-extrabold' : 'text-amber-300 font-extrabold'
-                  : isDay ? 'hover:bg-amber-50 text-amber-900' : 'hover:bg-[#1a170e] text-amber-400/80'
+                  : isDay ? 'hover:bg-amber-50 text-amber-900/80' : 'hover:bg-[#1a170e] text-amber-400/80'
               }`}
             >
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center relative ${
@@ -1733,58 +1718,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <Book className="w-4 h-4" />
               </div>
               <span className="text-[10px] font-bold whitespace-nowrap">
-                {wordByWordMode ? 'Without word' : 'Word by word'}
+                {wordByWordMode ? (selectedLanguage === 'bn' ? 'শব্দে শব্দে' : 'Word by word') : (selectedLanguage === 'bn' ? 'শব্দ ছাড়া' : 'Without word')}
               </span>
             </button>
-
-            {/* 2.2 Color-Coded Tajweed & Pronunciation Toggle */}
-            <button
-              onClick={() => {
-                setTajweedColorMode(!tajweedColorMode);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              title={selectedLanguage === 'bn' ? 'কালার কোডেড তাজবীদ ও উচ্চরণ চালু/বন্ধ করুন' : 'Toggle Color-Coded Tajweed & Pronunciation'}
-              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
-                tajweedColorMode
-                  ? isDay ? 'text-rose-700 font-extrabold' : 'text-rose-400 font-extrabold'
-                  : 'text-slate-400'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center relative ${
-                tajweedColorMode
-                  ? isDay ? 'bg-gradient-to-br from-rose-100 via-cyan-100 to-amber-100 text-rose-600 ring-2 ring-rose-500/30' : 'bg-gradient-to-br from-rose-950/80 via-cyan-950/80 to-purple-950/80 text-rose-400 ring-2 ring-rose-400/30'
-                  : isDay ? 'bg-slate-100 text-slate-400' : 'bg-[#152a36] text-slate-500'
-              }`}>
-                <Sparkles className="w-4 h-4 text-rose-500" />
-              </div>
-              <span className="text-[10px] font-bold whitespace-nowrap">
-                {selectedLanguage === 'bn' ? (tajweedColorMode ? 'রঙিন তাজবীদ ON' : 'রঙিন তাজবীদ OFF') : (tajweedColorMode ? 'Color Tajweed' : 'Tajweed OFF')}
-              </span>
-            </button>
-
-            {/* 2.5 Animation Type Selector (Active Word Highlight Styles) */}
-            <button
-              onClick={() => {
-                setShowAnimationModal(true);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              title={selectedLanguage === 'bn' ? 'তিলাওয়াত অ্যানিমেশন স্টাইল পরিবর্তন করুন' : 'Change recitation animation style'}
-              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
-                isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center relative ${
-                isDay ? 'bg-emerald-100 text-[#006747]' : 'bg-emerald-500/20 text-[#10b981]'
-              }`}>
-                <Sparkles className="w-4 h-4 animate-pulse" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-white dark:border-[#0e1c26]" />
-              </div>
-              <span className="text-[10px] font-bold whitespace-nowrap">
-                {selectedLanguage === 'bn' ? 'অ্যানিমেশন' : 'Animation'}
-              </span>
-            </button>
-
-
 
             {/* 3. Prominent Circular Play Audio Button */}
             <button
@@ -1805,45 +1741,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 )}
               </div>
               <span className={`text-[10px] font-bold mt-0.5 ${isDay ? 'text-[#006747]' : 'text-[#10b981]'}`}>
-                {isPlaying && playingMode === 'surah' ? 'Pause' : 'Play Audio'}
-              </span>
-            </button>
-
-            {/* 3.5 Offline Audio Cache Button */}
-            <button
-              onClick={handleDownloadSurahAudioOffline}
-              disabled={isCachingAudio || isAudioCached}
-              title={selectedLanguage === 'bn' ? 'অফলাইনে শোনার জন্য অডিও সেভ করুন' : 'Cache Surah audio for offline listening'}
-              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
-                isAudioCached
-                  ? 'text-emerald-500 font-bold'
-                  : isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                isAudioCached
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : isDay ? 'bg-amber-100 text-amber-700' : 'bg-amber-500/15 text-amber-400'
-              }`}>
-                {isCachingAudio ? (
-                  <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
-                ) : isAudioCached ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-              </div>
-              <span className="text-[10px] font-bold whitespace-nowrap">
-                {isCachingAudio
-                  ? (selectedLanguage === 'bn' ? 'সেভ হচ্ছে...' : 'Saving...')
-                  : isAudioCached
-                  ? (selectedLanguage === 'bn' ? 'অফলাইন রেডি' : 'Offline Ready')
-                  : (selectedLanguage === 'bn' ? 'অফলাইন অডিও' : 'Offline Audio')}
+                {isPlaying && playingMode === 'surah' ? (selectedLanguage === 'bn' ? 'থামান' : 'Pause') : (selectedLanguage === 'bn' ? 'অডিও শুনুন' : 'Play Audio')}
               </span>
             </button>
 
             {/* 4. AutoScroll Toggle */}
-            <div className="flex flex-col items-center justify-center shrink-0 min-w-[68px]">
+            <div className="flex flex-col items-center justify-center shrink-0 min-w-[64px]">
               <button
                 onClick={() => {
                   setAutoScroll(!autoScroll);
@@ -1874,7 +1777,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     setAutoScrollSpeed(next);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className="mt-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-[#10b981] dark:text-[#10b981] text-[9px] font-extrabold transition active:scale-95 cursor-pointer border border-emerald-500/30"
+                  className="mt-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-[#10b981] text-[9px] font-extrabold transition active:scale-95 cursor-pointer border border-emerald-500/30"
                   title={selectedLanguage === 'bn' ? 'গতি পরিবর্তন করুন' : 'Change Speed'}
                 >
                   {autoScrollSpeed === 'slow'
@@ -1886,9 +1789,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
               )}
             </div>
 
-            {/* 5. Details Button */}
+            {/* 5. Others Button (Renamed from Details to Others, opening Others Modal containing all secondary options) */}
             <button
-              onClick={() => setShowDetailsModal(true)}
+              onClick={() => {
+                setShowOthersModal(true);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
               className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition cursor-pointer shrink-0 min-w-[64px] ${
                 isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#152a36] text-slate-300'
               }`}
@@ -1896,7 +1802,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isDay ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/15 text-indigo-400'}`}>
                 <LayoutGrid className="w-4 h-4" />
               </div>
-              <span className="text-[10px] font-bold">Details</span>
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                {selectedLanguage === 'bn' ? 'অন্যান্য (Others)' : 'Others'}
+              </span>
             </button>
           </div>
 
@@ -4369,6 +4277,222 @@ export const QuranView: React.FC<QuranViewProps> = ({
               >
                 <Check className="w-4 h-4" />
                 <span>{selectedLanguage === 'bn' ? 'পছন্দ নিশ্চিত করুন' : 'Confirm & Apply'}</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ======================================================== */}
+      {/* OTHERS OPTIONS & SECONDARY TOOLS MODAL                   */}
+      {/* ======================================================== */}
+      {showOthersModal && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setShowOthersModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-md flex flex-col rounded-[28px] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ${
+              isDay
+                ? 'bg-white border-[#dcebe8] text-slate-900 shadow-2xl shadow-emerald-950/20'
+                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-2xl shadow-black'
+            }`}
+          >
+            {/* Modal Header */}
+            <div
+              className={`p-4 sm:p-5 border-b flex items-center justify-between shrink-0 ${
+                isDay ? 'bg-[#f8fafc] border-[#e8f3f1]' : 'bg-[#0a1620] border-[#152936]'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
+                  isDay ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-400'
+                }`}>
+                  <LayoutGrid className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-extrabold">
+                    {selectedLanguage === 'bn' ? 'অন্যান্য অপশন ও টুলস' : 'Others Options & Tools'}
+                  </h3>
+                  <p className="text-[11px] text-emerald-500 font-bold">
+                    {selectedLanguage === 'bn' ? 'তাফসীর, তাজবীদ, অডিও সেভ ও অতিরিক্ত সেটিংস' : 'Tafsir, Tajweed, Offline Audio & Extra Settings'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowOthersModal(false)}
+                className={`p-1.5 rounded-xl transition cursor-pointer ${
+                  isDay ? 'hover:bg-slate-200 text-slate-500' : 'hover:bg-white/10 text-slate-400'
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Options Grid */}
+            <div className="p-4 sm:p-5 grid grid-cols-1 gap-2.5 max-h-[75vh] overflow-y-auto">
+              {/* Option 1: Tafsir */}
+              <button
+                onClick={() => {
+                  setShowOthersModal(false);
+                  const firstAyah = displayedAyahs[0] || surahDetail?.ayahs[0];
+                  if (firstAyah) handleOpenTafsir(firstAyah);
+                }}
+                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition cursor-pointer active:scale-98 ${
+                  isDay
+                    ? 'bg-amber-50/50 hover:bg-amber-50 border-amber-200 text-slate-900'
+                    : 'bg-[#14231f] hover:bg-[#1a2d28] border-amber-500/30 text-white'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm">
+                      {selectedLanguage === 'bn' ? 'তাফসীর ও ব্যাখ্যা (Tafsir)' : 'Tafsir & Commentary'}
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedLanguage === 'bn' ? 'ইবনে কাছীর, জাকারিয়া ও তাফহীমুল কুরআন' : 'Ibn Kathir, Zakariya & Tafheemul Quran'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {/* Option 2: Color Tajweed & Pronunciation */}
+              <button
+                onClick={() => {
+                  setTajweedColorMode(!tajweedColorMode);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition cursor-pointer active:scale-98 ${
+                  tajweedColorMode
+                    ? isDay ? 'bg-rose-50/60 border-rose-200' : 'bg-rose-950/30 border-rose-800/40'
+                    : isDay ? 'bg-white hover:bg-slate-50 border-slate-200' : 'bg-[#091620] hover:bg-[#0d1d2b] border-[#152a36]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5 text-rose-500" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
+                      <span>{selectedLanguage === 'bn' ? 'রঙিন তাজবীদ ও উচ্চারণ' : 'Color Tajweed & Rules'}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-black ${
+                        tajweedColorMode ? 'bg-rose-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        {tajweedColorMode ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedLanguage === 'bn' ? 'রঙিন অক্ষরের তাজবীদ নিয়ম ও সঠিক উচ্চারণ' : 'Color-coded Tajweed pronunciation highlights'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {/* Option 3: Animation Style Selector */}
+              <button
+                onClick={() => {
+                  setShowOthersModal(false);
+                  setShowAnimationModal(true);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition cursor-pointer active:scale-98 ${
+                  isDay
+                    ? 'bg-emerald-50/50 hover:bg-emerald-50 border-emerald-200 text-slate-900'
+                    : 'bg-[#0a231f] hover:bg-[#0e2c28] border-emerald-800/40 text-white'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm">
+                      {selectedLanguage === 'bn' ? 'তিলাওয়াত অ্যানিমেশন স্টাইল' : 'Recitation Animation Style'}
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedLanguage === 'bn' ? 'পড়ার সময় নূরানি গ্লো ও বর্ডার হাইলাইট' : 'Radiant glow & border word highlights'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {/* Option 4: Offline Audio Cache */}
+              <button
+                onClick={() => {
+                  handleDownloadSurahAudioOffline();
+                }}
+                disabled={isCachingAudio || isAudioCached}
+                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition cursor-pointer active:scale-98 ${
+                  isAudioCached
+                    ? isDay ? 'bg-emerald-50 border-emerald-300' : 'bg-emerald-950/40 border-emerald-800'
+                    : isDay ? 'bg-white hover:bg-slate-50 border-slate-200' : 'bg-[#091620] hover:bg-[#0d1d2b] border-[#152a36]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
+                    {isCachingAudio ? (
+                      <RefreshCw className="w-5 h-5 animate-spin text-amber-400" />
+                    ) : isAudioCached ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    ) : (
+                      <Download className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
+                      <span>{selectedLanguage === 'bn' ? 'অফলাইন অডিও ডাউনলোড' : 'Offline Audio Download'}</span>
+                      {isAudioCached && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-emerald-500 text-white">
+                          সেভ করা হয়েছে
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {isCachingAudio
+                        ? (selectedLanguage === 'bn' ? 'অডিও ডাউনলোড হচ্ছে...' : 'Caching audio...')
+                        : (selectedLanguage === 'bn' ? 'ইন্টারনেট ছাড়াই পরবর্তীতে সম্পূর্ণ সূরাটি শুনুন' : 'Listen offline without internet connection')}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {/* Option 5: Surah Details & Insight */}
+              <button
+                onClick={() => {
+                  setShowOthersModal(false);
+                  setShowDetailsModal(true);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition cursor-pointer active:scale-98 ${
+                  isDay
+                    ? 'bg-indigo-50/50 hover:bg-indigo-50 border-indigo-200 text-slate-900'
+                    : 'bg-[#151c2e] hover:bg-[#1a233a] border-indigo-800/40 text-white'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+                    <LayoutGrid className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm">
+                      {selectedLanguage === 'bn' ? 'সূরার পরিচিতি ও বিবরণ' : 'Surah Details & Insight'}
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedLanguage === 'bn' ? 'অবতীর্ণের স্থান, আয়াত সংখ্যা, জুয ও ফজিলত' : 'Ayah count, Revelation place, Juz & Virtues'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </button>
             </div>
           </div>
