@@ -181,17 +181,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       color: 'from-amber-500/15 to-emerald-500/10 border-amber-500/30',
       badge: selectedLanguage === 'bn' ? 'ইন্টারেক্টিভ ম্যাপ' : 'History Map',
     },
-    {
-      id: 'arabian_map' as OtherSubSection,
-      title: selectedLanguage === 'bn' ? 'পবিত্র ভূমি ও মধ্যপ্রাচ্যের সচিত্র মানচিত্র' : 'Pictorial Map of Holy Lands',
-      arabic: 'خريطة الأماكن المقدسة المصورة',
-      desc: selectedLanguage === 'bn'
-        ? 'ঐতিহ্যবাহী ভিন্টেজ কার্টোগ্রাফিক শৈলীতে সৌদি আরব, পবিত্র মক্কা-মদিনা, ৫টি মিকাত, লোহিত সাগরের পালতোলা জাহাজ ও হজ রুট'
-        : 'Vintage cartographic illustrated map of Saudi Arabia, Makkah, Madinah, 5 Miqats, Red Sea dhows & Hajj routes.',
-      icon: <span className="text-2xl">🗺️</span>,
-      color: 'from-amber-600/25 via-amber-500/15 to-emerald-500/10 border-amber-500/40',
-      badge: selectedLanguage === 'bn' ? 'সচিত্র মানচিত্র' : 'Pictorial Map',
-    },
+
     {
       id: 'dua' as OtherSubSection,
       title: NAV_TRANSLATIONS.dua[selectedLanguage],
