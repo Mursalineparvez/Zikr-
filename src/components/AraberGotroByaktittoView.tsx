@@ -769,59 +769,6 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           ===================================================================== */}
       {viewMode === 'topic_toc' && (
         <div className="space-y-3">
-          {/* 1. Category Summary Badges Grid (Ultra Compact & Slim) */}
-          <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-xs space-y-2.5 ${
-            isDay ? 'bg-amber-50/60 border-amber-200/80 text-amber-950' : 'bg-[#18130a] border-amber-500/30 text-amber-100'
-          }`}>
-            <div className="flex flex-wrap items-center justify-between gap-1.5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center font-black text-xs">📖</span>
-                <h3 className="text-xs font-extrabold">
-                  বিষয়ভিত্তিক সীরাত ও গোত্রকোষ সারসংক্ষেপ
-                </h3>
-              </div>
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
-                ৫টি অধ্যায় ও ৪০টি গোত্র তালিকা
-              </span>
-            </div>
-
-            {/* 5 Topic Quick Summary Cards Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-1">
-              {[
-                { id: 'topic-kaba-admin', icon: '🕋', title: 'কাবার প্রশাসন ও কুরাইশ', count: '১০টি দপ্তর' },
-                { id: 'topic-prophetic-lineage', icon: '👑', title: 'বনু হাশিম ও আহলে বাইত', count: 'পবিত্র বংশলতিকা' },
-                { id: 'topic-ansar-madinah', icon: '🌿', title: 'মদিনার আনসার ভ্রাতৃত্ব', count: 'খাযরাজ ও আওস' },
-                { id: 'topic-greater-arabia', icon: '🧭', title: 'বৃহত্তর আরবের পরাশক্তি', count: '১১টি অঞ্চল' },
-                { id: 'topic-all-tribes-appendix', icon: '📜', title: '৪০টি গোত্রকোষ এনসাইক্লোপিডিয়া', count: 'পূর্ণাঙ্গ সংকলন' },
-              ].map((cat) => (
-                <div
-                  key={cat.id}
-                  onClick={() => {
-                    if (soundEnabled) soundHaptics.playTap();
-                    setSelectedTocTopicId(selectedTocTopicId === cat.id ? 'all' : cat.id);
-                  }}
-                  className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-1 shadow-2xs ${
-                    selectedTocTopicId === cat.id
-                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm ring-1 ring-emerald-500/30'
-                      : isDay
-                      ? 'bg-white border-amber-200 hover:border-emerald-400'
-                      : 'bg-[#0c2227] border-teal-900/50 hover:border-emerald-500'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-base">{cat.icon}</span>
-                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-500">
-                      {cat.count}
-                    </span>
-                  </div>
-                  <div className="text-[11px] font-bold truncate mt-0.5">
-                    {cat.title}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* 3. Search Bar with Instant Reset */}
           <div className={`p-2.5 sm:p-3 rounded-xl border shadow-xs ${isDay ? 'bg-white border-slate-200' : 'bg-[#0b2228] border-[#16424b]'}`}>
             <div className="relative">
