@@ -241,12 +241,41 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const [, startSubTransition] = React.useTransition();
 
-  const handleSelectSub = (sub: OtherSubSection) => {
+  const handleSelectSub = (sub: OtherSubSection, skipPushState = false) => {
+    if (sub === activeSub) return;
     if (soundEnabled) soundHaptics.playTap();
+    if (!skipPushState) {
+      try {
+        window.history.pushState({ appModule: 'other', appSub: sub }, '');
+      } catch {}
+    }
     startSubTransition(() => {
       setActiveSub(sub);
     });
   };
+
+  useEffect(() => {
+    const handleSubPopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state && state.appModule === 'other') {
+        const targetSub = state.appSub || 'hub';
+        startSubTransition(() => {
+          setActiveSub(targetSub);
+        });
+      } else if (state && state.appModule) {
+        // Main App.tsx handles top-level module switching
+      } else {
+        startSubTransition(() => {
+          setActiveSub('hub');
+        });
+      }
+    };
+
+    window.addEventListener('popstate', handleSubPopState);
+    return () => {
+      window.removeEventListener('popstate', handleSubPopState);
+    };
+  }, []);
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">

@@ -576,8 +576,18 @@ export const QuranView: React.FC<QuranViewProps> = ({
   }, [lastRead]);
 
   // Load a Surah by number
-  const loadSurah = async (surahNumber: number, targetAyahNumber?: number, openTafsirImmediately?: boolean) => {
+  const loadSurah = async (
+    surahNumber: number,
+    targetAyahNumber?: number,
+    openTafsirImmediately?: boolean,
+    skipPushState = false
+  ) => {
     setSelectedSurahNumber(surahNumber);
+    if (!skipPushState) {
+      try {
+        window.history.pushState({ appModule: 'quran', quranSurah: surahNumber }, '');
+      } catch {}
+    }
     setIsInsightExpanded(false);
     setAutoScroll(false);
     stopAudio();
@@ -663,6 +673,25 @@ export const QuranView: React.FC<QuranViewProps> = ({
     }
     setShowLanguagePicker(false);
   };
+
+  // Back button handling inside QuranView
+  useEffect(() => {
+    const handleQuranPopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state && typeof state.quranSurah === 'number') {
+        loadSurah(state.quranSurah, undefined, false, true);
+      } else if (state && state.appModule === 'quran') {
+        setSelectedSurahNumber(null);
+      } else {
+        setSelectedSurahNumber(null);
+      }
+    };
+
+    window.addEventListener('popstate', handleQuranPopState);
+    return () => {
+      window.removeEventListener('popstate', handleQuranPopState);
+    };
+  }, []);
 
   // Re-fetch Surah when selectedLanguage or selectedReciterId changes
   useEffect(() => {

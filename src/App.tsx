@@ -307,13 +307,49 @@ export default function App() {
   const [activeModule, setActiveModule] = useState<NavModule>('zikir_counter');
   const [, startNavTransition] = React.useTransition();
 
-  const handleNavigate = (targetModule: NavModule) => {
+  const handleNavigate = (targetModule: NavModule, skipPushState = false) => {
     if (targetModule === activeModule) return;
     if (settings.soundEnabled) soundHaptics.playTap();
+    if (!skipPushState) {
+      try {
+        window.history.pushState({ appModule: targetModule }, '');
+      } catch {}
+    }
     startNavTransition(() => {
       setActiveModule(targetModule);
     });
   };
+
+  // Browser & Native Device Back Button Navigation History Stack Management
+  useEffect(() => {
+    try {
+      if (!window.history.state || !window.history.state.appModule) {
+        window.history.replaceState({ appModule: 'zikir_counter' }, '');
+      }
+    } catch {}
+
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state && state.appModule) {
+        startNavTransition(() => {
+          setActiveModule(state.appModule);
+        });
+      } else {
+        // Return gracefully to Zikr Home if user popped to origin
+        setActiveModule((prev) => {
+          if (prev !== 'zikir_counter') {
+            return 'zikir_counter';
+          }
+          return prev;
+        });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   // Pre-warm all view chunks during idle time so page loads are instantaneous
   useEffect(() => {

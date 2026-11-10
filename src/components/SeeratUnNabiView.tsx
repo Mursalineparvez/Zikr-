@@ -428,12 +428,33 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     };
   }, []);
 
-  const handleSelectAge = (age: number | null) => {
+  const handleSelectAge = (age: number | null, skipPushState = false) => {
     if (soundEnabled) soundHaptics.playTap();
+    if (age !== null && !skipPushState) {
+      try {
+        window.history.pushState({ appModule: 'other', appSub: 'seerat_un_nabi', seeratAge: age }, '');
+      } catch {}
+    }
     startTransition(() => {
       setSelectedAge(age);
     });
   };
+
+  useEffect(() => {
+    const handleSeeratPopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state && typeof state.seeratAge === 'number') {
+        handleSelectAge(state.seeratAge, true);
+      } else {
+        setSelectedAge(null);
+      }
+    };
+
+    window.addEventListener('popstate', handleSeeratPopState);
+    return () => {
+      window.removeEventListener('popstate', handleSeeratPopState);
+    };
+  }, []);
 
   const toggleBookmark = (age: number) => {
     if (soundEnabled) soundHaptics.playTargetChime();

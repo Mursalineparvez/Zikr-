@@ -138,18 +138,39 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     }, 2500);
   };
 
-  const handleSelectSahaba = (id: string | null) => {
+  const handleSelectSahaba = (id: string | null, skipPushState = false) => {
     if (soundEnabled) soundHaptics.playTap();
     if (id) {
       try {
         localStorage.setItem(SAHABA_STORAGE_KEYS.LAST_READ, id);
         setLastReadSahabaId(id);
       } catch {}
+      if (!skipPushState) {
+        try {
+          window.history.pushState({ appModule: 'other', appSub: 'hayatus_sahaba', sahabaId: id }, '');
+        } catch {}
+      }
     }
     startTransition(() => {
       setSelectedSahabaId(id);
     });
   };
+
+  useEffect(() => {
+    const handleSahabaPopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state && state.sahabaId) {
+        handleSelectSahaba(state.sahabaId, true);
+      } else {
+        setSelectedSahabaId(null);
+      }
+    };
+
+    window.addEventListener('popstate', handleSahabaPopState);
+    return () => {
+      window.removeEventListener('popstate', handleSahabaPopState);
+    };
+  }, []);
 
   const toggleCompleteSahaba = (id: string) => {
     setCompletedSahaba((prev) => {
