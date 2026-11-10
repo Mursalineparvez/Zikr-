@@ -147,10 +147,10 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       id: 'hayatus_sahaba' as OtherSubSection,
       title: NAV_TRANSLATIONS.hayatus_sahaba[selectedLanguage] || (selectedLanguage === 'bn' ? 'হায়াতুস সাহাবা' : 'Hayatus Sahaba'),
       arabic: 'حياة الصحابة رضي الله عنهم',
-      desc: selectedLanguage === 'bn' ? 'মর্যাদা ও জনপ্রিয়তার ক্রমানুসারে ১০৭+ জন সাহাবির ইসলাম গ্রহণ, হৃদয়স্পর্শী ইতিহাস, আত্মত্যাগ ও সহিহ হাদিসের দলিল' : 'Ranked biographical accounts of 107+ prominent Sahaba, their sacrifices, emotional stories and authentic hadith citations.',
+      desc: selectedLanguage === 'bn' ? 'মর্যাদা ও জনপ্রিয়তার ক্রমানুসারে ১৬৬+ জন সাহাবির ইসলাম গ্রহণ, হৃদয়স্পর্শী ইতিহাস, আত্মত্যাগ ও সহিহ হাদিসের দলিল' : 'Ranked biographical accounts of 166+ prominent Sahaba, their sacrifices, emotional stories and authentic hadith citations.',
       icon: <span className="text-2xl">📜</span>,
       color: 'from-emerald-500/20 via-amber-500/15 to-teal-500/10 border-emerald-500/40',
-      badge: selectedLanguage === 'bn' ? '১০৭+ সাহাবি' : '107+ Sahaba',
+      badge: selectedLanguage === 'bn' ? '১৬৬+ সাহাবি' : '166+ Sahaba',
     },
     {
       id: 'arober_gotro' as OtherSubSection,

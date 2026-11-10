@@ -1193,7 +1193,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-emerald-100 text-xs font-semibold backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>حياة الصحابة رضي الله عنهم • Hayatus Sahaba</span>
+            <span>{isBn ? 'حياة الصحابة رضي الله عنهم • হায়াতুস সাহাবা' : 'Hayatus Sahaba • حياة الصحابة رضي الله عنهم'}</span>
           </div>
           <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30">
             {totalSahaba} {isBn ? 'জন সাহাবি' : 'Companions'}
@@ -1512,7 +1512,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <div className="space-y-1.5 border-b pb-4 border-amber-500/20 pr-8">
               <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[11px] font-black uppercase">
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>حياة الصحابة • Classical Bibliography</span>
+                <span>{isBn ? 'حياة الصحابة • প্রামাণ্য গ্রন্থ ও উৎসপঞ্জি' : 'Hayatus Sahaba • Master Bibliography'}</span>
               </span>
               <h3 className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400">
                 {isBn ? 'হায়াতুস সাহাবা (رضي الله عنهم) গ্রন্থ ও উৎসের সবিস্তার বিবরণ' : 'Hayatus Sahaba Master Bibliography & Sources'}
