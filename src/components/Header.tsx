@@ -124,11 +124,16 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2 cursor-pointer select-none group shrink-0"
             onClick={() => onModuleChange('zikir_counter')}
           >
-            {/* Green Dome Icon in Circle Badge */}
-            <div className="w-9 h-9 rounded-full bg-[#005740] border border-emerald-400/40 flex items-center justify-center shadow-inner text-white transition transform group-hover:scale-105">
-              <svg className="w-5 h-5 fill-current text-emerald-200" viewBox="0 0 24 24">
-                <path d="M12 2C8 6 4 9 4 14a8 8 0 0 0 16 0c0-5-4-8-8-12zm0 18a6 6 0 0 1-6-6c0-3.3 2.7-5.8 6-9.1 3.3 3.3 6 5.8 6 9.1a6 6 0 0 1-6 6z"/>
-              </svg>
+            {/* Zikr+ Official Logo Circle Badge */}
+            <div className="w-9 h-9 rounded-full bg-[#005740] border border-emerald-400/50 flex items-center justify-center shadow-md transition transform group-hover:scale-105 overflow-hidden p-0.5 shrink-0">
+              <img
+                src="/pwa-192x192.png"
+                alt="Zikr+ Logo"
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/icon.svg';
+                }}
+              />
             </div>
             <div className="flex items-center gap-1.5">
               <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-0.5">
