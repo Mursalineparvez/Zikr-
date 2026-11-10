@@ -1206,57 +1206,6 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         </p>
       </div>
 
-      {/* Category Summary Badges Grid */}
-      <div className={`p-4 sm:p-5 rounded-3xl border shadow-md space-y-3 ${isDay ? 'bg-amber-50/60 border-amber-200/80 text-amber-950' : 'bg-[#18130a] border-amber-500/30 text-amber-100'}`}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-black text-xs">📖</span>
-            <h3 className="text-xs sm:text-sm font-extrabold">
-              {isBn ? 'মর্যাদা ও জনপ্রিয়তার ক্রমানুসারে পূর্ণাঙ্গ সাহাবিদের জীবনী' : 'Comprehensive Biographies Ranked by Status'}
-            </h3>
-          </div>
-          <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-500">
-            {isBn ? `মোট ${totalSahaba} জন মর্যাদাবান সাহাবি ও সহিহ হাদিসের দলিল` : `Total ${totalSahaba} Honored Companions`}
-          </span>
-        </div>
-        <p className="text-xs leading-relaxed opacity-90">
-          {isBn
-            ? 'যেকোনো সাহাবির কার্ড বা সূচিপত্রের লিংকে চাপ দিলে সরাসরি সম্পূর্ণ পৃষ্ঠাজুড়ে বিস্তারিত পরিবার, স্ত্রী, সন্তান, ইসলাম গ্রহণ, হৃদয়স্পর্শী ঘটনা ও সহিহ হাদিসসমূহ পড়তে পারবেন।'
-            : 'Tap any companion from the Book Table of Contents to read their complete biography, family details, wives, children, and conversion story.'}
-        </p>
-
-        {/* 8 Category Summary Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
-          {SAHABA_CATEGORIES.map((cat) => {
-            const count = sahabaByCategory[cat.key]?.length || 0;
-            return (
-              <div
-                key={cat.key}
-                onClick={() => {
-                  setActiveCategoryFilter(activeCategoryFilter === cat.key ? 'all' : cat.key);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-1 shadow-xs ${
-                  activeCategoryFilter === cat.key
-                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-500/30'
-                    : isDay ? 'bg-white border-amber-200 hover:border-emerald-400' : 'bg-[#0c2227] border-teal-900/50 hover:border-emerald-500'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-lg">{cat.icon}</span>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
-                    {count} {isBn ? 'জন' : ''}
-                  </span>
-                </div>
-                <div className="text-xs font-bold truncate mt-1">
-                  {isBn ? cat.titleBn : cat.titleEn}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Search Bar */}
       <div className={`p-4 rounded-3xl border shadow-md ${isDay ? 'bg-white border-slate-200' : 'bg-[#0b2228] border-[#16424b]'}`}>
         <div className="relative">
