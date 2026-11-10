@@ -6,6 +6,7 @@ import {
 import {
   QuranSurahDetail,
   QuranAyah,
+  QuranWord,
   QURAN_RECITERS,
 } from '../utils/quranService';
 import { ZikrLanguage, ThemeMode } from '../types';
@@ -164,11 +165,26 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
     } catch {}
   }, [mushafTheme, fontSize, mushafFont, showRuledLines]);
 
-  // Modals & Panels
+  // Modals & Floating Popovers
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [showSurahPicker, setShowSurahPicker] = useState(false);
   const [surahPickerSearch, setSurahPickerSearch] = useState('');
-  const [selectedAyahSheet, setSelectedAyahSheet] = useState<QuranAyah | null>(null);
+  
+  // Inline Floating Popover above clicked Ayah or Word (replaces full-screen modal)
+  interface PopoverAnchor {
+    ayah: QuranAyah;
+    word?: QuranWord;
+    wordIndex?: number;
+    rect: {
+      top: number;
+      bottom: number;
+      left: number;
+      right: number;
+      width: number;
+      height: number;
+    };
+  }
+  const [activePopover, setActivePopover] = useState<PopoverAnchor | null>(null);
   const [copiedAyah, setCopiedAyah] = useState<number | null>(null);
 
   // Active Ayah element ref for smooth scroll during audio
@@ -179,6 +195,64 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
       activeAyahRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [isPlaying, currentPlayingAyahNum]);
+
+  // Auto-dismiss floating popover on scroll, resize, or Escape key
+  useEffect(() => {
+    if (!activePopover) return;
+    const handleDismiss = () => setActivePopover(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActivePopover(null);
+    };
+    window.addEventListener('scroll', handleDismiss, { passive: true });
+    window.addEventListener('resize', handleDismiss);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('scroll', handleDismiss);
+      window.removeEventListener('resize', handleDismiss);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activePopover]);
+
+  const handleWordClick = (
+    e: React.MouseEvent,
+    ayah: QuranAyah,
+    word: QuranWord,
+    wordIndex: number
+  ) => {
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setActivePopover({
+      ayah,
+      word,
+      wordIndex,
+      rect: {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
+      },
+    });
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleAyahClick = (e: React.MouseEvent, ayah: QuranAyah) => {
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setActivePopover({
+      ayah,
+      rect: {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
+      },
+    });
+    if (soundEnabled) soundHaptics.playTap();
+  };
 
   // Surah page and juz calculation
   const startPage = MADANI_SURAH_PAGES[surahDetail.number] || 1;
@@ -620,11 +694,8 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               <span
                 key={ayah.number}
                 ref={isThisAyahPlaying ? activeAyahRef : null}
-                onClick={() => {
-                  setSelectedAyahSheet(ayah);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`inline rounded-xl px-1 py-0.5 transition cursor-pointer select-text hover:bg-emerald-500/20 active:opacity-90 ${
+                onClick={(e) => handleAyahClick(e, ayah)}
+                className={`inline rounded-xl px-1 py-0.5 transition cursor-pointer select-text hover:bg-emerald-500/15 active:opacity-90 ${
                   isThisAyahPlaying
                     ? themeStyles.ayahHighlightBg
                     : isBookmarked
@@ -645,11 +716,13 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                         return (
                           <span
                             key={wIdx}
-                            className={`inline-block mx-0.5 transition ${
+                            onClick={(e) => handleWordClick(e, ayah, w, wIdx)}
+                            className={`inline-block mx-0.5 px-0.5 rounded-md transition hover:bg-emerald-500/25 active:scale-95 cursor-pointer ${
                               isWordActive
                                 ? 'text-amber-500 dark:text-amber-300 font-black scale-105 drop-shadow-sm'
                                 : ''
                             }`}
+                            title={`${w.arabic} ${w.translation ? `(${w.translation})` : ''}`}
                           >
                             {w.arabic}
                           </span>
@@ -659,9 +732,12 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 </span>
 
                 {/* Ornate Circular End-of-Ayah Badge (Exact to uploaded screenshot ۝١ ۝٢ ۝٣ ...) */}
-                <span className="inline-flex items-center justify-center mx-1.5 align-middle select-none">
+                <span
+                  onClick={(e) => handleAyahClick(e, ayah)}
+                  className="inline-flex items-center justify-center mx-1.5 align-middle select-none cursor-pointer"
+                >
                   <span
-                    className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full border-2 ${themeStyles.ayahBadgeBorder} ${themeStyles.ayahBadgeBg} ${themeStyles.ayahBadgeText} text-xs sm:text-sm md:text-base font-bold font-arabic flex items-center justify-center shadow-xs transition transform hover:scale-110`}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full border-2 ${themeStyles.ayahBadgeBorder} ${themeStyles.ayahBadgeBg} ${themeStyles.ayahBadgeText} text-xs sm:text-sm md:text-base font-bold font-arabic flex items-center justify-center shadow-xs transition transform hover:scale-110 active:scale-95`}
                   >
                     {toArabicNumerals(ayah.number)}
                   </span>
@@ -737,113 +813,164 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
       </main>
 
       {/* ========================================================================= */}
-      {/* 4. AYAH ACTION SHEET (Triggered by tapping any Ayah)                       */}
+      {/* 4. INLINE FLOATING AYAH / WORD POPOVER (Positioned directly above, NO modal)*/}
       {/* ========================================================================= */}
-      {selectedAyahSheet && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="w-full sm:max-w-lg bg-white dark:bg-[#081e18] text-slate-900 dark:text-emerald-50 rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-emerald-700/50 shadow-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto">
-            {/* Header with Ayah Number & Close */}
-            <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-emerald-800/40">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-emerald-600 text-white font-mono font-bold text-xs flex items-center justify-center">
-                  {selectedAyahSheet.number}
-                </span>
-                <div>
-                  <h4 className="font-bold text-sm text-emerald-800 dark:text-emerald-300">
-                    সূরা {surahDetail.englishName} : আয়াত {selectedAyahSheet.number}
-                  </h4>
-                  <span className="text-[11px] text-slate-500 dark:text-emerald-400">
-                    জুয {selectedAyahSheet.juz || juzNumber} • পৃষ্ঠা {selectedAyahSheet.page || startPage}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedAyahSheet(null)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-800 dark:hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {activePopover && (() => {
+        const isDayTheme = mushafTheme !== 'night';
+        const winWidth = typeof window !== 'undefined' ? window.innerWidth : 400;
+        const popoverWidth = Math.min(380, winWidth - 24);
+        const targetCenterX = activePopover.rect.left + activePopover.rect.width / 2;
+        const clampedLeft = Math.max(12, Math.min(winWidth - popoverWidth - 12, targetCenterX - popoverWidth / 2));
+        const caretLeft = Math.max(16, Math.min(popoverWidth - 24, targetCenterX - clampedLeft));
+        const placeAbove = activePopover.rect.top > 190;
 
-            {/* Arabic Text Highlight in Action Sheet */}
+        return (
+          <>
+            {/* Transparent backdrop to catch clicks outside without dimming the screen */}
             <div
-              dir="rtl"
-              className="font-quran text-xl sm:text-2xl font-bold text-right p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 leading-relaxed text-[#062d23] dark:text-emerald-100"
+              className="fixed inset-0 z-40 bg-transparent cursor-default"
+              onClick={() => setActivePopover(null)}
+            />
+
+            {/* Floating Tooltip Box */}
+            <div
+              style={{
+                position: 'fixed',
+                left: `${clampedLeft}px`,
+                width: `${popoverWidth}px`,
+                ...(placeAbove
+                  ? { top: `${activePopover.rect.top - 10}px`, transform: 'translateY(-100%)' }
+                  : { top: `${activePopover.rect.bottom + 10}px` }),
+              }}
+              className={`z-50 rounded-2xl border-2 p-3 sm:p-3.5 shadow-2xl backdrop-blur-md transition-all animate-in fade-in zoom-in-95 duration-150 ${
+                isDayTheme
+                  ? 'bg-white/98 border-emerald-600/40 text-slate-900 shadow-emerald-950/20'
+                  : 'bg-[#061c16]/98 border-emerald-500/50 text-emerald-50 shadow-black/80'
+              }`}
+              onClick={(e) => e.stopPropagation()}
             >
-              {selectedAyahSheet.arabic} ﴿{toArabicNumerals(selectedAyahSheet.number)}﴾
-            </div>
-
-            {/* Bangla / English Meaning */}
-            <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-1">
-              <div className="font-bold text-emerald-700 dark:text-emerald-400">
-                {selectedLanguage === 'bn' ? 'বাংলা অর্থ:' : 'Meaning:'}
-              </div>
-              <p className="leading-relaxed bg-slate-50 dark:bg-black/30 p-3 rounded-xl border border-slate-200 dark:border-emerald-900/30">
-                {selectedAyahSheet.translation || 'অর্থ লোড হচ্ছে...'}
-              </p>
-            </div>
-
-            {/* Action Buttons: Play, Tafsir, Bookmark, Copy */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs font-bold">
-              <button
-                onClick={() => {
-                  onPlayAyah(selectedAyahSheet);
-                  if (soundEnabled) soundHaptics.playTap();
-                  setSelectedAyahSheet(null);
-                }}
-                className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>তিলাওয়াত</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  onOpenTafsir(selectedAyahSheet);
-                  if (soundEnabled) soundHaptics.playTap();
-                  setSelectedAyahSheet(null);
-                }}
-                className="p-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>তাফসীর</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  onToggleBookmark(selectedAyahSheet);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`p-2.5 rounded-xl border flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer transition ${
-                  isAyahBookmarked(selectedAyahSheet.number)
-                    ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200'
-                    : 'bg-slate-100 dark:bg-emerald-900/40 text-slate-800 dark:text-emerald-200 border-slate-200 dark:border-emerald-800'
+              {/* Little Caret Arrow Pointing directly at the clicked Ayah or Word */}
+              <div
+                style={{ left: `${caretLeft}px` }}
+                className={`absolute w-3 h-3 rotate-45 transform -translate-x-1/2 border-2 ${
+                  placeAbove
+                    ? 'bottom-[-7px] border-t-0 border-l-0 ' + (isDayTheme ? 'bg-white border-emerald-600/40' : 'bg-[#061c16] border-emerald-500/50')
+                    : 'top-[-7px] border-b-0 border-r-0 ' + (isDayTheme ? 'bg-white border-emerald-600/40' : 'bg-[#061c16] border-emerald-500/50')
                 }`}
-              >
-                <Bookmark className={`w-3.5 h-3.5 ${isAyahBookmarked(selectedAyahSheet.number) ? 'fill-current' : ''}`} />
-                <span>{isAyahBookmarked(selectedAyahSheet.number) ? 'বুকমার্কড' : 'বুকমার্ক'}</span>
-              </button>
+              />
 
-              <button
-                onClick={() => handleCopyAyah(selectedAyahSheet)}
-                className="p-2.5 rounded-xl bg-slate-100 dark:bg-emerald-900/40 text-slate-800 dark:text-emerald-200 border border-slate-200 dark:border-emerald-800 flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-              >
-                {copiedAyah === selectedAyahSheet.number ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>কপি হয়েছে</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>কপি করুন</span>
-                  </>
-                )}
-              </button>
+              {/* Popover Top Bar */}
+              <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-black/10 dark:border-white/10 mb-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
+                    {activePopover.ayah.number}
+                  </span>
+                  <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate">
+                    {getBareSurahName(surahDetail.number, selectedLanguage)} : আয়াত {activePopover.ayah.number}
+                  </span>
+                  {activePopover.word && (
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 shrink-0 font-arabic">
+                      {activePopover.word.arabic}
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setActivePopover(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white transition cursor-pointer"
+                  title="বন্ধ করুন"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Word Breakdown if clicked a specific word */}
+              {activePopover.word && (
+                <div className="mb-2 p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 font-bold min-w-0 truncate">
+                    <span className="font-quran text-base text-emerald-900 dark:text-emerald-200 shrink-0">{activePopover.word.arabic}</span>
+                    <span className="text-slate-400 text-[10px] shrink-0">➜</span>
+                    <span className="text-amber-700 dark:text-amber-300 font-extrabold truncate">
+                      {activePopover.word.translation || activePopover.word.transliteration}
+                    </span>
+                  </div>
+                  {activePopover.word.transliteration && (
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 italic shrink-0 hidden xs:inline">
+                      ({activePopover.word.transliteration})
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Ayah Translation / Meaning */}
+              <div className="mb-2.5">
+                <p className="text-xs sm:text-[13px] leading-relaxed text-slate-700 dark:text-slate-200 font-medium max-h-32 overflow-y-auto pr-1">
+                  {activePopover.ayah.translation || 'অর্থ লোড হচ্ছে...'}
+                </p>
+              </div>
+
+              {/* Compact Mini Action Buttons */}
+              <div className="grid grid-cols-4 gap-1.5 text-[11px] font-bold">
+                <button
+                  onClick={() => {
+                    onPlayAyah(activePopover.ayah);
+                    if (soundEnabled) soundHaptics.playTap();
+                    setActivePopover(null);
+                  }}
+                  className="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-1 shadow-xs active:scale-95 cursor-pointer"
+                >
+                  <Play className="w-3 h-3 fill-current" />
+                  <span>শুনুন</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    onOpenTafsir(activePopover.ayah);
+                    if (soundEnabled) soundHaptics.playTap();
+                    setActivePopover(null);
+                  }}
+                  className="py-1.5 px-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center gap-1 shadow-xs active:scale-95 cursor-pointer"
+                >
+                  <BookOpen className="w-3 h-3" />
+                  <span>তাফসীর</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    onToggleBookmark(activePopover.ayah);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`py-1.5 px-2 rounded-xl border flex items-center justify-center gap-1 active:scale-95 cursor-pointer transition ${
+                    isAyahBookmarked(activePopover.ayah.number)
+                      ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200'
+                      : 'bg-black/5 dark:bg-white/10 text-slate-700 dark:text-emerald-200 border-black/10 dark:border-white/15'
+                  }`}
+                >
+                  <Bookmark className={`w-3 h-3 ${isAyahBookmarked(activePopover.ayah.number) ? 'fill-current' : ''}`} />
+                  <span className="truncate">{isAyahBookmarked(activePopover.ayah.number) ? 'সংরক্ষিত' : 'বুকমার্ক'}</span>
+                </button>
+
+                <button
+                  onClick={() => handleCopyAyah(activePopover.ayah)}
+                  className="py-1.5 px-2 rounded-xl bg-black/5 dark:bg-white/10 text-slate-700 dark:text-emerald-200 border border-black/10 dark:border-white/15 flex items-center justify-center gap-1 active:scale-95 cursor-pointer"
+                >
+                  {copiedAyah === activePopover.ayah.number ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-500" />
+                      <span>কপি</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>কপি</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* 5. SURAH / JUZ QUICK SWITCHER MODAL                                       */}
