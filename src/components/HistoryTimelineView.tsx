@@ -1135,43 +1135,45 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   return (
     <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-500 select-none pb-24 sm:pb-12 font-bengali">
       
-      {/* 1. TOP PREMIUM WIDE HERO BANNER - GOLD ACCENTED EPOCH DASHBOARD */}
-      <div className="relative w-full rounded-[26px] overflow-hidden border border-[#1a4b54]/60 bg-gradient-to-r from-[#051419] via-[#0c242b] to-[#123640] p-6 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(16,185,129,0.08),transparent)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none opacity-20" />
-        <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-amber-400 to-emerald-500 rounded-l-full" />
+      {/* 1. TOP PREMIUM WIDE HERO BANNER - ULTRA SLIM & GORGEOUS EPOCH DASHBOARD */}
+      <div className="relative w-full rounded-2xl overflow-hidden border border-[#1d5763]/70 bg-gradient-to-r from-[#05171d] via-[#0a272f] to-[#0e353f] p-3.5 sm:p-4 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 transition-all">
+        {/* Ambient Backlight Glows */}
+        <div className="absolute -top-12 -left-12 w-40 h-40 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:14px_14px] pointer-events-none opacity-20" />
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-emerald-400 to-teal-400 rounded-l-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
         
-        <div className="z-10 space-y-3 max-w-2xl text-left pl-2 md:pl-4">
+        <div className="z-10 space-y-1 max-w-2xl text-left pl-2 sm:pl-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black tracking-widest text-amber-300 bg-amber-500/10 border border-amber-500/35 px-3 py-1 rounded-full uppercase flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="text-[10px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/30 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
+              <Clock className="w-3 h-3 text-amber-400 shrink-0" />
               <span>{selectedLanguage === 'bn' ? 'অধ্যায়' : 'Chapter'} {toBengaliDigits(ISLAMIC_HISTORY_ERAS.indexOf(activeEra) + 1)} • {toBengaliDigits(activeEra.from)}-{toBengaliDigits(activeEra.to)} খ্রি.</span>
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-amber-50 tracking-tight flex items-center gap-2 drop-shadow">
+          <h2 className="text-base sm:text-lg md:text-xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
             <span>{getLangText(activeEra.name, selectedLanguage)}</span>
           </h2>
-          <p className="text-xs sm:text-sm text-teal-100/90 leading-relaxed font-medium">
+          <p className="text-[11px] sm:text-xs text-teal-100/90 leading-snug font-medium line-clamp-3 md:line-clamp-2">
             {formattedEraSum}
           </p>
         </div>
 
-        {/* Segmented Timeline Chapter Jump buttons */}
-        <div className="z-10 flex flex-col items-center md:items-end gap-3 shrink-0">
-          <span className="text-[10px] font-black tracking-wider text-emerald-300/80 uppercase">
+        {/* Segmented Timeline Chapter Jump buttons - Ultra Slim Capsule */}
+        <div className="z-10 flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-2 shrink-0 pt-1 md:pt-0 border-t md:border-t-0 border-white/5">
+          <span className="text-[10px] font-bold tracking-wide text-emerald-300/80">
             {selectedLanguage === 'bn' ? 'অধ্যায় পরিবর্তন করুন' : 'Jump to Chapter'}
           </span>
-          <div className="flex items-center gap-1.5 bg-black/45 p-1.5 rounded-2xl border border-white/10 shadow-inner">
+          <div className="flex items-center gap-1 bg-[#041317]/80 backdrop-blur-md px-1.5 py-1 rounded-full border border-teal-500/20 shadow-inner">
             {ISLAMIC_HISTORY_ERAS.map((era, index) => {
               const isSelected = activeEra.id === era.id;
               return (
                 <button
                   key={era.id}
                   onClick={() => handleJumpToEra(era)}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full text-xs font-black transition-all active:scale-95 flex items-center justify-center cursor-pointer relative ${
+                  className={`w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full text-[11px] font-bold transition-all active:scale-95 flex items-center justify-center cursor-pointer relative ${
                     isSelected
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black shadow-lg shadow-emerald-500/30 ring-2 ring-amber-300 scale-110'
-                      : 'bg-white/5 hover:bg-white/15 text-teal-200/80 hover:text-white'
+                      ? 'bg-gradient-to-br from-[#10b981] to-[#047857] text-white font-extrabold shadow-md shadow-emerald-500/40 ring-1.5 ring-emerald-300 ring-offset-1 ring-offset-[#071d22] scale-105'
+                      : 'text-teal-200/70 hover:text-white hover:bg-white/10'
                   }`}
                   title={getLangText(era.name, selectedLanguage)}
                 >
