@@ -318,73 +318,73 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
 
   const fontConfig = getFontSizeConfig();
 
-  // Color & Theme Palette Definitions (matching screenshot and premium variants)
+  // Color & Theme Palette Definitions (matching the app's signature Emerald & Gold identity)
   const themeStyles = useMemo(() => {
     switch (mushafTheme) {
       case 'madina':
-        // Exact look of user reference screenshot!
+        // Royal Madani Emerald & Gold (Signature App UI)
         return {
-          pageBg: 'bg-[#faf7ee]',
-          pageText: 'text-[#062d23]',
-          ruleLine: 'rgba(148, 163, 184, 0.28)',
-          headerBg: 'bg-[#0b3e31]',
-          ribbonContainer: 'bg-[#9eccb0] text-[#062d23] border-[#7db392]',
-          pageNumberBadge: 'bg-black/10 text-[#062d23]',
-          bismillahCard: 'bg-white text-[#0b3e31] border border-emerald-900/10 shadow-md',
-          ayahBadgeBorder: 'border-[#1b5040]',
-          ayahBadgeBg: 'bg-[#e7f1eb]',
-          ayahBadgeText: 'text-[#0b3e31]',
-          ayahHighlightBg: 'bg-emerald-500/20 text-[#04241c] ring-2 ring-emerald-500/50',
-          pageContainerBorder: 'border-[#d8cfbe]',
+          pageBg: 'bg-[#fcfbf7]',
+          pageText: 'text-[#06241b]',
+          ruleLine: 'rgba(210, 175, 125, 0.28)',
+          headerBg: 'bg-gradient-to-r from-[#004d35] via-[#006747] to-[#047857]',
+          ribbonContainer: 'bg-black/25 text-white border-white/20 shadow-inner backdrop-blur-md hover:bg-black/35',
+          pageNumberBadge: 'bg-amber-400 text-slate-950 font-black',
+          bismillahCard: 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/90 text-[#006747] border-2 border-amber-500/50 shadow-md ring-1 ring-amber-400/20',
+          ayahBadgeBorder: 'border-amber-600/80',
+          ayahBadgeBg: 'bg-gradient-to-br from-[#fffdfa] via-amber-50 to-amber-100/90',
+          ayahBadgeText: 'text-amber-950 font-black',
+          ayahHighlightBg: 'bg-amber-400/25 text-[#004d35] ring-2 ring-amber-500/60 shadow-sm',
+          pageContainerBorder: 'border-amber-600/30 ring-1 ring-amber-500/20 shadow-2xl',
         };
       case 'hafezi':
         // Traditional Bangladesh & Indo-Pak Hafezi Mushaf
         return {
-          pageBg: 'bg-[#fcf8ec]',
-          pageText: 'text-[#1e1e1e]',
-          ruleLine: 'rgba(180, 150, 110, 0.22)',
-          headerBg: 'bg-[#1b4332]',
-          ribbonContainer: 'bg-[#d8e2dc] text-[#1b4332] border-[#b7c9be]',
-          pageNumberBadge: 'bg-black/10 text-[#1b4332]',
-          bismillahCard: 'bg-[#fdfaf2] text-[#1b4332] border border-amber-800/15 shadow-md',
-          ayahBadgeBorder: 'border-amber-800/80',
-          ayahBadgeBg: 'bg-[#f5ebd7]',
-          ayahBadgeText: 'text-amber-950',
-          ayahHighlightBg: 'bg-amber-400/25 text-[#1b4332] ring-2 ring-amber-500/50',
-          pageContainerBorder: 'border-[#dcd3be]',
+          pageBg: 'bg-[#faf6eb]',
+          pageText: 'text-[#141414]',
+          ruleLine: 'rgba(190, 150, 100, 0.26)',
+          headerBg: 'bg-gradient-to-r from-[#173824] via-[#1e4830] to-[#173824]',
+          ribbonContainer: 'bg-black/25 text-amber-100 border-amber-500/30 shadow-inner backdrop-blur-md',
+          pageNumberBadge: 'bg-amber-400 text-slate-950 font-black',
+          bismillahCard: 'bg-[#fbf7eb] text-[#1e4830] border-2 border-amber-700/40 shadow-md ring-1 ring-amber-500/20',
+          ayahBadgeBorder: 'border-amber-700',
+          ayahBadgeBg: 'bg-gradient-to-br from-[#fbf7ed] to-[#f2e2be]',
+          ayahBadgeText: 'text-amber-950 font-black',
+          ayahHighlightBg: 'bg-amber-400/30 text-[#173824] ring-2 ring-amber-600/60 shadow-sm',
+          pageContainerBorder: 'border-amber-700/35 ring-1 ring-amber-600/20 shadow-2xl',
         };
       case 'white':
-        // Clean Minimal Modern
+        // Modern Minimalist White & Emerald
         return {
           pageBg: 'bg-white',
           pageText: 'text-slate-900',
-          ruleLine: 'rgba(203, 213, 225, 0.35)',
-          headerBg: 'bg-[#005a3e]',
-          ribbonContainer: 'bg-emerald-100/90 text-emerald-950 border-emerald-300',
-          pageNumberBadge: 'bg-emerald-900/10 text-emerald-950',
-          bismillahCard: 'bg-white text-[#005a3e] border border-slate-200 shadow-sm',
-          ayahBadgeBorder: 'border-emerald-800',
+          ruleLine: 'rgba(16, 185, 129, 0.18)',
+          headerBg: 'bg-gradient-to-r from-[#005a3e] via-[#00704d] to-[#005a3e]',
+          ribbonContainer: 'bg-white/15 text-white border-white/25 shadow-inner backdrop-blur-md',
+          pageNumberBadge: 'bg-emerald-600 text-white font-black',
+          bismillahCard: 'bg-gradient-to-r from-emerald-50/70 via-white to-emerald-50/70 text-[#005a3e] border-2 border-emerald-600/30 shadow-sm',
+          ayahBadgeBorder: 'border-emerald-700',
           ayahBadgeBg: 'bg-emerald-50',
-          ayahBadgeText: 'text-emerald-900',
-          ayahHighlightBg: 'bg-emerald-100 text-emerald-950 ring-2 ring-emerald-400',
-          pageContainerBorder: 'border-slate-200',
+          ayahBadgeText: 'text-emerald-950 font-black',
+          ayahHighlightBg: 'bg-emerald-100 text-emerald-950 ring-2 ring-emerald-500',
+          pageContainerBorder: 'border-emerald-300/60 shadow-xl',
         };
       case 'night':
       default:
-        // OLED / Celestial Midnight Emerald
+        // Celestial Midnight Velvet Emerald (Matching App Dark Mode)
         return {
-          pageBg: 'bg-[#041512]',
+          pageBg: 'bg-[#031510]',
           pageText: 'text-[#d8f5ec]',
-          ruleLine: 'rgba(20, 184, 166, 0.12)',
-          headerBg: 'bg-[#02100d]',
-          ribbonContainer: 'bg-[#0f3b31] text-[#9ae6ce] border-[#1d5c4e]',
-          pageNumberBadge: 'bg-black/40 text-[#a7f3d0]',
-          bismillahCard: 'bg-[#07241e] text-amber-300 border border-emerald-600/30 shadow-lg',
-          ayahBadgeBorder: 'border-amber-400/70',
-          ayahBadgeBg: 'bg-[#07241e]',
-          ayahBadgeText: 'text-amber-300',
-          ayahHighlightBg: 'bg-emerald-500/25 text-emerald-100 ring-2 ring-emerald-400/60',
-          pageContainerBorder: 'border-emerald-900/50',
+          ruleLine: 'rgba(52, 211, 153, 0.13)',
+          headerBg: 'bg-gradient-to-r from-[#031c15] via-[#072c21] to-[#031c15]',
+          ribbonContainer: 'bg-black/40 text-emerald-100 border-emerald-500/40 shadow-inner backdrop-blur-md',
+          pageNumberBadge: 'bg-amber-400 text-slate-950 font-black',
+          bismillahCard: 'bg-gradient-to-r from-[#06221a] via-[#093327] to-[#06221a] text-amber-300 border-2 border-amber-400/40 shadow-lg ring-1 ring-emerald-500/30',
+          ayahBadgeBorder: 'border-amber-400/80',
+          ayahBadgeBg: 'bg-gradient-to-br from-[#0c3127] to-[#041a14]',
+          ayahBadgeText: 'text-amber-300 font-black',
+          ayahHighlightBg: 'bg-emerald-500/25 text-emerald-100 ring-2 ring-emerald-400/60 shadow-md',
+          pageContainerBorder: 'border-emerald-600/40 ring-1 ring-emerald-400/20 shadow-2xl',
         };
     }
   }, [mushafTheme]);
@@ -456,28 +456,29 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
           </button>
 
-          {/* Central Sage Green Interactive Pill Container matching screenshot */}
+          {/* Central Interactive Pill Container matching App UI */}
           <div
             onClick={() => {
               setShowSurahPicker(true);
               if (soundEnabled) soundHaptics.playTap();
             }}
-            className={`flex-1 max-w-xl ${themeStyles.ribbonContainer} font-bold text-xs sm:text-sm py-1.5 px-3 sm:px-5 rounded-xl border flex items-center justify-between shadow-inner cursor-pointer hover:opacity-95 transition select-none`}
+            className={`flex-1 max-w-xl ${themeStyles.ribbonContainer} font-bold text-xs sm:text-sm py-2 px-3 sm:px-5 rounded-xl border flex items-center justify-between shadow-inner cursor-pointer hover:opacity-95 transition select-none`}
             title={selectedLanguage === 'bn' ? 'অন্য সূরা বা জুয নির্বাচন করতে ক্লিক করুন' : 'Click to jump to another Surah or Juz'}
           >
             {/* Left: JUZ badge */}
-            <span className="font-extrabold tracking-wide uppercase flex items-center gap-1">
+            <span className="font-extrabold tracking-wide uppercase flex items-center gap-1.5 text-amber-300">
+              <span className="text-amber-400 text-xs">✦</span>
               <span>JUZ {juzNumber}</span>
             </span>
 
             {/* Center: Page Number badge */}
-            <span className={`font-mono font-black px-2.5 py-0.5 rounded ${themeStyles.pageNumberBadge} text-xs sm:text-sm shadow-xs`}>
+            <span className={`font-mono font-black px-2.5 py-0.5 rounded-lg ${themeStyles.pageNumberBadge} text-xs sm:text-sm shadow-xs`}>
               {startPage}
             </span>
 
             {/* Right: Surah Number and Localized Name badge */}
-            <span className="font-extrabold tracking-wide uppercase flex items-center gap-1 truncate max-w-[150px] sm:max-w-none">
-              <span>{surahDetail.number} {getBareSurahName(surahDetail.number, selectedLanguage)}</span>
+            <span className="font-extrabold tracking-wide flex items-center gap-1 truncate max-w-[150px] sm:max-w-none text-white">
+              <span>{surahDetail.number}. {getBareSurahName(surahDetail.number, selectedLanguage)}</span>
             </span>
           </div>
 
@@ -493,10 +494,10 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 }
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className={`p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer ${
+              className={`p-2 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer ${
                 isPlaying
-                  ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 ring-2 ring-amber-400/50'
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 ring-2 ring-amber-400/50 font-black'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/40 shadow-emerald-950/20'
               }`}
               title={isPlaying ? 'তিলাওয়াত থামান' : 'সম্পূর্ণ সূরা তিলাওয়াত শুনুন'}
             >
@@ -508,7 +509,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               ) : (
                 <>
                   <Play className="w-4 h-4 fill-current" />
-                  <span className="hidden md:inline">{selectedLanguage === 'bn' ? 'তিলাওয়াত' : 'Recite'}</span>
+                  <span className="hidden md:inline">{selectedLanguage === 'bn' ? 'তিলাওয়াত' : 'Recite'}</span>
                 </>
               )}
             </button>
@@ -519,7 +520,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 if (soundEnabled) soundHaptics.playTap();
                 onExitMushaf();
               }}
-              className="px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-100 text-[11px] font-bold border border-white/15 transition cursor-pointer"
+              className="px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-100 text-[11px] font-bold border border-white/20 transition cursor-pointer active:scale-95"
               title="অনুবাদসহ সাধারণ ভিউতে ফিরুন"
             >
               <span>{selectedLanguage === 'bn' ? 'অনুবাদসহ' : 'Normal'}</span>
@@ -664,14 +665,18 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
       <main
         className={`${themeStyles.pageBg} ${themeStyles.pageText} ${themeStyles.pageContainerBorder} border-2 shadow-2xl rounded-[28px] p-4 sm:p-7 md:p-9 space-y-4 relative overflow-hidden transition-colors`}
       >
-        {/* Calligraphic Bismillah Header Card matching user's screenshot */}
+        {/* Calligraphic Bismillah Header Card matching app signature styling */}
         {surahDetail.number !== 1 && surahDetail.number !== 9 && (
           <div className="pt-2 pb-4 text-center">
             <div
-              className={`inline-block py-3 px-8 sm:px-12 rounded-2xl ${themeStyles.bismillahCard} max-w-lg mx-auto transition-transform hover:scale-[1.01]`}
+              className={`inline-block py-3 px-8 sm:px-14 rounded-2xl ${themeStyles.bismillahCard} max-w-lg mx-auto transition-transform hover:scale-[1.01]`}
             >
-              <div className="font-quran text-2xl sm:text-3xl md:text-4xl font-bold tracking-wide select-none drop-shadow-xs">
-                بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-amber-500/80 text-xs sm:text-sm select-none">✦</span>
+                <div className="font-quran text-2xl sm:text-3xl md:text-4xl font-bold tracking-wider select-none drop-shadow-xs">
+                  بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+                </div>
+                <span className="text-amber-500/80 text-xs sm:text-sm select-none">✦</span>
               </div>
             </div>
           </div>
@@ -748,24 +753,26 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
         </div>
 
         {/* Mushaf Page Footer Strip */}
-        <div className="pt-6 mt-6 border-t border-slate-300/80 dark:border-emerald-800/40 flex flex-wrap items-center justify-between gap-3 text-xs font-bold opacity-80">
-          <div className="flex items-center gap-2">
-            <span>{getLocalizedSurahName(surahDetail.number, selectedLanguage)} ({surahDetail.name})</span>
+        <div className="pt-6 mt-6 border-t border-slate-300/70 dark:border-emerald-800/40 flex flex-wrap items-center justify-between gap-3 text-xs font-bold opacity-90">
+          <div className="flex items-center gap-2 text-slate-700 dark:text-emerald-200">
+            <span className="font-extrabold">{getLocalizedSurahName(surahDetail.number, selectedLanguage)} ({surahDetail.name})</span>
             <span>•</span>
             <span>{selectedLanguage === 'bn' ? `${surahDetail.numberOfAyahs}টি আয়াত` : `${surahDetail.numberOfAyahs} Ayahs`}</span>
             <span>•</span>
-            <span>{selectedLanguage === 'bn' ? `পারা ${juzNumber}` : `Juz ${juzNumber}`}</span>
+            <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+              {selectedLanguage === 'bn' ? `পারা ${juzNumber}` : `Juz ${juzNumber}`}
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-black">
+            <span className="px-3 py-1 rounded-xl bg-emerald-600/15 text-emerald-800 dark:text-emerald-300 border border-emerald-600/30 text-[11px] font-black">
               📖 {selectedLanguage === 'bn' ? 'শুধু আরবি পবিত্র কুরআন' : 'Pure Arabic Noble Quran'}
             </span>
           </div>
         </div>
 
         {/* Navigation to Previous & Next Surah */}
-        <div className="pt-2 flex items-center justify-between gap-3">
+        <div className="pt-3 flex items-center justify-between gap-3">
           <button
             onClick={() => {
               if (surahDetail.number > 1) {
@@ -774,13 +781,13 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               }
             }}
             disabled={surahDetail.number <= 1}
-            className={`flex-1 py-3 px-4 rounded-2xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${
+            className={`flex-1 py-3 px-4 rounded-2xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition active:scale-98 shadow-sm ${
               surahDetail.number <= 1
-                ? 'opacity-40 cursor-not-allowed border-transparent'
-                : 'bg-white/80 dark:bg-emerald-950/60 hover:bg-emerald-500/20 border-emerald-700/30 active:scale-95 cursor-pointer shadow-sm'
+                ? 'opacity-40 cursor-not-allowed border-transparent bg-black/5 dark:bg-white/5 text-slate-400'
+                : 'bg-white/90 dark:bg-[#071f18] hover:bg-emerald-50 dark:hover:bg-[#0c2e24] border-emerald-600/30 text-emerald-950 dark:text-emerald-100 cursor-pointer shadow-sm'
             }`}
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>
               {surahDetail.number > 1
                 ? (selectedLanguage === 'bn' ? `পূর্ববর্তী: ${getBareSurahName(surahDetail.number - 1, selectedLanguage)}` : `Previous: ${getBareSurahName(surahDetail.number - 1, selectedLanguage)}`)
@@ -796,10 +803,10 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               }
             }}
             disabled={surahDetail.number >= 114}
-            className={`flex-1 py-3 px-4 rounded-2xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${
+            className={`flex-1 py-3 px-4 rounded-2xl border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition active:scale-98 shadow-md ${
               surahDetail.number >= 114
-                ? 'opacity-40 cursor-not-allowed border-transparent'
-                : 'bg-white/80 dark:bg-emerald-950/60 hover:bg-emerald-500/20 border-emerald-700/30 active:scale-95 cursor-pointer shadow-sm'
+                ? 'opacity-40 cursor-not-allowed border-transparent bg-black/5 dark:bg-white/5 text-slate-400'
+                : 'bg-gradient-to-r from-emerald-600 to-[#006747] hover:from-emerald-500 hover:to-emerald-600 border-emerald-500/50 text-white cursor-pointer shadow-emerald-950/20'
             }`}
           >
             <span>
@@ -807,7 +814,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 ? (selectedLanguage === 'bn' ? `পরবর্তী: ${getBareSurahName(surahDetail.number + 1, selectedLanguage)}` : `Next: ${getBareSurahName(surahDetail.number + 1, selectedLanguage)}`)
                 : (selectedLanguage === 'bn' ? 'শেষ সূরা' : 'Last Surah')}
             </span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 text-white" />
           </button>
         </div>
       </main>
