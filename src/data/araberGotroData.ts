@@ -1,23 +1,32 @@
 export interface TribePersonality {
   id: string;
   nameBn: string;
+  nameEn?: string;
   nameAr?: string;
   roleBn: string;
+  roleEn?: string;
   category: 'sahabi' | 'historical_hanif' | 'negative' | 'historical';
   bioBn: string;
+  bioEn?: string;
   referenceBn: string;
+  referenceEn?: string;
   additionalNotesBn?: string;
 }
 
 export interface ClanResponsibility {
   clanBn: string;
+  clanEn?: string;
   sectionCode: string;
   responsibilityBn: string;
+  responsibilityEn?: string;
   detailsBn: string;
+  detailsEn?: string;
   iconName?: string;
   responsibilityAr?: string;
   preIslamicHolder?: string;
+  preIslamicHolderEn?: string;
   islamicHolder?: string;
+  islamicHolderEn?: string;
   category?: 'kaba_service' | 'military' | 'judiciary' | 'parliament';
 }
 
@@ -27,30 +36,45 @@ export interface TribeSection {
   chapterTitleBn: string;
   sectionCode: string;
   tribeNameBn: string;
+  tribeNameEn?: string;
   tribeNameAr?: string;
   locationOrContextBn: string;
+  locationOrContextEn?: string;
   responsibilityOrRoleBn: string;
+  responsibilityOrRoleEn?: string;
   introductionBn: string;
+  introductionEn?: string;
   subClans?: {
     nameBn: string;
+    nameEn?: string;
     descriptionBn: string;
+    descriptionEn?: string;
     notableFigures?: string[];
   }[];
   personalities: TribePersonality[];
   referencesBn: string[];
+  referencesEn?: string[];
 }
 
 export interface AppendixTribe {
   index: number;
   id: string;
   nameBn: string;
+  nameEn?: string;
   categoryBn: string;
+  categoryEn?: string;
   regionBn: string;
+  regionEn?: string;
   historicalSignificanceBn: string;
+  historicalSignificanceEn?: string;
   sahabaListBn: string[];
+  sahabaListEn?: string[];
   negativeFiguresBn?: string[];
+  negativeFiguresEn?: string[];
   historicalFiguresBn?: string[];
+  historicalFiguresEn?: string[];
   referenceBn: string;
+  referenceEn?: string;
   totalPersonalitiesCount?: number;
 }
 
@@ -64,9 +88,12 @@ export const BOOK_METADATA = {
 // Page 44: অধ্যায় ৩ - এক নজরে এই অধ্যায়ের গোত্রসমূহ
 export interface Chapter3OverviewItem {
   clanBn: string;
+  clanEn?: string;
   sectionCode: string;
   locationBn: string;
+  locationEn?: string;
   noteBn: string;
+  noteEn?: string;
 }
 
 export const CHAPTER3_OVERVIEW: Chapter3OverviewItem[] = [

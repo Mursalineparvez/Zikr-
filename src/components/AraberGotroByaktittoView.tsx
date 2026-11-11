@@ -65,6 +65,8 @@ import {
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice } from '../utils/audioHaptics';
 
+import { ARABER_GOTRO_TRANSLATIONS, TOPIC_TOC_ENGLISH_MAP } from '../utils/araberGotroTranslations';
+
 interface AraberGotroByaktittoViewProps {
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
@@ -78,6 +80,7 @@ type ChapterFilter = 'all' | 1 | 2 | 3;
 interface ClanVisualMeta {
   icon: string;
   badgeBn: string;
+  badgeEn?: string;
   gradientDay: string;
   gradientNight: string;
   borderDay: string;
@@ -89,6 +92,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-hashim': {
     icon: '👑',
     badgeBn: 'কাবার সিকায়াহ ও রিফাদাহ · নবীজি ও আহলে বাইত',
+    badgeEn: 'Kaaba Siqayah & Rifadah · Prophet PBUH & Ahl al-Bayt',
     gradientDay: 'from-amber-500/15 via-emerald-500/10 to-teal-500/5',
     gradientNight: 'from-amber-500/20 via-emerald-950/40 to-[#04191d]',
     borderDay: 'border-amber-400/60',
@@ -98,6 +102,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-umayya': {
     icon: '🚩',
     badgeBn: 'রণপতাকা আল-উকাব · হযরত উসমান ও সেনাপতিত্ব',
+    badgeEn: 'Banner Al-Uqab · Uthman (RA) & Supreme Command',
     gradientDay: 'from-emerald-500/15 via-teal-500/10 to-cyan-500/5',
     gradientNight: 'from-emerald-600/20 via-[#072428] to-[#041417]',
     borderDay: 'border-emerald-400/60',
@@ -107,6 +112,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-makhzum': {
     icon: '🛡️',
     badgeBn: 'অশ্বারোহী বাহিনী ও সমর শিবির · খালিদ বিন ওয়ালিদ',
+    badgeEn: 'Cavalry & Encampment · Khalid ibn al-Walid (RA)',
     gradientDay: 'from-indigo-500/15 via-sky-500/10 to-teal-500/5',
     gradientNight: 'from-indigo-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-indigo-400/60',
@@ -116,6 +122,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-adi': {
     icon: '📜',
     badgeBn: 'কূটনীতি, দূত ও আন্তর্জাতিক সালিশি · হযরত উমর ফারুক',
+    badgeEn: 'Diplomacy & Envoys · Umar Farooq (RA)',
     gradientDay: 'from-teal-500/15 via-emerald-500/10 to-slate-500/5',
     gradientNight: 'from-teal-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-teal-400/60',
@@ -125,6 +132,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-taym': {
     icon: '⚖️',
     badgeBn: 'রক্তপণ (দিয়াত) ও ক্ষতিপূরণ · হযরত আবু বকর সিদ্দিক',
+    badgeEn: 'Blood Money & Arbitration · Abu Bakr As-Siddiq (RA)',
     gradientDay: 'from-sky-500/15 via-teal-500/10 to-amber-500/5',
     gradientNight: 'from-sky-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-sky-400/60',
@@ -134,6 +142,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-asad-quraysh': {
     icon: '🏛️',
     badgeBn: 'দারুন নাদওয়াহ ও বাণিজ্য · উম্মুল মুমিনীন খাদিজা ও যুবাইর',
+    badgeEn: 'Dar al-Nadwah Assembly · Khadijah (RA) & Zubayr (RA)',
     gradientDay: 'from-purple-500/15 via-pink-500/10 to-amber-500/5',
     gradientNight: 'from-purple-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-purple-400/60',
@@ -143,6 +152,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-zuhrah': {
     icon: '🌸',
     badgeBn: 'রাসূলুল্লাহ ﷺ-এর মাতামহ বংশ · আমিনা ও সা\'দ ইবনে আবি ওয়াক্কাস',
+    badgeEn: 'Maternal Lineage of Prophet PBUH · Aminah & Sa\'d ibn Abi Waqqas',
     gradientDay: 'from-rose-500/15 via-amber-500/10 to-teal-500/5',
     gradientNight: 'from-rose-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-rose-400/60',
@@ -152,6 +162,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'quraysh-other-branches': {
     icon: '🔑',
     badgeBn: 'কাবার চাবি, লিওয়া, আযলাম ও হাদিয়াহ · মুস\'আব ইবনে উমায়ের',
+    badgeEn: 'Keys of Kaaba, Standard, Divination & Offerings · Mus\'ab ibn Umair',
     gradientDay: 'from-amber-500/15 via-orange-500/10 to-teal-500/5',
     gradientNight: 'from-amber-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-amber-400/60',
@@ -161,6 +172,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'khazraj-tribe': {
     icon: '🌴',
     badgeBn: 'মদিনার আনসার (বৃহত্তম শাখা) · আবু আইয়ুব ও জাবির ইবনে আব্দুল্লাহ',
+    badgeEn: 'Madinan Ansar (Largest Clan) · Abu Ayyub & Jabir ibn Abdillah',
     gradientDay: 'from-emerald-500/15 via-green-500/10 to-teal-500/5',
     gradientNight: 'from-emerald-900/30 via-[#061e22] to-[#041417]',
     borderDay: 'border-emerald-400/60',
@@ -170,6 +182,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'aws-tribe': {
     icon: '🌿',
     badgeBn: 'মদিনার আনসার (বীরত্বগাঁথা) · সা\'দ ইবনে মু\'আজ ও আসহাবে বদর',
+    badgeEn: 'Madinan Ansar (Fierce Warriors) · Sa\'d ibn Mu\'adh & Badr Sahaba',
     gradientDay: 'from-teal-500/15 via-cyan-500/10 to-emerald-500/5',
     gradientNight: 'from-teal-900/30 via-[#061e22] to-[#041417]',
     borderDay: 'border-teal-400/60',
@@ -179,6 +192,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'madinah-jewish-tribes': {
     icon: '🏰',
     badgeBn: 'মদিনার কায়নুকা, নাদির ও কুরাইজা দুর্গ · ঐতিহাসিক চুক্তি ও সংঘাত',
+    badgeEn: 'Fortresses of Qaynuqa, Nadir & Qurayzah · Historical Treaties',
     gradientDay: 'from-slate-500/15 via-zinc-500/10 to-stone-500/5',
     gradientNight: 'from-slate-900/30 via-[#061e22] to-[#041417]',
     borderDay: 'border-slate-400/60',
@@ -188,6 +202,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-thaqif': {
     icon: '🏔️',
     badgeBn: 'তায়েফ নগরী ও রণপ্রস্তুতি · উরওয়া ইবনে মাসউদ ও মুগীরা',
+    badgeEn: 'City of Taif & Preparations · Urwah ibn Mas\'ud & Mughirah',
     gradientDay: 'from-orange-500/15 via-amber-500/10 to-red-500/5',
     gradientNight: 'from-orange-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-orange-400/60',
@@ -197,6 +212,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-hawazin-saad': {
     icon: '🌾',
     badgeBn: 'দুধমাতা হালিমা ও শুদ্ধতম আরবি · হুনাইনের ঐতিহাসিক ময়দান',
+    badgeEn: 'Foster Mother Halimah & Pure Dialect · Battle of Hunayn',
     gradientDay: 'from-lime-500/15 via-emerald-500/10 to-teal-500/5',
     gradientNight: 'from-lime-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-lime-400/60',
@@ -206,6 +222,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-khuzaa-bakr': {
     icon: '🤝',
     badgeBn: 'হুদাইবিয়ার চুক্তিতে মিত্রতা · মক্কা বিজয়ের ঐতিহাসিক পটভূমি',
+    badgeEn: 'Treaty of Hudaybiyyah Allies · Conquest of Makkah Background',
     gradientDay: 'from-cyan-500/15 via-blue-500/10 to-teal-500/5',
     gradientNight: 'from-cyan-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-cyan-400/60',
@@ -215,6 +232,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-ghifar-daws': {
     icon: '🏜️',
     badgeBn: 'বাণিজ্যপথ ও দক্ষিণ আরব · আবু যার ও আবু হুরায়রা (রা.)',
+    badgeEn: 'Trade Routes & South Arabia · Abu Dharr & Abu Hurairah (RA)',
     gradientDay: 'from-amber-500/15 via-yellow-500/10 to-teal-500/5',
     gradientNight: 'from-amber-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-amber-400/60',
@@ -224,6 +242,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-tamim-kalb': {
     icon: '🦁',
     badgeBn: 'নজদের বীর যোদ্ধা ও কবি · যায়েদ ইবনে হারিসা ও খাব্বাব',
+    badgeEn: 'Warriors of Najd · Zaid ibn Harithah & Khabbab (RA)',
     gradientDay: 'from-red-500/15 via-amber-500/10 to-teal-500/5',
     gradientNight: 'from-red-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-red-400/60',
@@ -233,6 +252,7 @@ const CLAN_VISUAL_MAP: Record<string, ClanVisualMeta> = {
   'banu-ghatfan-hanifa': {
     icon: '⚔️',
     badgeBn: 'খন্দকের বিশাল বাহিনী ও ইয়ামামার ঐতিহাসিক সংঘাত',
+    badgeEn: 'Confederate Army at Trench & Battle of Yamamah',
     gradientDay: 'from-stone-500/15 via-zinc-500/10 to-amber-500/5',
     gradientNight: 'from-stone-900/25 via-[#061e22] to-[#041417]',
     borderDay: 'border-stone-400/60',
@@ -248,6 +268,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   soundEnabled,
 }) => {
   const isDay = themeMode === 'day';
+  const isBn = selectedLanguage === 'bn';
+  const t = ARABER_GOTRO_TRANSLATIONS[isBn ? 'bn' : 'en'];
   const [viewMode, setViewMode] = useState<ViewMode>('topic_toc');
   const [chapterFilter, setChapterFilter] = useState<ChapterFilter>('all');
   const [activeClanId, setActiveClanId] = useState<string>('banu-hashim');
@@ -535,7 +557,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-white/10 hover:bg-white/20 backdrop-blur-md transition cursor-pointer text-white border border-white/20 shadow-2xs"
               >
                 <ArrowLeft className="w-3 h-3" />
-                <span>লাইব্রেরিতে ফিরুন</span>
+                <span>{t.backToLibrary}</span>
               </button>
             )}
 
@@ -544,7 +566,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 {BOOK_METADATA.titleAr}
               </span>
               <span className="text-[9px] px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold whitespace-nowrap">
-                প্রামাণ্য ঐতিহাসিক সীরাত কোষ
+                {t.subHeaderBadge}
               </span>
             </div>
           </div>
@@ -554,10 +576,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             <div>
               <h1 className="text-base sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5">
                 <span className="text-lg">🛡️</span>
-                <span>{BOOK_METADATA.titleBn} (প্রামাণ্য ঐতিহাসিক সীরাত কোষ)</span>
+                <span>{t.mainHeaderTitle}</span>
               </h1>
               <p className="text-[11px] sm:text-xs text-emerald-100/90 leading-relaxed max-w-3xl mt-0.5">
-                প্রাক-ইসলামী ও সীরাত যুগে মক্কার কাবার প্রশাসনিক দায়িত্ব, মদিনার আনসার ভ্রাতৃত্ব এবং সমগ্র আরব উপদ্বীপের শীর্ষ গোত্র ও ব্যক্তিত্বের প্রামাণ্য ইতিহাস।
+                {t.mainHeaderDesc}
               </p>
             </div>
           </div>
@@ -567,29 +589,29 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
               <span className="text-xs">🗺️</span>
               <div>
-                <span className="text-emerald-200/70 block text-[9px]">মূল পরিমণ্ডল</span>
-                <span className="font-bold text-white truncate block">মক্কা, মদিনা ও আরব</span>
+                <span className="text-emerald-200/70 block text-[9px]">{t.metricDomainLabel}</span>
+                <span className="font-bold text-white truncate block">{t.metricDomainValue}</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
               <span className="text-xs">🕋</span>
               <div>
-                <span className="text-emerald-200/70 block text-[9px]">কাবার শাসন</span>
-                <span className="font-bold text-white truncate block">১০টি কুরাইশ দপ্তর</span>
+                <span className="text-emerald-200/70 block text-[9px]">{t.metricKabaLabel}</span>
+                <span className="font-bold text-white truncate block">{t.metricKabaValue}</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
               <span className="text-xs">📜</span>
               <div>
-                <span className="text-emerald-200/70 block text-[9px]">গোত্র কোষ</span>
-                <span className="font-bold text-amber-300 truncate block">৪০টি ঐতিহাসিক গোত্র</span>
+                <span className="text-emerald-200/70 block text-[9px]">{t.metricTribeLabel}</span>
+                <span className="font-bold text-amber-300 truncate block">{t.metricTribeValue}</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
               <span className="text-xs">📊</span>
               <div>
-                <span className="text-emerald-200/70 block text-[9px]">তথ্যসূত্র</span>
-                <span className="font-bold text-emerald-200 truncate block">ইবনে হিশাম ও সীরাত</span>
+                <span className="text-emerald-200/70 block text-[9px]">{t.metricSourceLabel}</span>
+                <span className="font-bold text-emerald-200 truncate block">{t.metricSourceValue}</span>
               </div>
             </div>
           </div>
@@ -612,7 +634,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}
         >
           <Layers className="w-3.5 h-3.5 text-amber-400" />
-          <span>বিষয়ভিত্তিক সূচিপত্র</span>
+          <span>{t.tabTopicToc}</span>
         </button>
 
         <button
@@ -627,7 +649,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
-          <span>গোত্র ডিরেক্টরি</span>
+          <span>{t.tabDirectory}</span>
         </button>
 
         <button
@@ -642,7 +664,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}
         >
           <BookMarked className="w-3.5 h-3.5 text-amber-400" />
-          <span>গোত্র পাঠ (সীরাত)</span>
+          <span>{t.tabReader}</span>
         </button>
 
         <button
@@ -657,7 +679,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}
         >
           <Users className="w-3.5 h-3.5 text-teal-400" />
-          <span>কোন গোত্রে কে কে (ম্যাপিং)</span>
+          <span>{t.tabWhoIsWho}</span>
         </button>
 
         <button
@@ -672,7 +694,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}
         >
           <GitFork className="w-3.5 h-3.5 text-emerald-400" />
-          <span>চার্ট ও বংশধারা</span>
+          <span>{t.tabChartsGallery}</span>
         </button>
 
         <button
@@ -687,7 +709,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}
         >
           <Scroll className="w-3.5 h-3.5" />
-          <span>৪০টি গোত্র কোষ</span>
+          <span>{t.tabAppendix40}</span>
         </button>
 
         <button
@@ -702,7 +724,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}
         >
           <Bookmark className="w-3.5 h-3.5" />
-          <span>বুকমার্ক ({bookmarkedPersonalities.length})</span>
+          <span>{t.tabBookmarks(bookmarkedPersonalities.length)}</span>
         </button>
       </div>
 
@@ -716,7 +738,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="গোত্র, সাহাবি, উপাধি বা হাদিস সূত্র অনুসন্ধান..."
+            placeholder={t.searchPlaceholderGlobal}
             className={`w-full pl-9 pr-7 py-1.5 rounded-lg text-xs border outline-none transition ${
               isDay
                 ? 'bg-slate-50 border-slate-200 focus:border-teal-600 text-slate-800'
@@ -743,7 +765,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70'
               }`}
             >
-              স্বাভাবিক
+              {t.fontSizeNormal}
             </button>
             <button
               onClick={() => setFontSizeLevel('large')}
@@ -753,18 +775,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70'
               }`}
             >
-              বড় (A+)
+              {t.fontSizeLarge}
             </button>
           </div>
         </div>
       </div>
 
       {/* =====================================================================
-          VIEW MODE 0: TOPIC-WISE INDEX (বিষয়ভিত্তিক সূচিপত্র)
-          Comprehensive Thematic Table of Contents with zero page numbers
-          ===================================================================== */}
-      {/* =====================================================================
-          VIEW MODE 0: HAYATUS SAHABA STYLE TABLE OF CONTENTS (বইয়ের মূল সূচিপত্র)
+          VIEW MODE 0: HAYATUS SAHABA STYLE TABLE OF CONTENTS
           Book Table of Contents with category summary cards and numbered lists
           ===================================================================== */}
       {viewMode === 'topic_toc' && (
@@ -777,7 +795,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 type="text"
                 value={tocSearchQuery}
                 onChange={(e) => setTocSearchQuery(e.target.value)}
-                placeholder="সূচিপত্রে খুঁজুন (যেমন: হাশিম, উমর, খালিদ, কাবার চাবি, সিকায়া, খাযরাজ, বদর, তায়েফ...)"
+                placeholder={t.searchPlaceholderToc}
                 className={`w-full pl-9 pr-7 py-1.5 rounded-lg border text-xs font-semibold transition focus:outline-none ${
                   isDay
                     ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500'
@@ -795,7 +813,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             </div>
           </div>
 
-          {/* 4. BOOK TABLE OF CONTENTS (TOC) — 5 CATEGORY BOXES WITH NUMBERED LISTS (COMPACT) */}
+          {/* 4. BOOK TABLE OF CONTENTS (TOC) — 5 CATEGORY BOXES WITH NUMBERED LISTS */}
           <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-md space-y-4 ${
             isDay ? 'bg-white border-amber-200 text-slate-900' : 'bg-[#0b1f24] border-amber-500/30 text-white'
           }`}>
@@ -806,10 +824,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 </span>
                 <div>
                   <h3 className="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400">
-                    সূচিপত্র (Table of Contents)
+                    {t.tocTitle}
                   </h3>
                   <p className="text-[10px] text-slate-500 dark:text-teal-300">
-                    যেকোনো গোত্র বা চার্টে স্পর্শ করে সরাসরি সম্পূর্ণ অধ্যায় পড়ুন
+                    {t.tocSubtitle}
                   </p>
                 </div>
               </div>
@@ -823,7 +841,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     }}
                     className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 transition cursor-pointer"
                   >
-                    সকল বিষয় ✕
+                    {t.allTopicsBtn}
                   </button>
                 )}
                 <button
@@ -834,7 +852,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   }}
                   className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 text-white shadow-xs hover:bg-emerald-500 transition cursor-pointer flex items-center gap-1"
                 >
-                  <span>📊 সকল চার্ট</span>
+                  <span>{t.allChartsBtn}</span>
                 </button>
               </div>
             </div>
@@ -844,13 +862,22 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {TOPIC_WISE_TOC_DATA
                 .filter(topic => selectedTocTopicId === 'all' || topic.id === selectedTocTopicId)
                 .map((topic) => {
-                  const filteredSubs = topic.subsections.filter(s =>
-                    !tocSearchQuery.trim() ||
-                    s.titleBn.toLowerCase().includes(tocSearchQuery.toLowerCase()) ||
-                    s.subtitleBn.toLowerCase().includes(tocSearchQuery.toLowerCase()) ||
-                    s.badgeBn.toLowerCase().includes(tocSearchQuery.toLowerCase()) ||
-                    s.figuresPreview?.some(f => f.toLowerCase().includes(tocSearchQuery.toLowerCase()))
-                  );
+                  const topicDataEn = TOPIC_TOC_ENGLISH_MAP[topic.id];
+                  const themeBadge = isBn ? topic.themeBadgeBn : (topicDataEn?.themeBadgeEn || topic.themeBadgeBn);
+
+                  const filteredSubs = topic.subsections.filter(s => {
+                    if (!tocSearchQuery.trim()) return true;
+                    const q = tocSearchQuery.toLowerCase();
+                    const subDataEn = topicDataEn?.subsectionsEn?.[s.id];
+                    const sTitle = isBn ? s.titleBn : (subDataEn?.titleEn || s.titleBn);
+                    const sSubtitle = isBn ? s.subtitleBn : (subDataEn?.subtitleEn || s.subtitleBn);
+                    const sBadge = isBn ? s.badgeBn : (subDataEn?.badgeEn || s.badgeBn);
+
+                    return sTitle.toLowerCase().includes(q) ||
+                      sSubtitle.toLowerCase().includes(q) ||
+                      sBadge.toLowerCase().includes(q) ||
+                      s.figuresPreview?.some(f => f.toLowerCase().includes(q));
+                  });
 
                   if (filteredSubs.length === 0 && tocSearchQuery.trim()) return null;
 
@@ -869,15 +896,15 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           <span className="text-base shrink-0">{topic.icon}</span>
                           <div>
                             <span className="text-[9px] font-bold uppercase text-amber-500 block">
-                              বিষয় {topic.topicNumber}
+                              {t.topicNumLabel(topic.topicNumber)}
                             </span>
                             <h4 className="font-extrabold text-xs text-amber-700 dark:text-amber-300 truncate">
-                              {topic.themeBadgeBn}
+                              {themeBadge}
                             </h4>
                           </div>
                         </div>
                         <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
-                          {filteredSubs.length}টি বিষয়
+                          {t.topicCountBadge(filteredSubs.length)}
                         </span>
                       </div>
 
@@ -885,6 +912,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       <div className="space-y-1 max-h-60 overflow-y-auto pr-0.5 scrollbar-thin">
                         {filteredSubs.map((sub, sIdx) => {
                           const isChart = sub.type === 'chart';
+                          const subDataEn = topicDataEn?.subsectionsEn?.[sub.id];
+                          const subTitle = isBn ? sub.titleBn : (subDataEn?.titleEn || sub.titleBn);
+                          const subSubtitle = isBn ? sub.subtitleBn : (subDataEn?.subtitleEn || sub.subtitleBn);
+
                           return (
                             <div
                               key={sIdx}
@@ -913,9 +944,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                   {isChart ? '📊' : `${sIdx + 1}.`}
                                 </span>
                                 <div className="truncate">
-                                  <div className="truncate text-[11px]">{sub.titleBn}</div>
+                                  <div className="truncate text-[11px]">{subTitle}</div>
                                   <div className="text-[9px] opacity-70 truncate font-normal">
-                                    {sub.subtitleBn}
+                                    {subSubtitle}
                                   </div>
                                 </div>
                               </div>
@@ -924,7 +955,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 <span className={`text-[8px] px-1 py-0.2 rounded font-black hidden sm:inline ${
                                   isChart ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/10 text-emerald-400'
                                 }`}>
-                                  {isChart ? 'চার্ট' : 'পাঠ'}
+                                  {isChart ? t.badgeChart : t.badgeRead}
                                 </span>
                                 <ChevronRight className="w-3 h-3 text-emerald-500" />
                               </div>
@@ -937,13 +968,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       {topic.relatedChartKey && (
                         <div className="pt-1.5 border-t border-slate-200/40 dark:border-slate-800/60 flex items-center justify-between text-[10px]">
                           <span className="opacity-75 truncate max-w-[150px] text-amber-500 font-medium">
-                            📊 {topic.relatedChartTitleBn}
+                            📊 {isBn ? topic.relatedChartTitleBn : 'Chart Diagram'}
                           </span>
                           <button
                             onClick={() => openChart(topic.relatedChartKey)}
                             className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
                           >
-                            <span>চার্ট</span>
+                            <span>{t.topicChartBtn}</span>
                             <ChevronRight className="w-2.5 h-2.5" />
                           </button>
                         </div>
@@ -979,22 +1010,22 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
                     chapterFilter === 1 ? 'bg-white/20 text-white' : 'bg-amber-500/15 text-amber-500 font-black'
                   }`}>
-                    বিষয় ০১
+                    {t.topicNumLabel(1)}
                   </span>
                   <span className="text-base">🏛️</span>
                 </div>
                 <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
-                  মক্কার কুরাইশ গোত্রসমূহ
+                  {t.dirTopic1Title}
                 </h3>
                 <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 1 ? 'text-white/80' : 'opacity-70'}`}>
-                  পবিত্র কাবার খেদমত, ১০টি প্রধান কুরাইশ দায়িত্ব বণ্টন ও অভিজাত বংশসমূহ
+                  {t.dirTopic1Desc}
                 </p>
               </div>
 
               <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
-                <span>৮টি মূল শাখা</span>
+                <span>{t.dirTopic1Footer}</span>
                 <span className={chapterFilter === 1 ? 'text-amber-200' : 'text-emerald-500'}>
-                  {chapterFilter === 1 ? 'নির্বাচিত ✓' : 'ফিল্টার →'}
+                  {chapterFilter === 1 ? t.filterSelected : t.filterDefault}
                 </span>
               </div>
             </div>
@@ -1015,22 +1046,22 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
                     chapterFilter === 2 ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-400 font-black'
                   }`}>
-                    বিষয় ০২
+                    {t.topicNumLabel(2)}
                   </span>
                   <span className="text-base">🌴</span>
                 </div>
                 <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
-                  মদিনার আনসার ও অন্যান্য
+                  {t.dirTopic2Title}
                 </h3>
                 <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 2 ? 'text-white/80' : 'opacity-70'}`}>
-                  ইয়েমেনের আজদ বংশ, খাযরাজ ও আওস ভ্রাতৃত্ব এবং মদিনার ইহুদি গোত্রসমূহ
+                  {t.dirTopic2Desc}
                 </p>
               </div>
 
               <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
-                <span>আওস, খাযরাজ ও ইহুদি</span>
+                <span>{t.dirTopic2Footer}</span>
                 <span className={chapterFilter === 2 ? 'text-amber-200' : 'text-teal-400'}>
-                  {chapterFilter === 2 ? 'নির্বাচিত ✓' : 'ফিল্টার →'}
+                  {chapterFilter === 2 ? t.filterSelected : t.filterDefault}
                 </span>
               </div>
             </div>
@@ -1051,22 +1082,22 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
                     chapterFilter === 3 ? 'bg-white/20 text-white' : 'bg-orange-500/15 text-orange-400 font-black'
                   }`}>
-                    বিষয় ০৩
+                    {t.topicNumLabel(3)}
                   </span>
                   <span className="text-base">🧭</span>
                 </div>
                 <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
-                  আরবের অন্যান্য গোত্র
+                  {t.dirTopic3Title}
                 </h3>
                 <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 3 ? 'text-white/80' : 'opacity-70'}`}>
-                  তায়েফের সাকীফ, নজদের হাওয়াযিন, হুদাইবিয়ার খুযা'আ, গিফার ও তামিম
+                  {t.dirTopic3Desc}
                 </p>
               </div>
 
               <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
-                <span>১১টি গোত্র</span>
+                <span>{t.dirTopic3Footer}</span>
                 <span className={chapterFilter === 3 ? 'text-amber-200' : 'text-orange-400'}>
-                  {chapterFilter === 3 ? 'নির্বাচিত ✓' : 'ফিল্টার →'}
+                  {chapterFilter === 3 ? t.filterSelected : t.filterDefault}
                 </span>
               </div>
             </div>
@@ -1078,7 +1109,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}>
             <span className="text-[11px] font-bold text-amber-500 flex items-center gap-1 whitespace-nowrap">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>গুরুত্বপূর্ণ চার্টসমূহ:</span>
+              <span>{t.keyChartsStripLabel}</span>
             </span>
 
             <div className="flex items-center gap-1.5">
@@ -1089,7 +1120,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 }}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 whitespace-nowrap transition cursor-pointer"
               >
-                🏛️ কুরাইশ দায়িত্ব চার্ট
+                {t.chartBtnQurayshRoles}
               </button>
 
               <button
@@ -1099,7 +1130,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 }}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 whitespace-nowrap transition cursor-pointer"
               >
-                🌳 বনু হাশিম বংশলতিকা
+                {t.chartBtnHashimTree}
               </button>
 
               <button
@@ -1109,7 +1140,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 }}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30 hover:bg-teal-500/25 whitespace-nowrap transition cursor-pointer"
               >
-                🌿 আনসার গোত্র শাখা
+                {t.chartBtnAnsarTree}
               </button>
 
               <button
@@ -1119,7 +1150,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 }}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/25 whitespace-nowrap transition cursor-pointer"
               >
-                📊 ব্যক্তিত্ব বার চার্ট
+                {t.chartBtnStats}
               </button>
             </div>
           </div>
@@ -1130,6 +1161,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               const meta = CLAN_VISUAL_MAP[sec.id] || {
                 icon: '🛡️',
                 badgeBn: sec.responsibilityOrRoleBn,
+                badgeEn: sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn,
                 gradientDay: 'from-slate-50 to-white',
                 gradientNight: 'from-[#082226] to-[#041417]',
                 borderDay: 'border-slate-200',
@@ -1137,10 +1169,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 themeColor: 'text-emerald-400'
               };
 
+              const tribeName = isBn ? sec.tribeNameBn : (sec.tribeNameEn || sec.tribeNameBn);
+              const locationText = isBn ? sec.locationOrContextBn : (sec.locationOrContextEn || sec.locationOrContextBn);
+              const roleText = isBn ? sec.responsibilityOrRoleBn : (sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn);
+
               const prominentSahaba = sec.personalities
                 .filter(p => p.category === 'sahabi')
                 .slice(0, 3)
-                .map(p => p.nameBn);
+                .map(p => isBn ? p.nameBn : (p.nameEn || p.nameBn));
 
               return (
                 <div
@@ -1161,7 +1197,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                         <div>
                           <div className="flex items-center gap-1.5">
                             <h4 className="text-sm font-black tracking-tight group-hover:text-amber-400 transition">
-                              {sec.tribeNameBn}
+                              {tribeName}
                             </h4>
                             {sec.tribeNameAr && (
                               <span className="text-[10px] font-serif text-amber-500/80 font-bold hidden sm:inline">
@@ -1170,21 +1206,21 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             )}
                           </div>
                           <span className="text-[10px] opacity-75 block mt-0.5">
-                            {sec.locationOrContextBn}
+                            {locationText}
                           </span>
                         </div>
                       </div>
 
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 shrink-0">
-                        {sec.personalities.length} জন
+                        {t.figureCountBadge(sec.personalities.length)}
                       </span>
                     </div>
 
                     {/* Role / Responsibility Badge */}
                     <div className="p-2 rounded-lg bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 text-[11px]">
-                      <span className="font-bold text-amber-500 block mb-0.5">দায়িত্ব ও ভূমিকা:</span>
+                      <span className="font-bold text-amber-500 block mb-0.5">{t.roleLabel}</span>
                       <p className="leading-relaxed opacity-90 line-clamp-2">
-                        {sec.responsibilityOrRoleBn}
+                        {roleText}
                       </p>
                     </div>
 
@@ -1192,7 +1228,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     {prominentSahaba.length > 0 && (
                       <div className="space-y-1">
                         <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                          উল্লেখযোগ্য ব্যক্তিত্ব:
+                          {t.notableFiguresLabel}
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {prominentSahaba.map((name, nIdx) => (
@@ -1205,7 +1241,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           ))}
                           {sec.personalities.length > 3 && (
                             <span className="text-[9px] font-bold opacity-60 self-center">
-                              +{sec.personalities.length - 3} জন
+                              +{sec.personalities.length - 3}
                             </span>
                           )}
                         </div>
@@ -1215,11 +1251,11 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
                   <div className="pt-2 border-t border-dashed border-black/10 dark:border-white/10 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                     <span className="flex items-center gap-1 group-hover:translate-x-0.5 transition">
-                      <span>সীরাত বিবরণী পড়ুন</span>
+                      <span>{t.readSeerahBtn}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </span>
                     <span className="text-[9px] opacity-70">
-                      {sec.subClans ? `${sec.subClans.length} উপশাখা` : 'মূল বংশ'}
+                      {sec.subClans ? t.subClansCount(sec.subClans.length) : t.mainBranchLabel}
                     </span>
                   </div>
                 </div>
@@ -1242,6 +1278,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {ARABER_GOTRO_DATABASE.map((s) => {
                 const isActive = s.id === activeClanId;
                 const meta = CLAN_VISUAL_MAP[s.id];
+                const sTribeName = isBn ? s.tribeNameBn : (s.tribeNameEn || s.tribeNameBn);
+
                 return (
                   <button
                     key={s.id}
@@ -1256,7 +1294,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     }`}
                   >
                     <span>{meta?.icon || '🛡️'}</span>
-                    <span>{s.tribeNameBn}</span>
+                    <span>{sTribeName}</span>
                   </button>
                 );
               })}
@@ -1277,7 +1315,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400">
                       {activeClan.sectionCode}
                     </span>
-                    <h2 className="text-lg sm:text-xl font-black tracking-tight">{activeClan.tribeNameBn}</h2>
+                    <h2 className="text-lg sm:text-xl font-black tracking-tight">
+                      {isBn ? activeClan.tribeNameBn : (activeClan.tribeNameEn || activeClan.tribeNameBn)}
+                    </h2>
                     {activeClan.tribeNameAr && (
                       <span className="text-xs font-serif text-amber-500 font-bold">
                         ({activeClan.tribeNameAr})
@@ -1286,7 +1326,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   </div>
                   <p className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
                     <MapPin className="w-3 h-3" />
-                    <span>{activeClan.locationOrContextBn}</span>
+                    <span>{isBn ? activeClan.locationOrContextBn : (activeClan.locationOrContextEn || activeClan.locationOrContextBn)}</span>
                   </p>
                 </div>
               </div>
@@ -1300,7 +1340,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   }`}
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">পূর্ববর্তী গোত্র</span>
+                  <span className="hidden sm:inline">{t.prevClanBtn}</span>
                 </button>
                 <button
                   disabled={!hasNextClan}
@@ -1309,7 +1349,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     hasNextClan ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/10' : 'opacity-40 cursor-not-allowed'
                   }`}
                 >
-                  <span className="hidden sm:inline">পরবর্তী গোত্র</span>
+                  <span className="hidden sm:inline">{t.nextClanBtn}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -1321,10 +1361,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             }`}>
               <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                 <Crown className="w-3.5 h-3.5" />
-                <span>মক্কার ঐতিহাসিক দায়িত্ব ও মর্যাদা</span>
+                <span>{t.dignityTitle}</span>
               </div>
               <p className="text-xs sm:text-sm font-bold leading-relaxed">
-                {activeClan.responsibilityOrRoleBn}
+                {isBn ? activeClan.responsibilityOrRoleBn : (activeClan.responsibilityOrRoleEn || activeClan.responsibilityOrRoleBn)}
               </p>
             </div>
 
@@ -1335,18 +1375,18 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               <div className="flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>গোত্র পরিচিতি ও ঐতিহাসিক ইতিবৃত্ত</span>
+                  <span>{t.introTitle}</span>
                 </span>
                 <button
-                  onClick={(e) => handleCopy(activeClan.introductionBn, `intro-${activeClan.id}`, e)}
+                  onClick={(e) => handleCopy(isBn ? activeClan.introductionBn : (activeClan.introductionEn || activeClan.introductionBn), `intro-${activeClan.id}`, e)}
                   className="opacity-70 hover:opacity-100 flex items-center gap-1 cursor-pointer"
                 >
                   {copiedId === `intro-${activeClan.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedId === `intro-${activeClan.id}` ? 'কপি হয়েছে' : 'কপি করুন'}</span>
+                  <span>{copiedId === `intro-${activeClan.id}` ? t.copiedBtn : t.copyBtn}</span>
                 </button>
               </div>
               <p className={fontSizeLevel === 'large' ? 'text-base sm:text-lg leading-relaxed' : 'text-sm sm:text-base leading-relaxed'}>
-                {activeClan.introductionBn}
+                {isBn ? activeClan.introductionBn : (activeClan.introductionEn || activeClan.introductionBn)}
               </p>
             </div>
 
@@ -1357,10 +1397,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               }`}>
                 <div className="space-y-0.5">
                   <span className="text-[11px] font-bold px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-500">
-                    ঐতিহাসিক চিত্র
+                    {t.genealogyTitle}
                   </span>
                   <h4 className="text-sm sm:text-base font-black tracking-tight mt-1">
-                    বনু হাশিমের সংক্ষিপ্ত বংশধারা (নবীজি, আহলে বাইত ও খুলাফা)
+                    {t.genealogySubtitle}
                   </h4>
                 </div>
 
@@ -1383,48 +1423,56 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <div className="w-0.5 h-3 bg-amber-500/50 mx-auto" />
 
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
-                    {BANU_HASHIM_GENEALOGY.son.sons.map((son, sIdx) => (
-                      <div
-                        key={sIdx}
-                        className={`p-3 rounded-xl border text-center space-y-1 ${
-                          son.name === 'আব্দুল্লাহ'
-                            ? 'border-amber-500 bg-amber-500/10 shadow-sm'
-                            : son.name === 'আবু লাহাব'
-                            ? 'border-rose-500/40 bg-rose-500/5'
-                            : isDay ? 'border-slate-200 bg-white' : 'border-[#153e46] bg-[#041417]'
-                        }`}
-                      >
-                        <div className="font-bold text-xs sm:text-sm">{son.name}</div>
-                        <div className="text-[10px] opacity-75 leading-tight">{son.desc}</div>
+                    {BANU_HASHIM_GENEALOGY.son.sons.map((son, sIdx) => {
+                      const sonName = son.name;
+                      const sonDesc = son.desc;
 
-                        {son.children && son.children.length > 0 && (
-                          <div className="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700 space-y-1">
-                            {son.children.map((child: any, cIdx: number) => (
-                              <div
-                                key={cIdx}
-                                className={`p-1.5 rounded-lg text-[10px] font-bold ${
-                                  child.isProphet
-                                    ? 'bg-emerald-600 text-white shadow-sm'
-                                    : 'bg-black/5 dark:bg-white/5 text-amber-500'
-                                }`}
-                              >
-                                {child.name}
-                                {child.marriageTo && (
-                                  <div className="text-[9px] opacity-80 font-normal mt-0.5 text-pink-300">
-                                    বিবাহ: {child.marriageTo}
+                      return (
+                        <div
+                          key={sIdx}
+                          className={`p-3 rounded-xl border text-center space-y-1 ${
+                            son.name === 'আব্দুল্লাহ'
+                              ? 'border-amber-500 bg-amber-500/10 shadow-sm'
+                              : son.name === 'আবু লাহাব'
+                              ? 'border-rose-500/40 bg-rose-500/5'
+                              : isDay ? 'border-slate-200 bg-white' : 'border-[#153e46] bg-[#041417]'
+                          }`}
+                        >
+                          <div className="font-bold text-xs sm:text-sm">{sonName}</div>
+                          <div className="text-[10px] opacity-75 leading-snug">{sonDesc}</div>
+
+                          {son.children && son.children.length > 0 && (
+                            <div className="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700 space-y-1">
+                              {son.children.map((child: any, cIdx: number) => {
+                                const childName = isBn ? child.name : (child.nameEn || child.name);
+                                return (
+                                  <div
+                                    key={cIdx}
+                                    className={`p-1.5 rounded-lg text-[10px] font-bold ${
+                                      child.isProphet
+                                        ? 'bg-emerald-600 text-white shadow-sm'
+                                        : 'bg-black/5 dark:bg-white/5 text-amber-500'
+                                    }`}
+                                  >
+                                    {childName}
+                                    {child.marriageTo && (
+                                      <div className="text-[9px] opacity-80 font-normal mt-0.5 text-pink-300">
+                                        Marriage: {child.marriageTo}
+                                      </div>
+                                    )}
+                                    {child.sons && (
+                                      <div className="text-[9px] opacity-90 font-bold mt-0.5 text-amber-300">
+                                        ↓ {child.sons.join(isBn ? ' ও ' : ' & ')}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                                {child.sons && (
-                                  <div className="text-[9px] opacity-90 font-bold mt-0.5 text-amber-300">
-                                    ↓ {child.sons.join(' ও ')}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -1435,7 +1483,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               <div className="space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
                   <Building className="w-4 h-4" />
-                  <span>গোত্রের প্রধান উপশাখাসমূহ ({activeClan.subClans.length}টি)</span>
+                  <span>{t.subClansHeader(activeClan.subClans.length)}</span>
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {activeClan.subClans.map((sc, scIdx) => (
@@ -1446,12 +1494,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       }`}
                     >
                       <h5 className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                        {sc.nameBn}
+                        {isBn ? sc.nameBn : (sc.nameEn || sc.nameBn)}
                       </h5>
-                      <p className="text-xs leading-relaxed opacity-90">{sc.descriptionBn}</p>
+                      <p className="text-xs leading-relaxed opacity-90">
+                        {isBn ? sc.descriptionBn : (sc.descriptionEn || sc.descriptionBn)}
+                      </p>
                       {sc.notableFigures && (
                         <div className="text-[11px] opacity-75 pt-1 border-t border-dashed border-slate-200 dark:border-slate-800">
-                          <strong>ব্যক্তিত্ব:</strong> {sc.notableFigures.join(', ')}
+                          <strong>{isBn ? 'ব্যক্তিত্ব:' : 'Figures:'}</strong> {sc.notableFigures.join(', ')}
                         </div>
                       )}
                     </div>
@@ -1465,9 +1515,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  <span>গোত্রের উল্লেখযোগ্য ব্যক্তিত্ব ({activeClan.personalities.length} জন)</span>
+                  <span>{t.notableFiguresHeader(activeClan.personalities.length)}</span>
                 </h4>
-                <span className="text-xs opacity-60">ক্লিক করে সম্পূর্ণ জীবনী পড়ুন</span>
+                <span className="text-xs opacity-60">{t.clickToReadTip}</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -1475,6 +1525,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   const isBookmarked = bookmarks[pers.id];
                   const isNegative = pers.category === 'negative';
                   const isProphet = pers.id === 'prophet-muhammad';
+                  const persName = isBn ? pers.nameBn : (pers.nameEn || pers.nameBn);
+                  const persRole = isBn ? pers.roleBn : (pers.roleEn || pers.roleBn);
+                  const persBio = isBn ? pers.bioBn : (pers.bioEn || pers.bioBn);
+                  const persRef = isBn ? pers.referenceBn : (pers.referenceEn || pers.referenceBn);
 
                   return (
                     <div
@@ -1499,7 +1553,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             <h5 className={`font-black tracking-tight ${
                               isProphet ? 'text-amber-500 text-base sm:text-lg' : 'text-sm sm:text-base group-hover:text-amber-400 transition'
                             }`}>
-                              {pers.nameBn}
+                              {persName}
                             </h5>
                             {pers.nameAr && (
                               <span className="text-xs font-serif text-amber-500/80 block mt-0.5">
@@ -1510,7 +1564,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
                           <button
                             onClick={(e) => toggleBookmark(pers.id, e)}
-                            title={isBookmarked ? 'বুকমার্ক সরানো' : 'বুকমার্ক যুক্ত করুন'}
+                            title={isBookmarked ? 'Remove Bookmark' : 'Add Bookmark'}
                             className={`p-1.5 rounded-lg border transition ${
                               isBookmarked
                                 ? 'bg-amber-500 text-white border-amber-400'
@@ -1524,7 +1578,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                         {/* Role Badge */}
                         <div className="text-xs font-semibold flex items-center gap-1.5 flex-wrap">
                           <span className={isNegative ? 'text-rose-500 font-bold' : 'text-amber-500 font-bold'}>
-                            {pers.roleBn}
+                            {persRole}
                           </span>
                         </div>
 
@@ -1532,14 +1586,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                         <p className={`text-xs leading-relaxed line-clamp-3 ${
                           isDay ? 'text-slate-600' : 'text-emerald-200/80'
                         } ${fontSizeLevel === 'large' ? 'text-sm' : 'text-xs'}`}>
-                          {pers.bioBn}
+                          {persBio}
                         </p>
                       </div>
 
                       <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] opacity-75">
-                        <span className="truncate max-w-[200px]">📚 {pers.referenceBn}</span>
+                        <span className="truncate max-w-[200px]">📚 {persRef}</span>
                         <span className="font-bold text-amber-500 flex items-center gap-0.5 group-hover:translate-x-1 transition">
-                          <span>বিস্তারিত</span>
+                          <span>{isBn ? 'বিস্তারিত' : 'Details'}</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </span>
                       </div>
@@ -1556,7 +1610,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               }`}>
                 <div className="font-bold text-amber-500 flex items-center gap-1.5">
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>প্রামাণ্য রেফারেন্স ও গ্রন্থসূত্র</span>
+                  <span>{t.referencesTitle}</span>
                 </div>
                 <ol className="list-decimal pl-5 space-y-1">
                   {activeClan.referencesBn.map((ref, rIdx) => (
@@ -1578,14 +1632,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 }`}
               >
                 <ChevronLeft className="w-4 h-4" />
-                <span>পূর্ববর্তী গোত্র</span>
+                <span>{t.prevClanBtn}</span>
               </button>
 
               <button
                 onClick={() => setViewMode('directory')}
                 className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow cursor-pointer"
               >
-                গোত্র ডিরেক্টরিতে ফিরুন
+                {t.returnToDirectoryBtn}
               </button>
 
               <button
@@ -1597,7 +1651,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     : 'opacity-40 cursor-not-allowed border border-transparent'
                 }`}
               >
-                <span>পরবর্তী গোত্র</span>
+                <span>{t.nextClanBtn}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -1617,19 +1671,19 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               <div>
                 <h3 className="text-base sm:text-lg font-black text-amber-500 flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  <span>কোন গোত্রে কে কে : গোত্র ও ব্যক্তিত্বের পূর্ণাঙ্গ ম্যাপিং চার্ট</span>
+                  <span>{t.mappingHeaderTitle}</span>
                 </h3>
                 <p className="text-xs sm:text-sm opacity-80 leading-relaxed mt-1">
-                  আরবের প্রতিটি প্রধান গোত্র অনুযায়ী কে কোন গোত্রের সন্তান, ইসলাম গ্রহণকারী সাহাবায়ে কেরাম (রা.), উম্মাহাতুল মুমিনীন ও ঐতিহাসিক ব্যক্তিত্বের সুবিন্যস্ত চিত্র।
+                  {t.mappingHeaderDesc}
                 </p>
               </div>
 
               {/* Special Cross-Category Quick Tabs */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {[
-                  { id: 'all', label: 'সকল গোত্রীয় তালিকা', icon: '📜' },
-                  { id: 'ashara_mubashshara', label: 'আশারায়ে মুবাশশারা (১০ জান্নাতী)', icon: '🌟' },
-                  { id: 'mothers_of_believers', label: 'উম্মাহাতুল মুমিনীন (সহধর্মিনী)', icon: '🌸' },
+                  { id: 'all', label: t.specCatAll, icon: '📜' },
+                  { id: 'ashara_mubashshara', label: t.specCatAshara, icon: '🌟' },
+                  { id: 'mothers_of_believers', label: t.specCatMothers, icon: '🌸' },
                 ].map((specCat) => (
                   <button
                     key={specCat.id}
@@ -1657,13 +1711,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             {/* Standard Chapter Filter when 'all' is selected */}
             {selectedSpecialCategory === 'all' && (
               <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs font-bold opacity-60">অধ্যায় অনুযায়ী ফিল্টার:</span>
+                <span className="text-xs font-bold opacity-60">{t.filterChapterLabel}</span>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {[
-                    { id: 'all', label: 'সকল অধ্যায়' },
-                    { id: 1, label: '১ম অধ্যায়: কুরাইশ (মক্কা)' },
-                    { id: 2, label: '২য় অধ্যায়: আনসার (মদিনা)' },
-                    { id: 3, label: '৩য় অধ্যায়: বৃহত্তর আরব' },
+                    { id: 'all', label: t.chapterAll },
+                    { id: 1, label: t.chapter1 },
+                    { id: 2, label: t.chapter2 },
+                    { id: 3, label: t.chapter3 },
                   ].map((cat) => (
                     <button
                       key={cat.id}
@@ -1693,80 +1747,87 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span>{selectedSpecialCategory === 'ashara_mubashshara' ? '🌟' : '🌸'}</span>
                   <span>
                     {selectedSpecialCategory === 'ashara_mubashshara'
-                      ? '১০ জান্নাতী সাহাবি (আশারায়ে মুবাশশারা)-এর গোত্র ও বংশমিলন নির্দেশিকা'
-                      : 'উম্মাহাতুল মুমিনীন (নবীজি ﷺ-এর সহধর্মিনীগণ)-এর গোত্র ও বংশতালিকা'}
+                      ? t.asharaSectionTitle
+                      : t.mothersSectionTitle}
                   </span>
                 </h4>
                 <span className="text-xs font-bold opacity-70">
-                  {SPECIAL_HISTORICAL_CROSS_INDEX.filter(item => item.categoryType === selectedSpecialCategory).length} জন মহীয়ান ব্যক্তিত্ব
+                  {t.figureCountBadge(SPECIAL_HISTORICAL_CROSS_INDEX.filter(item => item.categoryType === selectedSpecialCategory).length)}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {SPECIAL_HISTORICAL_CROSS_INDEX
                   .filter(item => item.categoryType === selectedSpecialCategory)
-                  .map((item) => (
-                    <div
-                      key={item.id}
-                      className={`p-5 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
-                        isDay ? 'bg-white border-amber-300/80 shadow-xs' : 'bg-[#082226] border-amber-500/30 shadow-md'
-                      }`}
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h5 className="font-black text-base text-emerald-600 dark:text-emerald-400">
-                                {item.nameBn}
-                              </h5>
-                              <button
-                                onClick={(e) => handlePlayVoice(item.nameAr, `voice-${item.id}`, e)}
-                                title="আরবি উচ্চারণ শুনুন"
-                                className={`p-1 rounded-lg border transition ${
-                                  playingVoiceId === `voice-${item.id}`
-                                    ? 'bg-amber-500 text-white animate-pulse'
-                                    : 'bg-black/5 dark:bg-white/5 opacity-70 hover:opacity-100'
-                                }`}
-                              >
-                                <Volume2 className="w-3.5 h-3.5" />
-                              </button>
+                  .map((item) => {
+                    const itemName = item.nameBn;
+                    const ancestorIntersection = item.ancestorIntersectionBn;
+                    const clanName = item.clanBn;
+                    const significance = item.significanceBn;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-5 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
+                          isDay ? 'bg-white border-amber-300/80 shadow-xs' : 'bg-[#082226] border-amber-500/30 shadow-md'
+                        }`}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h5 className="font-black text-base text-emerald-600 dark:text-emerald-400">
+                                  {itemName}
+                                </h5>
+                                <button
+                                  onClick={(e) => handlePlayVoice(item.nameAr, `voice-${item.id}`, e)}
+                                  title={t.voiceTitleAr}
+                                  className={`p-1 rounded-lg border transition ${
+                                    playingVoiceId === `voice-${item.id}`
+                                      ? 'bg-amber-500 text-white animate-pulse'
+                                      : 'bg-black/5 dark:bg-white/5 opacity-70 hover:opacity-100'
+                                  }`}
+                                >
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                              <span className="text-xs font-arabic text-amber-500 font-semibold block mt-0.5" dir="rtl">
+                                {item.nameAr}
+                              </span>
                             </div>
-                            <span className="text-xs font-arabic text-amber-500 font-semibold block mt-0.5" dir="rtl">
-                              {item.nameAr}
+
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30 shrink-0">
+                              {ancestorIntersection}
                             </span>
                           </div>
 
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30 shrink-0">
-                            {item.ancestorIntersectionBn}
-                          </span>
+                          {/* Clan badge */}
+                          <div className="p-2 rounded-xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-700 dark:text-slate-300">
+                              🏛️ {t.clanTitleLabel} <strong className="text-amber-500">{clanName}</strong>
+                            </span>
+                            <span className="text-[11px] opacity-75">
+                              {t.intersectionLabel} {ancestorIntersection}
+                            </span>
+                          </div>
+
+                          <p className="text-xs leading-relaxed opacity-90 pt-1">
+                            {significance}
+                          </p>
                         </div>
 
-                        {/* Clan badge */}
-                        <div className="p-2 rounded-xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700 dark:text-slate-300">
-                            🏛️ গোত্র: <strong className="text-amber-500">{item.clanBn}</strong>
-                          </span>
-                          <span className="text-[11px] opacity-75">
-                            মিলন: {item.ancestorIntersectionBn}
-                          </span>
+                        <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                          <button
+                            onClick={() => openClanInReader(item.clanId)}
+                            className="font-bold text-emerald-600 dark:text-emerald-400 hover:text-amber-500 flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>{t.readClanSeerahBtn}</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-
-                        <p className="text-xs leading-relaxed opacity-90 pt-1">
-                          {item.significanceBn}
-                        </p>
                       </div>
-
-                      <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
-                        <button
-                          onClick={() => openClanInReader(item.clanId)}
-                          className="font-bold text-emerald-600 dark:text-emerald-400 hover:text-amber-500 flex items-center gap-1 cursor-pointer"
-                        >
-                          <span>এই গোত্রের সীরাত বিবরণী পড়ুন</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -1778,6 +1839,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 const sahaba = clan.personalities.filter(p => p.category === 'sahabi');
                 const historical = clan.personalities.filter(p => p.category === 'historical' || p.category === 'historical_hanif');
                 const negative = clan.personalities.filter(p => p.category === 'negative');
+
+                const tribeName = isBn ? clan.tribeNameBn : (clan.tribeNameEn || clan.tribeNameBn);
+                const locationText = isBn ? clan.locationOrContextBn : (clan.locationOrContextEn || clan.locationOrContextBn);
+                const roleText = isBn ? clan.responsibilityOrRoleBn : (clan.responsibilityOrRoleEn || clan.responsibilityOrRoleBn);
 
                 return (
                   <div
@@ -1794,13 +1859,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                         <span className="text-2xl">{CLAN_VISUAL_MAP[clan.id]?.icon || '🛡️'}</span>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-base sm:text-lg font-black tracking-tight">{clan.tribeNameBn}</h4>
+                            <h4 className="text-base sm:text-lg font-black tracking-tight">{tribeName}</h4>
                             {clan.tribeNameAr && (
                               <div className="flex items-center gap-1">
                                 <span className="text-xs font-serif text-amber-500 font-bold">({clan.tribeNameAr})</span>
                                 <button
                                   onClick={(e) => handlePlayVoice(clan.tribeNameAr!, `clan-${clan.id}`, e)}
-                                  title="আরবি নাম শুনুন"
+                                  title={t.voiceTitleAr}
                                   className={`p-1 rounded-md border text-xs transition ${
                                     playingVoiceId === `clan-${clan.id}` ? 'bg-amber-500 text-white animate-pulse' : 'opacity-60 hover:opacity-100'
                                   }`}
@@ -1810,19 +1875,19 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                               </div>
                             )}
                           </div>
-                          <p className="text-xs opacity-75 mt-0.5">{clan.locationOrContextBn}</p>
+                          <p className="text-xs opacity-75 mt-0.5">{locationText}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 self-end sm:self-center">
                         <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400">
-                          মোট ব্যক্তিত্ব: {clan.personalities.length} জন
+                          {t.figureCountBadge(clan.personalities.length)}
                         </span>
                         <button
                           onClick={() => openClanInReader(clan.id)}
                           className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
                         >
-                          <span>সীরাত আকারে পড়ুন</span>
+                          <span>{t.readSeerahBtn}</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -1835,7 +1900,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       }`}>
                         <Building className="w-4 h-4 text-amber-400 shrink-0" />
                         <div>
-                          <strong className="text-amber-500">দায়িত্ব ও ভূমিকা:</strong> {clan.responsibilityOrRoleBn}
+                          <strong className="text-amber-500">{t.roleLabel}:</strong> {roleText}
                         </div>
                       </div>
 
@@ -1849,7 +1914,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           <div className="flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
                             <span className="flex items-center gap-1.5">
                               <span>🌿</span>
-                              <span>সাহাবায়ে কেরাম (রা.) ({sahaba.length} জন)</span>
+                              <span>{t.sahabaCategoryLabel} ({sahaba.length})</span>
                             </span>
                           </div>
                           <div className="space-y-1.5">
@@ -1865,8 +1930,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 }`}
                               >
                                 <div>
-                                  <span className="font-bold">{s.nameBn}</span>
-                                  <span className="text-[10px] opacity-75 block text-amber-500">{s.roleBn}</span>
+                                  <span className="font-bold">{isBn ? s.nameBn : (s.nameEn || s.nameBn)}</span>
+                                  <span className="text-[10px] opacity-75 block text-amber-500">{isBn ? s.roleBn : (s.roleEn || s.roleBn)}</span>
                                 </div>
                                 <Info className="w-3.5 h-3.5 opacity-60 hover:opacity-100 text-amber-400 shrink-0" />
                               </div>
@@ -1883,7 +1948,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           <div className="flex items-center justify-between text-xs font-bold text-amber-500">
                             <span className="flex items-center gap-1.5">
                               <span>📜</span>
-                              <span>ঐতিহাসিক ও বিশিষ্ট ব্যক্তিত্ব ({historical.length} জন)</span>
+                              <span>{t.historicalCategoryLabel} ({historical.length})</span>
                             </span>
                           </div>
                           <div className="space-y-1.5">
@@ -1899,8 +1964,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 }`}
                               >
                                 <div>
-                                  <span className="font-bold">{h.nameBn}</span>
-                                  <span className="text-[10px] opacity-75 block text-teal-500">{h.roleBn}</span>
+                                  <span className="font-bold">{isBn ? h.nameBn : (h.nameEn || h.nameBn)}</span>
+                                  <span className="text-[10px] opacity-75 block text-teal-500">{isBn ? h.roleBn : (h.roleEn || h.roleBn)}</span>
                                 </div>
                                 <Info className="w-3.5 h-3.5 opacity-60 hover:opacity-100 text-amber-400 shrink-0" />
                               </div>
@@ -1917,7 +1982,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           <div className="flex items-center justify-between text-xs font-bold text-rose-500">
                             <span className="flex items-center gap-1.5">
                               <span>⚔️</span>
-                              <span>প্রতিপক্ষ ও চরম বিরুদ্ধাচরণকারী চরিত্র ({negative.length} জন)</span>
+                              <span>{t.negativeCategoryLabel} ({negative.length})</span>
                             </span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -1933,8 +1998,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 }`}
                               >
                                 <div>
-                                  <span className="font-bold text-rose-400">{n.nameBn}</span>
-                                  <span className="text-[10px] opacity-75 block text-slate-400">{n.roleBn}</span>
+                                  <span className="font-bold text-rose-400">{isBn ? n.nameBn : (n.nameEn || n.nameBn)}</span>
+                                  <span className="text-[10px] opacity-75 block text-slate-400">{isBn ? n.roleBn : (n.roleEn || n.roleBn)}</span>
                                 </div>
                                 <Info className="w-3.5 h-3.5 opacity-60 hover:opacity-100 text-rose-400 shrink-0" />
                               </div>
@@ -1970,7 +2035,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70 hover:opacity-100'
               }`}
             >
-              🏛️ কুরাইশ দায়িত্ব বণ্টন চার্ট
+              {t.galleryTabQurayshRoles}
             </button>
 
             <button
@@ -1981,7 +2046,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70 hover:opacity-100'
               }`}
             >
-              🌳 কুরাইশ মিলনরেখা (Convergence)
+              {t.galleryTabQurayshConvergence}
             </button>
 
             <button
@@ -1992,7 +2057,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70 hover:opacity-100'
               }`}
             >
-              👑 বনু হাশিম বংশলতিকা চিত্র
+              {t.galleryTabHashimTree}
             </button>
 
             <button
@@ -2003,7 +2068,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70 hover:opacity-100'
               }`}
             >
-              🌿 আনসার গোত্র উপশাখা চিত্র
+              {t.galleryTabAnsarTree}
             </button>
 
             <button
@@ -2014,7 +2079,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70 hover:opacity-100'
               }`}
             >
-              🧭 বৃহত্তর আরব গোত্র চার্ট
+              {t.galleryTabArabMap}
             </button>
 
             <button
@@ -2025,7 +2090,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   : 'opacity-70 hover:opacity-100'
               }`}
             >
-              📊 ব্যক্তিত্বের বার চার্ট
+              {t.galleryTabStats}
             </button>
           </div>
 
@@ -2040,16 +2105,16 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <div className="space-y-1.5 max-w-2xl">
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                        মক্কার ১০টি প্রশাসনিক দায়িত্ব
+                        {t.galleryTabQurayshRoles}
                       </span>
-                      <span className="text-xs opacity-60 font-semibold">• কুসাঈ ইবনে কিলাব কর্তৃক প্রতিষ্ঠিত ব্যবস্থা</span>
+                      <span className="text-xs opacity-60 font-semibold">• {t.rolesHeaderTitle}</span>
                     </div>
                     <h3 className="text-xl sm:text-2xl font-black flex items-center gap-2.5">
                       <Building className="w-6 h-6 text-amber-500 shrink-0" />
-                      <span>কুরাইশ শাখাগুলোর দায়িত্ব বণ্টন ও ঐতিহাসিক রূপরেখা</span>
+                      <span>{t.rolesHeaderTitle}</span>
                     </h3>
                     <p className="text-xs sm:text-sm opacity-85 leading-relaxed">
-                      হজ পালনকারীদের সেবা, কাবার পবিত্রতা রক্ষা, নগর প্রতিরক্ষা ও আন্তর্জাতিক কূটনীতি পরিচালনার জন্য কুরাইশদের শীর্ষ ১০টি শাখার মাঝে বিশেষ দপ্তর অর্পিত ছিল।
+                      {t.rolesHeaderDesc}
                     </p>
                   </div>
 
@@ -2058,10 +2123,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   }`}>
                     <div className="font-bold flex items-center gap-1.5 text-amber-500 mb-1">
                       <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                      <span>মক্কা বিজয়ের ঐতিহাসিক বিধান</span>
+                      <span>{isBn ? 'সীরাতের প্রামাণ্য নির্দেশিকা' : 'Authentic Seerah Guidance'}</span>
                     </div>
                     <p className="text-[11px] leading-relaxed opacity-90">
-                      রাসুলুল্লাহ ﷺ ইরশাদ করেন: &ldquo;অতীতের জাহেলি প্রথা সমাপ্ত, কেবল কাবা শরিফের খিদমত (সিদানাহ) ও হাজিদের পানি পান (সিকায়াহ) ব্যতীত।&rdquo;
+                      {t.rolesMakkahHadith}
                     </p>
                   </div>
                 </div>
@@ -2069,11 +2134,11 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 {/* Domain Filter Tabs */}
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-5 border-t border-slate-200/60 dark:border-slate-800/80 scrollbar-none">
                   {[
-                    { id: 'all', label: 'সকল দায়িত্ব (১০)', icon: '🏛️' },
-                    { id: 'kaba_service', label: 'কাবার পবিত্র সেবা (৩)', icon: '💧' },
-                    { id: 'military', label: 'যুদ্ধ ও সেনাপতিত্ব (২)', icon: '🛡️' },
-                    { id: 'judiciary', label: 'বিচার ও সালিশি (২)', icon: '⚖️' },
-                    { id: 'parliament', label: 'সংসদ ও অর্থব্যবস্থা (৩)', icon: '📜' },
+                    { id: 'all', label: t.rolesFilterAll, icon: '🏛️' },
+                    { id: 'kaba_service', label: t.rolesFilterService, icon: '💧' },
+                    { id: 'military', label: t.rolesFilterMilitary, icon: '🛡️' },
+                    { id: 'judiciary', label: t.rolesFilterJudiciary, icon: '⚖️' },
+                    { id: 'parliament', label: t.rolesFilterParliament, icon: '📜' },
                   ].map((filterTab) => (
                     <button
                       key={filterTab.id}
@@ -2095,24 +2160,27 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
                 {/* 10 Offices Quick Jump Strip */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-3 border-t border-slate-200/50 dark:border-slate-800/60 scrollbar-none">
-                  <span className="text-[11px] font-bold opacity-60 shrink-0">১০ দপ্তর:</span>
-                  {MAKKAH_RESPONSIBILITIES.map((r, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        if (soundEnabled) soundHaptics.playTap();
-                        setSelectedResponsibility(r);
-                      }}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
-                        isDay
-                          ? 'bg-white hover:bg-teal-50 border-slate-200 text-slate-700 hover:border-teal-400'
-                          : 'bg-[#041417]/80 hover:bg-[#082226] border-[#153e46] text-slate-300 hover:border-emerald-500'
-                      }`}
-                    >
-                      <span className="font-mono text-[10px] text-amber-500 font-black">#{i + 1}</span>
-                      <span>{r.clanBn}</span>
-                    </button>
-                  ))}
+                  <span className="text-[11px] font-bold opacity-60 shrink-0">{t.keyChartsStripLabel}</span>
+                  {MAKKAH_RESPONSIBILITIES.map((r, i) => {
+                    const clanName = isBn ? r.clanBn : (r.clanEn || r.clanBn);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          if (soundEnabled) soundHaptics.playTap();
+                          setSelectedResponsibility(r);
+                        }}
+                        className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                          isDay
+                            ? 'bg-white hover:bg-teal-50 border-slate-200 text-slate-700 hover:border-teal-400'
+                            : 'bg-[#041417]/80 hover:bg-[#082226] border-[#153e46] text-slate-300 hover:border-emerald-500'
+                        }`}
+                      >
+                        <span className="font-mono text-[10px] text-amber-500 font-black">#{i + 1}</span>
+                        <span>{clanName}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -2120,6 +2188,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredResponsibilities.map((resp, idx) => {
                   const roleNumber = MAKKAH_RESPONSIBILITIES.findIndex(r => r.clanBn === resp.clanBn) + 1;
+                  const clanName = isBn ? resp.clanBn : (resp.clanEn || resp.clanBn);
+                  const responsibilityText = isBn ? resp.responsibilityBn : (resp.responsibilityEn || resp.responsibilityBn);
+                  const detailsText = isBn ? resp.detailsBn : (resp.detailsEn || resp.detailsBn);
+                  const preHolder = isBn ? resp.preIslamicHolder : (resp.preIslamicHolderEn || resp.preIslamicHolder);
+                  const isoHolder = isBn ? resp.islamicHolder : (resp.islamicHolderEn || resp.islamicHolder);
+
                   return (
                     <div
                       key={idx}
@@ -2144,7 +2218,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             <div>
                               <div className="flex items-center gap-2">
                                 <h4 className="text-base sm:text-lg font-black group-hover:text-emerald-500 transition-colors">
-                                  {resp.clanBn}
+                                  {clanName}
                                 </h4>
                                 {resp.responsibilityAr && (
                                   <span className="text-[11px] font-arabic opacity-70 text-amber-500 hidden sm:inline" dir="rtl">
@@ -2153,7 +2227,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 )}
                               </div>
                               <div className="text-xs font-semibold text-amber-500 flex items-center gap-1.5 mt-0.5">
-                                <span>{resp.responsibilityBn}</span>
+                                <span>{responsibilityText}</span>
                               </div>
                             </div>
                           </div>
@@ -2161,31 +2235,31 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           <span className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border shrink-0 ${
                             isDay ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
                           }`}>
-                            দপ্তর #{roleNumber}
+                            #{roleNumber}
                           </span>
                         </div>
 
                         <p className="text-xs sm:text-sm opacity-85 leading-relaxed pt-1">
-                          {resp.detailsBn}
+                          {detailsText}
                         </p>
 
                         {/* Dual-Era Leadership Pill Box */}
                         <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs rounded-xl p-3 border ${
                           isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#041417]/70 border-[#153e46]'
                         }`}>
-                          {resp.preIslamicHolder && (
+                          {preHolder && (
                             <div>
-                              <span className="text-[10px] font-bold opacity-60 block uppercase">🏛️ জাহেলিয়াত যুগে নেতৃত্ব</span>
+                              <span className="text-[10px] font-bold opacity-60 block uppercase">{t.preIslamicLeadership}</span>
                               <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
-                                {resp.preIslamicHolder}
+                                {preHolder}
                               </span>
                             </div>
                           )}
-                          {resp.islamicHolder && (
+                          {isoHolder && (
                             <div>
-                              <span className="text-[10px] font-bold text-emerald-500 block uppercase">☪️ ইসলামের যুগে অবস্থান</span>
+                              <span className="text-[10px] font-bold text-emerald-500 block uppercase">{t.islamicPosition}</span>
                               <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">
-                                {resp.islamicHolder}
+                                {isoHolder}
                               </span>
                             </div>
                           )}
@@ -2193,7 +2267,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       </div>
 
                       <div className="pt-3 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-bold group-hover:text-amber-500 transition-colors">
-                        <span>বিস্তারিত ঐতিহাসিক তথ্য ও সংশ্লিষ্ট ব্যক্তিত্ব দেখুন</span>
+                        <span>{isBn ? 'বিস্তারিত তথ্য পড়ুন' : 'Read Details'}</span>
                         <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                       </div>
                     </div>
@@ -2211,13 +2285,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               <div className="space-y-2 border-b border-slate-200/80 dark:border-slate-800/80 pb-5">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                    বংশমিলন নকশা (Genealogy Convergence)
+                    {t.galleryTabQurayshConvergence}
                   </span>
-                  <span className="text-xs opacity-60">• বিশ্বনবী ﷺ ও সহচরগণের কুরাইশি পূর্বপুরুষ</span>
+                  <span className="text-xs opacity-60">• {t.convergenceHeaderTitle}</span>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-black">সাহাবায়ে কেরাম ও বিশ্বনবী ﷺ-এর কুরাইশি বংশমিলন রেখা</h3>
+                <h3 className="text-xl sm:text-2xl font-black">{t.convergenceHeaderTitle}</h3>
                 <p className="text-xs sm:text-sm opacity-85 leading-relaxed">
-                  রাসূলুল্লাহ ﷺ-এর থেকে কততম বংশস্তরে (Generation) ইসলামের কোন মহান সাহাবি, খলিফা ও উম্মাহাতুল মুমিনীন তাঁর আদি কুরাইশি রক্তধারায় মিলিত হয়েছেন তার নিখুঁত ও বিশুদ্ধ চিত্রপ্রদর্শন।
+                  {t.convergenceHeaderDesc}
                 </p>
               </div>
 
@@ -2226,103 +2300,116 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 isDay ? 'bg-amber-50/70 border-amber-300 text-amber-950' : 'bg-amber-950/20 border-amber-500/30 text-amber-200'
               }`}>
                 <p className="font-semibold">
-                  💡 <strong className="text-amber-500">বংশবিজ্ঞান দ্রষ্টব্য:</strong> কুরাইশ গোত্রের সকল শাখা ফিহর ইবনে মালিকের সন্তান। ১ থেকে ১০ম প্রজন্মের মধ্যে চার খলিফা, আশারায়ে মুবাশশারা এবং উম্মাহাতুল মুমিনীন সকলেই বিশ্বনবী ﷺ-এর পরিবারের সাথে একই পবিত্র শিকড়ে সংযুক্ত।
+                  {t.convergenceHadithNote}
                 </p>
               </div>
 
               {/* Generation Nodes list */}
               <div className="space-y-6 pt-2">
-                {QURAYSH_CONVERGENCE_TREE.map((node, nIdx) => (
-                  <div
-                    key={nIdx}
-                    className={`p-5 sm:p-6 rounded-3xl border relative transition-all shadow-sm ${
-                      isDay
-                        ? 'bg-gradient-to-br from-slate-50 via-white to-amber-50/30 border-slate-200 hover:border-amber-400'
-                        : 'bg-gradient-to-br from-[#041417] via-[#082226] to-[#04191d] border-[#153e46] hover:border-emerald-500/70'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-dashed border-slate-200 dark:border-slate-800">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-500 font-black flex items-center justify-center text-xs shrink-0 shadow-inner">
-                          {node.generationNumber}ম স্তর
+                {QURAYSH_CONVERGENCE_TREE.map((node, nIdx) => {
+                  const ancestorName = node.ancestorNameBn;
+                  const significance = node.significanceBn;
+                  const noteText = node.hadithOrHistoryNoteBn;
+
+                  return (
+                    <div
+                      key={nIdx}
+                      className={`p-5 sm:p-6 rounded-3xl border relative transition-all shadow-sm ${
+                        isDay
+                          ? 'bg-gradient-to-br from-slate-50 via-white to-amber-50/30 border-slate-200 hover:border-amber-400'
+                          : 'bg-gradient-to-br from-[#041417] via-[#082226] to-[#04191d] border-[#153e46] hover:border-emerald-500/70'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-dashed border-slate-200 dark:border-slate-800">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-500 font-black flex items-center justify-center text-xs shrink-0 shadow-inner">
+                            {t.generationLevel(node.generationNumber)}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400">
+                                {ancestorName}
+                              </h4>
+                              <button
+                                onClick={(e) => handlePlayVoice(node.ancestorNameAr, `anc-${nIdx}`, e)}
+                                title={t.voiceTitleAr}
+                                className={`p-1 rounded-md border text-xs transition ${
+                                  playingVoiceId === `anc-${nIdx}` ? 'bg-amber-500 text-white animate-pulse' : 'opacity-60 hover:opacity-100'
+                                }`}
+                              >
+                                <Volume2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <span className="text-xs font-serif text-amber-500 font-semibold" dir="rtl">
+                              {node.ancestorNameAr}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400">
-                              {node.ancestorNameBn}
-                            </h4>
-                            <button
-                              onClick={(e) => handlePlayVoice(node.ancestorNameAr, `anc-${nIdx}`, e)}
-                              title="উচ্চারণ শুনুন"
-                              className={`p-1 rounded-md border text-xs transition ${
-                                playingVoiceId === `anc-${nIdx}` ? 'bg-amber-500 text-white animate-pulse' : 'opacity-60 hover:opacity-100'
+
+                        <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 self-start sm:self-center">
+                          {t.connectedBranchesCount(node.connectedBranches.length)}
+                        </span>
+                      </div>
+
+                      <p className="text-xs sm:text-sm opacity-85 leading-relaxed pt-2">
+                        {significance}
+                      </p>
+
+                      {/* Connected Clan Branches */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
+                        {node.connectedBranches.map((branch, bIdx) => {
+                          const branchClanName = branch.clanNameBn;
+                          const branchRoleTitle = branch.roleTitleBn;
+
+                          return (
+                            <div
+                              key={bIdx}
+                              onClick={() => openClanInReader(branch.clanId)}
+                              className={`p-4 rounded-2xl border transition-all cursor-pointer group space-y-2 ${
+                                isDay
+                                  ? 'bg-white hover:bg-emerald-50/50 border-slate-200 hover:border-teal-400 shadow-xs'
+                                  : 'bg-[#061e22] hover:bg-[#07252b] border-[#153e46] hover:border-emerald-500'
                               }`}
                             >
-                              <Volume2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                          <span className="text-xs font-serif text-amber-500 font-semibold" dir="rtl">
-                            {node.ancestorNameAr}
-                          </span>
-                        </div>
-                      </div>
-
-                      <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 self-start sm:self-center">
-                        {node.connectedBranches.length}টি প্রধান বংশধারা মিলিত
-                      </span>
-                    </div>
-
-                    <p className="text-xs sm:text-sm opacity-85 leading-relaxed pt-2">
-                      {node.significanceBn}
-                    </p>
-
-                    {/* Connected Clan Branches */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
-                      {node.connectedBranches.map((branch, bIdx) => (
-                        <div
-                          key={bIdx}
-                          onClick={() => openClanInReader(branch.clanId)}
-                          className={`p-4 rounded-2xl border transition-all cursor-pointer group space-y-2 ${
-                            isDay
-                              ? 'bg-white hover:bg-emerald-50/50 border-slate-200 hover:border-teal-400 shadow-xs'
-                              : 'bg-[#061e22] hover:bg-[#07252b] border-[#153e46] hover:border-emerald-500'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <h5 className="font-extrabold text-xs sm:text-sm text-amber-500 group-hover:text-amber-400 transition">
-                              {branch.clanNameBn}
-                            </h5>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/5 dark:bg-white/5 opacity-80">
-                              {branch.roleTitleBn}
-                            </span>
-                          </div>
-
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
-                              এই পূর্বপুরুষের সন্তান ও সাহাবিগণ:
-                            </span>
-                            <div className="flex flex-wrap gap-1">
-                              {branch.prominentSahaba.map((sahabi, sIdx) => (
-                                <span
-                                  key={sIdx}
-                                  className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5"
-                                >
-                                  {sahabi}
+                              <div className="flex items-center justify-between">
+                                <h5 className="font-extrabold text-xs sm:text-sm text-amber-500 group-hover:text-amber-400 transition">
+                                  {branchClanName}
+                                </h5>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/5 dark:bg-white/5 opacity-80">
+                                  {branchRoleTitle}
                                 </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                              </div>
 
-                    {node.hadithOrHistoryNoteBn && (
-                      <div className="pt-2 text-[11px] text-amber-500 opacity-90 font-medium italic">
-                        📜 {node.hadithOrHistoryNoteBn}
+                              <div className="space-y-1">
+                                <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
+                                  {t.prominentSahaba}
+                                </span>
+                                <div className="flex flex-wrap gap-1">
+                                  {branch.prominentSahaba.map((sahabi, sIdx) => {
+                                    return (
+                                      <span
+                                        key={sIdx}
+                                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5"
+                                      >
+                                        {sahabi}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      {noteText && (
+                        <div className="pt-2 text-[11px] text-amber-500 opacity-90 font-medium italic">
+                          📜 {noteText}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2336,23 +2423,23 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-amber-500 uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
-                      শাজারা শরীফ
+                      {t.galleryTabHashimTree}
                     </span>
-                    <span className="text-xs opacity-60">• বিশুদ্ধ কুরাইশি বংশধারা</span>
+                    <span className="text-xs opacity-60">• {t.hashimHeaderTitle}</span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black">বনু হাশিমের পবিত্র ঐতিহাসিক বংশলতিকা চিত্র</h3>
+                  <h3 className="text-xl sm:text-2xl font-black">{t.hashimHeaderTitle}</h3>
                   <p className="text-xs sm:text-sm opacity-80">
-                    হাশিম ইবনে আবদে মানাফ থেকে আবদুল মুত্তালিব, বিশ্বনবী হযরত মুহাম্মদ ﷺ এবং আহলে বাইতের গৌরবময় শাখা
+                    {t.hashimHeaderDesc}
                   </p>
                 </div>
 
                 {/* Branch Selector */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                   {[
-                    { id: 'all', label: 'সকল শাখা' },
-                    { id: 'prophet', label: 'নবীজি ﷺ ও আহলে বাইত' },
-                    { id: 'martyrs_caliphs', label: 'বীর শহীদ ও খুলাফা' },
-                    { id: 'uncles', label: 'অন্যান্য পিতৃব্য' },
+                    { id: 'all', label: t.hashimBranchAll },
+                    { id: 'prophet', label: t.hashimBranchProphet },
+                    { id: 'martyrs_caliphs', label: t.hashimBranchMartyrs },
+                    { id: 'uncles', label: t.hashimBranchUncles },
                   ].map((branch) => (
                     <button
                       key={branch.id}
@@ -2377,7 +2464,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 isDay ? 'bg-teal-50/70 border-teal-200 text-teal-900' : 'bg-[#041417]/90 border-emerald-500/30 text-emerald-200'
               }`}>
                 <p className="font-semibold">
-                  রাসুলুল্লাহ ﷺ বলেন: <span className="text-amber-500 font-bold">&ldquo;আল্লাহ তায়ালা ইবরাহিম (আ.)-এর বংশ থেকে ইসমাইল (আ.)-কে, তাঁর বংশ থেকে কিনানাহকে, কিনানাহ থেকে কুরাইশকে, কুরাইশ থেকে বনু হাশিমকে এবং বনু হাশিম থেকে আমাকে মনোনীত করেছেন।&rdquo;</span> — (সহিহ মুসলিম)
+                  {t.hashimHadithNote}
                 </p>
               </div>
 
@@ -2386,7 +2473,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 {/* Level 1: Root - Hashim */}
                 <div className="flex flex-col items-center">
                   <div className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-base text-center shadow-lg border border-amber-300 ring-4 ring-amber-500/20">
-                    <div className="text-[11px] font-bold uppercase tracking-widest text-slate-900/70">বংশের মূল প্রতিষ্ঠাতা</div>
+                    <div className="text-[11px] font-bold uppercase tracking-widest text-slate-900/70">{isBn ? 'মূল পুরুষ' : 'Root Ancestor'}</div>
                     <div>{BANU_HASHIM_GENEALOGY.rootName}</div>
                     {BANU_HASHIM_GENEALOGY.rootNameAr && (
                       <div className="text-xs font-arabic mt-0.5 font-normal" dir="rtl">{BANU_HASHIM_GENEALOGY.rootNameAr}</div>
@@ -2400,7 +2487,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <div className={`px-8 py-4 rounded-3xl border text-center shadow-md max-w-md w-full ${
                     isDay ? 'bg-teal-50 border-teal-300 text-teal-950' : 'bg-[#041417] border-emerald-500/60 text-emerald-100 ring-2 ring-emerald-500/20'
                   }`}>
-                    <div className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">মক্কার অভিভাবক ও সর্দার</div>
+                    <div className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">{isBn ? 'মক্কার সর্দার' : 'Guardian of Makkah'}</div>
                     <div className="font-black text-lg sm:text-xl">{BANU_HASHIM_GENEALOGY.son.name}</div>
                     <div className="text-xs opacity-80 mt-0.5">{BANU_HASHIM_GENEALOGY.son.title}</div>
                   </div>
@@ -2421,6 +2508,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       const isProphetBranch = son.name === 'আব্দুল্লাহ';
                       const isMartyrBranch = son.name === 'হামযা (রা.)';
                       const isEnemyBranch = son.name === 'আবু লাহাব';
+                      const sonName = son.name;
+                      const sonDesc = son.desc;
 
                       return (
                         <div
@@ -2441,73 +2530,86 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                         >
                           <div className="space-y-1.5 pb-2">
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md inline-block uppercase bg-black/5 dark:bg-white/5 text-amber-500">
-                              আবদুল মুত্তালিবের পুত্র
+                              {isBn ? 'পুত্র' : 'Son'}
                             </span>
-                            <div className="font-black text-sm sm:text-base">{son.name}</div>
-                            <div className="text-[11px] opacity-80 leading-snug">{son.desc}</div>
+                            <div className="font-black text-sm sm:text-base">{sonName}</div>
+                            <div className="text-[11px] opacity-80 leading-snug">{sonDesc}</div>
                           </div>
 
                           {son.children && son.children.length > 0 && (
                             <div className="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700/80 space-y-2 mt-2">
-                              {son.children.map((child: any, cIdx: number) => (
-                                <div
-                                  key={cIdx}
-                                  className={`p-2.5 rounded-xl text-left border space-y-1.5 ${
-                                    child.isProphet
-                                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border-emerald-400 ring-2 ring-amber-400/40'
-                                      : isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#082226] border-[#153e46] text-slate-200'
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between gap-1">
-                                    <span className="font-black text-xs">{child.name}</span>
-                                    {child.isProphet && (
-                                      <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded">
-                                        সর্বশেষ নবী
-                                      </span>
+                              {son.children.map((child: any, cIdx: number) => {
+                                const childName = child.name;
+                                const childBadge = child.badge;
+                                const childTitle = child.title;
+
+                                return (
+                                  <div
+                                    key={cIdx}
+                                    className={`p-2.5 rounded-xl text-left border space-y-1.5 ${
+                                      child.isProphet
+                                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md border-emerald-400 ring-2 ring-amber-400/40'
+                                        : isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#082226] border-[#153e46] text-slate-200'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-1">
+                                      <span className="font-black text-xs">{childName}</span>
+                                      {child.isProphet && (
+                                        <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded">
+                                          {isBn ? 'সর্বশেষ নবী' : 'Final Prophet'}
+                                        </span>
+                                      )}
+                                      {childBadge && !child.isProphet && (
+                                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30">
+                                          {childBadge}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {childTitle && (
+                                      <div className="text-[10px] opacity-80 text-amber-400 font-medium">
+                                        {childTitle}
+                                      </div>
                                     )}
-                                    {child.badge && !child.isProphet && (
-                                      <span className="text-[9px] bg-emerald-500/20 text-emerald-400 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30">
-                                        {child.badge}
-                                      </span>
+
+                                    {/* Ahl al-Bayt Nested Children (e.g. Sayyida Fatima and Hasan-Husain) */}
+                                    {child.children && child.children.length > 0 && (
+                                      <div className="pt-1.5 mt-1 border-t border-white/20 space-y-1.5">
+                                        {child.children.map((subChild: any, scIdx: number) => {
+                                          const subName = subChild.name;
+                                          const subBadge = subChild.badge;
+                                          const marriageText = subChild.marriageTo;
+                                          const sonsJoined = subChild.sons?.join(isBn ? ' ও ' : ' & ');
+
+                                          return (
+                                            <div
+                                              key={scIdx}
+                                              className="p-1.5 rounded-lg bg-black/20 border border-amber-300/30 text-[10px]"
+                                            >
+                                              <div className="flex items-center justify-between">
+                                                <span className="font-black text-amber-300">{subName}</span>
+                                                <span className="text-[9px] text-emerald-200 bg-emerald-800/40 px-1 py-0.2 rounded">
+                                                  {subBadge}
+                                                </span>
+                                              </div>
+                                              {subChild.marriageTo && (
+                                                <div className="text-[9px] text-pink-200 mt-0.5">
+                                                  {isBn ? 'বিবাহ:' : 'Marriage:'} {marriageText}
+                                                </div>
+                                              )}
+                                              {subChild.sons && (
+                                                <div className="text-[9px] text-amber-200 font-bold mt-0.5">
+                                                  {isBn ? 'জান্নাতী সর্দার:' : 'Leaders in Paradise:'} {sonsJoined}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
                                     )}
                                   </div>
-
-                                  {child.title && (
-                                    <div className="text-[10px] opacity-80 text-amber-400 font-medium">
-                                      {child.title}
-                                    </div>
-                                  )}
-
-                                  {/* Ahl al-Bayt Nested Children (e.g. Sayyida Fatima and Hasan-Husain) */}
-                                  {child.children && child.children.length > 0 && (
-                                    <div className="pt-1.5 mt-1 border-t border-white/20 space-y-1.5">
-                                      {child.children.map((subChild: any, scIdx: number) => (
-                                        <div
-                                          key={scIdx}
-                                          className="p-1.5 rounded-lg bg-black/20 border border-amber-300/30 text-[10px]"
-                                        >
-                                          <div className="flex items-center justify-between">
-                                            <span className="font-black text-amber-300">{subChild.name}</span>
-                                            <span className="text-[9px] text-emerald-200 bg-emerald-800/40 px-1 py-0.2 rounded">
-                                              {subChild.badge}
-                                            </span>
-                                          </div>
-                                          {subChild.marriageTo && (
-                                            <div className="text-[9px] text-pink-200 mt-0.5">
-                                              বিবাহ: {subChild.marriageTo}
-                                            </div>
-                                          )}
-                                          {subChild.sons && (
-                                            <div className="text-[9px] text-amber-200 font-bold mt-0.5">
-                                              জান্নাতী সর্দার: {subChild.sons.join(' ও ')}
-                                            </div>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -2527,22 +2629,22 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-teal-500 uppercase tracking-wider px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/20">
-                      মদিনাতুল মুনাওয়ারার আনসার
+                      {t.galleryTabAnsarTree}
                     </span>
-                    <span className="text-xs opacity-60">• ইয়াসরিবের আদি বংশধারা</span>
+                    <span className="text-xs opacity-60">• {t.ansarHeaderDesc}</span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black">আওস ও খাযরাজ গোত্রের উপশাখা চিত্র</h3>
+                  <h3 className="text-xl sm:text-2xl font-black">{t.ansarHeaderTitle}</h3>
                   <p className="text-xs sm:text-sm opacity-80">
-                    ইয়েমেনের প্রাচীন কাহতানি &lsquo;আজদ&rsquo; বংশ থেকে হিজরত করে মদিনায় বসতি স্থাপনকারী দুই ভ্রাতৃপ্রতিম গোত্র
+                    {t.ansarHeaderDesc}
                   </p>
                 </div>
 
                 {/* Sub Tabs */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                   {[
-                    { id: 'tree', label: 'বংশলতিকা ও উপশাখা চিত্র' },
-                    { id: 'comparison', label: 'খাযরাজ বনাম আওস তুলনা' },
-                    { id: 'virtues', label: 'আনসারদের মর্যাদা ও হাদিস' },
+                    { id: 'tree', label: t.ansarSubTabTree },
+                    { id: 'comparison', label: t.ansarSubTabComparison },
+                    { id: 'virtues', label: t.ansarSubTabVirtues },
                   ].map((subTab) => (
                     <button
                       key={subTab.id}
@@ -2567,7 +2669,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   {/* Root Origin */}
                   <div className="flex flex-col items-center">
                     <div className="px-8 py-3 rounded-2xl bg-teal-700 text-white font-black text-sm sm:text-base text-center shadow-lg border border-teal-500 ring-4 ring-teal-500/20">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-teal-200">আদি কাহতানি পূর্বপুরুষ</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-teal-200">{isBn ? 'আদি পুরুষ' : 'Root Ancestor'}</div>
                       <div>{ANSAR_GENEALOGY.ancestor}</div>
                     </div>
                     <div className="w-0.5 h-6 bg-teal-500/50" />
@@ -2577,6 +2679,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {ANSAR_GENEALOGY.branches.map((branch, bIdx) => {
                       const isKhazraj = branch.name.includes('খাযরাজ');
+                      const branchName = branch.name;
+
                       return (
                         <div
                           key={bIdx}
@@ -2589,34 +2693,40 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                               <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
                                 isKhazraj ? 'bg-amber-500/15 text-amber-500' : 'bg-teal-500/15 text-teal-500'
                               }`}>
-                                {isKhazraj ? 'বৃহত্তম আনসার গোত্র (মদিনার সিংহভাগ)' : 'প্রভাবশালী যুদ্ধবাজ আনসার গোত্র'}
+                                {isKhazraj ? (isBn ? 'খাযরাজ' : 'Khazraj') : (isBn ? 'আওস' : 'Aws')}
                               </span>
                               <h4 className="text-lg sm:text-xl font-black mt-1 text-emerald-600 dark:text-emerald-400">
-                                {branch.name}
+                                {branchName}
                               </h4>
                             </div>
                             <span className="text-xs opacity-75 font-bold px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/5">
-                              {branch.subClans.length}টি প্রধান উপশাখা
+                              {t.subClansCount(branch.subClans.length)}
                             </span>
                           </div>
 
                           <div className="space-y-2.5">
-                            {branch.subClans.map((sub, sIdx) => (
-                              <div
-                                key={sIdx}
-                                className={`p-3.5 rounded-2xl border transition-all ${
-                                  isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                  <div className="font-bold text-xs sm:text-sm">{sub.name}</div>
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-500 shrink-0">
-                                    দলপতি: {sub.leader}
-                                  </span>
+                            {branch.subClans.map((sub, sIdx) => {
+                              const subName = sub.name;
+                              const leaderName = sub.leader;
+                              const subNote = sub.note;
+
+                              return (
+                                <div
+                                  key={sIdx}
+                                  className={`p-3.5 rounded-2xl border transition-all ${
+                                    isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <div className="font-bold text-xs sm:text-sm">{subName}</div>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-500 shrink-0">
+                                      {isBn ? `সর্দার: ${leaderName}` : `Leader: ${leaderName}`}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs opacity-80 leading-relaxed">{subNote}</div>
                                 </div>
-                                <div className="text-xs opacity-80 leading-relaxed">{sub.note}</div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       );
@@ -2633,31 +2743,31 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     <table className="w-full text-left text-xs sm:text-sm border-collapse">
                       <thead>
                         <tr className={`border-b ${isDay ? 'bg-slate-100 text-slate-800' : 'bg-[#082226] text-emerald-300'}`}>
-                          <th className="p-3.5 font-black">তুলনার বিষয়</th>
-                          <th className="p-3.5 font-black text-amber-500">বনু খাযরাজ গোত্র</th>
-                          <th className="p-3.5 font-black text-teal-400">বনু আওস গোত্র</th>
+                          <th className="p-3.5 font-black">{isBn ? 'তুলনার বিষয়' : 'Topic'}</th>
+                          <th className="p-3.5 font-black text-amber-500">{isBn ? 'বনু খাযরাজ' : 'Banu Khazraj'}</th>
+                          <th className="p-3.5 font-black text-teal-400">{isBn ? 'বনু আওস' : 'Banu Aws'}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                         <tr>
-                          <td className="p-3.5 font-bold opacity-70">জনসংখ্যা ও আকার</td>
-                          <td className="p-3.5">মদিনার আনসারদের প্রায় তিন-চতুর্থাংশ (সংখ্যাধিক্য)</td>
-                          <td className="p-3.5">সংখ্যায় কিছুটা কম তবে অত্যন্ত শক্তিশালী ও বীরযোদ্ধা</td>
+                          <td className="p-3.5 font-bold opacity-70">{isBn ? 'আদি বংশধারা' : 'Ancestral Lineage'}</td>
+                          <td className="p-3.5">{isBn ? 'খাযরাজ ইবনে হারিসাহ (আজদ কাহতান)' : 'Khazraj ibn Harithah (Azd Kahlan)'}</td>
+                          <td className="p-3.5">{isBn ? 'আওস ইবনে হারিসাহ (আজদ কাহতান)' : 'Aws ibn Harithah (Azd Kahlan)'}</td>
                         </tr>
                         <tr>
-                          <td className="p-3.5 font-bold opacity-70">আকাবার প্রথম ও দ্বিতীয় বায়াত</td>
-                          <td className="p-3.5">প্রথম বায়াতের ১২ জনের মধ্যে বেশিরভাগ এবং দ্বিতীয় বায়াতেও আধিক্য</td>
-                          <td className="p-3.5">সা&lsquo;দ ইবনে মু&lsquo;আজ (রা.)-এর নেতৃত্বে ব্যাপক ইসলাম গ্রহণ</td>
+                          <td className="p-3.5 font-bold opacity-70">{isBn ? 'জনসংখ্যা ও প্রভাব' : 'Population & Strength'}</td>
+                          <td className="p-3.5">{isBn ? 'মদিনার বৃহত্তর শাখা (~৩/৪ অংশ)' : 'Majority Clan in Madinah (~3/4)'}</td>
+                          <td className="p-3.5">{isBn ? 'মদিনার সমকক্ষ শক্তিশালী শাখা' : 'Equally Powerful Counterpart Clan'}</td>
                         </tr>
                         <tr>
-                          <td className="p-3.5 font-bold opacity-70">প্রধান দলপতি</td>
-                          <td className="p-3.5">সা&lsquo;দ ইবনে উবাদাহ (রা.) ও আস&lsquo;আদ ইবনে যুরারাহ (রা.)</td>
-                          <td className="p-3.5">সা&lsquo;দ ইবনে মু&lsquo;আজ (রা.) ও উসাইদ ইবনে হুদাইর (রা.)</td>
+                          <td className="p-3.5 font-bold opacity-70">{isBn ? 'প্রধান সর্দার' : 'Key Leaders'}</td>
+                          <td className="p-3.5">{isBn ? 'সা\'দ ইবনে উবাদাহ, আস\'আদ ইবনে যারা রাহ' : 'Sa\'d ibn Ubadah, As\'ad ibn Zurarah'}</td>
+                          <td className="p-3.5">{isBn ? 'সা\'দ ইবনে মু\'আজ, উসাইদ ইবনে হুদাইর' : 'Sa\'d ibn Mu\'adh, Usaid ibn Hudair'}</td>
                         </tr>
                         <tr>
-                          <td className="p-3.5 font-bold opacity-70">কুরআন সংকলনে ভূমিকা</td>
-                          <td className="p-3.5">যায়েদ ইবনে সাবিত (রা.), উবাই ইবনে কা&lsquo;ব (রা.)</td>
-                          <td className="p-3.5">বদর ও উহুদে শীর্ষ যোদ্ধা ও অকুতোভয় সেনাদল</td>
+                          <td className="p-3.5 font-bold opacity-70">{isBn ? 'প্রধান অবদান' : 'Primary Contribution'}</td>
+                          <td className="p-3.5">{isBn ? 'আকাবার বায়আত, বদর যুদ্ধ ও হাদিস বর্ণনাকারী' : 'Pledges of Aqabah, Badr & Hadith Transmission'}</td>
+                          <td className="p-3.5">{isBn ? 'মদিনার দুর্গ রক্ষা, খন্দকের যুদ্ধ ও খিলাফতের সমর্থন' : 'Madinah Defense, Battle of Trench & Caliphate Support'}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -2668,26 +2778,30 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {ansarTab === 'virtues' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className={`p-5 rounded-2xl border space-y-2 ${
-                    isDay ? 'bg-teal-50 border-teal-200' : 'bg-[#041417] border-[#153e46]'
+                    isDay ? 'bg-teal-50 border-teal-200' : 'bg-[#041417]'
                   }`}>
                     <h4 className="font-black text-sm text-amber-500 flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4" />
-                      <span>ঈমানের মাপকাঠি আনসারদের ভালোবাসা</span>
+                      <span>{isBn ? 'আনসারদের ঈমানি মর্যাদা' : 'Faith & Virtue of Ansar'}</span>
                     </h4>
                     <p className="text-xs sm:text-sm leading-relaxed opacity-90">
-                      রাসুলুল্লাহ ﷺ বলেন: &ldquo;আনসারদের ভালোবাসা খাঁটি ঈমানের লক্ষণ, আর তাদের প্রতি বিদ্বেষ মুনাফিকির আলামত। যে তাদের ভালোবাসে, আল্লাহ তাকে ভালোবাসেন।&rdquo; (সহিহ বুখারি)
+                      {isBn
+                        ? 'রাসূলুল্লাহ (সা.) বলেন: "আনসারদের ভালোবাসাই ঈমানের আলামত এবং তাদের প্রতি বিদ্বেষই মুনাফিকির আলামত।" — (সহিহ বুখারি)'
+                        : 'The Prophet (PBUH) said: "Love for the Ansar is a sign of faith and hatred for the Ansar is a sign of hypocrisy." — (Sahih Bukhari)'}
                     </p>
                   </div>
 
                   <div className={`p-5 rounded-2xl border space-y-2 ${
-                    isDay ? 'bg-amber-50/60 border-amber-200' : 'bg-[#041417] border-[#153e46]'
+                    isDay ? 'bg-amber-50/60 border-amber-200' : 'bg-[#041417]'
                   }`}>
                     <h4 className="font-black text-sm text-emerald-500 flex items-center gap-1.5">
                       <Heart className="w-4 h-4" />
-                      <span>আনসারদের উপত্যকা ও হিজরতের মর্যাদা</span>
+                      <span>{isBn ? 'আনসারদের অনন্য ত্যাগ' : 'Unmatched Sacrifice of Ansar'}</span>
                     </h4>
                     <p className="text-xs sm:text-sm leading-relaxed opacity-90">
-                      রাসুলুল্লাহ ﷺ বলেন: &ldquo;যদি সমগ্র মানুষ এক উপত্যকায় গমন করে আর আনসাররা অন্য উপত্যকায় গমন করে, তবে আমি আনসারদের উপত্যকাতেই অবস্থান করব।&rdquo; (সহিহ বুখারি)
+                      {isBn
+                        ? 'হিজরতের পর নিজের ঘরবাড়ি ও সম্পদ অর্ধেক ভাগ করে আনসারগণ মুহাজির ভাইদের গ্রহণ করেছিলেন।'
+                        : 'After Hijrah, the Ansar welcomed their Muhajir brothers by sharing half of their homes and wealth.'}
                     </p>
                   </div>
                 </div>
@@ -2702,11 +2816,11 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             }`}>
               <div className="space-y-1 border-b border-slate-200/80 dark:border-slate-800/80 pb-4">
                 <span className="text-xs font-bold text-orange-500 uppercase tracking-wider px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20">
-                  অঞ্চলভিত্তিক গোত্র বিন্যাস
+                  {t.galleryTabArabMap}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black">বৃহত্তর আরবের ১০টি প্রধান ভৌগোলিক অঞ্চল ও গোত্র চিত্র</h3>
+                <h3 className="text-xl sm:text-2xl font-black">{t.arabMapHeaderTitle}</h3>
                 <p className="text-xs sm:text-sm opacity-80">
-                  মক্কা, মদিনা, তায়েফ, নজদ, ইয়ামামাহ, ইয়েমেন ও সিরিয়া সীমান্তের ভূ-রাজনৈতিক রূপরেখা
+                  {t.arabMapHeaderDesc}
                 </p>
               </div>
 
@@ -2726,14 +2840,16 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div className="absolute top-3 right-3 z-10 p-2.5 rounded-2xl bg-black/40 backdrop-blur-md text-white border border-white/10 text-[11px] font-bold space-y-1">
                   <div className="flex items-center gap-1.5 text-amber-300">
                     <MapPin className="w-3.5 h-3.5" />
-                    <span>মানচিত্রের পিন স্পর্শ করুন</span>
+                    <span>{t.mapPinInstruction}</span>
                   </div>
-                  <div className="text-[10px] opacity-80">১০টি কৌশলগত আরব এলাকা</div>
+                  <div className="text-[10px] opacity-80">{isBn ? 'মানচিত্রের পিন সিলেক্ট করুন' : 'Select a pin on the map'}</div>
                 </div>
 
                 {/* Hotspot Pins on SVG Overlay */}
                 {ARABIAN_TRIBAL_GEO_REGIONS.map((reg) => {
                   const isSelected = reg.id === activeGeoRegionId;
+                  const regShortName = isBn ? reg.nameBn.split(' ')[0] : reg.nameBn.split(' ')[0];
+
                   return (
                     <button
                       key={reg.id}
@@ -2757,7 +2873,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             ? 'bg-amber-400 text-slate-950 border-amber-300'
                             : 'bg-black/70 text-white border-white/20'
                         }`}>
-                          {reg.nameBn.split(' ')[0]}
+                          {regShortName}
                         </span>
                       </div>
                     </button>
@@ -2768,6 +2884,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {/* Active Geo Region Detailed Showcase Card */}
               {(() => {
                 const activeReg = ARABIAN_TRIBAL_GEO_REGIONS.find(r => r.id === activeGeoRegionId) || ARABIAN_TRIBAL_GEO_REGIONS[0];
+                const regName = activeReg.nameBn;
+                const regDetails = activeReg.detailsBn;
+                const dominantTribesText = activeReg.dominantTribesBn.join(', ');
+                const historicalEventsText = activeReg.historicalEventsBn.join(' • ');
+                const prominentSahabaText = activeReg.prominentSahabaList.join(', ');
+
                 return (
                   <div className={`p-6 rounded-3xl border space-y-4 shadow-md ${
                     isDay ? 'bg-gradient-to-r from-amber-50/70 via-white to-teal-50/50 border-amber-300' : 'bg-gradient-to-r from-[#04161a] via-[#082226] to-[#0b2d33] border-emerald-500/40 text-emerald-100'
@@ -2776,12 +2898,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30">
-                            নির্বাচিত অঞ্চল
+                            {isBn ? 'নির্বাচিত অঞ্চল' : 'Selected Region'}
                           </span>
-                          <h4 className="text-lg sm:text-xl font-black">{activeReg.nameBn}</h4>
+                          <h4 className="text-lg sm:text-xl font-black">{regName}</h4>
                           <button
                             onClick={(e) => handlePlayVoice(activeReg.nameAr, `geo-voice-${activeReg.id}`, e)}
-                            title="আরবি উচ্চারণ শুনুন"
+                            title={t.voiceTitleAr}
                             className={`p-1 rounded-lg border transition ${
                               playingVoiceId === `geo-voice-${activeReg.id}` ? 'bg-amber-500 text-white animate-pulse' : 'opacity-60 hover:opacity-100'
                             }`}
@@ -2799,33 +2921,33 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           onClick={() => openClanInReader(activeReg.targetClanId!)}
                           className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow cursor-pointer self-start sm:self-center flex items-center gap-1"
                         >
-                          <span>এই অঞ্চলের সীরাত পাঠ দেখুন</span>
+                          <span>{t.readRegionSeerahBtn}</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
 
                     <p className="text-xs sm:text-sm leading-relaxed opacity-90">
-                      {activeReg.detailsBn}
+                      {regDetails}
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs">
                       {/* Dominant Tribes */}
                       <div className="p-3 rounded-2xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 space-y-1">
-                        <span className="text-[10px] font-bold text-amber-500 uppercase block">🛡️ প্রভাবশালী গোত্রসমূহ</span>
-                        <div className="font-semibold">{activeReg.dominantTribesBn.join(', ')}</div>
+                        <span className="text-[10px] font-bold text-amber-500 uppercase block">🛡️ {t.dominantTribes}</span>
+                        <div className="font-semibold">{dominantTribesText}</div>
                       </div>
 
                       {/* Historical Events */}
                       <div className="p-3 rounded-2xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 space-y-1">
-                        <span className="text-[10px] font-bold text-emerald-500 uppercase block">📜 ঐতিহাসিক ঘটনাবলী</span>
-                        <div className="font-semibold">{activeReg.historicalEventsBn.join(' • ')}</div>
+                        <span className="text-[10px] font-bold text-emerald-500 uppercase block">📜 {t.historicalEvents}</span>
+                        <div className="font-semibold">{historicalEventsText}</div>
                       </div>
 
                       {/* Prominent Sahaba */}
                       <div className="p-3 rounded-2xl bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 space-y-1">
-                        <span className="text-[10px] font-bold text-teal-400 uppercase block">🌿 শীর্ষ সাহাবি ও ব্যক্তিত্ব</span>
-                        <div className="font-semibold">{activeReg.prominentSahabaList.join(', ')}</div>
+                        <span className="text-[10px] font-bold text-teal-400 uppercase block">🌿 {t.prominentSahaba}</span>
+                        <div className="font-semibold">{prominentSahabaText}</div>
                       </div>
                     </div>
                   </div>
@@ -2834,49 +2956,55 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
               {/* 6 Strategic Geopolitical Regions Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {CHAPTER3_OVERVIEW.map((item, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      if (soundEnabled) soundHaptics.playTap();
-                      const targetId =
-                        item.clanBn.includes('সাকীফ') ? 'banu-thaqif' :
-                        item.clanBn.includes('হাওয়াযিন') || item.clanBn.includes('সা’দ') ? 'banu-hawazin-saad' :
-                        item.clanBn.includes('খুযাআ') || item.clanBn.includes('বকর') ? 'banu-khuzaa-bakr' :
-                        item.clanBn.includes('গিফার') || item.clanBn.includes('দাওস') ? 'banu-ghifar-daws' :
-                        item.clanBn.includes('তামিম') || item.clanBn.includes('কালব') ? 'banu-tamim-kalb' : 'banu-ghatafan-hanifa';
-                      openClanInReader(targetId);
-                    }}
-                    className={`p-5 rounded-2xl border space-y-3 transition-all cursor-pointer group flex flex-col justify-between ${
-                      isDay
-                        ? 'bg-slate-50 border-slate-200 hover:border-teal-500 hover:bg-white shadow-xs hover:shadow-md'
-                        : 'bg-[#041417] border-[#153e46] hover:border-emerald-500 hover:bg-[#072428]'
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-black text-base text-emerald-600 dark:text-emerald-400 group-hover:text-amber-500 transition-colors">
-                          {item.clanBn}
-                        </h4>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          {item.sectionCode}
-                        </span>
+                {CHAPTER3_OVERVIEW.map((item, idx) => {
+                  const clanName = isBn ? item.clanBn : (item.clanEn || item.clanBn);
+                  const locationText = isBn ? item.locationBn : (item.locationEn || item.locationBn);
+                  const noteText = isBn ? item.noteBn : (item.noteEn || item.noteBn);
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        const targetId =
+                          item.clanBn.includes('সাকীফ') ? 'banu-thaqif' :
+                          item.clanBn.includes('হাওয়াযিন') || item.clanBn.includes('সা’দ') ? 'banu-hawazin-saad' :
+                          item.clanBn.includes('খুযাআ') || item.clanBn.includes('বকর') ? 'banu-khuzaa-bakr' :
+                          item.clanBn.includes('গিফার') || item.clanBn.includes('দাওস') ? 'banu-ghifar-daws' :
+                          item.clanBn.includes('তামিম') || item.clanBn.includes('কালব') ? 'banu-tamim-kalb' : 'banu-ghatafan-hanifa';
+                        openClanInReader(targetId);
+                      }}
+                      className={`p-5 rounded-2xl border space-y-3 transition-all cursor-pointer group flex flex-col justify-between ${
+                        isDay
+                          ? 'bg-slate-50 border-slate-200 hover:border-teal-500 hover:bg-white shadow-xs hover:shadow-md'
+                          : 'bg-[#041417] border-[#153e46] hover:border-emerald-500 hover:bg-[#072428]'
+                      }`}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-black text-base text-emerald-600 dark:text-emerald-400 group-hover:text-amber-500 transition-colors">
+                            {clanName}
+                          </h4>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            {item.sectionCode}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-amber-500 flex items-center gap-1.5 font-bold">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" />
+                          <span>{locationText}</span>
+                        </p>
+
+                        <p className="text-xs opacity-85 leading-relaxed">{noteText}</p>
                       </div>
 
-                      <p className="text-xs text-amber-500 flex items-center gap-1.5 font-bold">
-                        <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span>{item.locationBn}</span>
-                      </p>
-
-                      <p className="text-xs opacity-85 leading-relaxed">{item.noteBn}</p>
+                      <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-bold group-hover:text-amber-400 transition-colors">
+                        <span>{t.readSeerahAndBattleBtn}</span>
+                        <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                      </div>
                     </div>
-
-                    <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400 font-bold group-hover:text-amber-400 transition-colors">
-                      <span>সীরাত ও যুদ্ধ বিবরণী পড়ুন</span>
-                      <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2889,21 +3017,21 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-4">
                 <div className="space-y-1">
                   <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                    তুলনামূলক পরিসংখ্যান
+                    {t.statsBadge}
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-black">তালিকায় উল্লিখিত ব্যক্তিত্বের তুলনামূলক বার চার্ট</h3>
+                  <h3 className="text-xl sm:text-2xl font-black">{t.statsTitle}</h3>
                   <p className="text-xs sm:text-sm opacity-80">
-                    ১ থেকে ১৩ নম্বর মূল অধ্যায় অনুযায়ী আরবের শীর্ষ গোত্রগুলোতে বিশিষ্ট সাহাবি ও ব্যক্তিত্বের সংখ্যা
+                    {t.statsDesc}
                   </p>
                 </div>
 
                 {/* Sort Bar */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs opacity-60 font-semibold">ক্রমানুসার:</span>
+                  <span className="text-xs opacity-60 font-semibold">{t.statsSortLabel}:</span>
                   <div className="flex items-center gap-1 rounded-xl p-1 border bg-black/5 dark:bg-white/5">
                     {[
-                      { id: 'highest', label: 'সর্বোচ্চ ব্যক্তিত্ব' },
-                      { id: 'alphabetical', label: 'নামানুসারে' },
+                      { id: 'highest', label: t.statsSortHighest },
+                      { id: 'alphabetical', label: t.statsSortAlpha },
                     ].map((sortOption) => (
                       <button
                         key={sortOption.id}
@@ -2929,6 +3057,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 {sortedStatistics.map((stat, idx) => {
                   const maxCount = 25;
                   const percentage = Math.min(100, Math.round((stat.count / maxCount) * 100));
+                  const statName = stat.nameBn;
+                  const statChapter = stat.chapter;
 
                   return (
                     <div
@@ -2954,14 +3084,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black bg-emerald-500/10 text-emerald-400">
                             {idx + 1}
                           </span>
-                          <span className="truncate group-hover:text-emerald-500 transition-colors">{stat.nameBn}</span>
+                          <span className="truncate group-hover:text-emerald-500 transition-colors">{statName}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-[11px] opacity-75 hidden sm:inline text-amber-500">
-                            {stat.chapter}
+                            {statChapter}
                           </span>
                           <span className="tabular-nums text-emerald-600 dark:text-emerald-400 font-black px-2 py-0.5 rounded-md bg-emerald-500/10">
-                            মোট {stat.count} জন
+                            {t.statsTotalCount(stat.count)}
                           </span>
                         </div>
                       </div>
@@ -2992,100 +3122,121 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             <div>
               <h3 className="text-base font-black text-amber-500 flex items-center gap-2">
                 <Scroll className="w-5 h-5" />
-                <span>সংযুক্তি : আরবের পূর্ণাঙ্গ ৪০টি গোত্রের এনসাইক্লোপিডিয়া</span>
+                <span>{t.appendixTitle}</span>
               </h3>
               <p className="text-xs sm:text-sm opacity-80 leading-relaxed mt-1">
-                আরবের শীর্ষ ৪০টি গোত্রের উৎপত্তি, ভৌগোলিক অবস্থান, ইসলাম গ্রহণকারী সাহাবি ও ঐতিহাসিক চরিত্র
+                {t.appendixSubtitle}
               </p>
             </div>
 
             {/* Quick Filter */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              {['all', 'কুরাইশ', 'আনসার', 'ইয়েমেন', 'বেদুইন', 'খ্রিস্টান'].map((cat) => (
+              {[
+                { id: 'all', label: t.appendixFilterAll },
+                { id: 'কুরাইশ', label: t.appendixFilterQuraysh },
+                { id: 'আনসার', label: t.appendixFilterAnsar },
+                { id: 'ইয়েমেন', label: t.appendixFilterYemen },
+                { id: 'বেদুইন', label: t.appendixFilterBedouin },
+                { id: 'খ্রিস্টান', label: t.appendixFilterChristian },
+              ].map((catObj) => (
                 <button
-                  key={cat}
-                  onClick={() => setAppendixFilter(cat)}
+                  key={catObj.id}
+                  onClick={() => setAppendixFilter(catObj.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                    appendixFilter === cat
+                    appendixFilter === catObj.id
                       ? isDay ? 'bg-teal-700 text-white border-teal-600' : 'bg-emerald-600 text-white border-emerald-500'
                       : isDay ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
                   }`}
                 >
-                  {cat === 'all' ? 'সকল গোত্র' : cat}
+                  {catObj.label}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredAppendixTribes.map((tribe) => (
-              <div
-                key={tribe.id}
-                className={`p-5 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
-                  isDay ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#082226] border-[#153e46]'
-                }`}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-black border ${
-                        isDay ? 'bg-teal-50 border-teal-200 text-teal-800' : 'bg-[#041417] border-emerald-500/30 text-emerald-300'
-                      }`}>
-                        {tribe.index}
-                      </div>
-                      <div>
-                        <h4 className="text-base font-black">{tribe.nameBn}</h4>
-                        <div className="flex items-center gap-2 text-xs opacity-75">
-                          <span>{tribe.categoryBn}</span>
-                          <span>·</span>
-                          <span className="flex items-center gap-0.5">
-                            <MapPin className="w-3 h-3 text-amber-500" />
-                            <span>{tribe.regionBn}</span>
-                          </span>
+            {filteredAppendixTribes.map((tribe) => {
+              const tribeName = isBn ? tribe.nameBn : (tribe.nameEn || tribe.nameBn);
+              const categoryText = isBn ? tribe.categoryBn : (tribe.categoryEn || tribe.categoryBn);
+              const regionText = isBn ? tribe.regionBn : (tribe.regionEn || tribe.regionBn);
+              const significanceText = isBn ? tribe.historicalSignificanceBn : (tribe.historicalSignificanceEn || tribe.historicalSignificanceBn);
+              const sahabaListText = isBn
+                ? tribe.sahabaListBn.join(' • ')
+                : (tribe.sahabaListEn?.join(' • ') || tribe.sahabaListBn.join(' • '));
+              const negativeText = isBn
+                ? tribe.negativeFiguresBn?.join(' • ')
+                : (tribe.negativeFiguresEn?.join(' • ') || tribe.negativeFiguresBn?.join(' • '));
+              const referenceText = isBn ? tribe.referenceBn : (tribe.referenceEn || tribe.referenceBn);
+
+              return (
+                <div
+                  key={tribe.id}
+                  className={`p-5 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
+                    isDay ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#082226] border-[#153e46]'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-black border ${
+                          isDay ? 'bg-teal-50 border-teal-200 text-teal-800' : 'bg-[#041417] border-emerald-500/30 text-emerald-300'
+                        }`}>
+                          {tribe.index}
+                        </div>
+                        <div>
+                          <h4 className="text-base font-black">{tribeName}</h4>
+                          <div className="flex items-center gap-2 text-xs opacity-75">
+                            <span>{categoryText}</span>
+                            <span>·</span>
+                            <span className="flex items-center gap-0.5">
+                              <MapPin className="w-3 h-3 text-amber-500" />
+                              <span>{regionText}</span>
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
+
+                    <p className="text-xs leading-relaxed opacity-90">
+                      {significanceText}
+                    </p>
+
+                    {/* Sahaba List */}
+                    {tribe.sahabaListBn.length > 0 && (
+                      <div className="space-y-1 pt-2 border-t border-dashed border-slate-200 dark:border-slate-800">
+                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 block">
+                          {t.appendixSahabaTitle} ({tribe.sahabaListBn.length})
+                        </span>
+                        <p className="text-xs leading-relaxed font-medium">
+                          {sahabaListText}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Negative Figures */}
+                    {tribe.negativeFiguresBn && tribe.negativeFiguresBn.length > 0 && (
+                      <div className="space-y-1 text-rose-500 pt-1">
+                        <span className="text-[11px] font-bold block">{t.appendixNegativeTitle}</span>
+                        <p className="text-xs leading-relaxed">
+                          {negativeText}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  <p className="text-xs leading-relaxed opacity-90">
-                    {tribe.historicalSignificanceBn}
-                  </p>
-
-                  {/* Sahaba List */}
-                  {tribe.sahabaListBn.length > 0 && (
-                    <div className="space-y-1 pt-2 border-t border-dashed border-slate-200 dark:border-slate-800">
-                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 block">
-                        সাহাবি ও বিশিষ্ট ব্যক্তিবর্গ ({tribe.sahabaListBn.length} জন):
-                      </span>
-                      <p className="text-xs leading-relaxed font-medium">
-                        {tribe.sahabaListBn.join(' • ')}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Negative Figures */}
-                  {tribe.negativeFiguresBn && tribe.negativeFiguresBn.length > 0 && (
-                    <div className="space-y-1 text-rose-500 pt-1">
-                      <span className="text-[11px] font-bold block">নেতিবাচক চরিত্র:</span>
-                      <p className="text-xs leading-relaxed">
-                        {tribe.negativeFiguresBn.join(' • ')}
-                      </p>
-                    </div>
-                  )}
+                  <div className="pt-2 border-t border-slate-100 dark:border-teal-900/30 flex items-center justify-between text-[11px] opacity-75">
+                    <span className="truncate max-w-[280px]">📚 {referenceText}</span>
+                    <button
+                      onClick={(e) => handleCopy(`${tribeName}\n${significanceText}\n${t.referencesTitle}: ${referenceText}`, `app-${tribe.id}`, e)}
+                      className="hover:text-amber-500 transition cursor-pointer flex items-center gap-1"
+                    >
+                      {copiedId === `app-${tribe.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedId === `app-${tribe.id}` ? t.copiedBtn : t.copyBtn}</span>
+                    </button>
+                  </div>
                 </div>
-
-                <div className="pt-2 border-t border-slate-100 dark:border-teal-900/30 flex items-center justify-between text-[11px] opacity-75">
-                  <span className="truncate max-w-[280px]">📚 {tribe.referenceBn}</span>
-                  <button
-                    onClick={(e) => handleCopy(`${tribe.nameBn}\n${tribe.historicalSignificanceBn}\nসূত্র: ${tribe.referenceBn}`, `app-${tribe.id}`, e)}
-                    className="hover:text-amber-500 transition cursor-pointer flex items-center gap-1"
-                  >
-                    {copiedId === `app-${tribe.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                    <span>কপি</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -3100,10 +3251,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           }`}>
             <h3 className="text-base font-black text-amber-500 flex items-center gap-2">
               <Bookmark className="w-5 h-5 fill-current" />
-              <span>আপনার বুকমার্ককৃত ব্যক্তিত্বগণ ({bookmarkedPersonalities.length} জন)</span>
+              <span>{t.bookmarksTitle(bookmarkedPersonalities.length)}</span>
             </h3>
             <p className="text-xs opacity-80 mt-1">
-              যেকোনো সাহাবি বা ঐতিহাসিক চরিত্রের কার্ডে বুকমার্ক আইকনে ক্লিক করে এখানে সহজে সংরক্ষণ করুন।
+              {t.bookmarksSubtitle}
             </p>
           </div>
 
@@ -3112,40 +3263,47 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               isDay ? 'bg-white border-slate-200 text-slate-500' : 'bg-[#082226] border-[#153e46] text-emerald-400/70'
             }`}>
               <Bookmark className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-base font-bold">এখনো কোনো ব্যক্তিত্ব বুকমার্ক করা হয়নি</p>
-              <p className="text-xs mt-1">অধ্যায়ভিত্তিক পাঠ থেকে আপনার পছন্দের সাহাবিদের বুকমার্ক করুন</p>
+              <p className="text-base font-bold">{t.bookmarksEmptyTitle}</p>
+              <p className="text-xs mt-1">{t.bookmarksEmptySub}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {bookmarkedPersonalities.map(({ personality: pers, clanName }) => (
-                <div
-                  key={pers.id}
-                  onClick={() => {
-                    if (soundEnabled) soundHaptics.playTap();
-                    setActivePersonalityModal(pers);
-                  }}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
-                    isDay ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#082226] border-[#153e46]'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-bold text-sm">{pers.nameBn}</h4>
-                      <span className="text-xs text-amber-500">{clanName}</span>
+              {bookmarkedPersonalities.map(({ personality: pers, clanName }) => {
+                const persName = isBn ? pers.nameBn : (pers.nameEn || pers.nameBn);
+                const clanDisplayName = isBn ? clanName : (CLAN_VISUAL_MAP[pers.id]?.badgeEn || clanName);
+                const persBio = isBn ? pers.bioBn : (pers.bioEn || pers.bioBn);
+                const persRef = isBn ? pers.referenceBn : (pers.referenceEn || pers.referenceBn);
+
+                return (
+                  <div
+                    key={pers.id}
+                    onClick={() => {
+                      if (soundEnabled) soundHaptics.playTap();
+                      setActivePersonalityModal(pers);
+                    }}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                      isDay ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#082226] border-[#153e46]'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-bold text-sm">{persName}</h4>
+                        <span className="text-xs text-amber-500">{clanDisplayName}</span>
+                      </div>
+                      <button
+                        onClick={(e) => toggleBookmark(pers.id, e)}
+                        className="p-1.5 rounded-lg bg-amber-500 text-white cursor-pointer"
+                      >
+                        <Bookmark className="w-3.5 h-3.5 fill-current" />
+                      </button>
                     </div>
-                    <button
-                      onClick={(e) => toggleBookmark(pers.id, e)}
-                      className="p-1.5 rounded-lg bg-amber-500 text-white cursor-pointer"
-                    >
-                      <Bookmark className="w-3.5 h-3.5 fill-current" />
-                    </button>
+                    <p className="text-xs opacity-90 line-clamp-2">{persBio}</p>
+                    <div className="text-[11px] opacity-75 pt-2 border-t border-dashed border-slate-200 dark:border-slate-800">
+                      📚 {persRef}
+                    </div>
                   </div>
-                  <p className="text-xs opacity-90 line-clamp-2">{pers.bioBn}</p>
-                  <div className="text-[11px] opacity-75 pt-2 border-t border-dashed border-slate-200 dark:border-slate-800">
-                    📚 {pers.referenceBn}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -3170,10 +3328,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                     : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                 }`}>
-                  {activePersonalityModal.roleBn}
+                  {isBn ? activePersonalityModal.roleBn : (activePersonalityModal.roleEn || activePersonalityModal.roleBn)}
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black mt-2">
-                  {activePersonalityModal.nameBn}
+                  {isBn ? activePersonalityModal.nameBn : (activePersonalityModal.nameEn || activePersonalityModal.nameBn)}
                 </h3>
                 {activePersonalityModal.nameAr && (
                   <p className="text-sm font-serif text-amber-500 font-bold">
@@ -3211,10 +3369,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               isDay ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#041417] border-[#153e46] text-emerald-100'
             }`}>
               <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 mb-2">
-                ঐতিহাসিক অবদান ও জীবনী
+                {t.modalBioTitle}
               </h4>
               <p className="leading-relaxed text-sm sm:text-base">
-                {activePersonalityModal.bioBn}
+                {isBn ? activePersonalityModal.bioBn : (activePersonalityModal.bioEn || activePersonalityModal.bioBn)}
               </p>
             </div>
 
@@ -3223,14 +3381,19 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             }`}>
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-400 shrink-0" />
-                <span><strong>রেফারেন্স সূত্র:</strong> {activePersonalityModal.referenceBn}</span>
+                <span><strong>{t.modalRefTitle}:</strong> {isBn ? activePersonalityModal.referenceBn : (activePersonalityModal.referenceEn || activePersonalityModal.referenceBn)}</span>
               </div>
               <button
-                onClick={(e) => handleCopy(`${activePersonalityModal.nameBn}\n${activePersonalityModal.bioBn}\nসূত্র: ${activePersonalityModal.referenceBn}`, 'modal-copy', e)}
+                onClick={(e) => {
+                  const mName = isBn ? activePersonalityModal.nameBn : (activePersonalityModal.nameEn || activePersonalityModal.nameBn);
+                  const mBio = isBn ? activePersonalityModal.bioBn : (activePersonalityModal.bioEn || activePersonalityModal.bioBn);
+                  const mRef = isBn ? activePersonalityModal.referenceBn : (activePersonalityModal.referenceEn || activePersonalityModal.referenceBn);
+                  handleCopy(`${mName}\n${mBio}\n${t.modalRefTitle}: ${mRef}`, 'modal-copy', e);
+                }}
                 className="hover:underline flex items-center gap-1 font-bold shrink-0 cursor-pointer"
               >
                 {copiedId === 'modal-copy' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedId === 'modal-copy' ? 'কপি হয়েছে' : 'কপি করুন'}</span>
+                <span>{copiedId === 'modal-copy' ? t.copiedBtn : t.copyBtn}</span>
               </button>
             </div>
 
@@ -3242,7 +3405,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 }}
                 className="px-6 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer shadow-md"
               >
-                পড়া সম্পন্ন হয়েছে
+                {t.modalDoneReading}
               </button>
             </div>
           </div>
@@ -3270,14 +3433,16 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xl font-black">{selectedResponsibility.clanBn}</h4>
+                    <h4 className="text-xl font-black">
+                      {isBn ? selectedResponsibility.clanBn : (selectedResponsibility.clanEn || selectedResponsibility.clanBn)}
+                    </h4>
                     {selectedResponsibility.responsibilityAr && (
                       <span className="text-xs font-arabic text-amber-500 opacity-80" dir="rtl">
                         {selectedResponsibility.responsibilityAr}
                       </span>
                     )}
                   </div>
-                  <span className="text-xs opacity-60">কুরাইশের ঐতিহাসিক প্রশাসনিক দপ্তর</span>
+                  <span className="text-xs opacity-60">{t.modalOfficeSub}</span>
                 </div>
               </div>
               <button
@@ -3293,10 +3458,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             }`}>
               <div className="text-sm font-black text-amber-500 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4" />
-                <span>দায়িত্ব: {selectedResponsibility.responsibilityBn}</span>
+                <span>{t.roleLabel}: {isBn ? selectedResponsibility.responsibilityBn : (selectedResponsibility.responsibilityEn || selectedResponsibility.responsibilityBn)}</span>
               </div>
               <p className="text-xs sm:text-sm leading-relaxed opacity-90">
-                {selectedResponsibility.detailsBn}
+                {isBn ? selectedResponsibility.detailsBn : (selectedResponsibility.detailsEn || selectedResponsibility.detailsBn)}
               </p>
             </div>
 
@@ -3306,17 +3471,17 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             }`}>
               {selectedResponsibility.preIslamicHolder && (
                 <div>
-                  <span className="text-[10px] font-bold opacity-60 block uppercase">🏛️ জাহেলিয়াত যুগে নেতৃত্ব</span>
+                  <span className="text-[10px] font-bold opacity-60 block uppercase">{t.preIslamicLeadership}</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
-                    {selectedResponsibility.preIslamicHolder}
+                    {isBn ? selectedResponsibility.preIslamicHolder : (selectedResponsibility.preIslamicHolderEn || selectedResponsibility.preIslamicHolder)}
                   </span>
                 </div>
               )}
               {selectedResponsibility.islamicHolder && (
                 <div>
-                  <span className="text-[10px] font-bold text-emerald-500 block uppercase">☪️ ইসলামের যুগে অবস্থান</span>
+                  <span className="text-[10px] font-bold text-emerald-500 block uppercase">{t.islamicPosition}</span>
                   <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs">
-                    {selectedResponsibility.islamicHolder}
+                    {isBn ? selectedResponsibility.islamicHolder : (selectedResponsibility.islamicHolderEn || selectedResponsibility.islamicHolder)}
                   </span>
                 </div>
               )}
@@ -3327,7 +3492,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 onClick={() => setSelectedResponsibility(null)}
                 className="px-4 py-2 rounded-xl text-xs font-semibold opacity-75 hover:opacity-100 cursor-pointer"
               >
-                বন্ধ করুন
+                {t.modalClose}
               </button>
               <button
                 onClick={() => {
@@ -3344,7 +3509,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 }}
                 className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-md transition"
               >
-                গোত্রের পূর্ণ সীরাত পাঠ দেখুন
+                {t.readClanSeerahBtn}
               </button>
             </div>
           </div>
@@ -3358,10 +3523,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           setIsTocDrawerOpen(true);
         }}
         className="fixed bottom-20 right-4 sm:right-6 z-40 px-4 py-2.5 rounded-full shadow-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 border-2 border-amber-300 ring-4 ring-amber-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-        title="সম্পূর্ণ বিষয়ভিত্তিক সূচিপত্র খুলুন"
+        title={t.floatingTocBtn}
       >
         <BookOpen className="w-4 h-4" />
-        <span>📑 দ্রুত সূচিপত্র</span>
+        <span>📑 {t.floatingTocBtn}</span>
       </button>
 
       {/* Sliding Quick-TOC Drawer Modal */}
@@ -3380,14 +3545,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="space-y-0.5">
                 <span className="text-[10px] font-black uppercase text-amber-500 tracking-wider">
-                  বিষয়ভিত্তিক পরিচ্ছেদ তালিকা
+                  {t.drawerCategoryTag}
                 </span>
                 <h3 className="text-lg font-black flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-amber-500" />
-                  <span>সম্পূর্ণ বিষয়ভিত্তিক সূচিপত্র</span>
+                  <span>{t.drawerTitle}</span>
                 </h3>
                 <p className="text-xs opacity-70">
-                  ৩টি অধ্যায় • ১৩টি সীরাত পরিচ্ছেদ • ৫টি ঐতিহাসিক চার্ট
+                  {t.drawerSubtitle}
                 </p>
               </div>
 
@@ -3406,7 +3571,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 type="text"
                 value={tocSearchQuery}
                 onChange={(e) => setTocSearchQuery(e.target.value)}
-                placeholder="যেকোনো গোত্র বা চার্টের নাম খুঁজুন..."
+                placeholder={t.drawerSearchPlaceholder}
                 className={`w-full pl-9 pr-8 py-2 rounded-xl text-xs border outline-none transition ${
                   isDay
                     ? 'bg-slate-50 border-slate-200 focus:border-teal-500 text-slate-800'
@@ -3429,31 +3594,48 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 .filter(topic => {
                   if (!tocSearchQuery.trim()) return true;
                   const q = tocSearchQuery.toLowerCase();
+                  const topicDataEn = TOPIC_TOC_ENGLISH_MAP[topic.id];
+                  const topicTitle = isBn ? topic.topicTitleBn : (topicDataEn?.themeBadgeEn || topic.topicTitleBn);
+
                   return (
-                    topic.topicTitleBn.toLowerCase().includes(q) ||
-                    topic.subsections.some(s => s.titleBn.toLowerCase().includes(q) || s.subtitleBn.toLowerCase().includes(q))
+                    topicTitle.toLowerCase().includes(q) ||
+                    topic.subsections.some(s => {
+                      const subDataEn = topicDataEn?.subsectionsEn?.[s.id];
+                      const sTitle = isBn ? s.titleBn : (subDataEn?.titleEn || s.titleBn);
+                      const sSub = isBn ? s.subtitleBn : (subDataEn?.subtitleEn || s.subtitleBn);
+                      return sTitle.toLowerCase().includes(q) || sSub.toLowerCase().includes(q);
+                    })
                   );
                 })
                 .map((topic, tIdx) => {
-                  const filteredSubs = topic.subsections.filter(s =>
-                    !tocSearchQuery.trim() ||
-                    s.titleBn.toLowerCase().includes(tocSearchQuery.toLowerCase()) ||
-                    s.subtitleBn.toLowerCase().includes(tocSearchQuery.toLowerCase())
-                  );
+                  const topicDataEn = TOPIC_TOC_ENGLISH_MAP[topic.id];
+                  const topicTitle = isBn ? topic.topicTitleBn : (topicDataEn?.themeBadgeEn || topic.topicTitleBn);
+
+                  const filteredSubs = topic.subsections.filter(s => {
+                    if (!tocSearchQuery.trim()) return true;
+                    const q = tocSearchQuery.toLowerCase();
+                    const subDataEn = topicDataEn?.subsectionsEn?.[s.id];
+                    const sTitle = isBn ? s.titleBn : (subDataEn?.titleEn || s.titleBn);
+                    const sSub = isBn ? s.subtitleBn : (subDataEn?.subtitleEn || s.subtitleBn);
+                    return sTitle.toLowerCase().includes(q) || sSub.toLowerCase().includes(q);
+                  });
 
                   return (
                     <div key={tIdx} className="space-y-2">
                       <div className="flex items-center justify-between pb-1 border-b border-dashed border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-1.5 truncate">
                           <span>{topic.icon}</span>
-                          <span className="text-xs font-black text-amber-500 truncate">{topic.topicTitleBn}</span>
+                          <span className="text-xs font-black text-amber-500 truncate">{topicTitle}</span>
                         </div>
-                        <span className="text-[10px] font-bold opacity-60 shrink-0">{filteredSubs.length}টি বিষয়</span>
+                        <span className="text-[10px] font-bold opacity-60 shrink-0">{t.drawerCountBadge(filteredSubs.length)}</span>
                       </div>
 
                       <div className="space-y-1">
                         {filteredSubs.map((sub, sIdx) => {
                           const isChart = sub.type === 'chart';
+                          const subDataEn = topicDataEn?.subsectionsEn?.[sub.id];
+                          const subTitle = isBn ? sub.titleBn : (subDataEn?.titleEn || sub.titleBn);
+
                           return (
                             <button
                               key={sIdx}
@@ -3477,9 +3659,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-black shrink-0 ${
                                   isChart ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/10 text-emerald-400'
                                 }`}>
-                                  {isChart ? 'চার্ট' : 'পাঠ'}
+                                  {isChart ? t.badgeChart : t.badgeRead}
                                 </span>
-                                <span className="truncate">{sub.titleBn}</span>
+                                <span className="truncate">{subTitle}</span>
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 opacity-60 shrink-0" />
                             </button>
@@ -3505,7 +3687,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               >
                 <div className="flex items-center gap-2">
                   <span>📜</span>
-                  <span>সংযুক্তি : আরবের পূর্ণাঙ্গ ৪০টি গোত্রের এনসাইক্লোপিডিয়া</span>
+                  <span>{t.drawerAppendixOption}</span>
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-75" />
               </button>
@@ -3517,7 +3699,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 onClick={() => setIsTocDrawerOpen(false)}
                 className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow transition"
               >
-                সূচিপত্র বন্ধ করুন
+                {t.drawerCloseBtn}
               </button>
             </div>
           </div>
