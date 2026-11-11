@@ -350,6 +350,26 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
     return AAMAL_ITEM_TRANSLATIONS[item.id]?.[selectedLanguage]?.details || item.details;
   };
 
+  const getLocalizedRakats = (str: string | undefined, lang: ZikrLanguage): string => {
+    if (!str) return '';
+    if (lang === 'bn') return str;
+    return str
+      .replace(/০/g, '0')
+      .replace(/১/g, '1')
+      .replace(/২/g, '2')
+      .replace(/৩/g, '3')
+      .replace(/৪/g, '4')
+      .replace(/৫/g, '5')
+      .replace(/৬/g, '6')
+      .replace(/৭/g, '7')
+      .replace(/৮/g, '8')
+      .replace(/৯/g, '9')
+      .replace(/রাকাত/g, 'Rakats')
+      .replace(/সুন্নত/g, 'Sunnah')
+      .replace(/নফলসহ/g, 'with Nafl')
+      .replace(/সুন্নত\/নফলসহ/g, 'with Sunnah/Nafl');
+  };
+
   // Formatted display date
   const selectedDateFormatted = useMemo(() => {
     const [y, m, d] = selectedDateKey.split('-').map(Number);
@@ -739,7 +759,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                       <span className="px-2.5 py-1 rounded-xl text-xs font-bold font-mono bg-emerald-600 text-white shadow-sm">
                         {fardhCompletedCount === 5
                           ? (selectedLanguage === 'bn' ? '🌟 সব ফরজ সম্পন্ন!' : 'All 5 Done!')
-                          : `${fardhCompletedCount}/৫ ফরজ`}
+                          : (selectedLanguage === 'bn' ? `${fardhCompletedCount}/৫ ফরজ` : `${fardhCompletedCount}/5 Fardh`)}
                       </span>
                     </div>
                   </div>
@@ -785,7 +805,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                                 : 'text-stone-400 dark:text-stone-500'
                             }`}
                           >
-                            {isFardhDone ? '✓ আদায়' : 'বাকি'}
+                            {selectedLanguage === 'bn' ? (isFardhDone ? '✓ আদায়' : 'বাকি') : (isFardhDone ? '✓ Done' : 'Pending')}
                           </span>
                         </button>
                       );
@@ -1032,7 +1052,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                                     {selectedLanguage === 'bn' ? plan.nameBn : plan.nameEn}
                                   </h4>
                                   <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                                    {plan.totalRakats}
+                                    {getLocalizedRakats(plan.totalRakats, selectedLanguage)}
                                   </span>
                                 </div>
                                 <p className="text-xs text-stone-500 dark:text-emerald-300/80 font-medium mt-0.5">
@@ -1185,7 +1205,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
 
                                       {/* Rakat count badge */}
                                       <span className="px-2 py-0.5 rounded-lg text-[10px] sm:text-xs font-mono font-black bg-slate-200/80 dark:bg-teal-950 text-slate-800 dark:text-emerald-300 border border-slate-300/40 dark:border-teal-800/40">
-                                        {rakat.rakats}
+                                        {getLocalizedRakats(rakat.rakats, selectedLanguage)}
                                       </span>
 
                                       {/* Type badge */}
@@ -1225,7 +1245,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                   })}
                 </div>
 
-                {/* 5. JAMAT / CONGREGATIONAL PRAYER CARD (২৭ গুণ বেশি সওয়াব) */}
+                {/* 5. JAMAT / CONGREGATIONAL PRAYER CARD */}
                 {(() => {
                   const jamatItem = dayLog.items.find((i) => i.id === 'jamat_fardh');
                   if (!jamatItem) return null;
@@ -1258,7 +1278,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                               {AAMAL_UI.jamatLabel[selectedLanguage]}
                             </span>
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40">
-                              ⭐ ২৭ গুণ বেশি সওয়াব
+                              {selectedLanguage === 'bn' ? '⭐ ২৭ গুণ বেশি সওয়াব' : '⭐ 27x Greater Reward'}
                             </span>
                           </div>
                           <div className="text-xs text-stone-600 dark:text-stone-300 font-medium mt-0.5">
@@ -1352,7 +1372,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                             {getAamalItemLabel(item)}
                           </span>
                           <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                            নফল আমল
+                            {selectedLanguage === 'bn' ? 'নফল আমল' : 'Nafl Deed'}
                           </span>
                         </div>
                         {getAamalItemDetails(item) && (
@@ -2267,7 +2287,9 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
             {isLoadingLeaderboard ? (
               <div className="flex flex-col items-center justify-center py-16 space-y-3">
                 <div className="w-8 h-8 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
-                <span className="text-xs font-bold text-slate-400">র‍্যাঙ্কিং লোড হচ্ছে...</span>
+                <span className="text-xs font-bold text-slate-400">
+                  {selectedLanguage === 'bn' ? 'র‍্যাঙ্কিং লোড হচ্ছে...' : 'Loading rankings...'}
+                </span>
               </div>
             ) : leaderboardUsers.length === 0 ? (
               <div className="text-center py-12 space-y-2">
@@ -2337,7 +2359,9 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                               {isTop1 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black shadow-xs">Top 1</span>}
                             </h4>
                             <p className="text-[11px] font-bold text-emerald-300/90 font-mono">
-                              {leaderboardFilter === 'today' ? '🌅 আজকের জিকির' : '🌟 সর্বমোট পুঞ্জীভূত জিকির'}
+                              {leaderboardFilter === 'today'
+                                ? (selectedLanguage === 'bn' ? '🌅 আজকের জিকির' : '🌅 Today\'s Dhikr')
+                                : (selectedLanguage === 'bn' ? '🌟 সর্বমোট পুঞ্জীভূত জিকির' : '🌟 Lifetime Dhikr')}
                             </p>
                           </div>
                         </div>
@@ -2345,7 +2369,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                         {/* Count & Trophy */}
                         <div className="text-right shrink-0">
                           <div className="text-base sm:text-lg font-black font-mono text-amber-300">
-                            {countVal.toLocaleString()} <span className="text-xs font-bold text-emerald-200">বার</span>
+                            {countVal.toLocaleString()} <span className="text-xs font-bold text-emerald-200">{selectedLanguage === 'bn' ? 'বার' : 'times'}</span>
                           </div>
                           <div className="text-[10px] font-bold text-emerald-300/80 font-mono">
                             Rank #{rank}
