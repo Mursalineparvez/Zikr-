@@ -14,6 +14,7 @@ type PreloadableView =
   | 'hayatus_sahaba'
   | 'islamic_history_wars'
   | 'seerat_un_nabi'
+  | 'nobi_24_hours'
   | 'history_timeline'
   | 'arabian_map'
   | 'arober_gotro'
@@ -36,6 +37,7 @@ const viewLoaders: Record<PreloadableView, () => Promise<any>> = {
   hayatus_sahaba: () => import('../components/HayatusSahabaView'),
   islamic_history_wars: () => import('../components/IslamicHistoryWarsView'),
   seerat_un_nabi: () => import('../components/SeeratUnNabiView'),
+  nobi_24_hours: () => import('../components/Nobi24HoursView'),
   history_timeline: () => import('../components/HistoryTimelineView'),
   arabian_map: () => import('../components/ArabianIllustratedMapView'),
   arober_gotro: () => import('../components/AraberGotroByaktittoView'),

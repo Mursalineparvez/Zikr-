@@ -1891,6 +1891,7 @@ export default function App() {
   // Primary 5 module items metadata (Zikir Counter, Quran, Salat Time, Aamal Tracker, Other)
   const otherModules: NavModule[] = [
     'other',
+    'nobi_24_hours',
     'seerat_un_nabi',
     'hayatus_sahaba',
     'islamic_history_wars',
@@ -2096,7 +2097,9 @@ export default function App() {
                 onNavigateToQuran={() => handleNavigate('quran')}
                 onNavigateToNamaj={() => handleNavigate('namaj')}
                 initialSubSection={
-                  activeModule === 'seerat_un_nabi'
+                  activeModule === 'nobi_24_hours'
+                    ? 'nobi_24_hours'
+                    : activeModule === 'seerat_un_nabi'
                     ? 'seerat_un_nabi'
                     : activeModule === 'hayatus_sahaba'
                     ? 'hayatus_sahaba'

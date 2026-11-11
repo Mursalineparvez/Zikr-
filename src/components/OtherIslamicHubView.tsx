@@ -28,6 +28,7 @@ const IslamicHistoryWarsView = React.lazy(() => import('./IslamicHistoryWarsView
 const HayatusSahabaView = React.lazy(() => import('./HayatusSahabaView').then((m) => ({ default: m.HayatusSahabaView })));
 const SeeratUnNabiView = React.lazy(() => import('./SeeratUnNabiView').then((m) => ({ default: m.SeeratUnNabiView })));
 const AraberGotroByaktittoView = React.lazy(() => import('./AraberGotroByaktittoView').then((m) => ({ default: m.AraberGotroByaktittoView })));
+const Nobi24HoursView = React.lazy(() => import('./Nobi24HoursView').then((m) => ({ default: m.Nobi24HoursView })));
 
 const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
   <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
@@ -44,6 +45,7 @@ const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
 
 export type OtherSubSection =
   | 'hub'
+  | 'nobi_24_hours'
   | 'seerat_un_nabi'
   | 'hayatus_sahaba'
   | 'islamic_history_wars'
@@ -132,6 +134,41 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           },
         ]
       : []),
+    {
+      id: 'nobi_24_hours' as OtherSubSection,
+      title: NAV_TRANSLATIONS.nobi_24_hours?.[selectedLanguage] || (selectedLanguage === 'bn' ? 'নবীজির ২৪ ঘণ্টা' : "Prophet's 24 Hours"),
+      arabic: '٢٤ ساعة في حياة النبي ﷺ',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'নবীজির ২৪ ঘণ্টা রুটিনের আলোকে সুন্নাহ গাইডলাইন, ১৪টি ধারাবাহিক সময় পর্ব, ১২টি জীবনঘনিষ্ঠ অধ্যায় ও মাসনুন দোয়া'
+          : selectedLanguage === 'ar'
+          ? 'دليل السنة النبوية المستند إلى روتين الـ ٢٤ ساعة، ١٤ مرحلة زمنية، ١٢ فصلاً والأدعية المأثورة'
+          : selectedLanguage === 'ur'
+          ? 'نبی کریم ﷺ کے ۲۴ گھنٹے کے معمول پر مبنی سنت گائیڈ لائن، ۱۴ اوقات، ۱۲ ابواب اور مسنون دعائیں'
+          : selectedLanguage === 'hi'
+          ? 'नबीजी ﷺ के २४ घंटे की दिनचर्या पर आधारित सुन्नत गाइडलाइन, १४ भाग, १२ अध्याय और मसनून दुआएं'
+          : selectedLanguage === 'id'
+          ? 'Panduan Sunnah berdasarkan rutinitas 24 jam Nabi ﷺ, 14 segmen waktu, 12 bab dan doa-doa masnun'
+          : selectedLanguage === 'tr'
+          ? 'Peygamberimizin ﷺ 24 saatlik rutinine dayalı Sünnet rehberi, 14 zaman dilimi, 12 bölüm ve dualar'
+          : "Sunnah Guideline based on Prophet's 24 hours routine with 14 timeline slots, 12 book chapters and daily duas.",
+      icon: <span className="text-2xl">⏰</span>,
+      color: 'from-emerald-600/30 via-teal-600/20 to-amber-500/10 border-emerald-500/50',
+      badge:
+        selectedLanguage === 'bn'
+          ? '২৪ ঘণ্টা রুটিন'
+          : selectedLanguage === 'ar'
+          ? 'جدول ٢٤ ساعة'
+          : selectedLanguage === 'ur'
+          ? '۲۴ گھنٹے معمول'
+          : selectedLanguage === 'hi'
+          ? '२४ घंटे रूटीन'
+          : selectedLanguage === 'id'
+          ? 'Rutinitas 24 Jam'
+          : selectedLanguage === 'tr'
+          ? '24 Saat Rutini'
+          : '24H Sunnah',
+    },
     {
       id: 'seerat_un_nabi' as OtherSubSection,
       title: NAV_TRANSLATIONS.seerat_un_nabi[selectedLanguage] || 'সিরাতুন নবী (সা.)',
@@ -283,6 +320,22 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onPointerEnter={() => prefetchView('nobi_24_hours')}
+          onTouchStart={() => prefetchView('nobi_24_hours')}
+          onClick={() => handleSelectSub('nobi_24_hours')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'nobi_24_hours'
+              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <span>⏰</span>
+          <span>{NAV_TRANSLATIONS.nobi_24_hours?.[selectedLanguage] || (selectedLanguage === 'bn' ? 'নবীজির ২৪ ঘণ্টা' : "Prophet's 24 Hours")}</span>
         </button>
 
         <button
@@ -473,7 +526,21 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5">
             {hubItems.map((item) => {
               const actionText =
-                item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'tablig'
+                item.id === 'nobi_24_hours'
+                  ? selectedLanguage === 'bn'
+                    ? 'রুটিন দেখুন >'
+                    : selectedLanguage === 'ar'
+                    ? 'عرض الجدول >'
+                    : selectedLanguage === 'ur'
+                    ? 'معمول دیکھیں >'
+                    : selectedLanguage === 'hi'
+                    ? 'दिनचर्या देखें >'
+                    : selectedLanguage === 'id'
+                    ? 'Lihat Jadwal >'
+                    : selectedLanguage === 'tr'
+                    ? 'Çizelgeyi Gör >'
+                    : 'View Routine >'
+                  : item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'tablig'
                   ? selectedLanguage === 'bn' ? 'পড়ুন >' : 'Read >'
                   : item.id === 'namaj'
                   ? selectedLanguage === 'bn' ? 'সময় দেখুন >' : 'View >'
@@ -482,7 +549,21 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   : selectedLanguage === 'bn' ? 'দেখুন >' : 'View >';
 
               const subText =
-                item.id === 'seerat_un_nabi'
+                item.id === 'nobi_24_hours'
+                  ? selectedLanguage === 'bn'
+                    ? 'সুন্নাহ গাইডলাইন'
+                    : selectedLanguage === 'ar'
+                    ? 'منهج السنة النبوية'
+                    : selectedLanguage === 'ur'
+                    ? 'سنت گائیڈ لائن'
+                    : selectedLanguage === 'hi'
+                    ? 'सुन्नत गाइडलाइन'
+                    : selectedLanguage === 'id'
+                    ? 'Panduan Sunnah'
+                    : selectedLanguage === 'tr'
+                    ? 'Sünnet Rehberi'
+                    : 'Sunnah Guideline'
+                  : item.id === 'seerat_un_nabi'
                   ? selectedLanguage === 'bn' ? '১ থেকে ৬৩ বছর' : 'Ages 1 to 63'
                   : item.id === 'hayatus_sahaba'
                   ? selectedLanguage === 'bn' ? 'সাহাবি জীবনী' : 'Sahaba Stories'
@@ -565,6 +646,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       )}
 
       <React.Suspense fallback={<SubViewFallback isDay={isDay} />}>
+        {/* Sub-view: Nobi Karim (SA) 24 Hours Sunnah Guideline */}
+        {activeSub === 'nobi_24_hours' && (
+          <Nobi24HoursView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+            onBackToHub={() => setActiveSub('hub')}
+          />
+        )}
+
         {/* Sub-view: Seerat-un-Nabi (PBUH) */}
         {activeSub === 'seerat_un_nabi' && (
           <SeeratUnNabiView

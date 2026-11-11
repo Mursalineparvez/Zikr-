@@ -78,7 +78,8 @@ export type NavModule =
   | 'islamic_history_wars'
   | 'seerat_un_nabi'
   | 'araber_gotro'
-  | 'namaj';
+  | 'namaj'
+  | 'nobi_24_hours';
 
 
 export type DuaCategory =
