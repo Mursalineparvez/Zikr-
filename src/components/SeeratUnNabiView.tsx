@@ -1357,7 +1357,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
               <Sparkles className="w-3 h-3 text-amber-500" />
               <span>{t('headerBadge')}</span>
               <span className="w-1 h-1 rounded-full bg-emerald-500" />
-              <span>৬৩টি পূর্ণাঙ্গ অধ্যায় (১-৬৩ বছর)</span>
+              <span>{isBn ? '৬৩টি পূর্ণাঙ্গ অধ্যায় (১-৬৩ বছর)' : '63 Complete Chapters (Ages 1-63)'}</span>
             </div>
 
             <h1 className="text-base sm:text-lg md:text-xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -1590,7 +1590,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                 }`}
               >
                 <span>{phase.icon}</span>{' '}
-                <span>{phase.ageRange}</span>
+                <span>{isBn ? phase.ageRangeBn || phase.ageRange : phase.ageRangeEn || phase.ageRange}</span>
               </button>
             ))}
           </div>
@@ -1666,7 +1666,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                       </h3>
                     </div>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 shrink-0">
-                      {phaseAges.length}টি বছর
+                      {isBn ? `${phaseAges.length}টি বছর` : `${phaseAges.length} Years`}
                     </span>
                   </div>
 
@@ -1837,10 +1837,10 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                 <BookOpen className="w-6 h-6 text-amber-500" />
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-amber-900 dark:text-amber-300">
-                    প্রামাণ্য সীরাত গ্রন্থমালা (Primary Bibliography & Sources)
+                    {isBn ? 'প্রামাণ্য সীরাত গ্রন্থমালা (Primary Bibliography & Sources)' : 'Primary Seerah Bibliography & Sources'}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-emerald-300/80">
-                    সিরাতুন নবী (সা.) বিশ্বকোষের তথ্যসূত্রে ব্যবহৃত মূল সিরাত গ্রন্থ তালিকা
+                    {isBn ? 'সিরাতুন নবী (সা.) বিশ্বকোষের তথ্যসূত্রে ব্যবহৃত মূল সিরাত গ্রন্থ তালিকা' : 'Primary classical reference texts used in the Seerat-un-Nabi encyclopedia.'}
                   </p>
                 </div>
               </div>
@@ -1855,79 +1855,109 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">১. আর-রাহীকুল মাখতূম</h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">বিশ্ববিখ্যাত</span>
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                    {isBn ? '১. আর-রাহীকুল মাখতূম' : '1. Ar-Raheeq Al-Makhtum (The Sealed Nectar)'}
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                    {isBn ? 'বিশ্ববিখ্যাত' : 'World Renowned'}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
-                  <strong>লেখক:</strong> আল্লামা সফিউর রহমান মুবারকপুরী (র.)
+                  <strong>{isBn ? 'লেখক:' : 'Author:'}</strong> {isBn ? 'আল্লামা সফিউর রহমান মুবারকপুরী (র.)' : 'Allamah Safiur Rahman Mubarakpuri (RA)'}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
-                  রবেতায়ে আলমে ইসলামী আয়োজিত বিশ্ব সীরাত প্রতিযোগিতা প্রথম স্থান অধিকারী মহাকাব্যিক গ্রন্থ। রসুলুল্লাহ (সা.)-এর শুভ জন্ম থেকে ওফাত পর্যন্ত প্রতিটি ঐতিহাসিক যুদ্ধ, সন্ধি ও দাওয়াতের প্রামাণ্য বিশ্লেষণ।
+                  {isBn
+                    ? 'রবেতায়ে আলমে ইসলামী আয়োজিত বিশ্ব সীরাত প্রতিযোগিতা প্রথম স্থান অধিকারী মহাকাব্যিক গ্রন্থ। রসুলুল্লাহ (সা.)-এর শুভ জন্ম থেকে ওফাত পর্যন্ত প্রতিটি ঐতিহাসিক যুদ্ধ, সন্ধি ও দাওয়াতের প্রামাণ্য বিশ্লেষণ।'
+                    : 'First prize winner in the World Seerah Competition organized by Muslim World League. A comprehensive chronological analysis from the blessed birth to the departure of Prophet Muhammad (PBUH).'}
                 </p>
               </div>
 
               <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">২. সীরাতে ইবনে হিশাম</h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">প্রাচীনতম সীরাত</span>
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                    {isBn ? '২. সীরাতে ইবনে হিশাম' : '2. Seerat Ibn Hisham'}
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                    {isBn ? 'প্রাচীনতম সীরাত' : 'Earliest Source'}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
-                  <strong>লেখক:</strong> আল-হাফিজ ইবনে হিশাম (র.) (মূল: ইবনে ইসহাক)
+                  <strong>{isBn ? 'লেখক:' : 'Author:'}</strong> {isBn ? 'আল-হাফিজ ইবনে হিশাম (র.) (মূল: ইবনে ইসহাক)' : 'Al-Hafiz Ibn Hisham (RA) (Original: Ibn Ishaq)'}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
-                  ইসলামি ইতিহাসের প্রথম ও সর্বাধিক প্রামাণ্য সীরাত সংকলন। সাহাবি ও তাবেঈদের প্রামাণ্য বিবরণী, মক্কার কুরাইশদের ঘটনাপঞ্জি ও প্রথম সারির যুদ্ধসমূহের নির্ভরযোগ্য বিবরণ।
+                  {isBn
+                    ? 'ইসলামি ইতিহাসের প্রথম ও সর্বাধিক প্রামাণ্য সীরাত সংকলন। সাহাবি ও তাবেঈদের প্রামাণ্য বিবরণী, মক্কার কুরাইশদের ঘটনাপঞ্জি ও প্রথম সারির যুদ্ধসমূহের নির্ভরযোগ্য বিবরণ।'
+                    : 'The earliest surviving, highly authentic classical biographical collection detailing early Islamic history, Quraysh lineage, and early expeditions.'}
                 </p>
               </div>
 
               <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">৩. জাদুল মাআদ</h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">ফিকহুস সীরাহ</span>
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                    {isBn ? '৩. জাদুল মাআদ' : '3. Zad al-Ma\'ad'}
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                    {isBn ? 'ফিকহুস সীরাহ' : 'Fiqh & Ethics'}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
-                  <strong>লেখক:</strong> ইমাম ইবনুল কাইয়্যিম আল-জাওযিয়্যাহ (র.)
+                  <strong>{isBn ? 'লেখক:' : 'Author:'}</strong> {isBn ? 'ইমাম ইবনুল কাইয়্যিম আল-জাওযিয়্যাহ (র.)' : 'Ibn Qayyim al-Jawziyya (RA)'}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
-                  রসুলুল্লাহ (সা.)-এর ব্যক্তিগত জীবন, ইবাদত, যুদ্ধনীতি, বিচারব্যবস্থা ও দৈনন্দিন জীবনাচরণের বিস্তৃত ফিকহি ব্যাখ্যা ও আত্মিক শিক্ষা সংবলিত মাস্টারপিস গ্রন্থ।
+                  {isBn
+                    ? 'রসুলুল্লাহ (সা.)-এর ব্যক্তিগত জীবন, ইবাদত, যুদ্ধনীতি, বিচারব্যবস্থা ও দৈনন্দিন জীবনাচরণের বিস্তৃত ফিকহি ব্যাখ্যা ও আত্মিক শিক্ষা সংবলিত মাস্টারপিস গ্রন্থ।'
+                    : 'Masterwork on the practical sunnah, jurisprudence, spiritual guidance, medicine, and governance extracted from the life of the Prophet (PBUH).'}
                 </p>
               </div>
 
               <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">৪. আল-বিদায়া ওয়ান নিহায়া</h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">ঐতিহাসিক বিশ্বকোষ</span>
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                    {isBn ? '৪. আল-বিদায়া ওয়ান নিহায়া' : '4. Al-Bidayah wan-Nihayah'}
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                    {isBn ? 'ঐতিহাসিক বিশ্বকোষ' : 'Historical Chronicle'}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
-                  <strong>লেখক:</strong> আল-হাফিজ ইবনে কাছীর (র.)
+                  <strong>{isBn ? 'লেখক:' : 'Author:'}</strong> {isBn ? 'আল-হাফিজ ইবনে কাছীর (র.)' : 'Al-Hafiz Ibn Kathir (RA)'}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
-                  সৃষ্টির শুরু থেকে বিশ্ব ইতিহাসের প্রামাণ্য গ্রন্থাবলি। খণ্ড ৩ থেকে ৫ পর্যন্ত নবুওয়াত, মক্কী ও মাদানী যুগের পুঙ্খানুপুঙ্খ বিবরণ ধারণ করে।
+                  {isBn
+                    ? 'সৃষ্টির শুরু থেকে বিশ্ব ইতিহাসের প্রামাণ্য গ্রন্থাবলি। খণ্ড ৩ থেকে ৫ পর্যন্ত নবুওয়াত, মক্কী ও মাদানী যুগের পুঙ্খানুপুঙ্খ বিবরণ ধারণ করে।'
+                    : 'Classic multi-volume historical encyclopedia. Volumes 3 to 5 contain meticulous accounts of Prophethood, Meccan, and Medinan eras.'}
                 </p>
               </div>
 
               <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2 col-span-1 md:col-span-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">৫. আস-সহীহাইনি (সহীহ আল-বুখারী ও সহীহ মুসলিম)</h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">বিশুদ্ধতম হাদিস</span>
+                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                    {isBn ? '৫. আস-সহীহাইনি (সহীহ আল-বুখারী ও সহীহ মুসলিম)' : '5. Al-Sahihayn (Sahih al-Bukhari & Sahih Muslim)'}
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                    {isBn ? 'বিশুদ্ধতম হাদিস' : 'Authentic Hadith'}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
-                  <strong>সংকলক:</strong> ইমাম মুহাম্মদ ইবনে ইসমাইল আল-বুখারী (র.) ও ইমাম মুসলিম ইবনুল হাজ্জাজ (র.)
+                  <strong>{isBn ? 'সংকলক:' : 'Compilers:'}</strong> {isBn ? 'ইমাম মুহাম্মদ ইবনে ইসমাইল আল-বুখারী (র.) ও ইমাম মুসলিম ইবনুল হাজ্জাজ (র.)' : 'Imam Muhammad al-Bukhari (RA) & Imam Muslim ibn al-Hajjaj (RA)'}
                 </p>
                 <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
-                  কুরআনুল কারিমের পর পৃথিবীর সবচেয়ে বিশুদ্ধ কিতাবসমূহ। 'কিতাবুল মাগাজী' (যুদ্ধসমূহ), 'কিতাবুম মানাকিব' (মর্যাদাপূর্ণ গুণাবলী) ও 'কিতাবুল হজ্জ' থেকে প্রতিটি ঐতিহাসিক ঘটনার শতভাগ বিশুদ্ধ সনদ যাচাইকৃত।
+                  {isBn
+                    ? "কুরআনুল কারিমের পর পৃথিবীর সবচেয়ে বিশুদ্ধ কিতাবসমূহ। 'কিতাবুল মাগাজী' (যুদ্ধসমূহ), 'কিতাবুম মানাকিব' (মর্যাদাপূর্ণ গুণাবলী) ও 'কিতাবুল হজ্জ' থেকে প্রতিটি ঐতিহাসিক ঘটনার শতভাগ বিশুদ্ধ সনদ যাচাইকৃত।"
+                    : "The most authentic sources of prophetic traditions after the Holy Qur'an. Verified narrations from Kitab al-Maghazi, Kitab al-Manaqib, and Kitab al-Hajj."}
                 </p>
               </div>
             </div>
 
             <div className="pt-3 border-t border-slate-200 dark:border-emerald-800/60 flex items-center justify-between text-xs">
               <span className="text-slate-500 dark:text-emerald-300/80 font-medium">
-                পরম শ্রদ্ধাভরে সংকলিত — Zikr+ Apps
+                {isBn ? 'পরম শ্রদ্ধাভরে সংকলিত — Zikr+ Apps' : 'Compiled with reverence — Zikr+ Apps'}
               </span>
               <button
                 onClick={() => setShowBibliographyModal(false)}
                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
               >
-                বন্ধ করুন
+                {isBn ? 'বন্ধ করুন' : 'Close'}
               </button>
             </div>
           </div>

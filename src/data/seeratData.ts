@@ -14,6 +14,8 @@ export type SeeratPhaseKey =
 export interface SeeratPhaseMeta {
   key: SeeratPhaseKey;
   ageRange: string;
+  ageRangeBn?: string;
+  ageRangeEn?: string;
   titleBn: string;
   titleEn: string;
   titleAr: string;
@@ -84,6 +86,8 @@ export const SEERAT_PHASES: SeeratPhaseMeta[] = [
   {
     key: 'infancy_childhood',
     ageRange: 'বয়স ১ - ১২ বছর',
+    ageRangeBn: 'বয়স ১ - ১২ বছর',
+    ageRangeEn: 'Ages 1 - 12',
     titleBn: '১. শৈশব, লালন-পালন ও কৈশোর',
     titleEn: '1. Infancy, Childhood & Early Youth',
     titleAr: 'الطفولة والرعاية المبكرة (سن ١ - ١٢)',
@@ -96,6 +100,8 @@ export const SEERAT_PHASES: SeeratPhaseMeta[] = [
   {
     key: 'youth_preprophetic',
     ageRange: 'বয়স ১৩ - ৩৯ বছর',
+    ageRangeBn: 'বয়স ১৩ - ৩৯ বছর',
+    ageRangeEn: 'Ages 13 - 39',
     titleBn: '২. যৌবন ও আল-আমিন চরিত্র',
     titleEn: '2. Youth & The Trustworthy Citizen',
     titleAr: 'الشباب وعصر الصادق الأمين (سن ١٣ - ٣٩)',
@@ -108,6 +114,8 @@ export const SEERAT_PHASES: SeeratPhaseMeta[] = [
   {
     key: 'makki_prophetic',
     ageRange: 'বয়স ৪০ - ৫২ বছর',
+    ageRangeBn: 'বয়স ৪০ - ৫২ বছর',
+    ageRangeEn: 'Ages 40 - 52',
     titleBn: '৩. নবুওয়াত লাভ ও মক্কী দাওয়াত',
     titleEn: '3. Prophethood & The Makkah Trials',
     titleAr: 'البعثة والدعوة المكية (سن ٤٠ - ٥٢)',
@@ -120,6 +128,8 @@ export const SEERAT_PHASES: SeeratPhaseMeta[] = [
   {
     key: 'madani_early',
     ageRange: 'বয়স ৫৩ - ৫৪ বছর',
+    ageRangeBn: 'বয়স ৫৩ - ৫৪ বছর',
+    ageRangeEn: 'Ages 53 - 54',
     titleBn: '৪. ঐতিহাসিক হিজরত ও মদিনা সনদের প্রতিষ্ঠা',
     titleEn: '4. The Great Hijrah & Madinah Constitution',
     titleAr: 'الهجرة المباركة وتأسيس الدولة (سن ٥٣ - ٥٤)',
@@ -132,6 +142,8 @@ export const SEERAT_PHASES: SeeratPhaseMeta[] = [
   {
     key: 'madani_battles',
     ageRange: 'বয়স ৫৫ - ৫৯ বছর',
+    ageRangeBn: 'বয়স ৫৫ - ৫৯ বছর',
+    ageRangeEn: 'Ages 55 - 59',
     titleBn: '৫. প্রধান যুদ্ধসমূহ ও হুদাইবিয়ার সন্ধি',
     titleEn: '5. Major Battles & Treaty of Hudaybiyyah',
     titleAr: 'الغزوات الكبرى وصلح الحديبية (سن ٥٥ - ٥٩)',
@@ -144,6 +156,8 @@ export const SEERAT_PHASES: SeeratPhaseMeta[] = [
   {
     key: 'madani_victory_farewell',
     ageRange: 'বয়স ৬০ - ৬৩ বছর',
+    ageRangeBn: 'বয়স ৬০ - ৬৩ বছর',
+    ageRangeEn: 'Ages 60 - 63',
     titleBn: '৬. মক্কা বিজয়, বিদায় হজ ও ওফাত',
     titleEn: '6. Conquest of Makkah, Farewell & Passing',
     titleAr: 'فتح مكة وحجة الوداع والوفاة (سن ٦٠ - ٦٣)',
