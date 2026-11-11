@@ -948,7 +948,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             {/* Overall Timeline Range Display */}
             <div className="hidden sm:flex shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100/80 dark:bg-[#08262d] border border-slate-200/60 dark:border-teal-500/20 text-[10px] sm:text-xs text-slate-600 dark:text-teal-300 font-black font-mono">
               <Clock className="w-3 h-3 text-amber-500 shrink-0" />
-              <span>৫৭০ খ্রি. – ২০২৬ খ্রি.</span>
+              <span>{selectedLanguage === 'bn' ? '৫৭০ খ্রি. – ২০২৬ খ্রি.' : '570 CE – 2026 CE'}</span>
             </div>
           </div>
 
@@ -1069,15 +1069,15 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
           {/* Historical Tick Marks Row */}
           <div className="flex items-center justify-between text-[7.5px] sm:text-[8.5px] font-black text-slate-400/80 dark:text-teal-300/50 px-0.5 font-mono select-none">
-            <span>৫৭০ খ্রি.</span>
-            <span>৬২২ খ্রি.</span>
-            <span>৬৬১ খ্রি.</span>
-            <span>৭৫০ খ্রি.</span>
-            <span>১০০০ খ্রি.</span>
-            <span>১২৫৮ খ্রি.</span>
-            <span>১৫০০ খ্রি.</span>
-            <span>১৮০০ খ্রি.</span>
-            <span>২০২৬ খ্রি.</span>
+            <span>{selectedLanguage === 'bn' ? '৫৭০ খ্রি.' : '570 CE'}</span>
+            <span>{selectedLanguage === 'bn' ? '৬২২ খ্রি.' : '622 CE'}</span>
+            <span>{selectedLanguage === 'bn' ? '৬৬১ খ্রি.' : '661 CE'}</span>
+            <span>{selectedLanguage === 'bn' ? '৭৫০ খ্রি.' : '750 CE'}</span>
+            <span>{selectedLanguage === 'bn' ? '১০০০ খ্রি.' : '1000 CE'}</span>
+            <span>{selectedLanguage === 'bn' ? '১২৫৮ খ্রি.' : '1258 CE'}</span>
+            <span>{selectedLanguage === 'bn' ? '১৫০০ খ্রি.' : '1500 CE'}</span>
+            <span>{selectedLanguage === 'bn' ? '১৮০০ খ্রি.' : '1800 CE'}</span>
+            <span>{selectedLanguage === 'bn' ? '২০২৬ খ্রি.' : '2026 CE'}</span>
           </div>
 
           {/* ROW 4: Visited Count, Tour Status & Shimmering Progress Bar Indicator */}
@@ -1097,12 +1097,12 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                 <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
                   <Sparkles className="w-3 h-3 text-amber-400" />
-                  <span>স্বয়ংক্রিয় টাইমলাইন সফর চালু ({toBengaliDigits(playSpeed)}x গতি)</span>
+                  <span>{selectedLanguage === 'bn' ? `স্বয়ংক্রিয় টাইমলাইন সফর চালু (${toBengaliDigits(playSpeed)}x গতি)` : `Auto-play active (${playSpeed}x speed)`}</span>
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5 text-slate-500 dark:text-teal-300/70">
                   <Layers className="w-3 h-3 text-teal-400" />
-                  <span>ইন্টারেক্টিভ ইতিহাস পর্যালোচনা</span>
+                  <span>{selectedLanguage === 'bn' ? 'ইন্টারেক্টিভ ইতিহাস পর্যালোচনা' : 'Interactive History Explorer'}</span>
                 </span>
               )}
             </div>
@@ -1110,7 +1110,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             {/* Right: Percentage & Shimmering Progress Bar */}
             <div className="flex items-center gap-2">
               <span className="font-mono text-[9px] sm:text-[10px] text-slate-500 dark:text-teal-300/80 font-black">
-                {toBengaliDigits((((currentIndex + 1) / ISLAMIC_HISTORY_EVENTS.length) * 100).toFixed(0))}%
+                {selectedLanguage === 'bn' ? toBengaliDigits((((currentIndex + 1) / ISLAMIC_HISTORY_EVENTS.length) * 100).toFixed(0)) : (((currentIndex + 1) / ISLAMIC_HISTORY_EVENTS.length) * 100).toFixed(0)}%
               </span>
               <div className="w-24 sm:w-44 bg-slate-100 dark:bg-[#08262d] h-2 sm:h-2.5 rounded-full overflow-hidden border border-slate-200/60 dark:border-teal-500/25 p-0.5 relative text-left">
                 <div

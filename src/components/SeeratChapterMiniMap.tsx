@@ -135,7 +135,7 @@ export const SeeratChapterMiniMap: React.FC<SeeratChapterMiniMapProps> = ({
             {isBn ? location.nameBn : location.nameEn}
           </p>
           <p className="text-[10px] text-slate-500 dark:text-emerald-300/80">
-            {location.modernCityBn}
+            {isBn ? location.modernCityBn : location.modernCityEn}
           </p>
         </div>
       </div>
