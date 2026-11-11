@@ -200,7 +200,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
             </div>
             <div className="min-w-0">
               <h3 className={`text-sm sm:text-base font-bold tracking-tight truncate ${isDay ? 'text-[#004D38]' : 'text-white'}`}>
-                {selectedLanguage === 'bn' ? 'রিফ্রেশ সিস্টেম (Refresh System)' : 'Refresh System'}
+                {selectedLanguage === 'bn' ? 'রিফ্রেশ সিস্টেম' : 'Refresh System'}
               </h3>
               <p className={`text-xs truncate ${isDay ? 'text-slate-600 font-medium' : 'text-teal-200/80'}`}>
                 {selectedLanguage === 'bn'
@@ -447,7 +447,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               }`}
             >
               <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-              <span>Reset</span>
+              <span>{ZIKIR_UI.reset[selectedLanguage] || 'Reset'}</span>
             </button>
 
             {/* Export PDF Button */}
@@ -461,7 +461,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               }`}
             >
               <FileText className="w-3.5 h-3.5 text-slate-500" />
-              <span>PDF রিপোর্ট</span>
+              <span>{ZIKIR_UI.exportPdf[selectedLanguage] || 'PDF Report'}</span>
             </button>
 
             {/* Focus Mode Button */}
@@ -480,13 +480,13 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               </span>
             </button>
 
-            {/* + Zikr Add Button: [ + + জিকির যোগ ] */}
+            {/* + Zikr Add Button */}
             <button
               onClick={onOpenAddModal}
               className="flex items-center gap-1.5 text-xs font-extrabold px-4 py-2 rounded-xl shadow-sm transition active:scale-95 cursor-pointer bg-[#006A4E] hover:bg-[#005439] text-white"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
-              <span>+ জিকির যোগ</span>
+              <span>{ZIKIR_UI.addZikr[selectedLanguage] || '+ Add Zikr'}</span>
             </button>
           </div>
         </div>

@@ -150,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
             {!isOnline && (
               <div
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-300/40 text-amber-200 text-[10px] font-bold"
-                title="অফলাইন মোড সক্রিয়"
+                title={selectedLanguage === 'bn' ? 'অফলাইন মোড সক্রিয়' : 'Offline mode active'}
               >
                 <WifiOff className="w-3 h-3 text-amber-300" />
                 <span className="hidden sm:inline">Offline</span>

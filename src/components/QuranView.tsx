@@ -159,7 +159,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const isDay = themeMode === 'day';
 
   // Navigation & Selection state
-  const [selectedSurahNumber, setSelectedSurahNumber] = useState<number | null>(null);
+  const [selectedSurahNumber, setSelectedSurahNumber] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_active_surah_num');
+      if (saved) {
+        const num = parseInt(saved, 10);
+        if (num >= 1 && num <= 114) return num;
+      }
+    } catch {}
+    return null;
+  });
   const [surahDetail, setSurahDetail] = useState<QuranSurahDetail | null>(null);
   const [isLoadingSurah, setIsLoadingSurah] = useState<boolean>(false);
   const [surahLoadError, setSurahLoadError] = useState<string | null>(null);
@@ -199,15 +208,108 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [reciterCategoryFilter, setReciterCategoryFilter] = useState<'all' | 'makkah' | 'egypt' | 'melodic' | 'slow'>('all');
   const [isInsightExpanded, setIsInsightExpanded] = useState<boolean>(false);
 
-  // Reader Customization & Display Settings
-  const [wordByWordMode, setWordByWordMode] = useState<boolean>(true);
-  const [tajweedColorMode, setTajweedColorMode] = useState<boolean>(true);
-  const [showTranslation, setShowTranslation] = useState<boolean>(true);
-  const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
-  const [fontSize, setFontSize] = useState<FontSizeType>('large');
-  const [selectedReciterId, setSelectedReciterId] = useState<string>('ar.alafasy');
+  // Reader Customization & Display Settings (Persisted in LocalStorage so settings only change when manually toggled)
+  const [wordByWordMode, setWordByWordMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_word_by_word_mode');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true;
+  });
+
+  const [tajweedColorMode, setTajweedColorMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_tajweed_color_mode');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true;
+  });
+
+  const [showTranslation, setShowTranslation] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_show_translation');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true;
+  });
+
+  const [showTransliteration, setShowTransliteration] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_show_transliteration');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true;
+  });
+
+  const [fontSize, setFontSize] = useState<FontSizeType>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_font_size');
+      if (saved === 'normal' || saved === 'large' || saved === 'xl' || saved === '2xl') {
+        return saved as FontSizeType;
+      }
+    } catch {}
+    return 'large';
+  });
+
+  const [selectedReciterId, setSelectedReciterId] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_selected_reciter_id');
+      if (saved) return saved;
+    } catch {}
+    return 'ar.alafasy';
+  });
+
   const [autoScroll, setAutoScroll] = useState<boolean>(false);
-  const [autoScrollSpeed, setAutoScrollSpeed] = useState<'normal' | 'slow' | 'fast'>('normal');
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState<'normal' | 'slow' | 'fast'>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_auto_scroll_speed');
+      if (saved === 'normal' || saved === 'slow' || saved === 'fast') return saved;
+    } catch {}
+    return 'normal';
+  });
+
+  // Persist reader toggles so they strictly retain user manual choices across Surahs, tab exits, and refreshes
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_word_by_word_mode', String(wordByWordMode));
+    } catch {}
+  }, [wordByWordMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_tajweed_color_mode', String(tajweedColorMode));
+    } catch {}
+  }, [tajweedColorMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_show_translation', String(showTranslation));
+    } catch {}
+  }, [showTranslation]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_show_transliteration', String(showTransliteration));
+    } catch {}
+  }, [showTransliteration]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_font_size', fontSize);
+    } catch {}
+  }, [fontSize]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_selected_reciter_id', selectedReciterId);
+    } catch {}
+  }, [selectedReciterId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_auto_scroll_speed', autoScrollSpeed);
+    } catch {}
+  }, [autoScrollSpeed]);
 
   // Nurani Quran Mode state (traditional South Asian / IndoPak Hafezi Mushaf mode)
   const [isNuraniMode, setIsNuraniMode] = useState<boolean>(() => {
@@ -583,6 +685,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
     skipPushState = false
   ) => {
     setSelectedSurahNumber(surahNumber);
+    try {
+      localStorage.setItem('noor_quran_active_surah_num', String(surahNumber));
+    } catch {}
     if (!skipPushState) {
       try {
         window.history.pushState({ appModule: 'quran', quranSurah: surahNumber }, '');
@@ -674,6 +779,13 @@ export const QuranView: React.FC<QuranViewProps> = ({
     setShowLanguagePicker(false);
   };
 
+  // Auto-restore active surah on mount if user had one opened
+  useEffect(() => {
+    if (selectedSurahNumber !== null && !surahDetail) {
+      loadSurah(selectedSurahNumber, undefined, false, true);
+    }
+  }, []);
+
   // Back button handling inside QuranView
   useEffect(() => {
     const handleQuranPopState = (event: PopStateEvent) => {
@@ -682,8 +794,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
         loadSurah(state.quranSurah, undefined, false, true);
       } else if (state && state.appModule === 'quran') {
         setSelectedSurahNumber(null);
+        try {
+          localStorage.removeItem('noor_quran_active_surah_num');
+        } catch {}
       } else {
         setSelectedSurahNumber(null);
+        try {
+          localStorage.removeItem('noor_quran_active_surah_num');
+        } catch {}
       }
     };
 
@@ -1377,6 +1495,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 setAutoScroll(false);
                 setSelectedSurahNumber(null);
                 setSurahDetail(null);
+                try {
+                  localStorage.removeItem('noor_quran_active_surah_num');
+                } catch {}
               }}
               className="p-2 -ml-0.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer flex items-center justify-center shrink-0 border border-white/15 shadow-xs"
               title={selectedLanguage === 'bn' ? 'সূরা তালিকায় ফিরে যান' : 'Back to Surah List'}
@@ -4393,6 +4514,105 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                       {selectedLanguage === 'bn' ? 'রঙিন অক্ষরের তাজবীদ নিয়ম ও সঠিক উচ্চারণ' : 'Color-coded Tajweed pronunciation highlights'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {/* Option 2.1: Word by Word Meaning Mode */}
+              <button
+                onClick={() => {
+                  setWordByWordMode(!wordByWordMode);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition cursor-pointer active:scale-98 ${
+                  wordByWordMode
+                    ? isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-emerald-950/30 border-emerald-800/40'
+                    : isDay ? 'bg-white hover:bg-slate-50 border-slate-200' : 'bg-[#091620] hover:bg-[#0d1d2b] border-[#152a36]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                    <Book className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
+                      <span>{selectedLanguage === 'bn' ? 'শব্দে শব্দে অর্থ (Word by Word)' : 'Word by Word Meaning'}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-black ${
+                        wordByWordMode ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        {wordByWordMode ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedLanguage === 'bn' ? 'প্রতিটি আরবি শব্দের নিচে স্বতন্ত্র বাংলা অর্থ' : 'Individual word-by-word translations below each term'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {/* Option 2.2: Translation Display Toggle */}
+              <button
+                onClick={() => {
+                  setShowTranslation(!showTranslation);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition cursor-pointer active:scale-98 ${
+                  showTranslation
+                    ? isDay ? 'bg-teal-50/60 border-teal-200' : 'bg-teal-950/30 border-teal-800/40'
+                    : isDay ? 'bg-white hover:bg-slate-50 border-slate-200' : 'bg-[#091620] hover:bg-[#0d1d2b] border-[#152a36]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-500 flex items-center justify-center shrink-0">
+                    <Globe className="w-5 h-5 text-teal-500" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
+                      <span>{selectedLanguage === 'bn' ? 'পূর্ণাঙ্গ অনুবাদ প্রদর্শন' : 'Show Full Translation'}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-black ${
+                        showTranslation ? 'bg-teal-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        {showTranslation ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedLanguage === 'bn' ? 'আয়াতের নিচে বাংলা ও নির্বাচিত ভাষার অনুবাদ' : 'Ayah translations below the Arabic text'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              {/* Option 2.3: Transliteration Toggle */}
+              <button
+                onClick={() => {
+                  setShowTransliteration(!showTransliteration);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition cursor-pointer active:scale-98 ${
+                  showTransliteration
+                    ? isDay ? 'bg-sky-50/60 border-sky-200' : 'bg-sky-950/30 border-sky-800/40'
+                    : isDay ? 'bg-white hover:bg-slate-50 border-slate-200' : 'bg-[#091620] hover:bg-[#0d1d2b] border-[#152a36]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-500 flex items-center justify-center shrink-0">
+                    <Type className="w-5 h-5 text-sky-500" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
+                      <span>{selectedLanguage === 'bn' ? 'বাংলা উচ্চারণ (Phonetics)' : 'Phonetic Transliteration'}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-md font-black ${
+                        showTransliteration ? 'bg-sky-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                      }`}>
+                        {showTransliteration ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {selectedLanguage === 'bn' ? 'আরবি না পড়তে পারলে বাংলা হরফে সহিহ উচ্চারণ' : 'Phonetic pronunciation guide for non-native readers'}
                     </p>
                   </div>
                 </div>

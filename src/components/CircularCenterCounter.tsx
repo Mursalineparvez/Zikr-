@@ -73,7 +73,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
 
       {/* Top Header Pill Badge & Bismillah Calligraphy */}
       <div className="relative z-10 mb-3 space-y-1.5 flex flex-col items-center">
-        {/* Badge Pill: CENTRAL MASTER COUNTER • সর্বমোট তাসবীহ */}
+        {/* Badge Pill: CENTRAL MASTER COUNTER / সর্বমোট তাসবীহ */}
         <div
           className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-transform ${
             isPopping ? 'scale-105' : 'scale-100'
@@ -88,7 +88,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
               isPopping ? 'bg-emerald-500 animate-ping' : 'bg-[#006A4E]'
             }`}
           />
-          <span>● CENTRAL MASTER COUNTER • সর্বমোট তাসবীহ</span>
+          <span>● {ZIKIR_UI.centralMasterCounter[selectedLanguage] || 'Central Master Counter'}</span>
         </div>
 
         {/* Arabic Bismillah Calligraphy */}
@@ -185,7 +185,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
             {/* Upper Golden Star Label */}
             <div className="flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-emerald-300 mb-0.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-              <span>সর্বমোট তাসবীহ গণনা</span>
+              <span>{ZIKIR_UI.masterTasbeehCount[selectedLanguage] || 'Master Tasbeeh Count'}</span>
             </div>
 
             {/* Giant Bold Counter Digits matching reference screenshot (e.g., 11,573) */}
@@ -198,19 +198,19 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
             </div>
 
             <span className={`text-[11px] font-medium text-slate-500 mt-0.5`}>
-              সর্বমোট তাসবীহ গণনা
+              {ZIKIR_UI.masterTasbeehCount[selectedLanguage] || 'Total Tasbeeh Count'}
             </span>
 
             {/* Breakdown Indicators inside circle matching orange dots from image */}
             <div className="mt-2 flex items-center justify-center gap-2 text-[10px] font-bold">
               <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700">
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                <span>আজকের জিকির:</span>
+                <span>{ZIKIR_UI.todayDhikr[selectedLanguage] || "Today's Dhikr:"}</span>
                 <span className="font-mono text-[#006A4E] font-extrabold">{effectiveDaily.toLocaleString()}</span>
               </div>
               <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-slate-700">
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                <span>২ লক্ষ পূরণ</span>
+                <span>{ZIKIR_UI.goal200k[selectedLanguage] || '200k Goal'}</span>
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
               </div>
             </div>
@@ -220,17 +220,17 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
 
       {/* Action Controls beneath Circular Counter: Left Solid Emerald, Right Red Border Outline */}
       <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 mt-4 w-full max-w-sm">
-        {/* Left Green Save Button: [ 💾 হিস্ট্রিতে সংরক্ষণ করুন ] */}
+        {/* Left Green Save Button: Save to History */}
         <button
           type="button"
           onClick={onSaveSession}
           className="flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 cursor-pointer bg-[#006A4E] hover:bg-[#005439] text-white"
         >
           <BookmarkPlus className="w-4 h-4 text-emerald-200" />
-          <span>হিস্ট্রিতে সংরক্ষণ করুন</span>
+          <span>{ZIKIR_UI.saveSession[selectedLanguage] || 'Save Session to History'}</span>
         </button>
 
-        {/* Right Red Reset Button: [ 🔄 সব রিসেট ] */}
+        {/* Right Red Reset Button: Reset All */}
         <button
           type="button"
           onClick={onGlobalReset}
@@ -241,7 +241,7 @@ export const CircularCenterCounter: React.FC<CircularCenterCounterProps> = React
           }`}
         >
           <RotateCcw className="w-4 h-4 text-rose-500" />
-          <span>সব রিসেট</span>
+          <span>{ZIKIR_UI.resetAll[selectedLanguage] || 'Reset All'}</span>
         </button>
       </div>
     </section>

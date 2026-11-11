@@ -389,7 +389,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                 ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 shadow-xs'
                 : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
             }`}
-            title={isLocked ? 'লক করা আছে' : 'Exit Focus Mode'}
+            title={isLocked ? (selectedLanguage === 'bn' ? 'লক করা আছে' : 'Screen Locked') : (selectedLanguage === 'bn' ? 'ফোকাস মোড থেকে বের হন' : 'Exit Focus Mode')}
           >
             <X className="w-4 h-4 stroke-[2.5]" />
           </button>
@@ -422,7 +422,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               } ${
                 soundActive ? 'text-emerald-400' : 'text-slate-400 opacity-60'
               }`}
-              title={isLocked ? 'লক করা আছে' : soundActive ? 'শব্দ বন্ধ করুন' : 'শব্দ চালু করুন'}
+              title={isLocked ? (selectedLanguage === 'bn' ? 'লক করা আছে' : 'Screen Locked') : soundActive ? (selectedLanguage === 'bn' ? 'শব্দ বন্ধ করুন' : 'Mute Sound') : (selectedLanguage === 'bn' ? 'শব্দ চালু করুন' : 'Enable Sound')}
             >
               {soundActive ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             </button>
@@ -443,7 +443,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               } ${
                 vibrationActive ? 'text-amber-400' : 'text-slate-400 opacity-60'
               }`}
-              title={isLocked ? 'লক করা আছে' : vibrationActive ? 'ভাইব্রেশন বন্ধ করুন' : 'ভাইব্রেশন চালু করুন'}
+              title={isLocked ? (selectedLanguage === 'bn' ? 'লক করা আছে' : 'Screen Locked') : vibrationActive ? (selectedLanguage === 'bn' ? 'ভাইব্রেশন বন্ধ করুন' : 'Disable Vibration') : (selectedLanguage === 'bn' ? 'ভাইব্রেশন চালু করুন' : 'Enable Vibration')}
             >
               <Smartphone className="w-3.5 h-3.5" />
             </button>
@@ -469,7 +469,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 shadow-xs'
                   : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
               }`}
-              title={isLocked ? 'লক করা আছে' : 'কাউন্টার রিসেট (০ করুন)'}
+              title={isLocked ? (selectedLanguage === 'bn' ? 'লক করা আছে' : 'Screen Locked') : (selectedLanguage === 'bn' ? 'কাউন্টার রিসেট (০ করুন)' : 'Reset Counter (0)')}
             >
               <RotateCcw className="w-4 h-4 stroke-[2]" />
             </button>
@@ -496,7 +496,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
                   : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
               }`}
-              title={isLocked ? 'আনলক করতে চাপুন' : 'স্ক্রিন লক করুন'}
+              title={isLocked ? (selectedLanguage === 'bn' ? 'আনলক করতে চাপুন' : 'Tap to Unlock') : (selectedLanguage === 'bn' ? 'স্ক্রিন লক করুন' : 'Lock Screen')}
             >
               {isLocked ? (
                 <>
@@ -606,7 +606,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   ? 'bg-emerald-50 text-[#006747] border-emerald-200'
                   : 'bg-white/10 text-emerald-300 border-white/10'
               }`}
-              title="আরবি তিলাওয়াত শুনুন"
+              title={selectedLanguage === 'bn' ? 'আরবি তিলাওয়াত শুনুন' : 'Listen to Arabic Recitation'}
             >
               <Volume2 className="w-3.5 h-3.5" />
             </button>
@@ -786,7 +786,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs'
                   : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
               }`}
-              title="১ কমান (-1)"
+              title={selectedLanguage === 'bn' ? '১ কমান (-১)' : 'Decrease (-1)'}
             >
               <Minus className="w-4 h-4 stroke-[2.5]" />
             </button>
@@ -802,7 +802,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>
-                +১ {selectedLanguage === 'bn' ? 'গণনা' : 'Count'} ({displayPronunciation})
+                +{selectedLanguage === 'bn' ? '১ গণনা' : '1 Count'} ({displayPronunciation})
               </span>
             </button>
           </div>
@@ -888,7 +888,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               isDay ? 'text-[#0066FF]' : 'text-sky-300'
             }`}
           >
-            <span>📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ</span>
+            <span>{selectedLanguage === 'bn' ? '📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ' : '📱 Install Android App & Offline Package'}</span>
           </button>
         </div>
       </footer>

@@ -312,10 +312,10 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                   ? 'bg-emerald-50 hover:bg-emerald-100 text-[#006747] border-emerald-200'
                   : 'bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border-emerald-700/60'
               }`}
-              title="ফোকাস মোডে এক নজরে পড়ুন"
+              title={currentLang === 'bn' ? 'ফোকাস মোডে এক নজরে পড়ুন' : 'View in Focus Mode'}
             >
               <Eye className="w-3 h-3" />
-              <span>ফোকাস</span>
+              <span>{currentLang === 'bn' ? 'ফোকাস' : (currentLang === 'ar' ? 'تركيز' : (currentLang === 'ur' ? 'فوکس' : 'Focus'))}</span>
             </button>
           )}
         </div>
@@ -471,7 +471,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                 ? 'bg-[#e6f7f2] hover:bg-[#d5f2e8] text-[#006747] border-[#c3edd9]'
                 : 'bg-[#0a262c] hover:bg-[#10343c] text-emerald-300 border-[#184850]'
             }`}
-            title="১ কমান (-1)"
+            title={currentLang === 'bn' ? '১ কমান (-১)' : 'Decrease (-1)'}
           >
             -1
           </button>
@@ -488,7 +488,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                 ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-slate-600 hover:text-[#006747] border-[#d0e6e3]'
                 : 'bg-[#0a262c] hover:bg-[#10343c] text-slate-300 hover:text-white border-[#184850]'
             }`}
-            title="রিসেট (Reset to 0)"
+            title={currentLang === 'bn' ? 'রিসেট (০)' : 'Reset (0)'}
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
@@ -508,7 +508,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                 ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] border-[#d0e6e3]'
                 : 'bg-[#0a262c] text-[#94a3b8] border-[#184850]'
             }`}
-            title="উপরে নিন (Move Up)"
+            title={currentLang === 'bn' ? 'উপরে নিন' : 'Move Up'}
           >
             <ArrowUp className="w-3.5 h-3.5" />
           </button>
@@ -526,7 +526,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                 ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] border-[#d0e6e3]'
                 : 'bg-[#0a262c] text-[#94a3b8] border-[#184850]'
             }`}
-            title="নিচে নিন (Move Down)"
+            title={currentLang === 'bn' ? 'নিচে নিন' : 'Move Down'}
           >
             <ArrowDown className="w-3.5 h-3.5" />
           </button>
@@ -543,7 +543,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                 ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] hover:text-[#006747] border-[#d0e6e3]'
                 : 'bg-[#0a262c] hover:bg-[#10343c] text-[#94a3b8] hover:text-white border-[#184850]'
             }`}
-            title="সম্পাদনা (Edit)"
+            title={currentLang === 'bn' ? 'সম্পাদনা' : 'Edit'}
           >
             <Edit3 className="w-3.5 h-3.5" />
           </button>
@@ -560,7 +560,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                 ? 'bg-red-50 hover:bg-red-100 text-red-600 border-red-200'
                 : 'bg-red-950/30 hover:bg-red-900/50 text-red-300 border-red-900/40'
             }`}
-            title="মুছুন (Delete)"
+            title={currentLang === 'bn' ? 'মুছুন' : 'Delete'}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

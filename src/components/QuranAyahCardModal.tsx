@@ -40,8 +40,36 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
   selectedLanguage,
   soundEnabled,
 }) => {
-  const [cardTheme, setCardTheme] = useState<CardTheme>('emerald');
-  const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
+  const [cardTheme, setCardTheme] = useState<CardTheme>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_card_theme');
+      if (saved && ['emerald', 'midnight', 'royal', 'parchment', 'gold'].includes(saved)) {
+        return saved as CardTheme;
+      }
+    } catch {}
+    return 'emerald';
+  });
+
+  const [showTransliteration, setShowTransliteration] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('noor_quran_show_transliteration');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_card_theme', cardTheme);
+    } catch {}
+  }, [cardTheme]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('noor_quran_show_transliteration', String(showTransliteration));
+    } catch {}
+  }, [showTransliteration]);
+
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
