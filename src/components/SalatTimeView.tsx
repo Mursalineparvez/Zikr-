@@ -33,8 +33,13 @@ import {
   Share2,
   Info,
   ShieldCheck,
-  Shield,
   CloudSun,
+  Cloud,
+  CloudRain,
+  CloudDrizzle,
+  CloudLightning,
+  CloudSnow,
+  RefreshCw,
   X,
   Radio,
   BookOpen,
@@ -118,6 +123,68 @@ export const toBengaliNumber = (num: number | string): string => {
   const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
   return String(num).replace(/\d/g, (d) => bnDigits[parseInt(d, 10)]);
 };
+
+export interface LiveWeatherData {
+  temp: number;
+  tempFormattedBn: string;
+  tempFormattedEn: string;
+  conditionBn: string;
+  conditionEn: string;
+  code: number;
+  icon: 'sun' | 'cloud-sun' | 'cloud' | 'cloud-drizzle' | 'cloud-rain' | 'cloud-lightning' | 'cloud-snow';
+  lastUpdated: number;
+  locationName: string;
+}
+
+export function parseWmoWeatherCode(code: number): {
+  bn: string;
+  en: string;
+  icon: 'sun' | 'cloud-sun' | 'cloud' | 'cloud-drizzle' | 'cloud-rain' | 'cloud-lightning' | 'cloud-snow';
+} {
+  switch (code) {
+    case 0:
+      return { bn: 'পরিষ্কার', en: 'Clear Sky', icon: 'sun' };
+    case 1:
+      return { bn: 'নির্মল আবহাওয়া', en: 'Mainly Clear', icon: 'sun' };
+    case 2:
+      return { bn: 'আংশিক মেঘলা', en: 'Partly Cloudy', icon: 'cloud-sun' };
+    case 3:
+      return { bn: 'মেঘলা আকাশ', en: 'Overcast', icon: 'cloud' };
+    case 45:
+    case 48:
+      return { bn: 'কুয়াশাচ্ছন্ন', en: 'Foggy', icon: 'cloud' };
+    case 51:
+    case 53:
+    case 55:
+    case 56:
+    case 57:
+      return { bn: 'গুঁড়ি গুঁড়ি বৃষ্টি', en: 'Light Drizzle', icon: 'cloud-drizzle' };
+    case 61:
+    case 63:
+    case 65:
+    case 66:
+    case 67:
+      return { bn: 'বৃষ্টিপাত', en: 'Rainy', icon: 'cloud-rain' };
+    case 71:
+    case 73:
+    case 75:
+    case 77:
+      return { bn: 'তুষারপাত', en: 'Snowing', icon: 'cloud-snow' };
+    case 80:
+    case 81:
+    case 82:
+      return { bn: 'মৌসুমি বৃষ্টি', en: 'Rain Showers', icon: 'cloud-rain' };
+    case 85:
+    case 86:
+      return { bn: 'তুষার ঝড়', en: 'Snow Showers', icon: 'cloud-snow' };
+    case 95:
+    case 96:
+    case 99:
+      return { bn: 'বজ্রবৃষ্টি', en: 'Thunderstorm', icon: 'cloud-lightning' };
+    default:
+      return { bn: 'পরিষ্কার', en: 'Clear', icon: 'sun' };
+  }
+}
 
 export const getDetailedHijriBengaliString = (date: Date, offset: number = 0): {
   greeting: string;
@@ -296,6 +363,125 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
   const [activeAdhanName, setActiveAdhanName] = useState<string>('Makkah Adhan');
   const [selectedQuickPrayer, setSelectedQuickPrayer] = useState<any | null>(null);
   const [showSunnahFastDrawer, setShowSunnahFastDrawer] = useState<boolean>(false);
+
+  // Live Weather State with LocalStorage caching & 30-min auto-interval
+  const [liveWeather, setLiveWeather] = useState<LiveWeatherData>(() => {
+    try {
+      const saved = localStorage.getItem('zikrmate_live_weather');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed.temp === 'number') {
+          return parsed;
+        }
+      }
+    } catch {}
+    return {
+      temp: 27,
+      tempFormattedBn: '২৭°C',
+      tempFormattedEn: '27°C',
+      conditionBn: 'পরিষ্কার',
+      conditionEn: 'Clear',
+      code: 0,
+      icon: 'sun',
+      lastUpdated: 0,
+      locationName: 'Dhaka',
+    };
+  });
+  const [isWeatherFetching, setIsWeatherFetching] = useState<boolean>(false);
+
+  // Helper to fetch live weather from Open-Meteo for a given lat, lng
+  const updateWeatherForLocation = async (lat: number, lng: number, locName: string) => {
+    setIsWeatherFetching(true);
+    try {
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.current_weather) {
+          const temp = Math.round(data.current_weather.temperature);
+          const code = data.current_weather.weathercode ?? 0;
+          const parsed = parseWmoWeatherCode(code);
+          const updated: LiveWeatherData = {
+            temp,
+            tempFormattedBn: `${toBengaliNumber(temp)}°C`,
+            tempFormattedEn: `${temp}°C`,
+            conditionBn: parsed.bn,
+            conditionEn: parsed.en,
+            code,
+            icon: parsed.icon,
+            lastUpdated: Date.now(),
+            locationName: locName,
+          };
+          setLiveWeather(updated);
+          try {
+            localStorage.setItem('zikrmate_live_weather', JSON.stringify(updated));
+          } catch {}
+        }
+      }
+    } catch (err) {
+      console.error('Weather update error:', err);
+    } finally {
+      setIsWeatherFetching(false);
+    }
+  };
+
+  // Weather Manager: Location + 30-Minute Auto-Interval
+  useEffect(() => {
+    const refreshWeather = () => {
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            updateWeatherForLocation(latitude, longitude, selectedLanguage === 'bn' ? 'বর্তমান জিপিএস অবস্থান' : 'GPS Location');
+          },
+          () => {
+            updateWeatherForLocation(selectedCity.lat, selectedCity.lng, selectedCity.name);
+          },
+          { timeout: 8000 }
+        );
+      } else {
+        updateWeatherForLocation(selectedCity.lat, selectedCity.lng, selectedCity.name);
+      }
+    };
+
+    // Initial check: If cache is older than 30 mins, update immediately
+    const cacheAge = Date.now() - liveWeather.lastUpdated;
+    if (cacheAge > 30 * 60 * 1000 || liveWeather.lastUpdated === 0) {
+      refreshWeather();
+    }
+
+    // Set up strict 30-minute interval (1,800,000 ms)
+    const THIRTY_MIN_MS = 30 * 60 * 1000;
+    const weatherTimer = setInterval(() => {
+      refreshWeather();
+    }, THIRTY_MIN_MS);
+
+    return () => clearInterval(weatherTimer);
+  }, [selectedCity.lat, selectedCity.lng, selectedLanguage]);
+
+  const renderWeatherIcon = () => {
+    if (isWeatherFetching) {
+      return <RefreshCw className="w-4 h-4 text-emerald-500 animate-spin" />;
+    }
+    switch (liveWeather.icon) {
+      case 'cloud-sun':
+        return <CloudSun className="w-4 h-4 text-amber-400" />;
+      case 'cloud':
+        return <Cloud className="w-4 h-4 text-slate-400" />;
+      case 'cloud-drizzle':
+        return <CloudDrizzle className="w-4 h-4 text-teal-400" />;
+      case 'cloud-rain':
+        return <CloudRain className="w-4 h-4 text-sky-400" />;
+      case 'cloud-lightning':
+        return <CloudLightning className="w-4 h-4 text-amber-400 animate-pulse" />;
+      case 'cloud-snow':
+        return <CloudSnow className="w-4 h-4 text-blue-300" />;
+      case 'sun':
+      default:
+        return <Sun className="w-4 h-4 text-amber-500 animate-spin-slow" />;
+    }
+  };
 
   // Daily 5-prayer completion tracker with localStorage persistence
   const [completedPrayers, setCompletedPrayers] = useState<Record<string, boolean>>(() => {
@@ -658,18 +844,40 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
           </p>
         </div>
 
-        {/* Weather Badge */}
-        <div className="shrink-0 flex items-center gap-2 p-2 px-3 rounded-2xl bg-white/90 dark:bg-[#0a2822]/90 border border-slate-200/90 dark:border-emerald-800/60 shadow-xs backdrop-blur-md transition hover:border-amber-400">
-          <Sun className="w-4 h-4 text-amber-500 animate-spin-slow" />
+        {/* Weather Badge (Location-based, auto-updates every 30 mins) */}
+        <button
+          type="button"
+          onClick={() => {
+            soundHaptics.playTap();
+            if (typeof navigator !== 'undefined' && navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                (pos) => updateWeatherForLocation(pos.coords.latitude, pos.coords.longitude, selectedLanguage === 'bn' ? 'বর্তমান জিপিএস অবস্থান' : 'GPS Location'),
+                () => updateWeatherForLocation(selectedCity.lat, selectedCity.lng, selectedCity.name)
+              );
+            } else {
+              updateWeatherForLocation(selectedCity.lat, selectedCity.lng, selectedCity.name);
+            }
+          }}
+          className="shrink-0 flex items-center gap-2 p-2 px-3 rounded-2xl bg-white/90 dark:bg-[#0a2822]/90 border border-slate-200/90 dark:border-emerald-800/60 shadow-xs backdrop-blur-md transition hover:border-emerald-500 active:scale-95 cursor-pointer relative group"
+          title={
+            selectedLanguage === 'bn'
+              ? `আবহাওয়া (${liveWeather.locationName})\nপ্রতি ৩০ মিনিট পর পর স্বয়ংক্রিয়ভাবে আপডেট হয়\nট্যাপ করে এখনই রিফ্রেশ করুন`
+              : `Weather (${liveWeather.locationName})\nAuto-updates every 30 mins\nTap to refresh now`
+          }
+        >
+          <div className="relative flex items-center justify-center">
+            {renderWeatherIcon()}
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 animate-pulse border border-white dark:border-[#0a2822]" />
+          </div>
           <div className="text-right">
             <div className="text-xs font-black text-slate-800 dark:text-white leading-none">
-              {hijriWeather.weatherTemp}
+              {selectedLanguage === 'bn' ? liveWeather.tempFormattedBn : liveWeather.tempFormattedEn}
             </div>
             <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300/70 leading-none mt-0.5">
-              {hijriWeather.weatherCondition}
+              {selectedLanguage === 'bn' ? liveWeather.conditionBn : liveWeather.conditionEn}
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* ========================================================================= */}
