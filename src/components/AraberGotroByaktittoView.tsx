@@ -562,7 +562,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             )}
 
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-[10px] font-serif text-emerald-200/90 tracking-wide font-medium">
+              <span className="text-[10px] font-arabic text-emerald-200/90 tracking-wide font-medium">
                 {BOOK_METADATA.titleAr}
               </span>
               <span className="text-[9px] px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold whitespace-nowrap">
@@ -1200,7 +1200,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                               {tribeName}
                             </h4>
                             {sec.tribeNameAr && (
-                              <span className="text-[10px] font-serif text-amber-500/80 font-bold hidden sm:inline">
+                              <span className="text-[10px] font-arabic text-amber-500/80 font-bold hidden sm:inline">
                                 ({sec.tribeNameAr})
                               </span>
                             )}
@@ -1319,7 +1319,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       {isBn ? activeClan.tribeNameBn : (activeClan.tribeNameEn || activeClan.tribeNameBn)}
                     </h2>
                     {activeClan.tribeNameAr && (
-                      <span className="text-xs font-serif text-amber-500 font-bold">
+                      <span className="text-xs font-arabic text-amber-500 font-bold">
                         ({activeClan.tribeNameAr})
                       </span>
                     )}
@@ -1556,7 +1556,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                               {persName}
                             </h5>
                             {pers.nameAr && (
-                              <span className="text-xs font-serif text-amber-500/80 block mt-0.5">
+                              <span className="text-xs font-arabic text-amber-500/80 block mt-0.5">
                                 {pers.nameAr}
                               </span>
                             )}
@@ -1862,7 +1862,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             <h4 className="text-base sm:text-lg font-black tracking-tight">{tribeName}</h4>
                             {clan.tribeNameAr && (
                               <div className="flex items-center gap-1">
-                                <span className="text-xs font-serif text-amber-500 font-bold">({clan.tribeNameAr})</span>
+                                <span className="text-xs font-arabic text-amber-500 font-bold">({clan.tribeNameAr})</span>
                                 <button
                                   onClick={(e) => handlePlayVoice(clan.tribeNameAr!, `clan-${clan.id}`, e)}
                                   title={t.voiceTitleAr}
@@ -2340,7 +2340,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 <Volume2 className="w-3 h-3" />
                               </button>
                             </div>
-                            <span className="text-xs font-serif text-amber-500 font-semibold" dir="rtl">
+                            <span className="text-xs font-arabic text-amber-500 font-semibold" dir="rtl">
                               {node.ancestorNameAr}
                             </span>
                           </div>
@@ -2832,7 +2832,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div className="absolute left-4 top-4 opacity-20 pointer-events-none">
                   <Compass className="w-24 h-24 text-amber-500" />
                 </div>
-                <div className="absolute right-4 bottom-4 opacity-20 pointer-events-none text-right font-serif text-xs text-amber-500">
+                <div className="absolute right-4 bottom-4 opacity-20 pointer-events-none text-right font-arabic text-xs text-amber-500" dir="rtl">
                   خريطة شبه الجزيرة العربية
                 </div>
 
@@ -2911,7 +2911,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             <Volume2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <span className="text-xs font-serif text-amber-500 font-bold block mt-0.5" dir="rtl">
+                        <span className="text-xs font-arabic text-amber-500 font-bold block mt-0.5" dir="rtl">
                           {activeReg.nameAr} ({activeReg.nameEn})
                         </span>
                       </div>
@@ -3334,7 +3334,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   {isBn ? activePersonalityModal.nameBn : (activePersonalityModal.nameEn || activePersonalityModal.nameBn)}
                 </h3>
                 {activePersonalityModal.nameAr && (
-                  <p className="text-sm font-serif text-amber-500 font-bold">
+                  <p className="text-sm font-arabic text-amber-500 font-bold" dir="rtl">
                     {activePersonalityModal.nameAr}
                   </p>
                 )}

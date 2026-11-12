@@ -27,6 +27,7 @@ const HistoryReportModal = React.lazy(() => import('./components/HistoryReportMo
 const ProfileModal = React.lazy(() => import('./components/ProfileModal').then((m) => ({ default: m.ProfileModal })));
 const AdminPanelModal = React.lazy(() => import('./components/AdminPanelModal').then((m) => ({ default: m.AdminPanelModal })));
 const ConfirmModal = React.lazy(() => import('./components/ConfirmModal').then((m) => ({ default: m.ConfirmModal })));
+const FirstDownloadWelcomeView = React.lazy(() => import('./components/FirstDownloadWelcomeView').then((m) => ({ default: m.FirstDownloadWelcomeView })));
 
 const AppViewLoadingFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
   <div className="flex flex-col items-center justify-center min-h-[350px] py-20 space-y-3">
@@ -461,6 +462,17 @@ export default function App() {
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  const [showFirstDownloadWelcome, setShowFirstDownloadWelcome] = useState<boolean>(() => {
+    try {
+      const onboardingDone = localStorage.getItem('zikrmate_onboarding_completed');
+      const p = localStorage.getItem('zikrmate_user_profile');
+      const isUserSignedIn = p ? Boolean(JSON.parse(p)?.isSignedIn) : false;
+      if (!onboardingDone && !isUserSignedIn) {
+        return true;
+      }
+    } catch {}
+    return false;
+  });
 
   const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
 
@@ -2282,6 +2294,28 @@ export default function App() {
             completedGoals={completedGoals}
             voiceGender={settings.voiceGender || 'male'}
             onUpdateVoiceGender={(gender) => setSettings((prev) => ({ ...prev, voiceGender: gender }))}
+            onOpenWelcomeScreen={() => setShowFirstDownloadWelcome(true)}
+          />
+        )}
+
+        {/* First Download / Launch Cinematic Welcome & Onboarding Screen */}
+        {showFirstDownloadWelcome && (
+          <FirstDownloadWelcomeView
+            isOpen={showFirstDownloadWelcome}
+            onClose={() => setShowFirstDownloadWelcome(false)}
+            selectedLanguage={selectedLanguage}
+            onSelectLanguage={(lang) => {
+              setSelectedLanguage(lang);
+              const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+              showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
+            }}
+            userProfile={userProfile}
+            onUpdateProfile={handleUpdateProfile}
+            onCloudDataLoaded={handleCloudDataLoaded}
+            zikrs={zikrs}
+            historySessions={historySessions}
+            lifetimeTotalCount={lifetimeTotalCount}
+            soundEnabled={settings.soundEnabled}
           />
         )}
 

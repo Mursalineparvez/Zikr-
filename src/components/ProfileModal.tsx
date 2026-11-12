@@ -136,6 +136,7 @@ interface ProfileModalProps {
   completedGoals?: number;
   voiceGender?: VoiceGender;
   onUpdateVoiceGender?: (gender: VoiceGender) => void;
+  onOpenWelcomeScreen?: () => void;
 }
 
 const DEFAULT_AVATARS = [
@@ -177,6 +178,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   completedGoals = 0,
   voiceGender = 'male',
   onUpdateVoiceGender,
+  onOpenWelcomeScreen,
 }) => {
   const isDay = themeMode === 'day';
   const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
@@ -1432,6 +1434,39 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div>Location: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.location || 'Asia/Dhaka'}</span></div>
                 </div>
               </div>
+
+              {/* Onboarding Welcome Screen Preview Trigger */}
+              {onOpenWelcomeScreen && (
+                <div
+                  className={`p-4 rounded-2xl border text-xs space-y-2 ${
+                    isDay ? 'bg-emerald-50/70 border-emerald-200 text-slate-900' : 'bg-[#082830] border-emerald-700/40 text-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="font-extrabold text-xs text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>{selectedLanguage === 'bn' ? 'প্রথম ডাউনলোড ওয়েলকাম স্ক্রিন' : 'First Download Welcome Screen'}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-emerald-200/70 mt-0.5">
+                        {selectedLanguage === 'bn'
+                          ? 'অ্যাপ ইন্সটলের পর প্রদর্শিত নান্দনিক পূর্ণাঙ্গ সাইন-ইন ইন্টারফেস'
+                          : 'Show the initial onboarding & sign-in screen'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenWelcomeScreen();
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                    >
+                      {selectedLanguage === 'bn' ? 'স্ক্রিন দেখুন' : 'Preview'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

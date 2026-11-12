@@ -383,7 +383,7 @@ export const NamajView: React.FC<NamajViewProps> = ({
                 </div>
 
                 {/* Arabic */}
-                <p className="text-right font-serif text-lg sm:text-xl leading-loose tracking-wide text-slate-900 dark:text-emerald-50 py-1" dir="rtl">
+                <p className="text-right font-arabic font-bold text-lg sm:text-xl leading-loose tracking-wide text-slate-900 dark:text-emerald-50 py-1" dir="rtl">
                   {dua.arabic}
                 </p>
 
