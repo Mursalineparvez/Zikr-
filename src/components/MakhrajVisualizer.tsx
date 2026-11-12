@@ -25,7 +25,7 @@ interface MakhrajVisualizerProps {
 // Canonical letter list for interactive explorer
 const ARABIC_ALPHABET_ORDER = [
   'ء', 'ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ',
-  'د', 'ذ', 'ر', 'ز', 'س', 'শ', 'ص', 'ض',
+  'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض',
   'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل',
   'م', 'ن', 'ه', 'و', 'ي',
 ];
@@ -213,8 +213,14 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                 className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 shadow-sm"
               >
                 <Zap className="w-3 h-3 animate-pulse" />
-                <span>{maddInfo.typeBn}</span>
-                <span className="font-mono">({maddInfo.countMetrics} মাত্রা / {maddInfo.countAlif} আলিফ)</span>
+                <span>{selectedLanguage === 'bn' ? maddInfo.typeBn : maddInfo.typeEn}</span>
+                <span className="font-mono">
+                  {selectedLanguage === 'bn'
+                    ? `(${maddInfo.countMetrics} মাত্রা / ${maddInfo.countAlif} আলিফ)`
+                    : selectedLanguage === 'ar'
+                      ? `(${maddInfo.countMetrics} حركات / ${maddInfo.countAlif} ألف)`
+                      : `(${maddInfo.countMetrics} Counts / ${maddInfo.countAlif} Alif)`}
+                </span>
               </span>
             </div>
           )}
@@ -265,7 +271,7 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                       strokeDasharray="3,3"
                     />
                     <text x="175" y="98" fill="#5eead4" fontSize="8" fontWeight="bold">
-                      الخيشوم (নাসিকা)
+                      {selectedLanguage === 'bn' ? 'নাসিকা' : selectedLanguage === 'ar' ? 'الخيشوم' : 'Nasal'}
                     </text>
 
                     {/* Hard Palate Arc (Yellow) */}
@@ -283,7 +289,7 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                       strokeWidth="2.5"
                     />
                     <text x="165" y="180" fill="#a7f3d0" fontSize="9" fontWeight="bold">
-                      اللسان (জিহ্বা)
+                      {selectedLanguage === 'bn' ? 'জিহ্বা' : selectedLanguage === 'ar' ? 'اللسان' : 'Tongue'}
                     </text>
 
                     {/* Throat Line */}
@@ -339,10 +345,10 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                       </div>
                       <div className="min-w-0">
                         <div className="text-[11px] font-extrabold text-white flex items-center gap-1">
-                          <span>{c.nameBn} ({c.nameEn})</span>
+                          <span>{selectedLanguage === 'bn' ? c.nameBn : c.nameEn}</span>
                         </div>
                         <p className="text-[10px] text-slate-300 font-medium leading-tight">
-                          {c.actionBn}
+                          {selectedLanguage === 'bn' ? c.actionBn : c.actionEn}
                         </p>
                       </div>
                     </div>
@@ -354,7 +360,7 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
         )}
 
         {/* ======================================================================= */}
-        {/* TAB 2: MADD & VOWEL STRETCH FLOW ANIMATION (টান অ্যানিমেশন - 1 to 6 Counts) */}
+        {/* TAB 2: MADD & VOWEL STRETCH FLOW ANIMATION (1 to 6 Counts)              */}
         {/* ======================================================================= */}
         {activeTab === 'madd' && (
           <div className="space-y-3">
@@ -372,10 +378,14 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                   </div>
                   <div>
                     <h4 className="text-xs sm:text-sm font-extrabold text-pink-600 dark:text-pink-300">
-                      {maddInfo.typeBn}
+                      {selectedLanguage === 'bn' ? maddInfo.typeBn : maddInfo.typeEn}
                     </h4>
                     <p className="text-[10px] opacity-80">
-                      {selectedLanguage === 'bn' ? 'টানার নিয়ম: স্বরধ্বনি প্রসারিত করার সঠিক পরিমাপ' : 'Vowel Elongation Stretch Metric'}
+                      {selectedLanguage === 'bn'
+                        ? 'টানার নিয়ম: স্বরধ্বনি প্রসারিত করার সঠিক পরিমাপ'
+                        : selectedLanguage === 'ar'
+                          ? 'مقدار المد الصوتي الصحيح'
+                          : 'Vowel Elongation Stretch Metric'}
                     </p>
                   </div>
                 </div>
@@ -389,7 +399,11 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                   }`}
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>{isStretchingAudio ? 'টানা হচ্ছে...' : 'টান প্লে করুন'}</span>
+                  <span>
+                    {isStretchingAudio
+                      ? (selectedLanguage === 'bn' ? 'টানা হচ্ছে...' : selectedLanguage === 'ar' ? 'جاري المد...' : 'Stretching...')
+                      : (selectedLanguage === 'bn' ? 'টান প্লে করুন' : selectedLanguage === 'ar' ? 'تشغيل المد' : 'Play Stretch')}
+                  </span>
                 </button>
               </div>
 
@@ -418,7 +432,7 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                         }`}
                       >
                         <span className="text-[10px] font-mono">{num}</span>
-                        <span className="text-[8px] opacity-90">মাত্রা</span>
+                        <span className="text-[8px] opacity-90">{selectedLanguage === 'bn' ? 'মাত্রা' : selectedLanguage === 'ar' ? 'حركة' : 'Count'}</span>
                       </div>
                     );
                   })}
@@ -428,10 +442,14 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
               {/* Explanation Note */}
               <div className="p-3 rounded-xl bg-black/20 text-xs leading-relaxed space-y-1">
                 <p className="font-semibold opacity-95">
-                  📌 {maddInfo.descriptionBn}
+                  📌 {selectedLanguage === 'bn' ? maddInfo.descriptionBn : maddInfo.descriptionEn}
                 </p>
                 <p className="text-[11px] opacity-80 text-pink-400 font-mono">
-                  সময়সীমা: {maddInfo.countMetrics} মাত্রা ({maddInfo.countAlif} আলিফ টেনে পড়ার সময়)
+                  {selectedLanguage === 'bn'
+                    ? `সময়সীমা: ${maddInfo.countMetrics} মাত্রা (${maddInfo.countAlif} আলিফ টেনে পড়ার সময়)`
+                    : selectedLanguage === 'ar'
+                      ? `المدة: ${maddInfo.countMetrics} حركات (${maddInfo.countAlif} ألف)`
+                      : `Duration: ${maddInfo.countMetrics} Counts (${maddInfo.countAlif} Alif stretch)`}
                 </p>
               </div>
             </div>
@@ -482,7 +500,7 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                   strokeDasharray="3,3"
                 />
                 <text x="175" y="98" fill="#5eead4" fontSize="8" fontWeight="bold">
-                  الخيشوم (নাসিকা)
+                  {selectedLanguage === 'bn' ? 'নাসিকা' : selectedLanguage === 'ar' ? 'الخيشوم' : 'Nasal'}
                 </text>
 
                 {/* Hard Palate Arc */}
@@ -501,7 +519,7 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                   style={{ transition: 'd 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
                 />
                 <text x="165" y="180" fill="#a7f3d0" fontSize="9" fontWeight="bold">
-                  اللسان (জিহ্বা)
+                  {selectedLanguage === 'bn' ? 'জিহ্বা' : selectedLanguage === 'ar' ? 'اللسان' : 'Tongue'}
                 </text>
 
                 {/* Throat Line */}
@@ -553,13 +571,20 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
                     </span>
                     <div>
                       <h4 className="text-sm font-extrabold flex items-center gap-1.5">
-                        <span>হরফ: {makhrajData.nameBn}</span>
-                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-mono">
-                          ({makhrajData.nameEn})
+                        <span>
+                          {selectedLanguage === 'bn'
+                            ? `হরফ: ${makhrajData.nameBn}`
+                            : selectedLanguage === 'ar'
+                              ? `الحرف: ${makhrajData.letter}`
+                              : `Letter: ${makhrajData.nameEn}`}
                         </span>
                       </h4>
                       <p className="text-[10px] text-amber-500 font-extrabold uppercase tracking-wider">
-                        মাখরাজ নম্বর #{makhrajData.makhrajNumber} • {makhrajData.organNameBn}
+                        {selectedLanguage === 'bn'
+                          ? `মাখরাজ নম্বর #${makhrajData.makhrajNumber} • ${makhrajData.organNameBn}`
+                          : selectedLanguage === 'ar'
+                            ? `مخرج رقم #${makhrajData.makhrajNumber}`
+                            : `Makhraj #${makhrajData.makhrajNumber} • ${makhrajData.organNameEn}`}
                       </p>
                     </div>
                   </div>
@@ -571,14 +596,18 @@ export const MakhrajVisualizer: React.FC<MakhrajVisualizerProps> = ({
 
                 <div className="space-y-1.5 text-xs">
                   <div className="flex items-start gap-2">
-                    <span className="text-emerald-500 font-bold shrink-0">📍 স্থান:</span>
+                    <span className="text-emerald-500 font-bold shrink-0">
+                      {selectedLanguage === 'bn' ? '📍 স্থান:' : selectedLanguage === 'ar' ? '📍 الموضع:' : '📍 Place:'}
+                    </span>
                     <p className="leading-snug font-medium opacity-95">
                       {selectedLanguage === 'bn' ? makhrajData.locationBn : makhrajData.locationEn}
                     </p>
                   </div>
 
                   <div className="flex items-start gap-2 pt-1 border-t border-emerald-500/15">
-                    <span className="text-amber-500 font-bold shrink-0">✨ সিফাত:</span>
+                    <span className="text-amber-500 font-bold shrink-0">
+                      {selectedLanguage === 'bn' ? '✨ সিফাত:' : selectedLanguage === 'ar' ? '✨ الصفات:' : '✨ Attributes:'}
+                    </span>
                     <p className="leading-snug font-medium opacity-90 text-[11px]">
                       {selectedLanguage === 'bn' ? makhrajData.sifatBn : makhrajData.sifatEn}
                     </p>
@@ -706,12 +735,16 @@ export const AyahMouthCard: React.FC<AyahMouthCardProps> = ({
                 strokeWidth="2.5"
               />
               <path d="M 180,75 C 220,70 235,100 220,115 C 200,125 170,120 160,105 Z" fill="none" stroke="#2dd4bf" strokeWidth="1.5" strokeDasharray="3,3" />
-              <text x="175" y="98" fill="#5eead4" fontSize="8" fontWeight="bold">الخيشوم (নাসিকা)</text>
+              <text x="175" y="98" fill="#5eead4" fontSize="8" fontWeight="bold">
+                {selectedLanguage === 'bn' ? 'নাসিকা' : selectedLanguage === 'ar' ? 'الخيشوم' : 'Nasal'}
+              </text>
               <path d="M 140,140 C 170,125 205,128 220,140" fill="none" stroke="#fbbf24" strokeWidth="4" strokeLinecap="round" />
               <rect x="220" y="140" width="6" height="10" rx="2" fill="#f8fafc" />
               <rect x="218" y="156" width="6" height="10" rx="2" fill="#f8fafc" />
               <path d="M 130,205 C 135,175 145,155 170,152 C 185,150 200,148 215,148 C 215,154 205,162 195,166 C 175,174 160,188 150,210 Z" fill="rgba(16, 185, 129, 0.75)" stroke="#34d399" strokeWidth="2.5" />
-              <text x="165" y="180" fill="#a7f3d0" fontSize="9" fontWeight="bold">اللسان (জিহ্বা)</text>
+              <text x="165" y="180" fill="#a7f3d0" fontSize="9" fontWeight="bold">
+                {selectedLanguage === 'bn' ? 'জিহ্বা' : selectedLanguage === 'ar' ? 'اللسان' : 'Tongue'}
+              </text>
               <path d="M 120,165 L 120,265" stroke="#ef4444" strokeWidth="3" opacity="0.9" />
 
               {/* Multi-letter callout badges (image_2f033692.png style) */}
@@ -735,7 +768,8 @@ export const AyahMouthCard: React.FC<AyahMouthCardProps> = ({
                   {c.letter}
                 </span>
                 <div className="text-[10px] leading-tight text-emerald-100">
-                  <span className="font-extrabold text-white">{c.nameBn} ({c.nameEn}):</span> {c.actionBn}
+                  <span className="font-extrabold text-white">{selectedLanguage === 'bn' ? c.nameBn : c.nameEn}:</span>{' '}
+                  {selectedLanguage === 'bn' ? c.actionBn : c.actionEn}
                 </div>
               </div>
             ))}
@@ -745,9 +779,13 @@ export const AyahMouthCard: React.FC<AyahMouthCardProps> = ({
         /* Madd Flow Mode */
         <div className="p-3 bg-[#11050d] space-y-2">
           <div className="flex items-center justify-between text-xs text-pink-300 font-extrabold">
-            <span>✨ {maddInfo.typeBn}</span>
+            <span>✨ {selectedLanguage === 'bn' ? maddInfo.typeBn : maddInfo.typeEn}</span>
             <span className="text-[10px] bg-pink-500/20 px-2 py-0.5 rounded-full border border-pink-500/30">
-              {maddInfo.countMetrics} মাত্রা ({maddInfo.countAlif} আলিফ)
+              {selectedLanguage === 'bn'
+                ? `${maddInfo.countMetrics} মাত্রা (${maddInfo.countAlif} আলিফ)`
+                : selectedLanguage === 'ar'
+                  ? `${maddInfo.countMetrics} حركات (${maddInfo.countAlif} ألف)`
+                  : `${maddInfo.countMetrics} Counts (${maddInfo.countAlif} Alif)`}
             </span>
           </div>
 
@@ -755,13 +793,13 @@ export const AyahMouthCard: React.FC<AyahMouthCardProps> = ({
             {[1, 2, 3, 4, 5, 6].slice(0, maddInfo.countMetrics || 2).map((num) => (
               <div key={num} className="w-8 h-8 rounded-xl bg-pink-600/80 text-white font-bold text-xs flex flex-col items-center justify-center shadow-md animate-pulse">
                 <span>{num}</span>
-                <span className="text-[7px]">মাত্রা</span>
+                <span className="text-[7px]">{selectedLanguage === 'bn' ? 'মাত্রা' : selectedLanguage === 'ar' ? 'حركة' : 'Count'}</span>
               </div>
             ))}
           </div>
 
           <p className="text-[10px] text-pink-200/90 leading-snug">
-            {maddInfo.descriptionBn}
+            {selectedLanguage === 'bn' ? maddInfo.descriptionBn : maddInfo.descriptionEn}
           </p>
         </div>
       )}
@@ -782,16 +820,20 @@ export const AyahMouthCard: React.FC<AyahMouthCardProps> = ({
             </span>
             <div>
               <div className="font-extrabold text-xs text-[#006747] dark:text-emerald-300">
-                হরফ: {makhrajData.nameBn} • মাখরাজ #{makhrajData.makhrajNumber}
+                {selectedLanguage === 'bn'
+                  ? `হরফ: ${makhrajData.nameBn} • মাখরাজ #${makhrajData.makhrajNumber}`
+                  : selectedLanguage === 'ar'
+                    ? `الحرف: ${makhrajData.letter} • المخرج #${makhrajData.makhrajNumber}`
+                    : `Letter: ${makhrajData.nameEn} • Makhraj #${makhrajData.makhrajNumber}`}
               </div>
               <div className="text-[10px] text-slate-600 dark:text-emerald-200 truncate max-w-[220px]">
-                {makhrajData.locationBn}
+                {selectedLanguage === 'bn' ? makhrajData.locationBn : makhrajData.locationEn}
               </div>
             </div>
           </div>
 
           <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 group-hover:underline shrink-0">
-            <span>স্টুডিও দেখুন</span>
+            <span>{selectedLanguage === 'bn' ? 'স্টুডিও দেখুন' : selectedLanguage === 'ar' ? 'عرض الاستوديو' : 'Open Studio'}</span>
             <ChevronRight className="w-3 h-3" />
           </span>
         </div>

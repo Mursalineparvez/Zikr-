@@ -272,7 +272,13 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-black tracking-wide flex items-center gap-1.5">
                     <span>🕌</span>
-                    <span>Every Fard Salah</span>
+                    <span>
+                      {selectedLanguage === 'bn'
+                        ? 'প্রতি ফরজ সালাতে'
+                        : selectedLanguage === 'ar'
+                        ? 'بعد كل صلاة فرض'
+                        : 'Every Fard Salah'}
+                    </span>
                   </span>
                   {refreshMode === 'fard' && (
                     <span className="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
@@ -304,7 +310,13 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-black tracking-wide flex items-center gap-1.5">
                     <span>🌅</span>
-                    <span>Daily After Maghrib</span>
+                    <span>
+                      {selectedLanguage === 'bn'
+                        ? 'প্রতিদিন মাগরিবের পর'
+                        : selectedLanguage === 'ar'
+                        ? 'يومياً بعد المغرب'
+                        : 'Daily After Maghrib'}
+                    </span>
                   </span>
                   {refreshMode === 'maghrib' && (
                     <span className="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
@@ -336,7 +348,13 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-black tracking-wide flex items-center gap-1.5">
                     <span>🖐️</span>
-                    <span>Manually</span>
+                    <span>
+                      {selectedLanguage === 'bn'
+                        ? 'ম্যানুয়াল রিসেট'
+                        : selectedLanguage === 'ar'
+                        ? 'إعادة ضبط يدوي'
+                        : 'Manually'}
+                    </span>
                   </span>
                   {refreshMode === 'manual' && (
                     <span className="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
@@ -406,7 +424,23 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                     : 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
                 }`}
               >
-                {refreshMode === 'fard' ? '✓ Auto Fard Sync' : refreshMode === 'maghrib' ? '✓ Maghrib Sync' : '✓ Manual'}
+                {refreshMode === 'fard'
+                  ? selectedLanguage === 'bn'
+                    ? '✓ অটো ফরজ সিঙ্ক'
+                    : selectedLanguage === 'ar'
+                    ? '✓ مزامنة الفرض التلقائية'
+                    : '✓ Auto Fard Sync'
+                  : refreshMode === 'maghrib'
+                  ? selectedLanguage === 'bn'
+                    ? '✓ মাগরিব সিঙ্ক'
+                    : selectedLanguage === 'ar'
+                    ? '✓ مزامنة المغرب'
+                    : '✓ Maghrib Sync'
+                  : selectedLanguage === 'bn'
+                  ? '✓ ম্যানুয়াল'
+                  : selectedLanguage === 'ar'
+                  ? '✓ يدوي'
+                  : '✓ Manual'}
               </span>
             </div>
           </div>

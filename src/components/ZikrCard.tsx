@@ -277,7 +277,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
           ) : (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-teal-50 text-[#007e8a] border border-teal-200/60">
               <span className="w-1.5 h-1.5 rounded-full bg-[#007e8a] animate-pulse" />
-              <span>Active</span>
+              <span>{currentLang === 'bn' ? 'সক্রিয়' : currentLang === 'ar' ? 'نشط' : 'Active'}</span>
             </span>
           )}
 

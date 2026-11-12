@@ -200,6 +200,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onOpenSaved,
 }) => {
   const isDay = themeMode === 'day';
+  const isBn = selectedLanguage === 'bn';
+  const isAr = selectedLanguage === 'ar';
+  const toBnDigits = (v: number | string) => String(v).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+  const toArDigits = (v: number | string) => String(v).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[Number(d)]);
+  const formatNum = (n: number) => {
+    const s = n.toLocaleString('en-US');
+    return isBn ? toBnDigits(s) : isAr ? toArDigits(s) : s;
+  };
+  const t = (bn: string, ar: string, en: string) => (isBn ? bn : isAr ? ar : en);
+
   const [activeTab, setActiveTab] = useState<'profile' | 'settings'>(initialTab || 'profile');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isPlayingSample, setIsPlayingSample] = useState(false);
@@ -307,7 +317,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       const res = await install();
       setIsInstalling(false);
       if (res) {
-        setInstallFeedback('✓ অভিনন্দন! Zikr+ অ্যাপটি হোম স্ক্রিনে ইনস্টল হয়েছে!');
+        setInstallFeedback(
+          t(
+            '✓ অভিনন্দন! Zikr+ অ্যাপটি হোম স্ক্রিনে ইনস্টল হয়েছে!',
+            '✓ مبروك! تم تثبيت تطبيق Zikr+ على الشاشة الرئيسية!',
+            '✓ Congratulations! Zikr+ has been installed on your home screen!'
+          )
+        );
         try { confetti({ particleCount: 65, spread: 65, origin: { y: 0.6 } }); } catch {}
         setTimeout(() => setInstallFeedback(null), 4000);
       } else {
@@ -484,12 +500,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const phoneClean = inputPhone.trim().replace(/\D/g, '');
 
     if (!emailClean || !emailClean.includes('@') || !emailClean.includes('.')) {
-      setOtpErrorMessage('অনুগ্রহ করে সঠিক জিমেইল বা ইমেইল লিখুন (e.g. name@gmail.com)');
+      setOtpErrorMessage(
+        t(
+          'অনুগ্রহ করে সঠিক জিমেইল বা ইমেইল লিখুন (যেমন: name@gmail.com)',
+          'يرجى إدخال بريد إلكتروني صحيح (مثل: name@gmail.com)',
+          'Please enter a valid email address (e.g. name@gmail.com)'
+        )
+      );
       return;
     }
 
     if (!inputPassword.trim() || inputPassword.trim().length < 4) {
-      setOtpErrorMessage('কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড দিন');
+      setOtpErrorMessage(
+        t(
+          'কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড দিন',
+          'يرجى إدخال كلمة مرور لا تقل عن ٤ أحرف',
+          'Please enter a password of at least 4 characters'
+        )
+      );
       return;
     }
 
@@ -510,8 +538,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setIsVerifying(false);
       setOtpErrorMessage(
         isSuperAdminEmail
-          ? 'ভুল পাসওয়ার্ড! mdmursalineparvez@gmail.com এর সঠিক পাসওয়ার্ড দিন।'
-          : 'ভুল পাসওয়ার্ড! আপনার অ্যাকাউন্টের সঠিক পাসওয়ার্ড দিন। পাসওয়ার্ড ভুলে গেলে নিচে "Forgot Password" চাপুন।'
+          ? t(
+              'ভুল পাসওয়ার্ড! mdmursalineparvez@gmail.com এর সঠিক পাসওয়ার্ড দিন।',
+              'كلمة مرور خاطئة! أدخل كلمة المرور الصحيحة لحساب mdmursalineparvez@gmail.com.',
+              'Incorrect password! Enter the correct password for mdmursalineparvez@gmail.com.'
+            )
+          : t(
+              'ভুল পাসওয়ার্ড! আপনার অ্যাকাউন্টের সঠিক পাসওয়ার্ড দিন।',
+              'كلمة مرور خاطئة! أدخل كلمة المرور الصحيحة لحسابك.',
+              'Incorrect password! Please enter the correct password for your account.'
+            )
       );
       if (soundEnabled) soundHaptics.playTap();
       return;
@@ -519,7 +555,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     if (isSuperAdminEmail && !verifyResult.passwordMatches) {
       setIsVerifying(false);
-      setOtpErrorMessage('ভুল পাসওয়ার্ড! mdmursalineparvez@gmail.com এর সঠিক পাসওয়ার্ড দিন।');
+      setOtpErrorMessage(
+        t(
+          'ভুল পাসওয়ার্ড! mdmursalineparvez@gmail.com এর সঠিক পাসওয়ার্ড দিন।',
+          'كلمة مرور خاطئة! أدخل كلمة المرور الصحيحة لحساب mdmursalineparvez@gmail.com.',
+          'Incorrect password! Enter the correct password for mdmursalineparvez@gmail.com.'
+        )
+      );
       if (soundEnabled) soundHaptics.playTap();
       return;
     }
@@ -558,9 +600,21 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
 
     if (verifyResult.exists) {
-      setCloudSyncMessage('লগইন সফল! ক্লাউড থেকে আপনার আমল ও হিস্ট্রি লোড হচ্ছে...');
+      setCloudSyncMessage(
+        t(
+          'লগইন সফল! ক্লাউড থেকে আপনার আমল ও হিস্ট্রি লোড হচ্ছে...',
+          'تم تسجيل الدخول بنجاح! جارٍ تحميل أذكارك وسجلك من السحابة...',
+          'Sign-in successful! Loading your Zikr & history from the cloud...'
+        )
+      );
     } else {
-      setCloudSyncMessage('নতুন অ্যাকাউন্ট তৈরি হয়েছে! ক্লাউড সিঙ্ক চালু করা হয়েছে।');
+      setCloudSyncMessage(
+        t(
+          'নতুন অ্যাকাউন্ট তৈরি হয়েছে! ক্লাউড সিঙ্ক চালু করা হয়েছে।',
+          'تم إنشاء حساب جديد! تم تفعيل المزامنة السحابية.',
+          'New account created! Cloud sync is now active.'
+        )
+      );
     }
 
     if (cloudData && cloudData.foundInCloud) {
@@ -593,7 +647,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const emailClean = inputEmail.trim().toLowerCase();
 
     if (!emailClean || !emailClean.includes('@') || !emailClean.includes('.')) {
-      setOtpErrorMessage('অনুগ্রহ করে সঠিক জিমেইল বা ইমেইল লিখুন (e.g. name@gmail.com)');
+      setOtpErrorMessage(
+        t(
+          'অনুগ্রহ করে সঠিক জিমেইল বা ইমেইল লিখুন (যেমন: name@gmail.com)',
+          'يرجى إدخال بريد إلكتروني صحيح (مثل: name@gmail.com)',
+          'Please enter a valid email address (e.g. name@gmail.com)'
+        )
+      );
       return;
     }
 
@@ -618,7 +678,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const handleConfirmOtp = async () => {
     const fullEntered = otpDigits.join('');
     if (fullEntered.length < 6) {
-      setOtpErrorMessage('৬ ডিজিটের সম্পূর্ণ কোডটি লিখুন');
+      setOtpErrorMessage(
+        t(
+          '৬ ডিজিটের সম্পূর্ণ কোডটি লিখুন',
+          'يرجى إدخال الرمز المكون من ٦ أرقام كاملاً',
+          'Please enter the complete 6-digit code'
+        )
+      );
       return;
     }
 
@@ -677,7 +743,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
 
     setVerificationStep('success');
-    setCloudSyncMessage('ভেরিফিকেশন সফল! ক্লাউড থেকে আপনার ডাটা সিঙ্ক হয়েছে।');
+    setCloudSyncMessage(
+      t(
+        'ভেরিফিকেশন সফল! ক্লাউড থেকে আপনার ডাটা সিঙ্ক হয়েছে।',
+        'تم التحقق بنجاح! تمت مزامنة بياناتك من السحابة.',
+        'Verification successful! Your data has synced from the cloud.'
+      )
+    );
     confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
     if (soundEnabled) soundHaptics.playMilestone();
     setIsVerifying(false);
@@ -739,11 +811,23 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         return;
       } else {
         setIsVerifying(false);
-        setOtpErrorMessage('পপআপ খোলা না গেলে নিচে জিমেইল ও পাসওয়ার্ড দিয়ে খুব সহজেই ১-ক্লিকে সাইন-ইন করতে পারেন।');
+        setOtpErrorMessage(
+          t(
+            'পপআপ খোলা না গেলে নিচে জিমেইল ও পাসওয়ার্ড দিয়ে খুব সহজেই ১-ক্লিকে সাইন-ইন করতে পারেন।',
+            'إذا لم تفتح النافذة المنبثقة، يمكنك تسجيل الدخول بنقرة واحدة عبر البريد وكلمة المرور أدناه.',
+            'If the popup did not open, you can easily sign in below with your email and password.'
+          )
+        );
       }
     } catch (err) {
       setIsVerifying(false);
-      setOtpErrorMessage('নিচে জিমেইল ও পাসওয়ার্ড দিয়ে খুব সহজেই ১-ক্লিকে লগইন করতে পারেন।');
+      setOtpErrorMessage(
+        t(
+          'নিচে জিমেইল ও পাসওয়ার্ড দিয়ে খুব সহজেই ১-ক্লিকে লগইন করতে পারেন।',
+          'يمكنك تسجيل الدخول بنقرة واحدة عبر البريد وكلمة المرور أدناه.',
+          'You can easily sign in below with your email and password.'
+        )
+      );
     }
   };
 
@@ -814,7 +898,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   const handleSendFeedback = () => {
-    const msg = feedbackMessage.trim() || '[আপনার ফিডব্যাক বা প্রশ্ন]';
+    const msg = feedbackMessage.trim() || t('[আপনার ফিডব্যাক বা প্রশ্ন]', '[ملاحظاتك أو سؤالك]', '[Your feedback or question]');
     const emailVal = feedbackUserEmail.trim() || userProfile.emailOrPhone || 'user@zikrplus.app';
     const formattedText = `Zikr+ Feedback\nEmail: ${emailVal}\nLocation: ${feedbackLocation}\nModel: ${feedbackModel}\n\n${msg}`;
 
@@ -831,17 +915,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   const sampleBookmarks = [
-    { title: 'Surah Al-Mulk (সূরা মুলক)', category: 'Quran', module: 'quran' as NavModule },
-    { title: 'Surah Yasin (সূরা ইয়াসিন)', category: 'Quran', module: 'quran' as NavModule },
-    { title: 'Ayatul Kursi (আয়াতুল কুরসী)', category: 'Dua', module: 'dua' as NavModule },
-    { title: 'Sayyidul Istighfar (সাইয়্যিদুল ইস্তিগফার)', category: 'Dua', module: 'dua' as NavModule },
-    { title: 'Sahih al-Bukhari #1 (সহিহ বুখারি ১)', category: 'Hadith', module: 'hadith' as NavModule },
+    { title: t('সূরা মুলক', 'سورة الملك', 'Surah Al-Mulk'), category: t('কুরআন', 'القرآن', 'Quran'), module: 'quran' as NavModule },
+    { title: t('সূরা ইয়াসিন', 'سورة يس', 'Surah Yasin'), category: t('কুরআন', 'القرآن', 'Quran'), module: 'quran' as NavModule },
+    { title: t('আয়াতুল কুরসী', 'آية الكرسي', 'Ayatul Kursi'), category: t('দোয়া', 'الدعاء', 'Dua'), module: 'dua' as NavModule },
+    { title: t('সাইয়্যিদুল ইস্তিগফার', 'سيد الاستغفار', 'Sayyidul Istighfar'), category: t('দোয়া', 'الدعاء', 'Dua'), module: 'dua' as NavModule },
+    { title: t('সহিহ আল-বুখারী #১', 'صحيح البخاري ١', 'Sahih al-Bukhari #1'), category: t('হাদিস', 'الحديث', 'Hadith'), module: 'hadith' as NavModule },
   ];
 
   const sampleDownloads = [
-    { title: 'Riyadus Salihin (রিয়াদুস সালিহীন)', size: '4.2 MB', status: 'Ready' },
-    { title: 'Hisnul Muslim (হিসনুল মুসলিম)', size: '2.8 MB', status: 'Ready' },
-    { title: 'Kitabut Tawheed (কিতাবুত তাওহীদ)', size: '1.9 MB', status: 'Ready' },
+    { title: t('রিয়াদুস সালিহীন', 'رياض الصالحين', 'Riyadus Salihin'), size: isBn ? toBnDigits('4.2 MB') : '4.2 MB', status: t('প্রস্তুত', 'جاهز', 'Ready') },
+    { title: t('হিসনুল মুসলিম', 'حصن المسلم', 'Hisnul Muslim'), size: isBn ? toBnDigits('2.8 MB') : '2.8 MB', status: t('প্রস্তুত', 'جاهز', 'Ready') },
+    { title: t('কিতাবুত তাওহীদ', 'كتاب التوحيد', 'Kitabut Tawheed'), size: isBn ? toBnDigits('1.9 MB') : '1.9 MB', status: t('প্রস্তুত', 'جاهز', 'Ready') },
   ];
 
   return (
@@ -885,7 +969,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       : 'hover:bg-white/10 text-emerald-300'
                     : 'hover:bg-white/20 text-white'
                 }`}
-                title="Back"
+                title={t('পিছনে যান', 'رجوع', 'Back')}
               >
                 <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
               </button>
@@ -893,22 +977,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <div>
               <h2 className="text-lg font-black tracking-tight leading-tight">
                 {embedded
-                  ? selectedLanguage === 'bn'
-                    ? 'আমার অ্যাকাউন্ট'
-                    : selectedLanguage === 'ar'
-                    ? 'حسابي'
-                    : 'My Account'
+                  ? t('আমার অ্যাকাউন্ট', 'حسابي', 'My Account')
                   : activeTab === 'settings'
-                  ? selectedLanguage === 'bn'
-                    ? 'অ্যাপ সেটিংস'
-                    : selectedLanguage === 'ar'
-                    ? 'إعدادات التطبيق'
-                    : 'Settings'
-                  : selectedLanguage === 'bn'
-                  ? 'আমার অ্যাকাউন্ট'
-                  : selectedLanguage === 'ar'
-                  ? 'حسابي'
-                  : 'My Account'}
+                  ? t('অ্যাপ সেটিংস', 'إعدادات التطبيق', 'Settings')
+                  : t('আমার অ্যাকাউন্ট', 'حسابي', 'My Account')}
               </h2>
             </div>
           </div>
@@ -918,7 +990,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               type="button"
               onClick={onClose}
               className="p-1.5 rounded-full hover:bg-white/20 transition active:scale-95 cursor-pointer"
-              title="Close"
+              title={t('বন্ধ করুন', 'إغلاق', 'Close')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -963,7 +1035,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>{selectedLanguage === 'bn' ? 'প্রোফাইল ও অ্যাকাউন্ট' : 'Profile'}</span>
+              <span>{t('প্রোফাইল ও অ্যাকাউন্ট', 'الملف الشخصي', 'Profile')}</span>
             </button>
 
             <button
@@ -985,7 +1057,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               }`}
             >
               <Settings className="w-3.5 h-3.5" />
-              <span>{selectedLanguage === 'bn' ? 'সেটিংস' : 'Settings'}</span>
+              <span>{t('সেটিংস', 'الإعدادات', 'Settings')}</span>
             </button>
           </div>
         </div>
@@ -1041,8 +1113,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       if (soundEnabled) soundHaptics.playTap();
                     }}
                     className="absolute -bottom-0.5 -right-0.5 w-9 h-9 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white border-2 border-white dark:border-[#0a2328] shadow-md flex items-center justify-center transition active:scale-95 cursor-pointer"
-                    title={userProfile.isSignedIn ? 'Edit Profile & Photo' : 'Sign In'}
-                    aria-label="Edit Profile"
+                    title={
+                      userProfile.isSignedIn
+                        ? t('প্রোফাইল ও ছবি সম্পাদনা করুন', 'تعديل الملف الشخصي والصورة', 'Edit Profile & Photo')
+                        : t('সাইন ইন করুন', 'تسجيل الدخول', 'Sign In')
+                    }
+                    aria-label={t('প্রোফাইল সম্পাদনা', 'تعديل الملف الشخصي', 'Edit Profile')}
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
@@ -1054,12 +1130,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <h3 className="text-xl sm:text-2xl font-black tracking-tight">
                       {userProfile.isSignedIn && userProfile.name
                         ? userProfile.name
-                        : userProfile.name || (selectedLanguage === 'bn' ? 'গেস্ট অ্যাকাউন্ট' : 'Guest Account')}
+                        : userProfile.name || t('গেস্ট অ্যাকাউন্ট', 'حساب زائر', 'Guest Account')}
                     </h3>
                     {userProfile.isSignedIn && (
                       <span
                         className="w-5 h-5 rounded-full bg-[#006A4E] text-white inline-flex items-center justify-center shrink-0"
-                        title="Verified Account"
+                        title={t('ভেরিফায়েড অ্যাকাউন্ট', 'حساب موثق', 'Verified Account')}
                       >
                         <Check className="w-3 h-3 stroke-[3]" />
                       </span>
@@ -1069,9 +1145,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <p className={`text-xs sm:text-sm font-medium break-all ${isDay ? 'text-stone-600' : 'text-emerald-200/80'}`}>
                     {userProfile.isSignedIn && userProfile.emailOrPhone
                       ? userProfile.emailOrPhone
-                      : selectedLanguage === 'bn'
-                      ? 'সাইন ইন করে আপনার জিকির ও সেটিংস সিঙ্ক করুন'
-                      : 'Sign in to sync your Zikr, Saved & Profile'}
+                      : t(
+                          'সাইন ইন করে আপনার জিকির ও সেটিংস সিঙ্ক করুন',
+                          'سجّل الدخول لمزامنة أذكارك وإعداداتك',
+                          'Sign in to sync your Zikr, Saved & Profile'
+                        )}
                   </p>
                 </div>
 
@@ -1084,7 +1162,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         if (onTriggerCloudSync) {
                           await onTriggerCloudSync();
                         }
-                        setCloudSyncMessage('✓ অ্যাপের সকল কাউন্ট ক্লাউডে সফলভাবে আপলোড হয়েছে!');
+                        setCloudSyncMessage(
+                          t(
+                            '✓ অ্যাপের সকল কাউন্ট ক্লাউডে সফলভাবে আপলোড হয়েছে!',
+                            '✓ تم رفع جميع العدادات إلى السحابة بنجاح!',
+                            '✓ All counts uploaded to cloud successfully!'
+                          )
+                        );
                         setTimeout(() => setCloudSyncMessage(null), 4000);
                         if (soundEnabled) soundHaptics.playMilestone();
                       }}
@@ -1094,10 +1178,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <RefreshCw className={`w-4 h-4 ${isSyncingCloud ? 'animate-spin' : ''}`} />
                       <span>
                         {isSyncingCloud
-                          ? 'Syncing...'
-                          : selectedLanguage === 'bn'
-                          ? 'ক্লাউড সিঙ্ক করুন'
-                          : 'Cloud Sync Active'}
+                          ? t('সিঙ্ক হচ্ছে...', 'جارٍ المزامنة...', 'Syncing...')
+                          : t('ক্লাউড সিঙ্ক করুন', 'المزامنة السحابية نشطة', 'Cloud Sync Active')}
                       </span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -1110,9 +1192,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       className="min-h-[44px] px-6 py-2.5 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white font-bold text-xs sm:text-sm shadow-md inline-flex items-center gap-2 transition active:scale-95 cursor-pointer"
                     >
                       <span>
-                        {selectedLanguage === 'bn'
-                          ? 'সাইন ইন / পূর্ণ অ্যাক্সেস নিন'
-                          : 'Get Full Access · Sign In'}
+                        {t('সাইন ইন / পূর্ণ অ্যাক্সেস নিন', 'تسجيل الدخول / وصول كامل', 'Get Full Access · Sign In')}
                       </span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -1136,51 +1216,61 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center justify-between">
                     <div className="font-extrabold text-xs flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>এই অ্যাকাউন্টের সর্বমোট জিকির পরিসংখ্যান</span>
+                      <span>
+                        {t(
+                          'এই অ্যাকাউন্টের সর্বমোট জিকির পরিসংখ্যান',
+                          'إحصائيات الذكر لهذا الحساب',
+                          'Account Zikr Statistics'
+                        )}
+                      </span>
                     </div>
                     <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
                       <Cloud className="w-3.5 h-3.5" />
-                      <span>Synced</span>
+                      <span>{t('সিঙ্কড', 'تمت المزامنة', 'Synced')}</span>
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">
                     <div className={`p-3 rounded-xl border ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
                       <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                        সর্বমোট পুঞ্জীভূত জিকির
+                        {t('সর্বমোট পুঞ্জীভূত জিকির', 'إجمالي الأذكار المتراكمة', 'Total Cumulative Zikr')}
                       </div>
                       <div className="text-xl font-black font-mono tabular-nums text-[#006A4E] dark:text-amber-300 mt-0.5">
-                        {lifetimeTotalCount.toLocaleString()}
+                        {formatNum(lifetimeTotalCount)}
                       </div>
                       <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
-                        সকল দিন ও ডিভাইসের মোট যোগফল
+                        {t('সকল দিন ও ডিভাইসের মোট যোগফল', 'المجموع الكلي لجميع الأيام والأجهزة', 'Total across all days & devices')}
                       </div>
                     </div>
 
                     <div className={`p-3 rounded-xl border ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
                       <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                        আজকের দৈনন্দিন গণনা
+                        {t('আজকের দৈনন্দিন গণনা', 'إجمالي الذكر اليومي', "Today's Daily Count")}
                       </div>
                       <div className="text-xl font-black font-mono tabular-nums text-teal-600 dark:text-emerald-400 mt-0.5">
-                        {(dailyTotal || 0).toLocaleString()}
+                        {formatNum(dailyTotal || 0)}
                       </div>
                       <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
-                        আজকের পাঠ করা জিকির
+                        {t('আজকের পাঠ করা জিকির', 'الأذكار المقروءة اليوم', 'Zikr recited today')}
                       </div>
                     </div>
                   </div>
 
                   <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-black/5 dark:bg-black/20 border border-black/5 dark:border-white/5 space-y-1.5">
                     <div className="flex items-center justify-between font-semibold">
-                      <span>সক্রিয় দানার মোট গণনা (Active Beads):</span>
+                      <span>{t('সক্রিয় দানার মোট গণনা:', 'مجموع الحبات النشطة:', 'Active Beads Total:')}</span>
                       <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                        {zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0).toLocaleString()}
+                        {formatNum(zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0))}
                       </span>
                     </div>
                     <div className="flex items-center justify-between font-semibold">
-                      <span>সংরক্ষিত সেশন ইতিহাস (History Sessions):</span>
+                      <span>{t('সংরক্ষিত সেশন ইতিহাস:', 'سجل الجلسات المحفوظة:', 'Saved History Sessions:')}</span>
                       <span className="font-mono font-bold text-teal-600 dark:text-teal-400">
-                        {historySessions.length}টি সেশন
+                        {isBn
+                          ? `${formatNum(historySessions.length)}টি সেশন`
+                          : isAr
+                          ? `${formatNum(historySessions.length)} جلسات`
+                          : `${historySessions.length} ${historySessions.length === 1 ? 'session' : 'sessions'}`}
                       </span>
                     </div>
                   </div>
@@ -1212,12 +1302,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
                     <div>
                       <div className="font-bold text-sm">
-                        {selectedLanguage === 'bn' ? 'অ্যাপ সেটিংস ও ভাষা' : 'App Settings & Language'}
+                        {t('অ্যাপ সেটিংস ও ভাষা', 'إعدادات التطبيق واللغة', 'App Settings & Language')}
                       </div>
                       <div className={`text-[11px] ${isDay ? 'text-slate-600' : 'text-emerald-200/80'}`}>
-                        {selectedLanguage === 'bn'
-                          ? 'ভাষা, থিম, অডিও ভয়েস, ব্যাকআপ ও রিসেট'
-                          : 'Language, themes, voice reciter, backup & reset'}
+                        {t(
+                          'ভাষা, থিম, অডিও ভয়েস, ব্যাকআপ ও রিসেট',
+                          'اللغة، المظهر، الصوت، النسخ الاحتياطي وإعادة الضبط',
+                          'Language, themes, voice reciter, backup & reset'
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1244,13 +1336,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <Bookmark className="w-4 h-4 fill-current" />
                     </div>
                     <div>
-                      <div className="font-bold text-sm">Bookmarks</div>
+                      <div className="font-bold text-sm">{t('বুকমার্ক', 'العلامات المرجعية', 'Bookmarks')}</div>
                       <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
-                        সংরক্ষিত সূরা, আয়াত, হাদিস ও দোয়া
+                        {t(
+                          'সংরক্ষিত সূরা, আয়াত, হাদিস ও দোয়া',
+                          'السور والآيات والأحاديث والأدعية المحفوظة',
+                          'Saved Surahs, Ayahs, Hadith & Duas'
+                        )}
                       </div>
                     </div>
                   </div>
-                  <span className={`text-xs font-mono font-black ${isDay ? 'text-slate-800' : 'text-slate-300'}`}>5 items</span>
+                  <span className={`text-xs font-mono font-black ${isDay ? 'text-slate-800' : 'text-slate-300'}`}>
+                    {t('৫টি', '٥ عناصر', '5 items')}
+                  </span>
                 </button>
 
                 {/* Downloaded Books */}
@@ -1268,13 +1366,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <BookOpen className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-sm">Downloaded Books</div>
+                      <div className="font-bold text-sm">{t('ডাউনলোডকৃত কিতাব', 'الكتب المحملة', 'Downloaded Books')}</div>
                       <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
-                        অফলাইন কিতাব ও লাইব্রেরি PDF
+                        {t(
+                          'অফলাইন কিতাব ও লাইব্রেরি পিডিএফ',
+                          'كتب القراءة دون اتصال ومكتبة PDF',
+                          'Offline books & library PDF'
+                        )}
                       </div>
                     </div>
                   </div>
-                  <span className={`text-xs font-mono font-black ${isDay ? 'text-slate-800' : 'text-slate-300'}`}>3 books</span>
+                  <span className={`text-xs font-mono font-black ${isDay ? 'text-slate-800' : 'text-slate-300'}`}>
+                    {t('৩টি কিতাব', '٣ كتب', '3 books')}
+                  </span>
                 </button>
 
                 {/* Feedback */}
@@ -1292,9 +1396,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <MessageSquare className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-bold text-sm">Feedback</div>
+                      <div className="font-bold text-sm">{t('মতামত ও ফিডব্যাক', 'الملاحظات والتواصل', 'Feedback')}</div>
                       <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
-                        WhatsApp (01567963471) বা ইমেইলে মতামত জানান
+                        {t(
+                          'হোয়াটসঅ্যাপ (০১৫৬৭৯৬৩৪৭১) বা ইমেইলে মতামত জানান',
+                          'أرسل ملاحظاتك عبر واتساب (01567963471) أو البريد الإلكتروني',
+                          'Share feedback via WhatsApp (01567963471) or Email'
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1323,13 +1431,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </div>
                       <div>
                         <div className="font-bold text-sm text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
-                          <span>অ্যাডমিন ড্যাশবোর্ড</span>
+                          <span>{t('অ্যাডমিন ড্যাশবোর্ড', 'لوحة تحكم المشرف', 'Admin Dashboard')}</span>
                           <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-900 uppercase font-black">
-                            Super Admin
+                            {t('সুপার অ্যাডমিন', 'المشرف العام', 'Super Admin')}
                           </span>
                         </div>
                         <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
-                          লাইভ ডিভাইস, ইউজার ও জিকির রিপোর্ট
+                          {t(
+                            'লাইভ ডিভাইস, ইউজার ও জিকির রিপোর্ট',
+                            'تقارير الأجهزة والمستخدمين والأذكار المباشرة',
+                            'Live devices, users & Zikr reports'
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1353,9 +1465,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         <LogOut className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-bold text-sm text-rose-600 dark:text-rose-400">Logout</div>
+                        <div className="font-bold text-sm text-rose-600 dark:text-rose-400">
+                          {t('লগআউট', 'تسجيل الخروج', 'Logout')}
+                        </div>
                         <div className={`text-[11px] ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
-                          অ্যাকাউন্ট থেকে লগআউট করুন
+                          {t('অ্যাকাউন্ট থেকে লগআউট করুন', 'تسجيل الخروج من الحساب', 'Sign out of your account')}
                         </div>
                       </div>
                     </div>
@@ -1392,7 +1506,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-extrabold text-sm truncate">
-                        {userProfile?.isSignedIn ? (userProfile.name || 'User') : (selectedLanguage === 'bn' ? 'প্রোফাইল ও অ্যাকাউন্ট' : 'Profile & Account')}
+                        {userProfile?.isSignedIn ? (userProfile.name || t('ব্যবহারকারী', 'مستخدم', 'User')) : t('প্রোফাইল ও অ্যাকাউন্ট', 'الملف الشخصي والحساب', 'Profile & Account')}
                       </span>
                       {userProfile?.isSignedIn && (
                         <span className="p-0.5 rounded-full bg-emerald-600 text-white shrink-0">
@@ -1402,13 +1516,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
                     <p className={`text-xs truncate ${isDay ? 'text-slate-600' : 'text-emerald-200/80'}`}>
                       {userProfile?.isSignedIn
-                        ? (userProfile.emailOrPhone || 'Verified Zikr+ Account')
-                        : (selectedLanguage === 'bn' ? 'সাইন-ইন, ক্লাউড সিঙ্ক ও বুকমার্ক' : 'Sign in, Cloud Sync & Bookmarks')}
+                        ? (userProfile.emailOrPhone || t('ভেরিফায়েড জিকির+ অ্যাকাউন্ট', 'حساب Zikr+ موثق', 'Verified Zikr+ Account'))
+                        : t('সাইন-ইন, ক্লাউড সিঙ্ক ও বুকমার্ক', 'تسجيل الدخول والمزامنة السحابية والعلامات', 'Sign in, Cloud Sync & Bookmarks')}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                  <span>{userProfile?.isSignedIn ? (selectedLanguage === 'bn' ? 'প্রোফাইল' : 'Profile') : (selectedLanguage === 'bn' ? 'সাইন ইন' : 'Sign In')}</span>
+                  <span>{userProfile?.isSignedIn ? t('প্রোফাইল', 'الملف الشخصي', 'Profile') : t('সাইন ইন', 'تسجيل الدخول', 'Sign In')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </div>
               </button>
@@ -1494,10 +1608,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </div>
                   <div>
                     <h4 className={`font-extrabold text-sm ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                      মোবাইলে Zikr+ অ্যাপ ইনস্টল
+                      {t('মোবাইলে Zikr+ অ্যাপ ইনস্টল', 'تثبيت تطبيق Zikr+ على الهاتف', 'Install Zikr+ App on Mobile')}
                     </h4>
                     <p className={`text-[11px] font-semibold ${isDay ? 'text-emerald-950' : 'text-emerald-200/90'}`}>
-                      আলাদা কোনো APK ডাউনলোড ছাড়াই Chrome থেকে ১-ক্লিকে ইনস্টল হয়।
+                      {t(
+                        'আলাদা কোনো APK ডাউনলোড ছাড়াই Chrome থেকে ১-ক্লিকে ইনস্টল হয়।',
+                        'ثبّته بنقرة واحدة من Chrome دون تنزيل APK خارجي.',
+                        'Install in 1 click directly from Chrome without any separate APK download.'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -1510,8 +1628,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 >
                   <Download className="w-4 h-4" />
                   <span>{isInstalled
-                    ? (selectedLanguage === 'bn' ? 'অ্যাপটি ইনস্টল আছে ✓ (নির্দেশিকা দেখুন)' : 'App Installed ✓ (View Guide)')
-                    : (selectedLanguage === 'bn' ? 'অ্যাপ ইনস্টল করুন' : 'Install App')}</span>
+                    ? t('অ্যাপটি ইনস্টল আছে ✓ (নির্দেশিকা দেখুন)', 'التطبيق مثبّت ✓ (عرض الدليل)', 'App Installed ✓ (View Guide)')
+                    : t('অ্যাপ ইনস্টল করুন', 'تثبيت التطبيق', 'Install App')}</span>
                 </button>
 
                 {onOpenStandaloneModal && (
@@ -1524,7 +1642,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         : 'border-[#1f5c68] text-emerald-300 hover:bg-white/5'
                     }`}
                   >
-                    <span>📱 APK ও অফলাইন প্যাকেজ তথ্য</span>
+                    <span>
+                      {t(
+                        '📱 অ্যাপ ও অফলাইন প্যাকেজ তথ্য',
+                        '📱 معلومات التطبيق والحزمة دون اتصال',
+                        '📱 App & Offline Package Info'
+                      )}
+                    </span>
                   </button>
                 )}
 
@@ -1544,10 +1668,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm flex items-center gap-2">
                     <Sun className="w-4 h-4 text-amber-500" />
-                    <span>থিম মোড</span>
+                    <span>{t('থিম মোড', 'وضع المظهر', 'Theme Mode')}</span>
                   </span>
                   <span className={`text-xs font-bold ${isDay ? 'text-amber-700 font-black' : 'text-emerald-400'}`}>
-                    {isDay ? 'Day ☀️' : 'Night 🌙'}
+                    {isDay ? t('দিন ☀️', 'نهار ☀️', 'Day ☀️') : t('রাত 🌙', 'ليل 🌙', 'Night 🌙')}
                   </span>
                 </div>
 
@@ -1577,7 +1701,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
               </div>
 
-              {/* Voice Reciter Selection (ভয়েস তেলাওয়াত নির্বাচন) */}
+              {/* Voice Reciter Selection */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
                   isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
@@ -1586,20 +1710,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm flex items-center gap-2">
                     <Volume2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>{selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন' : 'Voice Recitation Gender'}</span>
+                    <span>{t('অডিও তেলাওয়াত কণ্ঠ নির্বাচন', 'اختيار صوت التلاوة', 'Voice Recitation Gender')}</span>
                   </span>
                   <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                     isDay
                       ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
                       : 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30'
                   }`}>
-                    {voiceGender === 'female' ? '👩 নারী কণ্ঠ' : '👨 পুরুষ কণ্ঠ'}
+                    {voiceGender === 'female' ? t('👩 নারী কণ্ঠ', '👩 صوت نسائي', '👩 Female') : t('👨 পুরুষ কণ্ঠ', '👨 صوت رجالي', '👨 Male')}
                   </span>
                 </div>
                 <p className={`text-xs ${isDay ? 'text-slate-600' : 'text-emerald-200/80'}`}>
-                  {selectedLanguage === 'bn'
-                    ? 'দোআ, হজ ও ওমরাহ তেলাওয়াতের জন্য পুরুষ কণ্ঠ (গভীর) বা নারী কণ্ঠ (সুমধুর) নির্বাচন করুন'
-                    : 'Choose Male baritone or Female melodious voice for prayer recitation'}
+                  {t(
+                    'দোআ, হজ ও ওমরাহ তেলাওয়াতের জন্য পুরুষ কণ্ঠ (গভীর) বা নারী কণ্ঠ (সুমধুর) নির্বাচন করুন',
+                    'اختر الصوت الرجالي أو النسائي لتلاوة الأدعية ومناسك الحج والعمرة',
+                    'Choose Male baritone or Female melodious voice for prayer recitation'
+                  )}
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
@@ -1617,7 +1743,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       }`}
                     >
                       <span>👨</span>
-                      <span>{selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ' : 'Male'}</span>
+                      <span>{t('পুরুষ কণ্ঠ', 'رجالي', 'Male')}</span>
                     </button>
                     <button
                       type="button"
@@ -1632,7 +1758,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       }`}
                     >
                       <span>👩</span>
-                      <span>{selectedLanguage === 'bn' ? 'নারী কণ্ঠ' : 'Female'}</span>
+                      <span>{t('নারী কণ্ঠ', 'نسائي', 'Female')}</span>
                     </button>
                   </div>
 
@@ -1650,12 +1776,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     {isPlayingSample ? (
                       <>
                         <Square className="w-3.5 h-3.5 fill-current" />
-                        <span>{selectedLanguage === 'bn' ? 'থামুন' : 'Stop Sample'}</span>
+                        <span>{t('থামুন', 'إيقاف', 'Stop Sample')}</span>
                       </>
                     ) : (
                       <>
                         <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন' : 'Test Voice'}</span>
+                        <span>{t('কণ্ঠ শুনুন', 'استمع للصوت', 'Test Voice')}</span>
                       </>
                     )}
                   </button>
@@ -1917,15 +2043,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 }`}
               >
                 <div className={`font-black text-xs ${isDay ? 'text-slate-900' : 'text-emerald-300'}`}>
-                  System Information
+                  {t('সিস্টেম তথ্য', 'معلومات النظام', 'System Information')}
                 </div>
                 <div className={`grid grid-cols-2 gap-1.5 text-[11px] font-mono ${
                   isDay ? 'text-slate-800 font-medium' : 'text-emerald-200/90'
                 }`}>
-                  <div>Model: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.deviceModel || 'Android Phone'}</span></div>
-                  <div>OS: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.osVersion || 'Android 10'}</span></div>
-                  <div>App: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>v411_38.1</span></div>
-                  <div>Location: <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.location || 'Asia/Dhaka'}</span></div>
+                  <div>{t('মডেল:', 'الطراز:', 'Model:')} <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.deviceModel || 'Android Phone'}</span></div>
+                  <div>{t('ওএস:', 'النظام:', 'OS:')} <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.osVersion || 'Android 10'}</span></div>
+                  <div>{t('অ্যাপ:', 'التطبيق:', 'App:')} <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>v411_38.1</span></div>
+                  <div>{t('অবস্থান:', 'الموقع:', 'Location:')} <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.location || 'Asia/Dhaka'}</span></div>
                 </div>
               </div>
 
@@ -1940,12 +2066,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <div>
                       <div className="font-extrabold text-xs text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>{selectedLanguage === 'bn' ? 'প্রথম ডাউনলোড ওয়েলকাম স্ক্রিন' : 'First Download Welcome Screen'}</span>
+                        <span>{t('প্রথম ডাউনলোড ওয়েলকাম স্ক্রিন', 'شاشة الترحيب الأولى', 'First Download Welcome Screen')}</span>
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-emerald-200/70 mt-0.5">
-                        {selectedLanguage === 'bn'
-                          ? 'অ্যাপ ইন্সটলের পর প্রদর্শিত নান্দনিক পূর্ণাঙ্গ সাইন-ইন ইন্টারফেস'
-                          : 'Show the initial onboarding & sign-in screen'}
+                        {t(
+                          'অ্যাপ ইন্সটলের পর প্রদর্শিত নান্দনিক পূর্ণাঙ্গ সাইন-ইন ইন্টারফেস',
+                          'شاشة الترحيب وتسجيل الدخول المعروضة عند أول تشغيل للتطبيق',
+                          'Show the initial onboarding & sign-in screen'
+                        )}
                       </p>
                     </div>
                     <button
@@ -1956,7 +2084,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       }}
                       className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition active:scale-95 cursor-pointer shrink-0"
                     >
-                      {selectedLanguage === 'bn' ? 'স্ক্রিন দেখুন' : 'Preview'}
+                      {t('স্ক্রিন দেখুন', 'معاينة', 'Preview')}
                     </button>
                   </div>
                 </div>
@@ -1983,10 +2111,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </div>
                   <div>
                     <h3 className="font-black text-base text-slate-900 dark:text-white">
-                      Zikr+ Login / Sign Up
+                      {t('Zikr+ লগইন / সাইন আপ', 'تسجيل الدخول / إنشاء حساب Zikr+', 'Zikr+ Login / Sign Up')}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-emerald-300/80">
-                      সহজ ও নিরাপদ ১-ক্লিক অ্যাকাউন্ট সাইন-ইন
+                      {t('সহজ ও নিরাপদ ১-ক্লিক অ্যাকাউন্ট সাইন-ইন', 'تسجيل دخول آمن وسهل بنقرة واحدة', 'Easy & secure 1-click account sign-in')}
                     </p>
                   </div>
                 </div>
@@ -2017,20 +2145,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <div className="flex items-center gap-3">
                       <GoogleIcon />
                       <div className="text-left">
-                        <div className="text-xs sm:text-sm font-extrabold">Continue with Google</div>
+                        <div className="text-xs sm:text-sm font-extrabold">
+                          {t('গুগল দিয়ে চালিয়ে যান', 'المتابعة باستخدام Google', 'Continue with Google')}
+                        </div>
                         <div className="text-[10px] text-slate-500 dark:text-emerald-300/70">
-                          ১-ক্লিকে সরাসরি গুগল সাইন-ইন
+                          {t('১-ক্লিকে সরাসরি গুগল সাইন-ইন', 'تسجيل دخول مباشر عبر Google بنقرة واحدة', 'Direct 1-click Google Sign-In')}
                         </div>
                       </div>
                     </div>
                     <span className="text-[10px] px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-extrabold border border-emerald-500/30">
-                      Google One-Tap
+                      {t('১-ক্লিক গুগল', 'نقرة واحدة', 'Google One-Tap')}
                     </span>
                   </button>
 
                   <div className="flex items-center gap-3 text-[10px] font-extrabold text-slate-400 dark:text-teal-400/60 uppercase tracking-wider py-0.5">
                     <div className="flex-1 h-px bg-slate-200 dark:bg-teal-900/60" />
-                    <span>অথবা জিমেইল ও ফোন দিয়ে</span>
+                    <span>{t('অথবা জিমেইল ও ফোন দিয়ে', 'أو عبر البريد والهاتف', 'Or with Email & Phone')}</span>
                     <div className="flex-1 h-px bg-slate-200 dark:bg-teal-900/60" />
                   </div>
 
@@ -2038,14 +2168,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>জিমেইল / ইমেইল অ্যাড্রেস (Gmail) *</span>
+                      <span>{t('জিমেইল / ইমেইল অ্যাড্রেস *', 'البريد الإلكتروني *', 'Email Address *')}</span>
                     </label>
                     <input
                       type="email"
                       required
                       value={inputEmail}
                       onChange={(e) => setInputEmail(e.target.value)}
-                      placeholder="e.g. name@gmail.com"
+                      placeholder={t('যেমন: name@gmail.com', 'مثال: name@gmail.com', 'e.g. name@gmail.com')}
                       className={`w-full rounded-2xl px-3.5 py-2.5 border text-xs font-semibold focus:outline-none transition ${
                         isDay
                           ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
@@ -2059,9 +2189,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     <div className="flex items-center justify-between mb-1">
                       <label className="text-[11px] font-bold text-slate-600 dark:text-emerald-300 flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                        <span>মোবাইল নম্বর (Phone Number - Optional)</span>
+                        <span>{t('মোবাইল নম্বর', 'رقم الهاتف', 'Phone Number')}</span>
                       </label>
-                      <span className="text-[9px] text-slate-400 font-mono">ঐচ্ছিক</span>
+                      <span className="text-[9px] text-slate-400 font-mono">{t('ঐচ্ছিক', 'اختياري', 'Optional')}</span>
                     </div>
                     <div className="flex gap-2">
                       <select
@@ -2083,7 +2213,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         type="tel"
                         value={inputPhone}
                         onChange={(e) => setInputPhone(e.target.value)}
-                        placeholder="01712345678 (Optional)"
+                        placeholder={t('০১৭১২৩৪৫৬৭৮ (ঐচ্ছিক)', '01712345678 (اختياري)', '01712345678 (Optional)')}
                         className={`flex-1 rounded-2xl px-3.5 py-2.5 border text-xs font-semibold focus:outline-none transition ${
                           isDay
                             ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
@@ -2097,13 +2227,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>আপনার নাম (Name - Optional)</span>
+                      <span>{t('আপনার নাম (ঐচ্ছিক)', 'الاسم الكامل (اختياري)', 'Your Name (Optional)')}</span>
                     </label>
                     <input
                       type="text"
                       value={inputName}
                       onChange={(e) => setInputName(e.target.value)}
-                      placeholder="e.g. Mursaline Parvez"
+                      placeholder={t('আপনার পূর্ণ নাম লিখুন', 'اكتب اسمك الكامل', 'e.g. Mursaline Parvez')}
                       className={`w-full rounded-2xl px-3.5 py-2.5 border text-xs font-semibold focus:outline-none transition ${
                         isDay
                           ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
@@ -2116,7 +2246,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
                       <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>পাসওয়ার্ড (Password) *</span>
+                      <span>{t('পাসওয়ার্ড *', 'كلمة المرور *', 'Password *')}</span>
                     </label>
                     <div className="relative">
                       <input
@@ -2126,7 +2256,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') handleInstantPasswordAuth();
                         }}
-                        placeholder="কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড"
+                        placeholder={t('কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড', '٤ أحرف على الأقل', 'At least 4 characters')}
                         className={`w-full rounded-2xl pl-3.5 pr-10 py-2.5 border text-xs font-semibold focus:outline-none transition ${
                           isDay
                             ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
@@ -2164,7 +2294,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       ) : (
                         <Sparkles className="w-4 h-4 text-amber-300" />
                       )}
-                      <span>⚡ ১-ক্লিকে সাইন-ইন / রেজিস্ট্রেশন করুন</span>
+                      <span>
+                        {t(
+                          '⚡ ১-ক্লিকে সাইন-ইন / রেজিস্ট্রেশন করুন',
+                          '⚡ تسجيل الدخول / التسجيل بنقرة واحدة',
+                          '⚡ 1-Click Sign In / Register'
+                        )}
+                      </span>
                     </button>
 
                     <button
@@ -2178,7 +2314,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       ) : (
                         <Send className="w-3.5 h-3.5 text-emerald-600" />
                       )}
-                      <span>📩 জিমেইলে ভেরিফিকেশন কোড পাঠান</span>
+                      <span>
+                        {t(
+                          '📩 জিমেইলে ভেরিফিকেশন কোড পাঠান',
+                          '📩 إرسال رمز التحقق إلى البريد',
+                          '📩 Send Verification Code to Email'
+                        )}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -2189,14 +2331,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="space-y-4 animate-in fade-in">
                   <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-1">
                     <h4 className="font-extrabold text-sm text-emerald-800 dark:text-emerald-300">
-                      ভেরিফিকেশন কোড পাঠানো হয়েছে
+                      {t('ভেরিফিকেশন কোড পাঠানো হয়েছে', 'تم إرسال رمز التحقق', 'Verification Code Sent')}
                     </h4>
                     <p className="text-[11px] text-slate-600 dark:text-emerald-200/90">
-                      আপনার ইমেইলে ({maskedTargetDisplay || inputEmail}) ৬-সংখ্যার সিকিউরিটি কোড পাঠানো হয়েছে।
+                      {t(
+                        `আপনার ইমেইলে (${maskedTargetDisplay || inputEmail}) ৬-সংখ্যার সিকিউরিটি কোড পাঠানো হয়েছে।`,
+                        `تم إرسال رمز أمان مكون من ٦ أرقام إلى بريدك (${maskedTargetDisplay || inputEmail}).`,
+                        `A 6-digit security code has been sent to your email (${maskedTargetDisplay || inputEmail}).`
+                      )}
                     </p>
                   </div>
 
-                  {/* INSTANT CODE HELPER BANNER FOR "code ase na" ISSUES */}
+                  {/* INSTANT CODE HELPER BANNER */}
                   {(() => {
                     const pending = getPendingOtp();
                     if (!pending || !pending.code) return null;
@@ -2205,7 +2351,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         <div className="flex items-center justify-between">
                           <span className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200 font-black">
                             <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-                            <span>ইমেইলে কোড আসতে দেরি হলে:</span>
+                            <span>{t('ইমেইলে কোড আসতে দেরি হলে:', 'إذا تأخر وصول الرمز للبريد:', 'If email delivery is delayed:')}</span>
                           </span>
                           <span className="font-mono bg-amber-500 text-slate-950 px-3 py-1 rounded-xl font-black text-sm tracking-wider shadow-xs">
                             {pending.code}
@@ -2224,7 +2370,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
                         >
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>⚡ ১-ক্লিকে কোড বসান ও ভেরিফাই করুন ({pending.code})</span>
+                          <span>
+                            {t(
+                              `⚡ ১-ক্লিকে কোড বসান ও ভেরিফাই করুন (${pending.code})`,
+                              `⚡ تعبئة الرمز والتحقق بنقرة واحدة (${pending.code})`,
+                              `⚡ 1-Click Auto-Fill & Verify (${pending.code})`
+                            )}
+                          </span>
                         </button>
                       </div>
                     );
@@ -2233,7 +2385,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   {/* 6-DIGIT OTP BOXES */}
                   <div className="space-y-2">
                     <label className="block text-center text-xs font-bold text-slate-600 dark:text-emerald-300">
-                      ৬-সংখ্যার সিকিউরিটি কোড দিন:
+                      {t('৬-সংখ্যার সিকিউরিটি কোড দিন:', 'أدخل رمز الأمان المكون من ٦ أرقام:', 'Enter 6-digit security code:')}
                     </label>
                     <div className="flex justify-between gap-1.5">
                       {[0, 1, 2, 3, 4, 5].map((idx) => (
@@ -2275,7 +2427,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       onClick={() => setVerificationStep('input')}
                       className="py-3 px-4 rounded-2xl border border-slate-300 dark:border-teal-900/60 font-bold text-xs hover:bg-slate-100 dark:hover:bg-teal-900/30 transition cursor-pointer"
                     >
-                      Back
+                      {t('পিছনে', 'رجوع', 'Back')}
                     </button>
 
                     <button
@@ -2289,7 +2441,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       ) : (
                         <CheckCircle2 className="w-4 h-4" />
                       )}
-                      <span>কোড সাবমিট করুন</span>
+                      <span>{t('কোড সাবমিট করুন', 'تأكيد الرمز', 'Verify Code')}</span>
                     </button>
                   </div>
                 </div>
@@ -2303,10 +2455,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </div>
                   <div>
                     <h4 className="font-black text-base text-emerald-600 dark:text-emerald-400">
-                      ✓ সফলভাবে লগইন হয়েছে!
+                      {t('✓ সফলভাবে লগইন হয়েছে!', '✓ تم تسجيل الدخول بنجاح!', '✓ Signed In Successfully!')}
                     </h4>
                     <p className="text-xs text-slate-500 dark:text-emerald-300 mt-1">
-                      {cloudSyncMessage || 'ক্লাউড সিঙ্ক চালু হয়েছে...'}
+                      {cloudSyncMessage || t('ক্লাউড সিঙ্ক চালু হয়েছে...', 'المزامنة السحابية مفعلة...', 'Cloud sync is active...')}
                     </p>
                   </div>
                 </div>
@@ -2326,7 +2478,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
                 <h3 className="font-bold text-base flex items-center gap-2">
                   <User className="w-4 h-4 text-emerald-600" />
-                  <span>Edit Account Profile</span>
+                  <span>{t('প্রোফাইল সম্পাদনা করুন', 'تعديل الملف الشخصي', 'Edit Account Profile')}</span>
                 </h3>
                 <button
                   onClick={() => setActiveSubModal('none')}
@@ -2338,7 +2490,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
               <form onSubmit={handleSaveProfile} className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold block mb-1 text-slate-500 dark:text-emerald-300">Full Name</label>
+                  <label className="font-bold block mb-1 text-slate-500 dark:text-emerald-300">
+                    {t('পূর্ণ নাম', 'الاسم الكامل', 'Full Name')}
+                  </label>
                   <input
                     type="text"
                     required
@@ -2353,7 +2507,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-bold block mb-1 text-slate-500 dark:text-emerald-300">Email / Phone</label>
+                  <label className="font-bold block mb-1 text-slate-500 dark:text-emerald-300">
+                    {t('ইমেইল / মোবাইল', 'البريد الإلكتروني / الهاتف', 'Email / Phone')}
+                  </label>
                   <input
                     type="text"
                     required
@@ -2373,13 +2529,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onClick={() => setActiveSubModal('none')}
                     className="flex-1 py-2.5 rounded-xl border border-slate-300 font-bold hover:bg-slate-100 transition"
                   >
-                    Cancel
+                    {t('বাতিল', 'إلغاء', 'Cancel')}
                   </button>
                   <button
                     type="submit"
                     className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-md active:scale-95"
                   >
-                    Save Changes
+                    {t('পরিবর্তন সংরক্ষণ করুন', 'حفظ التغييرات', 'Save Changes')}
                   </button>
                 </div>
               </form>
@@ -2398,7 +2554,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-emerald-600" />
-                  <h3 className="font-bold text-base">Send Feedback • মতামত পাঠান</h3>
+                  <h3 className="font-bold text-base">{t('মতামত পাঠান', 'إرسال الملاحظات', 'Send Feedback')}</h3>
                 </div>
                 <button
                   onClick={() => setActiveSubModal('none')}
@@ -2411,7 +2567,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="space-y-3 text-xs">
                 <div>
                   <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">
-                    Channel:
+                    {t('মাধ্যম নির্বাচন করুন:', 'الوسيلة:', 'Channel:')}
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -2421,7 +2577,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         feedbackChannel === 'whatsapp' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-700' : 'bg-slate-100'
                       }`}
                     >
-                      <span>💬 WhatsApp</span>
+                      <span>{t('💬 হোয়াটসঅ্যাপ', '💬 واتساب', '💬 WhatsApp')}</span>
                     </button>
                     <button
                       type="button"
@@ -2431,13 +2587,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       }`}
                     >
                       <Mail className="w-4 h-4 text-rose-500" />
-                      <span>Email</span>
+                      <span>{t('ইমেইল', 'البريد الإلكتروني', 'Email')}</span>
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">Your Email / Phone:</label>
+                  <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">
+                    {t('আপনার ইমেইল / মোবাইল:', 'بريدك الإلكتروني / رقم هاتفك:', 'Your Email / Phone:')}
+                  </label>
                   <input
                     type="text"
                     value={feedbackUserEmail}
@@ -2449,12 +2607,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">Your Message:</label>
+                  <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">
+                    {t('আপনার মতামত:', 'رسالتك:', 'Your Message:')}
+                  </label>
                   <textarea
                     rows={3}
                     value={feedbackMessage}
                     onChange={(e) => setFeedbackMessage(e.target.value)}
-                    placeholder="Type your message here..."
+                    placeholder={t('এখানে আপনার মতামত বা পরামর্শ লিখুন...', 'اكتب رسالتك هنا...', 'Type your message here...')}
                     className={`w-full rounded-xl p-3 border ${
                       isDay ? 'bg-slate-50 border-slate-300' : 'bg-[#092226] border-[#184850] text-white'
                     }`}
@@ -2467,7 +2627,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onClick={() => setActiveSubModal('none')}
                     className="flex-1 py-2.5 rounded-xl border border-slate-300 font-bold hover:bg-slate-100"
                   >
-                    Cancel
+                    {t('বাতিল', 'إلغاء', 'Cancel')}
                   </button>
                   <button
                     type="button"
@@ -2475,7 +2635,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     className="flex-1 py-2.5 rounded-xl bg-[#2d7d4f] hover:bg-[#256a42] text-white font-bold flex items-center justify-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    <span>Send Message</span>
+                    <span>{t('বার্তা পাঠান', 'إرسال', 'Send Message')}</span>
                   </button>
                 </div>
               </div>
@@ -2494,7 +2654,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
                 <div className="flex items-center gap-2">
                   <Bookmark className="w-4 h-4 text-emerald-600 fill-current" />
-                  <h3 className="font-bold text-base">Your Bookmarks</h3>
+                  <h3 className="font-bold text-base">{t('আপনার বুকমার্কসমূহ', 'علاماتك المرجعية', 'Your Bookmarks')}</h3>
                 </div>
                 <button onClick={() => setActiveSubModal('none')} className="p-1 rounded-lg hover:bg-slate-100">
                   <X className="w-4 h-4" />
@@ -2523,7 +2683,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       }}
                       className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white text-[10px] font-bold"
                     >
-                      Open →
+                      {t('খুলুন →', 'فتح ←', 'Open →')}
                     </button>
                   </div>
                 ))}
@@ -2543,7 +2703,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-blue-600" />
-                  <h3 className="font-bold text-base">Downloaded Books</h3>
+                  <h3 className="font-bold text-base">{t('ডাউনলোডকৃত কিতাব', 'الكتب المحملة', 'Downloaded Books')}</h3>
                 </div>
                 <button onClick={() => setActiveSubModal('none')} className="p-1 rounded-lg hover:bg-slate-100">
                   <X className="w-4 h-4" />
@@ -2583,9 +2743,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-600 mx-auto flex items-center justify-center border border-rose-500/30">
                 <LogOut className="w-6 h-6" />
               </div>
-              <h4 className="font-black text-base">Confirm Logout</h4>
+              <h4 className="font-black text-base">{t('লগআউট নিশ্চিত করুন', 'تأكيد تسجيل الخروج', 'Confirm Logout')}</h4>
               <p className="text-xs text-slate-500 dark:text-emerald-200/80">
-                লগআউট করলে আপনার ক্লাউড একাউন্ট থেকে ডিসকানেক্ট হবেন। পুনরায় একই জিমেইল দিয়ে সাইন-ইন করলেই সব ডাটা ফিরে আসবে।
+                {t(
+                  'লগআউট করলে আপনার ক্লাউড একাউন্ট থেকে ডিসকানেক্ট হবেন। পুনরায় একই জিমেইল দিয়ে সাইন-ইন করলেই সব ডাটা ফিরে আসবে।',
+                  'سيتم فصلك عن حسابك السحابي عند تسجيل الخروج. عند تسجيل الدخول مرة أخرى بنفس البريد ستعود جميع بياناتك.',
+                  'Signing out disconnects your cloud account. Sign back in with the same email anytime to restore all your data.'
+                )}
               </p>
               <div className="flex gap-2 pt-2">
                 <button
@@ -2593,7 +2757,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   onClick={() => setActiveSubModal('none')}
                   className="flex-1 py-2.5 rounded-xl border border-slate-300 font-bold text-xs"
                 >
-                  Cancel
+                  {t('বাতিল', 'إلغاء', 'Cancel')}
                 </button>
                 <button
                   type="button"
@@ -2625,7 +2789,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs shadow-md cursor-pointer"
                 >
-                  Yes, Logout
+                  {t('হ্যাঁ, লগআউট করুন', 'نعم، تسجيل الخروج', 'Yes, Logout')}
                 </button>
               </div>
             </div>

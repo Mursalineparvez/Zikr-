@@ -2296,6 +2296,7 @@ export default function App() {
           <StandaloneExportModal
             isOpen={isStandaloneModalOpen}
             onClose={() => setIsStandaloneModalOpen(false)}
+            selectedLanguage={selectedLanguage}
           />
         )}
 

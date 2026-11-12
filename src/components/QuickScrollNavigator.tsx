@@ -226,7 +226,19 @@ export const QuickScrollNavigator: React.FC<QuickScrollNavigatorProps> = ({
           setIsExpanded((prev) => !prev);
           if (soundEnabled) soundHaptics.playTap();
         }}
-        title={isExpanded ? 'মিনিমাইজ করুন' : 'বিস্তারিত স্ক্রলবার'}
+        title={
+          isExpanded
+            ? selectedLanguage === 'bn'
+              ? 'মিনিমাইজ করুন'
+              : selectedLanguage === 'ar'
+              ? 'تصغير'
+              : 'Minimize'
+            : selectedLanguage === 'bn'
+            ? 'বিস্তারিত স্ক্রলবার'
+            : selectedLanguage === 'ar'
+            ? 'شريط التمرير الموسع'
+            : 'Expanded Scrollbar'
+        }
         className={`w-5 h-4 rounded-full flex items-center justify-center opacity-40 hover:opacity-90 transition-opacity cursor-pointer ${
           isDay ? 'text-slate-600 bg-slate-200/80' : 'text-slate-400 bg-teal-950/80'
         }`}

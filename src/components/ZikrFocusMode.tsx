@@ -501,12 +501,16 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               {isLocked ? (
                 <>
                   <Lock className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span className="text-[10px] font-black uppercase tracking-wider">Locked</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider">
+                    {selectedLanguage === 'bn' ? 'লকড' : selectedLanguage === 'ar' ? 'مقفل' : 'Locked'}
+                  </span>
                 </>
               ) : (
                 <>
                   <Unlock className="w-3.5 h-3.5 stroke-[2]" />
-                  <span className="text-[10px] font-bold text-slate-300">Lock</span>
+                  <span className="text-[10px] font-bold text-slate-300">
+                    {selectedLanguage === 'bn' ? 'লক' : selectedLanguage === 'ar' ? 'قفل' : 'Lock'}
+                  </span>
                 </>
               )}
             </button>

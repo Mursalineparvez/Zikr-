@@ -265,7 +265,13 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
   };
 
   const handleCopyAyah = (ayah: QuranAyah) => {
-    const text = `${ayah.arabic} ﴿${toArabicNumerals(ayah.number)}﴾\n\n— সূরা ${surahDetail.englishName} (${surahDetail.name}), আয়াত: ${ayah.number}`;
+    const surahTitle = getBareSurahName(surahDetail.number, selectedLanguage);
+    const refLine = selectedLanguage === 'bn'
+      ? `— সূরা ${surahTitle}, আয়াত: ${ayah.number}`
+      : selectedLanguage === 'ar'
+        ? `— ${surahDetail.name}، آية: ${ayah.number}`
+        : `— Surah ${surahDetail.englishName}, Ayah ${ayah.number}`;
+    const text = `${ayah.arabic} ﴿${toArabicNumerals(ayah.number)}﴾\n\n${refLine}`;
     navigator.clipboard.writeText(text);
     setCopiedAyah(ayah.number);
     if (soundEnabled) soundHaptics.playTap();
@@ -499,17 +505,21 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                   ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 ring-2 ring-amber-400/50 font-black'
                   : 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/40 shadow-emerald-950/20'
               }`}
-              title={isPlaying ? 'তিলাওয়াত থামান' : 'সম্পূর্ণ সূরা তিলাওয়াত শুনুন'}
+              title={
+                isPlaying
+                  ? (selectedLanguage === 'bn' ? 'তিলাওয়াত থামান' : selectedLanguage === 'ar' ? 'إيقاف التلاوة' : 'Pause Recitation')
+                  : (selectedLanguage === 'bn' ? 'সম্পূর্ণ সূরা তিলাওয়াত শুনুন' : selectedLanguage === 'ar' ? 'استمع إلى السورة كاملة' : 'Play Full Surah')
+              }
             >
               {isPlaying ? (
                 <>
                   <Pause className="w-4 h-4 fill-current" />
-                  <span className="hidden md:inline">{selectedLanguage === 'bn' ? 'থামান' : 'Pause'}</span>
+                  <span className="hidden md:inline">{selectedLanguage === 'bn' ? 'থামান' : selectedLanguage === 'ar' ? 'إيقاف' : 'Pause'}</span>
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4 fill-current" />
-                  <span className="hidden md:inline">{selectedLanguage === 'bn' ? 'তিলাওয়াত' : 'Recite'}</span>
+                  <span className="hidden md:inline">{selectedLanguage === 'bn' ? 'তিলাওয়াত' : selectedLanguage === 'ar' ? 'تلاوة' : 'Recite'}</span>
                 </>
               )}
             </button>
@@ -521,9 +531,9 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 onExitMushaf();
               }}
               className="px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-100 text-[11px] font-bold border border-white/20 transition cursor-pointer active:scale-95"
-              title="অনুবাদসহ সাধারণ ভিউতে ফিরুন"
+              title={selectedLanguage === 'bn' ? 'অনুবাদসহ সাধারণ ভিউতে ফিরুন' : selectedLanguage === 'ar' ? 'العودة إلى العرض العادي' : 'Return to Normal View'}
             >
-              <span>{selectedLanguage === 'bn' ? 'অনুবাদসহ' : 'Normal'}</span>
+              <span>{selectedLanguage === 'bn' ? 'অনুবাদসহ' : selectedLanguage === 'ar' ? 'الوضع العادي' : 'Normal'}</span>
             </button>
           </div>
         </div>
@@ -555,10 +565,10 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               </label>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { id: 'madina', name: 'মদিনা পেপার', bg: 'bg-[#faf7ee] text-[#062d23] border-[#7db392]' },
-                  { id: 'hafezi', name: 'নূরানী ক্রিম', bg: 'bg-[#fcf8ec] text-amber-950 border-amber-300' },
-                  { id: 'white', name: 'আধুনিক সাদা', bg: 'bg-white text-slate-900 border-slate-300' },
-                  { id: 'night', name: 'রাত্রিকালীন ডার্ক', bg: 'bg-[#041512] text-emerald-200 border-emerald-700' },
+                  { id: 'madina', name: selectedLanguage === 'bn' ? 'মদিনা পেপার' : selectedLanguage === 'ar' ? 'ورق المدينة' : 'Madina Paper', bg: 'bg-[#faf7ee] text-[#062d23] border-[#7db392]' },
+                  { id: 'hafezi', name: selectedLanguage === 'bn' ? 'নূরানী ক্রিম' : selectedLanguage === 'ar' ? 'كريمي نوراني' : 'Noorani Cream', bg: 'bg-[#fcf8ec] text-amber-950 border-amber-300' },
+                  { id: 'white', name: selectedLanguage === 'bn' ? 'আধুনিক সাদা' : selectedLanguage === 'ar' ? 'أبيض حديث' : 'Modern White', bg: 'bg-white text-slate-900 border-slate-300' },
+                  { id: 'night', name: selectedLanguage === 'bn' ? 'রাত্রিকালীন ডার্ক' : selectedLanguage === 'ar' ? 'ليلي داكن' : 'Midnight Dark', bg: 'bg-[#041512] text-emerald-200 border-emerald-700' },
                 ].map((th) => (
                   <button
                     key={th.id}
@@ -579,13 +589,13 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             {/* 2. Arabic Font Family */}
             <div className="space-y-1.5">
               <label className="font-bold text-slate-600 dark:text-slate-300">
-                {selectedLanguage === 'bn' ? 'আরবি ফন্ট' : 'Arabic Script'}
+                {selectedLanguage === 'bn' ? 'আরবি ফন্ট' : selectedLanguage === 'ar' ? 'الخط العربي' : 'Arabic Script'}
               </label>
               <div className="grid grid-cols-3 gap-1">
                 {[
-                  { id: 'uthmani', label: 'উসমানী' },
-                  { id: 'naskh', label: 'নাসখ' },
-                  { id: 'indopak', label: 'ইন্দোপাক' },
+                  { id: 'uthmani', label: selectedLanguage === 'bn' ? 'উসমানী' : selectedLanguage === 'ar' ? 'عثماني' : 'Uthmani' },
+                  { id: 'naskh', label: selectedLanguage === 'bn' ? 'নাসখ' : selectedLanguage === 'ar' ? 'نسخ' : 'Naskh' },
+                  { id: 'indopak', label: selectedLanguage === 'bn' ? 'ইন্দোপাক' : selectedLanguage === 'ar' ? 'نستعليق' : 'IndoPak' },
                 ].map((f) => (
                   <button
                     key={f.id}
@@ -608,14 +618,14 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             {/* 3. Font Size */}
             <div className="space-y-1.5">
               <label className="font-bold text-slate-600 dark:text-slate-300">
-                {selectedLanguage === 'bn' ? 'ফন্ট সাইজ' : 'Font Size'}
+                {selectedLanguage === 'bn' ? 'ফন্ট সাইজ' : selectedLanguage === 'ar' ? 'حجم الخط' : 'Font Size'}
               </label>
               <div className="grid grid-cols-4 gap-1">
                 {[
-                  { id: 'compact', label: 'ছোট' },
-                  { id: 'standard', label: 'মাঝারি' },
-                  { id: 'large', label: 'বড়' },
-                  { id: 'huge', label: 'বিশাল' },
+                  { id: 'compact', label: selectedLanguage === 'bn' ? 'ছোট' : selectedLanguage === 'ar' ? 'صغير' : 'Small' },
+                  { id: 'standard', label: selectedLanguage === 'bn' ? 'মাঝারি' : selectedLanguage === 'ar' ? 'متوسط' : 'Medium' },
+                  { id: 'large', label: selectedLanguage === 'bn' ? 'বড়' : selectedLanguage === 'ar' ? 'كبير' : 'Large' },
+                  { id: 'huge', label: selectedLanguage === 'bn' ? 'বিশাল' : selectedLanguage === 'ar' ? 'ضخم' : 'Huge' },
                 ].map((sz) => (
                   <button
                     key={sz.id}
@@ -711,7 +721,13 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                     ? 'bg-amber-300/20 underline decoration-amber-400 decoration-wavy'
                     : ''
                 }`}
-                title={`আয়াত ${ayah.number} - তিলাওয়াত, অর্থ, তাফসীর ও অপশনের জন্য ট্যাপ করুন`}
+                title={
+                  selectedLanguage === 'bn'
+                    ? `আয়াত ${ayah.number} - তিলাওয়াত, অর্থ, তাফসীর ও অপশনের জন্য ট্যাপ করুন`
+                    : selectedLanguage === 'ar'
+                      ? `آية ${ayah.number} - اضغط للاستماع والتفسير والخيارات`
+                      : `Ayah ${ayah.number} - Tap for recitation, meaning, tafsir & options`
+                }
               >
                 {/* Arabic Words or Full Text */}
                 <span className="inline tracking-normal font-semibold">
@@ -759,7 +775,10 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
         {/* Mushaf Page Footer Strip */}
         <div className="pt-6 mt-6 border-t border-slate-300/70 dark:border-emerald-800/40 flex flex-wrap items-center justify-between gap-3 text-xs font-bold opacity-90">
           <div className="flex items-center gap-2 text-slate-700 dark:text-emerald-200">
-            <span className="font-extrabold">{getLocalizedSurahName(surahDetail.number, selectedLanguage)} ({surahDetail.name})</span>
+            <span className="font-extrabold">
+              {getLocalizedSurahName(surahDetail.number, selectedLanguage)}
+              {selectedLanguage !== 'ar' && surahDetail.name ? ` (${surahDetail.name})` : ''}
+            </span>
             <span>•</span>
             <span>{selectedLanguage === 'bn' ? `${surahDetail.numberOfAyahs}টি আয়াত` : `${surahDetail.numberOfAyahs} Ayahs`}</span>
             <span>•</span>
@@ -877,7 +896,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                     {activePopover.ayah.number}
                   </span>
                   <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 truncate">
-                    {getBareSurahName(surahDetail.number, selectedLanguage)} : আয়াত {activePopover.ayah.number}
+                    {getBareSurahName(surahDetail.number, selectedLanguage)} : {selectedLanguage === 'bn' ? `আয়াত ${activePopover.ayah.number}` : selectedLanguage === 'ar' ? `آية ${activePopover.ayah.number}` : `Ayah ${activePopover.ayah.number}`}
                   </span>
                   {activePopover.word && (
                     <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 shrink-0 font-arabic">
@@ -889,7 +908,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 <button
                   onClick={() => setActivePopover(null)}
                   className="p-1 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white transition cursor-pointer"
-                  title="বন্ধ করুন"
+                  title={selectedLanguage === 'bn' ? 'বন্ধ করুন' : selectedLanguage === 'ar' ? 'إغلاق' : 'Close'}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -916,7 +935,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               {/* Ayah Translation / Meaning */}
               <div className="mb-2.5">
                 <p className="text-xs sm:text-[13px] leading-relaxed text-slate-700 dark:text-slate-200 font-medium max-h-32 overflow-y-auto pr-1">
-                  {activePopover.ayah.translation || 'অর্থ লোড হচ্ছে...'}
+                  {activePopover.ayah.translation || (selectedLanguage === 'bn' ? 'অর্থ লোড হচ্ছে...' : selectedLanguage === 'ar' ? 'جاري التحميل...' : 'Loading translation...')}
                 </p>
               </div>
 
@@ -931,7 +950,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                   className="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-1 shadow-xs active:scale-95 cursor-pointer"
                 >
                   <Play className="w-3 h-3 fill-current" />
-                  <span>শুনুন</span>
+                  <span>{selectedLanguage === 'bn' ? 'শুনুন' : selectedLanguage === 'ar' ? 'استماع' : 'Listen'}</span>
                 </button>
 
                 <button
@@ -943,7 +962,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                   className="py-1.5 px-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center gap-1 shadow-xs active:scale-95 cursor-pointer"
                 >
                   <BookOpen className="w-3 h-3" />
-                  <span>তাফসীর</span>
+                  <span>{selectedLanguage === 'bn' ? 'তাফসীর' : selectedLanguage === 'ar' ? 'التفسير' : 'Tafsir'}</span>
                 </button>
 
                 <button
@@ -958,7 +977,11 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                   }`}
                 >
                   <Bookmark className={`w-3 h-3 ${isAyahBookmarked(activePopover.ayah.number) ? 'fill-current' : ''}`} />
-                  <span className="truncate">{isAyahBookmarked(activePopover.ayah.number) ? 'সংরক্ষিত' : 'বুকমার্ক'}</span>
+                  <span className="truncate">
+                    {isAyahBookmarked(activePopover.ayah.number)
+                      ? (selectedLanguage === 'bn' ? 'সংরক্ষিত' : selectedLanguage === 'ar' ? 'محفوظ' : 'Saved')
+                      : (selectedLanguage === 'bn' ? 'বুকমার্ক' : selectedLanguage === 'ar' ? 'إشارة' : 'Bookmark')}
+                  </span>
                 </button>
 
                 <button
@@ -968,12 +991,12 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                   {copiedAyah === activePopover.ayah.number ? (
                     <>
                       <Check className="w-3 h-3 text-emerald-500" />
-                      <span>কপি</span>
+                      <span>{selectedLanguage === 'bn' ? 'কপি' : selectedLanguage === 'ar' ? 'تم' : 'Copied'}</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3 h-3" />
-                      <span>কপি</span>
+                      <span>{selectedLanguage === 'bn' ? 'কপি' : selectedLanguage === 'ar' ? 'نسخ' : 'Copy'}</span>
                     </>
                   )}
                 </button>
@@ -1056,7 +1079,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                     <div className="text-right shrink-0">
                       <div className="font-arabic font-bold text-base">{surah.name}</div>
                       <div className={`text-[10px] font-mono ${isSelected ? 'text-emerald-200' : 'text-slate-400 dark:text-emerald-500'}`}>
-                        পৃষ্ঠা {surahPage}
+                        {selectedLanguage === 'bn' ? `পৃষ্ঠা ${surahPage}` : selectedLanguage === 'ar' ? `صفحة ${surahPage}` : `Page ${surahPage}`}
                       </div>
                     </div>
                   </button>

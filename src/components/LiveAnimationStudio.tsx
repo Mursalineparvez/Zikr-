@@ -45,7 +45,7 @@ interface InfographicPin {
 const KAABA_INFOGRAPHIC_PINS: InfographicPin[] = [
   {
     id: 'door',
-    titleBn: 'কাবার দরজা (Bab al-Kaaba)',
+    titleBn: 'কাবার দরজা',
     titleEn: 'Door of the Kaaba',
     arabic: 'بَابُ الكَعْبَةِ',
     descBn: 'কাবার উত্তর-পূর্ব দেওয়ালে অবস্থিত খাঁটি সোনার দরজা, যা মেঝে থেকে প্রায় ২.২ মিটার উঁচুতে স্থাপিত।',
@@ -56,8 +56,8 @@ const KAABA_INFOGRAPHIC_PINS: InfographicPin[] = [
   },
   {
     id: 'hajar',
-    titleBn: 'হাজরে আসওয়াদ (Black Stone)',
-    titleEn: 'Hajar al-Aswad',
+    titleBn: 'হাজরে আসওয়াদ',
+    titleEn: 'Hajar al-Aswad (Black Stone)',
     arabic: 'الحَجَرُ الأَسْوَدُ',
     descBn: 'জান্নাত থেকে প্রেরিত পবিত্র কালো পাথর, যেখান থেকে তাওয়াফ শুরু ও শেষ হয়।',
     descEn: 'Heavenly stone marking the start of Tawaf.',
@@ -67,7 +67,7 @@ const KAABA_INFOGRAPHIC_PINS: InfographicPin[] = [
   },
   {
     id: 'hateem',
-    titleBn: 'হাতিম (Hijr Isma\'il)',
+    titleBn: 'হাতিম',
     titleEn: 'Hijr Isma\'il (Hateem)',
     arabic: 'حِجْرُ إِسْمَاعِيلَ',
     descBn: 'কাবার উত্তর-পশ্চিম দিকের অর্ধচন্দ্রাকৃতির দেওয়াল, যা মূলত কাবারই অংশ।',
@@ -100,7 +100,7 @@ const KAABA_INFOGRAPHIC_PINS: InfographicPin[] = [
   },
   {
     id: 'mizaab',
-    titleBn: 'মিজাবে রহমত (স্বর্ণের পরনালা)',
+    titleBn: 'মিজাবে রহমত',
     titleEn: 'Golden Rain Gutter',
     arabic: 'مِيزَابُ الرَّحْمَةِ',
     descBn: 'কাবার ছাদের উপর স্থাপিত স্বর্ণের তৈরি পানির পরনালা।',
@@ -484,7 +484,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
             className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition active:scale-95 cursor-pointer flex items-center gap-2 text-xs sm:text-sm font-bold shadow-lg backdrop-blur-md"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>{isBn ? 'গાઇডে ফিরে যান' : 'Back'}</span>
+            <span>{isBn ? 'গাইডে ফিরে যান' : 'Back'}</span>
           </button>
           <div>
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-black mb-1 backdrop-blur-md">
@@ -635,7 +635,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
             <div className="flex items-center justify-between relative z-10">
               <div className="p-3.5 rounded-2xl bg-slate-900 border border-emerald-500/50 shadow-lg text-center">
                 <span className="text-2xl">🏔️</span>
-                <div className="text-xs font-black text-emerald-400 mt-1">সাফা পাহাড় (Safa)</div>
+                <div className="text-xs font-black text-emerald-400 mt-1">{isBn ? 'সাফা পাহাড়' : 'Mount Safa'}</div>
               </div>
 
               <div className="px-4 py-2 rounded-2xl bg-green-500/20 border border-green-400/60 text-green-300 text-xs font-black animate-pulse">
@@ -644,14 +644,14 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
 
               <div className="p-3.5 rounded-2xl bg-slate-900 border border-teal-500/50 shadow-lg text-center">
                 <span className="text-2xl">🏔️</span>
-                <div className="text-xs font-black text-teal-400 mt-1">মারওয়া পাহাড় (Marwah)</div>
+                <div className="text-xs font-black text-teal-400 mt-1">{isBn ? 'মারওয়া পাহাড়' : 'Mount Marwah'}</div>
               </div>
             </div>
 
             <div className="relative w-full h-12 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden flex items-center px-4 my-auto shadow-inner">
               <div className="w-[30%] h-full bg-slate-800/60" />
               <div className="w-[40%] h-full bg-gradient-to-r from-green-500/30 via-green-400/70 to-green-500/30 border-x-2 border-green-400 shadow-[0_0_25px_rgba(74,222,128,0.5)] flex items-center justify-center">
-                <span className="text-[11px] font-black text-green-200 tracking-wider">GREEN LIGHT ZONE</span>
+                <span className="text-[11px] font-black text-green-200 tracking-wider">{isBn ? 'সবুজ বাতি অঞ্চল' : 'GREEN LIGHT ZONE'}</span>
               </div>
               <div className="w-[30%] h-full bg-slate-800/60" />
 
@@ -704,13 +704,13 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-white/20">
-                      Step {node.id}
+                      {isBn ? `ধাপ ${node.id}` : `Step ${node.id}`}
                     </span>
                     {isSelected && <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />}
                   </div>
                   <div>
-                    <div className="text-xs font-black">{node.nameBn}</div>
-                    <div className="text-xs font-bold text-amber-300 mt-0.5">{node.placeBn}</div>
+                    <div className="text-xs font-black">{isBn ? node.nameBn : node.nameEn}</div>
+                    <div className="text-xs font-bold text-amber-300 mt-0.5">{isBn ? node.placeBn : node.placeEn}</div>
                   </div>
                 </button>
               );
@@ -722,7 +722,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
             <div className="relative w-full h-[300px] sm:h-[400px] rounded-2xl overflow-hidden border border-slate-700 shadow-2xl group">
               <img
                 src={activeRouteDetail.imageUrl}
-                alt={activeRouteDetail.placeBn}
+                alt={isBn ? activeRouteDetail.placeBn : activeRouteDetail.placeEn}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter brightness-95"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
@@ -730,10 +730,10 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
               <div className="absolute bottom-5 left-5 right-5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
                 <div className="space-y-1">
                   <span className="px-3 py-1 rounded-full bg-emerald-500 text-slate-950 font-black text-xs">
-                    {activeRouteDetail.nameBn}
+                    {isBn ? activeRouteDetail.nameBn : activeRouteDetail.nameEn}
                   </span>
                   <h4 className="text-xl sm:text-2xl font-black text-white drop-shadow-md">
-                    {activeRouteDetail.placeBn}
+                    {isBn ? activeRouteDetail.placeBn : activeRouteDetail.placeEn}
                   </h4>
                 </div>
                 <span className="font-arabic text-amber-300 font-bold text-lg sm:text-xl drop-shadow-md">
@@ -773,7 +773,15 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
                   <button
                     onClick={() => handleSpeakArabic(activeRouteDetail.duaArabic!)}
                     className="p-2 rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 cursor-pointer flex items-center justify-center shadow-md"
-                    title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
+                    title={
+                      isBn
+                        ? voiceGender === 'female'
+                          ? 'নারী কণ্ঠে শুনুন'
+                          : 'পুরুষ কণ্ঠে শুনুন'
+                        : voiceGender === 'female'
+                        ? 'Play Audio (Female)'
+                        : 'Play Audio (Male)'
+                    }
                   >
                     <Volume2 className="w-4 h-4" />
                   </button>

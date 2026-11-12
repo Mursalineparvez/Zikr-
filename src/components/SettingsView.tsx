@@ -270,7 +270,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <span>{selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ সেটিংস' : 'Voice Recitation Settings'}</span>
           </div>
           <span className="text-xs font-bold text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
-            {settings.voiceGender === 'female' ? '👩 নারী কণ্ঠ' : '👨 পুরুষ কণ্ঠ'}
+            {settings.voiceGender === 'female'
+              ? selectedLanguage === 'bn'
+                ? '👩 নারী কণ্ঠ'
+                : selectedLanguage === 'ar'
+                ? '👩 صوت نسائي'
+                : '👩 Female Voice'
+              : selectedLanguage === 'bn'
+              ? '👨 পুরুষ কণ্ঠ'
+              : selectedLanguage === 'ar'
+              ? '👨 صوت رجالي'
+              : '👨 Male Voice'}
           </span>
         </div>
 

@@ -351,13 +351,17 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             </div>
             <h2 className="text-sm sm:text-base font-black tracking-tight flex items-center gap-2">
               <span className={isDay ? 'text-slate-900' : 'text-white'}>
-                {SOLAR_UI.title[selectedLanguage] || 'সূর্যের গতিপথ ও পরবর্তী নামাজ'}
+                {SOLAR_UI.title[selectedLanguage] || 'Solar Path & Next Prayer'}
               </span>
             </h2>
           </div>
           <p className="text-[11px] font-medium text-slate-500 dark:text-emerald-300/80 flex items-center gap-1.5 pl-5">
-            <span>مسار الشمس الفلكي ومواقيت الصلاة</span>
-            <span>•</span>
+            {selectedLanguage === 'ar' && (
+              <>
+                <span>مسار الشمس الفلكي ومواقيت الصلاة</span>
+                <span>•</span>
+              </>
+            )}
             <span>{skyTheme.label}</span>
           </p>
         </div>
@@ -418,17 +422,18 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-xs font-black tracking-wider uppercase text-emerald-600 dark:text-emerald-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>{SOLAR_UI.nextPrayer[selectedLanguage] || 'পরবর্তী নামাজ:'}</span>
-                <span className="font-arabic opacity-80">• الصلاة القادمة</span>
+                <span>{SOLAR_UI.nextPrayer[selectedLanguage] || 'Next Prayer:'}</span>
               </div>
 
               <div className="flex items-baseline gap-3 flex-wrap">
                 <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                   {nextPrayerNameLocalized}
                 </span>
-                <span className="text-lg sm:text-xl font-bold font-arabic text-emerald-600 dark:text-emerald-400">
-                  ({prayerData.nextPrayerArabic})
-                </span>
+                {selectedLanguage !== 'ar' && (
+                  <span className="text-lg sm:text-xl font-bold font-arabic text-emerald-600 dark:text-emerald-400">
+                    ({prayerData.nextPrayerArabic})
+                  </span>
+                )}
                 <span className="text-xl sm:text-2xl font-mono font-black text-slate-800 dark:text-emerald-200">
                   {prayerData.nextPrayerFormattedTime}
                 </span>
@@ -461,7 +466,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                     {prayerData.timeRemainingFormatted}
                   </div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-emerald-300/70">
-                    {SOLAR_UI.remainingTime[selectedLanguage] || 'বাকি সময়'} • Live countdown
+                    {SOLAR_UI.remainingTime[selectedLanguage] || 'Time Remaining'}
                   </div>
                 </div>
               </div>
@@ -496,7 +501,19 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                   className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95"
                 >
                   {isAutoSimulating ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  <span>{isAutoSimulating ? 'Pause' : 'Auto Play'}</span>
+                  <span>
+                    {isAutoSimulating
+                      ? selectedLanguage === 'bn'
+                        ? 'থামান'
+                        : selectedLanguage === 'ar'
+                        ? 'إيقاف مؤقت'
+                        : 'Pause'
+                      : selectedLanguage === 'bn'
+                      ? 'অটো প্লে'
+                      : selectedLanguage === 'ar'
+                      ? 'تشغيل تلقائي'
+                      : 'Auto Play'}
+                  </span>
                 </button>
 
                 {/* Reset to live */}
@@ -533,21 +550,21 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 onClick={() => setScrubPercent(0)}
                 className="px-2 py-1 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold hover:bg-amber-500/30 cursor-pointer"
               >
-                0% সূর্যোদয় ({solar.sunriseTime})
+                0% {selectedLanguage === 'bn' ? 'সূর্যোদয়' : selectedLanguage === 'ar' ? 'الشروق' : 'Sunrise'} ({solar.sunriseTime})
               </button>
               <button
                 type="button"
                 onClick={() => setScrubPercent(50)}
                 className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/30 cursor-pointer"
               >
-                50% যাওয়াল/জোহর ({solar.solarNoonTime})
+                50% {selectedLanguage === 'bn' ? 'যাওয়াল/জোহর' : selectedLanguage === 'ar' ? 'الزوال / الظهر' : 'Solar Noon'} ({solar.solarNoonTime})
               </button>
               <button
                 type="button"
                 onClick={() => setScrubPercent(100)}
                 className="px-2 py-1 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold hover:bg-rose-500/30 cursor-pointer"
               >
-                100% সূর্যাস্ত ({solar.sunsetTime})
+                100% {selectedLanguage === 'bn' ? 'সূর্যাস্ত' : selectedLanguage === 'ar' ? 'الغروب' : 'Sunset'} ({solar.sunsetTime})
               </button>
             </div>
           </div>
@@ -569,12 +586,11 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                     />
                     <div>
                       <div className="font-bold flex items-center gap-1.5">
-                        <span>{wp.nameBn}</span>
-                        <span className="font-arabic text-emerald-400">({wp.arabic})</span>
+                        <span>{selectedLanguage === 'bn' ? wp.nameBn : wp.nameEn}</span>
                         <span className="font-mono text-emerald-300">• {wp.time}</span>
                       </div>
                       <div className="text-[10px] text-slate-300">
-                        {wp.desc} • সৌর উচ্চতা: {wp.altitude}
+                        {wp.desc} • {selectedLanguage === 'bn' ? 'সৌর উচ্চতা:' : selectedLanguage === 'ar' ? 'ارتفاع الشمس:' : 'Solar Altitude:'} {wp.altitude}
                       </div>
                     </div>
                     <button
@@ -707,7 +723,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 fontWeight="bold"
                 fontFamily="sans-serif"
               >
-                পূর্ব • EAST
+                {selectedLanguage === 'bn' ? 'পূর্ব' : selectedLanguage === 'ar' ? 'الشرق' : 'EAST'}
               </text>
               <text
                 x="475"
@@ -718,7 +734,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 fontFamily="sans-serif"
                 textAnchor="end"
               >
-                পশ্চিম • WEST
+                {selectedLanguage === 'bn' ? 'পশ্চিম' : selectedLanguage === 'ar' ? 'الغرب' : 'WEST'}
               </text>
               <text
                 x="270"
@@ -729,7 +745,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 fontFamily="sans-serif"
                 textAnchor="middle"
               >
-                দিগন্ত রেখা (HORIZON 0°)
+                {selectedLanguage === 'bn' ? 'দিগন্ত রেখা 0°' : selectedLanguage === 'ar' ? 'خط الأفق 0°' : 'HORIZON 0°'}
               </text>
 
               {/* 7. WAYPOINT NODES ON THE CELESTIAL ARC */}
@@ -880,7 +896,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                       fontFamily="monospace"
                       textAnchor="middle"
                     >
-                      {solar.solarAltitudeDeg}° (Night)
+                      {solar.solarAltitudeDeg}° ({selectedLanguage === 'bn' ? 'রাত' : selectedLanguage === 'ar' ? 'ليلاً' : 'Night'})
                     </text>
                   </g>
                 </g>
@@ -906,7 +922,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
                 {solar.sunriseTime}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                দিগন্ত উচ্চতা 0°
+                {selectedLanguage === 'bn' ? 'দিগন্ত উচ্চতা 0°' : selectedLanguage === 'ar' ? 'ارتفاع الأفق 0°' : 'Horizon Altitude 0°'}
               </div>
             </div>
 
@@ -920,13 +936,13 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             >
               <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
                 <Sun className="w-3.5 h-3.5 shrink-0" />
-                <span>{selectedLanguage === 'bn' ? 'মধ্যাহ্ন (জোহর)' : 'Solar Noon'}</span>
+                <span>{selectedLanguage === 'bn' ? 'মধ্যাহ্ন (জোহর)' : selectedLanguage === 'ar' ? 'الزوال (الظهر)' : 'Solar Noon'}</span>
               </div>
               <div className="text-xs sm:text-sm font-mono font-black mt-0.5 text-slate-800 dark:text-emerald-200">
                 {solar.solarNoonTime}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                শীর্ষ কোণ +74°
+                {selectedLanguage === 'bn' ? 'শীর্ষ কোণ +74°' : selectedLanguage === 'ar' ? 'الزاوية العليا +74°' : 'Zenith Angle +74°'}
               </div>
             </div>
 
@@ -940,7 +956,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             >
               <div className="flex items-center justify-end gap-1.5 text-xs font-bold text-rose-600 dark:text-rose-400">
                 <SunsetIcon className="w-3.5 h-3.5 shrink-0" />
-                <span>{selectedLanguage === 'bn' ? 'সূর্যাস্ত (মাগরিব)' : 'Sunset'}</span>
+                <span>{selectedLanguage === 'bn' ? 'সূর্যাস্ত (মাগরিব)' : selectedLanguage === 'ar' ? 'الغروب (المغرب)' : 'Sunset'}</span>
               </div>
               <div className="text-xs sm:text-sm font-mono font-black mt-0.5 text-slate-800 dark:text-rose-200">
                 {solar.sunsetTime}
@@ -958,39 +974,65 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             {/* Metric 1: Total Daylight */}
             <div className="space-y-1 pr-1">
               <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {selectedLanguage === 'bn' ? 'দিনের মোট আলো' : 'Total Daylight'}
+                {selectedLanguage === 'bn' ? 'দিনের মোট আলো' : selectedLanguage === 'ar' ? 'طول النهار' : 'Total Daylight'}
               </div>
               <div className="text-sm sm:text-base font-mono font-black text-amber-600 dark:text-amber-400">
                 {solar.daylightTotalFormatted}
               </div>
               <div className="text-[10px] text-slate-400">
-                সূর্যোদয় থেকে সূর্যাস্ত
+                {selectedLanguage === 'bn' ? 'সূর্যোদয় থেকে সূর্যাস্ত' : selectedLanguage === 'ar' ? 'من الشروق للغروب' : 'Sunrise to Sunset'}
               </div>
             </div>
 
             {/* Metric 2: Remaining Daylight */}
             <div className="space-y-1 px-2">
               <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {selectedLanguage === 'bn' ? 'অবশিষ্ট আলো' : 'Remaining Daylight'}
+                {selectedLanguage === 'bn' ? 'অবশিষ্ট আলো' : selectedLanguage === 'ar' ? 'الضوء المتبقي' : 'Remaining Daylight'}
               </div>
               <div className="text-sm sm:text-base font-mono font-black text-emerald-600 dark:text-emerald-400">
-                {solar.isDaytime ? solar.daylightRemainingFormatted : (selectedLanguage === 'bn' ? '০ মি. (রাত চলমান)' : '0m (Night)')}
+                {solar.isDaytime
+                  ? solar.daylightRemainingFormatted
+                  : selectedLanguage === 'bn'
+                  ? '০ মি. (রাত চলমান)'
+                  : selectedLanguage === 'ar'
+                  ? '٠ د (ليل)'
+                  : '0m (Night)'}
               </div>
               <div className="text-[10px] text-slate-400">
-                {solar.isDaytime ? 'সূর্যাস্ত বাকি' : 'নিশি কালীন ওয়াক্ত'}
+                {solar.isDaytime
+                  ? selectedLanguage === 'bn'
+                    ? 'সূর্যাস্ত বাকি'
+                    : selectedLanguage === 'ar'
+                    ? 'حتى الغروب'
+                    : 'Until Sunset'
+                  : selectedLanguage === 'bn'
+                  ? 'নিশি কালীন ওয়াক্ত'
+                  : selectedLanguage === 'ar'
+                  ? 'وقت الليل'
+                  : 'Nocturnal Phase'}
               </div>
             </div>
 
             {/* Metric 3: Current Salat Phase */}
             <div className="space-y-1 pl-2">
               <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {selectedLanguage === 'bn' ? 'বর্তমান পর্যায়' : 'Current Phase'}
+                {selectedLanguage === 'bn' ? 'বর্তমান পর্যায়' : selectedLanguage === 'ar' ? 'المرحلة الحالية' : 'Current Phase'}
               </div>
               <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                 {solar.solarPhaseLabel}
               </div>
               <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
-                {solar.isDaytime ? 'দিবানির্ভর ওয়াক্ত' : 'রাত্রির প্রহর'}
+                {solar.isDaytime
+                  ? selectedLanguage === 'bn'
+                    ? 'দিবানির্ভর ওয়াক্ত'
+                    : selectedLanguage === 'ar'
+                    ? 'فترة نهارية'
+                    : 'Daytime Period'
+                  : selectedLanguage === 'bn'
+                  ? 'রাত্রির প্রহর'
+                  : selectedLanguage === 'ar'
+                  ? 'فترة ليلية'
+                  : 'Nighttime Watch'}
               </div>
             </div>
           </div>
@@ -1002,11 +1044,13 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             <div className="flex items-center gap-2 text-slate-600 dark:text-emerald-300">
               <Compass className="w-3.5 h-3.5 text-emerald-500" />
               <span>
-                Altitude: <strong>{currentAltitude > 0 ? `+${currentAltitude}°` : `${currentAltitude}°`}</strong>
+                {selectedLanguage === 'bn' ? 'উচ্চতা:' : selectedLanguage === 'ar' ? 'الارتفاع:' : 'Altitude:'}{' '}
+                <strong>{currentAltitude > 0 ? `+${currentAltitude}°` : `${currentAltitude}°`}</strong>
               </span>
               <span>•</span>
               <span>
-                Azimuth: <strong>{solar.solarAzimuthDeg}° (W)</strong>
+                {selectedLanguage === 'bn' ? 'দিগংশ:' : selectedLanguage === 'ar' ? 'السمت:' : 'Azimuth:'}{' '}
+                <strong>{solar.solarAzimuthDeg}°</strong>
               </span>
             </div>
 
@@ -1018,7 +1062,19 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
               }}
               className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
             >
-              <span>{showScienceDetails ? (selectedLanguage === 'bn' ? 'বিবরণ বন্ধ করুন' : 'Hide Science') : (selectedLanguage === 'bn' ? 'সোলার সায়েন্স ও ইসলামিক বিধান' : 'Solar Science')}</span>
+              <span>
+                {showScienceDetails
+                  ? selectedLanguage === 'bn'
+                    ? 'বিবরণ বন্ধ করুন'
+                    : selectedLanguage === 'ar'
+                    ? 'إخفاء التفاصيل'
+                    : 'Hide Science'
+                  : selectedLanguage === 'bn'
+                  ? 'সোলার সায়েন্স ও ইসলামিক বিধান'
+                  : selectedLanguage === 'ar'
+                  ? 'علم الفلك الشرعي'
+                  : 'Solar Science'}
+              </span>
               <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 ${showScienceDetails ? 'rotate-90' : ''}`} />
             </button>
           </div>
@@ -1032,35 +1088,81 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
             >
               <div className="font-bold flex items-center gap-2 text-emerald-800 dark:text-emerald-300 text-sm">
                 <Sparkles className="w-4 h-4 text-emerald-500" />
-                <span>ইসলামিক জ্যোতির্বিজ্ঞান ও নামাজের ওয়াক্ত নির্ধারণ পদ্ধতি</span>
+                <span>
+                  {selectedLanguage === 'bn'
+                    ? 'ইসলামিক জ্যোতির্বিজ্ঞান ও নামাজের ওয়াক্ত নির্ধারণ পদ্ধতি'
+                    : selectedLanguage === 'ar'
+                    ? 'علم الفلك الإسلامي وتحديد مواقيت الصلاة'
+                    : 'Islamic Astronomy & Prayer Time Methodology'}
+                </span>
               </div>
               <p className="text-[11px] leading-relaxed">
-                ঐতিহাসিক ইসলামিক জ্যোতির্বিজ্ঞানীগণ (যেমন: আল-বিরুনী ও ইবনে আল-হাইসাম) সূর্যের প্রত্যক্ষ গতিপথ ও ছায়ার পরিবর্তনের মাধ্যমে নামাজের ছয়টি প্রধান পর্যায় নির্ভুলভাবে নির্ধারণ করেছিলেন:
+                {selectedLanguage === 'bn'
+                  ? 'ঐতিহাসিক ইসলামিক জ্যোতির্বিজ্ঞানীগণ (যেমন: আল-বিরুনী ও ইবনে আল-হাইসাম) সূর্যের প্রত্যক্ষ গতিপথ ও ছায়ার পরিবর্তনের মাধ্যমে নামাজের ছয়টি প্রধান পর্যায় নির্ভুলভাবে নির্ধারণ করেছিলেন:'
+                  : selectedLanguage === 'ar'
+                  ? 'استخدم علماء الفلك المسلمون حركة الشمس وطول الظل لتحديد المراحل الست الدقيقة لمواقيت الصلاة:'
+                  : 'Classical Islamic astronomers carefully mapped solar angles and shadow ratios to determine the six exact daily prayer phases:'}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px]">
                 <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/30 border border-emerald-500/20 space-y-1">
-                  <div className="font-bold text-amber-600 dark:text-amber-400">১. ফজর (সুবহে সাদিক):</div>
-                  <div>পূর্ব দিগন্তের ১৮° নিচে সূর্যের আলো বিচ্ছুরিত হয়ে শুভ্র আলোকচ্ছটা ছড়িয়ে পড়লে ফজরের সময় শুরু হয়।</div>
+                  <div className="font-bold text-amber-600 dark:text-amber-400">
+                    {selectedLanguage === 'bn' ? '১. ফজর (সুবহে সাদিক):' : selectedLanguage === 'ar' ? '١. الفجر الصادق:' : '1. Fajr (True Dawn):'}
+                  </div>
+                  <div>
+                    {selectedLanguage === 'bn'
+                      ? 'পূর্ব দিগন্তের ১৮° নিচে সূর্যের আলো বিচ্ছুরিত হয়ে শুভ্র আলোকচ্ছটা ছড়িয়ে পড়লে ফজরের সময় শুরু হয়।'
+                      : 'Begins when solar twilight reaches 18° beneath the eastern horizon.'}
+                  </div>
                 </div>
                 <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/30 border border-emerald-500/20 space-y-1">
-                  <div className="font-bold text-amber-500">২. সূর্যোদয় (নামাজ নিষেধ):</div>
-                  <div>সূর্য ওঠার সময় থেকে পূর্ণ গোলাকার হয়ে উজ্জ্বল না হওয়া পর্যন্ত (~১৫ মিনিট) নামাজ পড়া মাকরূহে তাহরীমী।</div>
+                  <div className="font-bold text-amber-500">
+                    {selectedLanguage === 'bn' ? '২. সূর্যোদয় (নামাজ নিষেধ):' : selectedLanguage === 'ar' ? '٢. الشروق (وقت النهي):' : '2. Sunrise (Forbidden Window):'}
+                  </div>
+                  <div>
+                    {selectedLanguage === 'bn'
+                      ? 'সূর্য ওঠার সময় থেকে পূর্ণ গোলাকার হয়ে উজ্জ্বল না হওয়া পর্যন্ত (~১৫ মিনিট) নামাজ পড়া মাকরূহে তাহরীমী।'
+                      : 'Prayer is prohibited from sunrise until the disc elevates clearly (~15 minutes).'}
+                  </div>
                 </div>
                 <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/30 border border-emerald-500/20 space-y-1">
-                  <div className="font-bold text-emerald-600 dark:text-emerald-400">৩. যাওয়াল ও জোহর:</div>
-                  <div>ঠিক মধ্যাহ্নে সূর্য মেরিন্ডিয়ান চূড়ায় পৌঁছায়। চূড়া থেকে সামান্য পশ্চিমমুখী ঢলে পড়লেই জোহরের ওয়াক্ত আরম্ভ হয়।</div>
+                  <div className="font-bold text-emerald-600 dark:text-emerald-400">
+                    {selectedLanguage === 'bn' ? '৩. যাওয়াল ও জোহর:' : selectedLanguage === 'ar' ? '٣. الزوال والظهر:' : '3. Zawal & Dhuhr:'}
+                  </div>
+                  <div>
+                    {selectedLanguage === 'bn'
+                      ? 'ঠিক মধ্যাহ্নে সূর্য মেরিডিয়ান চূড়ায় পৌঁছায়। চূড়া থেকে সামান্য পশ্চিমমুখী ঢলে পড়লেই জোহরের ওয়াক্ত আরম্ভ হয়।'
+                      : 'Starts right as the sun passes its meridian zenith toward the west.'}
+                  </div>
                 </div>
                 <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/30 border border-emerald-500/20 space-y-1">
-                  <div className="font-bold text-teal-600 dark:text-teal-400">৪. আসর ও ছায়ার পরিমাপ:</div>
-                  <div>যাওয়ালের সর্বনিম্ন ছায়া বাদে কোনো বস্তুর ছায়া তার মূল আকারের সমপরিমাণ (বা হানাফি মতে দ্বিগুণ) হলে আসর শুরু হয়।</div>
+                  <div className="font-bold text-teal-600 dark:text-teal-400">
+                    {selectedLanguage === 'bn' ? '৪. আসর ও ছায়ার পরিমাপ:' : selectedLanguage === 'ar' ? '٤. العصر وقياس الظل:' : '4. Asr & Shadow Length:'}
+                  </div>
+                  <div>
+                    {selectedLanguage === 'bn'
+                      ? 'যাওয়ালের সর্বনিম্ন ছায়া বাদে কোনো বস্তুর ছায়া তার মূল আকারের সমপরিমাণ (বা হানাফি মতে দ্বিগুণ) হলে আসর শুরু হয়।'
+                      : 'Begins when an object shadow reaches 1x (or 2x in Hanafi) of its height beyond noon shadow.'}
+                  </div>
                 </div>
                 <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/30 border border-emerald-500/20 space-y-1">
-                  <div className="font-bold text-rose-600 dark:text-rose-400">৫. মাগরিব ও সূর্যাস্ত:</div>
-                  <div>সূর্যের পুরো মণ্ডল পশ্চিম দিগন্তের নিচে সম্পূর্ণ মিলিয়ে যাওয়া মাত্রই মাগরিবের ওয়াক্ত ও রোজাদারদের ইফতারের সময় হয়।</div>
+                  <div className="font-bold text-rose-600 dark:text-rose-400">
+                    {selectedLanguage === 'bn' ? '৫. মাগরিব ও সূর্যাস্ত:' : selectedLanguage === 'ar' ? '٥. المغرب والغروب:' : '5. Maghrib & Sunset:'}
+                  </div>
+                  <div>
+                    {selectedLanguage === 'bn'
+                      ? 'সূর্যের পুরো মণ্ডল পশ্চিম দিগন্তের নিচে সম্পূর্ণ মিলিয়ে যাওয়া মাত্রই মাগরিবের ওয়াক্ত ও রোজাদারদের ইফতারের সময় হয়।'
+                      : 'Begins immediately once the entire solar disc sets below the western horizon.'}
+                  </div>
                 </div>
                 <div className="p-2.5 rounded-xl bg-white/80 dark:bg-black/30 border border-emerald-500/20 space-y-1">
-                  <div className="font-bold text-indigo-400">৬. ইশা ও তাহাজ্জুদ:</div>
-                  <div>পশ্চিমাকাশের রক্তিম শাফাক (আভা) সম্পূর্ণরূপে অদৃশ্য হয়ে ১৮° গভীর আঁধারে ডুবে গেলে ইশার ওয়াক্ত প্রবেশ করে।</div>
+                  <div className="font-bold text-indigo-400">
+                    {selectedLanguage === 'bn' ? '৬. ইশা ও তাহাজ্জুদ:' : selectedLanguage === 'ar' ? '٦. العشاء والتهجد:' : '6. Isha & Night:'}
+                  </div>
+                  <div>
+                    {selectedLanguage === 'bn'
+                      ? 'পশ্চিমাকাশের রক্তিম শাফাক (আভা) সম্পূর্ণরূপে অদৃশ্য হয়ে ১৮° গভীর আঁধারে ডুবে গেলে ইশার ওয়াক্ত প্রবেশ করে।'
+                      : 'Begins when the western twilight fades completely beyond 18° beneath horizon.'}
+                  </div>
                 </div>
               </div>
             </div>

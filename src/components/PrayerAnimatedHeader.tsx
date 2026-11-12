@@ -12,6 +12,8 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
+import { ZikrLanguage } from '../types';
+
 interface PrayerAnimatedHeaderProps {
   prayerId: string;
   nameBn: string;
@@ -19,6 +21,8 @@ interface PrayerAnimatedHeaderProps {
   nameAr: string;
   timeRange: string;
   celestialSignBn: string;
+  celestialSignEn?: string;
+  selectedLanguage?: ZikrLanguage;
   isActive?: boolean;
   isPrayed?: boolean;
   isPlayingAdhan?: boolean;
@@ -33,12 +37,17 @@ export const PrayerAnimatedHeader: React.FC<PrayerAnimatedHeaderProps> = ({
   nameAr,
   timeRange,
   celestialSignBn,
+  celestialSignEn,
+  selectedLanguage = 'bn',
   isActive = false,
   isPrayed = false,
   isPlayingAdhan = false,
   onToggleAdhan,
   isDay = true,
 }) => {
+  const isBn = selectedLanguage === 'bn';
+  const isAr = selectedLanguage === 'ar';
+  const t = (bn: string, ar: string, en: string) => (isBn ? bn : isAr ? ar : en);
   // Theme styling based on prayer phase
   const getThemeConfig = () => {
     switch (prayerId) {
@@ -155,7 +164,7 @@ export const PrayerAnimatedHeader: React.FC<PrayerAnimatedHeaderProps> = ({
             </div>
             {/* Light Beams */}
             <div className="text-[10px] font-bold text-yellow-100/90 tracking-widest uppercase mt-1 drop-shadow">
-              সূর্য মধ্যাকাশে • Solar Zenith
+              {t('সূর্য মধ্যাকাশে', 'كبد السماء', 'Solar Zenith')}
             </div>
           </div>
         )}
@@ -181,7 +190,7 @@ export const PrayerAnimatedHeader: React.FC<PrayerAnimatedHeaderProps> = ({
               </div>
             </div>
             <span className="text-[10px] font-bold text-amber-200/90 drop-shadow">
-              সুবহে সাদিক • Morning Star
+              {t('সুবহে সাদিক', 'الفجر الصادق', 'Morning Star')}
             </span>
           </div>
         )}
@@ -275,21 +284,21 @@ export const PrayerAnimatedHeader: React.FC<PrayerAnimatedHeaderProps> = ({
               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black border backdrop-blur-md shadow-sm transition-all ${theme.badgeBg}`}
             >
               <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
-              <span>{theme.phaseName}</span>
+              <span>{isBn ? theme.phaseName : theme.phaseEn}</span>
             </span>
 
             {/* Active Waqt Pill */}
             {isActive && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white shadow-lg shadow-emerald-500/50 animate-pulse">
                 <Clock className="w-3 h-3" />
-                <span>চলতি ওয়াক্ত</span>
+                <span>{t('চলতি ওয়াক্ত', 'الوقت الحالي', 'Active Waqt')}</span>
               </span>
             )}
 
             {isPrayed && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-600/90 text-white shadow-sm border border-emerald-400/40">
                 <CheckCircle2 className="w-3 h-3" />
-                <span>আদায় সম্পন্ন ✓</span>
+                <span>{t('আদায় সম্পন্ন ✓', 'تمت الصلاة ✓', 'Prayed ✓')}</span>
               </span>
             )}
           </div>
@@ -307,17 +316,17 @@ export const PrayerAnimatedHeader: React.FC<PrayerAnimatedHeaderProps> = ({
                   ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
                   : 'bg-white/20 hover:bg-white/30 text-white border-white/30'
               }`}
-              title={isPlayingAdhan ? 'Stop Adhan' : `Play ${nameEn} Adhan`}
+              title={isPlayingAdhan ? t('আযান বন্ধ করুন', 'إيقاف الأذان', 'Stop Adhan') : t('আযান শুনুন', 'استمع للأذان', `Play ${nameEn} Adhan`)}
             >
               {isPlayingAdhan ? (
                 <>
                   <VolumeX className="w-4 h-4" />
-                  <span className="text-[10px] font-bold hidden xs:inline">বন্ধ করুন</span>
+                  <span className="text-[10px] font-bold hidden xs:inline">{t('বন্ধ করুন', 'إيقاف', 'Stop')}</span>
                 </>
               ) : (
                 <>
                   <Volume2 className="w-4 h-4" />
-                  <span className="text-[10px] font-bold hidden xs:inline">আযান শুনুন</span>
+                  <span className="text-[10px] font-bold hidden xs:inline">{t('আযান শুনুন', 'استمع للأذان', 'Listen Adhan')}</span>
                 </>
               )}
             </button>
@@ -329,14 +338,16 @@ export const PrayerAnimatedHeader: React.FC<PrayerAnimatedHeaderProps> = ({
           <div>
             <div className="flex items-baseline gap-2">
               <h3 className="text-xl sm:text-2xl font-black tracking-tight drop-shadow-md">
-                {nameBn} সালাত
+                {t(`${nameBn} সালাত`, `صلاة ${nameAr}`, `${nameEn} Prayer`)}
               </h3>
-              <span className="text-sm sm:text-base font-arabic font-bold text-amber-300 drop-shadow">
-                ({nameAr})
-              </span>
+              {!isAr && (
+                <span className="text-sm sm:text-base font-arabic font-bold text-amber-300 drop-shadow">
+                  ({nameAr})
+                </span>
+              )}
             </div>
             <p className="text-[11px] sm:text-xs font-semibold text-emerald-100/90 flex items-center gap-1.5 drop-shadow">
-              <span>{celestialSignBn}</span>
+              <span>{isBn ? celestialSignBn : (celestialSignEn || celestialSignBn)}</span>
             </p>
           </div>
 

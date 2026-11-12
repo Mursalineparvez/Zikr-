@@ -309,7 +309,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
           {isExpanded ? (
             <div className="flex flex-col items-center gap-0.5 text-[9px] font-semibold text-teal-600 dark:text-emerald-300 z-10">
               <span className="font-mono text-emerald-500 font-bold">
-                আজকের: {dailyTotal.toLocaleString()}
+                {selectedLanguage === 'bn' ? 'আজকের:' : selectedLanguage === 'ar' ? 'اليوم:' : 'Today:'} {dailyTotal.toLocaleString()}
               </span>
               <span className="text-amber-500 text-[8px]">
                 {completedGoals} {ZIKIR_UI.goalsMet[selectedLanguage]}
@@ -318,7 +318,7 @@ export const PortableFloatingCounter: React.FC<PortableFloatingCounterProps> = R
           ) : (
             <div className="text-[8px] sm:text-[9px] font-semibold flex items-center gap-0.5 text-teal-600 dark:text-emerald-300/80 z-10">
               <ChevronUp className="w-2.5 h-2.5" />
-              <span>Top</span>
+              <span>{selectedLanguage === 'bn' ? 'উপরে' : selectedLanguage === 'ar' ? 'أعلى' : 'Top'}</span>
             </div>
           )}
 

@@ -43,7 +43,7 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
   const [cardTheme, setCardTheme] = useState<CardTheme>(() => {
     try {
       const saved = localStorage.getItem('noor_quran_card_theme');
-      if (saved && ['emerald', 'midnight', 'royal', 'parchment', 'gold'].includes(saved)) {
+      if (saved && ['emerald', 'midnight', 'pearl', 'amber'].includes(saved)) {
         return saved as CardTheme;
       }
     } catch {}
@@ -150,8 +150,23 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
         canvas.toBlob((b) => resolve(b), 'image/png', 1.0)
       );
 
-      const shareTitle = `সূরা ${surahName} (${surahEnglishName}) - আয়াত ${ayah.number}`;
-      const shareText = `${ayah.arabic}\n\n"${ayah.translation}"\n\n[সূরা ${surahName} (${surahEnglishName}) : আয়াত ${ayah.number}]\n- Zikr+ App (zikrplus.app)`;
+      const isBn = selectedLanguage === 'bn';
+      const isAr = selectedLanguage === 'ar';
+      const displaySurahTitle = isBn
+        ? `সূরা ${surahName}`
+        : isAr
+          ? surahName
+          : `Surah ${surahEnglishName}`;
+      const shareTitle = isBn
+        ? `${displaySurahTitle} - আয়াত ${ayah.number}`
+        : isAr
+          ? `${displaySurahTitle} - آية ${ayah.number}`
+          : `${displaySurahTitle} - Ayah ${ayah.number}`;
+      const shareText = isBn
+        ? `${ayah.arabic}\n\n"${ayah.translation}"\n\n[${displaySurahTitle} : আয়াত ${ayah.number}]\n- Zikr+ App (zikrplus.app)`
+        : isAr
+          ? `${ayah.arabic}\n\n"${ayah.translation}"\n\n[${displaySurahTitle} : آية ${ayah.number}]\n- Zikr+ App (zikrplus.app)`
+          : `${ayah.arabic}\n\n"${ayah.translation}"\n\n[${displaySurahTitle} : Ayah ${ayah.number}]\n- Zikr+ App (zikrplus.app)`;
 
       if (navigator.share) {
         if (blob) {
@@ -207,7 +222,14 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
   };
 
   const handleCopyCardText = () => {
-    const text = `${ayah.arabic}\n\n"${ayah.translation}"\n\n[সূরা ${surahEnglishName} (${surahName}) : আয়াত ${ayah.number}]\n- Zikr+ App (zikrplus.app)`;
+    const isBn = selectedLanguage === 'bn';
+    const isAr = selectedLanguage === 'ar';
+    const refLabel = isBn
+      ? `[সূরা ${surahName} : আয়াত ${ayah.number}]`
+      : isAr
+        ? `[${surahName} : آية ${ayah.number}]`
+        : `[Surah ${surahEnglishName} : Ayah ${ayah.number}]`;
+    const text = `${ayah.arabic}\n\n"${ayah.translation}"\n\n${refLabel}\n- Zikr+ App (zikrplus.app)`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     if (soundEnabled) soundHaptics.playMilestone();
@@ -317,13 +339,13 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-slate-400 font-bold flex items-center gap-1">
               <Palette className="w-3.5 h-3.5 text-emerald-400" />
-              <span>থিম:</span>
+              <span>{selectedLanguage === 'bn' ? 'থিম:' : selectedLanguage === 'ar' ? 'المظهر:' : 'Theme:'}</span>
             </span>
             {[
-              { id: 'emerald', label: '🌿 ইমেরাড' },
-              { id: 'midnight', label: '🌌 মিডনাইট' },
-              { id: 'pearl', label: '🤍 পার্ল হোয়াইট' },
-              { id: 'amber', label: '✨ সুফি অ্যাম্বার' },
+              { id: 'emerald', label: selectedLanguage === 'bn' ? '🌿 ইমেরাল্ড' : selectedLanguage === 'ar' ? '🌿 زمردي' : '🌿 Emerald' },
+              { id: 'midnight', label: selectedLanguage === 'bn' ? '🌌 মিডনাইট' : selectedLanguage === 'ar' ? '🌌 منتصف الليل' : '🌌 Midnight' },
+              { id: 'pearl', label: selectedLanguage === 'bn' ? '🤍 পার্ল হোয়াইট' : selectedLanguage === 'ar' ? '🤍 أبيض لؤلؤي' : '🤍 Pearl White' },
+              { id: 'amber', label: selectedLanguage === 'bn' ? '✨ সুফি অ্যাম্বার' : selectedLanguage === 'ar' ? '✨ كهرمان صوفي' : '✨ Sufi Amber' },
             ].map((t) => (
               <button
                 key={t.id}
@@ -355,7 +377,13 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>উচ্চারণ: {showTransliteration ? 'চালু' : 'বন্ধ'}</span>
+            <span>
+              {selectedLanguage === 'bn'
+                ? `উচ্চারণ: ${showTransliteration ? 'চালু' : 'বন্ধ'}`
+                : selectedLanguage === 'ar'
+                  ? `النطق: ${showTransliteration ? 'تشغيل' : 'إيقاف'}`
+                  : `Transliteration: ${showTransliteration ? 'ON' : 'OFF'}`}
+            </span>
           </button>
         </div>
 
@@ -390,10 +418,18 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
                 </span>
                 <div>
                   <h4 className="font-extrabold text-sm sm:text-base tracking-wide">
-                    সূরা {surahName} ({surahEnglishName})
+                    {selectedLanguage === 'bn'
+                      ? `সূরা ${surahName}`
+                      : selectedLanguage === 'ar'
+                        ? surahName
+                        : `Surah ${surahEnglishName}`}
                   </h4>
                   <p className="text-[10px] font-semibold opacity-90" style={{ color: themeStyles.accentColor }}>
-                    {selectedLanguage === 'bn' ? `আয়াত নম্বর: ${ayah.number}` : `Ayah ${ayah.number}`}
+                    {selectedLanguage === 'bn'
+                      ? `আয়াত নম্বর: ${ayah.number}`
+                      : selectedLanguage === 'ar'
+                        ? `آية رقم: ${ayah.number}`
+                        : `Ayah ${ayah.number}`}
                   </p>
                 </div>
               </div>
@@ -407,7 +443,7 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
                   color: themeStyles.badgeText,
                 }}
               >
-                ✨ QURAN CARD
+                {selectedLanguage === 'bn' ? '✨ কুরআন কার্ড' : selectedLanguage === 'ar' ? '✨ بطاقة الآية' : '✨ QURAN CARD'}
               </div>
             </div>
 
@@ -478,7 +514,13 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
         {downloadSuccess && (
           <div className="p-3 rounded-2xl bg-emerald-500/20 border border-emerald-500 text-emerald-300 flex items-center gap-2 text-xs font-bold animate-in fade-in">
             <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-            <span>হাই-রেস প্রিমিয়াম পিএনজি সফলভাবে ডাউনলোড হয়েছে! (High-Res PNG Downloaded)</span>
+            <span>
+              {selectedLanguage === 'bn'
+                ? 'হাই-রেস প্রিমিয়াম পিএনজি সফলভাবে ডাউনলোড হয়েছে!'
+                : selectedLanguage === 'ar'
+                  ? 'تم تحميل الصورة عالية الدقة بنجاح!'
+                  : 'High-Res PNG downloaded successfully!'}
+            </span>
           </div>
         )}
 
@@ -491,7 +533,11 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
             className="py-3 px-4 rounded-2xl bg-gradient-to-r from-[#006747] to-[#10b981] hover:from-[#005a3e] hover:to-[#059669] text-white font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer disabled:opacity-50"
           >
             <Download className="w-4 h-4 text-emerald-200 stroke-[2.5]" />
-            <span>{isGenerating ? 'জেনারেট হচ্ছে...' : 'এইচডি পিএনজি ডাউনলোড'}</span>
+            <span>
+              {isGenerating
+                ? (selectedLanguage === 'bn' ? 'জেনারেট হচ্ছে...' : selectedLanguage === 'ar' ? 'جاري الإنشاء...' : 'Generating...')
+                : (selectedLanguage === 'bn' ? 'এইচডি পিএনজি ডাউনলোড' : selectedLanguage === 'ar' ? 'تحميل PNG عالي الدقة' : 'Download HD PNG')}
+            </span>
           </button>
 
           {/* 2. Share Image Button */}
@@ -501,7 +547,7 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
             className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-emerald-500/30 text-emerald-300 font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer disabled:opacity-50"
           >
             <Share2 className="w-4 h-4 text-emerald-400" />
-            <span>কার্ড শেয়ার করুন</span>
+            <span>{selectedLanguage === 'bn' ? 'কার্ড শেয়ার করুন' : selectedLanguage === 'ar' ? 'مشاركة البطاقة' : 'Share Card'}</span>
           </button>
 
           {/* 3. Copy Text Button */}
@@ -510,7 +556,11 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
             className="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
-            <span>{copied ? 'কপি হয়েছে!' : 'টেক্সট কপি'}</span>
+            <span>
+              {copied
+                ? (selectedLanguage === 'bn' ? 'কপি হয়েছে!' : selectedLanguage === 'ar' ? 'تم النسخ!' : 'Copied!')
+                : (selectedLanguage === 'bn' ? 'টেক্সট কপি' : selectedLanguage === 'ar' ? 'نسخ النص' : 'Copy Text')}
+            </span>
           </button>
         </div>
       </div>

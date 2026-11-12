@@ -144,6 +144,9 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
   isHanafi,
   currentDate,
 }) => {
+  const isBn = selectedLanguage === 'bn';
+  const isAr = selectedLanguage === 'ar';
+  const t = (bn: string, ar: string, en: string) => (isBn ? bn : isAr ? ar : en);
   const [showCautionDropdown, setShowCautionDropdown] = useState<boolean>(false);
   const [expandedPrayerId, setExpandedPrayerId] = useState<string | null>(null);
 
@@ -233,14 +236,14 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                       ? 'bg-slate-100 text-slate-500 border-slate-200'
                       : 'bg-slate-800/60 text-slate-400 border-slate-700'
                   }`}
-                  title={`${completedCount} of 5 daily prayers completed`}
+                  title={t(`${completedCount}/৫ ওয়াক্ত আদায় সম্পন্ন`, `تمت ${completedCount} من 5 صلوات`, `${completedCount} of 5 daily prayers completed`)}
                 >
                   <Award className="w-3 h-3" />
-                  <span>{completedCount}/5 Prayed</span>
+                  <span>{completedCount}/5 {t('আদায়', 'تمت', 'Prayed')}</span>
                 </span>
               </div>
               <p className={`text-[11px] font-bold ${isDay ? 'text-slate-800' : 'text-emerald-300/70'}`}>
-                5 Prescribed Daily Prayers • الصلوات الخمس المفروضة
+                {t('প্রতিদিনের ৫ ওয়াক্ত ফরজ সালাত', 'الصلوات الخمس المفروضة يومياً', '5 Prescribed Daily Prayers')}
               </p>
             </div>
           </div>
@@ -313,7 +316,11 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                     {!withCaution && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                   </button>
                   <div className="p-2 text-[10px] text-slate-400 dark:text-emerald-300/70 border-t border-slate-100 dark:border-teal-900/40 mt-1">
-                    Adds safety buffer (+/- 2 min) around prayer boundaries.
+                    {t(
+                      'সতর্কতামূলক ওয়াক্তের শুরু ও শেষে +/- ২ মিনিট অতিরিক্ত সময় যোগ করে।',
+                      'يضيف هامش أمان (+/- دقيقتين) حول أوقات الصلاة.',
+                      'Adds safety buffer (+/- 2 min) around prayer boundaries.'
+                    )}
                   </div>
                 </div>
               </>
@@ -346,7 +353,17 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
             const remMs = Math.max(0, endMs - nowMs);
             const remH = Math.floor(remMs / 3600000);
             const remM = Math.floor((remMs % 3600000) / 60000);
-            remainingInWindowStr = remH > 0 ? `${remH}h ${remM}m left` : `${remM}m left`;
+            remainingInWindowStr = isBn
+              ? remH > 0
+                ? `${remH} ঘণ্টা ${remM} মি. বাকি`
+                : `${remM} মি. বাকি`
+              : isAr
+              ? remH > 0
+                ? `متبقي ${remH}س ${remM}د`
+                : `متبقي ${remM}د`
+              : remH > 0
+              ? `${remH}h ${remM}m left`
+              : `${remM}m left`;
           }
 
           return (
@@ -389,7 +406,11 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                           ? 'border-slate-300 hover:border-emerald-500 text-transparent hover:text-emerald-400 bg-white'
                           : 'border-teal-700/80 hover:border-teal-400 text-transparent hover:text-teal-400 bg-[#092226]'
                       }`}
-                      title={isPrayed ? 'Marked as prayed (Click to undo)' : 'Click to mark as prayed'}
+                      title={
+                        isPrayed
+                          ? t('আদায় সম্পন্ন (বাতিল করতে চাপুন)', 'تمت الصلاة (اضغط للإلغاء)', 'Marked as prayed (Click to undo)')
+                          : t('আদায় হিসেবে চিহ্নিত করুন', 'تحديد كمصلى', 'Click to mark as prayed')
+                      }
                     >
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
                     </button>
@@ -423,14 +444,16 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                         {localizedName}
                       </span>
 
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400/90 font-arabic hidden xs:inline">
-                        ({prayer.arabic})
-                      </span>
+                      {!isAr && (
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400/90 font-arabic hidden xs:inline">
+                          ({prayer.arabic})
+                        </span>
+                      )}
 
                       {/* Active Tag */}
                       {isCurrent && (
                         <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500 text-white shadow-xs animate-pulse">
-                          ACTIVE
+                          {t('চলতি', 'الآن', 'ACTIVE')}
                         </span>
                       )}
 
@@ -438,14 +461,21 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                       {prayer.hasInfo && (
                         <span
                           className="text-amber-500"
-                          title={isHanafi ? 'Hanafi Asr Calculation' : 'Standard Shafi Asr'}
+                          title={
+                            isHanafi
+                              ? t('হানাফি আসর হিসাব', 'حساب العصر الحنفي', 'Hanafi Asr Calculation')
+                              : t('শাফেয়ী/সাধারণ আসর হিসাব', 'حساب العصر الشافعي', 'Standard Shafi Asr')
+                          }
                         >
                           <Info className="w-3.5 h-3.5" />
                         </span>
                       )}
 
                       {prayer.hasCaution && prayer.id === 'Maghrib' && (
-                        <span className="text-emerald-600 dark:text-emerald-400" title="2-Min Sunset Caution">
+                        <span
+                          className="text-emerald-600 dark:text-emerald-400"
+                          title={t('২ মিনিট সতর্কতামূলক সূর্যাস্ত', 'احتياط دقيقتين للغروب', '2-Min Sunset Caution')}
+                        >
                           <ShieldCheck className="w-3.5 h-3.5" />
                         </span>
                       )}
@@ -479,7 +509,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                               ? 'bg-rose-500 text-white animate-pulse'
                               : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                           }`}
-                          title={isPlayingAdhan ? 'Stop Adhan' : `Play ${prayer.name} Adhan`}
+                          title={isPlayingAdhan ? t('আযান বন্ধ করুন', 'إيقاف الأذان', 'Stop Adhan') : t(`${localizedName} আযান শুনুন`, `استمع لأذان ${localizedName}`, `Play ${prayer.name} Adhan`)}
                         >
                           {isPlayingAdhan ? (
                             <VolumeX className="w-3.5 h-3.5" />
@@ -497,7 +527,11 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                               ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-400'
                               : 'bg-[#092226] hover:bg-[#133c44] border-[#184850] text-slate-400'
                           }`}
-                          title={isAlertOn ? 'Alert is On (Click to Mute)' : 'Alert is Off (Click to Turn On)'}
+                          title={
+                            isAlertOn
+                              ? t('সতর্কতা চালু (বন্ধ করতে চাপুন)', 'التنبيه مفعل (اضغط للكتم)', 'Alert is On (Click to Mute)')
+                              : t('সতর্কতা বন্ধ (চালু করতে চাপুন)', 'التنبيه متوقف (اضغط للتفعيل)', 'Alert is Off (Click to Turn On)')
+                          }
                         >
                           {isAlertOn ? (
                             <Bell className="w-3.5 h-3.5 fill-current" />
@@ -522,7 +556,11 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             ? 'bg-slate-50 hover:bg-slate-100 text-slate-500 border-slate-200'
                             : 'bg-[#0a262c] hover:bg-[#123e47] text-emerald-300 border-[#184850]'
                         }`}
-                        title={isExpanded ? 'সংক্ষেপ করুন' : 'বিস্তারিত, হাদিস ও এনিমেশন দেখুন'}
+                        title={
+                          isExpanded
+                            ? t('সংক্ষেপ করুন', 'طي التفاصيل', 'Collapse')
+                            : t('বিস্তারিত, হাদিস ও এনিমেশন দেখুন', 'عرض التفاصيل والحديث', 'View Details & Hadith')
+                        }
                       >
                         <ChevronDown className="w-3.5 h-3.5 transition-transform" />
                       </button>
@@ -536,9 +574,9 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                     <div className="flex items-center justify-between text-[10px] font-bold text-emerald-700 dark:text-emerald-300 mb-1">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-emerald-500 animate-spin" />
-                        <span>Waqt Remaining: <strong>{remainingInWindowStr}</strong></span>
+                        <span>{t('ওয়াক্ত বাকি:', 'الوقت المتبقي:', 'Waqt Remaining:')} <strong>{remainingInWindowStr}</strong></span>
                       </span>
-                      <span>{Math.round(windowProgress)}% Elapsed</span>
+                      <span>{Math.round(windowProgress)}% {t('অতিবাহিত', 'مضى', 'Elapsed')}</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-200 dark:bg-[#071f24] rounded-full overflow-hidden">
                       <div
@@ -571,6 +609,8 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                         nameAr={detailed.nameAr}
                         timeRange={prayer.timeRange}
                         celestialSignBn={detailed.celestialSignBn}
+                        celestialSignEn={detailed.celestialSignEn}
+                        selectedLanguage={selectedLanguage}
                         isActive={isCurrent}
                         isPrayed={isPrayed}
                         isPlayingAdhan={isPlayingAdhan && isCurrent}
@@ -601,7 +641,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             }`}
                           >
                             <BookOpen className="w-3.5 h-3.5" />
-                            <span>কুরআনের আয়াত ({detailed.ayats.length})</span>
+                            <span>{t('কুরআনের আয়াত', 'آيات قرآنية', 'Quran Verses')} ({detailed.ayats.length})</span>
                           </button>
 
                           {/* Tab 2: Hadith */}
@@ -620,7 +660,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             }`}
                           >
                             <Scroll className="w-3.5 h-3.5" />
-                            <span>সহীহ হাদিস ({detailed.hadiths.length})</span>
+                            <span>{t('সহীহ হাদিস', 'أحاديث صحيحة', 'Sahih Hadith')} ({detailed.hadiths.length})</span>
                           </button>
 
                           {/* Tab 3: Virtues */}
@@ -639,7 +679,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             }`}
                           >
                             <Sparkles className="w-3.5 h-3.5" />
-                            <span>ফযিলত ও মর্যাদা</span>
+                            <span>{t('ফযিলত ও মর্যাদা', 'الفضائل', 'Virtues & Merits')}</span>
                           </button>
 
                           {/* Tab 4: Rules & Rakats */}
@@ -658,7 +698,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             }`}
                           >
                             <Layers className="w-3.5 h-3.5" />
-                            <span>ওয়াক্ত ও রাকাত</span>
+                            <span>{t('ওয়াক্ত ও রাকাত', 'الأوقات والركعات', 'Timing & Rakats')}</span>
                           </button>
 
                           {/* Tab 5: Post-prayer Duas */}
@@ -677,7 +717,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             }`}
                           >
                             <Heart className="w-3.5 h-3.5" />
-                            <span>মাসনূন দোয়া</span>
+                            <span>{t('মাসনূন দোয়া', 'أذكار بعد الصلاة', 'Sunnah Duas')}</span>
                           </button>
                         </div>
                       </div>
@@ -701,7 +741,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                   <div className="flex items-center gap-1.5">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
                                     <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">
-                                      {ayat.surahNameBn} ({ayat.surahNameEn}) • আয়াত: {ayat.ayatNumber}
+                                      {isBn ? ayat.surahNameBn : ayat.surahNameEn} • {t('আয়াত:', 'الآية:', 'Ayah:')} {ayat.ayatNumber}
                                     </span>
                                   </div>
 
@@ -709,7 +749,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                     type="button"
                                     onClick={(e) =>
                                       handleCopy(
-                                        `${ayat.arabic}\n${ayat.translationBn}\n— [${ayat.surahNameBn}: ${ayat.ayatNumber}]`,
+                                        `${ayat.arabic}\n${isBn ? ayat.translationBn : ayat.translationEn}\n— [${isBn ? ayat.surahNameBn : ayat.surahNameEn}: ${ayat.ayatNumber}]`,
                                         `ayat-${prayer.id}-${idx}`,
                                         e
                                       )
@@ -725,12 +765,12 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                     {copiedId === `ayat-${prayer.id}-${idx}` ? (
                                       <>
                                         <Check className="w-3 h-3" />
-                                        <span>কপি হয়েছে</span>
+                                        <span>{t('কপি হয়েছে', 'تم النسخ', 'Copied')}</span>
                                       </>
                                     ) : (
                                       <>
                                         <Copy className="w-3 h-3" />
-                                        <span>কপি</span>
+                                        <span>{t('কপি', 'نسخ', 'Copy')}</span>
                                       </>
                                     )}
                                   </button>
@@ -743,16 +783,15 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                   </p>
                                 </div>
 
-                                {/* Bengali Translation */}
-                                <p className={`text-xs sm:text-sm font-medium leading-relaxed mb-1.5 ${isDay ? 'text-slate-800' : 'text-emerald-100'}`}>
-                                  <span className="font-bold text-emerald-700 dark:text-emerald-300">অনুবাদ: </span>
-                                  {ayat.translationBn}
-                                </p>
-
-                                {/* English Translation */}
-                                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-emerald-200/70 italic leading-relaxed">
-                                  {ayat.translationEn}
-                                </p>
+                                {/* Selected Language Translation Only */}
+                                {!isAr && (
+                                  <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDay ? 'text-slate-800' : 'text-emerald-100'}`}>
+                                    <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                                      {t('অনুবাদ: ', 'الترجمة: ', 'Translation: ')}
+                                    </span>
+                                    {isBn ? ayat.translationBn : ayat.translationEn}
+                                  </p>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -774,20 +813,20 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-teal-900/40">
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                                      বর্ণনাকারী: {h.narratorBn}
+                                      {t('বর্ণনাকারী:', 'الراوي:', 'Narrator:')} {isBn ? h.narratorBn : h.narratorEn}
                                     </span>
                                   </div>
 
                                   <div className="flex items-center gap-1.5">
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                                      {h.gradeBn}
+                                      {isBn ? h.gradeBn : h.gradeEn}
                                     </span>
 
                                     <button
                                       type="button"
                                       onClick={(e) =>
                                         handleCopy(
-                                          `"${h.textBn}"\n— [${h.bookBn}: ${h.hadithNumber}, বর্ণনাকারী: ${h.narratorBn}]`,
+                                          `"${isBn ? h.textBn : h.textEn}"\n— [${isBn ? h.bookBn : h.bookEn}: ${h.hadithNumber}, ${isBn ? h.narratorBn : h.narratorEn}]`,
                                           `hadith-${prayer.id}-${idx}`,
                                           e
                                         )
@@ -818,18 +857,17 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                   </div>
                                 )}
 
-                                {/* Hadith Matn / Bengali translation */}
-                                <div className={`text-xs sm:text-sm leading-relaxed mb-2 ${isDay ? 'text-slate-800' : 'text-teal-100'}`}>
-                                  “{h.textBn}”
-                                </div>
+                                {/* Hadith Matn in Selected Language */}
+                                {!isAr && (
+                                  <div className={`text-xs sm:text-sm leading-relaxed mb-2 ${isDay ? 'text-slate-800' : 'text-teal-100'}`}>
+                                    “{isBn ? h.textBn : h.textEn}”
+                                  </div>
+                                )}
 
                                 {/* Reference Citation */}
                                 <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-100 dark:border-teal-900/30">
                                   <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                                    সূত্র: {h.bookBn} (হাদিস নং: {h.hadithNumber})
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 italic">
-                                    {h.bookEn} #{h.hadithNumber}
+                                    {t(`সূত্র: ${h.bookBn} (হাদিস নং: ${h.hadithNumber})`, `المرجع: ${h.bookEn} #${h.hadithNumber}`, `Source: ${h.bookEn} #${h.hadithNumber}`)}
                                   </span>
                                 </div>
                               </div>
@@ -847,34 +885,58 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                   : 'bg-[#071d21] border-[#174852]'
                               }`}
                             >
-                              <div className="flex items-center gap-2 mb-2">
-                                <Sparkles className="w-4 h-4 text-amber-500" />
-                                <h4 className="text-sm font-black text-emerald-800 dark:text-emerald-200">
-                                  {detailed.virtues.titleBn}
-                                </h4>
-                              </div>
-                              <p className="text-xs text-slate-600 dark:text-emerald-300/80 mb-3 leading-relaxed">
-                                {detailed.virtues.descriptionBn}
-                              </p>
-
-                              {/* Bullet points */}
-                              <div className="space-y-2">
-                                {detailed.virtues.pointsBn.map((point, idx) => (
+                              {isBn ? (
+                                <>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Sparkles className="w-4 h-4 text-amber-500" />
+                                    <h4 className="text-sm font-black text-emerald-800 dark:text-emerald-200">
+                                      {detailed.virtues.titleBn}
+                                    </h4>
+                                  </div>
+                                  <p className="text-xs text-slate-600 dark:text-emerald-300/80 mb-3 leading-relaxed">
+                                    {detailed.virtues.descriptionBn}
+                                  </p>
+                                  <div className="space-y-2">
+                                    {detailed.virtues.pointsBn.map((point, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={`p-2.5 rounded-xl border flex items-start gap-2.5 text-xs ${
+                                          isDay
+                                            ? 'bg-white border-slate-200 text-slate-700'
+                                            : 'bg-[#0a272e] border-teal-900/60 text-teal-100'
+                                        }`}
+                                      >
+                                        <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                                          <CheckCircle2 className="w-3.5 h-3.5" />
+                                        </div>
+                                        <span className="leading-relaxed font-medium">{point}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Sparkles className="w-4 h-4 text-amber-500" />
+                                    <h4 className="text-sm font-black text-emerald-800 dark:text-emerald-200">
+                                      {detailed.nameEn} Prayer Virtues & Rewards
+                                    </h4>
+                                  </div>
+                                  <p className="text-xs text-slate-600 dark:text-emerald-300/80 mb-3 leading-relaxed">
+                                    {detailed.subTitleEn}
+                                  </p>
                                   <div
-                                    key={idx}
-                                    className={`p-2.5 rounded-xl border flex items-start gap-2.5 text-xs ${
-                                      isDay
-                                        ? 'bg-white border-slate-200 text-slate-700'
-                                        : 'bg-[#0a272e] border-teal-900/60 text-teal-100'
+                                    className={`p-3 rounded-xl border space-y-1.5 text-xs ${
+                                      isDay ? 'bg-white border-slate-200 text-slate-700' : 'bg-[#0a272e] border-teal-900/60 text-teal-100'
                                     }`}
                                   >
-                                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                                      <CheckCircle2 className="w-3.5 h-3.5" />
-                                    </div>
-                                    <span className="leading-relaxed font-medium">{point}</span>
+                                    <p className="font-medium leading-relaxed italic">“{meta.hadithQuote}”</p>
+                                    <p className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                      — {meta.hadithRef}
+                                    </p>
                                   </div>
-                                ))}
-                              </div>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}
@@ -890,30 +952,40 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             >
                               <div className="flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-300 border-b pb-2 border-slate-100 dark:border-teal-900/40">
                                 <Clock className="w-4 h-4 text-emerald-500" />
-                                <span>ওয়াক্ত শুরু ও শেষের জ্যোতির্বৈজ্ঞানিক শর্তাবলী</span>
+                                <span>
+                                  {t(
+                                    'ওয়াক্ত শুরু ও শেষের জ্যোতির্বৈজ্ঞানিক শর্তাবলী',
+                                    'الشروط الفلكية لبداية ونهاية الوقت',
+                                    'Astronomical Timing Window Rules'
+                                  )}
+                                </span>
                               </div>
 
-                              <div className="space-y-2 text-xs leading-relaxed">
-                                <div className="flex items-start gap-2">
-                                  <span className="font-bold text-emerald-700 dark:text-emerald-400 shrink-0">ওয়াক্ত শুরু:</span>
-                                  <span className="text-slate-700 dark:text-emerald-100">{detailed.timingConditions.startConditionBn}</span>
+                              {isBn ? (
+                                <div className="space-y-2 text-xs leading-relaxed">
+                                  <div className="flex items-start gap-2">
+                                    <span className="font-bold text-emerald-700 dark:text-emerald-400 shrink-0">ওয়াক্ত শুরু:</span>
+                                    <span className="text-slate-700 dark:text-emerald-100">{detailed.timingConditions.startConditionBn}</span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="font-bold text-rose-600 dark:text-rose-400 shrink-0">ওয়াক্ত শেষ:</span>
+                                    <span className="text-slate-700 dark:text-emerald-100">{detailed.timingConditions.endConditionBn}</span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="font-bold text-amber-600 dark:text-amber-400 shrink-0">মুস্তাহাব সময়:</span>
+                                    <span className="text-slate-700 dark:text-emerald-100">{detailed.timingConditions.mustahabTimeBn}</span>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="font-bold text-purple-600 dark:text-purple-400 shrink-0">সতর্কতা ও হুকুম:</span>
+                                    <span className="text-slate-700 dark:text-emerald-100">{detailed.timingConditions.fiqhDetailsBn}</span>
+                                  </div>
                                 </div>
-
-                                <div className="flex items-start gap-2">
-                                  <span className="font-bold text-rose-600 dark:text-rose-400 shrink-0">ওয়াক্ত শেষ:</span>
-                                  <span className="text-slate-700 dark:text-emerald-100">{detailed.timingConditions.endConditionBn}</span>
+                              ) : (
+                                <div className="space-y-2 text-xs leading-relaxed text-slate-700 dark:text-emerald-100">
+                                  <p>{meta.sunCondition}</p>
+                                  <p className="text-[11px] opacity-80">{detailed.celestialSignEn}</p>
                                 </div>
-
-                                <div className="flex items-start gap-2">
-                                  <span className="font-bold text-amber-600 dark:text-amber-400 shrink-0">মুস্তাহাব সময়:</span>
-                                  <span className="text-slate-700 dark:text-emerald-100">{detailed.timingConditions.mustahabTimeBn}</span>
-                                </div>
-
-                                <div className="flex items-start gap-2">
-                                  <span className="font-bold text-purple-600 dark:text-purple-400 shrink-0">সতর্কতা ও হুকুম:</span>
-                                  <span className="text-slate-700 dark:text-emerald-100">{detailed.timingConditions.fiqhDetailsBn}</span>
-                                </div>
-                              </div>
+                              )}
                             </div>
 
                             {/* Detailed Rak'at Breakdown Table */}
@@ -925,10 +997,14 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                               <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-teal-900/40">
                                 <div className="flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-300">
                                   <Layers className="w-4 h-4 text-emerald-500" />
-                                  <span>রাকাতের পূর্ণ বিবরণ ({detailed.summaryRakatsBn})</span>
+                                  <span>
+                                    {isBn
+                                      ? `রাকাতের পূর্ণ বিবরণ (${detailed.summaryRakatsBn})`
+                                      : `Rak'at Breakdown (${meta.rakatsDetail})`}
+                                  </span>
                                 </div>
                                 <span className="font-mono text-xs font-bold text-slate-500">
-                                  মোট {detailed.totalRakatsCount} রাকাত
+                                  {t(`মোট ${detailed.totalRakatsCount} রাকাত`, `المجموع ${detailed.totalRakatsCount} ركعات`, `${detailed.totalRakatsCount} Rak'ats Total`)}
                                 </span>
                               </div>
 
@@ -948,14 +1024,18 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                   >
                                     <div>
                                       <div className="font-black flex items-center gap-1.5">
-                                        <span>{r.typeBn}</span>
-                                        <span className="font-normal opacity-80 text-[11px]">({r.rulingBn})</span>
+                                        <span>{isBn ? r.typeBn : r.type}</span>
+                                        {isBn && (
+                                          <span className="font-normal opacity-80 text-[11px]">({r.rulingBn})</span>
+                                        )}
                                       </div>
-                                      <div className="text-[11px] opacity-75 mt-0.5">{r.descriptionBn}</div>
+                                      {isBn && (
+                                        <div className="text-[11px] opacity-75 mt-0.5">{r.descriptionBn}</div>
+                                      )}
                                     </div>
 
                                     <div className="px-2.5 py-1 rounded-lg font-mono font-black text-sm bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 shrink-0">
-                                      {r.rakats} রাকাত
+                                      {r.rakats} {t('রাকাত', 'ركعات', "Rak'ats")}
                                     </div>
                                   </div>
                                 ))}
@@ -978,14 +1058,14 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                               >
                                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-teal-900/40">
                                   <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                                    সালাম ফেরানোর পর মাসনূন আমল #{idx + 1}
+                                    {t(`সালাম ফেরানোর পর মাসনূন আমল #${idx + 1}`, `أذكار بعد السلام #${idx + 1}`, `Post-Prayer Sunnah Dhikr #${idx + 1}`)}
                                   </span>
 
                                   <button
                                     type="button"
                                     onClick={(e) =>
                                       handleCopy(
-                                        `${dua.arabic}\n${dua.meaningBn}\n[${dua.reference}]`,
+                                        `${dua.arabic}\n${isBn ? dua.meaningBn : dua.transliteration}\n[${dua.reference}]`,
                                         `dua-${prayer.id}-${idx}`,
                                         e
                                       )
@@ -1016,13 +1096,15 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                                   {dua.transliteration}
                                 </p>
 
-                                <p className="text-xs font-bold text-slate-800 dark:text-white leading-relaxed mb-2">
-                                  <span className="text-emerald-700 dark:text-emerald-400">অর্থ: </span>
-                                  {dua.meaningBn}
-                                </p>
+                                {isBn && (
+                                  <p className="text-xs font-bold text-slate-800 dark:text-white leading-relaxed mb-2">
+                                    <span className="text-emerald-700 dark:text-emerald-400">অর্থ: </span>
+                                    {dua.meaningBn}
+                                  </p>
+                                )}
 
                                 <div className="text-right font-mono text-[10px] text-emerald-600 dark:text-emerald-400">
-                                  সূত্র: {dua.reference}
+                                  {t('সূত্র:', 'المرجع:', 'Source:')} {dua.reference}
                                 </div>
                               </div>
                             ))}
@@ -1047,7 +1129,11 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                           }`}
                         >
                           <Check className="w-4 h-4 stroke-[3]" />
-                          <span>{isPrayed ? 'নামাজ আদায় সম্পন্ন ✓' : 'নামাজ পড়েছি (চিহ্নিত করুন)'}</span>
+                          <span>
+                            {isPrayed
+                              ? t('নামাজ আদায় সম্পন্ন ✓', 'تمت الصلاة ✓', 'Marked as Prayed ✓')
+                              : t('নামাজ পড়েছি (চিহ্নিত করুন)', 'تحديد كمصلى', 'Mark as Prayed')}
+                          </span>
                         </button>
 
                         {/* Right: Adhan & Close buttons */}
@@ -1061,7 +1147,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition active:scale-95 cursor-pointer shadow-sm"
                           >
                             <Volume2 className="w-3.5 h-3.5" />
-                            <span>আযান শুনুন</span>
+                            <span>{t('আযান শুনুন', 'استمع للأذان', 'Play Adhan')}</span>
                           </button>
 
                           <button
@@ -1070,7 +1156,7 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
                             className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition active:scale-95 cursor-pointer bg-slate-200/60 dark:bg-teal-900/40 hover:bg-slate-200 text-slate-700 dark:text-teal-200 border-slate-300 dark:border-teal-800"
                           >
                             <ChevronUp className="w-3.5 h-3.5" />
-                            <span>গুটিয়ে নিন</span>
+                            <span>{t('গুটিয়ে নিন', 'إغلاق', 'Collapse')}</span>
                           </button>
                         </div>
                       </div>

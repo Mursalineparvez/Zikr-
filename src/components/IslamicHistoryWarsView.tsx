@@ -59,6 +59,9 @@ const WARS_STORAGE_KEYS = {
   LAST_READ: 'zikr_wars_last_read_id',
 };
 
+const toBnDigits = (num: number | string) =>
+  String(num).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+
 export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
@@ -67,6 +70,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
 }) => {
   const isDay = themeMode === 'day';
   const isBn = selectedLanguage === 'bn';
+  const formatNum = (num: number | string) => (isBn ? toBnDigits(num) : String(num));
 
   const [selectedWarId, setSelectedWarId] = useState<string | null>(null);
   const [, startTransition] = React.useTransition();
@@ -164,10 +168,8 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
     if (soundEnabled) soundHaptics.playTap();
   };
 
-  const [activeEraFilter, setActiveEraFilter] = useState<WarItem['eraKey'] | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [active3DMapWarId, setActive3DMapWarId] = useState<string | null>(null);
-  const [showTocIndex, setShowTocIndex] = useState(true);
   const [copiedQuote, setCopiedQuote] = useState(false);
 
   useEffect(() => {
@@ -227,27 +229,25 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   }, []);
 
   const filteredWars = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return ISLAMIC_WARS_DATA;
     return ISLAMIC_WARS_DATA.filter((w) => {
-      const matchesEra = activeEraFilter === 'all' || w.eraKey === activeEraFilter;
-      const q = searchQuery.trim().toLowerCase();
       const name = (isBn ? w.nameBn : (w.nameEn || w.nameBn)).toLowerCase();
       const era = (isBn ? w.eraBn : (w.eraEn || w.eraBn)).toLowerCase();
       const location = (isBn ? w.locationBn : (w.locationEn || w.locationBn)).toLowerCase();
       const cause = (isBn ? w.causeBn : (w.causeEn || w.causeBn)).toLowerCase();
       const commander = (isBn ? w.commanderMuslimsBn : (w.commanderMuslimsEn || w.commanderMuslimsBn)).toLowerCase();
 
-      const matchesSearch =
-        !q ||
+      return (
         name.includes(q) ||
         w.nameAr.includes(q) ||
         era.includes(q) ||
         location.includes(q) ||
         cause.includes(q) ||
-        commander.includes(q);
-
-      return matchesEra && matchesSearch;
+        commander.includes(q)
+      );
     });
-  }, [activeEraFilter, searchQuery, isBn]);
+  }, [searchQuery, isBn]);
 
   const handleCopyWarSummary = () => {
     if (!activeWar) return;
@@ -761,7 +761,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
       <div className="space-y-1.5 px-1">
         <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
           <span>{isBn ? 'পঠন অগ্রগতি' : 'Reading Progress'}</span>
-          <span className="font-mono text-[11px]">{completedCount}/{totalWars} ({progressPercentage}%)</span>
+          <span className="font-mono text-[11px]">{formatNum(completedCount)}/{formatNum(totalWars)} ({formatNum(progressPercentage)}%)</span>
         </div>
         <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
           <div
@@ -782,23 +782,16 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-amber-100 text-xs font-semibold backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>حروب التاريخ الإسلامي • Islamic History Wars</span>
+            <span>{isBn ? 'ইসলামের ইতিহাসের যুদ্ধ' : 'Islamic History Wars'}</span>
           </div>
 
-          <button
-            onClick={() => {
-              setShowTocIndex(!showTocIndex);
-              if (soundEnabled) soundHaptics.playTap();
-            }}
-            className="px-3.5 py-1.5 rounded-xl bg-amber-500/30 hover:bg-amber-500/40 text-amber-200 border border-amber-400/40 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer transition shadow-sm active:scale-95"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-amber-300" />
-            <span>{showTocIndex ? (isBn ? 'সূচিপত্র লুকান' : 'Hide TOC') : (isBn ? 'সূচিপত্র' : 'Table of Contents')}</span>
-          </button>
+          <span className="px-3 py-1 rounded-full bg-amber-500/25 text-amber-100 text-xs font-bold border border-amber-300/30">
+            {isBn ? `${formatNum(totalWars)}টি ঐতিহাসিক যুদ্ধ` : `${totalWars} Historical Battles`}
+          </span>
         </div>
 
         <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-          {isBn ? 'ইসলামের ইতিহাসের যুদ্ধসমূহ (৩১টি ঐতিহাসিক যুদ্ধ)' : 'Battles in Islamic History (31 Epic Battles)'}
+          {isBn ? `ইসলামের ইতিহাসের যুদ্ধসমূহ (${formatNum(totalWars)}টি ঐতিহাসিক যুদ্ধ)` : `Battles in Islamic History (${totalWars} Epic Battles)`}
         </h2>
         <p className="text-xs sm:text-sm text-amber-100/90 mt-1 max-w-xl">
           {isBn
@@ -807,8 +800,95 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
         </p>
       </div>
 
-      {/* Book-Style Table of Contents (TOC) Container Matching Hayatus Sahaba Screenshot */}
-      {showTocIndex && (
+      {/* Search Bar (Matching Hayatus Sahaba) */}
+      <div className={`p-4 rounded-3xl border shadow-md ${isDay ? 'bg-white border-slate-200' : 'bg-[#181108] border-amber-500/30'}`}>
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={isBn ? 'যুদ্ধের নাম, যুগ, সেনাপতি, স্থান দিয়ে খুঁজুন...' : 'Search battles by name, era, commander, location...'}
+            className={`w-full pl-10 pr-9 py-2.5 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
+              isDay ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-amber-500' : 'bg-[#0d0905] border-amber-900/60 text-white focus:border-amber-500'
+            }`}
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Search Results View (Only shown when actively searching) */}
+      {searchQuery.trim() !== '' && (
+        <div className={`p-5 rounded-3xl border shadow-xl space-y-4 ${
+          isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#181108] border-amber-500/30 text-white'
+        }`}>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-amber-900/40">
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-amber-700 dark:text-amber-400">
+                {isBn ? `অনুসন্ধানের ফলাফল (${formatNum(filteredWars.length)}টি)` : `Search Results (${filteredWars.length})`}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {isBn ? `"${searchQuery}" এর জন্য ফলাফল দেখানো হচ্ছে` : `Showing results for "${searchQuery}"`}
+              </p>
+            </div>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              {isBn ? 'অনুসন্ধান মুছুন' : 'Clear Search'}
+            </button>
+          </div>
+
+          {filteredWars.length === 0 ? (
+            <div className="py-12 text-center space-y-2">
+              <span className="text-3xl">🔍</span>
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
+                {isBn ? 'কোনো যুদ্ধ পাওয়া যায়নি' : 'No battles found'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filteredWars.map((war) => {
+                const warName = isBn ? war.nameBn : war.nameEn;
+                const warEra = isBn ? war.eraBn : war.eraEn;
+                const warDate = isBn ? war.dateBn : war.dateEn;
+                const warLocation = isBn ? war.locationBn : war.locationEn;
+                return (
+                  <div
+                    key={war.id}
+                    onClick={() => handleSelectWar(war.id)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 shadow-xs hover:shadow-md ${
+                      isDay
+                        ? 'bg-white hover:bg-amber-50/50 border-slate-200 hover:border-amber-300 text-slate-900'
+                        : 'bg-[#140f07] hover:bg-[#1f160a] border-amber-900/50 hover:border-amber-500/50 text-white'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-mono font-bold text-amber-500">#{formatNum(war.orderNumber)}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 truncate">{warEra}</span>
+                      </div>
+                      <h4 className="font-black text-sm text-amber-800 dark:text-amber-300">{warName}</h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">📍 {warLocation} ({warDate})</p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-200/50 dark:border-amber-900/40 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-bold">
+                      <span>{isBn ? 'বিস্তারিত পড়ুন' : 'Read'}</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Book-Style Table of Contents (TOC) Container — Matching Hayatus Sahaba */}
+      {searchQuery.trim() === '' && (
         <div
           className={`rounded-3xl border-2 p-4 sm:p-6 shadow-md space-y-4 animate-in fade-in duration-200 ${
             isDay
@@ -817,31 +897,20 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
           }`}
         >
           {/* TOC Header */}
-          <div className="flex items-center justify-between pb-1 border-b border-amber-200/50 dark:border-amber-900/40">
+          <div className="flex items-center justify-between pb-2 border-b border-amber-200/50 dark:border-amber-900/40">
             <div className="flex items-start gap-2.5">
-              <span className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black text-sm shrink-0 mt-0.5">
+              <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black text-sm shrink-0">
                 📖
               </span>
               <div>
                 <h3 className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-400 leading-tight">
-                  {isBn ? 'সূচিপত্র (Table of Contents)' : 'Master Table of Contents (Chronological)'}
+                  {isBn ? 'সূচিপত্র' : 'Table of Contents'}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   {isBn ? 'যেকোনো যুদ্ধে স্পর্শ করে সম্পূর্ণ অধ্যায় পড়ুন' : 'Tap any battle to read the full chapter & strategic account'}
                 </p>
               </div>
             </div>
-
-            <button
-              onClick={() => {
-                setShowTocIndex(false);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className="p-1.5 rounded-xl hover:bg-amber-500/20 text-slate-400 hover:text-slate-600 dark:hover:text-amber-300 transition cursor-pointer"
-              title={isBn ? 'সূচিপত্র বন্ধ করুন' : 'Close TOC'}
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
 
           {/* 6 Era Boxes Grid */}
@@ -866,12 +935,12 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                       <span className="truncate">{isBn ? era.titleBn : era.titleEn}</span>
                     </h4>
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300/50 shrink-0">
-                      {list.length} {isBn ? 'টি' : ''}
+                      {formatNum(list.length)}{isBn ? ' টি' : ''}
                     </span>
                   </div>
 
                   {/* List of Battles */}
-                  <div className="space-y-1">
+                  <div className="space-y-1 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
                     {list.map((war, idx) => {
                       const warName = isBn ? war.nameBn : war.nameEn;
                       return (
@@ -886,13 +955,13 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                         >
                           <div className="flex items-start gap-1.5 truncate pr-2">
                             <span className="text-amber-600 dark:text-amber-400 font-bold text-xs shrink-0">
-                              {idx + 1}.
+                              {formatNum(idx + 1)}.
                             </span>
                             <span className="text-xs font-bold group-hover:text-amber-700 dark:group-hover:text-amber-300 transition truncate">
                               {warName}
                             </span>
                           </div>
-                          <BookOpen className="w-3.5 h-3.5 text-sky-400 dark:text-sky-300 shrink-0 opacity-70 group-hover:opacity-100 group-hover:scale-115 transition" />
+                          <ChevronRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         </div>
                       );
                     })}
@@ -903,191 +972,6 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
           </div>
         </div>
       )}
-
-      {/* Category Summary Badges & Quick Era Filter */}
-      <div
-        className={`p-4 sm:p-5 rounded-3xl border shadow-md space-y-3 ${
-          isDay ? 'bg-amber-50/60 border-amber-200/80 text-amber-950' : 'bg-[#18130a] border-amber-500/30 text-amber-100'
-        }`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-black text-xs">
-              ⚔️
-            </span>
-            <h3 className="text-xs sm:text-sm font-extrabold">
-              {isBn ? 'মর্যাদা ও কালানুসারে ইতিহাসের মহাকাব্যিক যুদ্ধসমূহ' : 'Historical Islamic Battles by Chronology'}
-            </h3>
-          </div>
-          <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-            {isBn ? 'মোট ৩১টি ঐতিহাসিক যুদ্ধ ও অভিযান' : 'Total 31 Epic Battles'}
-          </span>
-        </div>
-        <p className="text-xs leading-relaxed opacity-90">
-          {isBn
-            ? 'যেকোনো যুদ্ধের সূচিপত্রের নাম বা নিচের কার্ডে চাপ দিলে কোনো পপআপ ছাড়াই সরাসরি সম্পূর্ণ পৃষ্ঠা জুড়ে সৈন্য সংখ্যা, কারণ, সেনাপতি, শহীদ সাহাবিদের জীবনী, হৃদয়স্পর্শী ইতিহাস, রণকৌশল ও লাইভ মানচিত্র দেখতে পাবেন।'
-            : 'Click any battle to explore troop numbers, causes, commanders, honored martyrs, epic narratives, strategic lessons, and interactive satellite maps.'}
-        </p>
-
-        {/* 6 Era Summary Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-1">
-          {ERA_SECTIONS.map((era) => {
-            const count = warsByEra[era.key]?.length || 0;
-            const isSelected = activeEraFilter === era.key;
-            return (
-              <div
-                key={era.key}
-                onClick={() => {
-                  setActiveEraFilter(isSelected ? 'all' : era.key);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-1 shadow-xs ${
-                  isSelected
-                    ? 'bg-amber-600 text-white border-amber-500 shadow-md ring-2 ring-amber-500/30 font-black'
-                    : isDay ? 'bg-white border-amber-200 hover:border-amber-400' : 'bg-[#1a1208] border-amber-900/60 hover:border-amber-500'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-base">{era.icon}</span>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono">
-                    {count} {isBn ? 'টি' : ''}
-                  </span>
-                </div>
-                <div className="text-xs font-bold truncate mt-1">
-                  {isBn ? era.titleBn.replace(/^[০-৯]+\.\s*/, '') : era.titleEn.replace(/^[0-9]+\.\s*/, '')}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Search & Era Selector */}
-      <div className={`p-4 rounded-3xl border shadow-md space-y-3 ${isDay ? 'bg-white border-slate-200' : 'bg-[#181108] border-amber-500/30'}`}>
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isBn ? 'যুদ্ধের নাম, যুগ, সেনাপতি, স্থান দিয়ে খুঁজুন...' : 'Search battles by name, era, commander, location...'}
-            className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
-              isDay ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-amber-500' : 'bg-[#0d0905] border-amber-900/60 text-white focus:border-amber-500'
-            }`}
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            onClick={() => setActiveEraFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
-              activeEraFilter === 'all'
-                ? 'bg-amber-600 text-white border-amber-500 shadow-sm'
-                : isDay ? 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' : 'bg-[#140e06] text-amber-300 border-amber-900/50 hover:bg-[#1f1609]'
-            }`}
-          >
-            {isBn ? 'সকল যুদ্ধ (৩১টি)' : 'All Battles (31)'}
-          </button>
-          {ERA_SECTIONS.map((era) => (
-            <button
-              key={era.key}
-              onClick={() => setActiveEraFilter(era.key)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border flex items-center gap-1.5 ${
-                activeEraFilter === era.key
-                  ? 'bg-amber-600 text-white border-amber-500 shadow-sm'
-                  : isDay ? 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200' : 'bg-[#140e06] text-amber-300 border-amber-900/50 hover:bg-[#1f1609]'
-              }`}
-            >
-              <span>{era.icon}</span>
-              <span>{isBn ? era.titleBn : era.titleEn}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Wars Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className={`text-sm sm:text-base font-extrabold flex items-center gap-2 ${isDay ? 'text-slate-900' : 'text-white'}`}>
-            <span>⚔️</span>
-            <span>{isBn ? 'ঐতিহাসিক যুদ্ধের বিস্তারিত তালিকা' : 'List of Historical Battles'}</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono font-bold">
-              {filteredWars.length}
-            </span>
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredWars.map((war) => {
-            const warName = isBn ? war.nameBn : war.nameEn;
-            const warEra = isBn ? war.eraBn : war.eraEn;
-            const warCause = isBn ? war.causeBn : war.causeEn;
-            const warDate = isBn ? war.dateBn : war.dateEn;
-            const warLocation = isBn ? war.locationBn : war.locationEn;
-            const isCompleted = completedWars.includes(war.id);
-            const isBookmarked = bookmarkedWars.includes(war.id);
-
-            return (
-              <div
-                key={war.id}
-                onClick={() => handleSelectWar(war.id)}
-                className={`p-4 rounded-3xl border shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between gap-3 relative ${
-                  isDay
-                    ? 'bg-white border-slate-200 hover:border-amber-400 hover:shadow-xl'
-                    : 'bg-[#140f07] border-amber-500/20 hover:border-amber-500/50 hover:shadow-black/70'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 font-black text-xs flex items-center justify-center shrink-0">
-                      #{war.orderNumber}
-                    </span>
-                    {isCompleted && (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        <span>{isBn ? 'পঠিত' : 'Read'}</span>
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    {isBookmarked && (
-                      <Bookmark className="w-3.5 h-3.5 text-amber-500 fill-current" />
-                    )}
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 truncate">
-                      {warEra}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-arabic text-sm text-amber-600 dark:text-amber-400 font-bold mb-0.5 text-right">
-                    {war.nameAr}
-                  </div>
-                  <h4 className={`text-sm sm:text-base font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    {warName}
-                  </h4>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
-                    📍 {warLocation} ({warDate})
-                  </p>
-                  <p className={`text-xs mt-2 line-clamp-2 leading-relaxed ${isDay ? 'text-slate-600' : 'text-amber-100/80'}`}>
-                    {warCause}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-amber-900/30 text-xs font-bold text-amber-600 dark:text-amber-400">
-                  <span>{isBn ? 'সম্পূর্ণ অধ্যায় ও বিবরণ' : 'Read Full Chapter'}</span>
-                  <ChevronRight className="w-4 h-4" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Bibliography Modal for Islamic History Wars */}
       {showWarBibliographyModal && (
@@ -1109,7 +993,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
 
             <div className="space-y-1 border-b pb-3 border-amber-500/20 pr-8">
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300">
-                المصادر والمراجع التاريخية • Classical War Chronicles
+                {isBn ? 'প্রামাণ্য গ্রন্থ ও উৎসপঞ্জি' : 'Classical War Chronicles'}
               </span>
               <h3 className="text-lg sm:text-xl font-black text-amber-700 dark:text-amber-400">
                 {isBn ? 'ইসলামের ইতিহাসের যুদ্ধসমূহ: প্রামাণ্য গ্রন্থমালা' : 'Chronicles of Islamic Battles: Bibliography'}
