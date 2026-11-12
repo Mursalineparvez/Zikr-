@@ -183,6 +183,11 @@ export const SAHABA_CATEGORIES: CategoryMeta[] = [
 
 import { SAHABA_DATABASE_PART2 } from './sahabaDataPart2';
 import { SAHABA_DATABASE_PART3 } from './sahabaDataPart3';
+import { SAHABA_DATABASE_PART4A } from './sahabaDataPart4a';
+import { SAHABA_DATABASE_PART4B } from './sahabaDataPart4b';
+import { SAHABA_DATABASE_PART4C } from './sahabaDataPart4c';
+import { SAHABA_DATABASE_PART4D } from './sahabaDataPart4d';
+import { SAHABA_DATABASE_PART4E } from './sahabaDataPart4e';
 
 const SAHABA_DATABASE_PART1: SahabaItem[] = [
   {
@@ -2922,4 +2927,9 @@ export const SAHABA_DATABASE: SahabaItem[] = [
   ...SAHABA_DATABASE_PART1,
   ...SAHABA_DATABASE_PART2,
   ...SAHABA_DATABASE_PART3,
+  ...SAHABA_DATABASE_PART4A,
+  ...SAHABA_DATABASE_PART4B,
+  ...SAHABA_DATABASE_PART4C,
+  ...SAHABA_DATABASE_PART4D,
+  ...SAHABA_DATABASE_PART4E,
 ];
