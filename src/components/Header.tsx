@@ -129,17 +129,32 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
 
-      {/* Sub-Header Bismillah Calligraphy & Date Banner */}
+      {/* Sub-Header Salam & Date Banner */}
       <div className="bg-white border-b border-slate-200/80 px-4 py-2 text-slate-700 shadow-xs">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 text-xs">
-          {/* Left Bismillah Calligraphy */}
-          <div className="flex items-center gap-1.5 font-arabic text-base sm:text-lg text-[#006A4E] font-bold">
+          {/* Left Salam Greeting + Signed-in User Name Below */}
+          <div className="flex items-center gap-2 min-w-0">
             <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-            <span dir="rtl" className="select-none">بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ</span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm sm:text-base text-[#006A4E] font-extrabold leading-tight select-none truncate">
+                {selectedLanguage === 'bn'
+                  ? 'আসসালামু আলাইকুম'
+                  : selectedLanguage === 'ar' || selectedLanguage === 'ur'
+                  ? 'السَّلَامُ عَلَيْكُمْ'
+                  : selectedLanguage === 'hi'
+                  ? 'अस्सलामु अलैकुम'
+                  : 'Assalamu Alaikum'}
+              </span>
+              {userProfile?.isSignedIn && userProfile?.name?.trim() && (
+                <span className="text-[11px] sm:text-xs font-bold text-slate-700 leading-tight truncate">
+                  {userProfile.name.trim()}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Right Live Gregorian Date */}
-          <div className="text-slate-500 font-semibold text-xs whitespace-nowrap">
+          <div className="text-slate-500 font-semibold text-xs whitespace-nowrap shrink-0">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'short',
               month: 'short',
