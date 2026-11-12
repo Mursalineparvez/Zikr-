@@ -13,6 +13,7 @@ import {
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
 import { prefetchView } from '../utils/viewPreloader';
+import { getAllUnifiedBookmarks, getSavedHighlights, getSavedNotes } from '../utils/savedItems';
 
 // Code-split sub-views to keep initial app bundle small and startup instantaneous
 const SavedView = React.lazy(() => import('./SavedView').then((m) => ({ default: m.SavedView })));
@@ -117,18 +118,26 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [activeSub]);
 
+  const [savedStats, setSavedStats] = useState({ bookmarks: 0, highlights: 0, notes: 0 });
+
+  useEffect(() => {
+    const updateCounts = () => {
+      setSavedStats({
+        bookmarks: getAllUnifiedBookmarks().length,
+        highlights: getSavedHighlights().length,
+        notes: getSavedNotes().length,
+      });
+    };
+    updateCounts();
+    window.addEventListener('zikrplus-saved-updated', updateCounts);
+    window.addEventListener('storage', updateCounts);
+    return () => {
+      window.removeEventListener('zikrplus-saved-updated', updateCounts);
+      window.removeEventListener('storage', updateCounts);
+    };
+  }, [activeSub]);
+
   const hubItems = [
-    {
-      id: 'saved' as OtherSubSection,
-      title: selectedLanguage === 'bn' ? 'সংরক্ষিত (Saved)' : 'Saved',
-      arabic: 'المحفوظات والملاحظات',
-      desc: selectedLanguage === 'bn'
-        ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং ব্যক্তিগত নোটসমূহ এক জায়গায় দেখুন ও সংরক্ষণ করুন'
-        : 'Your bookmarks, highlights, and notes organized in one place.',
-      icon: <Bookmark className="w-6 h-6 text-[#006A4E] dark:text-emerald-400" />,
-      color: 'from-emerald-600/25 via-teal-600/15 to-amber-500/10 border-emerald-500/40',
-      badge: selectedLanguage === 'bn' ? 'বুকমার্ক • হাইলাইট • নোট' : 'Bookmarks • Notes',
-    },
     ...(onNavigateToNamaj
       ? [
           {
@@ -523,6 +532,71 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               {OTHER_HUB_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
+
+          {/* Featured Saved Library Card (Bookmarks · Highlights · Notes) */}
+          <button
+            type="button"
+            onPointerEnter={() => prefetchView('saved')}
+            onTouchStart={() => prefetchView('saved')}
+            onClick={() => handleSelectSub('saved')}
+            className={`w-full p-4 sm:p-5 rounded-3xl border text-left transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer group active:scale-[0.99] ${
+              isDay
+                ? 'bg-gradient-to-r from-[#f4faf7] via-white to-[#f6fbf9] border-emerald-200/80 hover:border-[#006A4E]/50 shadow-2xs hover:shadow-md'
+                : 'bg-gradient-to-r from-[#0a262c] via-[#082026] to-[#0a272f] border-[#1a4b56] hover:border-emerald-500/50 shadow-md'
+            }`}
+          >
+            <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+              <div
+                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
+                  isDay
+                    ? 'bg-[#006A4E] text-white shadow-sm'
+                    : 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                }`}
+              >
+                <Bookmark className="w-6 h-6" />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className={`text-base sm:text-lg font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                    {selectedLanguage === 'bn' ? 'সংরক্ষিত লাইব্রেরি' : 'Saved'}
+                  </h3>
+                  <span className="font-arabic text-xs sm:text-sm text-emerald-700 dark:text-emerald-400/90 hidden sm:inline">
+                    المحفوظات
+                  </span>
+                </div>
+                <p className={`text-xs mt-0.5 line-clamp-1 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
+                  {selectedLanguage === 'bn'
+                    ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং নোটসমূহ'
+                    : 'Your bookmarks, highlights, and notes'}
+                </p>
+                <div className={`text-[11px] sm:text-xs font-semibold mt-1.5 flex items-center gap-2 font-mono tabular-nums ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}>
+                  <span>
+                    {savedStats.bookmarks} {selectedLanguage === 'bn' ? 'বুকমার্ক' : 'Bookmarks'}
+                  </span>
+                  <span aria-hidden="true" className="opacity-50">·</span>
+                  <span>
+                    {savedStats.highlights} {selectedLanguage === 'bn' ? 'হাইলাইট' : 'Highlights'}
+                  </span>
+                  <span aria-hidden="true" className="opacity-50">·</span>
+                  <span>
+                    {savedStats.notes} {selectedLanguage === 'bn' ? 'নোটস' : 'Notes'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`min-w-[44px] min-h-[44px] px-3 sm:px-4 rounded-full border text-xs font-bold flex items-center justify-center gap-1 shrink-0 transition ${
+                isDay
+                  ? 'bg-white border-emerald-200 text-[#006A4E] group-hover:bg-[#006A4E] group-hover:text-white'
+                  : 'bg-[#07191e] border-[#1a4b56] text-emerald-300 group-hover:bg-emerald-600 group-hover:text-white'
+              }`}
+            >
+              <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'খুলুন' : 'Open'}</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </button>
 
           {/* Feature Cards Grid matching user uploaded reference image */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5">
