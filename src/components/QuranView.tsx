@@ -105,7 +105,7 @@ export interface WordAnimationOption {
 export const WORD_ANIMATION_OPTIONS: WordAnimationOption[] = [
   {
     id: 'glow',
-    nameBn: 'নূরানি গ্লো (Radiant Glow)',
+    nameBn: 'নূরানি গ্লো',
     nameEn: 'Radiant Glow',
     badgeBn: 'তিলাওয়াত',
     badgeEn: 'Reciting',
@@ -116,7 +116,7 @@ export const WORD_ANIMATION_OPTIONS: WordAnimationOption[] = [
   },
   {
     id: 'minimal',
-    nameBn: 'শান্ত মার্জিত (Calm Minimal)',
+    nameBn: 'শান্ত মার্জিত',
     nameEn: 'Calm Minimal',
     badgeBn: 'তিলাওয়াত',
     badgeEn: 'Reciting',
@@ -1930,7 +1930,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <LayoutGrid className="w-4 h-4" />
               </div>
               <span className="text-[10px] font-bold whitespace-nowrap">
-                {selectedLanguage === 'bn' ? 'অন্যান্য (Others)' : 'Others'}
+                {selectedLanguage === 'bn' ? 'অন্যান্য' : 'Others'}
               </span>
             </button>
           </div>
@@ -2170,7 +2170,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#006747] hover:bg-[#154f53] text-white text-xs font-bold transition active:scale-95 cursor-pointer shadow-md"
               >
                 <RefreshCw className="w-4 h-4" />
-                <span>{selectedLanguage === 'bn' ? 'পুনরায় চেষ্টা করুন (Retry)' : 'Retry Loading'}</span>
+                <span>{selectedLanguage === 'bn' ? 'পুনরায় চেষ্টা করুন' : 'Retry Loading'}</span>
               </button>
             </div>
           )}
@@ -2232,7 +2232,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span>
                         {selectedLanguage === 'bn'
-                          ? 'তাজবীদ কালার ও সংকেত গাইড (Tajweed & Sign Guide)'
+                          ? 'তাজবীদ কালার ও সংকেত গাইড'
                           : 'Tajweed & Notation Sign Guide'}
                       </span>
                     </span>
@@ -4325,7 +4325,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mb-2">
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-                    {selectedLanguage === 'bn' ? 'লাইভ প্রিভিউ (Live Preview):' : 'Live Preview:'}
+                    {selectedLanguage === 'bn' ? 'লাইভ প্রিভিউ:' : 'Live Preview:'}
                   </span>
                   <span className="text-emerald-500 font-mono">
                     {WORD_ANIMATION_OPTIONS.find((o) => o.id === wordAnimationType)?.tagBn}
@@ -4508,7 +4508,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   </div>
                   <div>
                     <div className="font-extrabold text-xs sm:text-sm">
-                      {selectedLanguage === 'bn' ? 'তাফসীর ও ব্যাখ্যা (Tafsir)' : 'Tafsir & Commentary'}
+                      {selectedLanguage === 'bn' ? 'তাফসীর ও ব্যাখ্যা' : 'Tafsir & Commentary'}
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                       {selectedLanguage === 'bn' ? 'ইবনে কাছীর, জাকারিয়া ও তাফহীমুল কুরআন' : 'Ibn Kathir, Zakariya & Tafheemul Quran'}
@@ -4569,7 +4569,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   </div>
                   <div>
                     <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
-                      <span>{selectedLanguage === 'bn' ? 'শব্দে শব্দে অর্থ (Word by Word)' : 'Word by Word Meaning'}</span>
+                      <span>{selectedLanguage === 'bn' ? 'শব্দে শব্দে অর্থ' : 'Word by Word Meaning'}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-md font-black ${
                         wordByWordMode ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                       }`}>
@@ -4635,7 +4635,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   </div>
                   <div>
                     <div className="font-extrabold text-xs sm:text-sm flex items-center gap-2">
-                      <span>{selectedLanguage === 'bn' ? 'বাংলা উচ্চারণ (Phonetics)' : 'Phonetic Transliteration'}</span>
+                      <span>{selectedLanguage === 'bn' ? 'বাংলা উচ্চারণ' : 'Phonetic Transliteration'}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-md font-black ${
                         showTransliteration ? 'bg-sky-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                       }`}>

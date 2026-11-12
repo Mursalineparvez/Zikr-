@@ -111,8 +111,8 @@ export const QuickScrollNavigator: React.FC<QuickScrollNavigatorProps> = ({
   const circumference = 2 * Math.PI * 18; // r=18
   const strokeDashoffset = circumference - (scrollPercent / 100) * circumference;
 
-  const topTooltip = selectedLanguage === 'bn' ? 'একদম উপরে যান (Top)' : 'Scroll to Top';
-  const bottomTooltip = selectedLanguage === 'bn' ? 'একদম নিচে যান (Bottom)' : 'Scroll to Bottom';
+  const topTooltip = selectedLanguage === 'bn' ? 'একদম উপরে যান' : 'Scroll to Top';
+  const bottomTooltip = selectedLanguage === 'bn' ? 'একদম নিচে যান' : 'Scroll to Bottom';
 
   return (
     <div

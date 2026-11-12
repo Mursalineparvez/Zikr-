@@ -894,12 +894,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <h2 className="text-lg font-black tracking-tight leading-tight">
                 {embedded
                   ? selectedLanguage === 'bn'
-                    ? 'আমার অ্যাকাউন্ট (My Account)'
+                    ? 'আমার অ্যাকাউন্ট'
+                    : selectedLanguage === 'ar'
+                    ? 'حسابي'
                     : 'My Account'
                   : activeTab === 'settings'
                   ? selectedLanguage === 'bn'
                     ? 'অ্যাপ সেটিংস'
+                    : selectedLanguage === 'ar'
+                    ? 'إعدادات التطبيق'
                     : 'Settings'
+                  : selectedLanguage === 'bn'
+                  ? 'আমার অ্যাকাউন্ট'
+                  : selectedLanguage === 'ar'
+                  ? 'حسابي'
                   : 'My Account'}
               </h2>
             </div>
@@ -1414,7 +1422,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm flex items-center gap-2">
                     <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>{SETTINGS_UI.appLanguage[selectedLanguage] || 'অ্যাপের ভাষা (Language)'}</span>
+                    <span>{SETTINGS_UI.appLanguage[selectedLanguage] || 'App Language'}</span>
                   </span>
                   <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                     isDay 
@@ -1501,7 +1509,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-98"
                 >
                   <Download className="w-4 h-4" />
-                  <span>{isInstalled ? 'অ্যাপটি ইনস্টল আছে ✓ (নির্দেশিকা দেখুন)' : 'Install App (অ্যাপ ইনস্টল করুন)'}</span>
+                  <span>{isInstalled
+                    ? (selectedLanguage === 'bn' ? 'অ্যাপটি ইনস্টল আছে ✓ (নির্দেশিকা দেখুন)' : 'App Installed ✓ (View Guide)')
+                    : (selectedLanguage === 'bn' ? 'অ্যাপ ইনস্টল করুন' : 'Install App')}</span>
                 </button>
 
                 {onOpenStandaloneModal && (
@@ -1551,7 +1561,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       isDay ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm font-black' : 'bg-[#092226] text-slate-300 border-[#184850]'
                     }`}
                   >
-                    ☀️ ডে মোড (Light)
+                    {SETTINGS_UI.dayMode[selectedLanguage] || '☀️ Day Mode'}
                   </button>
                   <button
                     type="button"
@@ -1562,7 +1572,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       !isDay ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm font-black' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                     }`}
                   >
-                    🌙 নাইট মোড (Dark)
+                    {SETTINGS_UI.nightMode[selectedLanguage] || '🌙 Night Mode'}
                   </button>
                 </div>
               </div>
@@ -1640,12 +1650,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     {isPlayingSample ? (
                       <>
                         <Square className="w-3.5 h-3.5 fill-current" />
-                        <span>{selectedLanguage === 'bn' ? 'থামুন (Stop)' : 'Stop Sample'}</span>
+                        <span>{selectedLanguage === 'bn' ? 'থামুন' : 'Stop Sample'}</span>
                       </>
                     ) : (
                       <>
                         <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন (Test Voice)' : 'Test Voice'}</span>
+                        <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন' : 'Test Voice'}</span>
                       </>
                     )}
                   </button>

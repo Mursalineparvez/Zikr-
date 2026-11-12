@@ -159,7 +159,7 @@ export const StandaloneExportModal: React.FC<StandaloneExportModalProps> = ({
               className="w-full py-3 px-4 rounded-xl bg-white hover:bg-emerald-50 text-emerald-900 font-black text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
             >
               <Download className="w-4 h-4 text-emerald-700 stroke-[2.5]" />
-              <span>{isInstalling ? 'ইনস্টল হচ্ছে...' : 'এখনই ফোনে ইনস্টল করুন (Install App)'}</span>
+              <span>{isInstalling ? 'ইনস্টল হচ্ছে...' : 'এখনই ফোনে ইনস্টল করুন'}</span>
             </button>
           </div>
         ) : isInstalled ? (

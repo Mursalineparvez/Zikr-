@@ -293,7 +293,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
           : 'from-[#06181d] via-[#08222a] to-[#030d10]',
         textColor: 'text-white',
         arcGlow: '#818cf8',
-        label: 'রাত্রিকালীন কক্ষপথ • Nocturnal Transit',
+        label: selectedLanguage === 'bn' ? 'রাত্রিকালীন কক্ষপথ' : selectedLanguage === 'ar' ? 'المدار الليلي' : 'Nocturnal Transit',
       };
     }
 
@@ -307,7 +307,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
           : 'from-[#1a1c29] via-[#16272e] to-[#091b22]',
         textColor: isDay ? 'text-slate-900' : 'text-white',
         arcGlow: '#f59e0b',
-        label: 'সূর্যোদয় ও প্রত্যুষ • Dawn Horizon',
+        label: selectedLanguage === 'bn' ? 'সূর্যোদয় ও প্রত্যুষ' : selectedLanguage === 'ar' ? 'الشروق والفجر' : 'Dawn Horizon',
       };
     } else if (t > 78) {
       // Golden Hour / Sunset
@@ -317,7 +317,7 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
           : 'from-[#24131b] via-[#1a222a] to-[#08181f]',
         textColor: isDay ? 'text-slate-900' : 'text-white',
         arcGlow: '#f43f5e',
-        label: 'গোধূলি ও সূর্যাস্ত • Golden Dusk',
+        label: selectedLanguage === 'bn' ? 'গোধূলি ও সূর্যাস্ত' : selectedLanguage === 'ar' ? 'الشفق والغروب' : 'Golden Dusk',
       };
     }
 
@@ -328,9 +328,9 @@ export const SolarTrajectoryCard: React.FC<SolarTrajectoryCardProps> = ({
         : 'from-[#092b32] via-[#0c3942] to-[#071f25]',
       textColor: isDay ? 'text-slate-900' : 'text-white',
       arcGlow: '#10b981',
-      label: 'দ্বিপ্রহর ও মধ্যাহ্ন আলো • Meridian Apex',
+      label: selectedLanguage === 'bn' ? 'দ্বিপ্রহর ও মধ্যাহ্ন আলো' : selectedLanguage === 'ar' ? 'ذروة الظهيرة' : 'Meridian Apex',
     };
-  }, [solar.isDaytime, isScrubbing, isAutoSimulating, scrubPercent, solar.sunProgressPercent, isDay]);
+  }, [solar.isDaytime, isScrubbing, isAutoSimulating, scrubPercent, solar.sunProgressPercent, isDay, selectedLanguage]);
 
   return (
     <div

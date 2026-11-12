@@ -62,7 +62,48 @@ interface HayatusSahabaViewProps {
   onBackToHub?: () => void;
 }
 
+function toBnDigits(input: string | number): string {
+  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return String(input).replace(/\d/g, (d) => bn[Number(d)]);
+}
+
+function toEnDigits(input: string | number): string {
+  return String(input).replace(/[০-৯]/g, (d) => String('০১২৩৪৫৬৭৮৯'.indexOf(d)));
+}
+
+function localizeRefToEn(text: string): string {
+  const map: [RegExp, string][] = [
+    [/সহীহ বুখারী|সহিহ বুখারি/g, 'Sahih al-Bukhari'],
+    [/সহীহ মুসলিম|সহিহ মুসলিম/g, 'Sahih Muslim'],
+    [/জামে তিরমিযী|সুনান আত-তিরমিযী|জামে আত-তিরমিজি/g, 'Jami at-Tirmidhi'],
+    [/সুনান আবু দাউদ|সুনানে আবু দাউদ/g, 'Sunan Abu Dawud'],
+    [/সুনান নাসায়ী|সুনান আন-নাসায়ী|সুনানুন নাসাঈ/g, "Sunan an-Nasa'i"],
+    [/সুনান ইবনে মাজাহ|সুনানে ইবনে মাজাহ|সুনান ইবনু মাজাহ/g, 'Sunan Ibn Majah'],
+    [/মুসনাদে আহমদ|মুসনাদে আহমাদ/g, 'Musnad Ahmad'],
+    [/মুয়াত্তা ইমাম মালিক|মুয়াত্তা মালিক/g, 'Muwatta Malik'],
+    [/আল-মুস্তাদরাক লিল-হাকিম|আল-মুস্তাদরাক|মুসতাদরাক হাকিম/g, 'Al-Mustadrak al-Hakim'],
+    [/সীরাতে ইবনে হিশাম/g, 'Sirah Ibn Hisham'],
+    [/তাবাকাতে ইবনে সা’দ|তাবাকাতে ইবনে সা'দ/g, "Tabaqat Ibn Sa'd"],
+    [/উসদুল গাবাহ/g, 'Usd al-Ghabah'],
+    [/সিয়ারু আলামিন নুবালা|সিয়ারু আ'লামিন নুবালা/g, "Siyar A'lam al-Nubala"],
+    [/আল-ইসাবাহ/g, 'Al-Isabah'],
+    [/আল-ইস্তিআব|আল-ইস্তিয়াব/g, "Al-Isti'ab"],
+    [/তারিখে তাবারী|তারীখে দিমাশক/g, 'Tarikh at-Tabari'],
+    [/আল-বিদায়া ওয়ান নিহায়া/g, 'Al-Bidayah wan-Nihayah'],
+    [/হায়াতুস সাহাবা|হায়াতুস সাহাবা/g, 'Hayatus Sahaba'],
+    [/হিলইয়াতুল আওলিয়া/g, 'Hilyat al-Awliya'],
+    [/তাফসীরে ইবনে কাসীর/g, 'Tafsir Ibn Kathir'],
+    [/ফুতুহুল বুলদান/g, 'Futuh al-Buldan'],
+  ];
+  let out = text;
+  for (const [re, rep] of map) {
+    out = out.replace(re, rep);
+  }
+  return toEnDigits(out);
+}
+
 function getSahabaName(item: SahabaItem, lang: ZikrLanguage): string {
+  if (lang === 'ar') return item.nameAr || item.nameEn || item.nameBn;
   if (lang === 'bn') return item.nameBn;
   if (item.nameEn) return item.nameEn;
   return getEnglishSahabaName(item.id, item.nameBn);
@@ -82,8 +123,13 @@ function getSahabaSummary(item: SahabaItem, lang: ZikrLanguage): string {
 
 function getSahabaCategory(item: SahabaItem, lang: ZikrLanguage): string {
   if (lang === 'bn') return item.categoryBn;
+  if (lang === 'ar') {
+    const catMeta = SAHABA_CATEGORIES.find((c) => c.key === item.categoryKey);
+    return catMeta ? catMeta.titleAr : item.categoryBn;
+  }
   const enProfile = SAHABA_EN_DATABASE[item.id];
   if (enProfile?.category) return enProfile.category;
+  if (item.categoryEn) return item.categoryEn;
   const catMeta = SAHABA_CATEGORIES.find((c) => c.key === item.categoryKey);
   return catMeta ? catMeta.titleEn : 'Honored Companion';
 }
@@ -102,6 +148,8 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 }) => {
   const isDay = themeMode === 'day';
   const isBn = selectedLanguage === 'bn';
+  const isAr = selectedLanguage === 'ar';
+  const formatNum = (val: string | number) => (isBn ? toBnDigits(val) : toEnDigits(val));
 
   const [selectedSahabaId, setSelectedSahabaId] = useState<string | null>(null);
   const [, startTransition] = React.useTransition();
@@ -201,9 +249,9 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
   const handleCopyHadith = (hp: { arabic?: string; textBn: string; textEn?: string; source: string }) => {
     const parts: string[] = [];
-    if (hp.arabic) parts.push(hp.arabic);
-    parts.push(`"${isBn ? hp.textBn : (hp.textEn || hp.textBn)}"`);
-    parts.push(`— ${hp.source}`);
+    if (isAr && hp.arabic) parts.push(hp.arabic);
+    parts.push(`"${isBn ? hp.textBn : (hp.textEn || '')}"`);
+    parts.push(`— ${isBn ? hp.source : localizeRefToEn(hp.source)}`);
     navigator.clipboard.writeText(parts.join('\n\n'));
     showToast(isBn ? 'হাদীস শরীফ কপি করা হয়েছে' : 'Hadith Copied');
     if (soundEnabled) soundHaptics.playTap();
@@ -211,9 +259,9 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
   const handleCopyQuran = (qr: { surah: string; verse: string; arabic?: string; translationBn: string; translationEn?: string }) => {
     const parts: string[] = [];
-    if (qr.arabic) parts.push(qr.arabic);
-    parts.push(`"${isBn ? qr.translationBn : (qr.translationEn || qr.translationBn)}"`);
-    parts.push(`— ${qr.surah} (${isBn ? 'আয়াত:' : 'Verse:'} ${qr.verse}) [পবিত্র কুরআন]`);
+    if (isAr && qr.arabic) parts.push(qr.arabic);
+    parts.push(`"${isBn ? qr.translationBn : (qr.translationEn || '')}"`);
+    parts.push(`— ${isBn ? qr.surah : localizeRefToEn(qr.surah)} (${isBn ? 'আয়াত:' : 'Verse:'} ${formatNum(qr.verse)}) ${isBn ? '[পবিত্র কুরআন]' : '[Holy Quran]'}`);
     navigator.clipboard.writeText(parts.join('\n\n'));
     showToast(isBn ? 'কুরআনের আয়াত কপি করা হয়েছে' : 'Quranic Verse Copied');
     if (soundEnabled) soundHaptics.playTap();
@@ -333,9 +381,9 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
     const birthDeath = isBn
       ? activeSahaba.birthAndDeathBn
-      : (enProfile?.birthAndDeath || activeSahaba.birthAndDeathEn || activeSahaba.birthAndDeathBn);
+      : (enProfile?.birthAndDeath || activeSahaba.birthAndDeathEn || '');
 
-    let textToCopy = `📖 ${name} (${activeSahaba.nameAr})\n🏆 ${isBn ? 'উপাধি:' : 'Title:'} ${title}\n⭐ ${isBn ? 'মর্যাদা:' : 'Rank:'} #${activeSahaba.rank} | ${cat}\n📅 ${birthDeath}\n\n${summary}\n\n- Zikr+ App (zikrplus.app)`;
+    const textToCopy = `📖 ${name}\n🏆 ${isBn ? 'উপাধি:' : 'Title:'} ${title}\n⭐ ${isBn ? 'মর্যাদা:' : 'Rank:'} #${formatNum(activeSahaba.rank)} | ${cat}${birthDeath ? `\n📅 ${birthDeath}` : ''}\n\n${summary}`;
 
     navigator.clipboard.writeText(textToCopy);
     setCopiedQuote(true);
@@ -343,50 +391,51 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     setTimeout(() => setCopiedQuote(false), 2000);
   };
 
-  // Resolve Family details in both languages
+  // Resolve Family details strictly in the chosen language
   const getSahabaFamilyData = (sahaba: SahabaItem): SahabaFamily => {
     const enProfile = SAHABA_EN_DATABASE[sahaba.id];
     const baseFamily = sahaba.familyBn;
+    const enFamily = enProfile?.family || sahaba.familyEn;
 
-    if (baseFamily) {
+    if (baseFamily || enFamily) {
       return {
-        fatherBn: baseFamily.fatherBn,
-        fatherEn: enProfile?.family?.fatherEn || baseFamily.fatherEn || baseFamily.fatherBn,
-        motherBn: baseFamily.motherBn,
-        motherEn: enProfile?.family?.motherEn || baseFamily.motherEn || baseFamily.motherBn,
-        tribeOrClanBn: baseFamily.tribeOrClanBn,
-        tribeOrClanEn: enProfile?.family?.tribeOrClanEn || baseFamily.tribeOrClanEn || baseFamily.tribeOrClanBn,
-        wivesBn: baseFamily.wivesBn || [],
-        wivesEn: enProfile?.family?.wivesEn || baseFamily.wivesEn || baseFamily.wivesBn || [],
-        sonsBn: baseFamily.sonsBn || [],
-        sonsEn: enProfile?.family?.sonsEn || baseFamily.sonsEn || baseFamily.sonsBn || [],
-        daughtersBn: baseFamily.daughtersBn || [],
-        daughtersEn: enProfile?.family?.daughtersEn || baseFamily.daughtersEn || baseFamily.daughtersBn || [],
-        keyRelativesBn: baseFamily.keyRelativesBn || [],
-        keyRelativesEn: enProfile?.family?.keyRelativesEn || baseFamily.keyRelativesEn || baseFamily.keyRelativesBn || [],
-        overviewBn: baseFamily.overviewBn,
-        overviewEn: enProfile?.family?.overviewEn || baseFamily.overviewEn || baseFamily.overviewBn,
+        fatherBn: baseFamily?.fatherBn,
+        fatherEn: enFamily?.fatherEn || '',
+        motherBn: baseFamily?.motherBn,
+        motherEn: enFamily?.motherEn || '',
+        tribeOrClanBn: baseFamily?.tribeOrClanBn,
+        tribeOrClanEn: enFamily?.tribeOrClanEn || '',
+        wivesBn: baseFamily?.wivesBn || [],
+        wivesEn: enFamily?.wivesEn || [],
+        sonsBn: baseFamily?.sonsBn || [],
+        sonsEn: enFamily?.sonsEn || [],
+        daughtersBn: baseFamily?.daughtersBn || [],
+        daughtersEn: enFamily?.daughtersEn || [],
+        keyRelativesBn: baseFamily?.keyRelativesBn || [],
+        keyRelativesEn: enFamily?.keyRelativesEn || [],
+        overviewBn: baseFamily?.overviewBn,
+        overviewEn: enFamily?.overviewEn || '',
       };
     }
 
     // Default fallback if not defined
     return {
       fatherBn: 'ইসলামি সীরাত ও ইতিহাসে নিবন্ধিত সম্মানিত পিতা',
-      fatherEn: enProfile?.family?.fatherEn || 'Father registered in classical Islamic Seerah',
+      fatherEn: 'Father registered in classical Islamic Seerah',
       motherBn: 'ইসলামি সীরাত সংকলনে নিবন্ধিত মহীয়সী মাতা',
-      motherEn: enProfile?.family?.motherEn || 'Mother registered in classical Islamic Seerah',
+      motherEn: 'Mother registered in classical Islamic Seerah',
       tribeOrClanBn: 'সম্মানিত আরব্য বংশ ও কুরাইশ শাখা',
-      tribeOrClanEn: enProfile?.family?.tribeOrClanEn || 'Noble Arabian Tribe & Lineage',
+      tribeOrClanEn: 'Noble Arabian Tribe & Lineage',
       wivesBn: [],
-      wivesEn: enProfile?.family?.wivesEn || [],
+      wivesEn: [],
       sonsBn: [],
-      sonsEn: enProfile?.family?.sonsEn || [],
+      sonsEn: [],
       daughtersBn: [],
-      daughtersEn: enProfile?.family?.daughtersEn || [],
+      daughtersEn: [],
       keyRelativesBn: ['রাসূলুল্লাহ (সা.)-এর সুমহান সাহাবি'],
-      keyRelativesEn: enProfile?.family?.keyRelativesEn || ['Honored companion of Prophet Muhammad (PBUH)'],
+      keyRelativesEn: ['Honored companion of Prophet Muhammad (PBUH)'],
       overviewBn: `${sahaba.nameBn} হযরত মুহাম্মদ (সা.)-এর অনুগত ও অত্যন্ত মর্যাদাবান সাহাবি ছিলেন। তাঁর পরিবার ইসলামের সুমহান সেবায় নিবেদিত ছিল।`,
-      overviewEn: enProfile?.family?.overviewEn || `${getSahabaName(sahaba, selectedLanguage)} was an illustrious companion of Prophet Muhammad (PBUH) whose family was dedicated to the service of Islam.`,
+      overviewEn: `${getSahabaName(sahaba, selectedLanguage)} was an illustrious companion of Prophet Muhammad (PBUH) whose family was dedicated to the service of Islam.`,
     };
   };
 
@@ -404,35 +453,43 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
     const activeBirthDeath = isBn
       ? activeSahaba.birthAndDeathBn
-      : (enProfile?.birthAndDeath || activeSahaba.birthAndDeathEn || activeSahaba.birthAndDeathBn);
+      : (enProfile?.birthAndDeath || activeSahaba.birthAndDeathEn || '');
 
     const activeIslamAcceptance = isBn
       ? activeSahaba.islamAcceptanceBn
-      : (enProfile?.islamAcceptance || activeSahaba.islamAcceptanceEn || activeSahaba.islamAcceptanceBn);
+      : (enProfile?.islamAcceptance || activeSahaba.islamAcceptanceEn || '');
 
     const activeVirtues = isBn
       ? activeSahaba.keyVirtuesBn
-      : (enProfile?.keyVirtues || activeSahaba.keyVirtuesEn || activeSahaba.keyVirtuesBn);
+      : (enProfile?.keyVirtues || activeSahaba.keyVirtuesEn || []);
 
     const activeBiography = isBn
       ? activeSahaba.detailedBiographyBn
-      : (enProfile?.detailedBiography || activeSahaba.detailedBiographyEn || activeSahaba.detailedBiographyBn);
+      : (enProfile?.detailedBiography || activeSahaba.detailedBiographyEn || '');
 
     const activeEmotionalStories = isBn
       ? activeSahaba.emotionalStoriesBn
-      : (enProfile?.emotionalStories || activeSahaba.emotionalStoriesEn || activeSahaba.emotionalStoriesBn);
+      : (enProfile?.emotionalStories || activeSahaba.emotionalStoriesEn || []);
 
     const activeDeath = isBn
       ? activeSahaba.deathOrMartyrdomBn
-      : (enProfile?.deathOrMartyrdom || activeSahaba.deathOrMartyrdomEn || activeSahaba.deathOrMartyrdomBn);
+      : (enProfile?.deathOrMartyrdom || activeSahaba.deathOrMartyrdomEn || '');
 
     const activeLessons = isBn
       ? activeSahaba.lessonsBn
-      : (enProfile?.lessons || activeSahaba.lessonsEn || activeSahaba.lessonsBn);
+      : (enProfile?.lessons || activeSahaba.lessonsEn || []);
 
     const activeReferences = isBn
       ? activeSahaba.referencesBn
-      : (enProfile?.references || activeSahaba.referencesEn || activeSahaba.referencesBn);
+      : (enProfile?.references || activeSahaba.referencesEn || []);
+
+    const activeQuranRefs = isBn
+      ? (activeSahaba.quranRefBn || [])
+      : (activeSahaba.quranRefBn || []).filter((qr) => Boolean(qr.translationEn));
+
+    const activeHadithPraises = isBn
+      ? (activeSahaba.hadithPraiseBn || [])
+      : (activeSahaba.hadithPraiseBn || []).filter((hp) => Boolean(hp.textEn));
 
     // Family localized values with strictly non-mixed fallbacks
     const father = isBn ? familyData.fatherBn : (familyData.fatherEn || 'Recorded in classical Seerah chronicles');
@@ -475,7 +532,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
           <div className="flex-1 text-center truncate px-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 truncate block">
-              Rank #{activeSahaba.rank} • {activeCat}
+              {isBn ? `ক্রম #${formatNum(activeSahaba.rank)}` : `Rank #${formatNum(activeSahaba.rank)}`} • {activeCat}
             </span>
             <h2 className="text-sm sm:text-base font-black truncate text-white">
               {activeName}
@@ -548,7 +605,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 }`}
               >
                 <Crown className="w-3.5 h-3.5 text-amber-500" />
-                <span>{isBn ? 'মর্যাদা র‍্যাংক:' : 'Rank:'} #{activeSahaba.rank} • {activeCat}</span>
+                <span>{isBn ? 'মর্যাদা ক্রম:' : 'Rank:'} #{formatNum(activeSahaba.rank)} • {activeCat}</span>
               </span>
 
               {activeBirthDeath && (
@@ -567,9 +624,6 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
               <h1 className={`text-xl sm:text-2xl md:text-3xl font-black leading-tight ${isDay ? 'text-emerald-900' : 'text-emerald-400'}`}>
                 {activeName}
               </h1>
-              <p className={`font-arabic text-lg sm:text-2xl text-right leading-loose font-bold ${isDay ? 'text-emerald-800' : 'text-emerald-300'}`}>
-                {activeSahaba.nameAr}
-              </p>
             </div>
 
             <div className={`p-3.5 rounded-xl border ${isDay ? 'bg-amber-50 border-amber-200 text-amber-950' : 'bg-[#142322] border-amber-500/30 text-amber-300'}`}>
@@ -589,56 +643,76 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2.5 border-amber-400/30">
                   <div className="flex items-center gap-2.5">
                     <span className="w-7 h-7 rounded-lg bg-amber-500 text-black flex items-center justify-center font-black text-xs shadow-xs">
-                      #{propheticProfile.no}
+                      #{formatNum(propheticProfile.no)}
                     </span>
                     <div>
                       <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
-                        👑 {isBn ? 'রাসূলুল্লাহ (সা.)-এর দেয়া উপাধি (চল্লিশ সাহাবির উপাধি গ্রন্থ)' : 'Prophetic Title (Forty Sahaba Titles Book)'}
+                        👑 {isBn ? 'রাসূলুল্লাহ (সা.)-এর দেয়া উপাধি (চল্লিশ সাহাবির উপাধি গ্রন্থ)' : 'Prophetic Title (Forty Sahaba Titles)'}
                       </span>
                       <h4 className="text-sm sm:text-base font-black text-amber-900 dark:text-amber-300">
-                        {isBn ? propheticProfile.titleBn : propheticProfile.titleEn}
+                        {isBn ? propheticProfile.titleBn : isAr ? propheticProfile.titleAr : propheticProfile.titleEn}
                       </h4>
                     </div>
                   </div>
-                  <span className="font-arabic text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">
-                    {propheticProfile.titleAr}
-                  </span>
                 </div>
 
-                <div className="space-y-2 text-xs sm:text-sm leading-relaxed opacity-95">
-                  <p>
-                    <strong className="text-amber-700 dark:text-amber-300">{isBn ? 'উপাধি লাভের প্রেক্ষাপট ও কারণ:' : 'Historical Context:'}</strong> {propheticProfile.reasonBn}
-                  </p>
+                {isBn ? (
+                  <div className="space-y-2 text-xs sm:text-sm leading-relaxed opacity-95">
+                    <p>
+                      <strong className="text-amber-700 dark:text-amber-300">উপাধি লাভের প্রেক্ষাপট ও কারণ:</strong> {propheticProfile.reasonBn}
+                    </p>
+                    <div className={`p-3 rounded-xl border space-y-1.5 ${
+                      isDay ? 'bg-white/90 border-amber-200 shadow-xs' : 'bg-black/40 border-amber-500/30'
+                    }`}>
+                      <p className="text-xs italic opacity-95">
+                        "{propheticProfile.hadithBn}"
+                      </p>
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-300/30 text-[11px]">
+                        <span className="font-bold text-amber-700 dark:text-amber-400">
+                          📖 প্রামাণ্য হাদিস সূত্র: {propheticProfile.sourcesBn.join(' • ')}
+                        </span>
+                        <button
+                          onClick={() => {
+                            const quote = `👑 রাসূলুল্লাহ (সা.)-এর দেয়া উপাধি:\n"${propheticProfile.titleBn}"\n\n📖 হাদিস: "${propheticProfile.hadithBn}"\nসূত্র: ${propheticProfile.sourcesBn.join(', ')}`;
+                            navigator.clipboard.writeText(quote);
+                            showToast('উপাধি ও হাদিস কপি করা হয়েছে');
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                          className="px-2 py-0.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-200 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>কপি</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : isAr && propheticProfile.hadithAr ? (
                   <div className={`p-3 rounded-xl border space-y-1.5 ${
                     isDay ? 'bg-white/90 border-amber-200 shadow-xs' : 'bg-black/40 border-amber-500/30'
                   }`}>
-                    {propheticProfile.hadithAr && (
-                      <p className="font-arabic text-right text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-300 leading-relaxed">
-                        "{propheticProfile.hadithAr}"
-                      </p>
-                    )}
-                    <p className="text-xs italic opacity-95">
-                      "{propheticProfile.hadithBn}"
+                    <p className="font-arabic text-right text-sm font-bold text-amber-600 dark:text-amber-300 leading-relaxed">
+                      "{propheticProfile.hadithAr}"
                     </p>
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-300/30 text-[11px]">
-                      <span className="font-bold text-amber-700 dark:text-amber-400">
-                        📖 {isBn ? 'প্রামাণ্য হাদিস সূত্র:' : 'Sources:'} {propheticProfile.sourcesBn.join(' • ')}
-                      </span>
-                      <button
-                        onClick={() => {
-                          const quote = `👑 রাসূলুল্লাহ (সা.)-এর দেয়া উপাধি:\n"${propheticProfile.titleBn}" (${propheticProfile.titleAr})\n\n📖 হাদিস: "${propheticProfile.hadithBn}"\nসূত্র: ${propheticProfile.sourcesBn.join(', ')}\n\n- Zikr+ App (চল্লিশ সাহাবির উপাধি)`;
-                          navigator.clipboard.writeText(quote);
-                          showToast(isBn ? 'উপাধি ও হাদিস কপি করা হয়েছে' : 'Title & Hadith Copied');
-                          if (soundEnabled) soundHaptics.playTap();
-                        }}
-                        className="px-2 py-0.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-200 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Copy className="w-3 h-3" />
-                        <span>{isBn ? 'কপি' : 'Copy'}</span>
-                      </button>
-                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-xs leading-relaxed opacity-90 flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-bold text-amber-700 dark:text-amber-400">
+                      📖 Sources: {propheticProfile.sourcesBn.map(localizeRefToEn).join(' • ')}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const quote = `👑 Prophetic Title:\n"${propheticProfile.titleEn}"\n\nSources: ${propheticProfile.sourcesBn.map(localizeRefToEn).join(', ')}`;
+                        navigator.clipboard.writeText(quote);
+                        showToast('Title Copied');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 dark:text-amber-200 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy</span>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -715,7 +789,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 {wives && wives.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {wives.map((wife, wIdx) => {
-                      const hasBio = FAMILY_MEMBER_BIOGRAPHIES[wife] || Object.values(FAMILY_MEMBER_BIOGRAPHIES).find(b => b.nameBn.includes(wife));
+                      const hasBio = isBn && (FAMILY_MEMBER_BIOGRAPHIES[wife] || Object.values(FAMILY_MEMBER_BIOGRAPHIES).find(b => b.nameBn.includes(wife)));
                       return (
                         <span
                           key={wIdx}
@@ -902,37 +976,41 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           {/* ========================================================================= */}
           {/* SECTION 6: QURANIC VERSES REVEALED IN THEIR HONOR                         */}
           {/* ========================================================================= */}
-          {activeSahaba.quranRefBn && activeSahaba.quranRefBn.length > 0 && (
+          {activeQuranRefs.length > 0 && (
             <div className={`p-5 rounded-2xl border space-y-3 ${isDay ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950' : 'bg-[#081f19] border-emerald-500/30 text-emerald-100'}`}>
               <h4 className="font-black text-xs sm:text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-emerald-500" />
                 <span>{isBn ? 'পবিত্র কুরআনের আয়াত ও সুসংবাদ' : 'Quranic Verses Revealed in Their Honor'}</span>
               </h4>
               <div className="space-y-3">
-                {activeSahaba.quranRefBn.map((qr, qIdx) => (
+                {activeQuranRefs.map((qr, qIdx) => (
                   <div key={qIdx} className={`p-4 rounded-xl border space-y-2 ${isDay ? 'bg-white border-emerald-200' : 'bg-[#061813] border-emerald-500/30'}`}>
                     <div className="flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                      <span>{qr.surah} • {isBn ? 'আয়াত:' : 'Verse:'} {qr.verse}</span>
+                      <span>{isBn ? qr.surah : localizeRefToEn(qr.surah)} • {isBn ? 'আয়াত:' : 'Verse:'} {formatNum(qr.verse)}</span>
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => handleCopyQuran(qr)}
                           className="px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
-                          title="আয়াত ও অনুবাদ কপি করুন"
+                          title={isBn ? 'আয়াত ও অনুবাদ কপি করুন' : 'Copy Verse & Translation'}
                         >
                           <Copy className="w-3 h-3" />
-                          <span>কপি</span>
+                          <span>{isBn ? 'কপি' : 'Copy'}</span>
                         </button>
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">القرآن الكريم</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
+                          {isBn ? 'আল-কুরআন' : isAr ? 'القرآن الكريم' : 'Holy Quran'}
+                        </span>
                       </div>
                     </div>
-                    {qr.arabic && (
+                    {isAr && qr.arabic && (
                       <p className="font-arabic text-right text-base sm:text-lg leading-loose font-bold text-emerald-800 dark:text-emerald-300">
                         {qr.arabic}
                       </p>
                     )}
-                    <p className="text-xs leading-relaxed opacity-95">
-                      "{isBn ? qr.translationBn : (qr.translationEn || qr.translationBn)}"
-                    </p>
+                    {!isAr && (
+                      <p className="text-xs leading-relaxed opacity-95">
+                        "{isBn ? qr.translationBn : qr.translationEn}"
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -942,32 +1020,34 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           {/* ========================================================================= */}
           {/* SECTION 7: AUTHENTIC HADITH PRAISES & TESTIMONIES                         */}
           {/* ========================================================================= */}
-          {activeSahaba.hadithPraiseBn && activeSahaba.hadithPraiseBn.length > 0 && (
+          {activeHadithPraises.length > 0 && (
             <div className={`p-5 rounded-2xl border space-y-3 ${isDay ? 'bg-teal-50/60 border-teal-200 text-teal-950' : 'bg-[#071d22] border-teal-500/30 text-teal-100'}`}>
               <h4 className="font-black text-xs sm:text-sm text-teal-700 dark:text-teal-300 flex items-center gap-2">
                 <Quote className="w-4 h-4 text-teal-500" />
                 <span>{isBn ? 'সহিহ হাদিসে রাসুল (সা.)-এর সুসংবাদ ও প্রশংসা' : 'Prophetic Praises & Authentic Hadiths'}</span>
               </h4>
               <div className="space-y-3">
-                {activeSahaba.hadithPraiseBn.map((hp, hIdx) => (
+                {activeHadithPraises.map((hp, hIdx) => (
                   <div key={hIdx} className={`p-4 rounded-xl border space-y-2 ${isDay ? 'bg-white border-teal-200' : 'bg-[#05171b] border-teal-500/30'}`}>
-                    {hp.arabic && (
+                    {isAr && hp.arabic && (
                       <p className="font-arabic text-right text-base sm:text-lg leading-loose font-bold text-teal-800 dark:text-teal-300">
                         {hp.arabic}
                       </p>
                     )}
-                    <p className="text-xs leading-relaxed opacity-95 font-medium">
-                      "{isBn ? hp.textBn : (hp.textEn || hp.textBn)}"
-                    </p>
+                    {!isAr && (
+                      <p className="text-xs leading-relaxed opacity-95 font-medium">
+                        "{isBn ? hp.textBn : hp.textEn}"
+                      </p>
+                    )}
                     <div className="flex items-center justify-between text-[11px] font-bold text-teal-600 dark:text-teal-400 pt-1 border-t border-teal-100 dark:border-teal-900/30">
-                      <span>— {hp.source}</span>
+                      <span>— {isBn ? hp.source : localizeRefToEn(hp.source)}</span>
                       <button
                         onClick={() => handleCopyHadith(hp)}
                         className="px-2 py-0.5 rounded-md bg-teal-500/15 hover:bg-teal-500/30 text-teal-700 dark:text-teal-300 font-bold text-[10px] flex items-center gap-1 transition cursor-pointer"
-                        title="হাদীসটি কপি করুন"
+                        title={isBn ? 'হাদীসটি কপি করুন' : 'Copy Hadith'}
                       >
                         <Copy className="w-3 h-3" />
-                        <span>কপি</span>
+                        <span>{isBn ? 'কপি' : 'Copy'}</span>
                       </button>
                     </div>
                   </div>
@@ -1038,7 +1118,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           </button>
 
           <span className="text-xs font-black text-amber-500 text-center">
-            #{activeSahaba.rank} / {SAHABA_DATABASE.length}
+            #{formatNum(activeSahaba.rank)} / {formatNum(SAHABA_DATABASE.length)}
           </span>
 
           <button
@@ -1146,7 +1226,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200'
                 : 'bg-emerald-950/80 text-amber-300 border-emerald-700/60 hover:bg-emerald-900'
             }`}
-            title="হায়াতুস সাহাবা প্রামাণ্য গ্রন্থমালা"
+            title={isBn ? 'হায়াতুস সাহাবা প্রামাণ্য গ্রন্থমালা' : 'Hayatus Sahaba Master Bibliography'}
           >
             <BookOpen className="w-3.5 h-3.5 text-amber-500" />
             <span>{isBn ? 'সাহাবা গ্রন্থমালা' : 'Bibliography'}</span>
@@ -1160,7 +1240,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                   ? 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
                   : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
               }`}
-              title="Back to Hub"
+              title={isBn ? 'ফিরে যান' : 'Back to Hub'}
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
@@ -1171,7 +1251,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         <div className="w-full sm:w-56 space-y-1">
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-emerald-300">
             <span>{isBn ? 'পঠন অগ্রগতি' : 'Reading Progress'}</span>
-            <span className="font-mono">{completedCount}/{totalSahaba} ({progressPercentage}%)</span>
+            <span className="font-mono">{formatNum(completedCount)}/{formatNum(totalSahaba)} ({formatNum(progressPercentage)}%)</span>
           </div>
           <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-emerald-950/80 overflow-hidden">
             <div
@@ -1193,14 +1273,14 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-emerald-100 text-xs font-semibold backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>{isBn ? 'حياة الصحابة رضي الله عنهم • হায়াতুস সাহাবা' : 'Hayatus Sahaba • حياة الصحابة رضي الله عنهم'}</span>
+            <span>{isBn ? 'হায়াতুস সাহাবা' : isAr ? 'حياة الصحابة رضي الله عنهم' : 'Hayatus Sahaba'}</span>
           </div>
           <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30">
-            {totalSahaba} {isBn ? 'জন সাহাবি' : 'Companions'}
+            {isBn ? `${formatNum(totalSahaba)} জন সাহাবি` : `${totalSahaba} Companions`}
           </span>
         </div>
         <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-          {isBn ? `হায়াতুস সাহাবা (${totalSahaba}+ বিশিষ্ট সাহাবির জীবনী)` : `Hayatus Sahaba (${totalSahaba}+ Prominent Biographies)`}
+          {isBn ? `হায়াতুস সাহাবা (${formatNum(totalSahaba)}+ বিশিষ্ট সাহাবির জীবনী)` : `Hayatus Sahaba (${totalSahaba}+ Prominent Biographies)`}
         </h2>
         <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
           {isBn
@@ -1276,29 +1356,28 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="w-6 h-6 rounded-lg bg-amber-500 text-black flex items-center justify-center font-black text-xs shrink-0">
-                        {pt.no}
+                        {formatNum(pt.no)}
                       </span>
                       <h4 className="font-black text-sm text-emerald-800 dark:text-emerald-300 truncate">
-                        {pt.nameBn}
+                        {isBn ? pt.nameBn : isAr ? pt.nameAr : pt.nameEn}
                       </h4>
                     </div>
-                    <span className="font-arabic text-xs font-bold text-amber-500 shrink-0">
-                      {pt.titleAr}
-                    </span>
                   </div>
 
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-800 dark:text-amber-300 text-xs font-black">
                     <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    <span>{pt.titleBn}</span>
+                    <span>{isBn ? pt.titleBn : isAr ? pt.titleAr : pt.titleEn}</span>
                   </div>
 
-                  <p className="text-xs opacity-90 line-clamp-2 leading-relaxed">
-                    {pt.reasonBn}
-                  </p>
+                  {isBn && (
+                    <p className="text-xs opacity-90 line-clamp-2 leading-relaxed">
+                      {pt.reasonBn}
+                    </p>
+                  )}
 
                   <div className="pt-2 border-t border-slate-200/50 dark:border-teal-900/50 flex items-center justify-between text-[11px]">
                     <span className="opacity-75 truncate max-w-[200px]">
-                      📖 {pt.sourcesBn[0]}
+                      📖 {isBn ? pt.sourcesBn[0] : localizeRefToEn(pt.sourcesBn[0])}
                     </span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                       <span>{isBn ? 'বিস্তারিত পড়ুন' : 'Read'}</span>
@@ -1323,12 +1402,12 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <div>
               <h3 className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400">
                 {searchQuery
-                  ? (isBn ? `অনুসন্ধানের ফলাফল (${filteredSahaba.length} জন)` : `Search Results (${filteredSahaba.length})`)
-                  : (isBn ? `ক্যাটাগরির ফলাফল (${filteredSahaba.length} জন)` : `Category Results (${filteredSahaba.length})`)}
+                  ? (isBn ? `অনুসন্ধানের ফলাফল (${formatNum(filteredSahaba.length)} জন)` : `Search Results (${filteredSahaba.length})`)
+                  : (isBn ? `ক্যাটাগরির ফলাফল (${formatNum(filteredSahaba.length)} জন)` : `Category Results (${filteredSahaba.length})`)}
               </h3>
               {searchQuery && (
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  "{searchQuery}" এর জন্য ফলাফল দেখানো হচ্ছে
+                  {isBn ? `"${searchQuery}" এর জন্য ফলাফল দেখানো হচ্ছে` : `Showing results for "${searchQuery}"`}
                 </p>
               )}
             </div>
@@ -1372,10 +1451,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="font-mono font-bold text-amber-500">
-                          #{sahaba.rank}
-                        </span>
-                        <span className="font-arabic font-bold text-slate-400">
-                          {sahaba.nameAr}
+                          #{formatNum(sahaba.rank)}
                         </span>
                       </div>
 
@@ -1386,7 +1462,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                       {hasProphetic && proProfile && (
                         <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-black border border-amber-400/30">
                           <span>👑</span>
-                          <span className="truncate">{proProfile.titleBn}</span>
+                          <span className="truncate">{isBn ? proProfile.titleBn : isAr ? proProfile.titleAr : proProfile.titleEn}</span>
                         </div>
                       )}
 
@@ -1420,7 +1496,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <span className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black">📖</span>
             <div>
               <h3 className="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400">
-                {isBn ? 'সূচিপত্র (Table of Contents)' : 'Table of Contents (TOC)'}
+                {isBn ? 'সূচিপত্র' : isAr ? 'فهرس المحتويات' : 'Table of Contents'}
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-teal-300">
                 {isBn ? 'যেকোনো সাহাবি স্পর্শ করে সম্পূর্ণ অধ্যায় পড়ুন' : 'Tap any companion to read full chapter'}
@@ -1456,11 +1532,11 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xl shrink-0">{catMeta.icon}</span>
                     <h4 className="font-extrabold text-xs sm:text-sm text-amber-700 dark:text-amber-300 truncate">
-                      {isBn ? catMeta.titleBn : catMeta.titleEn}
+                      {isBn ? catMeta.titleBn : isAr ? catMeta.titleAr : catMeta.titleEn}
                     </h4>
                   </div>
                   <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
-                    {list.length} {isBn ? 'জন' : ''}
+                    {formatNum(list.length)}{isBn ? ' জন' : ''}
                   </span>
                 </div>
 
@@ -1480,7 +1556,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="font-mono text-[11px] text-amber-500 font-bold shrink-0">
-                            {sIdx + 1}.
+                            {formatNum(sIdx + 1)}.
                           </span>
                           <span className="truncate">{name}</span>
                         </div>
@@ -1512,10 +1588,10 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <div className="space-y-1.5 border-b pb-4 border-amber-500/20 pr-8">
               <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[11px] font-black uppercase">
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>{isBn ? 'حياة الصحابة • প্রামাণ্য গ্রন্থ ও উৎসপঞ্জি' : 'Hayatus Sahaba • Master Bibliography'}</span>
+                <span>{isBn ? 'প্রামাণ্য গ্রন্থ ও উৎসপঞ্জি' : isAr ? 'حياة الصحابة • المراجع' : 'Hayatus Sahaba • Master Bibliography'}</span>
               </span>
               <h3 className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400">
-                {isBn ? 'হায়াতুস সাহাবা (رضي الله عنهم) গ্রন্থ ও উৎসের সবিস্তার বিবরণ' : 'Hayatus Sahaba Master Bibliography & Sources'}
+                {isBn ? 'হায়াতুস সাহাবা গ্রন্থ ও উৎসের সবিস্তার বিবরণ' : 'Hayatus Sahaba Master Bibliography & Sources'}
               </h3>
               <p className="text-xs opacity-80">
                 {isBn
@@ -1532,8 +1608,8 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 </h4>
                 <p>
                   {isBn
-                    ? 'প্রখ্যাত হাদিস বিশারদ হযরত মাওলানা মুহাম্মদ ইউসুফ কান্ধলভী (র.) ৩ খণ্ডে আরবি ভাষায় সংকলন করেন ‘হায়াতুস সাহাবা’ (حياة الصحابة)। এই গ্রন্থে বিশুদ্ধ ও গ্রহণযোগ্য সহিহ হাদিস, সীরাত গ্রন্থাবলি ও মুহাদ্দিসগণের সনদের আলোকে সাহাবিদের দাওয়াত, ইবাদত, আখলাক, হিজরত, বীরত্ব ও শাহাদাতের বিরল ঘটনাপ্রবাহ সুবিন্যস্তভাবে সংগৃহীত হয়েছে।'
-                    : 'Compiled in 3 volumes in Arabic by the renowned scholar Shaykh Muhammad Yusuf Kandhlawi (RA), "Hayatus Sahaba" documents the companions\' faith, dawah, worship, sacrifices, and character with authentic chains.'}
+                    ? 'প্রখ্যাত হাদিস বিশারদ হযরত মাওলানা মুহাম্মদ ইউসুফ কান্ধলভী (র.) ৩ খণ্ডে আরবি ভাষায় সংকলন করেন ‘হায়াতুস সাহাবা’। এই গ্রন্থে বিশুদ্ধ ও গ্রহণযোগ্য সহিহ হাদিস, সীরাত গ্রন্থাবলি ও মুহাদ্দিসগণের সনদের আলোকে সাহাবিদের দাওয়াত, ইবাদত, আখলাক, হিজরত, বীরত্ব ও শাহাদাতের বিরল ঘটনাপ্রবাহ সুবিন্যস্তভাবে সংগৃহীত হয়েছে।'
+                    : 'Compiled in 3 volumes by the renowned scholar Shaykh Muhammad Yusuf Kandhlawi (RA), "Hayatus Sahaba" documents the companions\' faith, dawah, worship, sacrifices, and character with authentic chains.'}
                 </p>
               </div>
 
@@ -1542,35 +1618,56 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                   <Shield className="w-4 h-4 text-emerald-500" />
                   <span>{isBn ? '২. ক্লাসিক্যাল তথ্যসূত্র ও নির্ভরতা' : '2. Classical Reference Works'}</span>
                 </h4>
-                <ul className="space-y-2 text-xs">
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-500 font-bold">•</span>
-                    <span><strong>سير أعلام النبلاء (সিয়ারু আ‘লামিন নুবালা):</strong> ইমাম আজ-জাহাবি (র.) কর্তৃক সংকলিত সাহাবি ও তাবেয়িদের প্রামাণ্য জীবনীগ্রন্থ।</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-500 font-bold">•</span>
-                    <span><strong>الإصابة في تمييز الصحابة (আল-ইসাবাহ):</strong> হাফেজ ইবনে হাজার আল-আসকালানি (র.)-এর রচিত অনন্য সাহাবি অভিধান।</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-500 font-bold">•</span>
-                    <span><strong>الاستيعاب في معرفة الأصحاب (আল-ইস্তিয়াব):</strong> ইমাম ইবনে আবদিল বার (র.)-এর প্রাচীনতম প্রামাণ্য সংকলন।</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-emerald-500 font-bold">•</span>
-                    <span><strong>হাদিস শরিফ:</strong> সহিহ বুখারি, সহিহ মুসলিম, জামে আত-তিরমিজি, সুনানে আবু দাউদ ও মুসনাদে আহমাদ।</span>
-                  </li>
-                </ul>
+                {isBn ? (
+                  <ul className="space-y-2 text-xs">
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span><strong>সিয়ারু আ‘লামিন নুবালা:</strong> ইমাম আজ-জাহাবি (র.) কর্তৃক সংকলিত সাহাবি ও তাবেয়িদের প্রামাণ্য জীবনীগ্রন্থ।</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span><strong>আল-ইসাবাহ ফি তাময়ীযিস সাহাবাহ:</strong> হাফেজ ইবনে হাজার আল-আসকালানি (র.)-এর রচিত অনন্য সাহাবি অভিধান।</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span><strong>আল-ইস্তিয়াব ফি মা‘রিফাতিল আসহাব:</strong> ইমাম ইবনে আবদিল বার (র.)-এর প্রাচীনতম প্রামাণ্য সংকলন।</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span><strong>হাদিস শরিফ:</strong> সহিহ বুখারি, সহিহ মুসলিম, জামে আত-তিরমিজি, সুনানে আবু দাউদ ও মুসনাদে আহমাদ।</span>
+                    </li>
+                  </ul>
+                ) : (
+                  <ul className="space-y-2 text-xs">
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span><strong>Siyar A'lam al-Nubala:</strong> Classical biographical encyclopedia authored by Imam adh-Dhahabi (RA).</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span><strong>Al-Isabah fi Tamyiz as-Sahabah:</strong> Authoritative lexicon of the Companions by Hafiz Ibn Hajar al-Asqalani (RA).</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span><strong>Al-Isti'ab fi Ma'rifat al-Ashab:</strong> Foundational Companion compilation by Imam Ibn Abd al-Barr (RA).</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span><strong>Hadith Collections:</strong> Sahih al-Bukhari, Sahih Muslim, Jami at-Tirmidhi, Sunan Abu Dawud, and Musnad Ahmad.</span>
+                    </li>
+                  </ul>
+                )}
               </div>
 
               <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-blue-50/60 border-blue-200' : 'bg-[#081926] border-blue-500/30'}`}>
                 <h4 className="font-extrabold text-blue-600 dark:text-blue-300 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-blue-500" />
-                  <span>{isBn ? '৩. অ্যাপ অ্যাপ্লেটের মূল বৈশিষ্ট্য' : '3. Key Applet Features'}</span>
+                  <span>{isBn ? '৩. মূল বৈশিষ্ট্য' : '3. Key Features'}</span>
                 </h4>
                 <p>
                   {isBn
-                    ? 'Zikr+ অ্যাপের হায়াতুস সাহাবা বিভাগে মোট ১০৭ জন মর্যাদাবান সাহাবির র‍্যাংকভিত্তিক জীবনচরিত, পরিবার (পিতা, মাতা, সহধর্মিণী ও সন্তানগণ), ইসলাম গ্রহণের আবেগঘন কাহিনী, বীরত্বপূর্ণ অবদান, পবিত্র কুরআনের আয়াত ও সহিহ হাদিসের সুসংবাদ সন্নিবেশিত করা হয়েছে।'
-                    : 'Features comprehensive biographies of 107 companions categorized into Rashidun, Ashara Mubashshara, Pioneers, Commanders, Scholars, Ansar, and Sahabiyyat with full family trees and authentic Hadith praises.'}
+                    ? `হায়াতুস সাহাবা বিভাগে মোট ${formatNum(totalSahaba)} জন মর্যাদাবান সাহাবির ক্রমভিত্তিক জীবনচরিত, পরিবার (পিতা, মাতা, সহধর্মিণী ও সন্তানগণ), ইসলাম গ্রহণের আবেগঘন কাহিনী, বীরত্বপূর্ণ অবদান, পবিত্র কুরআনের আয়াত ও সহিহ হাদিসের সুসংবাদ সন্নিবেশিত করা হয়েছে।`
+                    : `Features comprehensive biographies of ${totalSahaba} companions categorized into Rashidun, Ashara Mubashshara, Pioneers, Commanders, Scholars, Ansar, Beloved Companions, and Sahabiyyat with family trees and authentic Hadith praises.`}
                 </p>
               </div>
             </div>

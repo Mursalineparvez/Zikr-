@@ -121,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title={selectedLanguage === 'bn' ? 'অফলাইন মোড সক্রিয়' : 'Offline mode active'}
               >
                 <WifiOff className="w-3 h-3 text-amber-300" />
-                <span className="hidden sm:inline">Offline</span>
+                <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'অফলাইন' : selectedLanguage === 'ar' ? 'غير متصل' : 'Offline'}</span>
               </div>
             )}
           </div>
@@ -155,12 +155,27 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Live Gregorian Date */}
           <div className="text-slate-500 font-semibold text-xs whitespace-nowrap shrink-0">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            {new Date().toLocaleDateString(
+              selectedLanguage === 'bn'
+                ? 'bn-BD'
+                : selectedLanguage === 'ar'
+                ? 'ar-SA'
+                : selectedLanguage === 'ur'
+                ? 'ur-PK'
+                : selectedLanguage === 'hi'
+                ? 'hi-IN'
+                : selectedLanguage === 'id'
+                ? 'id-ID'
+                : selectedLanguage === 'tr'
+                ? 'tr-TR'
+                : 'en-US',
+              {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              }
+            )}
           </div>
         </div>
       </div>

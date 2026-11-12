@@ -1837,7 +1837,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                 <BookOpen className="w-6 h-6 text-amber-500" />
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-amber-900 dark:text-amber-300">
-                    {isBn ? 'প্রামাণ্য সীরাত গ্রন্থমালা (Primary Bibliography & Sources)' : 'Primary Seerah Bibliography & Sources'}
+                    {isBn ? 'প্রামাণ্য সীরাত গ্রন্থমালা' : 'Primary Seerah Bibliography & Sources'}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-emerald-300/80">
                     {isBn ? 'সিরাতুন নবী (সা.) বিশ্বকোষের তথ্যসূত্রে ব্যবহৃত মূল সিরাত গ্রন্থ তালিকা' : 'Primary classical reference texts used in the Seerat-un-Nabi encyclopedia.'}

@@ -173,8 +173,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <Download className="w-4 h-4 stroke-[2.5]" />
           <span>
             {isInstalled
-              ? (selectedLanguage === 'bn' ? 'অ্যাপটি ইতিমধ্যে ইনস্টল আছে ✓ (নির্দেশিকা)' : 'App Installed ✓ (View Guide)')
-              : (selectedLanguage === 'bn' ? 'ফোনে ইনস্টল করুন (Install App)' : 'Install App on Device')}
+              ? (selectedLanguage === 'bn' ? 'অ্যাপটি ইতিমধ্যে ইনস্টল আছে ✓' : 'App Installed ✓ (View Guide)')
+              : (selectedLanguage === 'bn' ? 'ফোনে ইনস্টল করুন' : 'Install App on Device')}
           </span>
         </button>
       </div>
@@ -282,7 +282,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">
-                {selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন (Voice Reciter)' : 'Voice Recitation Gender'}
+                {selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন' : 'Voice Recitation Gender'}
               </h3>
               <p className="text-xs text-emerald-300/80">
                 {selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ (গভীর) বা নারী কণ্ঠ (সুমধুর) তেলাওয়াত নির্বাচন করুন' : 'Choose Male baritone or Female melodious voice'}
@@ -347,12 +347,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {isPlayingSample ? (
               <>
                 <Square className="w-3.5 h-3.5 fill-current" />
-                <span>{selectedLanguage === 'bn' ? 'থামুন (Stop)' : 'Stop Sample'}</span>
+                <span>{selectedLanguage === 'bn' ? 'থামুন' : 'Stop Sample'}</span>
               </>
             ) : (
               <>
                 <Play className="w-3.5 h-3.5 fill-current" />
-                <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন (Test Voice)' : 'Play Sample Voice'}</span>
+                <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন' : 'Play Sample Voice'}</span>
               </>
             )}
           </button>

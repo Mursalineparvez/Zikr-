@@ -33,7 +33,10 @@ const AraberGotroByaktittoView = React.lazy(() => import('./AraberGotroByaktitto
 const Nobi24HoursView = React.lazy(() => import('./Nobi24HoursView').then((m) => ({ default: m.Nobi24HoursView })));
 const ProfileModal = React.lazy(() => import('./ProfileModal').then((m) => ({ default: m.ProfileModal })));
 
-const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
+const toBnDigits = (num: number | string) =>
+  String(num).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+
+const SubViewFallback: React.FC<{ isDay: boolean; selectedLanguage?: ZikrLanguage }> = ({ isDay, selectedLanguage = 'bn' }) => (
   <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
     <div className={`w-8 h-8 border-3 rounded-full animate-spin ${
       isDay ? 'border-teal-600/30 border-t-teal-600' : 'border-emerald-500/30 border-t-emerald-400'
@@ -41,7 +44,7 @@ const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
     <span className={`text-xs font-bold animate-pulse ${
       isDay ? 'text-teal-800' : 'text-emerald-400'
     }`}>
-      লোড হচ্ছে...
+      {selectedLanguage === 'bn' ? 'লোড হচ্ছে...' : selectedLanguage === 'ar' ? 'جارٍ التحميل...' : 'Loading...'}
     </span>
   </div>
 );
@@ -197,22 +200,24 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   const hubItems = [
     {
       id: 'my_account' as OtherSubSection,
-      title: 'My Account',
+      title: selectedLanguage === 'bn' ? 'আমার অ্যাকাউন্ট' : selectedLanguage === 'ar' ? 'حسابي' : 'My Account',
       arabic: 'حسابي والإعدادات',
       desc: selectedLanguage === 'bn'
         ? 'প্রোফাইল, ক্লাউড সিঙ্ক ও সকল অ্যাপ সেটিংস'
+        : selectedLanguage === 'ar'
+        ? 'الملف الشخصي والمزامنة وإعدادات التطبيق'
         : 'Profile, Cloud Sync & App Settings',
       icon: userProfile?.photoUrl ? (
         <img
           src={userProfile.photoUrl}
-          alt={userProfile.name || 'My Account'}
+          alt={userProfile.name || (selectedLanguage === 'bn' ? 'আমার অ্যাকাউন্ট' : 'My Account')}
           className="w-full h-full object-cover rounded-2xl"
         />
       ) : (
         <User className="w-6 h-6 text-[#006A4E] dark:text-emerald-300" />
       ),
       color: 'from-emerald-600/20 to-teal-500/10 border-emerald-500/30',
-      badge: selectedLanguage === 'bn' ? 'প্রোফাইল ও সেটিংস' : 'Profile & Settings',
+      badge: selectedLanguage === 'bn' ? 'প্রোফাইল ও সেটিংস' : selectedLanguage === 'ar' ? 'الحساب والإعدادات' : 'Profile & Settings',
       action: () => {
         setAccountTab('profile');
         handleSelectSub('my_account');
@@ -220,14 +225,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     },
     {
       id: 'saved' as OtherSubSection,
-      title: selectedLanguage === 'bn' ? 'সংরক্ষিত লাইব্রেরি' : 'Saved',
+      title: selectedLanguage === 'bn' ? 'সংরক্ষিত লাইব্রেরি' : selectedLanguage === 'ar' ? 'المحفوظات' : 'Saved',
       arabic: 'المحفوظات',
       desc: selectedLanguage === 'bn'
         ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং নোটসমূহ'
+        : selectedLanguage === 'ar'
+        ? 'الإشارات المرجعية والتمييزات والملاحظات المحفوظة'
         : 'Your bookmarks, highlights, and notes',
       icon: <Bookmark className="w-6 h-6 text-[#006A4E] dark:text-emerald-300" />,
       color: 'from-emerald-600/20 to-teal-500/10 border-emerald-500/30',
-      badge: selectedLanguage === 'bn' ? 'বুকমার্ক ও নোটস' : 'Bookmarks & Notes',
+      badge: selectedLanguage === 'bn' ? 'বুকমার্ক ও নোটস' : selectedLanguage === 'ar' ? 'المحفوظات والملاحظات' : 'Bookmarks & Notes',
     },
     ...(onNavigateToNamaj
       ? [
@@ -440,7 +447,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <User className="w-3.5 h-3.5" />
-          <span>My Account</span>
+          <span>{selectedLanguage === 'bn' ? 'আমার অ্যাকাউন্ট' : selectedLanguage === 'ar' ? 'حسابي' : 'My Account'}</span>
         </button>
 
         <button
@@ -456,7 +463,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           }`}
         >
           <Bookmark className="w-3.5 h-3.5" />
-          <span>{selectedLanguage === 'bn' ? 'সংরক্ষিত (Saved)' : 'Saved'}</span>
+          <span>{selectedLanguage === 'bn' ? 'সংরক্ষিত' : selectedLanguage === 'ar' ? 'المحفوظات' : 'Saved'}</span>
         </button>
 
         <button
@@ -633,13 +640,21 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>المكتبة والمعرفة الإسلامية • Comprehensive Islamic Suite</span>
+              <span>
+                {selectedLanguage === 'bn'
+                  ? 'ইসলামিক জ্ঞান ও আমলের পূর্ণাঙ্গ সমাহার'
+                  : selectedLanguage === 'ar'
+                  ? 'المكتبة والمعرفة الإسلامية'
+                  : selectedLanguage === 'ur'
+                  ? 'اسلامی کتب خانہ اور علم کا خزانہ'
+                  : 'Comprehensive Islamic Suite'}
+              </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              {OTHER_HUB_UI.bannerTitle[selectedLanguage]}
+              {OTHER_HUB_UI.bannerTitle[selectedLanguage] || OTHER_HUB_UI.bannerTitle.en}
             </h2>
             <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-xl">
-              {OTHER_HUB_UI.bannerSub[selectedLanguage]}
+              {OTHER_HUB_UI.bannerSub[selectedLanguage] || OTHER_HUB_UI.bannerSub.en}
             </p>
           </div>
 
@@ -678,7 +693,9 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     : 'Profile & Settings'
                   : item.id === 'saved'
                   ? savedStats.bookmarks + savedStats.highlights + savedStats.notes > 0
-                    ? `${savedStats.bookmarks} ${selectedLanguage === 'bn' ? 'বুকমার্ক' : 'Bookmarks'} · ${savedStats.highlights} ${selectedLanguage === 'bn' ? 'হাইলাইট' : 'Highlights'} · ${savedStats.notes} ${selectedLanguage === 'bn' ? 'নোট' : 'Notes'}`
+                    ? selectedLanguage === 'bn'
+                      ? `${toBnDigits(savedStats.bookmarks)} বুকমার্ক · ${toBnDigits(savedStats.highlights)} হাইলাইট · ${toBnDigits(savedStats.notes)} নোট`
+                      : `${savedStats.bookmarks} Bookmarks · ${savedStats.highlights} Highlights · ${savedStats.notes} Notes`
                     : selectedLanguage === 'bn'
                     ? 'বুকমার্ক, হাইলাইট ও নোটস'
                     : 'Bookmarks, Highlights & Notes'
@@ -776,7 +793,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         </div>
       )}
 
-      <React.Suspense fallback={<SubViewFallback isDay={isDay} />}>
+      <React.Suspense fallback={<SubViewFallback isDay={isDay} selectedLanguage={selectedLanguage} />}>
         {/* Sub-view: Nobi Karim (SA) 24 Hours Sunnah Guideline */}
         {activeSub === 'nobi_24_hours' && (
           <Nobi24HoursView

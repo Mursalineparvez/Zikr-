@@ -228,9 +228,9 @@ export const ARABER_GOTRO_TRANSLATIONS: Record<'bn' | 'en', UIStringDict> = {
     searchPlaceholderGlobal: 'গোত্র, সাহাবি, উপাধি বা হাদিস সূত্র অনুসন্ধান...',
     searchPlaceholderToc: 'সূচিপত্রে খুঁজুন (যেমন: হাশিম, উমর, খালিদ, কাবার চাবি, সিকায়া, খাযরাজ, বদর, তায়েফ...)',
     fontSizeNormal: 'স্বাভাবিক',
-    fontSizeLarge: 'বড় (A+)',
+    fontSizeLarge: 'বড় (ক+)',
 
-    tocTitle: 'সূচিপত্র (Table of Contents)',
+    tocTitle: 'সূচিপত্র',
     tocSubtitle: 'যেকোনো গোত্র বা চার্টে স্পর্শ করে সরাসরি সম্পূর্ণ অধ্যায় পড়ুন',
     allTopicsBtn: 'সকল বিষয় ✕',
     allChartsBtn: '📊 সকল চার্ট',
@@ -301,7 +301,7 @@ export const ARABER_GOTRO_TRANSLATIONS: Record<'bn' | 'en', UIStringDict> = {
     readClanSeerahBtn: 'এই গোত্রের সীরাত বিবরণী পড়ুন',
 
     galleryTabQurayshRoles: '🏛️ কুরাইশ দায়িত্ব বণ্টন চার্ট',
-    galleryTabQurayshConvergence: '🌳 কুরাইশ মিলনরেখা (Convergence)',
+    galleryTabQurayshConvergence: '🌳 কুরাইশ মিলনরেখা',
     galleryTabHashimTree: '👑 বনু হাশিম বংশলতিকা চিত্র',
     galleryTabAnsarTree: '🌿 আনসার গোত্র উপশাখা চিত্র',
     galleryTabArabMap: '🧭 বৃহত্তর আরব গোত্র চার্ট',

@@ -551,7 +551,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             {/* 1. Theme Colorways */}
             <div className="space-y-1.5">
               <label className="font-bold text-slate-600 dark:text-slate-300">
-                {selectedLanguage === 'bn' ? 'পৃষ্ঠার থিম (Theme)' : 'Page Theme'}
+                {selectedLanguage === 'bn' ? 'পৃষ্ঠার থিম' : 'Page Theme'}
               </label>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
@@ -579,7 +579,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             {/* 2. Arabic Font Family */}
             <div className="space-y-1.5">
               <label className="font-bold text-slate-600 dark:text-slate-300">
-                {selectedLanguage === 'bn' ? 'আরবি ফন্ট (Font)' : 'Arabic Script'}
+                {selectedLanguage === 'bn' ? 'আরবি ফন্ট' : 'Arabic Script'}
               </label>
               <div className="grid grid-cols-3 gap-1">
                 {[
@@ -608,7 +608,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             {/* 3. Font Size */}
             <div className="space-y-1.5">
               <label className="font-bold text-slate-600 dark:text-slate-300">
-                {selectedLanguage === 'bn' ? 'ফন্ট সাইজ (Size)' : 'Font Size'}
+                {selectedLanguage === 'bn' ? 'ফন্ট সাইজ' : 'Font Size'}
               </label>
               <div className="grid grid-cols-4 gap-1">
                 {[
@@ -638,7 +638,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             {/* 4. Ruled Notebook Lines Toggle */}
             <div className="space-y-1.5">
               <label className="font-bold text-slate-600 dark:text-slate-300">
-                {selectedLanguage === 'bn' ? 'খাতাসদৃশ দাগ (Ruled Lines)' : 'Notebook Lines'}
+                {selectedLanguage === 'bn' ? 'খাতাসদৃশ দাগ' : 'Notebook Lines'}
               </label>
               <button
                 onClick={() => {
@@ -651,7 +651,11 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                     : 'bg-slate-100 dark:bg-[#0f2e26] border-slate-300 dark:border-emerald-800 text-slate-600 dark:text-slate-300'
                 }`}
               >
-                <span>{showRuledLines ? '✓ দাগ চালু (Lined)' : '✕ দাগ বন্ধ (Plain)'}</span>
+                <span>
+                  {showRuledLines
+                    ? selectedLanguage === 'bn' ? '✓ দাগ চালু' : '✓ Lined'
+                    : selectedLanguage === 'bn' ? '✕ দাগ বন্ধ' : '✕ Plain'}
+                </span>
                 <span className="text-xs">✏️</span>
               </button>
             </div>

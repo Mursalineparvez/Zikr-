@@ -712,7 +712,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
               <div className="flex items-center gap-2">
                 <Compass className={`w-4 h-4 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
                 <h2 className={`text-xs sm:text-sm font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                  {isBn ? '২৪ ঘণ্টার ভারসাম্যপূর্ণ জীবনবণ্টন (Life Balance)' : '24-Hour Prophetic Life Balance'}
+                  {isBn ? '২৪ ঘণ্টার ভারসাম্যপূর্ণ জীবনবণ্টন' : '24-Hour Prophetic Life Balance'}
                 </h2>
               </div>
               <span className={`text-[11px] font-mono font-semibold tabular-nums ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
