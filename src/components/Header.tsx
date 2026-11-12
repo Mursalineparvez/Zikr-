@@ -1,24 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  Smartphone,
-  BookOpen,
-  Clock,
-  Award,
-  User,
-  X,
   Sparkles,
-  Globe,
   Settings,
-  ChevronDown,
-  Check,
   WifiOff,
-  Layers,
 } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from '../hooks/usePWAInstall';
 import { NavModule, ThemeMode, ZikrLanguage, UserProfile } from '../types';
-import { NAV_TRANSLATIONS } from '../utils/navTranslations';
-import { SUPPORTED_LANGUAGES } from '../utils/constants';
-import { prefetchView } from '../utils/viewPreloader';
 
 const InstallAppModal = React.lazy(() =>
   import('./InstallAppModal').then((m) => ({ default: m.InstallAppModal }))
@@ -58,24 +45,6 @@ export const Header: React.FC<HeaderProps> = ({
   const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showInstallModal, setShowInstallModal] = useState(false);
-  const [isLangOpen, setIsLangOpen] = useState(false);
-  const langDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
-        setIsLangOpen(false);
-      }
-    };
-    if (isLangOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isLangOpen]);
-
-  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage) || SUPPORTED_LANGUAGES[0];
 
   const handleInstallClick = async () => {
     if (isInstallable) {
@@ -145,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Right Action Icons: Flag Dropdown, Settings Gear, Profile Pill */}
+          {/* Right Action Icon: Settings Gear (Profile & Language are inside Settings) */}
           <div className="flex items-center gap-2">
             {!isOnline && (
               <div
@@ -157,91 +126,16 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             )}
 
-            {/* 1. Flag Language Dropdown Pill */}
-            <div className="relative" ref={langDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setIsLangOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-white/20 bg-white/15 hover:bg-white/25 text-white text-xs font-semibold transition active:scale-95 cursor-pointer shadow-xs"
-                title="Change Language"
-              >
-                <Globe className="w-3.5 h-3.5 text-emerald-200" />
-                <span className="text-sm leading-none">{currentLangObj.flag}</span>
-                <ChevronDown className={`w-3 h-3 text-white/80 transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isLangOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 max-h-80 overflow-y-auto rounded-2xl border border-emerald-600/30 bg-[#005740] text-white shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150 scrollbar-thin">
-                  <div className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 text-emerald-300 border-b border-emerald-600/40 mb-1 flex items-center justify-between">
-                    <span>App Language</span>
-                    <Globe className="w-3 h-3" />
-                  </div>
-                  <div className="space-y-1">
-                    {SUPPORTED_LANGUAGES.map((langItem) => {
-                      const isSelected = selectedLanguage === langItem.code;
-                      return (
-                        <button
-                          key={langItem.code}
-                          type="button"
-                          onClick={() => {
-                            onSelectLanguage(langItem.code);
-                            setIsLangOpen(false);
-                          }}
-                          className={`w-full px-2.5 py-1.5 rounded-xl text-left text-xs font-bold transition flex items-center justify-between gap-2 cursor-pointer ${
-                            isSelected
-                              ? 'bg-emerald-400 text-slate-950 shadow-sm font-extrabold'
-                              : 'hover:bg-white/10 text-emerald-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-base shrink-0">{langItem.flag}</span>
-                            <span className="truncate">{langItem.nativeName}</span>
-                          </div>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-slate-950 shrink-0 stroke-[3]" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 2. Settings Gear Button */}
+            {/* Settings Gear Button (contains Profile, Language & App Settings) */}
             {onOpenProfile && (
               <button
                 type="button"
                 onClick={() => onOpenProfile('settings')}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/20 bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition active:scale-95 cursor-pointer relative shadow-xs"
-                title="Settings"
+                className="w-9 h-9 rounded-full border border-white/25 bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition active:scale-95 cursor-pointer relative shadow-xs"
+                title={selectedLanguage === 'bn' ? 'সেটিংস ও প্রোফাইল' : 'Settings & Profile'}
+                aria-label="Settings"
               >
                 <Settings className="w-4 h-4 text-emerald-100" />
-              </button>
-            )}
-
-            {/* 3. User Profile Pill Button (showing "Md." or initials/name like reference screenshot) */}
-            {onOpenProfile && (
-              <button
-                type="button"
-                onClick={() => onOpenProfile('profile')}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/30 bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition active:scale-95 cursor-pointer shadow-xs"
-                title={userProfile?.isSignedIn ? `Profile: ${userProfile.name}` : 'Sign In'}
-              >
-                <div className="w-5 h-5 rounded-full overflow-hidden bg-emerald-300/30 text-emerald-100 flex items-center justify-center border border-white/40 shrink-0 text-[10px]">
-                  {userProfile?.isSignedIn && userProfile?.photoUrl ? (
-                    <img
-                      src={userProfile.photoUrl}
-                      alt={userProfile.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span>{userProfile?.isSignedIn ? (userProfile.name?.slice(0, 2) || 'Md') : 'Md'}</span>
-                  )}
-                </div>
-                <span className="truncate max-w-[70px] sm:max-w-[90px] text-xs font-bold text-white">
-                  {userProfile?.isSignedIn
-                    ? userProfile?.name?.split(' ')[0] || 'Md.'
-                    : 'Md.'}
-                </span>
               </button>
             )}
           </div>

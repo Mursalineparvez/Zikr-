@@ -73,8 +73,10 @@ import {
   CheckCircle2,
   Download,
   WifiOff,
+  Pencil,
 } from 'lucide-react';
 
+import { addSavedHighlight } from '../utils/savedItems';
 import { getFormattedTransliteration, normalizeArabicPronunciationBn } from '../utils/transliterationHelper';
 import { QuranAyahCardModal } from './QuranAyahCardModal';
 import { MushafArabicView, MADANI_SURAH_PAGES } from './MushafArabicView';
@@ -373,6 +375,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [selectedTafsirId, setSelectedTafsirId] = useState<number>(165); // Default: Tafsir Ibn Kathir
   const [tafsirFontSize, setTafsirFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
   const [isTafsirCopied, setIsTafsirCopied] = useState(false);
+  const [isTafsirHighlighted, setIsTafsirHighlighted] = useState(false);
   const tafsirScrollRef = useRef<HTMLDivElement | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
@@ -4009,6 +4012,34 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           isAyahBookmarked(surahDetail.number, activeTafsirAyah.number) ? 'fill-current' : ''
                         }`}
                       />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const selectedText = typeof window !== 'undefined' ? window.getSelection()?.toString().trim() : '';
+                        const textToHighlight = selectedText || tafsirContent?.text?.slice(0, 260) || activeTafsirAyah.translation;
+                        if (textToHighlight) {
+                          addSavedHighlight(
+                            textToHighlight,
+                            `${surahDetail.englishName} (${surahDetail.number}:${activeTafsirAyah.number}) • ${tafsirContent?.author || 'Tafsir'}`,
+                            'amber'
+                          );
+                          setIsTafsirHighlighted(true);
+                          if (soundEnabled) soundHaptics.playMilestone();
+                          setTimeout(() => setIsTafsirHighlighted(false), 2000);
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 ${
+                        isTafsirHighlighted
+                          ? 'bg-amber-500 text-slate-950 border-amber-400'
+                          : isDay
+                          ? 'bg-slate-100 hover:bg-amber-50 border-slate-200 text-slate-700'
+                          : 'bg-[#07131b] hover:bg-[#152e3c] border-[#162c3a] text-amber-300'
+                      }`}
+                      title={selectedLanguage === 'bn' ? 'তাফসীরের নির্বাচিত অংশ হাইলাইট করুন' : 'Highlight selected commentary'}
+                    >
+                      {isTafsirHighlighted ? <Check className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
+                      <span>{isTafsirHighlighted ? (selectedLanguage === 'bn' ? 'সংরক্ষিত' : 'Saved') : (selectedLanguage === 'bn' ? 'হাইলাইট' : 'Highlight')}</span>
                     </button>
 
                     <button

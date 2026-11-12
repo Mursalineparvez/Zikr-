@@ -7,14 +7,15 @@ import {
   Sparkles,
   Layers,
   ChevronRight,
-  Settings,
   Compass,
+  Bookmark,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
-import { NAV_TRANSLATIONS, OTHER_HUB_UI, SETTINGS_UI } from '../utils/appTranslations';
+import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
 import { prefetchView } from '../utils/viewPreloader';
 
 // Code-split sub-views to keep initial app bundle small and startup instantaneous
+const SavedView = React.lazy(() => import('./SavedView').then((m) => ({ default: m.SavedView })));
 const DuaView = React.lazy(() => import('./DuaView').then((m) => ({ default: m.DuaView })));
 const HadithView = React.lazy(() => import('./HadithView').then((m) => ({ default: m.HadithView })));
 const KitabView = React.lazy(() => import('./KitabView').then((m) => ({ default: m.KitabView })));
@@ -22,7 +23,6 @@ const DailyTabligView = React.lazy(() => import('./DailyTabligView').then((m) =>
 const AllahNamesView = React.lazy(() => import('./AllahNamesView').then((m) => ({ default: m.AllahNamesView })));
 const HajjUmrahView = React.lazy(() => import('./HajjUmrahView').then((m) => ({ default: m.HajjUmrahView })));
 const HistoryTimelineView = React.lazy(() => import('./HistoryTimelineView').then((m) => ({ default: m.HistoryTimelineView })));
-const SettingsView = React.lazy(() => import('./SettingsView').then((m) => ({ default: m.SettingsView })));
 const ArabianIllustratedMapView = React.lazy(() => import('./ArabianIllustratedMapView').then((m) => ({ default: m.ArabianIllustratedMapView })));
 const IslamicHistoryWarsView = React.lazy(() => import('./IslamicHistoryWarsView').then((m) => ({ default: m.IslamicHistoryWarsView })));
 const HayatusSahabaView = React.lazy(() => import('./HayatusSahabaView').then((m) => ({ default: m.HayatusSahabaView })));
@@ -45,6 +45,7 @@ const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
 
 export type OtherSubSection =
   | 'hub'
+  | 'saved'
   | 'nobi_24_hours'
   | 'seerat_un_nabi'
   | 'hayatus_sahaba'
@@ -60,8 +61,7 @@ export type OtherSubSection =
   | 'hajj_route_map'
   | 'hajj_essentials'
   | 'tablig'
-  | 'allah_names'
-  | 'settings';
+  | 'allah_names';
 
 interface OtherIslamicHubViewProps {
   onAddDuaToCounters: (dua: DuaItem) => void;
@@ -118,6 +118,17 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [activeSub]);
 
   const hubItems = [
+    {
+      id: 'saved' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'সংরক্ষিত (Saved)' : 'Saved',
+      arabic: 'المحفوظات والملاحظات',
+      desc: selectedLanguage === 'bn'
+        ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং ব্যক্তিগত নোটসমূহ এক জায়গায় দেখুন ও সংরক্ষণ করুন'
+        : 'Your bookmarks, highlights, and notes organized in one place.',
+      icon: <Bookmark className="w-6 h-6 text-[#006A4E] dark:text-emerald-400" />,
+      color: 'from-emerald-600/25 via-teal-600/15 to-amber-500/10 border-emerald-500/40',
+      badge: selectedLanguage === 'bn' ? 'বুকমার্ক • হাইলাইট • নোট' : 'Bookmarks • Notes',
+    },
     ...(onNavigateToNamaj
       ? [
           {
@@ -255,15 +266,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       color: 'from-amber-500/15 to-orange-500/10 border-amber-500/30',
       badge: OTHER_HUB_UI.badgeAllahNames[selectedLanguage],
     },
-    {
-      id: 'settings' as OtherSubSection,
-      title: selectedLanguage === 'bn' ? 'সেটিংস ও ভয়েস' : (SETTINGS_UI.title[selectedLanguage] || 'Settings & Voice'),
-      arabic: 'الإعدادات واللغة',
-      desc: selectedLanguage === 'bn' ? 'তেলাওয়াত কণ্ঠ (পুরুষ/নারী), অ্যাপের ভাষা, থিম এবং ব্যাকআপ' : 'Voice recitation (Male/Female), app language, themes, and backups.',
-      icon: <Settings className="w-6 h-6 text-emerald-400" />,
-      color: 'from-emerald-500/15 to-teal-500/10 border-emerald-500/30',
-      badge: selectedLanguage === 'bn' ? 'ভয়েস ও সেটিংস' : 'Voice & Settings',
-    },
   ];
 
   const [, startSubTransition] = React.useTransition();
@@ -320,6 +322,22 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onPointerEnter={() => prefetchView('saved')}
+          onTouchStart={() => prefetchView('saved')}
+          onClick={() => handleSelectSub('saved')}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'saved'
+              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <Bookmark className="w-3.5 h-3.5" />
+          <span>{selectedLanguage === 'bn' ? 'সংরক্ষিত (Saved)' : 'Saved'}</span>
         </button>
 
         <button
@@ -481,22 +499,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           <Sparkles className="w-3.5 h-3.5" />
           <span>{NAV_TRANSLATIONS.allah_names[selectedLanguage]}</span>
         </button>
-
-        <button
-          onPointerEnter={() => prefetchView('settings')}
-          onTouchStart={() => prefetchView('settings')}
-          onClick={() => handleSelectSub('settings')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'settings'
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Settings className="w-3.5 h-3.5" />
-          <span>{selectedLanguage === 'bn' ? 'সেটিংস ও ভয়েস' : (SETTINGS_UI.title[selectedLanguage] || 'Settings & Voice')}</span>
-        </button>
       </div>
 
       {/* Main Content Area */}
@@ -542,14 +544,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     : 'View Routine >'
                   : item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'tablig'
                   ? selectedLanguage === 'bn' ? 'পড়ুন >' : 'Read >'
+                  : item.id === 'saved'
+                  ? selectedLanguage === 'bn' ? 'খুলুন >' : 'Open >'
                   : item.id === 'namaj'
                   ? selectedLanguage === 'bn' ? 'সময় দেখুন >' : 'View >'
-                  : item.id === 'settings'
-                  ? selectedLanguage === 'bn' ? 'সেট করুন >' : 'Set >'
                   : selectedLanguage === 'bn' ? 'দেখুন >' : 'View >';
 
               const subText =
-                item.id === 'nobi_24_hours'
+                item.id === 'saved'
+                  ? selectedLanguage === 'bn' ? 'বুকমার্ক, হাইলাইট ও নোটস' : 'Bookmarks, Highlights & Notes'
+                  : item.id === 'nobi_24_hours'
                   ? selectedLanguage === 'bn'
                     ? 'সুন্নাহ গাইডলাইন'
                     : selectedLanguage === 'ar'
@@ -583,9 +587,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   ? selectedLanguage === 'bn' ? 'হজ ও ওমরাহ' : 'Hajj & Umrah'
                   : item.id === 'tablig'
                   ? selectedLanguage === 'bn' ? 'দাওয়াত ও আমল' : 'Dawah & Amal'
-                  : item.id === 'allah_names'
-                  ? selectedLanguage === 'bn' ? '৯৯টি নাম ও জিকির' : '99 Names'
-                  : selectedLanguage === 'bn' ? 'অ্যাপ সেটিংস' : 'App Settings';
+                  : selectedLanguage === 'bn' ? '৯৯টি নাম ও জিকির' : '99 Names';
 
               return (
                 <div
@@ -761,6 +763,17 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           />
         )}
 
+        {/* Sub-view: Saved (Bookmarks, Highlights & Notes) */}
+        {activeSub === 'saved' && (
+          <SavedView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+            onNavigateToQuran={onNavigateToQuran}
+            onBackToHub={() => setActiveSub('hub')}
+          />
+        )}
+
         {/* Sub-view: Hajj & Umrah Checklist */}
         {activeSub === 'hajj_checklist' && (
           <HajjUmrahView
@@ -769,30 +782,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             selectedLanguage={selectedLanguage}
             voiceGender={settings?.voiceGender || 'male'}
             initialTab="home_journey_hub"
-          />
-        )}
-
-        {/* Sub-view: Settings & Language */}
-        {activeSub === 'settings' && (
-          <SettingsView
-            settings={
-              settings || {
-                theme: 'emerald',
-                themeMode: themeMode,
-                soundEnabled: soundEnabled,
-                vibrationEnabled: true,
-                screenAwake: false,
-                voiceGender: 'male',
-              }
-            }
-            selectedLanguage={selectedLanguage}
-            onSelectLanguage={onSelectLanguage}
-            onUpdateSettings={onUpdateSettings || (() => {})}
-            onGlobalReset={onGlobalReset || (() => {})}
-            onRestoreDefaults={onRestoreDefaults || (() => {})}
-            onExportPdf={onExportPdf || (() => {})}
-            onExportBackupJson={onExportBackupJson || (() => {})}
-            onImportBackupJson={onImportBackupJson || (() => {})}
           />
         )}
       </React.Suspense>

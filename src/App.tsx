@@ -2295,6 +2295,9 @@ export default function App() {
             voiceGender={settings.voiceGender || 'male'}
             onUpdateVoiceGender={(gender) => setSettings((prev) => ({ ...prev, voiceGender: gender }))}
             onOpenWelcomeScreen={() => setShowFirstDownloadWelcome(true)}
+            appSettings={settings}
+            onUpdateSettings={(newSettings) => setSettings((prev) => ({ ...prev, ...newSettings }))}
+            onRestoreDefaults={handleRestoreDefaults}
           />
         )}
 

@@ -24,6 +24,7 @@ type PreloadableView =
   | 'hajj_checklist'
   | 'tablig'
   | 'allah_names'
+  | 'saved'
   | 'settings'
   | 'zikr_modal'
   | 'profile_modal'
@@ -47,6 +48,7 @@ const viewLoaders: Record<PreloadableView, () => Promise<any>> = {
   hajj_checklist: () => import('../components/HajjUmrahView'),
   tablig: () => import('../components/DailyTabligView'),
   allah_names: () => import('../components/AllahNamesView'),
+  saved: () => import('../components/SavedView'),
   settings: () => import('../components/SettingsView'),
   zikr_modal: () => import('../components/ZikrModal'),
   profile_modal: () => import('../components/ProfileModal'),

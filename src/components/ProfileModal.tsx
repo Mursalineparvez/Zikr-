@@ -43,9 +43,12 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Palette,
+  Play,
+  Square,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings } from '../types';
+import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings, AppTheme } from '../types';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { findSavedAccount, saveAccountToRegistry, updateAccountPassword, normalizeIdentifier } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
@@ -137,6 +140,11 @@ interface ProfileModalProps {
   voiceGender?: VoiceGender;
   onUpdateVoiceGender?: (gender: VoiceGender) => void;
   onOpenWelcomeScreen?: () => void;
+  appSettings?: AppSettings;
+  onUpdateSettings?: (newSettings: Partial<AppSettings>) => void;
+  onRestoreDefaults?: () => void;
+  onExportBackupJson?: () => void;
+  onImportBackupJson?: (file: File) => void;
 }
 
 const DEFAULT_AVATARS = [
@@ -179,10 +187,102 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   voiceGender = 'male',
   onUpdateVoiceGender,
   onOpenWelcomeScreen,
+  appSettings,
+  onUpdateSettings,
+  onRestoreDefaults,
+  onExportBackupJson,
+  onImportBackupJson,
 }) => {
   const isDay = themeMode === 'day';
   const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isPlayingSample, setIsPlayingSample] = useState(false);
+
+  const handlePlayVoiceSample = () => {
+    if (isPlayingSample) {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsPlayingSample(false);
+      return;
+    }
+    setIsPlayingSample(true);
+    playArabicVoice(
+      'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّهِ الْعَظِيمِ',
+      voiceGender || 'male',
+      () => {
+        setIsPlayingSample(false);
+      }
+    );
+  };
+
+  const handleDefaultExportBackup = () => {
+    try {
+      const backupData = {
+        settings: appSettings || {
+          theme: 'emerald',
+          themeMode,
+          soundEnabled,
+          vibrationEnabled,
+          screenAwake: false,
+          voiceGender,
+        },
+        savedAt: new Date().toISOString(),
+        version: 'v411_38.1',
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `zikrmate_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDefaultImportBackup = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target?.result as string);
+        if (parsed.settings && onUpdateSettings) {
+          onUpdateSettings(parsed.settings);
+        }
+      } catch (err) {
+        console.error('Failed to import backup JSON', err);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const appearanceThemes: Array<{ id: AppTheme; name: string; desc: string; previewClass: string }> = [
+    {
+      id: 'emerald',
+      name: SETTINGS_UI.themeEmeraldName[selectedLanguage] || 'Serene Emerald',
+      desc: SETTINGS_UI.themeEmeraldDesc[selectedLanguage] || 'Classic Islamic Emerald Green with Gold accents',
+      previewClass: 'from-emerald-900 to-emerald-950 border-emerald-500',
+    },
+    {
+      id: 'midnight',
+      name: SETTINGS_UI.themeMidnightName[selectedLanguage] || 'Midnight Slate',
+      desc: SETTINGS_UI.themeMidnightDesc[selectedLanguage] || 'Deep obsidian night with cool slate accents',
+      previewClass: 'from-slate-900 to-black border-slate-600',
+    },
+    {
+      id: 'teal',
+      name: SETTINGS_UI.themeTealName[selectedLanguage] || 'Ocean Teal',
+      desc: SETTINGS_UI.themeTealDesc[selectedLanguage] || 'Calming Mediterranean deep teal and turquoise',
+      previewClass: 'from-teal-900 to-cyan-950 border-teal-500',
+    },
+    {
+      id: 'gold',
+      name: SETTINGS_UI.themeGoldName[selectedLanguage] || 'Medina Gold',
+      desc: SETTINGS_UI.themeGoldDesc[selectedLanguage] || 'Warm sacred desert gold and amber tones',
+      previewClass: 'from-amber-950 to-yellow-950 border-amber-500',
+    },
+  ];
 
   // PWA Install capabilities inside Settings
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -1178,6 +1278,51 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           {/* TAB 2: SETTINGS */}
           {activeTab === 'settings' && (
             <div className="space-y-4 animate-in fade-in duration-200">
+              {/* 0. Profile & Account Summary Card (Moved inside Settings) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('profile');
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`w-full p-4 rounded-2xl border shadow-sm flex items-center justify-between gap-3 text-left transition active:scale-[0.99] cursor-pointer ${
+                  isDay
+                    ? 'bg-white hover:bg-emerald-50/60 border-slate-200 text-slate-900'
+                    : 'bg-[#0f343c] hover:bg-[#13404a] border-[#1c5763] text-white'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-emerald-500 shadow-xs shrink-0 bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
+                    {userProfile?.isSignedIn && userProfile?.photoUrl ? (
+                      <img src={userProfile.photoUrl} alt={userProfile.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-extrabold text-sm truncate">
+                        {userProfile?.isSignedIn ? (userProfile.name || 'User') : (selectedLanguage === 'bn' ? 'প্রোফাইল ও অ্যাকাউন্ট' : 'Profile & Account')}
+                      </span>
+                      {userProfile?.isSignedIn && (
+                        <span className="p-0.5 rounded-full bg-emerald-600 text-white shrink-0">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-xs truncate ${isDay ? 'text-slate-600' : 'text-emerald-200/80'}`}>
+                      {userProfile?.isSignedIn
+                        ? (userProfile.emailOrPhone || 'Verified Zikr+ Account')
+                        : (selectedLanguage === 'bn' ? 'সাইন-ইন, ক্লাউড সিঙ্ক ও বুকমার্ক' : 'Sign in, Cloud Sync & Bookmarks')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <span>{userProfile?.isSignedIn ? (selectedLanguage === 'bn' ? 'প্রোফাইল' : 'Profile') : (selectedLanguage === 'bn' ? 'সাইন ইন' : 'Sign In')}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </button>
+
               {/* 1. Language Selection (14 World Languages) */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
@@ -1401,20 +1546,277 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => {
-                      playArabicVoice('سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', voiceGender || 'male');
-                    }}
+                    onClick={handlePlayVoiceSample}
                     className={`w-full sm:w-auto px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 transition active:scale-95 cursor-pointer ${
-                      isDay
+                      isPlayingSample
+                        ? 'bg-amber-600 text-white border-amber-500 animate-pulse'
+                        : isDay
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
                         : 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/60'
                     }`}
                   >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন' : 'Test Voice'}</span>
+                    {isPlayingSample ? (
+                      <>
+                        <Square className="w-3.5 h-3.5 fill-current" />
+                        <span>{selectedLanguage === 'bn' ? 'থামুন (Stop)' : 'Stop Sample'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5 fill-current" />
+                        <span>{selectedLanguage === 'bn' ? 'কণ্ঠ শুনুন (Test Voice)' : 'Test Voice'}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
+
+              {/* Appearance Theme Selection (Moved from Other Hub Settings) */}
+              {onUpdateSettings && (
+                <div
+                  className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
+                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    <Palette className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>{SETTINGS_UI.themeTitle[selectedLanguage] || 'Appearance Theme'}</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {appearanceThemes.map((th) => {
+                      const isSelected = (appSettings?.theme || 'emerald') === th.id;
+                      return (
+                        <button
+                          key={th.id}
+                          type="button"
+                          onClick={() => {
+                            onUpdateSettings({ theme: th.id });
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                          className={`p-3 rounded-2xl border text-left transition flex items-center gap-3 bg-gradient-to-br cursor-pointer ${th.previewClass} ${
+                            isSelected
+                              ? 'ring-2 ring-emerald-400 shadow-md'
+                              : 'opacity-80 hover:opacity-100 border-slate-700'
+                          }`}
+                        >
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-emerald-300 bg-emerald-500' : 'border-slate-400'}`}>
+                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-white truncate">{th.name}</div>
+                            <div className="text-[10px] text-slate-300 leading-tight line-clamp-1">{th.desc}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Feedback & Sensory Controls (Audio, Haptics, Screen Wake Lock) */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
+                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2 font-bold text-sm">
+                  <SlidersHorizontal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>{SETTINGS_UI.audioHaptics[selectedLanguage] || 'Feedback & Sensory Controls'}</span>
+                </div>
+
+                <div className={`divide-y text-xs ${isDay ? 'divide-slate-100' : 'divide-teal-900/40'}`}>
+                  {/* Bead Click Audio Toggle */}
+                  {onToggleSound && (
+                    <div className="py-2.5 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-bold text-sm">
+                          {SETTINGS_UI.soundLabel[selectedLanguage] || 'Bead Click Audio'}
+                        </div>
+                        <div className={`text-[11px] ${isDay ? 'text-slate-600' : 'text-emerald-200/75'}`}>
+                          {SETTINGS_UI.soundDesc[selectedLanguage] || 'Synthesized acoustic wooden bead click on every count'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onToggleSound}
+                        className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer shrink-0 ${
+                          soundEnabled ? 'bg-emerald-600' : 'bg-slate-400 dark:bg-slate-700'
+                        }`}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${
+                            soundEnabled ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Tactile Vibration Toggle */}
+                  {onToggleVibration && (
+                    <div className="py-2.5 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-bold text-sm">
+                          {SETTINGS_UI.vibrationLabel[selectedLanguage] || 'Tactile Vibration Haptics'}
+                        </div>
+                        <div className={`text-[11px] ${isDay ? 'text-slate-600' : 'text-emerald-200/75'}`}>
+                          {SETTINGS_UI.vibrationDesc[selectedLanguage] || 'Soft pulse feedback on tap, milestone chords for targets'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onToggleVibration}
+                        className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer shrink-0 ${
+                          vibrationEnabled ? 'bg-emerald-600' : 'bg-slate-400 dark:bg-slate-700'
+                        }`}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${
+                            vibrationEnabled ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Keep Screen Awake (Wake Lock) */}
+                  {onUpdateSettings && (
+                    <div className="py-2.5 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-bold text-sm">
+                          {SETTINGS_UI.wakeLockLabel[selectedLanguage] || 'Keep Screen Awake (Wake Lock)'}
+                        </div>
+                        <div className={`text-[11px] ${isDay ? 'text-slate-600' : 'text-emerald-200/75'}`}>
+                          {SETTINGS_UI.wakeLockDesc[selectedLanguage] || 'Prevents phone display from sleeping while reciting'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onUpdateSettings({ screenAwake: !(appSettings?.screenAwake) })}
+                        className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer shrink-0 ${
+                          appSettings?.screenAwake ? 'bg-emerald-600' : 'bg-slate-400 dark:bg-slate-700'
+                        }`}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${
+                            appSettings?.screenAwake ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Export & Data Backup (PDF Report, Backup JSON, Restore JSON) */}
+              <div
+                className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
+                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2 font-bold text-sm">
+                  <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>{SETTINGS_UI.dataBackup[selectedLanguage] || 'Export & Data Backup'}</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {onExportPdf && (
+                    <button
+                      type="button"
+                      onClick={onExportPdf}
+                      className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
+                        isDay
+                          ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900'
+                          : 'bg-emerald-950/70 hover:bg-emerald-900 border-emerald-600/50 text-emerald-200'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4 text-amber-500" />
+                      <span>{SETTINGS_UI.exportPdf[selectedLanguage] || 'Export PDF'}</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={onExportBackupJson || handleDefaultExportBackup}
+                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
+                      isDay
+                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
+                        : 'bg-[#092226] hover:bg-[#123840] border-[#184850] text-slate-200'
+                    }`}
+                  >
+                    <Download className="w-4 h-4 text-teal-500" />
+                    <span>{SETTINGS_UI.backupJson[selectedLanguage] || 'Backup JSON'}</span>
+                  </button>
+
+                  <label
+                    className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
+                      isDay
+                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
+                        : 'bg-[#092226] hover:bg-[#123840] border-[#184850] text-slate-200'
+                    }`}
+                  >
+                    <Upload className="w-4 h-4 text-emerald-500" />
+                    <span>{SETTINGS_UI.restoreJson[selectedLanguage] || 'Restore JSON'}</span>
+                    <input
+                      type="file"
+                      accept=".json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (onImportBackupJson) onImportBackupJson(file);
+                          else handleDefaultImportBackup(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Data Reset Controls (Danger Zone) */}
+              {(onResetAllCounters || onRestoreDefaults) && (
+                <div
+                  className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
+                    isDay ? 'bg-rose-50/60 border-rose-200 text-slate-900' : 'bg-[#1a1114] border-red-900/50 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-rose-600 dark:text-red-400">
+                    <ShieldAlert className="w-4 h-4" />
+                    <span>{SETTINGS_UI.dangerZone[selectedLanguage] || 'Data Reset Controls'}</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {onResetAllCounters && (
+                      <button
+                        type="button"
+                        onClick={onResetAllCounters}
+                        className={`px-3.5 py-2 rounded-xl border text-xs font-bold transition active:scale-95 cursor-pointer flex items-center gap-1.5 ${
+                          isDay
+                            ? 'bg-rose-600 hover:bg-rose-700 border-rose-700 text-white'
+                            : 'bg-red-950/70 hover:bg-red-900 border-red-800/60 text-red-200'
+                        }`}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>{SETTINGS_UI.resetCounters[selectedLanguage] || 'Reset All Counters to 0'}</span>
+                      </button>
+                    )}
+
+                    {onRestoreDefaults && (
+                      <button
+                        type="button"
+                        onClick={onRestoreDefaults}
+                        className={`px-3.5 py-2 rounded-xl border text-xs font-semibold transition active:scale-95 cursor-pointer ${
+                          isDay
+                            ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800'
+                            : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                        }`}
+                      >
+                        {SETTINGS_UI.restoreAzkar[selectedLanguage] || 'Restore Default Azkar'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* System Info */}
               <div
