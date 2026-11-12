@@ -308,7 +308,35 @@ export default function App() {
   const [activeModule, setActiveModule] = useState<NavModule>('zikir_counter');
   const [, startNavTransition] = React.useTransition();
 
+  const [otherInitialSub, setOtherInitialSub] = useState<OtherSubSection>('hub');
+  const [otherAccountTab, setOtherAccountTab] = useState<'profile' | 'settings'>('profile');
+  const [otherNavTick, setOtherNavTick] = useState(0);
+
+  const navigateToMyAccount = (tab: 'profile' | 'settings' = 'profile') => {
+    setIsProfileModalOpen(false);
+    setShowFirstDownloadWelcome(false);
+    setOtherAccountTab(tab);
+    setOtherInitialSub('my_account');
+    setOtherNavTick((t) => t + 1);
+    if (activeModule !== 'other') {
+      try {
+        window.history.pushState({ appModule: 'other', appSub: 'my_account' }, '');
+      } catch {}
+      startNavTransition(() => {
+        setActiveModule('other');
+      });
+    }
+  };
+
   const handleNavigate = (targetModule: NavModule, skipPushState = false) => {
+    if (targetModule === 'other') {
+      setOtherInitialSub('hub');
+      setOtherNavTick((t) => t + 1);
+      if (activeModule === 'other') {
+        if (settings.soundEnabled) soundHaptics.playTap();
+        return;
+      }
+    }
     if (targetModule === activeModule) return;
     if (settings.soundEnabled) soundHaptics.playTap();
     if (!skipPushState) {
@@ -478,7 +506,7 @@ export default function App() {
 
   const handleOpenProfileModal = (tab: 'profile' | 'settings' = 'profile') => {
     setProfileModalTab(tab);
-    setIsProfileModalOpen(true);
+    navigateToMyAccount(tab);
   };
 
   const zikrsRef = useRef(zikrs);
@@ -1166,6 +1194,9 @@ export default function App() {
       }
 
       // 2. Handle LOGIN or SWITCHING ACCOUNT (from guest or another user)
+      if (isLoginOrSwitch) {
+        navigateToMyAccount('profile');
+      }
       if (isLoginOrSwitch && newEmail) {
         saveAccountToRegistry(updated);
 
@@ -2099,7 +2130,11 @@ export default function App() {
                 soundEnabled={settings.soundEnabled}
                 themeMode={settings.themeMode}
                 selectedLanguage={selectedLanguage}
-                onSelectLanguage={setSelectedLanguage}
+                onSelectLanguage={(lang) => {
+                  setSelectedLanguage(lang);
+                  const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+                  showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
+                }}
                 settings={settings}
                 onUpdateSettings={(newSettings) => setSettings((prev) => ({ ...prev, ...newSettings }))}
                 onGlobalReset={handleGlobalReset}
@@ -2108,6 +2143,33 @@ export default function App() {
                 onOpenSettingsModal={() => handleOpenProfileModal('settings')}
                 onNavigateToQuran={() => handleNavigate('quran')}
                 onNavigateToNamaj={() => handleNavigate('namaj')}
+                userProfile={userProfile}
+                onUpdateProfile={handleUpdateProfile}
+                onNavigateModule={handleNavigate}
+                onToggleThemeMode={handleToggleThemeMode}
+                onToggleSound={handleToggleSound}
+                onToggleVibration={handleToggleVibration}
+                onResetAllCounters={handleGlobalReset}
+                onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
+                onCloudDataLoaded={handleCloudDataLoaded}
+                onTriggerCloudSync={handleTriggerCloudSync}
+                isSyncingCloud={isSyncingCloud}
+                lastCloudSyncTimestamp={lastCloudSyncTimestamp}
+                onOpenAdminPanel={
+                  Boolean(
+                    userProfile.isSignedIn &&
+                    (userProfile.emailOrPhone || '').toLowerCase().trim() === 'mdmursalineparvez@gmail.com'
+                  )
+                    ? () => setIsAdminPanelOpen(true)
+                    : undefined
+                }
+                historySessions={historySessions}
+                lifetimeTotalCount={masterGrandTotal}
+                dailyTotal={dailyTotal}
+                completedGoals={completedGoals}
+                onOpenWelcomeScreen={() => setShowFirstDownloadWelcome(true)}
+                subSectionSyncKey={otherNavTick}
+                initialAccountTab={otherAccountTab}
                 initialSubSection={
                   activeModule === 'nobi_24_hours'
                     ? 'nobi_24_hours'
@@ -2139,7 +2201,7 @@ export default function App() {
                     ? 'history_timeline'
                     : activeModule === 'araber_gotro'
                     ? 'arober_gotro'
-                    : 'hub'
+                    : otherInitialSub
                 }
               />
             </React.Suspense>

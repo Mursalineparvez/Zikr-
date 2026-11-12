@@ -145,6 +145,9 @@ interface ProfileModalProps {
   onRestoreDefaults?: () => void;
   onExportBackupJson?: () => void;
   onImportBackupJson?: (file: File) => void;
+  embedded?: boolean;
+  onBackToHub?: () => void;
+  onOpenSaved?: () => void;
 }
 
 const DEFAULT_AVATARS = [
@@ -192,9 +195,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onRestoreDefaults,
   onExportBackupJson,
   onImportBackupJson,
+  embedded = false,
+  onBackToHub,
+  onOpenSaved,
 }) => {
   const isDay = themeMode === 'day';
-  const [activeTab, setActiveTab] = useState<'profile' | 'settings'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'settings'>(initialTab || 'profile');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isPlayingSample, setIsPlayingSample] = useState(false);
 
@@ -839,57 +845,117 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+    <div
+      className={
+        embedded
+          ? 'w-full animate-in fade-in duration-200'
+          : 'fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200'
+      }
+    >
       <div
-        className={`w-full max-w-md h-full sm:h-auto sm:max-h-[92vh] sm:rounded-3xl border shadow-2xl flex flex-col overflow-hidden ${
-          isDay ? 'bg-[#f6f9f8] text-[#103e42] border-[#d2ece9]' : 'bg-[#0a2328] text-white border-[#1a515c]'
-        }`}
+        className={
+          embedded
+            ? `w-full rounded-3xl border shadow-sm flex flex-col overflow-hidden ${
+                isDay ? 'bg-[#fcfaf5] text-[#103e42] border-stone-200/90' : 'bg-[#071c21] text-white border-[#143b44]'
+              }`
+            : `w-full max-w-md h-full sm:h-auto sm:max-h-[92vh] sm:rounded-3xl border shadow-2xl flex flex-col overflow-hidden ${
+                isDay ? 'bg-[#f6f9f8] text-[#103e42] border-[#d2ece9]' : 'bg-[#0a2328] text-white border-[#1a515c]'
+              }`
+        }
       >
         {/* HEADER BAR */}
-        <div className="bg-[#2d7d4f] text-white px-4 py-3.5 flex items-center justify-between shadow-md select-none shrink-0">
+        <div
+          className={`px-4 py-3.5 flex items-center justify-between select-none shrink-0 ${
+            embedded
+              ? isDay
+                ? 'bg-white border-b border-stone-200/80 text-slate-900'
+                : 'bg-[#0a262c] border-b border-[#143b44] text-white'
+              : 'bg-[#2d7d4f] text-white shadow-md'
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              className="p-1 rounded-full hover:bg-white/20 transition active:scale-95 cursor-pointer"
-              title="Back"
-            >
-              <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
-            </button>
-            <h2 className="text-lg font-bold tracking-tight">
-              {activeTab === 'settings'
-                ? selectedLanguage === 'bn'
-                  ? 'অ্যাপ সেটিংস'
-                  : 'Settings'
-                : 'Profile & Account'}
-            </h2>
+            {(embedded ? onBackToHub : true) && (
+              <button
+                type="button"
+                onClick={embedded ? onBackToHub : onClose}
+                className={`min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                  embedded
+                    ? isDay
+                      ? 'hover:bg-slate-100 text-slate-700'
+                      : 'hover:bg-white/10 text-emerald-300'
+                    : 'hover:bg-white/20 text-white'
+                }`}
+                title="Back"
+              >
+                <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+              </button>
+            )}
+            <div>
+              <h2 className="text-lg font-black tracking-tight leading-tight">
+                {embedded
+                  ? selectedLanguage === 'bn'
+                    ? 'আমার অ্যাকাউন্ট (My Account)'
+                    : 'My Account'
+                  : activeTab === 'settings'
+                  ? selectedLanguage === 'bn'
+                    ? 'অ্যাপ সেটিংস'
+                    : 'Settings'
+                  : 'My Account'}
+              </h2>
+            </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-white/20 transition active:scale-95 cursor-pointer"
-            title="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {!embedded && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-full hover:bg-white/20 transition active:scale-95 cursor-pointer"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* TOP NAVIGATION TABS */}
-        <div className="bg-[#236841] px-4 py-2 flex items-center justify-center shrink-0 border-b border-emerald-600/30">
-          <div className="w-full grid grid-cols-2 p-1 rounded-2xl bg-black/25 backdrop-blur-md border border-white/10 text-xs font-bold text-white shadow-inner">
+        <div
+          className={`px-4 py-2.5 flex items-center justify-center shrink-0 border-b ${
+            embedded
+              ? isDay
+                ? 'bg-stone-50/70 border-stone-200/70'
+                : 'bg-[#06181c] border-[#133841]'
+              : 'bg-[#236841] border-emerald-600/30'
+          }`}
+        >
+          <div
+            className={`w-full max-w-md grid grid-cols-2 p-1 rounded-full border text-xs font-bold ${
+              embedded
+                ? isDay
+                  ? 'bg-stone-200/70 border-stone-200 text-stone-700'
+                  : 'bg-[#0b262d] border-[#17444e] text-slate-300'
+                : 'bg-black/25 backdrop-blur-md border-white/10 text-white shadow-inner'
+            }`}
+          >
             <button
               type="button"
               onClick={() => {
                 setActiveTab('profile');
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className={`py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
+              className={`min-h-[40px] py-2 px-3 rounded-full flex items-center justify-center gap-2 transition cursor-pointer ${
                 activeTab === 'profile'
-                  ? 'bg-white text-[#1a5530] shadow-md font-extrabold'
+                  ? embedded
+                    ? 'bg-[#006A4E] text-white shadow-sm font-extrabold'
+                    : 'bg-white text-[#1a5530] shadow-md font-extrabold'
+                  : embedded
+                  ? isDay
+                    ? 'text-stone-700 hover:text-stone-900'
+                    : 'text-slate-300 hover:text-white'
                   : 'text-emerald-100 hover:text-white hover:bg-white/10'
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>{userProfile.isSignedIn ? userProfile.name.split(' ')[0] || 'Profile' : 'Sign In'}</span>
+              <span>{selectedLanguage === 'bn' ? 'প্রোফাইল ও অ্যাকাউন্ট' : 'Profile'}</span>
             </button>
 
             <button
@@ -898,9 +964,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 setActiveTab('settings');
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className={`py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
+              className={`min-h-[40px] py-2 px-3 rounded-full flex items-center justify-center gap-2 transition cursor-pointer ${
                 activeTab === 'settings'
-                  ? 'bg-white text-[#1a5530] shadow-md font-extrabold'
+                  ? embedded
+                    ? 'bg-[#006A4E] text-white shadow-sm font-extrabold'
+                    : 'bg-white text-[#1a5530] shadow-md font-extrabold'
+                  : embedded
+                  ? isDay
+                    ? 'text-stone-700 hover:text-stone-900'
+                    : 'text-slate-300 hover:text-white'
                   : 'text-emerald-100 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -911,223 +983,199 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         </div>
 
         {/* BODY CONTENT */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className={embedded ? 'p-4 sm:p-6 space-y-5' : 'flex-1 overflow-y-auto p-4 space-y-4'}>
           {/* TAB 1: PROFILE / AUTH */}
           {activeTab === 'profile' && (
             <>
-              {/* PROFILE CARD */}
-              {userProfile.isSignedIn && userProfile.name ? (
-                <div
-                  className={`p-4 rounded-2xl border shadow-md transition-all space-y-3 ${
-                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm shrink-0 bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
-                        {userProfile.photoUrl ? (
-                          <img src={userProfile.photoUrl} alt={userProfile.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-7 h-7 text-emerald-600 dark:text-emerald-300" />
-                        )}
-                        {userProfile.authProvider === 'google' && (
-                          <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-xs">
-                            <GoogleIcon />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="font-black text-sm sm:text-base truncate leading-snug">
-                            {userProfile.name}
-                          </h3>
-                          <span className="p-0.5 rounded-full bg-emerald-600 text-white shrink-0" title="Verified Account">
-                            <Check className="w-3 h-3 stroke-[3]" />
-                          </span>
-                        </div>
-                        <p className={`text-xs truncate font-mono ${isDay ? 'text-slate-800 font-bold' : 'text-emerald-300'}`}>
-                          {userProfile.emailOrPhone || 'Verified Zikr+ User'}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
-                            isDay
-                              ? 'bg-emerald-100 border-emerald-300 text-emerald-900'
-                              : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                          }`}>
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            <span>Verified Account</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setActiveSubModal('edit_profile');
-                        if (soundEnabled) soundHaptics.playTap();
-                      }}
-                      className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer shrink-0 ${
-                        isDay
-                          ? 'bg-slate-100 hover:bg-emerald-100 border-slate-300 text-slate-800 hover:text-emerald-800'
-                          : 'bg-[#092226] hover:bg-teal-900/60 border-[#184850] text-emerald-300'
-                      }`}
-                      title="Edit Profile"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
+              {/* CENTERED UPPER-PIC PROFILE HERO (Matching User Reference Screenshot) */}
+              <div
+                className={`p-6 sm:p-7 rounded-3xl border text-center flex flex-col items-center space-y-3 transition-all ${
+                  isDay
+                    ? 'bg-gradient-to-b from-[#faf6ef] to-white border-stone-200/80 text-slate-900 shadow-2xs'
+                    : 'bg-gradient-to-b from-[#0b272e] to-[#081f25] border-[#1a4b56] text-white shadow-md'
+                }`}
+              >
+                {/* Centered Avatar with Floating Edit Pencil Badge */}
+                <div className="relative inline-block">
+                  <div
+                    className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 shadow-lg flex items-center justify-center ${
+                      isDay
+                        ? 'border-white bg-emerald-100 ring-1 ring-stone-200'
+                        : 'border-[#154550] bg-emerald-950 ring-1 ring-emerald-500/30'
+                    }`}
+                  >
+                    {userProfile.isSignedIn && userProfile.photoUrl ? (
+                      <img
+                        src={userProfile.photoUrl}
+                        alt={userProfile.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : userProfile.photoUrl ? (
+                      <img
+                        src={userProfile.photoUrl}
+                        alt={userProfile.name || 'User'}
+                        className="w-full h-full object-cover opacity-90"
+                      />
+                    ) : (
+                      <User className="w-11 h-11 text-[#006A4E] dark:text-emerald-300" />
+                    )}
                   </div>
 
-                  <div className={`pt-2.5 border-t flex items-center justify-between text-xs ${isDay ? 'border-slate-200' : 'border-teal-900/40'}`}>
-                    <div className="flex items-center gap-2">
-                      <Cloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <div className="leading-tight">
-                        <div className={`font-black text-xs flex items-center gap-1 ${isDay ? 'text-emerald-950' : 'text-emerald-400'}`}>
-                          <span>Firebase Cloud Sync Active</span>
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        </div>
-                        <div className={`text-[10px] ${isDay ? 'text-slate-700 font-semibold' : 'text-slate-300'}`}>
-                          সব হিস্ট্রি স্বয়ংক্রিয়ভাবে ক্লাউডে সিঙ্ক থাকে
-                        </div>
-                      </div>
-                    </div>
+                  {/* Overlapping Bottom-Right Pencil Edit Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (userProfile.isSignedIn) {
+                        setActiveSubModal('edit_profile');
+                      } else {
+                        handleOpenVerifiedAuth();
+                      }
+                      if (soundEnabled) soundHaptics.playTap();
+                    }}
+                    className="absolute -bottom-0.5 -right-0.5 w-9 h-9 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white border-2 border-white dark:border-[#0a2328] shadow-md flex items-center justify-center transition active:scale-95 cursor-pointer"
+                    title={userProfile.isSignedIn ? 'Edit Profile & Photo' : 'Sign In'}
+                    aria-label="Edit Profile"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                </div>
 
+                {/* Centered Name & Email */}
+                <div className="space-y-1 max-w-sm">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <h3 className="text-xl sm:text-2xl font-black tracking-tight">
+                      {userProfile.isSignedIn && userProfile.name
+                        ? userProfile.name
+                        : userProfile.name || (selectedLanguage === 'bn' ? 'গেস্ট অ্যাকাউন্ট' : 'Guest Account')}
+                    </h3>
+                    {userProfile.isSignedIn && (
+                      <span
+                        className="w-5 h-5 rounded-full bg-[#006A4E] text-white inline-flex items-center justify-center shrink-0"
+                        title="Verified Account"
+                      >
+                        <Check className="w-3 h-3 stroke-[3]" />
+                      </span>
+                    )}
+                  </div>
+
+                  <p className={`text-xs sm:text-sm font-medium break-all ${isDay ? 'text-stone-600' : 'text-emerald-200/80'}`}>
+                    {userProfile.isSignedIn && userProfile.emailOrPhone
+                      ? userProfile.emailOrPhone
+                      : selectedLanguage === 'bn'
+                      ? 'সাইন ইন করে আপনার জিকির ও সেটিংস সিঙ্ক করুন'
+                      : 'Sign in to sync your Zikr, Saved & Profile'}
+                  </p>
+                </div>
+
+                {/* Primary Centered Pill Action Button (Matching Reference Screenshot CTA) */}
+                {userProfile.isSignedIn ? (
+                  <div className="pt-1 flex flex-wrap items-center justify-center gap-2.5">
                     <button
                       type="button"
                       onClick={async () => {
                         if (onTriggerCloudSync) {
                           await onTriggerCloudSync();
                         }
-                        setCloudSyncMessage('✓ অ্যাপের সকল কাউন্ট ক্লাউডে সফলভাবে আপলোড হয়েছে! এখন ওয়েব ব্রাউজারেও একই কাউন্ট দেখাবে।');
+                        setCloudSyncMessage('✓ অ্যাপের সকল কাউন্ট ক্লাউডে সফলভাবে আপলোড হয়েছে!');
                         setTimeout(() => setCloudSyncMessage(null), 4000);
                         if (soundEnabled) soundHaptics.playMilestone();
                       }}
                       disabled={isSyncingCloud}
-                      className={`px-3.5 py-2 rounded-xl font-black text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0 ${
-                        isDay
-                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
-                          : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md'
-                      }`}
+                      className="min-h-[44px] px-6 py-2.5 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white font-bold text-xs sm:text-sm shadow-md inline-flex items-center gap-2 transition active:scale-95 cursor-pointer"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
-                      <span>{isSyncingCloud ? 'Uploading...' : '☁️ আপলোড ও সিঙ্ক (Push to Web)'}</span>
+                      <RefreshCw className={`w-4 h-4 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+                      <span>
+                        {isSyncingCloud
+                          ? 'Syncing...'
+                          : selectedLanguage === 'bn'
+                          ? 'ক্লাউড সিঙ্ক করুন'
+                          : 'Cloud Sync Active'}
+                      </span>
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
-
-                  {cloudSyncMessage && (
-                    <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-800 dark:text-emerald-200 text-xs font-bold animate-in fade-in">
-                      {cloudSyncMessage}
-                    </div>
-                  )}
-
-                  {/* ZIKR STATS OVERVIEW CARD FOR THIS ACCOUNT */}
-                  <div
-                    className={`p-3.5 rounded-2xl border text-xs space-y-2.5 ${
-                      isDay ? 'bg-emerald-50/70 border-emerald-200/80' : 'bg-[#082025] border-[#184850]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="font-extrabold text-xs flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                        <span>এই অ্যাকাউন্টের সর্বমোট জিকির পরিসংখ্যান</span>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
-                        Live Synced
+                ) : (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={handleOpenVerifiedAuth}
+                      className="min-h-[44px] px-6 py-2.5 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white font-bold text-xs sm:text-sm shadow-md inline-flex items-center gap-2 transition active:scale-95 cursor-pointer"
+                    >
+                      <span>
+                        {selectedLanguage === 'bn'
+                          ? 'সাইন ইন / পূর্ণ অ্যাক্সেস নিন'
+                          : 'Get Full Access · Sign In'}
                       </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className={`p-2.5 rounded-xl border ${isDay ? 'bg-white border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          সর্বমোট পুঞ্জীভূত জিকির
-                        </div>
-                        <div className="text-xl font-black font-mono text-emerald-600 dark:text-amber-300 mt-0.5">
-                          {lifetimeTotalCount.toLocaleString()}
-                        </div>
-                        <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
-                          সকল দিন ও ডিভাইসের মোট যোগফল
-                        </div>
-                      </div>
-
-                      <div className={`p-2.5 rounded-xl border ${isDay ? 'bg-white border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          আজকের দৈনন্দিন গণনা
-                        </div>
-                        <div className="text-xl font-black font-mono text-teal-600 dark:text-emerald-400 mt-0.5">
-                          {(dailyTotal || 0).toLocaleString()}
-                        </div>
-                        <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
-                          আজকের পাঠ করা জিকির
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Active Beads vs History breakdown note */}
-                    <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-black/5 dark:bg-black/20 border border-black/5 dark:border-white/5 space-y-1.5">
-                      <div className="flex items-center justify-between font-semibold">
-                        <span>সক্রিয় দানার মোট গণনা (Active Beads):</span>
-                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                          {zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between font-semibold">
-                        <span>সংরক্ষিত সেশন ইতিহাস (History Sessions):</span>
-                        <span className="font-mono font-bold text-teal-600 dark:text-teal-400">
-                          {historySessions.length}টি সেশন
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-black/5 dark:border-white/5">
-                        💡 হোমস্ক্রিনের উপরের বড় সংখ্যার সেন্ট্রাল কাউন্টারে আপনার <strong>সর্বমোট পুঞ্জীভূত জিকির ({lifetimeTotalCount.toLocaleString()})</strong> প্রদর্শিত হয়। প্রতিদিনের নামায বা দিনের শেষে দানার গণনা ০ হয়ে নতুন করে শুরু হলেও আপনার সর্বমোট পুঞ্জীভূত গণনা ক্লাউডে সবসময় অক্ষত থাকে।
-                      </p>
-                    </div>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
-              ) : (
-                /* UNIFIED SIMPLE SIGN IN CARD */
+                )}
+
+                {cloudSyncMessage && (
+                  <div className="w-full p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 text-xs font-bold animate-in fade-in">
+                    {cloudSyncMessage}
+                  </div>
+                )}
+              </div>
+
+              {/* ZIKR STATS & CLOUD OVERVIEW CARD FOR THIS ACCOUNT (When Signed In) */}
+              {userProfile.isSignedIn && userProfile.name && (
                 <div
-                  className={`p-4 sm:p-5 rounded-3xl border shadow-lg transition-all space-y-4 relative overflow-hidden ${
-                    isDay
-                      ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50/70 border-emerald-200/80'
-                      : 'bg-gradient-to-br from-[#0a272e] via-[#0d343c] to-[#0a2328] border-[#1f5e6b]'
+                  className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
+                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center shrink-0 shadow-md">
-                      <ShieldCheck className="w-6 h-6 stroke-[2.2]" />
+                  <div className="flex items-center justify-between">
+                    <div className="font-extrabold text-xs flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>এই অ্যাকাউন্টের সর্বমোট জিকির পরিসংখ্যান</span>
                     </div>
-                    <div>
-                      <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight">
-                        Zikr+ Account Login
-                      </h3>
-                      <p className={`text-xs mt-0.5 ${isDay ? 'text-slate-700 font-semibold' : 'text-emerald-200/80'}`}>
-                        ১-ক্লিকে সরাসরি লগইন করুন বা ভেরিফিকেশন কোড নিন।
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Auto Guest Username Badge */}
-                  <div className={`p-2.5 rounded-2xl border flex items-center justify-between text-xs ${
-                    isDay ? 'bg-white/80 border-emerald-200 text-slate-800' : 'bg-black/25 border-white/10 text-emerald-100'
-                  }`}>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                        <User className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="font-bold">আপনার অটো ইউজার নেম:</span>
-                    </div>
-                    <span className="font-mono font-black text-xs px-2.5 py-0.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
-                      {userProfile.name || 'Guest User'}
+                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                      <Cloud className="w-3.5 h-3.5" />
+                      <span>Synced</span>
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleOpenVerifiedAuth}
-                    className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span>সহজ সাইন-ইন ও নতুন অ্যাকাউন্ট (১-ক্লিক)</span>
-                  </button>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className={`p-3 rounded-xl border ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
+                      <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                        সর্বমোট পুঞ্জীভূত জিকির
+                      </div>
+                      <div className="text-xl font-black font-mono tabular-nums text-[#006A4E] dark:text-amber-300 mt-0.5">
+                        {lifetimeTotalCount.toLocaleString()}
+                      </div>
+                      <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
+                        সকল দিন ও ডিভাইসের মোট যোগফল
+                      </div>
+                    </div>
+
+                    <div className={`p-3 rounded-xl border ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
+                      <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                        আজকের দৈনন্দিন গণনা
+                      </div>
+                      <div className="text-xl font-black font-mono tabular-nums text-teal-600 dark:text-emerald-400 mt-0.5">
+                        {(dailyTotal || 0).toLocaleString()}
+                      </div>
+                      <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
+                        আজকের পাঠ করা জিকির
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 p-2.5 rounded-xl bg-black/5 dark:bg-black/20 border border-black/5 dark:border-white/5 space-y-1.5">
+                    <div className="flex items-center justify-between font-semibold">
+                      <span>সক্রিয় দানার মোট গণনা (Active Beads):</span>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        {zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between font-semibold">
+                      <span>সংরক্ষিত সেশন ইতিহাস (History Sessions):</span>
+                      <span className="font-mono font-bold text-teal-600 dark:text-teal-400">
+                        {historySessions.length}টি সেশন
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1139,10 +1187,44 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     : 'bg-[#0f343c] border-[#1c5763] divide-teal-900/40 text-white'
                 }`}
               >
+                {/* App Settings Quick Entry inside Profile List */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('settings');
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`w-full p-3.5 flex items-center justify-between text-left transition cursor-pointer ${
+                    isDay ? 'hover:bg-slate-50' : 'hover:bg-teal-950/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-[#006A4E] dark:text-emerald-400 flex items-center justify-center">
+                      <Settings className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm">
+                        {selectedLanguage === 'bn' ? 'অ্যাপ সেটিংস ও ভাষা' : 'App Settings & Language'}
+                      </div>
+                      <div className={`text-[11px] ${isDay ? 'text-slate-600' : 'text-emerald-200/80'}`}>
+                        {selectedLanguage === 'bn'
+                          ? 'ভাষা, থিম, অডিও ভয়েস, ব্যাকআপ ও রিসেট'
+                          : 'Language, themes, voice reciter, backup & reset'}
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+
                 {/* Bookmark */}
                 <button
+                  type="button"
                   onClick={() => {
-                    setActiveSubModal('bookmarks');
+                    if (onOpenSaved) {
+                      onOpenSaved();
+                    } else {
+                      setActiveSubModal('bookmarks');
+                    }
                     if (soundEnabled) soundHaptics.playTap();
                   }}
                   className={`w-full p-3.5 flex items-center justify-between text-left transition cursor-pointer ${

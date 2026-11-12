@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem, AppSettings } from '../types';
+import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem, AppSettings, UserProfile, NavModule, HistorySession } from '../types';
 import {
   Heart,
   BookMarked,
   Users,
   Sparkles,
   Layers,
-  ChevronRight,
   Compass,
   Bookmark,
+  User,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
 import { prefetchView } from '../utils/viewPreloader';
 import { getAllUnifiedBookmarks, getSavedHighlights, getSavedNotes } from '../utils/savedItems';
+import type { CloudZikrState } from '../services/firebase';
 
 // Code-split sub-views to keep initial app bundle small and startup instantaneous
 const SavedView = React.lazy(() => import('./SavedView').then((m) => ({ default: m.SavedView })));
@@ -30,6 +31,7 @@ const HayatusSahabaView = React.lazy(() => import('./HayatusSahabaView').then((m
 const SeeratUnNabiView = React.lazy(() => import('./SeeratUnNabiView').then((m) => ({ default: m.SeeratUnNabiView })));
 const AraberGotroByaktittoView = React.lazy(() => import('./AraberGotroByaktittoView').then((m) => ({ default: m.AraberGotroByaktittoView })));
 const Nobi24HoursView = React.lazy(() => import('./Nobi24HoursView').then((m) => ({ default: m.Nobi24HoursView })));
+const ProfileModal = React.lazy(() => import('./ProfileModal').then((m) => ({ default: m.ProfileModal })));
 
 const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
   <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
@@ -46,6 +48,7 @@ const SubViewFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
 
 export type OtherSubSection =
   | 'hub'
+  | 'my_account'
   | 'saved'
   | 'nobi_24_hours'
   | 'seerat_un_nabi'
@@ -71,6 +74,8 @@ interface OtherIslamicHubViewProps {
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
   initialSubSection?: OtherSubSection;
+  subSectionSyncKey?: number;
+  initialAccountTab?: 'profile' | 'settings';
   onSelectLanguage?: (lang: ZikrLanguage) => void;
   settings?: AppSettings;
   onUpdateSettings?: (newSettings: Partial<AppSettings>) => void;
@@ -82,7 +87,32 @@ interface OtherIslamicHubViewProps {
   onOpenSettingsModal?: () => void;
   onNavigateToQuran?: () => void;
   onNavigateToNamaj?: () => void;
+  userProfile?: UserProfile;
+  onUpdateProfile?: (updated: UserProfile) => void;
+  onNavigateModule?: (module: NavModule) => void;
+  onToggleThemeMode?: () => void;
+  onToggleSound?: () => void;
+  onToggleVibration?: () => void;
+  onResetAllCounters?: () => void;
+  onOpenStandaloneModal?: () => void;
+  onCloudDataLoaded?: (data: CloudZikrState, targetEmailOrPhone?: string) => void;
+  onTriggerCloudSync?: () => Promise<boolean>;
+  isSyncingCloud?: boolean;
+  lastCloudSyncTimestamp?: number;
+  onOpenAdminPanel?: () => void;
+  historySessions?: HistorySession[];
+  lifetimeTotalCount?: number;
+  dailyTotal?: number;
+  completedGoals?: number;
+  onOpenWelcomeScreen?: () => void;
 }
+
+const FALLBACK_GUEST_PROFILE: UserProfile = {
+  name: 'Guest Account',
+  emailOrPhone: '',
+  photoUrl: '',
+  isSignedIn: false,
+};
 
 export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   onAddDuaToCounters,
@@ -91,6 +121,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   themeMode = 'night',
   selectedLanguage = 'bn',
   initialSubSection = 'hub',
+  subSectionSyncKey = 0,
+  initialAccountTab = 'profile',
   onSelectLanguage,
   settings,
   onUpdateSettings,
@@ -102,16 +134,41 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   onOpenSettingsModal,
   onNavigateToQuran,
   onNavigateToNamaj,
+  userProfile = FALLBACK_GUEST_PROFILE,
+  onUpdateProfile,
+  onNavigateModule,
+  onToggleThemeMode,
+  onToggleSound,
+  onToggleVibration,
+  onResetAllCounters,
+  onOpenStandaloneModal,
+  onCloudDataLoaded,
+  onTriggerCloudSync,
+  isSyncingCloud = false,
+  lastCloudSyncTimestamp,
+  onOpenAdminPanel,
+  historySessions = [],
+  lifetimeTotalCount = 0,
+  dailyTotal = 0,
+  completedGoals = 0,
+  onOpenWelcomeScreen,
 }) => {
   const isDay = themeMode === 'day';
   const [activeSub, setActiveSub] = useState<OtherSubSection>(initialSubSection);
+  const [accountTab, setAccountTab] = useState<'profile' | 'settings'>(initialAccountTab);
 
   // Sync activeSub state with initialSubSection prop changes
   useEffect(() => {
     if (initialSubSection) {
       setActiveSub(initialSubSection);
     }
-  }, [initialSubSection]);
+  }, [initialSubSection, subSectionSyncKey]);
+
+  useEffect(() => {
+    if (initialAccountTab) {
+      setAccountTab(initialAccountTab);
+    }
+  }, [initialAccountTab, subSectionSyncKey]);
 
   // Auto-scroll to top whenever switching sub-module
   useEffect(() => {
@@ -138,6 +195,40 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [activeSub]);
 
   const hubItems = [
+    {
+      id: 'my_account' as OtherSubSection,
+      title: 'My Account',
+      arabic: 'حسابي والإعدادات',
+      desc: selectedLanguage === 'bn'
+        ? 'প্রোফাইল, ক্লাউড সিঙ্ক ও সকল অ্যাপ সেটিংস'
+        : 'Profile, Cloud Sync & App Settings',
+      icon: userProfile?.photoUrl ? (
+        <img
+          src={userProfile.photoUrl}
+          alt={userProfile.name || 'My Account'}
+          className="w-full h-full object-cover rounded-2xl"
+        />
+      ) : (
+        <User className="w-6 h-6 text-[#006A4E] dark:text-emerald-300" />
+      ),
+      color: 'from-emerald-600/20 to-teal-500/10 border-emerald-500/30',
+      badge: selectedLanguage === 'bn' ? 'প্রোফাইল ও সেটিংস' : 'Profile & Settings',
+      action: () => {
+        setAccountTab('profile');
+        handleSelectSub('my_account');
+      },
+    },
+    {
+      id: 'saved' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'সংরক্ষিত লাইব্রেরি' : 'Saved',
+      arabic: 'المحفوظات',
+      desc: selectedLanguage === 'bn'
+        ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং নোটসমূহ'
+        : 'Your bookmarks, highlights, and notes',
+      icon: <Bookmark className="w-6 h-6 text-[#006A4E] dark:text-emerald-300" />,
+      color: 'from-emerald-600/20 to-teal-500/10 border-emerald-500/30',
+      badge: selectedLanguage === 'bn' ? 'বুকমার্ক ও নোটস' : 'Bookmarks & Notes',
+    },
     ...(onNavigateToNamaj
       ? [
           {
@@ -331,6 +422,25 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
+        </button>
+
+        <button
+          onPointerEnter={() => prefetchView('profile_modal')}
+          onTouchStart={() => prefetchView('profile_modal')}
+          onClick={() => {
+            setAccountTab('profile');
+            handleSelectSub('my_account');
+          }}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
+            activeSub === 'my_account'
+              ? 'bg-[#006A4E] text-white border-emerald-500 shadow-md'
+              : isDay
+              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          }`}
+        >
+          <User className="w-3.5 h-3.5" />
+          <span>My Account</span>
         </button>
 
         <button
@@ -533,71 +643,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             </p>
           </div>
 
-          {/* Featured Saved Library Card (Bookmarks · Highlights · Notes) */}
-          <button
-            type="button"
-            onPointerEnter={() => prefetchView('saved')}
-            onTouchStart={() => prefetchView('saved')}
-            onClick={() => handleSelectSub('saved')}
-            className={`w-full p-4 sm:p-5 rounded-3xl border text-left transition-all duration-200 flex items-center justify-between gap-4 cursor-pointer group active:scale-[0.99] ${
-              isDay
-                ? 'bg-gradient-to-r from-[#f4faf7] via-white to-[#f6fbf9] border-emerald-200/80 hover:border-[#006A4E]/50 shadow-2xs hover:shadow-md'
-                : 'bg-gradient-to-r from-[#0a262c] via-[#082026] to-[#0a272f] border-[#1a4b56] hover:border-emerald-500/50 shadow-md'
-            }`}
-          >
-            <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
-              <div
-                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
-                  isDay
-                    ? 'bg-[#006A4E] text-white shadow-sm'
-                    : 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
-                }`}
-              >
-                <Bookmark className="w-6 h-6" />
-              </div>
-
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className={`text-base sm:text-lg font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    {selectedLanguage === 'bn' ? 'সংরক্ষিত লাইব্রেরি' : 'Saved'}
-                  </h3>
-                  <span className="font-arabic text-xs sm:text-sm text-emerald-700 dark:text-emerald-400/90 hidden sm:inline">
-                    المحفوظات
-                  </span>
-                </div>
-                <p className={`text-xs mt-0.5 line-clamp-1 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
-                  {selectedLanguage === 'bn'
-                    ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং নোটসমূহ'
-                    : 'Your bookmarks, highlights, and notes'}
-                </p>
-                <div className={`text-[11px] sm:text-xs font-semibold mt-1.5 flex items-center gap-2 font-mono tabular-nums ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}>
-                  <span>
-                    {savedStats.bookmarks} {selectedLanguage === 'bn' ? 'বুকমার্ক' : 'Bookmarks'}
-                  </span>
-                  <span aria-hidden="true" className="opacity-50">·</span>
-                  <span>
-                    {savedStats.highlights} {selectedLanguage === 'bn' ? 'হাইলাইট' : 'Highlights'}
-                  </span>
-                  <span aria-hidden="true" className="opacity-50">·</span>
-                  <span>
-                    {savedStats.notes} {selectedLanguage === 'bn' ? 'নোটস' : 'Notes'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`min-w-[44px] min-h-[44px] px-3 sm:px-4 rounded-full border text-xs font-bold flex items-center justify-center gap-1 shrink-0 transition ${
-                isDay
-                  ? 'bg-white border-emerald-200 text-[#006A4E] group-hover:bg-[#006A4E] group-hover:text-white'
-                  : 'bg-[#07191e] border-[#1a4b56] text-emerald-300 group-hover:bg-emerald-600 group-hover:text-white'
-              }`}
-            >
-              <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'খুলুন' : 'Open'}</span>
-              <ChevronRight className="w-4 h-4" />
-            </div>
-          </button>
-
           {/* Feature Cards Grid matching user uploaded reference image */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5">
             {hubItems.map((item) => {
@@ -618,15 +663,25 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     : 'View Routine >'
                   : item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'tablig'
                   ? selectedLanguage === 'bn' ? 'পড়ুন >' : 'Read >'
-                  : item.id === 'saved'
+                  : item.id === 'saved' || item.id === 'my_account'
                   ? selectedLanguage === 'bn' ? 'খুলুন >' : 'Open >'
                   : item.id === 'namaj'
                   ? selectedLanguage === 'bn' ? 'সময় দেখুন >' : 'View >'
                   : selectedLanguage === 'bn' ? 'দেখুন >' : 'View >';
 
               const subText =
-                item.id === 'saved'
-                  ? selectedLanguage === 'bn' ? 'বুকমার্ক, হাইলাইট ও নোটস' : 'Bookmarks, Highlights & Notes'
+                item.id === 'my_account'
+                  ? userProfile?.isSignedIn && userProfile?.name
+                    ? userProfile.name
+                    : selectedLanguage === 'bn'
+                    ? 'প্রোফাইল ও সেটিংস'
+                    : 'Profile & Settings'
+                  : item.id === 'saved'
+                  ? savedStats.bookmarks + savedStats.highlights + savedStats.notes > 0
+                    ? `${savedStats.bookmarks} ${selectedLanguage === 'bn' ? 'বুকমার্ক' : 'Bookmarks'} · ${savedStats.highlights} ${selectedLanguage === 'bn' ? 'হাইলাইট' : 'Highlights'} · ${savedStats.notes} ${selectedLanguage === 'bn' ? 'নোট' : 'Notes'}`
+                    : selectedLanguage === 'bn'
+                    ? 'বুকমার্ক, হাইলাইট ও নোটস'
+                    : 'Bookmarks, Highlights & Notes'
                   : item.id === 'nobi_24_hours'
                   ? selectedLanguage === 'bn'
                     ? 'সুন্নাহ গাইডলাইন'
@@ -666,8 +721,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               return (
                 <div
                   key={item.id}
-                  onPointerEnter={() => prefetchView(item.id)}
-                  onTouchStart={() => prefetchView(item.id)}
+                  onPointerEnter={() => prefetchView(item.id === 'my_account' ? 'profile_modal' : item.id)}
+                  onTouchStart={() => prefetchView(item.id === 'my_account' ? 'profile_modal' : item.id)}
                   onClick={() => {
                     if ((item as any).action) {
                       (item as any).action();
@@ -683,7 +738,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                 >
                   {/* Centered Top Icon */}
                   <div
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-1.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                    className={`w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center text-2xl mb-1.5 transition-transform group-hover:scale-105 shadow-2xs ${
                       isDay ? 'bg-[#f0f7f4] text-[#005a3e]' : 'bg-[#123138] text-emerald-300'
                     }`}
                   >
@@ -691,15 +746,15 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   </div>
 
                   {/* Title & Subtitle */}
-                  <div className="space-y-0.5 my-auto">
+                  <div className="space-y-0.5 my-auto w-full">
                     <h3
-                      className={`text-sm sm:text-base font-black transition-colors ${
+                      className={`text-sm sm:text-base font-black transition-colors line-clamp-1 ${
                         isDay ? 'text-slate-900 group-hover:text-[#005a3e]' : 'text-white group-hover:text-emerald-400'
                       }`}
                     >
                       {item.title}
                     </h3>
-                    <p className={`text-[11px] font-medium ${isDay ? 'text-slate-400' : 'text-slate-400'}`}>
+                    <p className={`text-[11px] font-medium line-clamp-1 ${isDay ? 'text-slate-400' : 'text-slate-400'}`}>
                       {subText}
                     </p>
                   </div>
@@ -845,6 +900,50 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             soundEnabled={soundEnabled}
             onNavigateToQuran={onNavigateToQuran}
             onBackToHub={() => setActiveSub('hub')}
+          />
+        )}
+
+        {/* Sub-view: My Account (Embedded Profile & App Settings) */}
+        {activeSub === 'my_account' && (
+          <ProfileModal
+            embedded={true}
+            isOpen={true}
+            onClose={() => setActiveSub('hub')}
+            onBackToHub={() => setActiveSub('hub')}
+            onOpenSaved={() => handleSelectSub('saved')}
+            userProfile={userProfile}
+            onUpdateProfile={onUpdateProfile || (() => {})}
+            onNavigateModule={onNavigateModule || (() => {})}
+            themeMode={themeMode}
+            onToggleThemeMode={onToggleThemeMode}
+            selectedLanguage={selectedLanguage}
+            onSelectLanguage={onSelectLanguage}
+            soundEnabled={soundEnabled}
+            onToggleSound={onToggleSound}
+            vibrationEnabled={settings?.vibrationEnabled ?? true}
+            onToggleVibration={onToggleVibration}
+            onExportPdf={onExportPdf}
+            onOpenStandaloneModal={onOpenStandaloneModal}
+            onResetAllCounters={onResetAllCounters || onGlobalReset}
+            initialTab={accountTab}
+            onCloudDataLoaded={onCloudDataLoaded}
+            onTriggerCloudSync={onTriggerCloudSync}
+            isSyncingCloud={isSyncingCloud}
+            lastCloudSyncTimestamp={lastCloudSyncTimestamp}
+            onOpenAdminPanel={onOpenAdminPanel}
+            zikrs={activeCounters}
+            historySessions={historySessions}
+            lifetimeTotalCount={lifetimeTotalCount}
+            dailyTotal={dailyTotal}
+            completedGoals={completedGoals}
+            voiceGender={settings?.voiceGender || 'male'}
+            onUpdateVoiceGender={(gender) => onUpdateSettings?.({ voiceGender: gender })}
+            onOpenWelcomeScreen={onOpenWelcomeScreen}
+            appSettings={settings}
+            onUpdateSettings={onUpdateSettings}
+            onRestoreDefaults={onRestoreDefaults}
+            onExportBackupJson={onExportBackupJson}
+            onImportBackupJson={onImportBackupJson}
           />
         )}
 

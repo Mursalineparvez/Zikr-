@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Sparkles,
-  Settings,
   WifiOff,
 } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from '../hooks/usePWAInstall';
@@ -114,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Right Action Icon: Settings Gear (Profile & Language are inside Settings) */}
+          {/* Right Status (Settings & Account live inside My Account in Other) */}
           <div className="flex items-center gap-2">
             {!isOnline && (
               <div
@@ -124,19 +123,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <WifiOff className="w-3 h-3 text-amber-300" />
                 <span className="hidden sm:inline">Offline</span>
               </div>
-            )}
-
-            {/* Settings Gear Button (contains Profile, Language & App Settings) */}
-            {onOpenProfile && (
-              <button
-                type="button"
-                onClick={() => onOpenProfile('settings')}
-                className="w-9 h-9 rounded-full border border-white/25 bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition active:scale-95 cursor-pointer relative shadow-xs"
-                title={selectedLanguage === 'bn' ? 'সেটিংস ও প্রোফাইল' : 'Settings & Profile'}
-                aria-label="Settings"
-              >
-                <Settings className="w-4 h-4 text-emerald-100" />
-              </button>
             )}
           </div>
         </div>
