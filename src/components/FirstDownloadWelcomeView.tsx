@@ -29,7 +29,7 @@ import { findSavedAccount, saveAccountToRegistry } from '../utils/accountRegistr
 import { getDetectedDeviceInfo } from '../utils/deviceInfo';
 
 const GoogleIcon = () => (
-  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
     <path
       fill="#4285F4"
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -77,8 +77,9 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
   soundEnabled,
 }) => {
   const isBn = selectedLanguage === 'bn';
+  const isAr = selectedLanguage === 'ar';
 
-  // Carousel Slide State (3 slides matching reference design)
+  // Carousel Slide State (3 slides)
   const [activeSlide, setActiveSlide] = useState<number>(0);
   const slideTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -97,26 +98,32 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
   const SLIDES = [
     {
       id: 0,
-      title: 'Revealed',
+      title: 'Al-Quran Al-Kareem',
       titleBn: 'আল-কুরআনুল কারীম',
-      subtitleEn: 'Understand the Quran, verse by verse',
+      titleAr: 'القرآن الكريم',
+      subtitleEn: 'Understand the Quran, verse by verse with tafsir',
       subtitleBn: 'পবিত্র কুরআন ও সহীহ হাদিস, আয়াত ও শব্দের গভীর আলোকবর্তিকা',
+      subtitleAr: 'فهم القرآن الكريم آية بآية مع التفسير والترجمة',
       badge: 'Al-Quran & Tafsir',
     },
     {
       id: 1,
-      title: 'Zikr+',
+      title: 'Zikr & Digital Tasbeeh',
       titleBn: 'যিকির ও ডিজিটাল তাসবীহ',
+      titleAr: 'الذكر والتسبيح الرقمي',
       subtitleEn: 'Find pure peace & tranquility in daily remembrance',
       subtitleBn: 'প্রশান্তিময় প্রাত্যহিক যিকির, নূরানি তাসবীহ ও আত্মশুদ্ধি',
+      subtitleAr: 'أوجد السكينة والاطمئنان في ذكر الله اليومي والتسبيح',
       badge: 'Daily Dhikr & Tasbeeh',
     },
     {
       id: 2,
-      title: 'Sunnah Life',
-      titleBn: 'সুন্নাহ ও প্রাত্যহিক রুটিন',
+      title: 'Sunnah Life & Routine',
+      titleBn: 'নবীজির ২৪ ঘণ্টা ও সুন্নাহ',
+      titleAr: 'السنة النبوية والروتين',
       subtitleEn: '24-Hour Prophetic routines, Salah & authentic duas',
       subtitleBn: 'নবীজির ২৪ ঘণ্টার আমল, সালাত ও নির্ভরযোগ্য মাসনূন দুআ',
+      subtitleAr: 'روتين النبي صلى الله عليه وسلم والأدعية الصحيحة',
       badge: 'Prophetic Routine',
     },
   ];
@@ -139,7 +146,6 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
 
   if (!isOpen) return null;
 
-  // Complete onboarding and enter app
   const completeOnboardingAndDismiss = () => {
     try {
       localStorage.setItem('zikrmate_onboarding_completed', 'true');
@@ -148,7 +154,6 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
     onClose();
   };
 
-  // 1. Google 1-Tap Sign In
   const handleGoogleSignIn = async () => {
     setIsLoadingGoogle(true);
     setErrorMessage(null);
@@ -180,10 +185,8 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
         saveAccountToRegistry(updated);
         onUpdateProfile(updated);
 
-        if (cloudData && cloudData.foundInCloud) {
-          if (onCloudDataLoaded) {
-            onCloudDataLoaded(cloudData, targetEmail);
-          }
+        if (cloudData && cloudData.foundInCloud && onCloudDataLoaded) {
+          onCloudDataLoaded(cloudData, targetEmail);
         } else {
           const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
           if (localSum > 0 || lifetimeTotalCount > 0) {
@@ -205,13 +208,14 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
         if (soundEnabled) soundHaptics.playMilestone();
         completeOnboardingAndDismiss();
       } else if (result.isRedirecting) {
-        // Redirecting to Google OAuth
         return;
       } else {
         setErrorMessage(
           isBn
-            ? result.error || 'গুগল সাইন-ইন সম্পন্ন হয়নি। দয়া করে আবার চেষ্টা করুন বা ইমেইল দিয়ে লগইন করুন।'
-            : result.error || 'Google Sign-in was cancelled. Please try again or sign in with Email.'
+            ? result.error || 'গুগল সাইন-ইন সম্পন্ন হয়নি। দয়া করে আবার চেষ্টা করুন।'
+            : isAr
+              ? result.error || 'فشل تسجيل الدخول بواسطة جوجل. يجيب المحاولة مرة أخرى.'
+              : result.error || 'Google Sign-in was cancelled. Please try again.'
         );
       }
     } catch (err: any) {
@@ -221,11 +225,16 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
     }
   };
 
-  // 2. Email Sign In
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailInput.trim() || !passwordInput.trim()) {
-      setErrorMessage(isBn ? 'অনুগ্রহ করে ইমেইল ও পাসওয়ার্ড প্রদান করুন।' : 'Please enter your email and password.');
+      setErrorMessage(
+        isBn
+          ? 'অনুগ্রহ করে ইমেইল ও পাসওয়ার্ড প্রদান করুন।'
+          : isAr
+            ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور.'
+            : 'Please enter your email and password.'
+      );
       return;
     }
 
@@ -253,14 +262,15 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
       if (!isSuccess) {
         setErrorMessage(
           isBn
-            ? 'ইমেইল বা পাসওয়ার্ড সঠিক নয়। দয়া করে সঠিক পাসওয়ার্ড দিন অথবা নতুন একাউন্ট তৈরি করুন।'
-            : 'Incorrect email or password. Please verify your credentials or create a new account.'
+            ? 'ইমেইল বা পাসওয়ার্ড সঠিক নয়। দয়া করে সঠিক পাসওয়ার্ড দিন।'
+            : isAr
+              ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
+              : 'Incorrect email or password. Please verify your credentials.'
         );
         setIsSubmitting(false);
         return;
       }
 
-      // Successful sign in
       const detected = getDetectedDeviceInfo();
       const cloudData = await loadUserDataFromCloud(targetEmail);
 
@@ -304,16 +314,27 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
     }
   };
 
-  // 3. Email Sign Up
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailInput.trim() || !passwordInput.trim() || !nameInput.trim()) {
-      setErrorMessage(isBn ? 'সকল তথ্য পূরণ করা আবশ্যক।' : 'All fields are required.');
+      setErrorMessage(
+        isBn
+          ? 'সকল তথ্য পূরণ করা আবশ্যক।'
+          : isAr
+            ? 'جميع الحقول مطلوبة.'
+            : 'All fields are required.'
+      );
       return;
     }
 
     if (passwordInput.length < 6) {
-      setErrorMessage(isBn ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.');
+      setErrorMessage(
+        isBn
+          ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।'
+          : isAr
+            ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.'
+            : 'Password must be at least 6 characters.'
+      );
       return;
     }
 
@@ -328,7 +349,9 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
         setErrorMessage(
           isBn
             ? 'এই ইমেইল দিয়ে ইতিপূর্বেই একটি একাউন্ট খোলা আছে। অনুগ্রহ করে সাইন-ইন করুন।'
-            : 'An account with this email already exists. Please sign in.'
+            : isAr
+              ? 'هذا البريد مسجل مسبقاً. يرجى تسجيل الدخول.'
+              : 'An account with this email already exists. Please sign in.'
         );
         setIsSubmitting(false);
         return;
@@ -354,7 +377,6 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
       saveAccountToRegistry(updated);
       onUpdateProfile(updated);
 
-      // Save initial state to cloud
       saveUserDataToCloud(targetEmail, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
 
       try {
@@ -378,53 +400,62 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
   const curSlide = SLIDES[activeSlide];
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col justify-between overflow-hidden select-none bg-[#02161a]">
-      {/* 1. Atmospheric Photographic Background matching user's image */}
+    <div
+      dir={isAr ? 'rtl' : 'ltr'}
+      className="fixed inset-0 z-[100] flex flex-col justify-between overflow-hidden select-none bg-[#011014]"
+    >
+      {/* 1. Stunning Atmospheric Background with Multi-layer Glow & Islamic Motif */}
       <div
-        className="absolute inset-0 z-0 bg-cover bg-top bg-no-repeat transition-transform duration-1000 scale-100"
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(2, 22, 26, 0.45) 40%, rgba(1, 14, 17, 0.94) 72%, #010e11 100%), url('/assets/onboarding_bg.jpg')`,
+          backgroundImage: `linear-gradient(180deg, rgba(1, 16, 20, 0.45) 0%, rgba(1, 14, 18, 0.75) 50%, rgba(1, 10, 13, 0.96) 80%, #01080a 100%), url('/assets/onboarding_bg.jpg')`,
         }}
       />
 
-      {/* Subtle Warm Amber & Emerald Light Overlay */}
-      <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 -right-24 w-72 h-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+      {/* Radiant Glowing Orbs */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full bg-emerald-500/15 blur-[100px] pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-amber-500/15 blur-[90px] pointer-events-none" />
+      <div className="absolute top-1/3 -right-20 w-80 h-80 rounded-full bg-teal-500/15 blur-[90px] pointer-events-none" />
 
       {/* 2. Top Header Bar: Language Switcher & Skip/Close Button */}
-      <div className="relative z-10 px-4 sm:px-6 pt-safe pt-4 pb-2 flex items-center justify-between">
+      <div className="relative z-10 px-5 sm:px-8 pt-safe pt-5 pb-2 flex items-center justify-between">
         {/* Language Switcher Pill */}
         <button
           type="button"
           onClick={() => {
-            const nextLang: ZikrLanguage = selectedLanguage === 'bn' ? 'en' : 'bn';
+            const nextLang: ZikrLanguage = selectedLanguage === 'bn' ? 'ar' : selectedLanguage === 'ar' ? 'en' : 'bn';
             onSelectLanguage(nextLang);
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white text-xs font-bold backdrop-blur-md transition active:scale-95 cursor-pointer shadow-md"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/50 hover:bg-black/70 border border-emerald-500/30 text-white text-xs font-bold backdrop-blur-md transition active:scale-95 cursor-pointer shadow-lg"
         >
-          <Globe className="w-3.5 h-3.5 text-emerald-300" />
-          <span>{selectedLanguage === 'bn' ? 'বাংলা (BN)' : 'English (EN)'}</span>
+          <Globe className="w-4 h-4 text-emerald-400" />
+          <span>{selectedLanguage === 'bn' ? 'বাংলা (BN)' : selectedLanguage === 'ar' ? 'العربية (AR)' : 'English (EN)'}</span>
         </button>
 
         {/* Skip / Close Button */}
         <button
           type="button"
           onClick={completeOnboardingAndDismiss}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white/90 hover:text-white text-xs font-semibold backdrop-blur-md transition active:scale-95 cursor-pointer shadow-md"
-          title={isBn ? 'স্কিপ করুন' : 'Skip for now'}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/50 hover:bg-black/70 border border-emerald-500/30 text-emerald-200 hover:text-white text-xs font-bold backdrop-blur-md transition active:scale-95 cursor-pointer shadow-lg"
+          title={isBn ? 'স্কিপ করুন' : isAr ? 'تخطي' : 'Skip'}
         >
-          <span>{isBn ? 'স্কিপ করুন' : 'Skip'}</span>
-          <ChevronRight className="w-3.5 h-3.5" />
+          <span>{isBn ? 'স্কিপ করুন' : isAr ? 'تخطي' : 'Skip'}</span>
+          <ChevronRight className={`w-4 h-4 ${isAr ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
       {/* 3. Middle Section: Carousel Content or Inline Sign In Panels */}
-      <div className="relative z-10 flex-1 flex flex-col justify-end px-6 sm:px-8 pb-3 max-w-md mx-auto w-full">
+      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 sm:px-8 max-w-lg mx-auto w-full">
         {authMode === 'welcome' && (
-          <div className="text-center space-y-4 animate-in fade-in duration-300">
+          <div className="text-center space-y-6 animate-in fade-in duration-300 py-6">
+            {/* Ornate Islamic Star / Crescent Badge */}
+            <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-emerald-500/30 via-emerald-600/20 to-amber-500/20 border border-emerald-400/40 backdrop-blur-xl flex items-center justify-center shadow-2xl ring-4 ring-emerald-500/10">
+              <span className="text-3xl filter drop-shadow-[0_2px_8px_rgba(16,185,129,0.5)]">☪</span>
+            </div>
+
             {/* Interactive Carousel Pagination Dots */}
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="flex items-center justify-center gap-2">
               {SLIDES.map((slide, idx) => {
                 const isActive = activeSlide === idx;
                 return (
@@ -436,7 +467,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                       if (soundEnabled) soundHaptics.playTap();
                     }}
                     className={`h-2 transition-all rounded-full cursor-pointer ${
-                      isActive ? 'w-6 bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'w-2 bg-white/40 hover:bg-white/70'
+                      isActive ? 'w-8 bg-emerald-400 shadow-[0_0_12px_#34d399]' : 'w-2 bg-white/30 hover:bg-white/60'
                     }`}
                     aria-label={`Slide ${idx + 1}`}
                   />
@@ -444,83 +475,86 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
               })}
             </div>
 
-            {/* Slide Title - Exact Serif Typography from User's Reference Screenshot */}
+            {/* Slide Title - Magnisicent Serif Typography */}
             <h1
-              className="text-4xl sm:text-5xl font-serif font-bold text-white tracking-tight drop-shadow-md transition-all duration-300"
+              className="text-4xl sm:text-5xl md:text-6xl font-serif font-black text-white tracking-tight drop-shadow-lg transition-all duration-300 leading-tight"
               style={{ fontFamily: "'Playfair Display', Georgia, Cambria, serif" }}
             >
-              {isBn ? curSlide.titleBn : curSlide.title}
+              {isBn ? curSlide.titleBn : isAr ? curSlide.titleAr : curSlide.title}
             </h1>
 
             {/* Subtitle Tagline */}
-            <p className="text-sm sm:text-base text-white/90 font-medium leading-relaxed max-w-xs mx-auto drop-shadow-xs">
-              {isBn ? curSlide.subtitleBn : curSlide.subtitleEn}
+            <p className="text-sm sm:text-base md:text-lg text-emerald-100/90 font-medium leading-relaxed max-w-md mx-auto drop-shadow-sm px-2">
+              {isBn ? curSlide.subtitleBn : isAr ? curSlide.subtitleAr : curSlide.subtitleEn}
             </p>
           </div>
         )}
 
         {/* Inline Email Sign-In Form */}
         {authMode === 'email-signin' && (
-          <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-3xl p-5 text-white space-y-3.5 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-              <h3 className="text-lg font-bold text-white">
-                {isBn ? 'ইমেইল দিয়ে সাইন ইন' : 'Sign in with Email'}
-              </h3>
+          <div className="bg-[#041a1f]/90 backdrop-blur-2xl border border-emerald-500/40 rounded-[32px] p-6 text-white space-y-4 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
+            <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🔐</span>
+                <h3 className="text-base sm:text-lg font-black text-white">
+                  {isBn ? 'ইমেইল দিয়ে সাইন ইন' : isAr ? 'تسجيل الدخول بالبريد' : 'Sign in with Email'}
+                </h3>
+              </div>
               <button
                 type="button"
                 onClick={() => {
                   setAuthMode('welcome');
                   setErrorMessage(null);
                 }}
-                className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition"
+                className="p-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {errorMessage && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-xs">
+              <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-xs font-semibold">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
-            <form onSubmit={handleEmailSignIn} className="space-y-3">
+            <form onSubmit={handleEmailSignIn} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-semibold text-emerald-200/90 mb-1">
-                  {isBn ? 'ইমেইল এড্রেস' : 'Email Address'}
+                <label className="block text-xs font-bold text-emerald-300 mb-1">
+                  {isBn ? 'ইমেইল এড্রেস' : isAr ? 'البريد الإلكتروني' : 'Email Address'}
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-emerald-400/70 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     required
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     placeholder="user@example.com"
-                    className="w-full bg-white/10 border border-white/20 focus:border-emerald-400 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none transition"
+                    className="w-full bg-black/40 border border-emerald-500/30 focus:border-emerald-400 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-emerald-200/90 mb-1">
-                  {isBn ? 'পাসওয়ার্ড' : 'Password'}
+                <label className="block text-xs font-bold text-emerald-300 mb-1">
+                  {isBn ? 'পাসওয়ার্ড' : isAr ? 'كلمة المرور' : 'Password'}
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-emerald-400/70 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-white/10 border border-white/20 focus:border-emerald-400 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none transition"
+                    className="w-full bg-black/40 border border-emerald-500/30 focus:border-emerald-400 rounded-2xl pl-11 pr-11 py-3 text-sm text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -530,29 +564,29 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-md transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-xl transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{isBn ? 'যাচাই করা হচ্ছে...' : 'Signing in...'}</span>
+                    <span>{isBn ? 'যাচাই করা হচ্ছে...' : isAr ? 'جاري التحقق...' : 'Signing in...'}</span>
                   </>
                 ) : (
-                  <span>{isBn ? 'লগইন করুন' : 'Sign In'}</span>
+                  <span>{isBn ? 'লগইন করুন' : isAr ? 'تسجيل الدخول' : 'Sign In'}</span>
                 )}
               </button>
             </form>
 
-            <div className="flex items-center justify-between text-xs text-white/80 pt-1">
+            <div className="flex items-center justify-between text-xs text-emerald-200/90 pt-2 border-t border-emerald-500/20">
               <button
                 type="button"
                 onClick={() => {
                   setAuthMode('email-signup');
                   setErrorMessage(null);
                 }}
-                className="hover:text-emerald-300 underline font-medium cursor-pointer"
+                className="hover:text-white underline font-bold cursor-pointer"
               >
-                {isBn ? 'নতুন একাউন্ট খুলুন' : 'Create new account'}
+                {isBn ? 'নতুন একাউন্ট খুলুন' : isAr ? 'إنشاء حساب جديد' : 'Create new account'}
               </button>
               <button
                 type="button"
@@ -560,9 +594,9 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                   setAuthMode('welcome');
                   setErrorMessage(null);
                 }}
-                className="hover:text-white cursor-pointer"
+                className="hover:text-white font-semibold cursor-pointer"
               >
-                {isBn ? 'অন্যান্য উপায়' : 'Other options'}
+                {isBn ? 'অন্যান্য উপায়' : isAr ? 'خيارات أخرى' : 'Other options'}
               </button>
             </div>
           </div>
@@ -570,83 +604,86 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
 
         {/* Inline Email Sign-Up Form */}
         {authMode === 'email-signup' && (
-          <div className="bg-black/60 backdrop-blur-xl border border-white/20 rounded-3xl p-5 text-white space-y-3 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-              <h3 className="text-lg font-bold text-white">
-                {isBn ? 'নতুন একাউন্ট নিবন্ধন' : 'Create an Account'}
-              </h3>
+          <div className="bg-[#041a1f]/90 backdrop-blur-2xl border border-emerald-500/40 rounded-[32px] p-6 text-white space-y-3.5 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200">
+            <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">✨</span>
+                <h3 className="text-base sm:text-lg font-black text-white">
+                  {isBn ? 'নতুন একাউন্ট নিবন্ধন' : isAr ? 'إنشاء حساب جديد' : 'Create an Account'}
+                </h3>
+              </div>
               <button
                 type="button"
                 onClick={() => {
                   setAuthMode('welcome');
                   setErrorMessage(null);
                 }}
-                className="p-1 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition"
+                className="p-2 rounded-2xl text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {errorMessage && (
-              <div className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-xs">
+              <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-xs font-semibold">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
-            <form onSubmit={handleEmailSignUp} className="space-y-2.5">
+            <form onSubmit={handleEmailSignUp} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-semibold text-emerald-200/90 mb-1">
-                  {isBn ? 'আপনার পূর্ণ নাম' : 'Full Name'}
+                <label className="block text-xs font-bold text-emerald-300 mb-1">
+                  {isBn ? 'আপনার পূর্ণ নাম' : isAr ? 'الاسم الكامل' : 'Full Name'}
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <User className="w-4 h-4 text-emerald-400/70 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
-                    placeholder={isBn ? 'মুহাম্মদ' : 'Muhammad'}
-                    className="w-full bg-white/10 border border-white/20 focus:border-emerald-400 rounded-xl pl-10 pr-3.5 py-2 text-sm text-white placeholder-white/40 focus:outline-none transition"
+                    placeholder={isBn ? 'মুহাম্মদ' : isAr ? 'محمد' : 'Muhammad'}
+                    className="w-full bg-black/40 border border-emerald-500/30 focus:border-emerald-400 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-emerald-200/90 mb-1">
-                  {isBn ? 'ইমেইল এড্রেস' : 'Email Address'}
+                <label className="block text-xs font-bold text-emerald-300 mb-1">
+                  {isBn ? 'ইমেইল এড্রেস' : isAr ? 'البريد الإلكتروني' : 'Email Address'}
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-emerald-400/70 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     required
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     placeholder="user@example.com"
-                    className="w-full bg-white/10 border border-white/20 focus:border-emerald-400 rounded-xl pl-10 pr-3.5 py-2 text-sm text-white placeholder-white/40 focus:outline-none transition"
+                    className="w-full bg-black/40 border border-emerald-500/30 focus:border-emerald-400 rounded-2xl pl-11 pr-4 py-2.5 text-sm text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-emerald-200/90 mb-1">
-                  {isBn ? 'পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)' : 'Password (min 6 chars)'}
+                <label className="block text-xs font-bold text-emerald-300 mb-1">
+                  {isBn ? 'পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)' : isAr ? 'كلمة المرور (6 أحرف على الأقل)' : 'Password (min 6 chars)'}
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-emerald-400/70 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-white/10 border border-white/20 focus:border-emerald-400 rounded-xl pl-10 pr-10 py-2 text-sm text-white placeholder-white/40 focus:outline-none transition"
+                    className="w-full bg-black/40 border border-emerald-500/30 focus:border-emerald-400 rounded-2xl pl-11 pr-11 py-2.5 text-sm text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -656,41 +693,41 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-md transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-1"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm shadow-xl transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{isBn ? 'নিবন্ধন করা হচ্ছে...' : 'Registering...'}</span>
+                    <span>{isBn ? 'নিবন্ধন করা হচ্ছে...' : isAr ? 'جاري التسجيل...' : 'Registering...'}</span>
                   </>
                 ) : (
-                  <span>{isBn ? 'একাউন্ট তৈরি করুন' : 'Create Account'}</span>
+                  <span>{isBn ? 'একাউন্ট তৈরি করুন' : isAr ? 'إنشاء الحساب' : 'Create Account'}</span>
                 )}
               </button>
             </form>
 
-            <div className="text-center text-xs text-white/80 pt-1">
-              <span>{isBn ? 'ইতিমধ্যে একাউন্ট আছে?' : 'Already have an account?'} </span>
+            <div className="text-center text-xs text-emerald-200/90 pt-2 border-t border-emerald-500/20">
+              <span>{isBn ? 'ইতিমধ্যে একাউন্ট আছে?' : isAr ? 'لديك حساب بالفعل؟' : 'Already have an account?'} </span>
               <button
                 type="button"
                 onClick={() => {
                   setAuthMode('email-signin');
                   setErrorMessage(null);
                 }}
-                className="hover:text-emerald-300 underline font-semibold cursor-pointer"
+                className="hover:text-white underline font-bold cursor-pointer"
               >
-                {isBn ? 'সাইন ইন করুন' : 'Sign in'}
+                {isBn ? 'সাইন ইন করুন' : isAr ? 'تسجيل الدخول' : 'Sign in'}
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* 4. Bottom Action Buttons: Pixel-Perfect to Reference Screenshot */}
+      {/* 4. Bottom Action Buttons: Perfectly localized to selectedLanguage */}
       {authMode === 'welcome' && (
-        <div className="relative z-10 px-6 sm:px-8 pb-safe pb-6 pt-2 max-w-md mx-auto w-full space-y-3.5">
+        <div className="relative z-10 px-6 sm:px-8 pb-safe pb-8 pt-4 max-w-md mx-auto w-full space-y-3.5">
           {errorMessage && (
-            <div className="flex items-start gap-2 p-2.5 rounded-2xl bg-rose-500/25 border border-rose-400/40 text-rose-200 text-xs shadow-lg backdrop-blur-md">
+            <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-rose-500/25 border border-rose-400/40 text-rose-200 text-xs font-semibold shadow-xl backdrop-blur-md">
               <AlertCircle className="w-4 h-4 text-rose-300 shrink-0 mt-0.5" />
               <span>{errorMessage}</span>
             </div>
@@ -701,26 +738,34 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
             type="button"
             disabled={isLoadingGoogle}
             onClick={handleGoogleSignIn}
-            className="w-full py-3.5 px-6 rounded-full bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm sm:text-base flex items-center justify-center gap-3 shadow-xl transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60"
+            className="w-full py-4 px-6 rounded-full bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-sm sm:text-base flex items-center justify-center gap-3 shadow-2xl transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60 ring-2 ring-white/50"
           >
             {isLoadingGoogle ? (
               <>
                 <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
-                <span>{isBn ? 'গুগল সাইন-ইন হচ্ছে...' : 'Signing in with Google...'}</span>
+                <span>{isBn ? 'গুগল সাইন-ইন হচ্ছে...' : isAr ? 'جاري تسجيل الدخول...' : 'Signing in with Google...'}</span>
               </>
             ) : (
               <>
                 <GoogleIcon />
-                <span>{isBn ? 'Sign in with Google' : 'Sign in with Google'}</span>
+                <span>
+                  {isBn
+                    ? 'গুগল দিয়ে সাইন ইন'
+                    : isAr
+                      ? 'التسجيل بواسطة جوجل'
+                      : 'Sign in with Google'}
+                </span>
               </>
             )}
           </button>
 
           {/* Divider with 'or' */}
-          <div className="flex items-center gap-3 text-xs text-white/50 select-none">
-            <div className="flex-1 h-[1px] bg-white/20" />
-            <span className="font-medium tracking-wider lowercase">or</span>
-            <div className="flex-1 h-[1px] bg-white/20" />
+          <div className="flex items-center gap-3 text-xs text-white/50 select-none px-4">
+            <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+            <span className="font-bold tracking-wider uppercase text-[11px] text-emerald-200/80">
+              {isBn ? 'অথবা' : isAr ? 'أو' : 'or'}
+            </span>
+            <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
           </div>
 
           {/* Secondary Action Button: Sign in with Email (Glass Outline Pill) */}
@@ -731,9 +776,16 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
               setErrorMessage(null);
               if (soundEnabled) soundHaptics.playTap();
             }}
-            className="w-full py-3.5 px-6 rounded-full bg-white/10 hover:bg-white/20 border border-white/60 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 backdrop-blur-md shadow-lg transition-all duration-200 active:scale-95 cursor-pointer"
+            className="w-full py-4 px-6 rounded-full bg-black/40 hover:bg-black/60 border-2 border-emerald-400/60 text-emerald-100 font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 backdrop-blur-xl shadow-xl transition-all duration-200 active:scale-95 cursor-pointer"
           >
-            <span>{isBn ? 'Sign in with Email' : 'Sign in with Email'}</span>
+            <Mail className="w-5 h-5 text-emerald-400" />
+            <span>
+              {isBn
+                ? 'ইমেইল দিয়ে সাইন ইন'
+                : isAr
+                  ? 'تسجيل الدخول بالبريد'
+                  : 'Sign in with Email'}
+            </span>
           </button>
 
           {/* Create Account Link */}
@@ -745,21 +797,31 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                 setErrorMessage(null);
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className="text-white/80 hover:text-white font-semibold text-xs tracking-wide transition underline-offset-4 hover:underline cursor-pointer"
+              className="text-white/80 hover:text-white font-bold text-xs tracking-wide transition underline-offset-4 hover:underline cursor-pointer"
             >
-              {isBn ? 'Create Account' : 'Create Account'}
+              {isBn
+                ? 'নতুন একাউন্ট তৈরি করুন'
+                : isAr
+                  ? 'إنشاء حساب جديد'
+                  : 'Create Account'}
             </button>
           </div>
 
-          {/* Bottom Guest / Direct Access Link (like Bayyinah account in screenshot) */}
+          {/* Bottom Guest / Direct Access Link */}
           <div className="text-center pt-2">
             <button
               type="button"
               onClick={completeOnboardingAndDismiss}
-              className="text-emerald-300/80 hover:text-emerald-200 text-xs font-semibold tracking-wide transition cursor-pointer flex items-center justify-center gap-1 mx-auto"
+              className="text-emerald-300 hover:text-emerald-200 text-xs font-bold tracking-wide transition cursor-pointer flex items-center justify-center gap-1.5 mx-auto py-1 px-3 rounded-full hover:bg-emerald-500/10"
             >
-              <span>{isBn ? 'গেস্ট হিসেবে প্রবেশ করুন (Continue as Guest)' : 'Continue as Guest'}</span>
-              <ArrowRight className="w-3 h-3" />
+              <span>
+                {isBn
+                  ? 'গেস্ট হিসেবে প্রবেশ করুন (Continue as Guest)'
+                  : isAr
+                    ? 'المتابعة كضيف (Continue as Guest)'
+                    : 'Continue as Guest'}
+              </span>
+              <ArrowRight className={`w-3.5 h-3.5 ${isAr ? 'rotate-180' : ''}`} />
             </button>
           </div>
         </div>
