@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem, AppSettings, UserProfile, NavModule, HistorySession } from '../types';
 import {
   Heart,
@@ -9,6 +9,7 @@ import {
   Compass,
   Bookmark,
   User,
+  Menu,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
@@ -180,6 +181,18 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const [isHubMenuOpen, setIsHubMenuOpen] = useState(false);
   const [isClickedAnim, setIsClickedAnim] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+  const autoHideTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleOpenRightSidebar = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    setIsRightSidebarOpen(true);
+    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+    autoHideTimerRef.current = setTimeout(() => {
+      setIsRightSidebarOpen(false);
+    }, 3000);
+  };
 
   const [savedStats, setSavedStats] = useState({ bookmarks: 0, highlights: 0, notes: 0 });
 
@@ -418,221 +431,107 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Sticky Top Category Switcher Pills (Always accessible from any sub-page) */}
-      <div className="sticky top-0 z-40 py-2.5 bg-[#fcfbf7]/95 dark:bg-[#031518]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-teal-900/40 -mx-3 px-3 sm:-mx-6 sm:px-6 shadow-md transition-colors">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          onClick={() => handleSelectSub('hub')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'hub'
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
-        </button>
+      {/* Right Edge Vertical Pop-up Menu Button ("Zikr+") */}
+      {activeSub !== 'hub' && !isRightSidebarOpen && (
+        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-45 pointer-events-auto">
+          <button
+            onClick={handleOpenRightSidebar}
+            aria-label="Open Zikr+ Menu"
+            className={`group relative flex flex-col items-center justify-center py-4 px-2 rounded-l-2xl shadow-2xl transition-all duration-300 cursor-pointer active:scale-95 border-y border-l ${
+              isDay
+                ? 'bg-[#006A4E] text-white border-emerald-400 shadow-emerald-950/30 hover:bg-[#005439]'
+                : 'bg-[#0e353c] text-emerald-300 border-teal-500/50 shadow-black/90 hover:bg-[#12424b]'
+            }`}
+          >
+            <div className="flex flex-col items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+              <span
+                className="text-[11px] font-black tracking-widest uppercase py-1"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+              >
+                Zikr+
+              </span>
+            </div>
+            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-amber-400 animate-pulse" />
+          </button>
+        </div>
+      )}
 
-        <button
-          onPointerEnter={() => prefetchView('profile_modal')}
-          onTouchStart={() => prefetchView('profile_modal')}
-          onClick={() => {
-            setAccountTab('profile');
-            handleSelectSub('my_account');
+      {/* Right-Side Auto-Hiding Zikr+ Sidebar Panel */}
+      {isRightSidebarOpen && (
+        <div
+          onMouseEnter={() => {
+            if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
           }}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'my_account'
-              ? 'bg-[#006A4E] text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
+          onMouseLeave={() => {
+            if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+            autoHideTimerRef.current = setTimeout(() => {
+              setIsRightSidebarOpen(false);
+            }, 3000);
+          }}
+          className={`fixed right-4 top-4 bottom-4 z-50 w-72 flex flex-col rounded-3xl border shadow-2xl p-4 space-y-3 overflow-y-auto animate-in slide-in-from-right duration-300 ${
+            isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#092226] border-teal-900/50 text-white'
           }`}
         >
-          <User className="w-3.5 h-3.5" />
-          <span>{selectedLanguage === 'bn' ? 'আমার অ্যাকাউন্ট' : selectedLanguage === 'ar' ? 'حسابي' : 'My Account'}</span>
-        </button>
+          {/* Header with Zikr+ and icon */}
+          <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-teal-900/40">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-md">
+                <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-black text-base text-emerald-600 dark:text-emerald-400">Zikr+</h3>
+                <p className="text-[10px] opacity-70">Islamic Knowledge Hub</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsRightSidebarOpen(false)}
+              className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#123840] flex items-center justify-center font-bold cursor-pointer transition"
+            >
+              ✕
+            </button>
+          </div>
 
-        <button
-          onPointerEnter={() => prefetchView('saved')}
-          onTouchStart={() => prefetchView('saved')}
-          onClick={() => handleSelectSub('saved')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'saved'
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Bookmark className="w-3.5 h-3.5" />
-          <span>{selectedLanguage === 'bn' ? 'সংরক্ষিত' : selectedLanguage === 'ar' ? 'المحفوظات' : 'Saved'}</span>
-        </button>
+          {/* Navigation Items List */}
+          <div className="space-y-1.5 flex-1">
+            <button
+              onClick={() => {
+                handleSelectSub('hub');
+                setIsRightSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                activeSub === 'hub' ? 'bg-emerald-600 text-white shadow-md' : isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#123840] text-emerald-300'
+              }`}
+            >
+              <Layers className="w-4 h-4 shrink-0" />
+              <span className="truncate">{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
+            </button>
 
-        <button
-          onPointerEnter={() => prefetchView('nobi_24_hours')}
-          onTouchStart={() => prefetchView('nobi_24_hours')}
-          onClick={() => handleSelectSub('nobi_24_hours')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'nobi_24_hours'
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>⏰</span>
-          <span>{NAV_TRANSLATIONS.nobi_24_hours?.[selectedLanguage] || (selectedLanguage === 'bn' ? 'নবীজির ২৪ ঘণ্টা' : "Prophet's 24 Hours")}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('seerat_un_nabi')}
-          onTouchStart={() => prefetchView('seerat_un_nabi')}
-          onClick={() => handleSelectSub('seerat_un_nabi')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'seerat_un_nabi'
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>🌱</span>
-          <span>{NAV_TRANSLATIONS.seerat_un_nabi[selectedLanguage] || 'সিরাতুন নবী (সা.)'}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('hayatus_sahaba')}
-          onTouchStart={() => prefetchView('hayatus_sahaba')}
-          onClick={() => handleSelectSub('hayatus_sahaba')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'hayatus_sahaba'
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>📜</span>
-          <span>{selectedLanguage === 'bn' ? 'হায়াতুস সাহাবা' : (selectedLanguage === 'ar' ? 'حياة الصحابة' : (selectedLanguage === 'ur' ? 'حیات الصحابہ' : 'Sahaba'))}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('arober_gotro')}
-          onTouchStart={() => prefetchView('arober_gotro')}
-          onClick={() => handleSelectSub('arober_gotro')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'arober_gotro'
-              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>🛡️</span>
-          <span>{selectedLanguage === 'bn' ? 'আরবের গোত্র ও ব্যক্তিত্ব' : 'Arab Tribes'}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('islamic_history_wars')}
-          onTouchStart={() => prefetchView('islamic_history_wars')}
-          onClick={() => handleSelectSub('islamic_history_wars')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'islamic_history_wars'
-              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>⚔️</span>
-          <span>{selectedLanguage === 'bn' ? 'ইতিহাসের যুদ্ধ' : (selectedLanguage === 'ar' ? 'معارك التاريخ' : (selectedLanguage === 'ur' ? 'تاریخ کی جنگیں' : 'Wars'))}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('history_timeline')}
-          onTouchStart={() => prefetchView('history_timeline')}
-          onClick={() => handleSelectSub('history_timeline')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'history_timeline'
-              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Compass className="w-3.5 h-3.5 text-amber-400" />
-          <span>{NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা'}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('dua')}
-          onTouchStart={() => prefetchView('dua')}
-          onClick={() => handleSelectSub('dua')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'dua'
-              ? 'bg-rose-600 text-white border-rose-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Heart className="w-3.5 h-3.5" />
-          <span>{NAV_TRANSLATIONS.dua[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('hajj_checklist')}
-          onTouchStart={() => prefetchView('hajj_checklist')}
-          onClick={() => handleSelectSub('hajj_checklist')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'hajj_checklist'
-              ? 'bg-teal-600 text-white border-teal-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <span>🕋</span>
-          <span>{NAV_TRANSLATIONS.hajj_checklist[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('tablig')}
-          onTouchStart={() => prefetchView('tablig')}
-          onClick={() => handleSelectSub('tablig')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'tablig'
-              ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Users className="w-3.5 h-3.5" />
-          <span>{NAV_TRANSLATIONS.tablig[selectedLanguage]}</span>
-        </button>
-
-        <button
-          onPointerEnter={() => prefetchView('allah_names')}
-          onTouchStart={() => prefetchView('allah_names')}
-          onClick={() => handleSelectSub('allah_names')}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeSub === 'allah_names'
-              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
-              : isDay
-              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{NAV_TRANSLATIONS.allah_names[selectedLanguage]}</span>
-        </button>
-      </div>
-    </div>
-
-      {/* Main Content Area */}
+            {hubItems.map((item) => {
+              const isActive = activeSub === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if ((item as any).action) {
+                      (item as any).action();
+                    } else {
+                      handleSelectSub(item.id);
+                    }
+                    setIsRightSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                    isActive ? 'bg-emerald-600 text-white shadow-md' : isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#123840] text-emerald-300'
+                  }`}
+                >
+                  <div className="w-5 h-5 flex items-center justify-center text-base shrink-0">{item.icon}</div>
+                  <span className="truncate">{item.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {activeSub === 'hub' && (
         <div className="space-y-5">
           {/* Header Banner */}
