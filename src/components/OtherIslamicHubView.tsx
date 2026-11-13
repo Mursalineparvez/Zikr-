@@ -178,16 +178,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [activeSub]);
 
-  const [showBottomDock, setShowBottomDock] = useState(false);
-  useEffect(() => {
-    const handleScrollDock = () => {
-      const scrollY = window.scrollY || document.documentElement.scrollTop;
-      setShowBottomDock(scrollY > 200);
-    };
-    window.addEventListener('scroll', handleScrollDock, { passive: true });
-    handleScrollDock();
-    return () => window.removeEventListener('scroll', handleScrollDock);
-  }, []);
+  const [isHubMenuOpen, setIsHubMenuOpen] = useState(false);
+  const [isClickedAnim, setIsClickedAnim] = useState(false);
 
   const [savedStats, setSavedStats] = useState({ bookmarks: 0, highlights: 0, notes: 0 });
 
@@ -989,102 +981,104 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         )}
       </React.Suspense>
 
-      {/* Floating Bottom Quick-Switcher Bar (Appears when scrolled down so user never needs to scroll back up to switch pages) */}
-      {showBottomDock && activeSub !== 'hub' && (
-        <div className="fixed bottom-16 left-3 right-3 sm:left-8 sm:right-8 z-35 animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto">
-          <div className={`p-2 rounded-2xl backdrop-blur-xl border shadow-2xl flex items-center gap-1.5 overflow-x-auto scrollbar-none ${
-            isDay
-              ? 'bg-white/95 border-emerald-600/30 text-slate-800 shadow-emerald-950/20'
-              : 'bg-[#0a2327]/95 border-teal-500/40 text-emerald-100 shadow-black/90'
-          }`}>
-            <button
-              onClick={() => {
-                handleSelectSub('hub');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold whitespace-nowrap shadow-md cursor-pointer shrink-0 active:scale-95"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
-            </button>
+      {/* Right Edge Vertical Pop-up Menu Button */}
+      {activeSub !== 'hub' && (
+        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-35 pointer-events-auto">
+          <button
+            onClick={() => {
+              if (soundEnabled) soundHaptics.playTap();
+              setIsClickedAnim(true);
+              setIsHubMenuOpen(true);
+              setTimeout(() => setIsClickedAnim(false), 2500);
+            }}
+            aria-label="Open Menu Hub"
+            className={`group relative flex flex-col items-center justify-center py-4 px-2 rounded-l-2xl shadow-2xl transition-all duration-300 cursor-pointer active:scale-95 border-y border-l ${
+              isClickedAnim
+                ? 'scale-110 bg-amber-600 text-white border-amber-400 shadow-amber-950/50'
+                : isDay
+                ? 'bg-[#006A4E] text-white border-emerald-400 shadow-emerald-950/30 hover:bg-[#005439]'
+                : 'bg-[#0e353c] text-emerald-300 border-teal-500/50 shadow-black/90 hover:bg-[#12424b]'
+            }`}
+          >
+            <div className="flex flex-col items-center gap-1.5">
+              <Layers className={`w-4 h-4 transition-transform ${isClickedAnim ? 'rotate-180 scale-125' : 'animate-pulse text-amber-300'}`} />
+              <span
+                className="text-[10px] font-black tracking-widest uppercase py-1"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+              >
+                {selectedLanguage === 'bn' ? 'মেনু হাব' : 'MENU HUB'}
+              </span>
+            </div>
+            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-amber-400 animate-pulse" />
+          </button>
+        </div>
+      )}
 
-            <button
-              onClick={() => {
-                handleSelectSub('nobi_24_hours');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
-                activeSub === 'nobi_24_hours' ? 'bg-emerald-600 text-white shadow-md' : isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-[#0e2c33] hover:bg-[#153b43] text-emerald-300'
-              }`}
-            >
-              <span>⏰</span>
-              <span>{selectedLanguage === 'bn' ? '২৪ ঘণ্টা' : '24H'}</span>
-            </button>
+      {/* Hub Menu Modal / Bottom Sheet */}
+      {isHubMenuOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className={`w-full sm:max-w-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto rounded-t-[28px] sm:rounded-3xl border shadow-2xl p-5 sm:p-6 space-y-4 animate-in slide-in-from-bottom-5 duration-300 ${
+              isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#092226] border-teal-900/50 text-white'
+            }`}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-teal-900/40">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600/20 flex items-center justify-center text-emerald-600 dark:text-emerald-300">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black">
+                    {selectedLanguage === 'bn' ? 'সকল ইসলামিক ফিচার ও সূচিপত্র' : 'All Features Menu'}
+                  </h3>
+                  <p className="text-xs opacity-70">
+                    {selectedLanguage === 'bn' ? 'যেকোনো ফিচারে দ্রুত প্রবেশ করুন' : 'Tap any feature to switch instantly'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsHubMenuOpen(false)}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm cursor-pointer transition ${
+                  isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-[#123840] hover:bg-[#1a4c55] text-emerald-300'
+                }`}
+              >
+                ✕
+              </button>
+            </div>
 
-            <button
-              onClick={() => {
-                handleSelectSub('seerat_un_nabi');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
-                activeSub === 'seerat_un_nabi' ? 'bg-emerald-600 text-white shadow-md' : isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-[#0e2c33] hover:bg-[#153b43] text-emerald-300'
-              }`}
-            >
-              <span>🌱</span>
-              <span>{selectedLanguage === 'bn' ? 'সিরাত' : 'Seerat'}</span>
-            </button>
-
-            <button
-              onClick={() => {
-                handleSelectSub('hayatus_sahaba');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
-                activeSub === 'hayatus_sahaba' ? 'bg-emerald-600 text-white shadow-md' : isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-[#0e2c33] hover:bg-[#153b43] text-emerald-300'
-              }`}
-            >
-              <span>📜</span>
-              <span>{selectedLanguage === 'bn' ? 'সাহাবি' : 'Sahaba'}</span>
-            </button>
-
-            <button
-              onClick={() => {
-                handleSelectSub('islamic_history_wars');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
-                activeSub === 'islamic_history_wars' ? 'bg-amber-600 text-white shadow-md' : isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-[#0e2c33] hover:bg-[#153b43] text-emerald-300'
-              }`}
-            >
-              <span>⚔️</span>
-              <span>{selectedLanguage === 'bn' ? 'যুদ্ধ' : 'Wars'}</span>
-            </button>
-
-            <button
-              onClick={() => {
-                handleSelectSub('dua');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
-                activeSub === 'dua' ? 'bg-rose-600 text-white shadow-md' : isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-[#0e2c33] hover:bg-[#153b43] text-emerald-300'
-              }`}
-            >
-              <Heart className="w-3.5 h-3.5 text-rose-500" />
-              <span>{selectedLanguage === 'bn' ? 'দোয়া' : 'Duas'}</span>
-            </button>
-
-            <button
-              onClick={() => {
-                handleSelectSub('saved');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${
-                activeSub === 'saved' ? 'bg-emerald-600 text-white shadow-md' : isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-[#0e2c33] hover:bg-[#153b43] text-emerald-300'
-              }`}
-            >
-              <Bookmark className="w-3.5 h-3.5" />
-              <span>{selectedLanguage === 'bn' ? 'সংরক্ষিত' : 'Saved'}</span>
-            </button>
+            {/* Hub Items Grid */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              {hubItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    setIsHubMenuOpen(false);
+                    if ((item as any).action) {
+                      (item as any).action();
+                    } else {
+                      handleSelectSub(item.id);
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`p-3.5 rounded-2xl border flex items-center gap-3 cursor-pointer transition-all duration-150 active:scale-95 group ${
+                    isDay
+                      ? 'bg-slate-50 hover:bg-emerald-50/60 border-slate-200 hover:border-emerald-400'
+                      : 'bg-[#0e2c33] hover:bg-[#143d46] border-[#16414a] hover:border-emerald-500/50'
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#071c20] flex items-center justify-center shrink-0 shadow-xs">
+                    {item.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs sm:text-sm font-black truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      {item.title}
+                    </h4>
+                    <p className="text-[10px] opacity-70 truncate">{item.badge}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
