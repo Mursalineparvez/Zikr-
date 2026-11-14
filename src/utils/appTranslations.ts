@@ -1327,6 +1327,17 @@ export const DUA_CATEGORIES: Record<string, Record<string, string>> = createTran
   forgiveness: { bn: 'ক্ষমা ও তওবা', en: 'Forgiveness (Istighfar)', ur: 'استغفار و توبہ', ar: 'الاستغفار والتوبة', hi: 'माफ़ी और इस्तग़फ़ार', id: 'Ampunan & Istighfar', tr: 'Bağışlanma ve Tövbe', ms: 'Keampunan & Istighfar', fr: 'Pardon & Repentir', es: 'Perdón y Arrepentimiento', ru: 'Прощение и Тауба', fa: 'آمرزش و توبه', de: 'Vergebung & Reue', sw: 'Msamaha na Toba' },
   hardship: { bn: 'বিপদ ও চিন্তা মুক্তি', en: 'Anxiety & Hardship', ur: 'پریشانی سے نجات', ar: 'تفريج الكرب والهم', hi: 'मुसीबत व परेशानी', id: 'Kesusahan & Cemas', tr: 'Sıkıntı ve Zorluk', ms: 'Kesusahan & Kebimbangan', fr: 'Épreuve & Anxiété', es: 'Dificultad y Ansiedad', ru: 'Избавление от Бед', fa: 'رفع سختی و غم', de: 'Kummer & Erleichterung', sw: 'Dhiki na Wasiwasi' },
   daily_living: { bn: 'দৈনন্দিন জীবন', en: 'Daily Life', ur: 'روزمرہ کی دعائیں', ar: 'أدعية الحياة اليومية', hi: 'दैनिक जीवन', id: 'Sehari-hari', tr: 'Günlük Hayat', ms: 'Kehidupan Harian', fr: 'Vie Quotidienne', es: 'Vida Cotidiana', ru: 'Повседневная Жизнь', fa: 'زندگی روزمره', de: 'Tägliches Leben', sw: 'Maisha ya Kila Siku' },
+  purification: { bn: 'পবিত্রতা ও অযু', en: 'Purification & Wudu', ur: 'طہارت اور وضو', ar: 'الطهارة والوضوء', hi: 'पवित्रता व वुज़ू', id: 'Bersuci & Wudhu', tr: 'Temizlik ve Abdest' },
+  mosque: { bn: 'মসজিদ ও আজান', en: 'Mosque & Adhan', ur: 'مسجد اور اذان', ar: 'المسجد والأذان', hi: 'मस्जिद और अज़ान', id: 'Masjid & Adzan', tr: 'Cami ve Ezan' },
+  food_drink: { bn: 'খাদ্য ও পানীয়', en: 'Food & Drink', ur: 'کھانا اور پانی', ar: 'الطعام والشراب', hi: 'खान-पान', id: 'Makanan & Minuman', tr: 'Yemek ve İçecek' },
+  sickness_funeral: { bn: 'অসুস্থতা ও মৃত্যু', en: 'Sickness & Funeral', ur: 'بیماری اور جنازہ', ar: 'المريض والجنازة', hi: 'बीमारी और जनाज़ा', id: 'Sakit & Jenazah', tr: 'Hastalık ve Cenaze' },
+  weather_nature: { bn: 'প্রকৃতি ও আবহাওয়া', en: 'Weather & Nature', ur: 'موسم اور قدرت', ar: 'الطقس والطبيعة', hi: 'मौसम और प्रकृति', id: 'Cuaca & Alam', tr: 'Hava Durumu ve Doğa' },
+  social_etiquette: { bn: 'সামাজিক শিষ্টাচার', en: 'Social Etiquette', ur: 'معاشرتی آداب', ar: 'الآداب الاجتماعية', hi: 'सामाजिक शिष्टाचार', id: 'Etika Sosial', tr: 'Sosyal Adap' },
+  hajj: { bn: 'হজ্জ ও ওমরাহ', en: 'Hajj & Umrah', ur: 'حج اور عمرہ', ar: 'الحج والعمرة', hi: 'हज और उमराह', id: 'Haji & Umrah', tr: 'Hac ve Umre' },
+  ramadan: { bn: 'রমাদান ও সাওম', en: 'Ramadan & Fasting', ur: 'رمضان اور روزہ', ar: 'رمضان والصيام', hi: 'रमज़ान और रोज़ा', id: 'Ramadan & Puasa', tr: 'Ramazan ve Oruç' },
+  family: { bn: 'পরিবার ও বিবাহ', en: 'Family & Marriage', ur: 'خاندان اور نکاح', ar: 'الأسرة والزواج', hi: 'परिवार और विवाह', id: 'Keluarga & Pernikahan', tr: 'Aile ve Evlilik' },
+  travel: { bn: 'সফর ও বাহন', en: 'Travel & Journey', ur: 'سفر اور سواری', ar: 'السفر والركوب', hi: 'यात्रा और सवारी', id: 'Perjalanan & Berkendara', tr: 'Yolculuk ve Araç' },
+  quranic: { bn: 'কোরআনি দোয়া', en: 'Quranic Supplications', ur: 'قرآنی دعائیں', ar: 'الدعاء القرآني', hi: 'कुरआनी दुआएं', id: 'Doa Al-Qur\'an', tr: 'Kur\'an Duaları' },
 });
 
 export const DUA_UI: Record<string, Record<string, string>> = createTranslationProxy({

@@ -96,7 +96,13 @@ export type DuaCategory =
   | 'hajj'
   | 'ramadan'
   | 'family'
-  | 'travel';
+  | 'travel'
+  | 'purification'
+  | 'mosque'
+  | 'food_drink'
+  | 'sickness_funeral'
+  | 'weather_nature'
+  | 'social_etiquette';
 
 export interface DuaItem {
   id: string;
