@@ -587,69 +587,271 @@ export const ARABER_GOTRO_TRANSLATIONS: Record<'bn' | 'en', UIStringDict> = {
   }
 };
 
-// Data item English Translation Helper Map for TOPIC_WISE_TOC_DATA
-export const TOPIC_TOC_ENGLISH_MAP: Record<string, {
+export interface TocSubsectionEnEntry {
+  titleEn: string;
+  subtitleEn: string;
+  badgeEn: string;
+  figuresPreviewEn?: string[];
+}
+
+export interface TocTopicEnEntry {
   topicTitleEn: string;
   themeBadgeEn: string;
   summaryEn: string;
-  subsectionsEn: Record<string, { titleEn: string; subtitleEn: string; badgeEn: string }>;
-}> = {
+  relatedChartTitleEn?: string;
+  subsectionsEn: Record<string, TocSubsectionEnEntry>;
+  subsectionsByTitleEn?: Record<string, TocSubsectionEnEntry>;
+}
+
+// Data item English Translation Helper Map for TOPIC_WISE_TOC_DATA
+export const TOPIC_TOC_ENGLISH_MAP: Record<string, TocTopicEnEntry> = {
   'topic-kaba-admin': {
     topicTitleEn: 'Service of the Holy Kaaba & Quraysh Offices (10 Portfolios)',
     themeBadgeEn: 'Kaaba Administration & 10 Noble Offices',
     summaryEn: 'The 10 administrative portfolios distributed among Quraysh noble clans during pre-Islamic era for orderly management of Makkah and Kaaba.',
+    relatedChartTitleEn: 'Quraysh Offices Chart',
     subsectionsEn: {
-      'banu-hashim': { titleEn: 'Banu Hashim', subtitleEn: 'Watering Pilgrims (Siqayah) & Feeding (Rifadah)', badgeEn: 'Portfolio 1' },
-      'banu-umayya': { titleEn: 'Banu Umayya / Abd Shams', subtitleEn: 'Carrying War Banner "Al-Uqab" & Supreme Military Command', badgeEn: 'Portfolio 2' },
-      'banu-makhzum': { titleEn: 'Banu Makhzum', subtitleEn: 'Cavalry Forces (Al-A\'innah) & Encampment (Al-Qubbah)', badgeEn: 'Portfolio 3' },
-      'banu-adi': { titleEn: 'Banu Adi', subtitleEn: 'Diplomacy (As-Sifarah), Envoys & Foreign Arbitration', badgeEn: 'Portfolio 4' },
-      'banu-taym': { titleEn: 'Banu Taym', subtitleEn: 'Blood Money (Diyat) & Financial Compensation', badgeEn: 'Portfolio 5' },
-      'banu-asad-quraysh': { titleEn: 'Banu Asad (Quraysh)', subtitleEn: 'Assembly House (Dar al-Nadwah) & Trade Caravans', badgeEn: 'Portfolio 6' },
-      'banu-zuhrah': { titleEn: 'Banu Zuhrah', subtitleEn: 'Treasury (Al-Amwal) & Maternal Lineage of the Prophet (PBUH)', badgeEn: 'Portfolio 7' },
-      'quraysh-other-branches': { titleEn: 'Banu Abd al-Dar, Sahm & Jumah', subtitleEn: 'Kaaba Keys (Sidanah), Standard (Liwa), Divination & Sacrifices', badgeEn: 'Portfolio 8' },
-      'chart-quraysh-roles': { titleEn: 'Quraysh 10 Offices Visual Chart', subtitleEn: 'Comparative diagram of pre-Islamic leadership & Islamic era status', badgeEn: 'Chart 1' },
-      'chart-quraysh-convergence': { titleEn: 'Quraysh Lineage Convergence Diagram', subtitleEn: 'Generation map showing where Sahaba merge with the Prophet\'s root', badgeEn: 'Chart 2' },
-      'chart-hashim-tree': { titleEn: 'Banu Hashim Genealogy Tree', subtitleEn: 'Genealogy of Prophet (PBUH), Ahl al-Bayt, Uncles, and Caliphs', badgeEn: 'Chart 3' }
+      'banu-hashim': {
+        titleEn: 'Banu Hashim',
+        subtitleEn: 'Watering Pilgrims (Siqayah) & Feeding (Rifadah)',
+        badgeEn: 'Portfolio 1',
+        figuresPreviewEn: ['Prophet Muhammad (PBUH)', 'Ali (RA)', 'Hamzah (RA)', 'Al-Abbas (RA)']
+      },
+      'banu-umayya': {
+        titleEn: 'Banu Abd Shams / Banu Umayyah',
+        subtitleEn: 'Carrying War Banner "Al-Uqab" & Supreme Military Command',
+        badgeEn: 'Portfolio 2',
+        figuresPreviewEn: ['Uthman ibn Affan (RA)', 'Abu Sufyan (RA)', 'Mu\'awiyah (RA)']
+      },
+      'banu-makhzum': {
+        titleEn: 'Banu Makhzum',
+        subtitleEn: 'Cavalry Forces (Al-A\'innah) & Encampment (Al-Qubbah)',
+        badgeEn: 'Portfolio 3',
+        figuresPreviewEn: ['Khalid ibn al-Walid (RA)', 'Umm Salamah (RA)', 'Abu Jahl']
+      },
+      'banu-adi': {
+        titleEn: 'Banu Adi',
+        subtitleEn: 'Diplomacy (As-Sifarah), Envoys & Foreign Arbitration',
+        badgeEn: 'Portfolio 4',
+        figuresPreviewEn: ['Umar ibn al-Khattab (RA)', 'Sa\'id ibn Zayd (RA)', 'Hafsah (RA)']
+      },
+      'banu-taym': {
+        titleEn: 'Banu Taym',
+        subtitleEn: 'Blood Money (Diyat) & Financial Compensation',
+        badgeEn: 'Portfolio 5',
+        figuresPreviewEn: ['Abu Bakr as-Siddiq (RA)', 'Talhah ibn Ubaydullah (RA)', 'Aishah (RA)']
+      },
+      'banu-asad-quraysh': {
+        titleEn: 'Banu Asad (Quraysh)',
+        subtitleEn: 'Assembly House (Dar al-Nadwah) & Trade Caravans',
+        badgeEn: 'Portfolio 6',
+        figuresPreviewEn: ['Khadijah bint Khuwaylid (RA)', 'Az-Zubayr ibn al-Awwam (RA)']
+      },
+      'banu-zuhrah': {
+        titleEn: 'Banu Zuhrah',
+        subtitleEn: 'Treasury (Al-Amwal) & Maternal Lineage of the Prophet (PBUH)',
+        badgeEn: 'Portfolio 7',
+        figuresPreviewEn: ['Aminah bint Wahb', 'Sa\'d ibn Abi Waqqas (RA)', 'Abdur Rahman ibn Awf (RA)']
+      },
+      'quraysh-other-branches': {
+        titleEn: 'Banu Abd al-Dar, Jumah & Sahm',
+        subtitleEn: 'Kaaba Keys (Sidanah), Standard (Liwa), Divination (Azlam) & Offerings',
+        badgeEn: 'Portfolios 8, 9 & 10',
+        figuresPreviewEn: ['Mus\'ab ibn Umayr (RA)', 'Uthman ibn Talhah (RA)', 'Amr ibn al-As (RA)']
+      },
+      'chart-quraysh-roles': {
+        titleEn: 'Quraysh 10 Offices Visual Chart',
+        subtitleEn: 'Overview of the 10 Quraysh branches, roles & administrative portfolios',
+        badgeEn: 'Visual Chart'
+      }
+    }
+  },
+  'topic-prophetic-lineage': {
+    topicTitleEn: 'Blessed Lineage of the Prophet (PBUH) & Ahl al-Bayt',
+    themeBadgeEn: 'Prophethood, Ahl al-Bayt & Sacred Lineage',
+    summaryEn: 'Sacred genealogy from Hashim ibn Abd Manaf to Prophet Muhammad (PBUH), the Rightly-Guided Caliphs, and the sacrifices of Ahl al-Bayt.',
+    relatedChartTitleEn: 'Banu Hashim Lineage Tree',
+    subsectionsEn: {
+      'chart-hashim-tree': {
+        titleEn: 'Banu Hashim Genealogy Tree Diagram',
+        subtitleEn: 'Visual family tree from Hashim to Abdul Muttalib and Prophet Muhammad (PBUH)',
+        badgeEn: 'Visual Lineage'
+      }
+    },
+    subsectionsByTitleEn: {
+      'সাইয়্যিদুল মুরসালীন হযরত মুহাম্মাদ মুস্তফা ﷺ': {
+        titleEn: 'Sayyid al-Mursalin Prophet Muhammad al-Mustafa (PBUH)',
+        subtitleEn: 'Final Messenger, Mercy to the Worlds & Rebuilder of the Kaaba',
+        badgeEn: 'Prophetic Lineage',
+        figuresPreviewEn: ['Prophet Muhammad (PBUH)']
+      },
+      'সাইয়্যিদুনা হযরত আলী ও ফাতিমাতুয যাহরা (রা.)': {
+        titleEn: 'Sayyiduna Ali & Fatimah az-Zahra (RA)',
+        subtitleEn: 'Asadullah al-Ghalib, 4th Caliph & Leader of the Women of Paradise',
+        badgeEn: 'Ahl al-Bayt',
+        figuresPreviewEn: ['Ali (RA)', 'Fatimah (RA)']
+      },
+      'ইমাম হাসান ও ইমাম হুসাইন (রা.)': {
+        titleEn: 'Imam al-Hasan & Imam al-Husayn (RA)',
+        subtitleEn: 'Chiefs of the Youth of Paradise & beloved grandsons of the Prophet (PBUH)',
+        badgeEn: 'Ahl al-Bayt',
+        figuresPreviewEn: ['Imam Hasan (RA)', 'Imam Husayn (RA)']
+      },
+      'সাইয়্যিদুশ শুহাদা হযরত হামযা ও জাফর ইবনে আবি তালিব (রা.)': {
+        titleEn: 'Chief of Martyrs Hamzah & Ja\'far ibn Abi Talib (RA)',
+        subtitleEn: 'Lion of Allah at Badr & Dhul-Janahayn Martyr of Mu\'tah',
+        badgeEn: 'Noble Martyrs',
+        figuresPreviewEn: ['Hamzah (RA)', 'Ja\'far ibn Abi Talib (RA)']
+      },
+      'হযরত আব্বাস ইবনে আব্দুল মুত্তালিব ও আব্দুল্লাহ ইবনে আব্বাস (রা.)': {
+        titleEn: 'Al-Abbas ibn Abdul Muttalib & Abdullah ibn Abbas (RA)',
+        subtitleEn: 'The Prophet\'s uncle & Chief Exegete (Ra\'is al-Mufassirin)',
+        badgeEn: 'Knowledge & Stewardship',
+        figuresPreviewEn: ['Al-Abbas (RA)', 'Ibn Abbas (RA)']
+      }
     }
   },
   'topic-ansar-madinah': {
     topicTitleEn: 'Madinan Ansar Brotherhood & Tribes of Yathrib',
     themeBadgeEn: 'Ansar Brotherhood & Constitution of Madinah',
-    summaryEn: 'The Khazraj & Aws brotherly tribes of Madinah and Jewish tribes (Qaynuqa, Nadir, Qurayzah).',
+    summaryEn: 'The Khazraj & Aws brotherly tribes of Madinah from Yemen\'s Azd lineage and Jewish tribes (Qaynuqa, Nadir, Qurayzah).',
+    relatedChartTitleEn: 'Ansar Branch Diagram',
     subsectionsEn: {
-      'khazraj-tribe': { titleEn: 'Banu Khazraj', subtitleEn: 'Largest Ansar clan, pledges of Aqabah, Badr heroes & Abu Ayyub', badgeEn: 'Ansar Clan 1' },
-      'aws-tribe': { titleEn: 'Banu Aws', subtitleEn: 'Sa\'d ibn Mu\'adh, Badr martyrs, defenders & champions of Ansar', badgeEn: 'Ansar Clan 2' },
-      'madinah-jewish-tribes': { titleEn: 'Madinan Jewish Tribes', subtitleEn: 'Banu Qaynuqa, Banu Nadir, Banu Qurayzah & Constitution of Madinah', badgeEn: 'Madinah Fortresses' },
-      'chart-ansar-tree': { titleEn: 'Aws & Khazraj Branch Diagram', subtitleEn: 'Sub-clan breakdown, leaders, and virtues of Madinan Ansar', badgeEn: 'Chart 4' }
+      'khazraj-tribe': {
+        titleEn: 'Banu Khazraj (Largest Ansar Clan)',
+        subtitleEn: 'History & valor of Banu Najjar, Salamah, Sa\'idah & Zurayq',
+        badgeEn: 'Ansar Khazraj',
+        figuresPreviewEn: ['Abu Ayyub al-Ansari (RA)', 'Jabir ibn Abdullah (RA)', 'Sa\'d ibn Ubadah (RA)']
+      },
+      'aws-tribe': {
+        titleEn: 'Banu Aws (Steadfast Ansar Clan)',
+        subtitleEn: 'Banu Abd al-Ashhal, Zafar, Awf & Heroes of Badr',
+        badgeEn: 'Ansar Aws',
+        figuresPreviewEn: ['Sa\'d ibn Mu\'adh (RA)', 'Usayd ibn Hudayr (RA)', 'Hanzalah (RA)']
+      },
+      'madinah-jewish-tribes': {
+        titleEn: 'Madinan Jewish Tribes (Qaynuqa, Nadir & Qurayzah)',
+        subtitleEn: 'Constitution of Madinah, fortresses, treaty violations & historical battles',
+        badgeEn: 'Treaties & Fortresses',
+        figuresPreviewEn: ['Huyayy ibn Akhtab', 'Ka\'b ibn al-Ashraf', 'Safiyyah bint Huyayy (RA)']
+      },
+      'chart-ansar-tree': {
+        titleEn: 'Aws & Khazraj Branch Diagram',
+        subtitleEn: 'Genealogy chart of the 7 main branches of Khazraj & Aws from Azd',
+        badgeEn: 'Visual Chart'
+      }
     }
   },
-  'topic-greater-arabia': {
-    topicTitleEn: 'Regional Powers & Historical Treaties of Greater Arabia',
-    themeBadgeEn: 'Regional Powers & Historical Expeditions',
-    summaryEn: 'Major regional tribes across Taif, Najd, Hudaybiyyah, and North/South Arabian borders.',
+  'topic-regional-arab': {
+    topicTitleEn: 'Regional Powers, Battles & Treaties of Greater Arabia',
+    themeBadgeEn: 'Taif, Najd, Hudaybiyyah & Frontiers',
+    summaryEn: 'Powerful tribes across Taif, Najd, Tihamah & the Syrian frontier; their battles, treaties, and entry into Islam.',
+    relatedChartTitleEn: 'Greater Arabia Tribes Chart',
     subsectionsEn: {
-      'banu-thaqif': { titleEn: 'Banu Thaqif', subtitleEn: 'City of Taif, Urwah ibn Mas\'ud, siege of Taif & Hunayn', badgeEn: 'Regional Tribe 1' },
-      'banu-hawazin-saad': { titleEn: 'Banu Hawazin & Banu Sa\'d', subtitleEn: 'Foster-mother Halimah, pure Arabic dialect & Battle of Hunayn', badgeEn: 'Regional Tribe 2' },
-      'banu-khuzaa-bakr': { titleEn: 'Banu Khuza\'a & Banu Bakr', subtitleEn: 'Treaty of Hudaybiyyah allies & background of Conquest of Makkah', badgeEn: 'Regional Tribe 3' },
-      'banu-ghifar-daws': { titleEn: 'Banu Ghifar & Banu Daws', subtitleEn: 'Abu Dharr al-Ghifari, Abu Hurairah & southern trade routes', badgeEn: 'Regional Tribe 4' },
-      'banu-tamim-kalb': { titleEn: 'Banu Tamim & Banu Kalb', subtitleEn: 'Fierce warriors of Najd, Khabbab & Zaid ibn Harithah', badgeEn: 'Regional Tribe 5' },
-      'banu-ghatfan-hanifa': { titleEn: 'Banu Ghatfan & Banu Hanifa', subtitleEn: 'Confederate cavalry at Battle of Trench & Ridda Wars', badgeEn: 'Regional Tribe 6' },
-      'chart-arab-map': { titleEn: 'Greater Arabia Geopolitical Map', subtitleEn: 'Interactive map of 10 strategic regions and regional tribes', badgeEn: 'Chart 5' },
-      'chart-statistics': { titleEn: 'Personalities Bar Chart', subtitleEn: 'Comparative statistical chart of Sahaba & figures by tribe', badgeEn: 'Chart 6' }
+      'banu-thaqif': {
+        titleEn: 'Banu Thaqif (City of Ta\'if)',
+        subtitleEn: 'Idol of al-Lat, Battle of Hunayn, Siege of Ta\'if & acceptance of Islam',
+        badgeEn: 'Ta\'if Region',
+        figuresPreviewEn: ['Urwah ibn Mas\'ud (RA)', 'Al-Mughirah ibn Shu\'bah (RA)']
+      },
+      'banu-hawazin-saad': {
+        titleEn: 'Banu Hawazin & Banu Sa\'d',
+        subtitleEn: 'Foster-mother Halimah as-Sa\'diyyah, pure Arabic & Battle of Hunayn',
+        badgeEn: 'Foster-Mother\'s Tribe',
+        figuresPreviewEn: ['Halimah as-Sa\'diyyah (RA)', 'Malik ibn Awf (RA)', 'Ash-Shayma']
+      },
+      'banu-khuzaa-bakr': {
+        titleEn: 'Banu Khuza\'ah & Banu Bakr',
+        subtitleEn: 'Treaty of Hudaybiyyah allies & immediate backdrop to the Conquest of Makkah',
+        badgeEn: 'Hudaybiyyah Allies',
+        figuresPreviewEn: ['Amr ibn Salim (RA)', 'Budayl ibn Waraqah (RA)']
+      },
+      'banu-ghifar-daws': {
+        titleEn: 'Banu Ghifar & Banu Daws',
+        subtitleEn: 'Trade-route pioneer Abu Dharr & foremost Hadith narrator Abu Hurayrah (RA)',
+        badgeEn: 'Trade Route & South Arabia',
+        figuresPreviewEn: ['Abu Dharr al-Ghifari (RA)', 'Abu Hurayrah (RA)', 'Tufayl ibn Amr (RA)']
+      },
+      'banu-tamim-kalb': {
+        titleEn: 'Banu Tamim & Banu Kalb',
+        subtitleEn: 'Najd\'s steadfast hero Khabbab, Zayd ibn Harithah & Dihyah al-Kalbi (RA)',
+        badgeEn: 'Najd & Sham Border',
+        figuresPreviewEn: ['Khabbab ibn al-Aratt (RA)', 'Zayd ibn Harithah (RA)', 'Dihyah al-Kalbi (RA)']
+      },
+      'banu-ghatfan-hanifa': {
+        titleEn: 'Banu Ghatafan & Banu Hanifah',
+        subtitleEn: '1,000 confederate cavalry at Trench & fall of Musaylimah at Yamamah',
+        badgeEn: 'Trench & Yamamah',
+        figuresPreviewEn: ['Nu\'aym ibn Mas\'ud (RA)', 'Thumamah ibn Uthal (RA)', 'Musaylimah al-Kadhdhab']
+      },
+      'chart-arab-map': {
+        titleEn: 'Greater Arabia Tribes Overview Chart',
+        subtitleEn: 'Geopolitical locations, context & history of 11 major regional tribes',
+        badgeEn: 'Visual Overview'
+      }
     }
   },
-  'topic-appendix-40': {
-    topicTitleEn: 'Appendix: Encyclopedia of 40 Arabian Tribes',
-    themeBadgeEn: '40 Tribes Index & Seerah Encyclopedia',
-    summaryEn: 'Comprehensive index of origins, geography, and Sahaba across all 40 Arabian tribes.',
+  'topic-appendix40': {
+    topicTitleEn: 'Historical Encyclopedia of 40 Arabian Tribes (Appendix 1–40)',
+    themeBadgeEn: '40 Tribes Comprehensive Encyclopedia',
+    summaryEn: 'Complete encyclopedia of 40 major Arabian tribes, regions, Sahaba & historical figures based on al-Isabah, Usd al-Ghabah & Ibn Hisham.',
+    relatedChartTitleEn: 'Personalities Bar Chart',
     subsectionsEn: {
-      'appendix-quresh': { titleEn: 'Quraysh Noble Branches (1-10)', subtitleEn: 'Hashim, Umayya, Makhzum, Adi, Taym, Asad, Zuhrah, Abd al-Dar, Sahm, Jumah', badgeEn: 'Appendix 1' },
-      'appendix-ansar': { titleEn: 'Ansar & Madinah (11-15)', subtitleEn: 'Najjar, Salimah, Sa\'idah, Abdul Ashhal, Nabit', badgeEn: 'Appendix 2' },
-      'appendix-bedouin': { titleEn: 'Bedouin & Border Tribes (16-30)', subtitleEn: 'Ghifar, Hawazin, Thaqif, Tamim, Ghatfan, Tayy, Abs, Muzainah', badgeEn: 'Appendix 3' },
-      'appendix-yemen': { titleEn: 'Yemen & Southern Arabia (31-40)', subtitleEn: 'Azd, Ash\'ar, Bajilah, Himyar, Kindah, Hamdan, Daws', badgeEn: 'Appendix 4' }
+      'appendix-quraysh-hijaz': {
+        titleEn: 'Quraysh & Hijazi Tribes of Makkah',
+        subtitleEn: 'Hashim, Umayyah, Makhzum, Adi, Taym, Asad, Zuhrah, Jumah, Sahm & Abd al-Dar',
+        badgeEn: '10 Quraysh Clans',
+        figuresPreviewEn: ['Rightly-Guided Caliphs', 'Ashara Mubashshara', 'Mothers of the Believers']
+      },
+      'appendix-madinah-ansar': {
+        titleEn: 'Madinan Ansar & Allied Border Tribes',
+        subtitleEn: 'Khazraj, Aws, Juhaynah, Muzaynah, Ashja & allied clans',
+        badgeEn: 'Ansar & Allies',
+        figuresPreviewEn: ['Sa\'d ibn Mu\'adh', 'Abu Ayyub', 'Abdullah ibn Amr']
+      },
+      'appendix-najd-central': {
+        titleEn: 'Central Arabia & Najd Tribes',
+        subtitleEn: 'Tamim, Hawazin, Ghatafan, Banu Sa\'d, Sulaym, Bahilah & central Bedouin tribes',
+        badgeEn: 'Najd & Tihamah',
+        figuresPreviewEn: ['Khabbab ibn al-Aratt', 'Al-Aqra ibn Habis', 'Abbas ibn Mirdas']
+      },
+      'appendix-south-yemen': {
+        titleEn: 'Southern Arabia & Yemeni Tribes',
+        subtitleEn: 'Daws, Aslam, Ash\'ari, Hamdan, Bajilah, Khath\'am, Kindah & southern peninsula',
+        badgeEn: 'Yemen & South Arabia',
+        figuresPreviewEn: ['Abu Hurayrah', 'Abu Musa al-Ash\'ari', 'Jarir ibn Abdullah']
+      },
+      'appendix-north-sham': {
+        titleEn: 'Northern Arabia & Sham Border Tribes',
+        subtitleEn: 'Kalb, Khuza\'ah, Judham, Bali, Quda\'ah, Tayy & Syrian frontier clans',
+        badgeEn: 'North Arabia & Sham',
+        figuresPreviewEn: ['Zayd ibn Harithah', 'Dihyah al-Kalbi', 'Adi ibn Hatim at-Ta\'i']
+      },
+      'chart-statistics': {
+        titleEn: 'Comparative Personalities Bar Chart',
+        subtitleEn: 'Statistical chart comparing prominent Sahaba & figures across 40 tribes',
+        badgeEn: 'Statistical Chart'
+      }
     }
   }
 };
+
+export function getTocTopicEn(topicId: string): TocTopicEnEntry | undefined {
+  return TOPIC_TOC_ENGLISH_MAP[topicId];
+}
+
+export function getTocSubsectionEn(
+  topicId: string,
+  subId: string,
+  titleBn: string
+): TocSubsectionEnEntry | undefined {
+  const topicEn = TOPIC_TOC_ENGLISH_MAP[topicId];
+  if (!topicEn) return undefined;
+  if (topicEn.subsectionsByTitleEn && topicEn.subsectionsByTitleEn[titleBn]) {
+    return topicEn.subsectionsByTitleEn[titleBn];
+  }
+  return topicEn.subsectionsEn[subId];
+}
 
 export const SPECIAL_CROSS_INDEX_EN: Record<string, {
   nameEn: string;

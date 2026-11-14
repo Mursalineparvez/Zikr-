@@ -67,14 +67,56 @@ import { soundHaptics, playArabicVoice } from '../utils/audioHaptics';
 
 import {
   ARABER_GOTRO_TRANSLATIONS,
-  TOPIC_TOC_ENGLISH_MAP,
   SPECIAL_CROSS_INDEX_EN,
   QURAYSH_CONVERGENCE_EN,
   BANU_HASHIM_GENEALOGY_EN,
   ANSAR_GENEALOGY_EN,
   ARABIAN_GEO_REGIONS_EN,
-  TRIBE_STATISTICS_EN
+  TRIBE_STATISTICS_EN,
+  getTocTopicEn,
+  getTocSubsectionEn
 } from '../utils/araberGotroTranslations';
+import {
+  MAKKAH_RESPONSIBILITIES_EN,
+  CHAPTER3_OVERVIEW_EN,
+  ARABER_GOTRO_DATABASE_EN,
+  ALL_40_APPENDIX_TRIBES_EN,
+  PersonalityEnEntry
+} from '../utils/araberGotroDataEn';
+
+const CLAN_ID_ALIASES: Record<string, string> = {
+  'aws-tribe': 'aus-tribe',
+  'banu-hawazin-saad': 'hawazin-saad',
+  'banu-khuzaa-bakr': 'khuzaa-bakr',
+  'banu-ghifar-daws': 'ghifar-daws',
+  'banu-tamim-kalb': 'tamim-kalb',
+  'banu-ghatfan-hanifa': 'ghatafan-hanifa',
+  'banu-ghatafan-hanifa': 'ghatafan-hanifa'
+};
+
+const toWesternDigits = (val: string): string =>
+  val.replace(/[০-৯]/g, d => String('০১২৩৪৫৬৭৮৯'.indexOf(d)));
+
+const APPENDIX_TOC_FILTER_MAP: Record<string, string> = {
+  'appendix-quraysh-hijaz': 'কুরাইশ',
+  'appendix-madinah-ansar': 'আনসার',
+  'appendix-najd-central': 'বেদুইন',
+  'appendix-south-yemen': 'ইয়েমেন',
+  'appendix-north-sham': 'খ্রিস্টান'
+};
+
+const PERSONALITIES_BY_ID_EN: Record<string, PersonalityEnEntry> = Object.values(ARABER_GOTRO_DATABASE_EN).reduce(
+  (acc, sec) => {
+    Object.assign(acc, sec.personalitiesEn);
+    return acc;
+  },
+  {} as Record<string, PersonalityEnEntry>
+);
+
+const getClanVisualMeta = (id: string) => {
+  const reverseAlias = Object.keys(CLAN_ID_ALIASES).find((k) => CLAN_ID_ALIASES[k] === id);
+  return CLAN_VISUAL_MAP[id] || (reverseAlias ? CLAN_VISUAL_MAP[reverseAlias] : undefined);
+};
 
 interface AraberGotroByaktittoViewProps {
   themeMode?: ThemeMode;
@@ -421,17 +463,26 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       const q = (tocSearchQuery || searchQuery).toLowerCase().trim();
       if (!q) return true;
 
+      const topicEn = getTocTopicEn(topic.id);
       const matchTopic = topic.topicTitleBn.toLowerCase().includes(q) ||
+        (topicEn?.topicTitleEn.toLowerCase().includes(q) ?? false) ||
         (topic.topicTitleAr && topic.topicTitleAr.toLowerCase().includes(q)) ||
         topic.summaryBn.toLowerCase().includes(q) ||
-        topic.themeBadgeBn.toLowerCase().includes(q);
+        (topicEn?.summaryEn.toLowerCase().includes(q) ?? false) ||
+        topic.themeBadgeBn.toLowerCase().includes(q) ||
+        (topicEn?.themeBadgeEn.toLowerCase().includes(q) ?? false);
 
-      const matchSubs = topic.subsections.some((sub) =>
-        sub.titleBn.toLowerCase().includes(q) ||
-        sub.subtitleBn.toLowerCase().includes(q) ||
-        sub.badgeBn.toLowerCase().includes(q) ||
-        sub.figuresPreview?.some((fig) => fig.toLowerCase().includes(q))
-      );
+      const matchSubs = topic.subsections.some((sub) => {
+        const subEn = getTocSubsectionEn(topic.id, sub.id, sub.titleBn);
+        return sub.titleBn.toLowerCase().includes(q) ||
+          (subEn?.titleEn.toLowerCase().includes(q) ?? false) ||
+          sub.subtitleBn.toLowerCase().includes(q) ||
+          (subEn?.subtitleEn.toLowerCase().includes(q) ?? false) ||
+          sub.badgeBn.toLowerCase().includes(q) ||
+          (subEn?.badgeEn.toLowerCase().includes(q) ?? false) ||
+          sub.figuresPreview?.some((fig) => fig.toLowerCase().includes(q)) ||
+          (subEn?.figuresPreviewEn?.some((fig) => fig.toLowerCase().includes(q)) ?? false);
+      });
 
       return matchTopic || matchSubs;
     });
@@ -468,30 +519,34 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       const q = searchQuery.toLowerCase().trim();
       if (!q) return true;
 
+      const secEn = ARABER_GOTRO_DATABASE_EN[sec.id];
+
       const matchTribe = sec.tribeNameBn.toLowerCase().includes(q) ||
-        (sec.tribeNameEn && sec.tribeNameEn.toLowerCase().includes(q)) ||
+        ((secEn?.tribeNameEn || sec.tribeNameEn)?.toLowerCase().includes(q) ?? false) ||
         (sec.tribeNameAr && sec.tribeNameAr.toLowerCase().includes(q)) ||
         sec.introductionBn.toLowerCase().includes(q) ||
-        (sec.introductionEn && sec.introductionEn.toLowerCase().includes(q)) ||
+        ((secEn?.introductionEn || sec.introductionEn)?.toLowerCase().includes(q) ?? false) ||
         sec.responsibilityOrRoleBn.toLowerCase().includes(q) ||
-        (sec.responsibilityOrRoleEn && sec.responsibilityOrRoleEn.toLowerCase().includes(q));
+        ((secEn?.responsibilityOrRoleEn || sec.responsibilityOrRoleEn)?.toLowerCase().includes(q) ?? false);
 
-      const matchPersonalities = sec.personalities.some(
-        (p) => p.nameBn.toLowerCase().includes(q) ||
-          (p.nameEn && p.nameEn.toLowerCase().includes(q)) ||
+      const matchPersonalities = sec.personalities.some((p) => {
+        const pEn = secEn?.personalitiesEn[p.id] || PERSONALITIES_BY_ID_EN[p.id];
+        return p.nameBn.toLowerCase().includes(q) ||
+          ((pEn?.nameEn || p.nameEn)?.toLowerCase().includes(q) ?? false) ||
           (p.nameAr && p.nameAr.toLowerCase().includes(q)) ||
           p.bioBn.toLowerCase().includes(q) ||
-          (p.bioEn && p.bioEn.toLowerCase().includes(q)) ||
+          ((pEn?.bioEn || p.bioEn)?.toLowerCase().includes(q) ?? false) ||
           p.roleBn.toLowerCase().includes(q) ||
-          (p.roleEn && p.roleEn.toLowerCase().includes(q))
-      );
+          ((pEn?.roleEn || p.roleEn)?.toLowerCase().includes(q) ?? false);
+      });
 
-      const matchSubClans = sec.subClans?.some(
-        (sc) => sc.nameBn.toLowerCase().includes(q) ||
-          (sc.nameEn && sc.nameEn.toLowerCase().includes(q)) ||
+      const matchSubClans = sec.subClans?.some((sc, idx) => {
+        const scEn = secEn?.subClansEn?.[idx];
+        return sc.nameBn.toLowerCase().includes(q) ||
+          ((scEn?.nameEn || sc.nameEn)?.toLowerCase().includes(q) ?? false) ||
           sc.descriptionBn.toLowerCase().includes(q) ||
-          (sc.descriptionEn && sc.descriptionEn.toLowerCase().includes(q))
-      );
+          ((scEn?.descriptionEn || sc.descriptionEn)?.toLowerCase().includes(q) ?? false);
+      });
 
       return matchTribe || matchPersonalities || matchSubClans;
     });
@@ -501,23 +556,28 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   const filteredAppendixTribes = useMemo(() => {
     return ALL_40_APPENDIX_TRIBES.filter((tribe) => {
       const q = searchQuery.toLowerCase().trim();
-      const matchFilter = appendixFilter === 'all' || tribe.categoryBn.includes(appendixFilter);
+      const matchFilter =
+        appendixFilter === 'all' ||
+        tribe.categoryBn.includes(appendixFilter) ||
+        (appendixFilter === 'বেদুইন' && (tribe.categoryBn.includes('নজদ') || tribe.categoryBn.includes('গাতফান'))) ||
+        (appendixFilter === 'খ্রিস্টান' && (tribe.categoryBn.includes('রোমান') || tribe.categoryBn.includes('উত্তর') || tribe.regionBn.includes('সিরিয়া')));
       if (!matchFilter) return false;
       if (!q) return true;
 
+      const tribeEn = ALL_40_APPENDIX_TRIBES_EN[tribe.id];
       return (
         tribe.nameBn.toLowerCase().includes(q) ||
-        (tribe.nameEn && tribe.nameEn.toLowerCase().includes(q)) ||
+        ((tribeEn?.nameEn || tribe.nameEn)?.toLowerCase().includes(q) ?? false) ||
         tribe.regionBn.toLowerCase().includes(q) ||
-        (tribe.regionEn && tribe.regionEn.toLowerCase().includes(q)) ||
+        ((tribeEn?.regionEn || tribe.regionEn)?.toLowerCase().includes(q) ?? false) ||
         tribe.historicalSignificanceBn.toLowerCase().includes(q) ||
-        (tribe.historicalSignificanceEn && tribe.historicalSignificanceEn.toLowerCase().includes(q)) ||
+        ((tribeEn?.historicalSignificanceEn || tribe.historicalSignificanceEn)?.toLowerCase().includes(q) ?? false) ||
         tribe.sahabaListBn.some((s) => s.toLowerCase().includes(q)) ||
-        (tribe.sahabaListEn?.some((s) => s.toLowerCase().includes(q)) ?? false) ||
+        ((tribeEn?.sahabaListEn || tribe.sahabaListEn)?.some((s) => s.toLowerCase().includes(q)) ?? false) ||
         tribe.negativeFiguresBn?.some((n) => n.toLowerCase().includes(q)) ||
-        (tribe.negativeFiguresEn?.some((n) => n.toLowerCase().includes(q)) ?? false) ||
+        ((tribeEn?.negativeFiguresEn || tribe.negativeFiguresEn)?.some((n) => n.toLowerCase().includes(q)) ?? false) ||
         tribe.referenceBn.toLowerCase().includes(q) ||
-        (tribe.referenceEn && tribe.referenceEn.toLowerCase().includes(q))
+        ((tribeEn?.referenceEn || tribe.referenceEn)?.toLowerCase().includes(q) ?? false)
       );
     });
   }, [appendixFilter, searchQuery]);
@@ -526,11 +586,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   const bookmarkedPersonalities = useMemo(() => {
     const list: { personality: TribePersonality; clanName: string }[] = [];
     ARABER_GOTRO_DATABASE.forEach((sec) => {
+      const secEn = ARABER_GOTRO_DATABASE_EN[sec.id];
       sec.personalities.forEach((p) => {
         if (bookmarks[p.id]) {
           list.push({
             personality: p,
-            clanName: isBn ? sec.tribeNameBn : (sec.tribeNameEn || sec.tribeNameBn)
+            clanName: isBn ? sec.tribeNameBn : (secEn?.tribeNameEn || sec.tribeNameEn || sec.tribeNameBn)
           });
         }
       });
@@ -557,7 +618,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
   const openClanInReader = (clanId: string) => {
     if (soundEnabled) soundHaptics.playTap();
-    setActiveClanId(clanId);
+    setActiveClanId(CLAN_ID_ALIASES[clanId] || clanId);
     setViewMode('reader');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -893,21 +954,21 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {TOPIC_WISE_TOC_DATA
                 .filter(topic => selectedTocTopicId === 'all' || topic.id === selectedTocTopicId)
                 .map((topic) => {
-                  const topicDataEn = TOPIC_TOC_ENGLISH_MAP[topic.id];
+                  const topicDataEn = getTocTopicEn(topic.id);
                   const themeBadge = isBn ? topic.themeBadgeBn : (topicDataEn?.themeBadgeEn || topic.themeBadgeBn);
 
                   const filteredSubs = topic.subsections.filter(s => {
                     if (!tocSearchQuery.trim()) return true;
                     const q = tocSearchQuery.toLowerCase();
-                    const subDataEn = topicDataEn?.subsectionsEn?.[s.id];
-                    const sTitle = isBn ? s.titleBn : (subDataEn?.titleEn || s.titleBn);
-                    const sSubtitle = isBn ? s.subtitleBn : (subDataEn?.subtitleEn || s.subtitleBn);
-                    const sBadge = isBn ? s.badgeBn : (subDataEn?.badgeEn || s.badgeBn);
-
-                    return sTitle.toLowerCase().includes(q) ||
-                      sSubtitle.toLowerCase().includes(q) ||
-                      sBadge.toLowerCase().includes(q) ||
-                      s.figuresPreview?.some(f => f.toLowerCase().includes(q));
+                    const subDataEn = getTocSubsectionEn(topic.id, s.id, s.titleBn);
+                    return s.titleBn.toLowerCase().includes(q) ||
+                      (subDataEn?.titleEn.toLowerCase().includes(q) ?? false) ||
+                      s.subtitleBn.toLowerCase().includes(q) ||
+                      (subDataEn?.subtitleEn.toLowerCase().includes(q) ?? false) ||
+                      s.badgeBn.toLowerCase().includes(q) ||
+                      (subDataEn?.badgeEn.toLowerCase().includes(q) ?? false) ||
+                      s.figuresPreview?.some(f => f.toLowerCase().includes(q)) ||
+                      (subDataEn?.figuresPreviewEn?.some(f => f.toLowerCase().includes(q)) ?? false);
                   });
 
                   if (filteredSubs.length === 0 && tocSearchQuery.trim()) return null;
@@ -943,7 +1004,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       <div className="space-y-1 max-h-60 overflow-y-auto pr-0.5 scrollbar-thin">
                         {filteredSubs.map((sub, sIdx) => {
                           const isChart = sub.type === 'chart';
-                          const subDataEn = topicDataEn?.subsectionsEn?.[sub.id];
+                          const subDataEn = getTocSubsectionEn(topic.id, sub.id, sub.titleBn);
                           const subTitle = isBn ? sub.titleBn : (subDataEn?.titleEn || sub.titleBn);
                           const subSubtitle = isBn ? sub.subtitleBn : (subDataEn?.subtitleEn || sub.subtitleBn);
 
@@ -955,7 +1016,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 if (isChart && sub.chartKey) {
                                   openChart(sub.chartKey);
                                 } else if (sub.id.startsWith('appendix-')) {
-                                  openAppendixCategory(sub.titleBn.split(' ')[0]);
+                                  openAppendixCategory(APPENDIX_TOC_FILTER_MAP[sub.id] || 'all');
                                 } else {
                                   openClanInReader(sub.id);
                                 }
@@ -998,8 +1059,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       {/* Topic Footer Quick Link */}
                       {topic.relatedChartKey && (
                         <div className="pt-1.5 border-t border-slate-200/40 dark:border-slate-800/60 flex items-center justify-between text-[10px]">
-                          <span className="opacity-75 truncate max-w-[150px] text-amber-500 font-medium">
-                            📊 {isBn ? topic.relatedChartTitleBn : 'Chart Diagram'}
+                          <span className="opacity-75 truncate max-w-[170px] text-amber-500 font-medium">
+                            📊 {isBn ? topic.relatedChartTitleBn : (topicDataEn?.relatedChartTitleEn || 'Chart Diagram')}
                           </span>
                           <button
                             onClick={() => openChart(topic.relatedChartKey)}
@@ -1189,10 +1250,11 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           {/* Compact Clan Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredClans.map((sec) => {
-              const meta = CLAN_VISUAL_MAP[sec.id] || {
+              const secEn = ARABER_GOTRO_DATABASE_EN[sec.id];
+              const meta = getClanVisualMeta(sec.id) || {
                 icon: '🛡️',
                 badgeBn: sec.responsibilityOrRoleBn,
-                badgeEn: sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn,
+                badgeEn: secEn?.responsibilityOrRoleEn || sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn,
                 gradientDay: 'from-slate-50 to-white',
                 gradientNight: 'from-[#082226] to-[#041417]',
                 borderDay: 'border-slate-200',
@@ -1200,14 +1262,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 themeColor: 'text-emerald-400'
               };
 
-              const tribeName = isBn ? sec.tribeNameBn : (sec.tribeNameEn || sec.tribeNameBn);
-              const locationText = isBn ? sec.locationOrContextBn : (sec.locationOrContextEn || sec.locationOrContextBn);
-              const roleText = isBn ? sec.responsibilityOrRoleBn : (sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn);
+              const tribeName = isBn ? sec.tribeNameBn : (secEn?.tribeNameEn || sec.tribeNameEn || sec.tribeNameBn);
+              const locationText = isBn ? sec.locationOrContextBn : (secEn?.locationOrContextEn || sec.locationOrContextEn || sec.locationOrContextBn);
+              const roleText = isBn ? sec.responsibilityOrRoleBn : (secEn?.responsibilityOrRoleEn || sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn);
 
               const prominentSahaba = sec.personalities
                 .filter(p => p.category === 'sahabi')
                 .slice(0, 3)
-                .map(p => isBn ? p.nameBn : (p.nameEn || p.nameBn));
+                .map(p => isBn ? p.nameBn : (secEn?.personalitiesEn[p.id]?.nameEn || PERSONALITIES_BY_ID_EN[p.id]?.nameEn || p.nameEn || p.nameBn));
 
               return (
                 <div
@@ -1308,8 +1370,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
               {ARABER_GOTRO_DATABASE.map((s) => {
                 const isActive = s.id === activeClanId;
-                const meta = CLAN_VISUAL_MAP[s.id];
-                const sTribeName = isBn ? s.tribeNameBn : (s.tribeNameEn || s.tribeNameBn);
+                const meta = getClanVisualMeta(s.id);
+                const sEn = ARABER_GOTRO_DATABASE_EN[s.id];
+                const sTribeName = isBn ? s.tribeNameBn : (sEn?.tribeNameEn || s.tribeNameEn || s.tribeNameBn);
 
                 return (
                   <button
@@ -1333,21 +1396,30 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           </div>
 
           {/* Active Clan Hero Showcase */}
+          {(() => {
+            const activeClanEn = ARABER_GOTRO_DATABASE_EN[activeClan.id];
+            const activeClanMeta = getClanVisualMeta(activeClan.id);
+            const activeTribeName = isBn ? activeClan.tribeNameBn : (activeClanEn?.tribeNameEn || activeClan.tribeNameEn || activeClan.tribeNameBn);
+            const activeLocation = isBn ? activeClan.locationOrContextBn : (activeClanEn?.locationOrContextEn || activeClan.locationOrContextEn || activeClan.locationOrContextBn);
+            const activeRole = isBn ? activeClan.responsibilityOrRoleBn : (activeClanEn?.responsibilityOrRoleEn || activeClan.responsibilityOrRoleEn || activeClan.responsibilityOrRoleBn);
+            const activeIntro = isBn ? activeClan.introductionBn : (activeClanEn?.introductionEn || activeClan.introductionEn || activeClan.introductionBn);
+
+            return (
           <div className={`p-4 sm:p-5 rounded-2xl border shadow-md space-y-4 ${
             isDay ? 'bg-white border-slate-200' : 'bg-[#082226] border-[#153e46]'
           }`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl bg-amber-500/15 border border-amber-500/30 shadow-xs shrink-0">
-                  {CLAN_VISUAL_MAP[activeClan.id]?.icon || '🛡️'}
+                  {activeClanMeta?.icon || '🛡️'}
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400">
-                      {activeClan.sectionCode}
+                      {isBn ? activeClan.sectionCode : toWesternDigits(activeClan.sectionCode)}
                     </span>
                     <h2 className="text-lg sm:text-xl font-black tracking-tight">
-                      {isBn ? activeClan.tribeNameBn : (activeClan.tribeNameEn || activeClan.tribeNameBn)}
+                      {activeTribeName}
                     </h2>
                     {activeClan.tribeNameAr && (
                       <span className="text-xs font-arabic text-amber-500 font-bold">
@@ -1357,7 +1429,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   </div>
                   <p className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
                     <MapPin className="w-3 h-3" />
-                    <span>{isBn ? activeClan.locationOrContextBn : (activeClan.locationOrContextEn || activeClan.locationOrContextBn)}</span>
+                    <span>{activeLocation}</span>
                   </p>
                 </div>
               </div>
@@ -1395,7 +1467,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <span>{t.dignityTitle}</span>
               </div>
               <p className="text-xs sm:text-sm font-bold leading-relaxed">
-                {isBn ? activeClan.responsibilityOrRoleBn : (activeClan.responsibilityOrRoleEn || activeClan.responsibilityOrRoleBn)}
+                {activeRole}
               </p>
             </div>
 
@@ -1409,7 +1481,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span>{t.introTitle}</span>
                 </span>
                 <button
-                  onClick={(e) => handleCopy(isBn ? activeClan.introductionBn : (activeClan.introductionEn || activeClan.introductionBn), `intro-${activeClan.id}`, e)}
+                  onClick={(e) => handleCopy(activeIntro, `intro-${activeClan.id}`, e)}
                   className="opacity-70 hover:opacity-100 flex items-center gap-1 cursor-pointer"
                 >
                   {copiedId === `intro-${activeClan.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
@@ -1417,7 +1489,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 </button>
               </div>
               <p className={fontSizeLevel === 'large' ? 'text-base sm:text-lg leading-relaxed' : 'text-sm sm:text-base leading-relaxed'}>
-                {isBn ? activeClan.introductionBn : (activeClan.introductionEn || activeClan.introductionBn)}
+                {activeIntro}
               </p>
             </div>
 
@@ -1521,7 +1593,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span>{t.subClansHeader(activeClan.subClans.length)}</span>
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {activeClan.subClans.map((sc, scIdx) => (
+                  {activeClan.subClans.map((sc, scIdx) => {
+                    const scEn = activeClanEn?.subClansEn?.[scIdx];
+                    const scName = isBn ? sc.nameBn : (scEn?.nameEn || sc.nameEn || sc.nameBn);
+                    const scDesc = isBn ? sc.descriptionBn : (scEn?.descriptionEn || sc.descriptionEn || sc.descriptionBn);
+                    const scFigures = isBn ? sc.notableFigures : (scEn?.notableFiguresEn || sc.notableFigures);
+
+                    return (
                     <div
                       key={scIdx}
                       className={`p-3.5 rounded-xl border space-y-1.5 ${
@@ -1529,18 +1607,19 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       }`}
                     >
                       <h5 className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                        {isBn ? sc.nameBn : (sc.nameEn || sc.nameBn)}
+                        {scName}
                       </h5>
                       <p className="text-xs leading-relaxed opacity-90">
-                        {isBn ? sc.descriptionBn : (sc.descriptionEn || sc.descriptionBn)}
+                        {scDesc}
                       </p>
-                      {sc.notableFigures && (
+                      {scFigures && scFigures.length > 0 && (
                         <div className="text-[11px] opacity-75 pt-1 border-t border-dashed border-slate-200 dark:border-slate-800">
-                          <strong>{isBn ? 'ব্যক্তিত্ব:' : 'Figures:'}</strong> {sc.notableFigures.join(', ')}
+                          <strong>{isBn ? 'ব্যক্তিত্ব:' : 'Figures:'}</strong> {scFigures.join(', ')}
                         </div>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1560,10 +1639,11 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   const isBookmarked = bookmarks[pers.id];
                   const isNegative = pers.category === 'negative';
                   const isProphet = pers.id === 'prophet-muhammad';
-                  const persName = isBn ? pers.nameBn : (pers.nameEn || pers.nameBn);
-                  const persRole = isBn ? pers.roleBn : (pers.roleEn || pers.roleBn);
-                  const persBio = isBn ? pers.bioBn : (pers.bioEn || pers.bioBn);
-                  const persRef = isBn ? pers.referenceBn : (pers.referenceEn || pers.referenceBn);
+                  const persEn = activeClanEn?.personalitiesEn[pers.id] || PERSONALITIES_BY_ID_EN[pers.id];
+                  const persName = isBn ? pers.nameBn : (persEn?.nameEn || pers.nameEn || pers.nameBn);
+                  const persRole = isBn ? pers.roleBn : (persEn?.roleEn || pers.roleEn || pers.roleBn);
+                  const persBio = isBn ? pers.bioBn : (persEn?.bioEn || pers.bioEn || pers.bioBn);
+                  const persRef = isBn ? pers.referenceBn : (persEn?.referenceEn || pers.referenceEn || pers.referenceBn);
 
                   return (
                     <div
@@ -1639,7 +1719,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             </div>
 
             {/* References */}
-            {((isBn ? activeClan.referencesBn : (activeClan.referencesEn || activeClan.referencesBn)) || []).length > 0 && (
+            {((isBn ? activeClan.referencesBn : (activeClanEn?.referencesEn || activeClan.referencesEn || activeClan.referencesBn)) || []).length > 0 && (
               <div className={`p-4 rounded-xl border text-xs space-y-2 ${
                 isDay ? 'bg-slate-100/70 border-slate-200 text-slate-600' : 'bg-[#041417] border-[#153e46] text-emerald-300/80'
               }`}>
@@ -1648,7 +1728,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span>{t.referencesTitle}</span>
                 </div>
                 <ol className="list-decimal pl-5 space-y-1">
-                  {(isBn ? activeClan.referencesBn : (activeClan.referencesEn || activeClan.referencesBn)).map((ref, rIdx) => (
+                  {(isBn ? activeClan.referencesBn : (activeClanEn?.referencesEn || activeClan.referencesEn || activeClan.referencesBn)).map((ref, rIdx) => (
                     <li key={rIdx}>{ref}</li>
                   ))}
                 </ol>
@@ -1691,6 +1771,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               </button>
             </div>
           </div>
+            );
+          })()}
         </div>
       )}
 
@@ -1876,9 +1958,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 const historical = clan.personalities.filter(p => p.category === 'historical' || p.category === 'historical_hanif');
                 const negative = clan.personalities.filter(p => p.category === 'negative');
 
-                const tribeName = isBn ? clan.tribeNameBn : (clan.tribeNameEn || clan.tribeNameBn);
-                const locationText = isBn ? clan.locationOrContextBn : (clan.locationOrContextEn || clan.locationOrContextBn);
-                const roleText = isBn ? clan.responsibilityOrRoleBn : (clan.responsibilityOrRoleEn || clan.responsibilityOrRoleBn);
+                const clanEn = ARABER_GOTRO_DATABASE_EN[clan.id];
+                const tribeName = isBn ? clan.tribeNameBn : (clanEn?.tribeNameEn || clan.tribeNameEn || clan.tribeNameBn);
+                const locationText = isBn ? clan.locationOrContextBn : (clanEn?.locationOrContextEn || clan.locationOrContextEn || clan.locationOrContextBn);
+                const roleText = isBn ? clan.responsibilityOrRoleBn : (clanEn?.responsibilityOrRoleEn || clan.responsibilityOrRoleEn || clan.responsibilityOrRoleBn);
 
                 return (
                   <div
@@ -1892,7 +1975,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       isDay ? 'bg-slate-50 border-slate-100' : 'bg-[#041417]/70 border-[#153e46]'
                     }`}>
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{CLAN_VISUAL_MAP[clan.id]?.icon || '🛡️'}</span>
+                        <span className="text-2xl">{getClanVisualMeta(clan.id)?.icon || '🛡️'}</span>
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="text-base sm:text-lg font-black tracking-tight">{tribeName}</h4>
@@ -1936,7 +2019,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       }`}>
                         <Building className="w-4 h-4 text-amber-400 shrink-0" />
                         <div>
-                          <strong className="text-amber-500">{t.roleLabel}:</strong> {roleText}
+                          <strong className="text-amber-500">{t.roleLabel}</strong> {roleText}
                         </div>
                       </div>
 
@@ -1954,7 +2037,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             </span>
                           </div>
                           <div className="space-y-1.5">
-                            {sahaba.map((s) => (
+                            {sahaba.map((s) => {
+                              const sEn = clanEn?.personalitiesEn[s.id] || PERSONALITIES_BY_ID_EN[s.id];
+                              return (
                               <div
                                 key={s.id}
                                 onClick={() => {
@@ -1966,12 +2051,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 }`}
                               >
                                 <div>
-                                  <span className="font-bold">{isBn ? s.nameBn : (s.nameEn || s.nameBn)}</span>
-                                  <span className="text-[10px] opacity-75 block text-amber-500">{isBn ? s.roleBn : (s.roleEn || s.roleBn)}</span>
+                                  <span className="font-bold">{isBn ? s.nameBn : (sEn?.nameEn || s.nameEn || s.nameBn)}</span>
+                                  <span className="text-[10px] opacity-75 block text-amber-500">{isBn ? s.roleBn : (sEn?.roleEn || s.roleEn || s.roleBn)}</span>
                                 </div>
                                 <Info className="w-3.5 h-3.5 opacity-60 hover:opacity-100 text-amber-400 shrink-0" />
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -1988,7 +2074,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             </span>
                           </div>
                           <div className="space-y-1.5">
-                            {historical.map((h) => (
+                            {historical.map((h) => {
+                              const hEn = clanEn?.personalitiesEn[h.id] || PERSONALITIES_BY_ID_EN[h.id];
+                              return (
                               <div
                                 key={h.id}
                                 onClick={() => {
@@ -2000,12 +2088,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 }`}
                               >
                                 <div>
-                                  <span className="font-bold">{isBn ? h.nameBn : (h.nameEn || h.nameBn)}</span>
-                                  <span className="text-[10px] opacity-75 block text-teal-500">{isBn ? h.roleBn : (h.roleEn || h.roleBn)}</span>
+                                  <span className="font-bold">{isBn ? h.nameBn : (hEn?.nameEn || h.nameEn || h.nameBn)}</span>
+                                  <span className="text-[10px] opacity-75 block text-teal-500">{isBn ? h.roleBn : (hEn?.roleEn || h.roleEn || h.roleBn)}</span>
                                 </div>
                                 <Info className="w-3.5 h-3.5 opacity-60 hover:opacity-100 text-amber-400 shrink-0" />
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -2022,7 +2111,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             </span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                            {negative.map((n) => (
+                            {negative.map((n) => {
+                              const nEn = clanEn?.personalitiesEn[n.id] || PERSONALITIES_BY_ID_EN[n.id];
+                              return (
                               <div
                                 key={n.id}
                                 onClick={() => {
@@ -2034,20 +2125,21 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 }`}
                               >
                                 <div>
-                                  <span className="font-bold text-rose-400">{isBn ? n.nameBn : (n.nameEn || n.nameBn)}</span>
-                                  <span className="text-[10px] opacity-75 block text-slate-400">{isBn ? n.roleBn : (n.roleEn || n.roleBn)}</span>
+                                  <span className="font-bold text-rose-400">{isBn ? n.nameBn : (nEn?.nameEn || n.nameEn || n.nameBn)}</span>
+                                  <span className="text-[10px] opacity-75 block text-slate-400">{isBn ? n.roleBn : (nEn?.roleEn || n.roleEn || n.roleBn)}</span>
                                 </div>
                                 <Info className="w-3.5 h-3.5 opacity-60 hover:opacity-100 text-rose-400 shrink-0" />
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
-              );
-            })}
+                );
+              })}
           </div>
         )}
       </div>
@@ -2198,7 +2290,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-3 border-t border-slate-200/50 dark:border-slate-800/60 scrollbar-none">
                   <span className="text-[11px] font-bold opacity-60 shrink-0">{t.keyChartsStripLabel}</span>
                   {MAKKAH_RESPONSIBILITIES.map((r, i) => {
-                    const clanName = isBn ? r.clanBn : (r.clanEn || r.clanBn);
+                    const rEn = MAKKAH_RESPONSIBILITIES_EN[r.clanBn];
+                    const clanName = isBn ? r.clanBn : (rEn?.clanEn || r.clanEn || r.clanBn);
                     return (
                       <button
                         key={i}
@@ -2224,11 +2317,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredResponsibilities.map((resp, idx) => {
                   const roleNumber = MAKKAH_RESPONSIBILITIES.findIndex(r => r.clanBn === resp.clanBn) + 1;
-                  const clanName = isBn ? resp.clanBn : (resp.clanEn || resp.clanBn);
-                  const responsibilityText = isBn ? resp.responsibilityBn : (resp.responsibilityEn || resp.responsibilityBn);
-                  const detailsText = isBn ? resp.detailsBn : (resp.detailsEn || resp.detailsBn);
-                  const preHolder = isBn ? resp.preIslamicHolder : (resp.preIslamicHolderEn || resp.preIslamicHolder);
-                  const isoHolder = isBn ? resp.islamicHolder : (resp.islamicHolderEn || resp.islamicHolder);
+                  const respEn = MAKKAH_RESPONSIBILITIES_EN[resp.clanBn];
+                  const clanName = isBn ? resp.clanBn : (respEn?.clanEn || resp.clanEn || resp.clanBn);
+                  const responsibilityText = isBn ? resp.responsibilityBn : (respEn?.responsibilityEn || resp.responsibilityEn || resp.responsibilityBn);
+                  const detailsText = isBn ? resp.detailsBn : (respEn?.detailsEn || resp.detailsEn || resp.detailsBn);
+                  const preHolder = isBn ? resp.preIslamicHolder : (respEn?.preIslamicHolderEn || resp.preIslamicHolderEn || resp.preIslamicHolder);
+                  const isoHolder = isBn ? resp.islamicHolder : (respEn?.islamicHolderEn || resp.islamicHolderEn || resp.islamicHolder);
 
                   return (
                     <div
@@ -3005,9 +3099,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {/* 6 Strategic Geopolitical Regions Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {CHAPTER3_OVERVIEW.map((item, idx) => {
-                  const clanName = isBn ? item.clanBn : (item.clanEn || item.clanBn);
-                  const locationText = isBn ? item.locationBn : (item.locationEn || item.locationBn);
-                  const noteText = isBn ? item.noteBn : (item.noteEn || item.noteBn);
+                  const itemEn = CHAPTER3_OVERVIEW_EN[item.clanBn];
+                  const clanName = isBn ? item.clanBn : (itemEn?.clanEn || item.clanEn || item.clanBn);
+                  const locationText = isBn ? item.locationBn : (itemEn?.locationEn || item.locationEn || item.locationBn);
+                  const noteText = isBn ? item.noteBn : (itemEn?.noteEn || item.noteEn || item.noteBn);
 
                   return (
                     <div
@@ -3034,7 +3129,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             {clanName}
                           </h4>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            {item.sectionCode}
+                            {isBn ? item.sectionCode : toWesternDigits(item.sectionCode)}
                           </span>
                         </div>
 
@@ -3204,17 +3299,16 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredAppendixTribes.map((tribe) => {
-              const tribeName = isBn ? tribe.nameBn : (tribe.nameEn || tribe.nameBn);
-              const categoryText = isBn ? tribe.categoryBn : (tribe.categoryEn || tribe.categoryBn);
-              const regionText = isBn ? tribe.regionBn : (tribe.regionEn || tribe.regionBn);
-              const significanceText = isBn ? tribe.historicalSignificanceBn : (tribe.historicalSignificanceEn || tribe.historicalSignificanceBn);
-              const sahabaListText = isBn
-                ? tribe.sahabaListBn.join(' • ')
-                : (tribe.sahabaListEn?.join(' • ') || tribe.sahabaListBn.join(' • '));
-              const negativeText = isBn
-                ? tribe.negativeFiguresBn?.join(' • ')
-                : (tribe.negativeFiguresEn?.join(' • ') || tribe.negativeFiguresBn?.join(' • '));
-              const referenceText = isBn ? tribe.referenceBn : (tribe.referenceEn || tribe.referenceBn);
+              const tribeEn = ALL_40_APPENDIX_TRIBES_EN[tribe.id];
+              const tribeName = isBn ? tribe.nameBn : (tribeEn?.nameEn || tribe.nameEn || tribe.nameBn);
+              const categoryText = isBn ? tribe.categoryBn : (tribeEn?.categoryEn || tribe.categoryEn || tribe.categoryBn);
+              const regionText = isBn ? tribe.regionBn : (tribeEn?.regionEn || tribe.regionEn || tribe.regionBn);
+              const significanceText = isBn ? tribe.historicalSignificanceBn : (tribeEn?.historicalSignificanceEn || tribe.historicalSignificanceEn || tribe.historicalSignificanceBn);
+              const sahabaArr = isBn ? tribe.sahabaListBn : (tribeEn?.sahabaListEn || tribe.sahabaListEn || tribe.sahabaListBn);
+              const sahabaListText = sahabaArr.join(' • ');
+              const negativeArr = (isBn ? tribe.negativeFiguresBn : (tribeEn?.negativeFiguresEn || tribe.negativeFiguresEn || tribe.negativeFiguresBn)) || [];
+              const negativeText = negativeArr.join(' • ');
+              const referenceText = isBn ? tribe.referenceBn : (tribeEn?.referenceEn || tribe.referenceEn || tribe.referenceBn);
 
               return (
                 <div
@@ -3250,10 +3344,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     </p>
 
                     {/* Sahaba List */}
-                    {(isBn ? tribe.sahabaListBn : (tribe.sahabaListEn || tribe.sahabaListBn)).length > 0 && (
+                    {sahabaArr.length > 0 && (
                       <div className="space-y-1 pt-2 border-t border-dashed border-slate-200 dark:border-slate-800">
                         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 block">
-                          {t.appendixSahabaTitle} ({(isBn ? tribe.sahabaListBn : (tribe.sahabaListEn || tribe.sahabaListBn)).length})
+                          {t.appendixSahabaTitle} ({sahabaArr.length})
                         </span>
                         <p className="text-xs leading-relaxed font-medium">
                           {sahabaListText}
@@ -3262,7 +3356,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     )}
 
                     {/* Negative Figures */}
-                    {((isBn ? tribe.negativeFiguresBn : (tribe.negativeFiguresEn || tribe.negativeFiguresBn)) || []).length > 0 && (
+                    {negativeArr.length > 0 && (
                       <div className="space-y-1 text-rose-500 pt-1">
                         <span className="text-[11px] font-bold block">{t.appendixNegativeTitle}</span>
                         <p className="text-xs leading-relaxed">
@@ -3317,10 +3411,11 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {bookmarkedPersonalities.map(({ personality: pers, clanName }) => {
-                const persName = isBn ? pers.nameBn : (pers.nameEn || pers.nameBn);
-                const clanDisplayName = isBn ? clanName : (CLAN_VISUAL_MAP[pers.id]?.badgeEn || clanName);
-                const persBio = isBn ? pers.bioBn : (pers.bioEn || pers.bioBn);
-                const persRef = isBn ? pers.referenceBn : (pers.referenceEn || pers.referenceBn);
+                const persEn = PERSONALITIES_BY_ID_EN[pers.id];
+                const persName = isBn ? pers.nameBn : (persEn?.nameEn || pers.nameEn || pers.nameBn);
+                const clanDisplayName = clanName;
+                const persBio = isBn ? pers.bioBn : (persEn?.bioEn || pers.bioEn || pers.bioBn);
+                const persRef = isBn ? pers.referenceBn : (persEn?.referenceEn || pers.referenceEn || pers.referenceBn);
 
                 return (
                   <div
@@ -3358,7 +3453,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       )}
 
       {/* Personality Detail Modal */}
-      {activePersonalityModal && (
+      {activePersonalityModal && (() => {
+        const modalPersEn = PERSONALITIES_BY_ID_EN[activePersonalityModal.id];
+        const modalName = isBn ? activePersonalityModal.nameBn : (modalPersEn?.nameEn || activePersonalityModal.nameEn || activePersonalityModal.nameBn);
+        const modalRole = isBn ? activePersonalityModal.roleBn : (modalPersEn?.roleEn || activePersonalityModal.roleEn || activePersonalityModal.roleBn);
+        const modalBio = isBn ? activePersonalityModal.bioBn : (modalPersEn?.bioEn || activePersonalityModal.bioEn || activePersonalityModal.bioBn);
+        const modalRef = isBn ? activePersonalityModal.referenceBn : (modalPersEn?.referenceEn || activePersonalityModal.referenceEn || activePersonalityModal.referenceBn);
+
+        return (
         <div
           onClick={() => setActivePersonalityModal(null)}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
@@ -3376,10 +3478,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                     : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                 }`}>
-                  {isBn ? activePersonalityModal.roleBn : (activePersonalityModal.roleEn || activePersonalityModal.roleBn)}
+                  {modalRole}
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black mt-2">
-                  {isBn ? activePersonalityModal.nameBn : (activePersonalityModal.nameEn || activePersonalityModal.nameBn)}
+                  {modalName}
                 </h3>
                 {activePersonalityModal.nameAr && (
                   <p className="text-sm font-arabic text-amber-500 font-bold" dir="rtl">
@@ -3420,7 +3522,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 {t.modalBioTitle}
               </h4>
               <p className="leading-relaxed text-sm sm:text-base">
-                {isBn ? activePersonalityModal.bioBn : (activePersonalityModal.bioEn || activePersonalityModal.bioBn)}
+                {modalBio}
               </p>
             </div>
 
@@ -3429,15 +3531,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             }`}>
               <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-400 shrink-0" />
-                <span><strong>{t.modalRefTitle}:</strong> {isBn ? activePersonalityModal.referenceBn : (activePersonalityModal.referenceEn || activePersonalityModal.referenceBn)}</span>
+                <span><strong>{t.modalRefTitle}:</strong> {modalRef}</span>
               </div>
               <button
-                onClick={(e) => {
-                  const mName = isBn ? activePersonalityModal.nameBn : (activePersonalityModal.nameEn || activePersonalityModal.nameBn);
-                  const mBio = isBn ? activePersonalityModal.bioBn : (activePersonalityModal.bioEn || activePersonalityModal.bioBn);
-                  const mRef = isBn ? activePersonalityModal.referenceBn : (activePersonalityModal.referenceEn || activePersonalityModal.referenceBn);
-                  handleCopy(`${mName}\n${mBio}\n${t.modalRefTitle}: ${mRef}`, 'modal-copy', e);
-                }}
+                onClick={(e) => handleCopy(`${modalName}\n${modalBio}\n${t.modalRefTitle}: ${modalRef}`, 'modal-copy', e)}
                 className="hover:underline flex items-center gap-1 font-bold shrink-0 cursor-pointer"
               >
                 {copiedId === 'modal-copy' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -3458,10 +3555,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Responsibility Detail Modal */}
-      {selectedResponsibility && (
+      {selectedResponsibility && (() => {
+        const selRespEn = MAKKAH_RESPONSIBILITIES_EN[selectedResponsibility.clanBn];
+        return (
         <div
           onClick={() => setSelectedResponsibility(null)}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
@@ -3482,7 +3582,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="text-xl font-black">
-                      {isBn ? selectedResponsibility.clanBn : (selectedResponsibility.clanEn || selectedResponsibility.clanBn)}
+                      {isBn ? selectedResponsibility.clanBn : (selRespEn?.clanEn || selectedResponsibility.clanEn || selectedResponsibility.clanBn)}
                     </h4>
                     {selectedResponsibility.responsibilityAr && (
                       <span className="text-xs font-arabic text-amber-500 opacity-80" dir="rtl">
@@ -3506,10 +3606,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             }`}>
               <div className="text-sm font-black text-amber-500 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4" />
-                <span>{t.roleLabel}: {isBn ? selectedResponsibility.responsibilityBn : (selectedResponsibility.responsibilityEn || selectedResponsibility.responsibilityBn)}</span>
+                <span>{t.roleLabel}: {isBn ? selectedResponsibility.responsibilityBn : (selRespEn?.responsibilityEn || selectedResponsibility.responsibilityEn || selectedResponsibility.responsibilityBn)}</span>
               </div>
               <p className="text-xs sm:text-sm leading-relaxed opacity-90">
-                {isBn ? selectedResponsibility.detailsBn : (selectedResponsibility.detailsEn || selectedResponsibility.detailsBn)}
+                {isBn ? selectedResponsibility.detailsBn : (selRespEn?.detailsEn || selectedResponsibility.detailsEn || selectedResponsibility.detailsBn)}
               </p>
             </div>
 
@@ -3521,7 +3621,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div>
                   <span className="text-[10px] font-bold opacity-60 block uppercase">{t.preIslamicLeadership}</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
-                    {isBn ? selectedResponsibility.preIslamicHolder : (selectedResponsibility.preIslamicHolderEn || selectedResponsibility.preIslamicHolder)}
+                    {isBn ? selectedResponsibility.preIslamicHolder : (selRespEn?.preIslamicHolderEn || selectedResponsibility.preIslamicHolderEn || selectedResponsibility.preIslamicHolder)}
                   </span>
                 </div>
               )}
@@ -3529,7 +3629,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div>
                   <span className="text-[10px] font-bold text-emerald-500 block uppercase">{t.islamicPosition}</span>
                   <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs">
-                    {isBn ? selectedResponsibility.islamicHolder : (selectedResponsibility.islamicHolderEn || selectedResponsibility.islamicHolder)}
+                    {isBn ? selectedResponsibility.islamicHolder : (selRespEn?.islamicHolderEn || selectedResponsibility.islamicHolderEn || selectedResponsibility.islamicHolder)}
                   </span>
                 </div>
               )}
@@ -3547,12 +3647,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   setSelectedResponsibility(null);
                   const targetId =
                     selectedResponsibility.clanBn.includes('হাশিম') ? 'banu-hashim' :
-                    selectedResponsibility.clanBn.includes('উমাইয়া') ? 'banu-umayya' :
+                    (selectedResponsibility.clanBn.includes('উমাইয়া') || selectedResponsibility.clanBn.includes('উমাইয়া')) ? 'banu-umayya' :
                     selectedResponsibility.clanBn.includes('মাখযুম') ? 'banu-makhzum' :
                     selectedResponsibility.clanBn.includes('আদি') ? 'banu-adi' :
                     selectedResponsibility.clanBn.includes('তাইম') ? 'banu-taym' :
                     selectedResponsibility.clanBn.includes('আসাদ') ? 'banu-asad-quraysh' :
-                    selectedResponsibility.clanBn.includes('যোহরা') ? 'banu-zuhrah' : 'quraysh-other-branches';
+                    (selectedResponsibility.clanBn.includes('যোহরা') || selectedResponsibility.clanBn.includes('যাহরা')) ? 'banu-zuhrah' : 'quraysh-other-branches';
                   openClanInReader(targetId);
                 }}
                 className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-md transition"
@@ -3562,7 +3662,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Floating Quick-TOC Button */}
       <button
@@ -3642,30 +3743,33 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 .filter(topic => {
                   if (!tocSearchQuery.trim()) return true;
                   const q = tocSearchQuery.toLowerCase();
-                  const topicDataEn = TOPIC_TOC_ENGLISH_MAP[topic.id];
-                  const topicTitle = isBn ? topic.topicTitleBn : (topicDataEn?.themeBadgeEn || topic.topicTitleBn);
+                  const topicDataEn = getTocTopicEn(topic.id);
 
                   return (
-                    topicTitle.toLowerCase().includes(q) ||
+                    topic.topicTitleBn.toLowerCase().includes(q) ||
+                    (topicDataEn?.topicTitleEn.toLowerCase().includes(q) ?? false) ||
+                    (topicDataEn?.themeBadgeEn.toLowerCase().includes(q) ?? false) ||
                     topic.subsections.some(s => {
-                      const subDataEn = topicDataEn?.subsectionsEn?.[s.id];
-                      const sTitle = isBn ? s.titleBn : (subDataEn?.titleEn || s.titleBn);
-                      const sSub = isBn ? s.subtitleBn : (subDataEn?.subtitleEn || s.subtitleBn);
-                      return sTitle.toLowerCase().includes(q) || sSub.toLowerCase().includes(q);
+                      const subDataEn = getTocSubsectionEn(topic.id, s.id, s.titleBn);
+                      return s.titleBn.toLowerCase().includes(q) ||
+                        (subDataEn?.titleEn.toLowerCase().includes(q) ?? false) ||
+                        s.subtitleBn.toLowerCase().includes(q) ||
+                        (subDataEn?.subtitleEn.toLowerCase().includes(q) ?? false);
                     })
                   );
                 })
                 .map((topic, tIdx) => {
-                  const topicDataEn = TOPIC_TOC_ENGLISH_MAP[topic.id];
+                  const topicDataEn = getTocTopicEn(topic.id);
                   const topicTitle = isBn ? topic.topicTitleBn : (topicDataEn?.themeBadgeEn || topic.topicTitleBn);
 
                   const filteredSubs = topic.subsections.filter(s => {
                     if (!tocSearchQuery.trim()) return true;
                     const q = tocSearchQuery.toLowerCase();
-                    const subDataEn = topicDataEn?.subsectionsEn?.[s.id];
-                    const sTitle = isBn ? s.titleBn : (subDataEn?.titleEn || s.titleBn);
-                    const sSub = isBn ? s.subtitleBn : (subDataEn?.subtitleEn || s.subtitleBn);
-                    return sTitle.toLowerCase().includes(q) || sSub.toLowerCase().includes(q);
+                    const subDataEn = getTocSubsectionEn(topic.id, s.id, s.titleBn);
+                    return s.titleBn.toLowerCase().includes(q) ||
+                      (subDataEn?.titleEn.toLowerCase().includes(q) ?? false) ||
+                      s.subtitleBn.toLowerCase().includes(q) ||
+                      (subDataEn?.subtitleEn.toLowerCase().includes(q) ?? false);
                   });
 
                   return (
@@ -3681,7 +3785,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       <div className="space-y-1">
                         {filteredSubs.map((sub, sIdx) => {
                           const isChart = sub.type === 'chart';
-                          const subDataEn = topicDataEn?.subsectionsEn?.[sub.id];
+                          const subDataEn = getTocSubsectionEn(topic.id, sub.id, sub.titleBn);
                           const subTitle = isBn ? sub.titleBn : (subDataEn?.titleEn || sub.titleBn);
 
                           return (
@@ -3693,6 +3797,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 if (isChart && sub.chartKey) {
                                   setActiveChartTab(sub.chartKey);
                                   setViewMode('charts_gallery');
+                                } else if (sub.id.startsWith('appendix-')) {
+                                  openAppendixCategory(APPENDIX_TOC_FILTER_MAP[sub.id] || 'all');
                                 } else {
                                   openClanInReader(sub.id);
                                 }
