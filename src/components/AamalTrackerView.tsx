@@ -715,7 +715,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
                     {prayerItems.filter((i) => i.completed).length} / {prayerItems.length}
                   </span>
                   <span className="text-[10px] text-stone-500 dark:text-emerald-400/60 font-medium mt-0.5">
-                    {Math.round(((prayerItems.filter((i) => i.completed).length) / (prayerItems.length || 1)) * 100)}% সম্পন্ন
+                    {Math.round(((prayerItems.filter((i) => i.completed).length) / (prayerItems.length || 1)) * 100)}% {selectedLanguage === 'bn' ? 'সম্পন্ন' : 'Completed'}
                   </span>
                 </div>
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${

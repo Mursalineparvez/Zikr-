@@ -246,7 +246,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                 {(masterTotal !== undefined ? masterTotal : reportData.totalDhikrSum).toLocaleString()}
               </div>
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400/80 font-semibold">
-                {reportData.activeDaysCount} Days Active
+                {reportData.activeDaysCount} {selectedLanguage === 'bn' ? 'দিন সক্রিয়' : 'Days Active'}
               </span>
             </div>
 
@@ -265,7 +265,9 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                 {reportData.prayerStats.fardhTotal}
               </div>
               <span className="text-[10px] text-teal-600 dark:text-teal-400/80 font-semibold">
-                Fajr {reportData.prayerStats.fajr} • Isha {reportData.prayerStats.isha}
+                {selectedLanguage === 'bn'
+                  ? `ফজর ${reportData.prayerStats.fajr} • ইশা ${reportData.prayerStats.isha}`
+                  : `Fajr ${reportData.prayerStats.fajr} • Isha ${reportData.prayerStats.isha}`}
               </span>
             </div>
 
@@ -303,7 +305,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                 {reportData.avgCompletionRate}%
               </div>
               <span className="text-[10px] text-amber-600 dark:text-amber-400/80 font-semibold">
-                Across {reportData.totalDays} Days
+                {selectedLanguage === 'bn' ? `মোট ${reportData.totalDays} দিন` : `Across ${reportData.totalDays} Days`}
               </span>
             </div>
           </div>
@@ -324,7 +326,9 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                 </h3>
               </div>
               <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                Sum: {reportData.totalDhikrSum.toLocaleString()} বার
+                {selectedLanguage === 'bn'
+                  ? `মোট: ${reportData.totalDhikrSum.toLocaleString()} বার`
+                  : `Sum: ${reportData.totalDhikrSum.toLocaleString()} times`}
               </span>
             </div>
 
@@ -347,9 +351,11 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
 
                   <div className="text-right shrink-0">
                     <div className="text-sm font-black font-mono text-emerald-600 dark:text-emerald-300">
-                      {z.totalCount.toLocaleString()} বার
+                      {z.totalCount.toLocaleString()} {selectedLanguage === 'bn' ? 'বার' : 'times'}
                     </div>
-                    <span className="text-[10px] text-slate-400 font-semibold">{z.percentageOfTotal}% share</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      {z.percentageOfTotal}% {selectedLanguage === 'bn' ? 'অংশ' : 'share'}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -370,7 +376,7 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
                 </h3>
               </div>
               <span className="text-[11px] text-slate-400">
-                {reportData.dailyLogs.length} Days in range
+                {reportData.dailyLogs.length} {selectedLanguage === 'bn' ? 'দিনের হিসাব' : 'Days in range'}
               </span>
             </div>
 
@@ -446,7 +452,11 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
               className="flex-1 sm:flex-initial py-2.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>{isGeneratingPdf ? 'Generating PDF...' : 'Download Full PDF (পিডিএফ ডাউনলোড)'}</span>
+              <span>
+                {isGeneratingPdf
+                  ? (selectedLanguage === 'bn' ? 'পিডিএফ তৈরি হচ্ছে...' : 'Generating PDF...')
+                  : (selectedLanguage === 'bn' ? 'পূর্ণাঙ্গ পিডিএফ ডাউনলোড করুন' : 'Download Full PDF')}
+              </span>
             </button>
           </div>
         </div>

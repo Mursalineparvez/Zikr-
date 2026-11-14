@@ -65,7 +65,16 @@ import {
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice } from '../utils/audioHaptics';
 
-import { ARABER_GOTRO_TRANSLATIONS, TOPIC_TOC_ENGLISH_MAP } from '../utils/araberGotroTranslations';
+import {
+  ARABER_GOTRO_TRANSLATIONS,
+  TOPIC_TOC_ENGLISH_MAP,
+  SPECIAL_CROSS_INDEX_EN,
+  QURAYSH_CONVERGENCE_EN,
+  BANU_HASHIM_GENEALOGY_EN,
+  ANSAR_GENEALOGY_EN,
+  ARABIAN_GEO_REGIONS_EN,
+  TRIBE_STATISTICS_EN
+} from '../utils/araberGotroTranslations';
 
 interface AraberGotroByaktittoViewProps {
   themeMode?: ThemeMode;
@@ -436,15 +445,19 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
   // Sorted statistics for Chart 5
   const sortedStatistics = useMemo(() => {
-    const list = [...TRIBE_STATISTICS];
+    const list = TRIBE_STATISTICS.map((item, origIdx) => ({
+      ...item,
+      nameEn: TRIBE_STATISTICS_EN[origIdx]?.nameEn || item.nameBn,
+      chapterEn: TRIBE_STATISTICS_EN[origIdx]?.chapterEn || item.chapter
+    }));
     if (statsSort === 'highest') {
       return list.sort((a, b) => b.count - a.count);
     }
     if (statsSort === 'alphabetical') {
-      return list.sort((a, b) => a.nameBn.localeCompare(b.nameBn));
+      return list.sort((a, b) => (isBn ? a.nameBn : a.nameEn).localeCompare(isBn ? b.nameBn : b.nameEn));
     }
     return list;
-  }, [statsSort]);
+  }, [statsSort, isBn]);
 
   // Filtered Clans for Directory Mode
   const filteredClans = useMemo(() => {
@@ -456,19 +469,28 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       if (!q) return true;
 
       const matchTribe = sec.tribeNameBn.toLowerCase().includes(q) ||
+        (sec.tribeNameEn && sec.tribeNameEn.toLowerCase().includes(q)) ||
         (sec.tribeNameAr && sec.tribeNameAr.toLowerCase().includes(q)) ||
         sec.introductionBn.toLowerCase().includes(q) ||
-        sec.responsibilityOrRoleBn.toLowerCase().includes(q);
+        (sec.introductionEn && sec.introductionEn.toLowerCase().includes(q)) ||
+        sec.responsibilityOrRoleBn.toLowerCase().includes(q) ||
+        (sec.responsibilityOrRoleEn && sec.responsibilityOrRoleEn.toLowerCase().includes(q));
 
       const matchPersonalities = sec.personalities.some(
         (p) => p.nameBn.toLowerCase().includes(q) ||
+          (p.nameEn && p.nameEn.toLowerCase().includes(q)) ||
           (p.nameAr && p.nameAr.toLowerCase().includes(q)) ||
           p.bioBn.toLowerCase().includes(q) ||
-          p.roleBn.toLowerCase().includes(q)
+          (p.bioEn && p.bioEn.toLowerCase().includes(q)) ||
+          p.roleBn.toLowerCase().includes(q) ||
+          (p.roleEn && p.roleEn.toLowerCase().includes(q))
       );
 
       const matchSubClans = sec.subClans?.some(
-        (sc) => sc.nameBn.toLowerCase().includes(q) || sc.descriptionBn.toLowerCase().includes(q)
+        (sc) => sc.nameBn.toLowerCase().includes(q) ||
+          (sc.nameEn && sc.nameEn.toLowerCase().includes(q)) ||
+          sc.descriptionBn.toLowerCase().includes(q) ||
+          (sc.descriptionEn && sc.descriptionEn.toLowerCase().includes(q))
       );
 
       return matchTribe || matchPersonalities || matchSubClans;
@@ -485,11 +507,17 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
       return (
         tribe.nameBn.toLowerCase().includes(q) ||
+        (tribe.nameEn && tribe.nameEn.toLowerCase().includes(q)) ||
         tribe.regionBn.toLowerCase().includes(q) ||
+        (tribe.regionEn && tribe.regionEn.toLowerCase().includes(q)) ||
         tribe.historicalSignificanceBn.toLowerCase().includes(q) ||
+        (tribe.historicalSignificanceEn && tribe.historicalSignificanceEn.toLowerCase().includes(q)) ||
         tribe.sahabaListBn.some((s) => s.toLowerCase().includes(q)) ||
+        (tribe.sahabaListEn?.some((s) => s.toLowerCase().includes(q)) ?? false) ||
         tribe.negativeFiguresBn?.some((n) => n.toLowerCase().includes(q)) ||
-        tribe.referenceBn.toLowerCase().includes(q)
+        (tribe.negativeFiguresEn?.some((n) => n.toLowerCase().includes(q)) ?? false) ||
+        tribe.referenceBn.toLowerCase().includes(q) ||
+        (tribe.referenceEn && tribe.referenceEn.toLowerCase().includes(q))
       );
     });
   }, [appendixFilter, searchQuery]);
@@ -500,12 +528,15 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
     ARABER_GOTRO_DATABASE.forEach((sec) => {
       sec.personalities.forEach((p) => {
         if (bookmarks[p.id]) {
-          list.push({ personality: p, clanName: sec.tribeNameBn });
+          list.push({
+            personality: p,
+            clanName: isBn ? sec.tribeNameBn : (sec.tribeNameEn || sec.tribeNameBn)
+          });
         }
       });
     });
     return list;
-  }, [bookmarks]);
+  }, [bookmarks, isBn]);
 
   // Responsibility icon helper
   const renderResponsibilityIcon = (iconName?: string) => {
@@ -1407,7 +1438,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-center">
                     <div className="px-6 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-black text-sm text-center shadow-md">
-                      {BANU_HASHIM_GENEALOGY.rootName}
+                      {isBn ? BANU_HASHIM_GENEALOGY.rootName : BANU_HASHIM_GENEALOGY_EN.rootName}
                     </div>
                   </div>
                   <div className="w-0.5 h-3 bg-amber-500/50 mx-auto" />
@@ -1416,16 +1447,17 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     <div className={`px-6 py-3 rounded-xl border text-center shadow ${
                       isDay ? 'bg-white border-amber-300 text-teal-900' : 'bg-[#041417] border-amber-500/50 text-emerald-100'
                     }`}>
-                      <div className="font-black text-sm sm:text-base">{BANU_HASHIM_GENEALOGY.son.name}</div>
-                      <div className="text-[11px] opacity-75">{BANU_HASHIM_GENEALOGY.son.title}</div>
+                      <div className="font-black text-sm sm:text-base">{isBn ? BANU_HASHIM_GENEALOGY.son.name : BANU_HASHIM_GENEALOGY_EN.son.name}</div>
+                      <div className="text-[11px] opacity-75">{isBn ? BANU_HASHIM_GENEALOGY.son.title : BANU_HASHIM_GENEALOGY_EN.son.title}</div>
                     </div>
                   </div>
                   <div className="w-0.5 h-3 bg-amber-500/50 mx-auto" />
 
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
                     {BANU_HASHIM_GENEALOGY.son.sons.map((son, sIdx) => {
-                      const sonName = son.name;
-                      const sonDesc = son.desc;
+                      const sonEn = BANU_HASHIM_GENEALOGY_EN.son.sons[sIdx];
+                      const sonName = isBn ? son.name : (sonEn?.name || son.name);
+                      const sonDesc = isBn ? son.desc : (sonEn?.desc || son.desc);
 
                       return (
                         <div
@@ -1444,7 +1476,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           {son.children && son.children.length > 0 && (
                             <div className="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700 space-y-1">
                               {son.children.map((child: any, cIdx: number) => {
-                                const childName = isBn ? child.name : (child.nameEn || child.name);
+                                const childEn: any = sonEn?.children?.[cIdx];
+                                const childName = isBn ? child.name : (childEn?.name || child.name);
+                                const childMarriage = isBn ? child.marriageTo : (childEn?.marriageTo || child.marriageTo);
+                                const childSons = isBn ? child.sons : (childEn?.sons || child.sons);
                                 return (
                                   <div
                                     key={cIdx}
@@ -1455,14 +1490,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                     }`}
                                   >
                                     {childName}
-                                    {child.marriageTo && (
+                                    {childMarriage && (
                                       <div className="text-[9px] opacity-80 font-normal mt-0.5 text-pink-300">
-                                        Marriage: {child.marriageTo}
+                                        {isBn ? 'বিবাহ:' : 'Marriage:'} {childMarriage}
                                       </div>
                                     )}
-                                    {child.sons && (
+                                    {childSons && (
                                       <div className="text-[9px] opacity-90 font-bold mt-0.5 text-amber-300">
-                                        ↓ {child.sons.join(isBn ? ' ও ' : ' & ')}
+                                        ↓ {childSons.join(isBn ? ' ও ' : ' & ')}
                                       </div>
                                     )}
                                   </div>
@@ -1604,7 +1639,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             </div>
 
             {/* References */}
-            {activeClan.referencesBn && activeClan.referencesBn.length > 0 && (
+            {((isBn ? activeClan.referencesBn : (activeClan.referencesEn || activeClan.referencesBn)) || []).length > 0 && (
               <div className={`p-4 rounded-xl border text-xs space-y-2 ${
                 isDay ? 'bg-slate-100/70 border-slate-200 text-slate-600' : 'bg-[#041417] border-[#153e46] text-emerald-300/80'
               }`}>
@@ -1613,7 +1648,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <span>{t.referencesTitle}</span>
                 </div>
                 <ol className="list-decimal pl-5 space-y-1">
-                  {activeClan.referencesBn.map((ref, rIdx) => (
+                  {(isBn ? activeClan.referencesBn : (activeClan.referencesEn || activeClan.referencesBn)).map((ref, rIdx) => (
                     <li key={rIdx}>{ref}</li>
                   ))}
                 </ol>
@@ -1760,10 +1795,11 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 {SPECIAL_HISTORICAL_CROSS_INDEX
                   .filter(item => item.categoryType === selectedSpecialCategory)
                   .map((item) => {
-                    const itemName = item.nameBn;
-                    const ancestorIntersection = item.ancestorIntersectionBn;
-                    const clanName = item.clanBn;
-                    const significance = item.significanceBn;
+                    const enCross = SPECIAL_CROSS_INDEX_EN[item.id];
+                    const itemName = isBn ? item.nameBn : (enCross?.nameEn || item.nameBn);
+                    const ancestorIntersection = isBn ? item.ancestorIntersectionBn : (enCross?.ancestorIntersectionEn || item.ancestorIntersectionBn);
+                    const clanName = isBn ? item.clanBn : (enCross?.clanEn || item.clanBn);
+                    const significance = isBn ? item.significanceBn : (enCross?.significanceEn || item.significanceBn);
 
                     return (
                       <div
@@ -2307,9 +2343,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {/* Generation Nodes list */}
               <div className="space-y-6 pt-2">
                 {QURAYSH_CONVERGENCE_TREE.map((node, nIdx) => {
-                  const ancestorName = node.ancestorNameBn;
-                  const significance = node.significanceBn;
-                  const noteText = node.hadithOrHistoryNoteBn;
+                  const nodeEn = QURAYSH_CONVERGENCE_EN[node.generationNumber];
+                  const ancestorName = isBn ? node.ancestorNameBn : (nodeEn?.ancestorNameEn || node.ancestorNameBn);
+                  const significance = isBn ? node.significanceBn : (nodeEn?.significanceEn || node.significanceBn);
+                  const noteText = isBn ? node.hadithOrHistoryNoteBn : (nodeEn?.hadithOrHistoryNoteEn || node.hadithOrHistoryNoteBn);
 
                   return (
                     <div
@@ -2358,8 +2395,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       {/* Connected Clan Branches */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
                         {node.connectedBranches.map((branch, bIdx) => {
-                          const branchClanName = branch.clanNameBn;
-                          const branchRoleTitle = branch.roleTitleBn;
+                          const branchEn = nodeEn?.branches?.[bIdx];
+                          const branchClanName = isBn ? branch.clanNameBn : (branchEn?.clanNameEn || branch.clanNameBn);
+                          const branchRoleTitle = isBn ? branch.roleTitleBn : (branchEn?.roleTitleEn || branch.roleTitleBn);
+                          const branchSahabaList = isBn ? branch.prominentSahaba : (branchEn?.prominentSahabaEn || branch.prominentSahaba);
 
                           return (
                             <div
@@ -2385,7 +2424,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                   {t.prominentSahaba}
                                 </span>
                                 <div className="flex flex-wrap gap-1">
-                                  {branch.prominentSahaba.map((sahabi, sIdx) => {
+                                  {branchSahabaList.map((sahabi, sIdx) => {
                                     return (
                                       <span
                                         key={sIdx}
@@ -2474,7 +2513,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div className="flex flex-col items-center">
                   <div className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-base text-center shadow-lg border border-amber-300 ring-4 ring-amber-500/20">
                     <div className="text-[11px] font-bold uppercase tracking-widest text-slate-900/70">{isBn ? 'মূল পুরুষ' : 'Root Ancestor'}</div>
-                    <div>{BANU_HASHIM_GENEALOGY.rootName}</div>
+                    <div>{isBn ? BANU_HASHIM_GENEALOGY.rootName : BANU_HASHIM_GENEALOGY_EN.rootName}</div>
                     {BANU_HASHIM_GENEALOGY.rootNameAr && (
                       <div className="text-xs font-arabic mt-0.5 font-normal" dir="rtl">{BANU_HASHIM_GENEALOGY.rootNameAr}</div>
                     )}
@@ -2488,8 +2527,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     isDay ? 'bg-teal-50 border-teal-300 text-teal-950' : 'bg-[#041417] border-emerald-500/60 text-emerald-100 ring-2 ring-emerald-500/20'
                   }`}>
                     <div className="text-[11px] font-bold text-amber-500 uppercase tracking-wider">{isBn ? 'মক্কার সর্দার' : 'Guardian of Makkah'}</div>
-                    <div className="font-black text-lg sm:text-xl">{BANU_HASHIM_GENEALOGY.son.name}</div>
-                    <div className="text-xs opacity-80 mt-0.5">{BANU_HASHIM_GENEALOGY.son.title}</div>
+                    <div className="font-black text-lg sm:text-xl">{isBn ? BANU_HASHIM_GENEALOGY.son.name : BANU_HASHIM_GENEALOGY_EN.son.name}</div>
+                    <div className="text-xs opacity-80 mt-0.5">{isBn ? BANU_HASHIM_GENEALOGY.son.title : BANU_HASHIM_GENEALOGY_EN.son.title}</div>
                   </div>
                   <div className="w-0.5 h-6 bg-emerald-500/60" />
                 </div>
@@ -2504,16 +2543,18 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       if (hashimTreeBranch === 'uncles') return son.name === 'আব্বাস (রা.)' || son.name === 'আবু লাহাব';
                       return true;
                     })
-                    .map((son, sIdx) => {
+                    .map((son) => {
+                      const origSonIdx = BANU_HASHIM_GENEALOGY.son.sons.indexOf(son);
+                      const sonEn = BANU_HASHIM_GENEALOGY_EN.son.sons[origSonIdx];
                       const isProphetBranch = son.name === 'আব্দুল্লাহ';
                       const isMartyrBranch = son.name === 'হামযা (রা.)';
                       const isEnemyBranch = son.name === 'আবু লাহাব';
-                      const sonName = son.name;
-                      const sonDesc = son.desc;
+                      const sonName = isBn ? son.name : (sonEn?.name || son.name);
+                      const sonDesc = isBn ? son.desc : (sonEn?.desc || son.desc);
 
                       return (
                         <div
-                          key={sIdx}
+                          key={son.name}
                           className={`p-4 rounded-2xl border text-center flex flex-col justify-between transition-all ${
                             isProphetBranch
                               ? isDay
@@ -2539,9 +2580,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                           {son.children && son.children.length > 0 && (
                             <div className="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700/80 space-y-2 mt-2">
                               {son.children.map((child: any, cIdx: number) => {
-                                const childName = child.name;
-                                const childBadge = child.badge;
-                                const childTitle = child.title;
+                                const childEn = sonEn?.children?.[cIdx];
+                                const childName = isBn ? child.name : (childEn?.name || child.name);
+                                const childBadge = isBn ? child.badge : (childEn?.badge || child.badge);
+                                const childTitle = isBn ? child.title : (childEn?.title || child.title);
 
                                 return (
                                   <div
@@ -2576,10 +2618,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                     {child.children && child.children.length > 0 && (
                                       <div className="pt-1.5 mt-1 border-t border-white/20 space-y-1.5">
                                         {child.children.map((subChild: any, scIdx: number) => {
-                                          const subName = subChild.name;
-                                          const subBadge = subChild.badge;
-                                          const marriageText = subChild.marriageTo;
-                                          const sonsJoined = subChild.sons?.join(isBn ? ' ও ' : ' & ');
+                                          const subEn = (childEn as any)?.children?.[scIdx];
+                                          const subName = isBn ? subChild.name : (subEn?.name || subChild.name);
+                                          const subBadge = isBn ? subChild.badge : (subEn?.badge || subChild.badge);
+                                          const marriageText = isBn ? subChild.marriageTo : (subEn?.marriageTo || subChild.marriageTo);
+                                          const sonsArr = isBn ? subChild.sons : (subEn?.sons || subChild.sons);
+                                          const sonsJoined = sonsArr?.join(isBn ? ' ও ' : ' & ');
 
                                           return (
                                             <div
@@ -2670,7 +2714,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   <div className="flex flex-col items-center">
                     <div className="px-8 py-3 rounded-2xl bg-teal-700 text-white font-black text-sm sm:text-base text-center shadow-lg border border-teal-500 ring-4 ring-teal-500/20">
                       <div className="text-[10px] font-bold uppercase tracking-wider text-teal-200">{isBn ? 'আদি পুরুষ' : 'Root Ancestor'}</div>
-                      <div>{ANSAR_GENEALOGY.ancestor}</div>
+                      <div>{isBn ? ANSAR_GENEALOGY.ancestor : ANSAR_GENEALOGY_EN.ancestor}</div>
                     </div>
                     <div className="w-0.5 h-6 bg-teal-500/50" />
                   </div>
@@ -2678,8 +2722,9 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   {/* Two Main Clans */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {ANSAR_GENEALOGY.branches.map((branch, bIdx) => {
+                      const branchEn = ANSAR_GENEALOGY_EN.branches[bIdx];
                       const isKhazraj = branch.name.includes('খাযরাজ');
-                      const branchName = branch.name;
+                      const branchName = isBn ? branch.name : (branchEn?.name || branch.name);
 
                       return (
                         <div
@@ -2706,9 +2751,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
                           <div className="space-y-2.5">
                             {branch.subClans.map((sub, sIdx) => {
-                              const subName = sub.name;
-                              const leaderName = sub.leader;
-                              const subNote = sub.note;
+                              const subEn = branchEn?.subClans?.[sIdx];
+                              const subName = isBn ? sub.name : (subEn?.name || sub.name);
+                              const leaderName = isBn ? sub.leader : (subEn?.leader || sub.leader);
+                              const subNote = isBn ? sub.note : (subEn?.note || sub.note);
 
                               return (
                                 <div
@@ -2848,7 +2894,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 {/* Hotspot Pins on SVG Overlay */}
                 {ARABIAN_TRIBAL_GEO_REGIONS.map((reg) => {
                   const isSelected = reg.id === activeGeoRegionId;
-                  const regShortName = isBn ? reg.nameBn.split(' ')[0] : reg.nameBn.split(' ')[0];
+                  const regEn = ARABIAN_GEO_REGIONS_EN[reg.id];
+                  const regShortName = isBn ? reg.nameBn.split(' ')[0] : (regEn?.shortNameEn || reg.nameEn);
 
                   return (
                     <button
@@ -2884,11 +2931,12 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {/* Active Geo Region Detailed Showcase Card */}
               {(() => {
                 const activeReg = ARABIAN_TRIBAL_GEO_REGIONS.find(r => r.id === activeGeoRegionId) || ARABIAN_TRIBAL_GEO_REGIONS[0];
-                const regName = activeReg.nameBn;
-                const regDetails = activeReg.detailsBn;
-                const dominantTribesText = activeReg.dominantTribesBn.join(', ');
-                const historicalEventsText = activeReg.historicalEventsBn.join(' • ');
-                const prominentSahabaText = activeReg.prominentSahabaList.join(', ');
+                const regEn = ARABIAN_GEO_REGIONS_EN[activeReg.id];
+                const regName = isBn ? activeReg.nameBn : (regEn?.nameEn || activeReg.nameEn);
+                const regDetails = isBn ? activeReg.detailsBn : (regEn?.detailsEn || activeReg.detailsBn);
+                const dominantTribesText = (isBn ? activeReg.dominantTribesBn : (regEn?.dominantTribesEn || activeReg.dominantTribesBn)).join(', ');
+                const historicalEventsText = (isBn ? activeReg.historicalEventsBn : (regEn?.historicalEventsEn || activeReg.historicalEventsBn)).join(' • ');
+                const prominentSahabaText = (isBn ? activeReg.prominentSahabaList : (regEn?.prominentSahabaEn || activeReg.prominentSahabaList)).join(', ');
 
                 return (
                   <div className={`p-6 rounded-3xl border space-y-4 shadow-md ${
@@ -3057,8 +3105,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 {sortedStatistics.map((stat, idx) => {
                   const maxCount = 25;
                   const percentage = Math.min(100, Math.round((stat.count / maxCount) * 100));
-                  const statName = stat.nameBn;
-                  const statChapter = stat.chapter;
+                  const statName = isBn ? stat.nameBn : stat.nameEn;
+                  const statChapter = isBn ? stat.chapter : stat.chapterEn;
 
                   return (
                     <div
@@ -3071,7 +3119,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                         if (matchingTribe) {
                           openClanInReader(matchingTribe.id);
                         } else {
-                          setSearchQuery(stat.nameBn);
+                          setSearchQuery(isBn ? stat.nameBn : stat.nameEn);
                           setViewMode('reader');
                         }
                       }}
@@ -3202,10 +3250,10 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     </p>
 
                     {/* Sahaba List */}
-                    {tribe.sahabaListBn.length > 0 && (
+                    {(isBn ? tribe.sahabaListBn : (tribe.sahabaListEn || tribe.sahabaListBn)).length > 0 && (
                       <div className="space-y-1 pt-2 border-t border-dashed border-slate-200 dark:border-slate-800">
                         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 block">
-                          {t.appendixSahabaTitle} ({tribe.sahabaListBn.length})
+                          {t.appendixSahabaTitle} ({(isBn ? tribe.sahabaListBn : (tribe.sahabaListEn || tribe.sahabaListBn)).length})
                         </span>
                         <p className="text-xs leading-relaxed font-medium">
                           {sahabaListText}
@@ -3214,7 +3262,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     )}
 
                     {/* Negative Figures */}
-                    {tribe.negativeFiguresBn && tribe.negativeFiguresBn.length > 0 && (
+                    {((isBn ? tribe.negativeFiguresBn : (tribe.negativeFiguresEn || tribe.negativeFiguresBn)) || []).length > 0 && (
                       <div className="space-y-1 text-rose-500 pt-1">
                         <span className="text-[11px] font-bold block">{t.appendixNegativeTitle}</span>
                         <p className="text-xs leading-relaxed">

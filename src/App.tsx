@@ -29,7 +29,7 @@ const AdminPanelModal = React.lazy(() => import('./components/AdminPanelModal').
 const ConfirmModal = React.lazy(() => import('./components/ConfirmModal').then((m) => ({ default: m.ConfirmModal })));
 const FirstDownloadWelcomeView = React.lazy(() => import('./components/FirstDownloadWelcomeView').then((m) => ({ default: m.FirstDownloadWelcomeView })));
 
-const AppViewLoadingFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
+const AppViewLoadingFallback: React.FC<{ isDay: boolean; isBn?: boolean }> = ({ isDay, isBn = false }) => (
   <div className="flex flex-col items-center justify-center min-h-[350px] py-20 space-y-3">
     <div className={`w-9 h-9 border-3 rounded-full animate-spin ${
       isDay ? 'border-teal-600/30 border-t-teal-600' : 'border-emerald-500/30 border-t-emerald-400'
@@ -37,7 +37,7 @@ const AppViewLoadingFallback: React.FC<{ isDay: boolean }> = ({ isDay }) => (
     <span className={`text-xs font-bold animate-pulse ${
       isDay ? 'text-teal-800' : 'text-emerald-400'
     }`}>
-      লোড হচ্ছে...
+      {isBn ? 'লোড হচ্ছে...' : 'Loading...'}
     </span>
   </div>
 );
@@ -297,8 +297,11 @@ export default function App() {
     return 'bn';
   });
 
+  const selectedLanguageRef = useRef<ZikrLanguage>(selectedLanguage);
+
   // Save selected language to localStorage
   useEffect(() => {
+    selectedLanguageRef.current = selectedLanguage;
     try {
       localStorage.setItem('noor_zikr_selected_lang', selectedLanguage);
     } catch {}
@@ -867,7 +870,11 @@ export default function App() {
 
     const now = Date.now();
     setLastCloudSyncTimestamp(now);
-    showToast('✨ স্বাগতম! আপনার অ্যাকাউন্ট নতুনভাবে ০ থেকে শুরু হয়েছে। এখন থেকে আপনার সকল জিকির গণনা ও হিস্ট্রি সংরক্ষিত হবে।');
+    showToast(
+      selectedLanguageRef.current === 'bn'
+        ? '✨ স্বাগতম! আপনার অ্যাকাউন্ট নতুনভাবে ০ থেকে শুরু হয়েছে। এখন থেকে আপনার সকল জিকির গণনা ও হিস্ট্রি সংরক্ষিত হবে।'
+        : '✨ Welcome! Your account has been initialized at 0. All your Zikr counts and history will now be synced.'
+    );
   };
 
   // Google Redirect Login Result Check & Firebase Auth State Listener (Deferred to protect cold startup speed)
@@ -1013,7 +1020,11 @@ export default function App() {
       applyCloudDataToState(cloudData, isFromOtherDevice, isInitial);
 
       if (isFromOtherDevice && !isInitial) {
-        showToast('🔄 অন্য ডিভাইস থেকে জিকির লাইভ সিঙ্ক হয়েছে!');
+        showToast(
+          selectedLanguageRef.current === 'bn'
+            ? '🔄 অন্য ডিভাইস থেকে জিকির লাইভ সিঙ্ক হয়েছে!'
+            : '🔄 Zikr counts live-synced from another device!'
+        );
       }
     });
 
@@ -1114,7 +1125,11 @@ export default function App() {
   // Manual Trigger Cloud Sync
   const handleTriggerCloudSync = async (): Promise<boolean> => {
     if (!userProfile.isSignedIn || !userProfile.emailOrPhone) {
-      showToast('লগইন করুন ক্লাউডে ডাটা সেভ করার জন্য');
+      showToast(
+        selectedLanguage === 'bn'
+          ? 'লগইন করুন ক্লাউডে ডাটা সেভ করার জন্য'
+          : 'Please sign in to save your data to the cloud'
+      );
       return false;
     }
 
@@ -1136,10 +1151,18 @@ export default function App() {
       const now = Date.now();
       setLastCloudSyncTimestamp(now);
       setUserProfile((prev) => ({ ...prev, lastSyncedAt: now }));
-      showToast('☁️ ক্লাউডে সব জিকির হিস্ট্রি ও প্রোফাইল সফলভাবে সিঙ্ক হয়েছে!');
+      showToast(
+        selectedLanguage === 'bn'
+          ? '☁️ ক্লাউডে সব জিকির হিস্ট্রি ও প্রোফাইল সফলভাবে সিঙ্ক হয়েছে!'
+          : '☁️ All Zikr history & profile synced to the cloud!'
+      );
       return true;
     } else {
-      showToast('⚠️ ক্লাউড সিঙ্কে সমস্যা হয়েছে, অফলাইনে ডাটা সুরক্ষিত আছে');
+      showToast(
+        selectedLanguage === 'bn'
+          ? '⚠️ ক্লাউড সিঙ্কে সমস্যা হয়েছে, অফলাইনে ডাটা সুরক্ষিত আছে'
+          : '⚠️ Cloud sync issue; your data remains safely saved offline'
+      );
       return false;
     }
   };
@@ -1189,7 +1212,11 @@ export default function App() {
           localStorage.removeItem('zikrmate_active_zikrs_backup');
         } catch {}
 
-        showToast('লগআউট সম্পন্ন হয়েছে। আপনার ডাটা ক্লাউডে সুরক্ষিত আছে এবং স্ক্রিন কাউন্টার ০ করা হয়েছে।');
+        showToast(
+          selectedLanguage === 'bn'
+            ? 'লগআউট সম্পন্ন হয়েছে। আপনার ডাটা ক্লাউডে সুরক্ষিত আছে এবং স্ক্রিন কাউন্টার ০ করা হয়েছে।'
+            : 'Logged out successfully. Your data is safe in the cloud and screen counters were reset to 0.'
+        );
         return;
       }
 
@@ -1205,7 +1232,11 @@ export default function App() {
 
         if (cloudData && cloudData.foundInCloud) {
           applyCloudDataToState(cloudData, true, true);
-          showToast(`✨ স্বাগতম ${updated.name || 'ইউজার'}! আপনার ক্লাউড ডাটা সিঙ্ক হয়েছে।`);
+          showToast(
+            selectedLanguage === 'bn'
+              ? `✨ স্বাগতম ${updated.name || 'ইউজার'}! আপনার ক্লাউড ডাটা সিঙ্ক হয়েছে।`
+              : `✨ Welcome ${updated.name || 'User'}! Your cloud data has been synced.`
+          );
           return;
         } else {
           // Brand new account: initialize with fresh zero state (all zikrs blank / 0 counts)
@@ -1226,7 +1257,11 @@ export default function App() {
           settings,
           getAllAamalLogs()
         );
-        showToast('✓ প্রোফাইল তথ্য ক্লাউডে সফলভাবে সংরক্ষিত হয়েছে!');
+        showToast(
+          selectedLanguage === 'bn'
+            ? '✓ প্রোফাইল তথ্য ক্লাউডে সফলভাবে সংরক্ষিত হয়েছে!'
+            : '✓ Profile information saved to the cloud!'
+        );
       }
     } catch (e) {
       console.error('Error in handleUpdateProfile:', e);
@@ -1765,9 +1800,12 @@ export default function App() {
   const handleGlobalReset = () => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Global Counter Reset (রিসেট অল)',
-      message: `আপনি কি নিশ্চিত যে সকল কাউন্টার, আজকের গণনা ও সর্বমোট গণনা (${lifetimeTotalCount.toLocaleString()}) রিসেট করতে চান?`,
-      confirmLabel: 'Yes, Reset All to 0',
+      title: selectedLanguage === 'bn' ? 'সব কাউন্টার রিসেট (রিসেট অল)' : 'Global Counter Reset',
+      message:
+        selectedLanguage === 'bn'
+          ? `আপনি কি নিশ্চিত যে সকল কাউন্টার, আজকের গণনা ও সর্বমোট গণনা (${lifetimeTotalCount.toLocaleString()}) রিসেট করতে চান?`
+          : `Are you sure you want to reset all counters, today's total, and grand total (${lifetimeTotalCount.toLocaleString()}) back to 0?`,
+      confirmLabel: selectedLanguage === 'bn' ? 'হ্যাঁ, সব ০ করুন' : 'Yes, Reset All to 0',
       isDanger: true,
       onConfirm: async () => {
         const now = Date.now();
@@ -1972,7 +2010,7 @@ export default function App() {
         onSelectLanguage={(lang) => {
           setSelectedLanguage(lang);
           const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
-          showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
+          showToast(lang === 'bn' ? `ভাষা পরিবর্তন: ${langObj?.label || lang}` : `Language changed: ${langObj?.label || lang}`);
         }}
         onExportPdf={handleExportPdf}
         isExportingPdf={isExportingPdf}
@@ -2067,7 +2105,7 @@ export default function App() {
         {/* 2. QURAN VIEW */}
         {activeModule === 'quran' && (
           <div key="quran" className="animate-view-entrance">
-            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} isBn={selectedLanguage === 'bn'} />}>
               <QuranView
                 soundEnabled={settings.soundEnabled}
                 themeMode={settings.themeMode}
@@ -2081,7 +2119,7 @@ export default function App() {
         {/* 3. SALAT TIME VIEW */}
         {activeModule === 'salat_time' && (
           <div key="salat_time" className="animate-view-entrance">
-            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} isBn={selectedLanguage === 'bn'} />}>
               <SalatTimeView
                 soundEnabled={settings.soundEnabled}
                 themeMode={settings.themeMode}
@@ -2094,7 +2132,7 @@ export default function App() {
         {/* 3.1 NAMAJ VIEW (NAMAZ GUIDE, 5 PRAYERS BREAKDOWN, STEP-BY-STEP, DUAS & QAZA CALCULATOR) */}
         {activeModule === 'namaj' && (
           <div key="namaj" className="animate-view-entrance">
-            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} isBn={selectedLanguage === 'bn'} />}>
               <NamajView
                 soundEnabled={settings.soundEnabled}
                 themeMode={settings.themeMode}
@@ -2108,7 +2146,7 @@ export default function App() {
         {/* 4. AAMAL TRACKER VIEW */}
         {activeModule === 'aamal_tracker' && (
           <div key="aamal_tracker" className="animate-view-entrance">
-            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} isBn={selectedLanguage === 'bn'} />}>
               <AamalTrackerView
                 soundEnabled={settings.soundEnabled}
                 themeMode={settings.themeMode}
@@ -2123,7 +2161,7 @@ export default function App() {
         {/* 5. OTHER ISLAMIC HUB VIEW (DUA, HADITH, KITAB, DAILY TABLIG, ALLAH 99 NAMES, HAJJ & UMRAH, SETTINGS) */}
         {isOtherActive && (
           <div key="other_hub" className="animate-view-entrance">
-            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} />}>
+            <React.Suspense fallback={<AppViewLoadingFallback isDay={isDay} isBn={selectedLanguage === 'bn'} />}>
               <OtherIslamicHubView
                 onAddDuaToCounters={handleAddDuaToCounters}
                 activeCounters={zikrs}
@@ -2133,7 +2171,7 @@ export default function App() {
                 onSelectLanguage={(lang) => {
                   setSelectedLanguage(lang);
                   const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
-                  showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
+                  showToast(lang === 'bn' ? `ভাষা পরিবর্তন: ${langObj?.label || lang}` : `Language changed: ${langObj?.label || lang}`);
                 }}
                 settings={settings}
                 onUpdateSettings={(newSettings) => setSettings((prev) => ({ ...prev, ...newSettings }))}
@@ -2239,7 +2277,11 @@ export default function App() {
                 isDay ? 'text-[#0066FF]' : 'text-sky-400'
               }`}
             >
-              <span>📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ</span>
+              <span>
+                {selectedLanguage === 'bn'
+                  ? '📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ'
+                  : '📱 Android App Install & Offline Package'}
+              </span>
             </button>
           </div>
         </div>
@@ -2328,7 +2370,7 @@ export default function App() {
             onSelectLanguage={(lang) => {
               setSelectedLanguage(lang);
               const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
-              showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
+              showToast(lang === 'bn' ? `ভাষা পরিবর্তন: ${langObj?.label || lang}` : `Language changed: ${langObj?.label || lang}`);
             }}
             soundEnabled={settings.soundEnabled}
             onToggleSound={handleToggleSound}
@@ -2373,7 +2415,7 @@ export default function App() {
             onSelectLanguage={(lang) => {
               setSelectedLanguage(lang);
               const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
-              showToast(`ভাষা পরিবর্তন: ${langObj?.label || lang}`);
+              showToast(lang === 'bn' ? `ভাষা পরিবর্তন: ${langObj?.label || lang}` : `Language changed: ${langObj?.label || lang}`);
             }}
             userProfile={userProfile}
             onUpdateProfile={handleUpdateProfile}
@@ -2397,6 +2439,7 @@ export default function App() {
             currentUserProfile={userProfile}
             soundEnabled={settings.soundEnabled}
             isDayTheme={settings.themeMode === 'day'}
+            selectedLanguage={selectedLanguage}
             currentMasterTotal={masterGrandTotal}
             currentZikrs={zikrs}
             currentDailyTotal={dailyTotal}

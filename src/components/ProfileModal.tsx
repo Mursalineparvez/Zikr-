@@ -2801,6 +2801,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           isOpen={showInstallGuideModal}
           onClose={() => setShowInstallGuideModal(false)}
           isDay={isDay}
+          selectedLanguage={selectedLanguage}
         />
       </div>
     </div>

@@ -1,5 +1,13 @@
 import React from 'react';
 import { Sparkles, MapPin, Compass } from 'lucide-react';
+import { ZikrLanguage } from '../types';
+
+function toBnDigits(num: number | string): string {
+  const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return num
+    .toString()
+    .replace(/\d/g, (d) => bnDigits[parseInt(d, 10)] ?? d);
+}
 
 interface AnimatedHistoryBannerProps {
   scene: string;
@@ -7,6 +15,7 @@ interface AnimatedHistoryBannerProps {
   category: string;
   year: number;
   locationName: string;
+  selectedLanguage?: ZikrLanguage;
   className?: string;
 }
 
@@ -16,18 +25,25 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
   category,
   year,
   locationName,
+  selectedLanguage = 'bn',
   className = '',
 }) => {
+  const isBn = selectedLanguage === 'bn';
+  const isAr = selectedLanguage === 'ar';
   // Determine color scheme & theme based on scene
   const getSceneConfig = () => {
     switch (scene) {
       case 'kaaba':
         return {
           titleBn: 'পবিত্র কাবা ও মক্কা মুকাররমা',
+          titleEn: 'Sacred Kaaba & Makkah al-Mukarramah',
+          titleAr: 'الكعبة المشرفة ومكة المكرمة',
           arabicText: 'مَكَّةُ الْمُكَرَّمَةُ • بَيْتُ اللَّهِ الْحَرَامِ',
           gradient: 'from-[#07090d] via-[#12151d] to-[#1c1917]',
           accentColor: '#f59e0b',
-          tag: 'পবিত্র হারামাইন',
+          tagBn: 'পবিত্র হারামাইন',
+          tagEn: 'Sacred Haramain',
+          tagAr: 'الحرمين الشريفين',
         };
       case 'mosque':
       case 'domerock':
@@ -36,37 +52,53 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
       case 'modernmosque':
         return {
           titleBn: 'পবিত্র মসজিদ ও সোনালী মিনার',
+          titleEn: 'Sacred Mosque & Golden Minaret',
+          titleAr: 'المسجد المبارك والمئذنة الذهبية',
           arabicText: 'الْمَسْجِدُ الْمُبَارَكُ • نُورُ الْهِدَايَةِ',
           gradient: 'from-[#041a17] via-[#092b25] to-[#0d3b32]',
           accentColor: '#10b981',
-          tag: 'ঐতিহাসিক মসজিদ',
+          tagBn: 'ঐতিহাসিক মসজিদ',
+          tagEn: 'Historic Mosque',
+          tagAr: 'مسجد تاريخي',
         };
       case 'journey':
       case 'tents':
       case 'wells':
         return {
           titleBn: 'মরুভূমির রুট ও বাণিজ্য কাফেলা',
+          titleEn: 'Desert Routes & Caravan Trail',
+          titleAr: 'طرق الصحراء وقوافل التجارة',
           arabicText: 'قَافِلَةُ الصَّحْرَاءِ • رِحْلَةُ الإِيمَانِ',
           gradient: 'from-[#17120c] via-[#2a1d12] to-[#1c140d]',
           accentColor: '#fbbf24',
-          tag: 'মরুভূমির কাফেলা',
+          tagBn: 'মরুভূমির কাফেলা',
+          tagEn: 'Desert Caravan',
+          tagAr: 'قافلة الصحراء',
         };
       case 'sea':
         return {
           titleBn: 'লোহিত সাগর ও সমুদ্র অভিযান',
+          titleEn: 'Red Sea & Maritime Voyages',
+          titleAr: 'البحر الأحمر والأساطيل البحرية',
           arabicText: 'الْبَحْرُ وَالْأَسَاطِيلُ • فُتُوحَاتُ الْإِسْلَامِ',
           gradient: 'from-[#021324] via-[#06243f] to-[#04172a]',
           accentColor: '#38bdf8',
-          tag: 'সমুদ্র অভিযান',
+          tagBn: 'সমুদ্র অভিযান',
+          tagEn: 'Naval Expedition',
+          tagAr: 'رحلة بحرية',
         };
       case 'cave':
       case 'mountain':
         return {
           titleBn: 'নিভৃত হেরা গুহা ও জাবালে নূর',
+          titleEn: 'Cave of Hira & Jabal an-Nur',
+          titleAr: 'غار حراء وجبل النور',
           arabicText: 'غَارُ حِرَاءَ • مَهْبِطُ الْوَحْيِ الْأَمِينِ',
           gradient: 'from-[#0f1115] via-[#1a1c22] to-[#121318]',
           accentColor: '#a78bfa',
-          tag: 'ওহির সূচনাস্থল',
+          tagBn: 'ওহির সূচনাস্থল',
+          tagEn: 'Mount of Revelation',
+          tagAr: 'مهبط الوحي',
         };
       case 'battle':
       case 'banners':
@@ -75,10 +107,14 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
       case 'fort':
         return {
           titleBn: 'ঐতিহাসিক ময়দান ও সত্যের সংগ্রাম',
+          titleEn: 'Historic Field & Struggle for Truth',
+          titleAr: 'ميدان التاريخ ونصرة الحق',
           arabicText: 'جِهَادٌ فِي سَبِيلِ اللَّهِ • نَصْرٌ مِنَ اللَّهِ',
           gradient: 'from-[#1a0f0d] via-[#2c1713] to-[#170e0c]',
           accentColor: '#f43f5e',
-          tag: 'ঐতিহাসিক ময়দান',
+          tagBn: 'ঐতিহাসিক ময়দান',
+          tagEn: 'Historic Battle',
+          tagAr: 'معركة تاريخية',
         };
       case 'scroll':
       case 'books':
@@ -87,10 +123,14 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
       case 'lamp':
         return {
           titleBn: 'বাইতুল হিকমাহ ও জ্ঞানের স্বর্ণযুগ',
+          titleEn: 'Bayt al-Hikmah & Golden Age of Knowledge',
+          titleAr: 'بيت الحكمة والعصر الذهبي للعلم',
           arabicText: 'بَيْتُ الْحِكْمَةِ • عَصْرُ الْعِلْمِ وَالْفِكْرِ',
           gradient: 'from-[#0a1820] via-[#102735] to-[#091b24]',
           accentColor: '#2dd4bf',
-          tag: 'জ্ঞানের স্বর্ণযুগ',
+          tagBn: 'জ্ঞানের স্বর্ণযুগ',
+          tagEn: 'Golden Age of Knowledge',
+          tagAr: 'عصر العلم',
         };
       case 'arches':
       case 'palace':
@@ -99,10 +139,14 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
       case 'taj':
         return {
           titleBn: 'রাজকীয় প্রাসাদ ও ঐতিহাসিক সালতানাত',
+          titleEn: 'Royal Palaces & Islamic Civilization',
+          titleAr: 'الحضارة الإسلامية والعمارة التاريخية',
           arabicText: 'حَضَارَةٌ إِسْلَامِيَّةٌ • أَنْدَلُسٌ وَخِلَافَةٌ',
           gradient: 'from-[#170b1f] via-[#271333] to-[#150a1c]',
           accentColor: '#e879f9',
-          tag: 'ইসলামি সভ্যতা',
+          tagBn: 'ইসলামি সভ্যতা',
+          tagEn: 'Islamic Civilization',
+          tagAr: 'الحضارة الإسلامية',
         };
       case 'river':
       case 'bengal':
@@ -110,15 +154,23 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
       default:
         return {
           titleBn: 'সবুজ বাংলার প্রান্তর ও নদী অববাহিকা',
+          titleEn: 'Delta Heritage & Sacred Landmarks',
+          titleAr: 'التراث الإسلامي والمعالم التاريخية',
           arabicText: 'بِلَادُ الْبِنْغَالِ • نُورُ الْأَوْلِيَاءِ وَالصَّالِحِينَ',
           gradient: 'from-[#051c19] via-[#0a2e28] to-[#061d19]',
           accentColor: '#34d399',
-          tag: 'ঐতিহাসিক রেনেসাঁ',
+          tagBn: 'ঐতিহাসিক রেনেসাঁ',
+          tagEn: 'Islamic Heritage',
+          tagAr: 'التراث التاريخي',
         };
     }
   };
 
   const config = getSceneConfig();
+  const sceneTitle = isBn ? config.titleBn : isAr ? config.titleAr : config.titleEn;
+  const sceneTag = isBn ? config.tagBn : isAr ? config.tagAr : config.tagEn;
+  const animatedLabel = isBn ? 'অ্যানিমেটেড দৃশ্য' : isAr ? 'مشهد متحرك' : 'Animated Scene';
+  const yearLabel = isBn ? `${toBnDigits(year)} খ্রি.` : isAr ? `${year} م` : `${year} CE`;
 
   return (
     <div
@@ -488,7 +540,7 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
       <div className="z-10 flex items-center justify-between gap-2">
         <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/40 border border-white/20 backdrop-blur-md text-[10px] font-black text-amber-300">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
-          <span>✨ অ্যানিমেটেড দৃশ্য • {config.tag}</span>
+          <span>✨ {animatedLabel} • {sceneTag}</span>
         </div>
 
         <span className="text-[11px] font-arabic font-bold text-amber-200/90 dir-rtl tracking-wide drop-shadow">
@@ -499,9 +551,9 @@ export const AnimatedHistoryBanner: React.FC<AnimatedHistoryBannerProps> = ({
       {/* 3. Bottom Hero Title & Location Meta */}
       <div className="z-10 space-y-1 text-left max-w-[85%] sm:max-w-[75%]">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
-          <span>{config.titleBn}</span>
+          <span>{sceneTitle}</span>
           <span>•</span>
-          <span className="text-white/80">{year} খ্রি.</span>
+          <span className="text-white/80">{yearLabel}</span>
         </div>
 
         <h3 className="text-base sm:text-lg font-black tracking-tight text-white drop-shadow-md line-clamp-1">

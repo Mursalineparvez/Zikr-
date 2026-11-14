@@ -207,7 +207,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                       ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
                       : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-emerald-300'
                   }`}
-                  title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
+                  title={selectedLanguage === 'bn' ? (voiceGender === 'female' ? 'অডিও শুনুন (নারী কণ্ঠে)' : 'অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Audio (Female Voice)' : 'Play Audio (Male Voice)')}
                 >
                   <Volume2 className="w-4 h-4 text-emerald-500" />
                 </button>

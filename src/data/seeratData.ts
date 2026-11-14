@@ -31,8 +31,11 @@ export interface ClassicalSourceRef {
   bookEn: string;
   bookAr?: string;
   authorBn: string;
+  authorEn?: string;
   volumePage?: string;
+  volumePageEn?: string;
   referenceDetailBn?: string;
+  referenceDetailEn?: string;
 }
 
 export interface KeySahabiInvolved {

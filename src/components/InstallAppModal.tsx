@@ -9,24 +9,27 @@ import {
   Laptop,
   Check,
   Sparkles,
-  ArrowRight,
   ShieldCheck,
   FileCode,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { ZikrLanguage } from '../types';
 
 interface InstallAppModalProps {
   isOpen: boolean;
   onClose: () => void;
   isDay?: boolean;
+  selectedLanguage?: ZikrLanguage;
 }
 
 export const InstallAppModal: React.FC<InstallAppModalProps> = ({
   isOpen,
   onClose,
   isDay = false,
+  selectedLanguage = 'bn',
 }) => {
+  const isBn = selectedLanguage === 'bn';
   const { isInstallable, isInstalled, isIOS, isAndroid, isDesktop, install } = usePWAInstall();
   const [isInstalling, setIsInstalling] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -39,7 +42,11 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
     const success = await install();
     setIsInstalling(false);
     if (success) {
-      setSuccessMessage('অভিনন্দন! Zikr+ অ্যাপটি আপনার ডিভাইসে সফলভাবে ইনস্টল হয়েছে!');
+      setSuccessMessage(
+        isBn
+          ? 'অভিনন্দন! Zikr+ অ্যাপটি আপনার ডিভাইসে সফলভাবে ইনস্টল হয়েছে!'
+          : 'Congratulations! Zikr+ has been successfully installed on your device!'
+      );
       try {
         confetti({
           particleCount: 70,
@@ -85,13 +92,15 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
             />
             <div>
               <div className="flex items-center gap-1.5">
-                <h3 className="text-base font-extrabold tracking-tight">Zikr+ অ্যাপ ইনস্টল</h3>
+                <h3 className="text-base font-extrabold tracking-tight">
+                  {isBn ? 'Zikr+ অ্যাপ ইনস্টল' : 'Install Zikr+ App'}
+                </h3>
                 <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30">
                   PWA App
                 </span>
               </div>
               <p className={`text-[11px] ${isDay ? 'text-slate-600' : 'text-teal-200/80'}`}>
-                ইন্টারনেট ছাড়া দ্রুততম ফুল-স্ক্রিন মোড
+                {isBn ? 'ইন্টারনেট ছাড়া দ্রুততম ফুল-স্ক্রিন মোড' : 'Fastest full-screen mode even offline'}
               </p>
             </div>
           </div>
@@ -103,7 +112,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
                 ? 'hover:bg-slate-200 text-slate-700'
                 : 'hover:bg-white/10 text-slate-300'
             }`}
-            title="Close"
+            title={isBn ? 'বন্ধ করুন' : 'Close'}
           >
             <X className="w-5 h-5" />
           </button>
@@ -116,10 +125,12 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
             <div className="p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 dark:text-emerald-300 flex items-start gap-3">
               <CheckCircle2 className="w-6 h-6 shrink-0 mt-0.5 text-emerald-500" />
               <div>
-                <h4 className="text-sm font-bold">ইনস্টলেশন সফল!</h4>
+                <h4 className="text-sm font-bold">{isBn ? 'ইনস্টলেশন সফল!' : 'Installation Complete!'}</h4>
                 <p className="text-xs mt-0.5 opacity-90">{successMessage}</p>
                 <p className="text-[11px] mt-1 text-emerald-700 dark:text-emerald-200">
-                  এখন আপনার ফোনের হোম স্ক্রিনে Zikr+ অ্যাপ আইকন দেখতে পাবেন। ডাটা অফ রেখেই চালাতে পারবেন।
+                  {isBn
+                    ? 'এখন আপনার ফোনের হোম স্ক্রিনে Zikr+ অ্যাপ আইকন দেখতে পাবেন। ডাটা অফ রেখেই চালাতে পারবেন।'
+                    : 'You will now find the Zikr+ app icon on your home screen. It works seamlessly offline.'}
                 </p>
               </div>
             </div>
@@ -127,9 +138,13 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
             <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 dark:text-emerald-300 flex items-center gap-3">
               <ShieldCheck className="w-6 h-6 shrink-0 text-emerald-500" />
               <div>
-                <h4 className="text-sm font-bold">অ্যাপটি ইতিপূর্বেই ইনস্টল করা আছে ✓</h4>
+                <h4 className="text-sm font-bold">
+                  {isBn ? 'অ্যাপটি ইতিপূর্বেই ইনস্টল করা আছে ✓' : 'App Already Installed ✓'}
+                </h4>
                 <p className="text-xs opacity-90">
-                  হোম স্ক্রিন থেকে ওপেন করলে এটি ফুলস্ক্রিনে সম্পূর্ণ অফলাইনে চলবে।
+                  {isBn
+                    ? 'হোম স্ক্রিন থেকে ওপেন করলে এটি ফুলস্ক্রিনে সম্পূর্ণ অফলাইনে চলবে।'
+                    : 'Opening from your home screen launches full-screen offline mode.'}
                 </p>
               </div>
             </div>
@@ -141,14 +156,16 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-xs uppercase font-extrabold tracking-wider text-emerald-100 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>সরাসরি ইনস্টল প্রস্তুত</span>
+                  <span>{isBn ? 'সরাসরি ইনস্টল প্রস্তুত' : 'Ready for Direct Install'}</span>
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20">
                   1-Click
                 </span>
               </div>
               <p className="text-xs text-emerald-50 leading-relaxed">
-                আপনার ব্রাউজার সরাসরি ইনস্টল সাপোর্ট করছে। নিচের বাটনে চাপ দিন:
+                {isBn
+                  ? 'আপনার ব্রাউজার সরাসরি ইনস্টল সাপোর্ট করছে। নিচের বাটনে চাপ দিন:'
+                  : 'Your browser supports direct one-click installation. Tap below:'}
               </p>
               <button
                 type="button"
@@ -157,7 +174,11 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
                 className="w-full py-3 px-4 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 font-black text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
               >
                 <Download className="w-4 h-4 text-emerald-700 stroke-[2.5]" />
-                <span>{isInstalling ? 'ইনস্টল হচ্ছে...' : 'এখনই ফোনে ইনস্টল করুন (Install Now)'}</span>
+                <span>
+                  {isInstalling
+                    ? (isBn ? 'ইনস্টল হচ্ছে...' : 'Installing...')
+                    : (isBn ? 'এখনই ফোনে ইনস্টল করুন (Install Now)' : 'Install App Now')}
+                </span>
               </button>
             </div>
           )}
@@ -165,7 +186,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
           {/* Device-Specific Visual Installation Instructions */}
           <div className="space-y-3">
             <h4 className={`text-xs font-bold uppercase tracking-wider ${isDay ? 'text-slate-700' : 'text-emerald-300'}`}>
-              সহজ ইনস্টলেশন নির্দেশিকা (Device Instructions):
+              {isBn ? 'সহজ ইনস্টলেশন নির্দেশিকা (Device Instructions):' : 'Device Installation Instructions:'}
             </h4>
 
             {/* Android Chrome / Brave / Edge */}
@@ -178,27 +199,35 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-bold text-xs text-emerald-600 dark:text-emerald-400">
                     <Smartphone className="w-4 h-4" />
-                    <span>Android (Chrome / Samsung / Brave ব্রাউজার):</span>
+                    <span>{isBn ? 'Android (Chrome / Samsung / Brave ব্রাউজার):' : 'Android (Chrome / Samsung / Brave Browser):'}</span>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">
-                    আসল WebAPK অ্যাপ
+                    {isBn ? 'আসল WebAPK অ্যাপ' : 'Native WebAPK'}
                   </span>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-[11px] leading-relaxed text-emerald-800 dark:text-emerald-200">
-                  💡 <strong>APK ডাউনলোড সংক্রান্ত তথ্য:</strong> আলাদা কোনো APK ফাইল খোঁজার প্রয়োজন নেই। Chrome থেকে সরাসরি ইনস্টল করলেই এটি ফোনে আসল ফুলস্ক্রিন অ্যাপ তৈরি করে দেয়:
+                  {isBn ? (
+                    <>💡 <strong>APK ডাউনলোড সংক্রান্ত তথ্য:</strong> আলাদা কোনো APK ফাইল খোঁজার প্রয়োজন নেই। Chrome থেকে সরাসরি ইনস্টল করলেই এটি ফোনে আসল ফুলস্ক্রিন অ্যাপ তৈরি করে দেয়:</>
+                  ) : (
+                    <>💡 <strong>About APK downloads:</strong> No separate APK file is needed. Installing directly from Chrome creates a full native-style app on your device:</>
+                  )}
                 </div>
 
                 <ol className="text-xs space-y-1.5 pl-4 list-decimal marker:text-emerald-500 leading-relaxed text-slate-700 dark:text-slate-200">
-                  <li>
-                    ব্রাউজারের উপরে বা নিচে ডানদিকের <strong>৩টি ডট (⋮ মেনু)</strong> বাটনে ট্যাপ করুন।
-                  </li>
-                  <li>
-                    মেনু তালিকা থেকে <strong>"Install app"</strong> অথবা <strong>"Add to Home screen" (হোম স্ক্রিনে যোগ করুন)</strong> চাপুন।
-                  </li>
-                  <li>
-                    <strong>"Install"</strong> নিশ্চিত করুন। কয়েক সেকেন্ডে ফোনের মূল অ্যাপ লিস্টে ও হোম স্ক্রিনে Zikr+ অ্যাপ তৈরি হয়ে যাবে!
-                  </li>
+                  {isBn ? (
+                    <>
+                      <li>ব্রাউজারের উপরে বা নিচে ডানদিকের <strong>৩টি ডট (⋮ মেনু)</strong> বাটনে ট্যাপ করুন।</li>
+                      <li>মেনু তালিকা থেকে <strong>"Install app"</strong> অথবা <strong>"Add to Home screen" (হোম স্ক্রিনে যোগ করুন)</strong> চাপুন।</li>
+                      <li><strong>"Install"</strong> নিশ্চিত করুন। কয়েক সেকেন্ডে ফোনের মূল অ্যাপ লিস্টে ও হোম স্ক্রিনে Zikr+ অ্যাপ তৈরি হয়ে যাবে!</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Tap the <strong>3-dot menu (⋮)</strong> at the top-right or bottom-right of your browser.</li>
+                      <li>Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong> from the menu.</li>
+                      <li>Confirm <strong>"Install"</strong>. Within seconds Zikr+ will appear in your app drawer and home screen!</li>
+                    </>
+                  )}
                 </ol>
               </div>
             )}
@@ -212,18 +241,22 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
               >
                 <div className="flex items-center gap-2 font-bold text-xs text-emerald-600 dark:text-emerald-400 mb-2">
                   <Share2 className="w-4 h-4" />
-                  <span>iPhone / iPad (Safari ব্রাউজার):</span>
+                  <span>{isBn ? 'iPhone / iPad (Safari ব্রাউজার):' : 'iPhone / iPad (Safari Browser):'}</span>
                 </div>
                 <ol className="text-xs space-y-1.5 pl-4 list-decimal marker:text-emerald-500 leading-relaxed text-slate-700 dark:text-slate-200">
-                  <li>
-                    সাফারি ব্রাউজারের নিচে থাকা <strong>Share (শেয়ার 📤)</strong> আইকনে চাপুন।
-                  </li>
-                  <li>
-                    নিচে স্ক্রল করে <strong>"Add to Home Screen" (হোম স্ক্রিনে যোগ করুন ➕)</strong> অপশনে ট্যাপ করুন।
-                  </li>
-                  <li>
-                    উপরে ডানদিকের <strong>"Add"</strong> বাটনে ক্লিক করলেই হোম স্ক্রিনে অ্যাপ যুক্ত হবে।
-                  </li>
+                  {isBn ? (
+                    <>
+                      <li>সাফারি ব্রাউজারের নিচে থাকা <strong>Share (শেয়ার 📤)</strong> আইকনে চাপুন।</li>
+                      <li>নিচে স্ক্রল করে <strong>"Add to Home Screen" (হোম স্ক্রিনে যোগ করুন ➕)</strong> অপশনে ট্যাপ করুন।</li>
+                      <li>উপরে ডানদিকের <strong>"Add"</strong> বাটনে ক্লিক করলেই হোম স্ক্রিনে অ্যাপ যুক্ত হবে।</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Tap the <strong>Share (📤)</strong> button in Safari&apos;s bottom toolbar.</li>
+                      <li>Scroll down and tap <strong>&quot;Add to Home Screen&quot; (➕)</strong>.</li>
+                      <li>Tap <strong>&quot;Add&quot;</strong> in the top-right corner to place the app on your home screen.</li>
+                    </>
+                  )}
                 </ol>
               </div>
             )}
@@ -237,15 +270,20 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
               >
                 <div className="flex items-center gap-2 font-bold text-xs text-emerald-600 dark:text-emerald-400 mb-2">
                   <Laptop className="w-4 h-4" />
-                  <span>কম্পিউটার বা ল্যাপটপ (Chrome / Edge):</span>
+                  <span>{isBn ? 'কম্পিউটার বা ল্যাপটপ (Chrome / Edge):' : 'Desktop / Laptop (Chrome / Edge):'}</span>
                 </div>
                 <ol className="text-xs space-y-1.5 pl-4 list-decimal marker:text-emerald-500 leading-relaxed text-slate-700 dark:text-slate-200">
-                  <li>
-                    ব্রাউজারের অ্যাড্রেস বারের (URL bar) একদম ডানপাশে থাকা <strong>ইনস্টল আইকন (⊕ বা মনিটর)</strong> ক্লিক করুন।
-                  </li>
-                  <li>
-                    অথবা ব্রাউজারের ৩টি ডট (⋮) মেনু থেকে <strong>"Save and share" → "Install Zikr+"</strong> সিলেক্ট করুন।
-                  </li>
+                  {isBn ? (
+                    <>
+                      <li>ব্রাউজারের অ্যাড্রেস বারের (URL bar) একদম ডানপাশে থাকা <strong>ইনস্টল আইকন (⊕ বা মনিটর)</strong> ক্লিক করুন।</li>
+                      <li>অথবা ব্রাউজারের ৩টি ডট (⋮) মেনু থেকে <strong>"Save and share" → "Install Zikr+"</strong> সিলেক্ট করুন।</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Click the <strong>Install icon (⊕)</strong> on the right side of your browser&apos;s address bar.</li>
+                      <li>Or open the 3-dot (⋮) menu and choose <strong>&quot;Save and share&quot; → &quot;Install Zikr+&quot;</strong>.</li>
+                    </>
+                  )}
                 </ol>
               </div>
             )}
@@ -258,7 +296,11 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
             }`}
           >
             <p className="leading-relaxed">
-              💡 আপনি যদি ফেসবুক, মেসেঞ্জার বা হোয়াটসঅ্যাপের ইন-অ্যাপ ব্রাউজারে থাকেন, তবে মূল <strong>Chrome বা Safari</strong> ব্রাউজারে লিংকটি ওপেন করুন:
+              {isBn ? (
+                <>💡 আপনি যদি ফেসবুক, মেসেঞ্জার বা হোয়াটসঅ্যাপের ইন-অ্যাপ ব্রাউজারে থাকেন, তবে মূল <strong>Chrome বা Safari</strong> ব্রাউজারে লিংকটি ওপেন করুন:</>
+              ) : (
+                <>💡 If you opened this inside Facebook, Messenger, or WhatsApp&apos;s in-app browser, copy the link and open it in <strong>Chrome or Safari</strong>:</>
+              )}
             </p>
             <button
               type="button"
@@ -272,12 +314,12 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
               {copiedLink ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3]" />
-                  <span>লিংক কপি হয়েছে! এবার Chrome এ পেস্ট করুন</span>
+                  <span>{isBn ? 'লিংক কপি হয়েছে! এবার Chrome এ পেস্ট করুন' : 'Link copied! Paste in Chrome or Safari'}</span>
                 </>
               ) : (
                 <>
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>ওয়েবসাইট লিংক কপি করুন (Copy App Link)</span>
+                  <span>{isBn ? 'ওয়েবসাইট লিংক কপি করুন (Copy App Link)' : 'Copy App Link'}</span>
                 </>
               )}
             </button>
@@ -292,14 +334,16 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
             <div className="flex items-center justify-between">
               <span className="font-bold text-xs flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                 <FileCode className="w-4 h-4" />
-                <span>সম্পূর্ণ অফলাইন স্ট্যান্ডঅ্যালোন ফাইল (.html)</span>
+                <span>{isBn ? 'সম্পূর্ণ অফলাইন স্ট্যান্ডঅ্যালোন ফাইল (.html)' : '100% Offline Standalone File (.html)'}</span>
               </span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
                 100% Offline
               </span>
             </div>
             <p className="text-[11px] opacity-80 leading-relaxed">
-              কোনো ব্রাউজার বা ইন্টারনেট ঝামেলা ছাড়াই সরাসরি ফোনে অফলাইন ফাইল সংরক্ষণ করতে চান? নিচের বাটনে চাপ দিন:
+              {isBn
+                ? 'কোনো ব্রাউজার বা ইন্টারনেট ঝামেলা ছাড়াই সরাসরি ফোনে অফলাইন ফাইল সংরক্ষণ করতে চান? নিচের বাটনে চাপ দিন:'
+                : 'Want to save an offline HTML file directly on your phone without relying on browser cache?'}
             </p>
             <a
               href="/zikr-tasbeeh-standalone.html"
@@ -311,7 +355,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
               }`}
             >
               <Download className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>অফলাইন HTML ফাইল ডাউনলোড করুন (Download HTML)</span>
+              <span>{isBn ? 'অফলাইন HTML ফাইল ডাউনলোড করুন (Download HTML)' : 'Download Offline HTML File'}</span>
             </a>
           </div>
         </div>
@@ -327,7 +371,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
             onClick={onClose}
             className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer"
           >
-            ঠিক আছে (Close)
+            {isBn ? 'ঠিক আছে (Close)' : 'Close'}
           </button>
         </div>
       </div>

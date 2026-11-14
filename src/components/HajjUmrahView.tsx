@@ -70,6 +70,7 @@ interface HajjRoutePhotoItem {
   checklistEn: string[];
   duaArabic?: string;
   duaMeaningBn?: string;
+  duaMeaningEn?: string;
 }
 
 const HAJJ_ROUTE_PHOTOS: HajjRoutePhotoItem[] = [
@@ -97,6 +98,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRoutePhotoItem[] = [
     ],
     duaArabic: 'لَبَّيْكَ اللَّهُمَّ حَجًّا، لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ',
     duaMeaningBn: 'আমি হজের উদ্দেশ্যে হাজির হে আল্লাহ, আমি হাজির।',
+    duaMeaningEn: 'Here I am, O Allah, for Hajj; here I am.',
   },
   {
     id: 2,
@@ -122,6 +124,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRoutePhotoItem[] = [
     ],
     duaArabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ',
     duaMeaningBn: 'আল্লাহ ছাড়া কোনো মাবুদ নেই, তিনি একক, তাঁর কোনো শরিক নেই। রাজত্ব ও প্রশংসা তাঁরই।',
+    duaMeaningEn: 'There is no deity worthy of worship except Allah alone without partner; to Him belongs the dominion and all praise, and He has power over everything.',
   },
   {
     id: 3,
@@ -147,6 +150,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRoutePhotoItem[] = [
     ],
     duaArabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ المَغْفِرَةَ وَالعَافِيَةَ',
     duaMeaningBn: 'হে আল্লাহ, আমি আপনার কাছে ক্ষমা ও নিরাপত্তা প্রার্থনা করছি।',
+    duaMeaningEn: 'O Allah, I ask You for forgiveness and well-being.',
   },
   {
     id: 4,
@@ -172,6 +176,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRoutePhotoItem[] = [
     ],
     duaArabic: 'بِسْمِ اللَّهِ، اللَّهُ أَكْبَرُ، رَغْمًا لِلشَّيْطَانِ وَرِضًا لِلرَّحْمَنِ',
     duaMeaningBn: 'আল্লাহর নামে, আল্লাহ সর্বশ্রেষ্ঠ। শয়তানের অপমানের জন্য এবং দয়াময়ের সন্তুষ্টির জন্য।',
+    duaMeaningEn: 'In the name of Allah, Allah is the Greatest—in defiance of Satan and seeking the pleasure of the Most Merciful.',
   },
   {
     id: 5,
@@ -197,6 +202,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRoutePhotoItem[] = [
     ],
     duaArabic: 'اللَّهُمَّ لَا تَجْعَلْ هَذَا آخِرَ العَهْدِ مِنْ بَيْتِكَ الحَرَامِ',
     duaMeaningBn: 'হে আল্লাহ, আপনি আমার এই সফরকে আপনার পবিত্র ঘরের শেষ সাক্ষাত বানাবেন না।',
+    duaMeaningEn: 'O Allah, do not make this my final visit to Your Sacred House.',
   },
 ];
 
@@ -317,14 +323,18 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
               )
             }
             className="px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer shrink-0 border border-amber-200"
-            title={voiceGender === 'female' ? 'Play Talbiyah Audio (নারী কণ্ঠে)' : 'Play Talbiyah Audio (পুরুষ কণ্ঠে)'}
+            title={isBn ? (voiceGender === 'female' ? 'তালবিয়া অডিও শুনুন (নারী কণ্ঠে)' : 'তালবিয়া অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Talbiyah Audio (Female Voice)' : 'Play Talbiyah Audio (Male Voice)')}
           >
             <div className="w-8 h-8 rounded-xl bg-slate-950/15 flex items-center justify-center">
               <Volume2 className="w-4 h-4 text-slate-950" />
             </div>
             <div className="text-left">
-              <div className="text-[10px] uppercase font-bold text-slate-900 tracking-wider">তালবিয়া শোনেন</div>
-              <div className="text-xs font-black">Play Talbiyah Audio</div>
+              <div className="text-[10px] uppercase font-bold text-slate-900 tracking-wider">
+                {isBn ? 'তালবিয়া শোনেন' : 'Listen Talbiyah'}
+              </div>
+              <div className="text-xs font-black">
+                {isBn ? 'তালবিয়াহ অডিও চালান' : 'Play Talbiyah Audio'}
+              </div>
             </div>
           </button>
         </div>
@@ -491,7 +501,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                             className={`p-2 rounded-xl cursor-pointer flex items-center justify-center transition active:scale-95 shadow-md ${
                               isDay ? 'bg-[#006747] hover:bg-[#00553a] text-white' : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
                             }`}
-                            title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
+                            title={isBn ? (voiceGender === 'female' ? 'অডিও শুনুন (নারী কণ্ঠে)' : 'অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Audio (Female Voice)' : 'Play Audio (Male Voice)')}
                           >
                             <Volume2 className="w-4 h-4" />
                           </button>
@@ -593,7 +603,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
               <div className="relative w-full h-[260px] sm:h-[380px] rounded-2xl overflow-hidden border border-slate-700/60 shadow-xl group">
                 <img
                   src={activeRouteDetail.imageUrl}
-                  alt={activeRouteDetail.placeBn}
+                  alt={isBn ? activeRouteDetail.placeBn : activeRouteDetail.placeEn}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter brightness-95"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -661,7 +671,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                     {activeRouteDetail.duaArabic}
                   </p>
                   <p className={`text-xs sm:text-sm font-medium italic ${isDay ? 'text-[#166534]' : 'text-emerald-300'}`}>
-                    {activeRouteDetail.duaMeaningBn}
+                    {isBn ? activeRouteDetail.duaMeaningBn : (activeRouteDetail.duaMeaningEn || activeRouteDetail.duaMeaningBn)}
                   </p>
                 </div>
               )}
@@ -814,7 +824,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                                     ? 'bg-[#006747] hover:bg-[#00553a] text-white shadow-emerald-950/20'
                                     : 'bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-black/40'
                                 }`}
-                                title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
+                                title={isBn ? (voiceGender === 'female' ? 'অডিও শুনুন (নারী কণ্ঠে)' : 'অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Audio (Female Voice)' : 'Play Audio (Male Voice)')}
                               >
                                 <Volume2 className="w-4 h-4" />
                               </button>
@@ -933,7 +943,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                                     ? 'bg-[#006747] hover:bg-[#00553a] text-white shadow-emerald-950/20'
                                     : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-black/40'
                                 }`}
-                                title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
+                                title={isBn ? (voiceGender === 'female' ? 'অডিও শুনুন (নারী কণ্ঠে)' : 'অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Audio (Female Voice)' : 'Play Audio (Male Voice)')}
                               >
                                 <Volume2 className="w-4 h-4" />
                               </button>

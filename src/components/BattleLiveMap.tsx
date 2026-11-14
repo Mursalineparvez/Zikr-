@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { WarItem } from './IslamicHistoryWarsView';
+import { WarItem, WARS_EN_MAP } from './IslamicHistoryWarsView';
+import { ZikrLanguage } from '../types';
 import {
   Compass,
   MapPin,
@@ -427,12 +428,215 @@ export const BATTLE_GEO_DATA: Record<string, BattleGeoLocation> = {
   },
 };
 
+const BATTLE_GEO_EN_MAP: Record<string, {
+  nameEn: string;
+  countryEn: string;
+  regionEn: string;
+  terrainEn: string;
+  strategicImportanceEn: string;
+  modernSiteEn: string;
+}> = {
+  badr: {
+    nameEn: 'Plain of Badr',
+    countryEn: 'Saudi Arabia',
+    regionEn: 'Al-Madinah Province (Badr Governorate)',
+    terrainEn: 'Sandy desert plain and historic oasis wells basin',
+    strategicImportanceEn: 'Key crossroads of the Makkah–Levant caravan route and a fertile freshwater oasis.',
+    modernSiteEn: 'Modern Badr City & Shuhada al-Badr Memorial',
+  },
+  uhud: {
+    nameEn: 'Foothills of Mount Uhud',
+    countryEn: 'Saudi Arabia',
+    regionEn: 'Al-Madinah Al-Munawwarah',
+    terrainEn: 'Reddish volcanic rock mountain, dry valley, and archers’ hill',
+    strategicImportanceEn: 'Natural northern defense wall of Madinah featuring the strategic Jabal ar-Rumah ridge.',
+    modernSiteEn: 'Uhud Martyrs Plaza & Jabal ar-Rumah, Madinah',
+  },
+  khandaq: {
+    nameEn: 'Northern Perimeter of Madinah (Trench)',
+    countryEn: 'Saudi Arabia',
+    regionEn: 'Al-Madinah (Seven Mosques Area)',
+    terrainEn: 'Open flat ground flanked by rugged volcanic Harrat lava fields',
+    strategicImportanceEn: 'Volcanic ridges shielded east and west Madinah, making the northern trench the decisive defense.',
+    modernSiteEn: 'Masjid al-Khandaq & Sab‘a Masajid Complex',
+  },
+  hudaibiyah: {
+    nameEn: 'Plain of Hudaybiyyah',
+    countryEn: 'Saudi Arabia',
+    regionEn: 'Western Gateway of Makkah',
+    terrainEn: 'Arid rocky plain dotted with desert acacia trees',
+    strategicImportanceEn: 'Ancient caravan trail at the boundary of the Haram where the landmark Peace Treaty was signed.',
+    modernSiteEn: 'Al-Shumaysi & Masjid al-Hudaybiyyah',
+  },
+  khaibar: {
+    nameEn: 'Oasis & Fortresses of Khaybar',
+    countryEn: 'Saudi Arabia',
+    regionEn: 'Hijaz Highlands north of Madinah',
+    terrainEn: 'Black basalt lava ridges and fortified rocky plateaus amid date groves',
+    strategicImportanceEn: 'Network of eight stone citadels and agricultural oasis controlling northern Arabia.',
+    modernSiteEn: 'Historic Khaybar Forts & Qamus Citadel',
+  },
+  makkah_conquest: {
+    nameEn: 'Sacred City of Makkah',
+    countryEn: 'Saudi Arabia',
+    regionEn: 'Makkah Al-Mukarramah',
+    terrainEn: 'Sacred valley encircled by rugged rocky mountains',
+    strategicImportanceEn: 'Spiritual heart of the Arabian Peninsula and site of the Sacred Kaaba.',
+    modernSiteEn: 'Al-Masjid al-Haram & Surrounding Passes',
+  },
+  hunayn: {
+    nameEn: 'Valley of Hunayn',
+    countryEn: 'Saudi Arabia',
+    regionEn: 'Between Makkah and Ta’if',
+    terrainEn: 'Narrow steep mountain gorge',
+    strategicImportanceEn: 'Steep mountain passes controlling the route between Makkah and Ta’if.',
+    modernSiteEn: 'Valley along Ash-Sharayi‘ – Ta’if corridor',
+  },
+  mutah: {
+    nameEn: 'Plain of Mu’tah',
+    countryEn: 'Jordan',
+    regionEn: 'Al-Karak Governorate',
+    terrainEn: 'High desert plateau and windswept plain',
+    strategicImportanceEn: 'Southern frontier outpost bordering Byzantine Syria.',
+    modernSiteEn: 'Mu’tah University & Martyrs’ Shrines, Jordan',
+  },
+  tabuk: {
+    nameEn: 'Tabuk Oasis',
+    countryEn: 'Saudi Arabia',
+    regionEn: 'Northwestern Frontier Province',
+    terrainEn: 'Expansive desert basin with freshwater springs',
+    strategicImportanceEn: 'Northern strategic staging ground along the Syrian frontier.',
+    modernSiteEn: 'Historic Ayn as-Sukkar Spring & Tabuk Fortress',
+  },
+  yarmouk: {
+    nameEn: 'Yarmouk River Gorge',
+    countryEn: 'Syria–Jordan Border',
+    regionEn: 'Daraa / Golan Plateau Foothills',
+    terrainEn: 'Deep steep canyons flanking the swift Yarmouk river',
+    strategicImportanceEn: 'Narrow plateau flanked by ravines where Muslim cavalry maneuvered decisively.',
+    modernSiteEn: 'Yarmouk River Valley',
+  },
+  qadisiyyah: {
+    nameEn: 'Plain of Al-Qadisiyyah',
+    countryEn: 'Iraq',
+    regionEn: 'Najaf Governorate, south of Kufa',
+    terrainEn: 'Alluvial plains and date groves near the Euphrates',
+    strategicImportanceEn: 'Main gateway guarding the Sassanid capital of Ctesiphon (Mada’in).',
+    modernSiteEn: 'Al-Qadisiyyah Historic Site, Iraq',
+  },
+  dhat_salasil: {
+    nameEn: 'Kazima Plain (Kuwait Bay)',
+    countryEn: 'Kuwait',
+    regionEn: 'Gulf Coast',
+    terrainEn: 'Coastal dunes and desert flats',
+    strategicImportanceEn: 'Strategic frontier outpost near the Persian Gulf coast.',
+    modernSiteEn: 'Kazima Coastal Region, Kuwait',
+  },
+  walaja: {
+    nameEn: 'Plain of Walaja',
+    countryEn: 'Iraq',
+    regionEn: 'Mesopotamian Plain',
+    terrainEn: 'Open riverine plain with scrubland ridges',
+    strategicImportanceEn: 'Flat expanse where Khalid ibn al-Walid executed his renowned double-envelopment maneuver.',
+    modernSiteEn: 'Mesopotamian Plain near the Euphrates',
+  },
+  damascus_conquest: {
+    nameEn: 'Old City of Damascus',
+    countryEn: 'Syria',
+    regionEn: 'Damascus Province',
+    terrainEn: 'Fertile oasis irrigated by the Barada River with ancient stone walls',
+    strategicImportanceEn: 'Historic metropolis and administrative hub of Bilad ash-Sham.',
+    modernSiteEn: 'Old Damascus & Bab Sharqi Gate',
+  },
+  nahavand: {
+    nameEn: 'Valley of Nahavand',
+    countryEn: 'Iran',
+    regionEn: 'Hamadan Province',
+    terrainEn: 'High mountain valley surrounded by the Zagros range',
+    strategicImportanceEn: 'Decisive pass known as Fath al-Futuh ("Victory of Victories").',
+    modernSiteEn: 'Nahavand City, Iran',
+  },
+  debal_sindh: {
+    nameEn: 'Port of Debal (Sindh)',
+    countryEn: 'Pakistan',
+    regionEn: 'Sindh Province (near Karachi & Thatta)',
+    terrainEn: 'Arabian Sea coastline and Indus River delta',
+    strategicImportanceEn: 'Historic maritime gateway of the Indian Subcontinent.',
+    modernSiteEn: 'Banbhore / Debal Archaeological Site',
+  },
+  guadalete: {
+    nameEn: 'Banks of Guadalete River',
+    countryEn: 'Spain',
+    regionEn: 'Andalusia (Cadiz Province)',
+    terrainEn: 'Fertile green valley and river estuary in southern Iberia',
+    strategicImportanceEn: 'Gateway of Tariq ibn Ziyad into Al-Andalus.',
+    modernSiteEn: 'Rio Guadalete Basin, Spain',
+  },
+  tours_poitiers: {
+    nameEn: 'Plain of Tours (Balat ash-Shuhada)',
+    countryEn: 'France',
+    regionEn: 'Vienne Region between Poitiers and Tours',
+    terrainEn: 'Temperate European meadows and oak woodlands',
+    strategicImportanceEn: 'Northernmost frontier of the early Islamic campaign in Western Europe.',
+    modernSiteEn: 'Vieux-Poitiers / Moussais Historic Site, France',
+  },
+  talas: {
+    nameEn: 'Talas River Valley',
+    countryEn: 'Kazakhstan–Kyrgyzstan Border',
+    regionEn: 'Central Asia',
+    terrainEn: 'Glacial mountain valley in the Tian Shan range',
+    strategicImportanceEn: 'Crossroads of the Silk Road through which papermaking spread across the Islamic world.',
+    modernSiteEn: 'Talas River Basin',
+  },
+  manzikert: {
+    nameEn: 'Plain of Manzikert',
+    countryEn: 'Turkey',
+    regionEn: 'Mus Province (Eastern Anatolia)',
+    terrainEn: 'High alpine plateau north of Lake Van',
+    strategicImportanceEn: 'Strategic gateway opening Anatolia under Sultan Alp Arslan.',
+    modernSiteEn: 'Malazgirt Historic Plain, Turkey',
+  },
+  zallaqa: {
+    nameEn: 'Plain of Az-Zallaqah (Sagrajas)',
+    countryEn: 'Spain',
+    regionEn: 'Badajoz, Extremadura',
+    terrainEn: 'Rolling plain in the Guadiana river basin',
+    strategicImportanceEn: 'Historic battleground where Yusuf ibn Tashfin defended Al-Andalus.',
+    modernSiteEn: 'Sagrajas Plain, Badajoz, Spain',
+  },
+  alarcos: {
+    nameEn: 'Fortress Hill of Alarcos',
+    countryEn: 'Spain',
+    regionEn: 'Ciudad Real, La Mancha',
+    terrainEn: 'Elevated ridge and stone citadel overlooking the Guadiana',
+    strategicImportanceEn: 'Key Almohad victory defending southern Iberia.',
+    modernSiteEn: 'Alarcos Archaeological Park, Spain',
+  },
+  las_navas: {
+    nameEn: 'Pass of Las Navas de Tolosa',
+    countryEn: 'Spain',
+    regionEn: 'Sierra Morena Mountains, Jaen',
+    terrainEn: 'Steep mountain passes and rugged gorges',
+    strategicImportanceEn: 'Major mountain corridor into Andalusia.',
+    modernSiteEn: 'Santa Elena Memorial Site, Spain',
+  },
+  gaza_palestine_resistance: {
+    nameEn: 'Sacred Al-Quds & Palestine',
+    countryEn: 'Palestine',
+    regionEn: 'Al-Quds (Jerusalem) & Gaza Strip',
+    terrainEn: 'Mount of Olives, rocky hills, and Mediterranean coast',
+    strategicImportanceEn: 'Site of Bayt al-Maqdis, first Qiblah and land of Isra and Mi‘raj.',
+    modernSiteEn: 'Al-Aqsa Compound & Historic Palestine',
+  },
+};
+
 type MapLayerType = 'satellite' | 'streets' | 'topo' | 'google_embed';
 
 interface BattleLiveMapProps {
   war: WarItem;
   allWars?: WarItem[];
   isDay?: boolean;
+  selectedLanguage?: ZikrLanguage;
   soundEnabled?: boolean;
   onSelectWar?: (warId: string) => void;
   onClose?: () => void;
@@ -443,11 +647,13 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
   war,
   allWars = [],
   isDay = false,
+  selectedLanguage = 'bn',
   soundEnabled = true,
   onSelectWar,
   onClose,
   compact = false,
 }) => {
+  const isBn = selectedLanguage === 'bn';
   const [activeWarId, setActiveWarId] = useState<string>(war.id);
   const [layerType, setLayerType] = useState<MapLayerType>('satellite');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -456,28 +662,56 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
   const currentTileLayerRef = useRef<L.TileLayer | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
 
+  const getWarTitle = (w: WarItem) => {
+    if (isBn) return w.nameBn;
+    return WARS_EN_MAP[w.id]?.name || w.nameEn || w.nameBn;
+  };
+
   // Active Geo Location
   const geoInfo = useMemo(() => {
-    return (
-      BATTLE_GEO_DATA[activeWarId] ||
-      BATTLE_GEO_DATA[war.id] || {
-        warId: war.id,
-        nameBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
-        nameAr: war.nameAr,
-        lat: 24.4672,
-        lng: 39.6111,
-        zoom: 14,
-        countryBn: 'ঐতিহাসিক ইসলামি ভূখণ্ড',
-        regionBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
-        terrainBn: 'ঐতিহাসিক প্রান্তর',
-        elevationMeters: 450,
-        distanceFromMadinahKm: 0,
-        distanceFromMakkahKm: 430,
-        strategicImportanceBn: war.causeBn.slice(0, 100),
-        modernSiteBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
-      }
-    );
-  }, [activeWarId, war]);
+    const raw = BATTLE_GEO_DATA[activeWarId] || BATTLE_GEO_DATA[war.id];
+    const enOverride = BATTLE_GEO_EN_MAP[activeWarId] || BATTLE_GEO_EN_MAP[war.id];
+    const warEn = WARS_EN_MAP[war.id];
+
+    if (raw) {
+      return {
+        ...raw,
+        displayName: isBn ? raw.nameBn : (enOverride?.nameEn || raw.nameBn),
+        displayCountry: isBn ? raw.countryBn : (enOverride?.countryEn || raw.countryBn),
+        displayRegion: isBn ? raw.regionBn : (enOverride?.regionEn || raw.regionBn),
+        displayTerrain: isBn ? raw.terrainBn : (enOverride?.terrainEn || raw.terrainBn),
+        displayImportance: isBn ? raw.strategicImportanceBn : (enOverride?.strategicImportanceEn || raw.strategicImportanceBn),
+        displayModernSite: isBn ? raw.modernSiteBn : (enOverride?.modernSiteEn || raw.modernSiteBn),
+      };
+    }
+
+    const fallbackLoc = isBn
+      ? (war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর')
+      : (war.location || 'Historic Battlefield');
+
+    return {
+      warId: war.id,
+      nameBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
+      nameAr: war.nameAr,
+      lat: 24.4672,
+      lng: 39.6111,
+      zoom: 14,
+      countryBn: 'ঐতিহাসিক ইসলামি ভূখণ্ড',
+      regionBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
+      terrainBn: 'ঐতিহাসিক প্রান্তর',
+      elevationMeters: 450,
+      distanceFromMadinahKm: 0,
+      distanceFromMakkahKm: 430,
+      strategicImportanceBn: war.causeBn.slice(0, 100),
+      modernSiteBn: war.locationBn || war.location || 'ঐতিহাসিক প্রান্তর',
+      displayName: fallbackLoc,
+      displayCountry: isBn ? 'ঐতিহাসিক ইসলামি ভূখণ্ড' : 'Historic Islamic Territory',
+      displayRegion: fallbackLoc,
+      displayTerrain: isBn ? 'ঐতিহাসিক প্রান্তর' : 'Historic Terrain',
+      displayImportance: isBn ? war.causeBn.slice(0, 100) : (warEn?.cause || war.causeBn).slice(0, 120),
+      displayModernSite: fallbackLoc,
+    };
+  }, [activeWarId, war, isBn]);
 
   useEffect(() => {
     setActiveWarId(war.id);
@@ -544,13 +778,14 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
         popupAnchor: [0, -18],
       });
 
+      const gpsLabel = isBn ? 'জিপিএস' : 'GPS';
       const marker = L.marker([geoInfo.lat, geoInfo.lng], { icon: customIcon }).addTo(map);
       marker.bindPopup(`
         <div style="font-family: inherit; font-size: 12px; color: #0f172a; min-width: 170px;">
-          <strong style="color: #047857; font-size: 13px; display: block; margin-bottom: 2px;">${geoInfo.nameBn}</strong>
-          <span style="color: #64748b; font-size: 11px; display: block;">${geoInfo.regionBn}, ${geoInfo.countryBn}</span>
+          <strong style="color: #047857; font-size: 13px; display: block; margin-bottom: 2px;">${geoInfo.displayName}</strong>
+          <span style="color: #64748b; font-size: 11px; display: block;">${geoInfo.displayRegion}, ${geoInfo.displayCountry}</span>
           <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #475569;">
-            📍 জিপিএস: ${geoInfo.lat.toFixed(4)}°, ${geoInfo.lng.toFixed(4)}°
+            📍 ${gpsLabel}: ${geoInfo.lat.toFixed(4)}°, ${geoInfo.lng.toFixed(4)}°
           </div>
         </div>
       `);
@@ -558,6 +793,7 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
 
       leafletMapRef.current = map;
     } else {
+      const gpsLabel = isBn ? 'জিপিএস' : 'GPS';
       const map = leafletMapRef.current;
       map.flyTo([geoInfo.lat, geoInfo.lng], geoInfo.zoom, {
         duration: 1.2,
@@ -567,10 +803,10 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
         markerRef.current.setLatLng([geoInfo.lat, geoInfo.lng]);
         markerRef.current.setPopupContent(`
           <div style="font-family: inherit; font-size: 12px; color: #0f172a; min-width: 170px;">
-            <strong style="color: #047857; font-size: 13px; display: block; margin-bottom: 2px;">${geoInfo.nameBn}</strong>
-            <span style="color: #64748b; font-size: 11px; display: block;">${geoInfo.regionBn}, ${geoInfo.countryBn}</span>
+            <strong style="color: #047857; font-size: 13px; display: block; margin-bottom: 2px;">${geoInfo.displayName}</strong>
+            <span style="color: #64748b; font-size: 11px; display: block;">${geoInfo.displayRegion}, ${geoInfo.displayCountry}</span>
             <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #475569;">
-              📍 জিপিএস: ${geoInfo.lat.toFixed(4)}°, ${geoInfo.lng.toFixed(4)}°
+              📍 ${gpsLabel}: ${geoInfo.lat.toFixed(4)}°, ${geoInfo.lng.toFixed(4)}°
             </div>
           </div>
         `);
@@ -585,7 +821,7 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
     }, 150);
 
     return () => clearTimeout(resizeTimeout);
-  }, [geoInfo, layerType]);
+  }, [geoInfo, layerType, isBn]);
 
   // Handle tile switch
   useEffect(() => {
@@ -636,7 +872,7 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
   // Google Maps Direct Links
   const googleMapsAppUrl = `https://www.google.com/maps/search/?api=1&query=${geoInfo.lat},${geoInfo.lng}`;
   // Google Maps Embed URL for satellite mode
-  const googleEmbedUrl = `https://maps.google.com/maps?q=${geoInfo.lat},${geoInfo.lng}&hl=bn&z=${geoInfo.zoom}&t=k&output=embed`;
+  const googleEmbedUrl = `https://maps.google.com/maps?q=${geoInfo.lat},${geoInfo.lng}&hl=${isBn ? 'bn' : 'en'}&z=${geoInfo.zoom}&t=k&output=embed`;
 
   return (
     <div
@@ -655,15 +891,15 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
-                <span>{war.nameBn}</span>
+                <span>{getWarTitle(war)}</span>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-bold border border-emerald-500/30">
-                  সরাসরি লাইভ ম্যাপ
+                  {isBn ? 'সরাসরি লাইভ ম্যাপ' : 'Live Map'}
                 </span>
               </h3>
             </div>
             <p className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 mt-0.5">
-              <span className="font-bold text-emerald-800 dark:text-emerald-200">{geoInfo.nameBn}</span>
-              <span className="opacity-75 font-medium">({geoInfo.regionBn}, {geoInfo.countryBn})</span>
+              <span className="font-bold text-emerald-800 dark:text-emerald-200">{geoInfo.displayName}</span>
+              <span className="opacity-75 font-medium">({geoInfo.displayRegion}, {geoInfo.displayCountry})</span>
             </p>
           </div>
         </div>
@@ -681,10 +917,10 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600'
               }`}
-              title="বাস্তব স্যাটেলাইট ছবি"
+              title={isBn ? 'বাস্তব স্যাটেলাইট ছবি' : 'Satellite Imagery'}
             >
               <Satellite className="w-3.5 h-3.5" />
-              <span>স্যাটেলাইট</span>
+              <span>{isBn ? 'স্যাটেলাইট' : 'Satellite'}</span>
             </button>
 
             <button
@@ -697,10 +933,10 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600'
               }`}
-              title="রাস্তাঘাট ও স্থান"
+              title={isBn ? 'রাস্তাঘাট ও স্থান' : 'Streets & Places'}
             >
               <MapIcon className="w-3.5 h-3.5" />
-              <span>স্ট্রিট</span>
+              <span>{isBn ? 'স্ট্রিট' : 'Street'}</span>
             </button>
 
             <button
@@ -713,10 +949,10 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
                   ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600'
               }`}
-              title="গুগল ম্যাপস লাইভ ভিউ"
+              title={isBn ? 'গুগল ম্যাপস লাইভ ভিউ' : 'Google Maps Live View'}
             >
               <Globe2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>গুগল ম্যাপস</span>
+              <span>{isBn ? 'গুগল ম্যাপস' : 'Google Maps'}</span>
             </button>
           </div>
 
@@ -725,10 +961,10 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className="p-1.5 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 transition shadow-sm"
-            title="গুগল ম্যাপস অ্যাপে সরাসরি খুলুন"
+            title={isBn ? 'গুগল ম্যাপস অ্যাপে সরাসরি খুলুন' : 'Open in Google Maps'}
           >
             <ExternalLink className="w-3.5 h-3.5 text-amber-300" />
-            <span className="hidden sm:inline text-[11px]">অ্যাপে খুলুন</span>
+            <span className="hidden sm:inline text-[11px]">{isBn ? 'অ্যাপে খুলুন' : 'Open App'}</span>
           </a>
 
           <button
@@ -737,7 +973,7 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
               if (soundEnabled) soundHaptics.playTap();
             }}
             className="p-1.5 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-800 dark:text-white transition cursor-pointer"
-            title={isFullscreen ? 'ছোট করুন' : 'সম্পূর্ণ স্ক্রিন'}
+            title={isFullscreen ? (isBn ? 'ছোট করুন' : 'Exit Fullscreen') : (isBn ? 'সম্পূর্ণ স্ক্রিন' : 'Fullscreen')}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
@@ -746,7 +982,7 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
             <button
               onClick={onClose}
               className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 text-rose-600 dark:text-rose-400 transition cursor-pointer"
-              title="বন্ধ করুন"
+              title={isBn ? 'বন্ধ করুন' : 'Close'}
             >
               <X className="w-4 h-4" />
             </button>
@@ -759,7 +995,7 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
         {/* Mode A: Direct Google Maps Live Satellite Embed */}
         {layerType === 'google_embed' ? (
           <iframe
-            title={`${geoInfo.nameBn} Google Maps`}
+            title={`${geoInfo.displayName} Google Maps`}
             src={googleEmbedUrl}
             className="w-full h-full min-h-[320px] sm:min-h-[380px] border-0 block"
             loading="lazy"
@@ -780,7 +1016,9 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
             {geoInfo.lat.toFixed(4)}° N, {geoInfo.lng.toFixed(4)}° E
           </span>
           <span className="text-white/40">|</span>
-          <span className="text-amber-300 font-sans font-bold">উচ্চতা: {geoInfo.elevationMeters} মি.</span>
+          <span className="text-amber-300 font-sans font-bold">
+            {isBn ? `উচ্চতা: ${geoInfo.elevationMeters} মি.` : `Elev: ${geoInfo.elevationMeters} m`}
+          </span>
         </div>
 
         {/* Floating Right Map Zoom & Recenter Controls (Leaflet mode) */}
@@ -789,21 +1027,21 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
             <button
               onClick={() => handleZoom('in')}
               className="p-2 rounded-xl bg-white/10 hover:bg-white/25 text-white active:scale-95 transition cursor-pointer"
-              title="জুম ইন (+)"
+              title={isBn ? 'জুম ইন (+)' : 'Zoom In (+)'}
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleZoom('out')}
               className="p-2 rounded-xl bg-white/10 hover:bg-white/25 text-white active:scale-95 transition cursor-pointer"
-              title="জুম আউট (-)"
+              title={isBn ? 'জুম আউট (-)' : 'Zoom Out (-)'}
             >
               <ZoomOut className="w-4 h-4" />
             </button>
             <button
               onClick={handleRecenter}
               className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white active:scale-95 transition cursor-pointer"
-              title="যুদ্ধক্ষেত্রের পিনে ফিরে যান"
+              title={isBn ? 'যুদ্ধক্ষেত্রের পিনে ফিরে যান' : 'Recenter on Battlefield'}
             >
               <RotateCcw className="w-4 h-4" />
             </button>
@@ -813,13 +1051,17 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
         {/* Floating Bottom Left Attribution Hint */}
         <div className="absolute bottom-3 left-3 z-20 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-[10px] text-slate-300 flex items-center gap-1.5">
           <span>🛰️</span>
-          <span>সরাসরি লাইভ স্যাটেলাইট মানচিত্র • স্পর্শ করে যেকোনো দিকে সরান ও জুম করুন</span>
+          <span>
+            {isBn
+              ? 'সরাসরি লাইভ স্যাটেলাইট মানচিত্র • স্পর্শ করে যেকোনো দিকে সরান ও জুম করুন'
+              : 'Live Satellite Map • Drag to pan and pinch/click to zoom'}
+          </span>
         </div>
       </div>
 
       {/* 3. Detailed Geographic Intelligence Card */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 text-xs">
-        {/* ক. ভৌগোলিক অবস্থান ও দেশ */}
+        {/* Location & Country */}
         <div
           className={`p-3 rounded-2xl border space-y-1 ${
             isDay ? 'bg-white border-emerald-200' : 'bg-white/5 border-white/10'
@@ -827,13 +1069,13 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
         >
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block uppercase tracking-wider flex items-center gap-1">
             <MapPin className="w-3 h-3 text-emerald-500" />
-            <span>অবস্থান ও দেশ:</span>
+            <span>{isBn ? 'অবস্থান ও দেশ:' : 'Region & Country:'}</span>
           </span>
-          <p className="font-bold text-slate-900 dark:text-slate-100">{geoInfo.regionBn}</p>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-300 font-semibold">{geoInfo.countryBn}</p>
+          <p className="font-bold text-slate-900 dark:text-slate-100">{geoInfo.displayRegion}</p>
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-300 font-semibold">{geoInfo.displayCountry}</p>
         </div>
 
-        {/* খ. ভূ-প্রকৃতি ও অঞ্চল */}
+        {/* Terrain */}
         <div
           className={`p-3 rounded-2xl border space-y-1 ${
             isDay ? 'bg-white border-emerald-200' : 'bg-white/5 border-white/10'
@@ -841,14 +1083,14 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
         >
           <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block uppercase tracking-wider flex items-center gap-1">
             <Compass className="w-3 h-3 text-amber-500" />
-            <span>ভূ-প্রকৃতি ও মাটির ধরন:</span>
+            <span>{isBn ? 'ভূ-প্রকৃতি ও মাটির ধরন:' : 'Terrain & Topography:'}</span>
           </span>
           <p className="font-medium text-slate-700 dark:text-slate-200 line-clamp-2 leading-tight">
-            {geoInfo.terrainBn}
+            {geoInfo.displayTerrain}
           </p>
         </div>
 
-        {/* গ. মক্কা ও মদিনা থেকে দূরত্ব */}
+        {/* Distance from Makkah & Madinah */}
         <div
           className={`p-3 rounded-2xl border space-y-1 ${
             isDay ? 'bg-white border-emerald-200' : 'bg-white/5 border-white/10'
@@ -856,23 +1098,23 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
         >
           <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold block uppercase tracking-wider flex items-center gap-1">
             <Navigation className="w-3 h-3 text-teal-500" />
-            <span>দূরত্ব (হারামাইন শরিফাইন):</span>
+            <span>{isBn ? 'দূরত্ব (হারামাইন শরিফাইন):' : 'Distance from Haramain:'}</span>
           </span>
           <div className="flex items-center justify-between text-[11px] text-slate-700 dark:text-slate-300">
-            <span>মদিনা থেকে:</span>
+            <span>{isBn ? 'মদিনা থেকে:' : 'From Madinah:'}</span>
             <strong className="text-amber-600 dark:text-amber-300 font-mono font-bold">
-              {geoInfo.distanceFromMadinahKm} কিমি
+              {geoInfo.distanceFromMadinahKm} {isBn ? 'কিমি' : 'km'}
             </strong>
           </div>
           <div className="flex items-center justify-between text-[11px] text-slate-700 dark:text-slate-300">
-            <span>মক্কা থেকে:</span>
+            <span>{isBn ? 'মক্কা থেকে:' : 'From Makkah:'}</span>
             <strong className="text-emerald-600 dark:text-emerald-300 font-mono font-bold">
-              {geoInfo.distanceFromMakkahKm} কিমি
+              {geoInfo.distanceFromMakkahKm} {isBn ? 'কিমি' : 'km'}
             </strong>
           </div>
         </div>
 
-        {/* ঘ. বর্তমান ঐতিহাসিক সাইট */}
+        {/* Modern Historic Site */}
         <div
           className={`p-3 rounded-2xl border space-y-1 ${
             isDay ? 'bg-white border-emerald-200' : 'bg-white/5 border-white/10'
@@ -880,10 +1122,10 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
         >
           <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold block uppercase tracking-wider flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3 text-rose-500" />
-            <span>বর্তমান ঐতিহাসিক সাইট:</span>
+            <span>{isBn ? 'বর্তমান ঐতিহাসিক সাইট:' : 'Modern Historic Site:'}</span>
           </span>
           <p className="font-bold text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight">
-            {geoInfo.modernSiteBn}
+            {geoInfo.displayModernSite}
           </p>
         </div>
       </div>
@@ -898,16 +1140,16 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
       >
         <strong className="text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-1.5">
           <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span>এই স্থানটি নির্বাচনের ঐতিহাসিক ও সামরিক কৌশলগত গুরুত্ব:</span>
+          <span>{isBn ? 'এই স্থানটি নির্বাচনের ঐতিহাসিক ও সামরিক কৌশলগত গুরুত্ব:' : 'Strategic & Historical Significance:'}</span>
         </strong>
-        <p className="leading-relaxed font-medium">{geoInfo.strategicImportanceBn}</p>
+        <p className="leading-relaxed font-medium">{geoInfo.displayImportance}</p>
       </div>
 
       {/* 5. Quick Jumps: Other Historical Battle Sites */}
       {allWars.length > 0 && (
         <div className="space-y-1.5 pt-1">
           <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-            📍 অন্যান্য ঐতিহাসিক যুদ্ধক্ষেত্রের লাইভ মানচিত্রে জাম্প করুন:
+            {isBn ? '📍 অন্যান্য ঐতিহাসিক যুদ্ধক্ষেত্রের লাইভ মানচিত্রে জাম্প করুন:' : '📍 Jump to Other Historic Battlefields:'}
           </span>
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {allWars.slice(0, 16).map((w) => {
@@ -928,7 +1170,7 @@ export const BattleLiveMap: React.FC<BattleLiveMapProps> = ({
                       : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                   }`}
                 >
-                  📍 {w.nameBn}
+                  📍 {getWarTitle(w)}
                 </button>
               );
             })}

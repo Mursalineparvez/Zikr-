@@ -62,6 +62,14 @@ function toBengaliDigits(num: number | string): string {
     .join('');
 }
 
+function formatDigits(num: number | string, lang: ZikrLanguage): string {
+  return lang === 'bn' ? toBengaliDigits(num) : String(num);
+}
+
+function formatYearSuffix(year: number | string, lang: ZikrLanguage): string {
+  return lang === 'bn' ? `${toBengaliDigits(year)} খ্রি.` : `${year} CE`;
+}
+
 // Type-safe language selector helper
 function getLangText(field: { en: string; bn: string } | undefined, lang: ZikrLanguage): string {
   if (!field) return '';
@@ -492,7 +500,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                 color: ${isThenMap ? '#fcd34d' : '#6ee7b7'};
                 text-shadow: -1.2px -1.2px 0 #000, 1.2px -1.2px 0 #000, -1.2px 1.2px 0 #000, 1.2px 1.2px 0 #000, 0 1px 3px rgba(0,0,0,0.9);
               ">
-                ${label} • ${toBengaliDigits(evt.y)} খ্রি.
+                ${label} • ${formatYearSuffix(evt.y, selectedLanguage)}
               </span>
             ` : ''}
           </div>
@@ -677,59 +685,60 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   };
 
   const getBannerGraphics = (scene: string, title: string) => {
+    const isBn = selectedLanguage === 'bn';
     let style = "from-[#0a2329] via-[#0d2d35] to-[#06171a]";
     let borderStyle = "border-teal-500/30";
     let icon = "🗺️";
-    let desc = "ইসলামী রেনেসাঁ ও গৌরবময় ইতিহাস";
+    let desc = isBn ? "ইসলামী রেনেসাঁ ও গৌরবময় ইতিহাস" : "Islamic Renaissance & Heritage";
 
     switch (scene) {
       case 'kaaba':
         style = "from-[#111317] via-[#1a1c24] to-[#0a0b0d]";
         borderStyle = "border-amber-500/20";
         icon = "🕋";
-        desc = "পবিত্র কাবা ও মক্কা মুকাররমা";
+        desc = isBn ? "পবিত্র কাবা ও মক্কা মুকাররমা" : "Sacred Kaaba & Makkah";
         break;
       case 'journey':
         style = "from-[#141518] via-[#2a1d13] to-[#0e1012]";
         borderStyle = "border-amber-600/25";
         icon = "🐫";
-        desc = "মরুভূমির রুট ও বাণিজ্য কাফেলা";
+        desc = isBn ? "মরুভূমির রুট ও বাণিজ্য কাফেলা" : "Desert Routes & Caravans";
         break;
       case 'sea':
         style = "from-[#041221] via-[#082036] to-[#020b14]";
         borderStyle = "border-blue-500/20";
         icon = "🌊";
-        desc = "লোহিত সাগর ও সমুদ্র অভিযান";
+        desc = isBn ? "লোহিত সাগর ও সমুদ্র অভিযান" : "Red Sea & Maritime Voyages";
         break;
       case 'mountain':
         style = "from-[#121314] via-[#1f1b18] to-[#0a0a0b]";
         borderStyle = "border-orange-500/15";
         icon = "⛰️";
-        desc = "নিভৃত পাহাড় ও হেরা গুহার ছায়া";
+        desc = isBn ? "নিভৃত পাহাড় ও হেরা গুহার ছায়া" : "Mountain Peaks & Cave of Hira";
         break;
       case 'mosque':
         style = "from-[#041a17] via-[#092b25] to-[#020f0d]";
         borderStyle = "border-emerald-500/30";
         icon = "🕌";
-        desc = "ঐতিহাসিক মসজিদ ও মিনার";
+        desc = isBn ? "ঐতিহাসিক মসজিদ ও মিনার" : "Historic Mosques & Minarets";
         break;
       case 'palace':
         style = "from-[#150b1a] via-[#22102e] to-[#0b050d]";
         borderStyle = "border-fuchsia-500/20";
         icon = "🏰";
-        desc = "রাজকীয় প্রাসাদ ও ঐতিহাসিক সালতানাত";
+        desc = isBn ? "রাজকীয় প্রাসাদ ও ঐতিহাসিক সালতানাত" : "Historic Sultanates & Architecture";
         break;
       case 'library':
         style = "from-[#0b1419] via-[#11232b] to-[#060c10]";
         borderStyle = "border-cyan-500/25";
         icon = "📚";
-        desc = "বাইতুল হিকমাহ ও জ্ঞানের স্বর্ণযুগ";
+        desc = isBn ? "বাইতুল হিকমাহ ও জ্ঞানের স্বর্ণযুগ" : "Bayt al-Hikmah & Golden Age";
         break;
       case 'river':
         style = "from-[#041b1d] via-[#092c30] to-[#020f11]";
         borderStyle = "border-teal-500/25";
         icon = "💧";
-        desc = "নদীর অববাহিকা ও বাংলার সবুজ প্রান্তর";
+        desc = isBn ? "নদীর অববাহিকা ও বাংলার সবুজ প্রান্তর" : "River Basins & Delta Heritage";
         break;
       default:
         break;
@@ -744,7 +753,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             <span className="animate-pulse">{icon}</span>
             <span>{desc}</span>
           </span>
-          <h4 className="text-sm font-black tracking-tight text-amber-50 line-clamp-1 drop-shadow font-bengali">
+          <h4 className={`text-sm font-black tracking-tight text-amber-50 line-clamp-1 drop-shadow ${isBn ? 'font-bengali' : ''}`}>
             {title}
           </h4>
         </div>
@@ -842,7 +851,11 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                       ? 'bg-gradient-to-tr from-amber-600 via-amber-500 to-yellow-400 shadow-[0_0_15px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/40'
                       : 'bg-gradient-to-tr from-[#059669] via-[#10b981] to-[#34d399] hover:brightness-110 shadow-[0_0_15px_rgba(16,185,129,0.5)] ring-2 ring-emerald-400/30'
                   }`}
-                  title={isPlaying ? 'বিরতি দিন (Pause Tour)' : 'প্লে করুন (Play Interactive Tour)'}
+                  title={
+                    isPlaying
+                      ? selectedLanguage === 'bn' ? 'বিরতি দিন' : 'Pause Tour'
+                      : selectedLanguage === 'bn' ? 'প্লে করুন' : 'Play Interactive Tour'
+                  }
                 >
                   {isPlaying ? (
                     <Pause className="w-4 h-4 fill-current animate-pulse" />
@@ -886,7 +899,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                           : 'text-teal-300 hover:text-white hover:bg-teal-950/40'
                       }`}
                     >
-                      {toBengaliDigits(speed)}x
+                      {formatDigits(speed, selectedLanguage)}x
                     </button>
                   );
                 })}
@@ -901,9 +914,9 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                     ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                     : 'bg-[#08262d] border-teal-500/35 text-teal-300'
                 }`}
-                title="প্লেব্যাক স্পিড পরিবর্তন করুন"
+                title={selectedLanguage === 'bn' ? 'প্লেব্যাক স্পিড পরিবর্তন করুন' : 'Change Playback Speed'}
               >
-                ⚡ {toBengaliDigits(playSpeed)}x
+                ⚡ {formatDigits(playSpeed, selectedLanguage)}x
               </button>
             </div>
 
@@ -924,7 +937,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   />
                 </span>
                 <span className="px-1.5 py-0.2 text-[9px] sm:text-[10.5px] font-mono font-black rounded-md bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/30 shrink-0">
-                  {toBengaliDigits(activeEvent.y)} খ্রি.
+                  {formatYearSuffix(activeEvent.y, selectedLanguage)}
                 </span>
                 <span className="truncate max-w-[110px] sm:max-w-xs md:max-w-sm tracking-tight">
                   {formattedTitle}
@@ -982,13 +995,13 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                       ? { boxShadow: `0 0 12px ${theme.glow}` }
                       : undefined
                   }
-                  title={`${getLangText(era.name, selectedLanguage)} (${era.from} - ${era.to} খ্রি.)`}
+                  title={`${getLangText(era.name, selectedLanguage)} (${selectedLanguage === 'bn' ? `${toBengaliDigits(era.from)} - ${toBengaliDigits(era.to)} খ্রি.` : `${era.from} - ${era.to} CE`})`}
                 >
                   <span className="truncate w-full block leading-tight font-black">
                     {getLangText(era.name, selectedLanguage)}
                   </span>
                   <span className="text-[7.5px] sm:text-[8px] opacity-85 block font-mono font-normal mt-0.5 leading-none">
-                    {toBengaliDigits(era.from)} - {toBengaliDigits(era.to)}
+                    {formatDigits(era.from, selectedLanguage)} - {formatDigits(era.to, selectedLanguage)}
                   </span>
                 </button>
               );
@@ -1014,7 +1027,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
               }}
             >
               <div className="px-1.5 py-0.5 rounded-md bg-amber-500 text-slate-950 font-mono font-black text-[8px] sm:text-[9px] shadow-[0_0_8px_rgba(245,158,11,0.6)] border border-amber-300 flex items-center gap-0.5 whitespace-nowrap">
-                <span>{toBengaliDigits(activeEvent.y)} খ্রি.</span>
+                <span>{formatYearSuffix(activeEvent.y, selectedLanguage)}</span>
               </div>
               <div className="w-1 h-1 bg-amber-400 rotate-45 -mt-0.5" />
             </div>
@@ -1133,7 +1146,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   const isNameDifferent = getLangText(activeEvent.p, selectedLanguage).trim().toLowerCase() !== getLangText(activeEvent.n, selectedLanguage).trim().toLowerCase();
 
   return (
-    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-500 select-none pb-24 sm:pb-12 font-bengali">
+    <div className={`space-y-4 sm:space-y-5 animate-in fade-in duration-500 select-none pb-24 sm:pb-12 ${selectedLanguage === 'bn' ? 'font-bengali' : ''}`}>
       
       {/* 1. TOP PREMIUM WIDE HERO BANNER - ULTRA SLIM & GORGEOUS EPOCH DASHBOARD */}
       <div className="relative w-full rounded-2xl overflow-hidden border border-[#1d5763]/70 bg-gradient-to-r from-[#05171d] via-[#0a272f] to-[#0e353f] p-3.5 sm:p-4 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 transition-all">
@@ -1147,7 +1160,13 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/30 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
               <Clock className="w-3 h-3 text-amber-400 shrink-0" />
-              <span>{selectedLanguage === 'bn' ? 'অধ্যায়' : 'Chapter'} {toBengaliDigits(ISLAMIC_HISTORY_ERAS.indexOf(activeEra) + 1)} • {toBengaliDigits(activeEra.from)}-{toBengaliDigits(activeEra.to)} খ্রি.</span>
+              <span>
+                {selectedLanguage === 'bn' ? 'অধ্যায়' : 'Chapter'}{' '}
+                {formatDigits(ISLAMIC_HISTORY_ERAS.indexOf(activeEra) + 1, selectedLanguage)} •{' '}
+                {selectedLanguage === 'bn'
+                  ? `${toBengaliDigits(activeEra.from)}-${toBengaliDigits(activeEra.to)} খ্রি.`
+                  : `${activeEra.from}-${activeEra.to} CE`}
+              </span>
             </span>
           </div>
           <h2 className="text-base sm:text-lg md:text-xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
@@ -1177,7 +1196,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   }`}
                   title={getLangText(era.name, selectedLanguage)}
                 >
-                  <span>{toBengaliDigits(index + 1)}</span>
+                  <span>{formatDigits(index + 1, selectedLanguage)}</span>
                 </button>
               );
             })}
@@ -1578,7 +1597,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           <div className="absolute bottom-14 left-4 z-[1010] pointer-events-none space-y-0.5 flex flex-col items-start drop-shadow-[0_2px_5px_rgba(0,0,0,0.95)]">
             <div className="flex items-baseline gap-1">
               <span className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tighter leading-none font-mono tabular-nums">
-                {toBengaliDigits(activeEvent.y)}
+                {formatDigits(activeEvent.y, selectedLanguage)}
               </span>
               <span className="text-[10px] font-black text-amber-200">
                 {selectedLanguage === 'bn' ? 'খ্রি.' : 'CE'}
@@ -1627,6 +1646,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
               category={activeEvent.cat}
               year={activeEvent.y}
               locationName={getLangText(activeEvent.p, selectedLanguage)}
+              selectedLanguage={selectedLanguage}
             />
           </div>
 
@@ -1661,7 +1681,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
               <div className={`text-xs font-bold flex items-center gap-1.5 ${
                 isDay ? 'text-amber-800' : 'text-amber-400'
               }`}>
-                <span>{toBengaliDigits(activeEvent.y)} {selectedLanguage === 'bn' ? 'খ্রি.' : 'CE'}</span>
+                <span>{formatYearSuffix(activeEvent.y, selectedLanguage)}</span>
                 <span>-</span>
                 <span>{getEraYearText(activeEvent, selectedLanguage)}</span>
               </div>
@@ -1898,7 +1918,9 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                     </div>
 
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-bold shrink-0 shadow-sm self-start sm:self-center">
-                      {religiousDetails.classicalBooks.length + 2} টি দলিল
+                      {selectedLanguage === 'bn'
+                        ? `${toBengaliDigits(religiousDetails.classicalBooks.length + 2)} টি দলিল`
+                        : `${religiousDetails.classicalBooks.length + 2} Sources`}
                     </span>
                   </div>
 
@@ -1959,7 +1981,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
                           <button
                             type="button"
-                            onClick={(e) => handleCopyText(`${religiousDetails.quranAyat.arabic}\n\n${religiousDetails.quranAyat.translationBn}\n(${religiousDetails.quranAyat.surah})`, 'quran_ref', e)}
+                            onClick={(e) => handleCopyText(`${religiousDetails.quranAyat.arabic}\n\n${selectedLanguage === 'bn' ? religiousDetails.quranAyat.translationBn : religiousDetails.quranAyat.translationEn}\n(${religiousDetails.quranAyat.surah})`, 'quran_ref', e)}
                             className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition flex items-center gap-1 cursor-pointer ${
                               copiedTextId === 'quran_ref'
                                 ? 'bg-emerald-600 text-white border-emerald-600'
@@ -1969,7 +1991,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                             }`}
                           >
                             {copiedTextId === 'quran_ref' ? <Check className="w-2.5 h-2.5 text-white" /> : <Copy className="w-2.5 h-2.5" />}
-                            <span>{copiedTextId === 'quran_ref' ? 'কপি হয়েছে' : 'কপি'}</span>
+                            <span>{copiedTextId === 'quran_ref' ? (selectedLanguage === 'bn' ? 'কপি হয়েছে' : 'Copied') : (selectedLanguage === 'bn' ? 'কপি' : 'Copy')}</span>
                           </button>
                         </div>
                       </div>
@@ -2014,7 +2036,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                         <p className={`text-xs sm:text-[13px] leading-relaxed font-medium select-text ${
                           isDay ? 'text-slate-950' : 'text-emerald-50'
                         }`}>
-                          {religiousDetails.quranAyat.translationBn}
+                          {selectedLanguage === 'bn' ? religiousDetails.quranAyat.translationBn : religiousDetails.quranAyat.translationEn}
                         </p>
                       </div>
                     </div>
@@ -2041,12 +2063,19 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white shadow-sm">
-                            ✓ সহীহ
+                            {selectedLanguage === 'bn' ? '✓ সহীহ' : '✓ Sahih'}
                           </span>
 
                           <button
                             type="button"
-                            onClick={(e) => handleCopyText(`${religiousDetails.hadith.arabicSnippet ? `«${religiousDetails.hadith.arabicSnippet}»\n` : ''}${religiousDetails.hadith.textBn}\nসূত্র: ${religiousDetails.hadith.source}`, 'hadith_ref', e)}
+                            onClick={(e) => {
+                              const hadithText = formatHonorifics(
+                                selectedLanguage === 'bn' ? religiousDetails.hadith.textBn : religiousDetails.hadith.textEn,
+                                selectedLanguage
+                              );
+                              const sourceLabel = selectedLanguage === 'bn' ? 'সূত্র:' : 'Source:';
+                              handleCopyText(`${religiousDetails.hadith.arabicSnippet ? `«${religiousDetails.hadith.arabicSnippet}»\n` : ''}${hadithText}\n${sourceLabel} ${religiousDetails.hadith.source}`, 'hadith_ref', e);
+                            }}
                             className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition flex items-center gap-1 cursor-pointer ${
                               copiedTextId === 'hadith_ref'
                                 ? 'bg-amber-600 text-white border-amber-600'
@@ -2056,7 +2085,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                             }`}
                           >
                             {copiedTextId === 'hadith_ref' ? <Check className="w-2.5 h-2.5 text-white" /> : <Copy className="w-2.5 h-2.5" />}
-                            <span>{copiedTextId === 'hadith_ref' ? 'কপি হয়েছে' : 'কপি'}</span>
+                            <span>{copiedTextId === 'hadith_ref' ? (selectedLanguage === 'bn' ? 'কপি হয়েছে' : 'Copied') : (selectedLanguage === 'bn' ? 'কপি' : 'Copy')}</span>
                           </button>
                         </div>
                       </div>
@@ -2096,7 +2125,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                         <p className={`text-xs sm:text-[13px] leading-relaxed font-medium select-text ${
                           isDay ? 'text-slate-950' : 'text-amber-50'
                         }`}>
-                          {religiousDetails.hadith.textBn}
+                          {formatHonorifics(
+                            selectedLanguage === 'bn' ? religiousDetails.hadith.textBn : religiousDetails.hadith.textEn,
+                            selectedLanguage
+                          )}
                         </p>
                       </div>
                     </div>
@@ -2124,7 +2156,9 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm shrink-0 ${
                           isDay ? 'bg-teal-100 text-teal-950 border-teal-300' : 'bg-teal-900/60 text-teal-200 border-teal-500/40'
                         }`}>
-                          {religiousDetails.classicalBooks.length} টি কিতাব
+                          {selectedLanguage === 'bn'
+                            ? `${toBengaliDigits(religiousDetails.classicalBooks.length)} টি কিতাব`
+                            : `${religiousDetails.classicalBooks.length} Books`}
                         </span>
                       </div>
 
@@ -2138,12 +2172,12 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                           >
                             <div className="flex items-start gap-2">
                               <span className="w-4 h-4 rounded bg-teal-600/15 text-teal-700 dark:text-teal-300 font-bold text-[10px] flex items-center justify-center shrink-0 border border-teal-500/20 mt-0.5">
-                                {toBengaliDigits(bIdx + 1)}
+                                {formatDigits(bIdx + 1, selectedLanguage)}
                               </span>
                               <h4 className={`font-bold text-xs sm:text-[13px] select-text leading-snug flex-1 ${
                                 isDay ? 'text-slate-950' : 'text-emerald-200'
                               }`}>
-                                {book.titleBn}
+                                {selectedLanguage === 'bn' ? book.titleBn : (book.titleEn || book.titleBn)}
                               </h4>
                             </div>
 
@@ -2151,20 +2185,30 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                               isDay ? 'border-slate-100 text-slate-700' : 'border-teal-800/40 text-emerald-300/90'
                             }`}>
                               <div className="flex items-center gap-1 min-w-0">
-                                <span className="shrink-0 text-slate-500">🖋️ লেখক:</span>
-                                <strong className={`font-semibold select-text ${isDay ? 'text-slate-950' : 'text-white'}`}>{book.authorBn}</strong>
+                                <span className="shrink-0 text-slate-500">{selectedLanguage === 'bn' ? '🖋️ লেখক:' : '🖋️ Author:'}</span>
+                                <strong className={`font-semibold select-text ${isDay ? 'text-slate-950' : 'text-white'}`}>
+                                  {selectedLanguage === 'bn' ? book.authorBn : (book.authorEn || book.authorBn)}
+                                </strong>
                               </div>
 
                               <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                                 <span className={`font-mono px-1.5 py-0.5 rounded border ${
                                   isDay ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-teal-900/60 text-emerald-300 border-teal-700/50'
                                 }`}>
-                                  ⏳ {book.era}
+                                  ⏳ {selectedLanguage === 'bn' ? book.era : (book.eraEn || book.era)}
                                 </span>
 
                                 <button
                                   type="button"
-                                  onClick={(e) => handleCopyText(`কিতাব: ${book.titleBn}\nলেখক: ${book.authorBn}\nযুগ: ${book.era}`, `book_${bIdx}`, e)}
+                                  onClick={(e) => {
+                                    const bTitle = selectedLanguage === 'bn' ? book.titleBn : (book.titleEn || book.titleBn);
+                                    const bAuthor = selectedLanguage === 'bn' ? book.authorBn : (book.authorEn || book.authorBn);
+                                    const bEra = selectedLanguage === 'bn' ? book.era : (book.eraEn || book.era);
+                                    const copyPayload = selectedLanguage === 'bn'
+                                      ? `কিতাব: ${bTitle}\nলেখক: ${bAuthor}\nযুগ: ${bEra}`
+                                      : `Book: ${bTitle}\nAuthor: ${bAuthor}\nEra: ${bEra}`;
+                                    handleCopyText(copyPayload, `book_${bIdx}`, e);
+                                  }}
                                   className={`p-1 rounded border transition cursor-pointer ${
                                     copiedTextId === `book_${bIdx}`
                                       ? 'bg-emerald-600 text-white border-emerald-600'
@@ -2203,7 +2247,9 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm shrink-0 ${
                           isDay ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-900/60 text-emerald-200 border-emerald-500/40'
                         }`}>
-                          {religiousDetails.keyLessons.length} টি শিক্ষা
+                          {selectedLanguage === 'bn'
+                            ? `${toBengaliDigits(religiousDetails.keyLessons.length)} টি শিক্ষা`
+                            : `${religiousDetails.keyLessons.length} Lessons`}
                         </span>
                       </div>
 
@@ -2216,12 +2262,12 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                             }`}
                           >
                             <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[10px] flex items-center justify-center shrink-0 border border-amber-500/30 mt-0.5">
-                              {toBengaliDigits(lIdx + 1)}
+                              {formatDigits(lIdx + 1, selectedLanguage)}
                             </span>
                             <p className={`text-xs sm:text-[13px] font-medium leading-relaxed select-text flex-1 ${
                               isDay ? 'text-slate-950' : 'text-emerald-50'
                             }`}>
-                              {lesson}
+                              {formatHonorifics(lesson, selectedLanguage)}
                             </p>
                           </div>
                         ))}
@@ -2236,12 +2282,12 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                         <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                           <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                             <Quote className="w-3 h-3 fill-current shrink-0" />
-                            <span>চিরন্তন জীবন দর্শন ও হিকমত:</span>
+                            <span>{selectedLanguage === 'bn' ? 'চিরন্তন জীবন দর্শন ও হিকমত:' : 'Timeless Wisdom & Reflection:'}</span>
                           </span>
 
                           <button
                             type="button"
-                            onClick={(e) => handleCopyText(`“${religiousDetails.spiritualTakeaway}”`, 'quote_ref', e)}
+                            onClick={(e) => handleCopyText(`“${formatHonorifics(religiousDetails.spiritualTakeaway, selectedLanguage)}”`, 'quote_ref', e)}
                             className={`p-1 rounded border transition cursor-pointer text-[10px] flex items-center gap-1 shrink-0 ${
                               copiedTextId === 'quote_ref'
                                 ? 'bg-amber-600 text-white border-amber-600'
@@ -2249,14 +2295,14 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                             }`}
                           >
                             {copiedTextId === 'quote_ref' ? <Check className="w-2.5 h-2.5 text-white" /> : <Copy className="w-2.5 h-2.5" />}
-                            <span>{copiedTextId === 'quote_ref' ? 'কপি হয়েছে' : 'কপি'}</span>
+                            <span>{copiedTextId === 'quote_ref' ? (selectedLanguage === 'bn' ? 'কপি হয়েছে' : 'Copied') : (selectedLanguage === 'bn' ? 'কপি' : 'Copy')}</span>
                           </button>
                         </div>
 
                         <p className={`italic leading-relaxed select-text font-bold text-xs sm:text-[13px] ${
                           isDay ? 'text-slate-950' : 'text-amber-100'
                         }`}>
-                          “{religiousDetails.spiritualTakeaway}”
+                          “{formatHonorifics(religiousDetails.spiritualTakeaway, selectedLanguage)}”
                         </p>
                       </div>
                     </div>
@@ -2363,7 +2409,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-800' 
                 : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300'
             }`}>
-              {toBengaliDigits(currentIndex + 1)} / {toBengaliDigits(ISLAMIC_HISTORY_EVENTS.length)}
+              {formatDigits(currentIndex + 1, selectedLanguage)} / {formatDigits(ISLAMIC_HISTORY_EVENTS.length, selectedLanguage)}
             </div>
 
             <button
@@ -2422,7 +2468,11 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   ? 'bg-gradient-to-tr from-amber-600 to-yellow-500 ring-2 ring-amber-400/40'
                   : 'bg-gradient-to-tr from-emerald-600 to-teal-500 ring-2 ring-emerald-400/30'
               }`}
-              title={isPlaying ? 'বিরতি দিন' : 'প্লে করুন'}
+              title={
+                isPlaying
+                  ? selectedLanguage === 'bn' ? 'বিরতি দিন' : 'Pause'
+                  : selectedLanguage === 'bn' ? 'প্লে করুন' : 'Play'
+              }
             >
               {isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
             </button>
@@ -2451,7 +2501,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             className="flex-1 min-w-0 cursor-pointer text-left pl-1"
           >
             <div className="flex items-center gap-1 text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400">
-              <span>{toBengaliDigits(activeEvent.y)} খ্রি.</span>
+              <span>{formatYearSuffix(activeEvent.y, selectedLanguage)}</span>
               <span>•</span>
               <span className="truncate">{getLangText(activeEvent.p, selectedLanguage)}</span>
             </div>

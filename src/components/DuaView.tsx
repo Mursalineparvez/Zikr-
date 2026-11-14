@@ -206,7 +206,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
                         ? 'bg-[#006747] hover:bg-[#00553a] text-white border-[#006747]'
                         : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 border-emerald-400'
                     }`}
-                    title={voiceGender === 'female' ? 'Play Audio (নারী কণ্ঠে)' : 'Play Audio (পুরুষ কণ্ঠে)'}
+                    title={selectedLanguage === 'bn' ? (voiceGender === 'female' ? 'অডিও শুনুন (নারী কণ্ঠে)' : 'অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Audio (Female Voice)' : 'Play Audio (Male Voice)')}
                   >
                     <Volume2 className="w-4 h-4" />
                   </button>

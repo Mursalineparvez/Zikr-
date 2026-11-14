@@ -107,11 +107,9 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
     zikr.transliteration ||
     zikr.name;
   const displayMeaning =
-    (selectedLanguage === 'bn' ? (zikr.meaningBn || zikr.meaning) : transData?.meaning) ||
-    transData?.meaning ||
-    zikr.meaningBn ||
-    zikr.meaning ||
-    '';
+    selectedLanguage === 'bn'
+      ? (zikr.meaningBn || transData?.meaning || zikr.meaning || '')
+      : (transData?.meaning || zikr.meaning || zikr.meaningBn || '');
 
   // Persist sound / vib settings
   const toggleSound = () => {
@@ -826,7 +824,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                   : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
               }`}
-              title={currentIndex > 0 ? zikrs[currentIndex - 1]?.pronunciationBn || 'Previous' : ''}
+              title={currentIndex > 0 ? ((selectedLanguage === 'bn' ? zikrs[currentIndex - 1]?.pronunciationBn : (zikrs[currentIndex - 1]?.translations?.[selectedLanguage]?.pronunciation || zikrs[currentIndex - 1]?.transliteration || zikrs[currentIndex - 1]?.name)) || 'Previous') : ''}
             >
               <ChevronLeft className="w-4 h-4" />
               <span>{selectedLanguage === 'bn' ? 'পূর্বের' : 'Prev'}</span>
@@ -856,7 +854,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                   : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
               }`}
-              title={currentIndex < zikrs.length - 1 ? zikrs[currentIndex + 1]?.pronunciationBn || 'Next' : ''}
+              title={currentIndex < zikrs.length - 1 ? ((selectedLanguage === 'bn' ? zikrs[currentIndex + 1]?.pronunciationBn : (zikrs[currentIndex + 1]?.translations?.[selectedLanguage]?.pronunciation || zikrs[currentIndex + 1]?.transliteration || zikrs[currentIndex + 1]?.name)) || 'Next') : ''}
             >
               <span>{selectedLanguage === 'bn' ? 'পরের' : 'Next'}</span>
               <ChevronRight className="w-4 h-4" />

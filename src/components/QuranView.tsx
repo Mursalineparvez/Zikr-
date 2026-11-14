@@ -89,6 +89,16 @@ import {
   getLocalizedRevelationType,
   getLocalizedAyahsAndJuz,
 } from '../utils/surahNamesMultiLang';
+import {
+  getLocalizedTopicCategory,
+  getLocalizedTopicName,
+  getLocalizedTopicDesc,
+  getLocalizedSubHeading,
+  getLocalizedTakeaway,
+  getLocalizedHadithRef,
+  getLocalizedHadithGrade,
+  getLocalizedHadithChapter,
+} from '../utils/quranTopicTranslations';
 
 export type WordAnimationType = 'glow' | 'minimal';
 
@@ -102,6 +112,7 @@ export interface WordAnimationOption {
   descEn: string;
   icon: string;
   tagBn: string;
+  tagEn: string;
 }
 
 export const WORD_ANIMATION_OPTIONS: WordAnimationOption[] = [
@@ -115,6 +126,7 @@ export const WORD_ANIMATION_OPTIONS: WordAnimationOption[] = [
     descEn: 'Pulsing emerald aura with soothing halo illumination',
     icon: '✨',
     tagBn: 'জনপ্রিয় ও দ্রুত',
+    tagEn: 'Popular & Fast',
   },
   {
     id: 'minimal',
@@ -126,6 +138,7 @@ export const WORD_ANIMATION_OPTIONS: WordAnimationOption[] = [
     descEn: 'Clean, elegant border highlight with zero movement or distraction',
     icon: '🍃',
     tagBn: 'শান্ত ও নিরবচ্ছিন্ন',
+    tagEn: 'Calm & Focused',
   },
 ];
 
@@ -425,29 +438,51 @@ export const QuranView: React.FC<QuranViewProps> = ({
   };
 
   const handleCopyTopicAyah = (ayah: TopicAyah) => {
-    const text = `${ayah.arabic}\n\n${ayah.translationBn}\n— ${ayah.surahNameBn} (আয়াত : ${ayah.ayahNumber})\n[পবিত্র আল-কুরআন]`;
+    const isBn = selectedLanguage === 'bn';
+    const sName = isBn ? ayah.surahNameBn : getLocalizedSurahName(ayah.surahNumber, selectedLanguage);
+    const transText = isBn ? ayah.translationBn : ayah.translationEn;
+    const text = `${ayah.arabic}\n\n${transText}\n— ${sName} (${isBn ? 'আয়াত' : 'Ayah'} : ${ayah.ayahNumber})\n[${isBn ? 'পবিত্র আল-কুরআন' : 'The Noble Quran'}]`;
     navigator.clipboard.writeText(text);
-    showTopicToast(`আয়াত ${ayah.surahNameBn}:${ayah.ayahNumber} কপি করা হয়েছে`);
+    showTopicToast(isBn ? `আয়াত ${ayah.surahNameBn}:${ayah.ayahNumber} কপি করা হয়েছে` : `Ayah ${sName}:${ayah.ayahNumber} copied`);
     if (soundEnabled) soundHaptics.playTap();
   };
 
-  const handleCopyHadith = (h: { arabic?: string; narratorBn: string; translationBn: string; referenceBn: string; gradeBn?: string }) => {
+  const handleCopyHadith = (h: { arabic?: string; narratorBn: string; narratorEn?: string; translationBn: string; translationEn?: string; referenceBn: string; gradeBn?: string }) => {
+    const isBn = selectedLanguage === 'bn';
     const parts: string[] = [];
     if (h.arabic) parts.push(h.arabic);
-    if (h.narratorBn) parts.push(h.narratorBn);
-    parts.push(`"${h.translationBn}"`);
-    parts.push(`— ${h.referenceBn}${h.gradeBn ? ` [মান: ${h.gradeBn}]` : ''}`);
+    const narrator = isBn ? h.narratorBn : (h.narratorEn || h.narratorBn);
+    if (narrator) parts.push(narrator);
+    const trans = isBn ? h.translationBn : (h.translationEn || h.translationBn);
+    parts.push(`"${trans}"`);
+    const refText = getLocalizedHadithRef(h.referenceBn, selectedLanguage);
+    const gradeText = h.gradeBn ? getLocalizedHadithGrade(h.gradeBn, selectedLanguage) : '';
+    parts.push(`— ${refText}${gradeText ? ` [${isBn ? 'মান' : 'Grade'}: ${gradeText}]` : ''}`);
     navigator.clipboard.writeText(parts.join('\n\n'));
-    showTopicToast('হাদীস শরীফ কপি করা হয়েছে');
+    showTopicToast(isBn ? 'হাদীস শরীফ কপি করা হয়েছে' : 'Hadith copied');
     if (soundEnabled) soundHaptics.playTap();
   };
 
   const handleShareFullTopic = (topic: QuranTopicItem) => {
-    const ayahsText = topic.ayahs.map(a => `${a.arabic}\n${a.translationBn}\n— ${a.surahNameBn} (${a.ayahNumber})`).join('\n\n');
-    const hadithsText = topic.hadiths.map(h => `${h.narratorBn || ''}\n"${h.translationBn}"\n— ${h.referenceBn}${h.gradeBn ? ` (${h.gradeBn})` : ''}`).join('\n\n');
-    const full = `【 বিষয়: ${topic.nameBn} 】\n\n📖 পবিত্র কুরআনের আয়াত:\n${ayahsText}\n\n📜 নির্ভরযোগ্য হাদীস শরীফ:\n${hadithsText}\n\n[পবিত্র কুরআন ও সহীহ হাদীস সংকলন]`;
+    const isBn = selectedLanguage === 'bn';
+    const tName = getLocalizedTopicName(topic.nameBn, topic.nameEn, selectedLanguage);
+    const ayahsText = topic.ayahs.map(a => {
+      const sName = isBn ? a.surahNameBn : getLocalizedSurahName(a.surahNumber, selectedLanguage);
+      const trans = isBn ? a.translationBn : a.translationEn;
+      return `${a.arabic}\n${trans}\n— ${sName} (${a.ayahNumber})`;
+    }).join('\n\n');
+    const hadithsText = topic.hadiths.map(h => {
+      const nar = isBn ? h.narratorBn : (h.narratorEn || '');
+      const tr = isBn ? h.translationBn : (h.translationEn || h.translationBn);
+      const ref = getLocalizedHadithRef(h.referenceBn, selectedLanguage);
+      const gr = h.gradeBn ? getLocalizedHadithGrade(h.gradeBn, selectedLanguage) : '';
+      return `${nar}\n"${tr}"\n— ${ref}${gr ? ` (${gr})` : ''}`;
+    }).join('\n\n');
+    const full = isBn
+      ? `【 বিষয়: ${topic.nameBn} 】\n\n📖 পবিত্র কুরআনের আয়াত:\n${ayahsText}\n\n📜 নির্ভরযোগ্য হাদীস শরীফ:\n${hadithsText}\n\n[পবিত্র কুরআন ও সহীহ হাদীস সংকলন]`
+      : `【 Topic: ${tName} 】\n\n📖 Quranic Verses:\n${ayahsText}\n\n📜 Authentic Hadith:\n${hadithsText}\n\n[Quran & Sahih Hadith Collection]`;
     navigator.clipboard.writeText(full);
-    showTopicToast(`${topic.nameBn} বিষয়ের সম্পূর্ণ বিবরণ কপি করা হয়েছে`);
+    showTopicToast(isBn ? `${topic.nameBn} বিষয়ের সম্পূর্ণ বিবরণ কপি করা হয়েছে` : `${tName} copied`);
     if (soundEnabled) soundHaptics.playTap();
   };
 
@@ -461,7 +496,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
           number: ayah.ayahNumber,
           globalNumber: ayah.globalNumber || 1,
           arabic: ayah.arabic,
-          translation: ayah.translationBn,
+          translation: selectedLanguage === 'bn' ? ayah.translationBn : ayah.translationEn,
           transliteration: ayah.transliterationBn || '',
           juz: 1,
           page: 1,
@@ -478,7 +513,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       number: ayah.ayahNumber,
       globalNumber: ayah.globalNumber || 1,
       arabic: ayah.arabic,
-      translation: ayah.translationBn,
+      translation: selectedLanguage === 'bn' ? ayah.translationBn : ayah.translationEn,
       transliteration: ayah.transliterationBn || '',
       juz: 1,
       page: 1,
@@ -769,7 +804,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       }
     } catch (err: any) {
       if (!quickCached) {
-        setSurahLoadError(err.message || 'সূরা লোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।');
+        setSurahLoadError(err.message || (selectedLanguage === 'bn' ? 'সূরা লোড করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।' : 'Could not load Surah. Please try again.'));
       }
     } finally {
       setIsLoadingSurah(false);
@@ -1378,7 +1413,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
   // Copy Tafsir Text to Clipboard
   const handleCopyTafsirText = () => {
     if (!tafsirContent || !activeTafsirAyah || !surahDetail) return;
-    const textToCopy = `【${tafsirContent.author}】\nসূরা ${surahDetail.englishName} (${surahDetail.name}) : আয়াত ${activeTafsirAyah.number}\n\n${activeTafsirAyah.arabic}\n\n"${activeTafsirAyah.translation}"\n\nতাফসীর ও ব্যাখ্যা:\n${tafsirContent.text}`;
+    const isBn = selectedLanguage === 'bn';
+    const sLabel = getLocalizedSurahName(surahDetail.number, selectedLanguage);
+    const textToCopy = isBn
+      ? `【${tafsirContent.author}】\nসূরা ${surahDetail.englishName} (${surahDetail.name}) : আয়াত ${activeTafsirAyah.number}\n\n${activeTafsirAyah.arabic}\n\n"${activeTafsirAyah.translation}"\n\nতাফসীর ও ব্যাখ্যা:\n${tafsirContent.text}`
+      : `【${tafsirContent.author}】\n${sLabel} (${surahDetail.name}) : Ayah ${activeTafsirAyah.number}\n\n${activeTafsirAyah.arabic}\n\n"${activeTafsirAyah.translation}"\n\nTafsir & Commentary:\n${tafsirContent.text}`;
     navigator.clipboard.writeText(textToCopy);
     setIsTafsirCopied(true);
     if (soundEnabled) soundHaptics.playMilestone();
@@ -1388,11 +1427,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
   // Copy Ayah
   const handleCopyAyah = (ayah: QuranAyah) => {
     if (!surahDetail) return;
+    const isBn = selectedLanguage === 'bn';
     let transFormatted = ayah.translation;
     if (ayah.translations && ayah.translations.length > 0) {
       transFormatted = ayah.translations.map((t) => `【${t.translator}】\n${t.text}`).join('\n\n');
     }
-    const text = `${ayah.arabic}\n\n${transFormatted}\n\n[সূরা ${surahDetail.englishName} : আয়াত ${ayah.number}]`;
+    const text = `${ayah.arabic}\n\n${transFormatted}\n\n[${isBn ? `সূরা ${surahDetail.englishName} : আয়াত ${ayah.number}` : `${getLocalizedSurahName(surahDetail.number, selectedLanguage)} : Ayah ${ayah.number}`}]`;
     navigator.clipboard.writeText(text);
     setCopiedAyah(ayah.number);
     setTimeout(() => setCopiedAyah(null), 2000);
@@ -1402,14 +1442,18 @@ export const QuranView: React.FC<QuranViewProps> = ({
   // Share Ayah
   const handleShareAyah = (ayah: QuranAyah) => {
     if (!surahDetail) return;
+    const isBn = selectedLanguage === 'bn';
     let transFormatted = ayah.translation;
     if (ayah.translations && ayah.translations.length > 0) {
       transFormatted = ayah.translations.map((t) => `【${t.translator}】\n${t.text}`).join('\n\n');
     }
-    const text = `${ayah.arabic}\n\n${transFormatted}\n\n- সূরা ${surahDetail.englishName} (${ayah.number})`;
+    const refLabel = isBn
+      ? `সূরা ${surahDetail.englishName} (${ayah.number})`
+      : `${getLocalizedSurahName(surahDetail.number, selectedLanguage)} (${ayah.number})`;
+    const text = `${ayah.arabic}\n\n${transFormatted}\n\n- ${refLabel}`;
     if (navigator.share) {
       navigator.share({
-        title: `সূরা ${surahDetail.englishName} - আয়াত ${ayah.number}`,
+        title: isBn ? `সূরা ${surahDetail.englishName} - আয়াত ${ayah.number}` : `${getLocalizedSurahName(surahDetail.number, selectedLanguage)} - Ayah ${ayah.number}`,
         text: text,
       });
     } else {
@@ -3128,7 +3172,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                               : 'bg-[#081b22] border-teal-900/60 text-slate-300 hover:bg-[#0d2a35]'
                           }`}
                         >
-                          {cat}
+                          {getLocalizedTopicCategory(cat, selectedLanguage)}
                         </button>
                       );
                     })}
@@ -3141,9 +3185,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       const matchCat = selectedTopicCategory === 'সকল বিষয় (All)' || t.categoryBn === selectedTopicCategory;
                       if (!matchCat) return false;
                       if (!query) return true;
+                      const localizedName = getLocalizedTopicName(t.nameBn, t.nameEn, selectedLanguage).toLowerCase();
                       return (
                         t.nameBn.toLowerCase().includes(query) ||
                         t.nameEn.toLowerCase().includes(query) ||
+                        localizedName.includes(query) ||
                         t.nameAr.includes(query) ||
                         t.descriptionBn.toLowerCase().includes(query)
                       );
@@ -3176,7 +3222,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             }`}
                           >
                             <span className="font-bold text-xs sm:text-sm leading-snug line-clamp-2">
-                              {topic.nameBn}
+                              {getLocalizedTopicName(topic.nameBn, topic.nameEn, selectedLanguage)}
                             </span>
                           </button>
                         ))}
@@ -3191,6 +3237,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   if (!currentTopic) return null;
 
                   const topicIndex = QURAN_TOPICS_DATABASE.findIndex(t => t.id === selectedTopicId);
+                  const isTopicBn = selectedLanguage === 'bn';
+                  const topicTitle = getLocalizedTopicName(currentTopic.nameBn, currentTopic.nameEn, selectedLanguage);
+                  const topicDesc = getLocalizedTopicDesc(currentTopic.descriptionBn, currentTopic.descriptionEn, currentTopic.nameBn, currentTopic.nameEn, selectedLanguage);
+                  const topicCategory = getLocalizedTopicCategory(currentTopic.categoryBn || '', selectedLanguage) || (isTopicBn ? 'কুরআনের নির্দেশনা' : 'Quranic Guidance');
                   const sections: TopicSubSection[] = (currentTopic.sections && currentTopic.sections.length > 0)
                     ? currentTopic.sections
                     : [
@@ -3224,7 +3274,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 hover:underline cursor-pointer py-1"
                         >
                           <ChevronLeft className="w-4 h-4" />
-                          <span>{selectedLanguage === 'bn' ? 'সকল বিষয় (তালিকা)' : 'All Topics'}</span>
+                          <span>{isTopicBn ? 'সকল বিষয় (তালিকা)' : 'All Topics'}</span>
                         </button>
 
                         <div className="flex items-center gap-2 ml-auto">
@@ -3238,17 +3288,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                                 : 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60 hover:bg-emerald-900/60'
                             }`}
-                            title="এই বিষয়ের সকল আয়াত ধারাবাহিকভাবে তিলাওয়াত শুনুন"
+                            title={isTopicBn ? 'এই বিষয়ের সকল আয়াত ধারাবাহিকভাবে তিলাওয়াত শুনুন' : 'Listen to all verses in this topic continuously'}
                           >
                             {isTopicAudioPlaying && activeTopicAudioId === 'all' ? (
                               <>
                                 <Pause className="w-3.5 h-3.5" />
-                                <span>অডিও চলছে</span>
+                                <span>{isTopicBn ? 'অডিও চলছে' : 'Playing Audio'}</span>
                               </>
                             ) : (
                               <>
                                 <Volume2 className="w-3.5 h-3.5" />
-                                <span>সকল আয়াত শুনুন</span>
+                                <span>{isTopicBn ? 'সকল আয়াত শুনুন' : 'Listen All Verses'}</span>
                               </>
                             )}
                           </button>
@@ -3261,10 +3311,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                                 : 'bg-[#081e28] hover:bg-[#0e2a36] text-slate-300 border-teal-900/60'
                             }`}
-                            title="সম্পূর্ণ বিষয় সারসংক্ষেপ কপি করুন"
+                            title={isTopicBn ? 'সম্পূর্ণ বিষয় সারসংক্ষেপ কপি করুন' : 'Copy complete topic summary'}
                           >
                             <Copy className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">বিষয় কপি</span>
+                            <span className="hidden sm:inline">{isTopicBn ? 'বিষয় কপি' : 'Copy Topic'}</span>
                           </button>
 
                           <span className="text-[11px] font-mono opacity-60 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-teal-950/40">
@@ -3277,19 +3327,19 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       <div className="text-center space-y-1.5 py-1">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-bold">
                           <span>{currentTopic.icon}</span>
-                          <span>{currentTopic.categoryBn || 'কুরআনের নির্দেশনা'}</span>
+                          <span>{topicCategory}</span>
                         </div>
                         <h2 className="text-2xl sm:text-3xl font-extrabold text-center text-slate-900 dark:text-slate-100 font-serif">
-                          {currentTopic.nameBn}
+                          {topicTitle}
                         </h2>
-                        {currentTopic.descriptionBn && (
+                        {topicDesc && (
                           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl mx-auto leading-relaxed">
-                            {currentTopic.descriptionBn}
+                            {topicDesc}
                           </p>
                         )}
                       </div>
 
-                      {/* Grouped Sub-Section Cards (Exact structure from user screenshot image_2da601e9.png) */}
+                      {/* Grouped Sub-Section Cards */}
                       <div className="space-y-4">
                         {sections.map(sec => (
                           <div
@@ -3300,7 +3350,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           >
                             {/* Subheading in bold with colon */}
                             <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 border-b pb-2 border-slate-100 dark:border-teal-900/30">
-                              {sec.subHeadingBn}
+                              {getLocalizedSubHeading(sec.subHeadingBn, currentTopic.nameBn, currentTopic.nameEn, selectedLanguage)}
                             </h3>
 
                             {/* Ayahs inside this section */}
@@ -3308,6 +3358,8 @@ export const QuranView: React.FC<QuranViewProps> = ({
                               {sec.ayahs.map(ayah => {
                                 const isBookmarked = isAyahBookmarked(ayah.surahNumber, ayah.ayahNumber);
                                 const isPlayingThisAyah = isTopicAudioPlaying && activeTopicAudioId === ayah.id;
+                                const sDisplay = isTopicBn ? ayah.surahNameBn : getLocalizedSurahName(ayah.surahNumber, selectedLanguage);
+                                const ayahTrans = isTopicBn ? ayah.translationBn : ayah.translationEn;
 
                                 return (
                                   <div
@@ -3321,9 +3373,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                       {ayah.arabic}
                                     </p>
 
-                                    {/* Bengali Translation (Directly beneath Arabic) */}
+                                    {/* Translation (Directly beneath Arabic) */}
                                     <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
-                                      {ayah.translationBn}
+                                      {ayahTrans}
                                     </p>
 
                                     {/* Clickable blue link & quick actions bar */}
@@ -3336,9 +3388,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                           if (soundEnabled) soundHaptics.playTap();
                                         }}
                                         className="text-blue-500 hover:text-blue-600 dark:text-sky-400 dark:hover:text-sky-300 underline text-xs font-semibold cursor-pointer inline-flex items-center gap-1 transition"
-                                        title={`পবিত্র কুরআনে ${ayah.surahNameBn} (আয়াত : ${ayah.ayahNumber}) পড়ুন`}
+                                        title={isTopicBn ? `পবিত্র কুরআনে ${sDisplay} (আয়াত : ${ayah.ayahNumber}) পড়ুন` : `Read ${sDisplay} (Ayah ${ayah.ayahNumber}) in Quran`}
                                       >
-                                        {ayah.surahNameBn} (আয়াত : {ayah.ayahNumber})
+                                        {sDisplay} ({isTopicBn ? 'আয়াত' : 'Ayah'} : {ayah.ayahNumber})
                                       </button>
 
                                       <div className="flex items-center gap-1.5 ml-auto">
@@ -3350,10 +3402,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                               ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
                                               : 'bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 border-amber-700/50'
                                           }`}
-                                          title="এই আয়াতের পূর্ণাঙ্গ তাফসীর পড়ুন"
+                                          title={isTopicBn ? 'এই আয়াতের পূর্ণাঙ্গ তাফসীর পড়ুন' : 'Read full Tafsir for this verse'}
                                         >
                                           <BookOpen className="w-3 h-3" />
-                                          <span>তাফসীর</span>
+                                          <span>{isTopicBn ? 'তাফসীর' : 'Tafsir'}</span>
                                         </button>
 
                                         {/* Single ayah audio button */}
@@ -3364,7 +3416,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                               ? 'bg-emerald-600 text-white border-emerald-600'
                                               : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-teal-950/40 border-transparent hover:border-emerald-200'
                                           }`}
-                                          title={isPlayingThisAyah ? 'অডিও থামান' : 'আয়াতের অডিও শুনুন'}
+                                          title={isTopicBn ? (isPlayingThisAyah ? 'অডিও থামান' : 'আয়াতের অডিও শুনুন') : (isPlayingThisAyah ? 'Pause Audio' : 'Listen to Ayah')}
                                         >
                                           {isPlayingThisAyah ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                                         </button>
@@ -3373,18 +3425,18 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                         <button
                                           onClick={() => handleCopyTopicAyah(ayah)}
                                           className="p-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-teal-900/40 transition cursor-pointer"
-                                          title="আয়াত ও অনুবাদ কপি করুন"
+                                          title={isTopicBn ? 'আয়াত ও অনুবাদ কপি করুন' : 'Copy verse and translation'}
                                         >
                                           <Copy className="w-3.5 h-3.5" />
                                         </button>
 
                                         {/* Bookmark button */}
                                         <button
-                                          onClick={() => toggleBookmark(ayah.surahNumber, ayah.ayahNumber, ayah.arabic, ayah.translationBn)}
+                                          onClick={() => toggleBookmark(ayah.surahNumber, ayah.ayahNumber, ayah.arabic, ayahTrans)}
                                           className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${
                                             isBookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/40'
                                           }`}
-                                          title={isBookmarked ? 'বুকমার্ক সরানো' : 'বুকমার্ক করুন'}
+                                          title={isTopicBn ? (isBookmarked ? 'বুকমার্ক সরানো' : 'বুকমার্ক করুন') : (isBookmarked ? 'Remove Bookmark' : 'Bookmark Verse')}
                                         >
                                           <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-amber-400' : ''}`} />
                                         </button>
@@ -3398,7 +3450,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         ))}
                       </div>
 
-                      {/* Practical Takeaways / বাস্তব জীবনের আমল ও শিক্ষা */}
+                      {/* Practical Takeaways */}
                       {currentTopic.practicalTakeawaysBn && currentTopic.practicalTakeawaysBn.length > 0 && (
                         <div
                           className={`rounded-2xl border p-4 sm:p-5 shadow-xs space-y-3 ${
@@ -3409,7 +3461,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         >
                           <div className="flex items-center gap-2 font-bold text-sm sm:text-base text-emerald-800 dark:text-emerald-300">
                             <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span>বাস্তব জীবনের আমল ও করণীয় শিক্ষা:</span>
+                            <span>{isTopicBn ? 'বাস্তব জীবনের আমল ও করণীয় শিক্ষা:' : 'Practical Action Points & Life Lessons:'}</span>
                           </div>
                           <ul className="space-y-2 text-xs sm:text-sm pl-1">
                             {currentTopic.practicalTakeawaysBn.map((item, pIdx) => (
@@ -3417,28 +3469,34 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold shrink-0 mt-0.5">
                                   {pIdx + 1}
                                 </span>
-                                <span>{item}</span>
+                                <span>{getLocalizedTakeaway(item, selectedLanguage)}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
 
-                      {/* Related Authentic Hadith Collection (Multiple Hadiths with Arabic, Narrator & Full Takhrij) */}
+                      {/* Related Authentic Hadith Collection */}
                       {currentTopic.hadiths && currentTopic.hadiths.length > 0 && (
                         <div className="space-y-3 pt-1">
                           <div className="flex items-center justify-between">
                             <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
                               <span>📜</span>
-                              <span>সংশ্লিষ্ট নির্ভরযোগ্য সহীহ হাদীস শরীফ</span>
+                              <span>{isTopicBn ? 'সংশ্লিষ্ট নির্ভরযোগ্য সহীহ হাদীস শরীফ' : 'Related Authentic Sahih Hadith'}</span>
                             </h3>
                             <span className="text-[11px] font-semibold text-slate-500 dark:text-teal-400">
-                              {currentTopic.hadiths.length}টি সহীহ বর্ণনা
+                              {isTopicBn ? `${currentTopic.hadiths.length}টি সহীহ বর্ণনা` : `${currentTopic.hadiths.length} Authentic Narrations`}
                             </span>
                           </div>
 
                           <div className="space-y-3">
-                            {currentTopic.hadiths.map((h, hIdx) => (
+                            {currentTopic.hadiths.map((h, hIdx) => {
+                              const hNar = isTopicBn ? h.narratorBn : (h.narratorEn || h.narratorBn);
+                              const hTrans = isTopicBn ? h.translationBn : (h.translationEn || h.translationBn);
+                              const hRef = getLocalizedHadithRef(h.referenceBn, selectedLanguage);
+                              const hGrade = h.gradeBn ? getLocalizedHadithGrade(h.gradeBn, selectedLanguage) : '';
+                              const hChap = h.chapterBn ? getLocalizedHadithChapter(h.chapterBn, selectedLanguage) : '';
+                              return (
                               <div
                                 key={h.id || hIdx}
                                 className={`rounded-2xl border p-4 sm:p-5 shadow-xs space-y-3 transition ${
@@ -3451,16 +3509,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/50 dark:border-amber-500/20 pb-2">
                                   <div className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
                                     <span>🎙️</span>
-                                    <span>{h.narratorBn}</span>
+                                    <span>{hNar}</span>
                                   </div>
                                   <div className="flex items-center gap-1.5 ml-auto">
-                                    {h.gradeBn && (
+                                    {hGrade && (
                                       <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                                        মান: {h.gradeBn}
+                                        {isTopicBn ? 'মান:' : 'Grade:'} {hGrade}
                                       </span>
                                     )}
                                     <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-                                      {h.referenceBn}
+                                      {hRef}
                                     </span>
                                   </div>
                                 </div>
@@ -3472,25 +3530,25 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   </p>
                                 )}
 
-                                {/* Bengali Translation */}
+                                {/* Translation */}
                                 <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 italic font-medium">
-                                  "{h.translationBn}"
+                                  "{hTrans}"
                                 </p>
 
                                 {/* Bottom Chapter & Copy Action */}
                                 <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-amber-200/40 dark:border-amber-500/10">
-                                  <span>{h.chapterBn ? `অধ্যায়: ${h.chapterBn}` : 'সহীহ হাদীস সংকলন'}</span>
+                                  <span>{hChap ? `${isTopicBn ? 'অধ্যায়:' : 'Chapter:'} ${hChap}` : (isTopicBn ? 'সহীহ হাদীস সংকলন' : 'Sahih Hadith Collection')}</span>
                                   <button
                                     onClick={() => handleCopyHadith(h)}
                                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 font-bold transition cursor-pointer text-[11px]"
-                                    title="হাদীসটি কপি করুন"
+                                    title={isTopicBn ? 'হাদীসটি কপি করুন' : 'Copy Hadith'}
                                   >
                                     <Copy className="w-3 h-3" />
-                                    <span>কপি হাদীস</span>
+                                    <span>{isTopicBn ? 'কপি হাদীস' : 'Copy Hadith'}</span>
                                   </button>
                                 </div>
                               </div>
-                            ))}
+                            )})}
                           </div>
                         </div>
                       )}
@@ -3500,11 +3558,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         <div className="pt-2 space-y-2">
                           <span className="text-xs font-bold text-slate-500 dark:text-teal-400 flex items-center gap-1.5">
                             <span>🔗</span>
-                            <span>সম্পর্কিত অন্যান্য বিষয়সমূহ:</span>
+                            <span>{isTopicBn ? 'সম্পর্কিত অন্যান্য বিষয়সমূহ:' : 'Related Topics:'}</span>
                           </span>
                           <div className="flex flex-wrap gap-2">
                             {currentTopic.relatedTopics.map(relName => {
                               const found = QURAN_TOPICS_DATABASE.find(t => t.nameBn === relName);
+                              const displayRel = found ? getLocalizedTopicName(found.nameBn, found.nameEn, selectedLanguage) : getLocalizedTopicName(relName, undefined, selectedLanguage);
                               return (
                                 <button
                                   key={relName}
@@ -3518,10 +3577,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   className={`px-3 py-1 rounded-xl text-xs font-semibold border transition cursor-pointer ${
                                     isDay
                                       ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                                      : 'bg-[#091b22] hover:bg-[#0f2832] text-slate-300 border-teal-900/60'
+                                      : 'bg-[#081b22] hover:bg-[#0d2a35] text-slate-300 border-teal-900/60'
                                   }`}
                                 >
-                                  {relName}
+                                  {displayRel}
                                 </button>
                               );
                             })}
@@ -3529,7 +3588,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         </div>
                       )}
 
-                      {/* Bottom Navigation Buttons (matching screenshot) */}
+                      {/* Bottom Navigation Buttons */}
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 pb-6 border-t border-slate-200/60 dark:border-teal-900/40">
                         {topicIndex > 0 ? (
                           <button
@@ -3543,7 +3602,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             }}
                             className="px-4 py-2 rounded-xl border border-slate-300 dark:border-teal-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-semibold hover:bg-slate-100 dark:hover:bg-teal-900/40 transition cursor-pointer"
                           >
-                            ← পূর্ববর্তী বিষয়
+                            {isTopicBn ? '← পূর্ববর্তী বিষয়' : '← Previous Topic'}
                           </button>
                         ) : <div />}
 
@@ -3558,7 +3617,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                             }}
                             className="px-4 py-2 rounded-xl border border-slate-300 dark:border-teal-800 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-semibold hover:bg-slate-100 dark:hover:bg-teal-900/40 transition cursor-pointer"
                           >
-                            সকল বিষয়
+                            {isTopicBn ? 'সকল বিষয়' : 'All Topics'}
                           </button>
 
                           {topicIndex < QURAN_TOPICS_DATABASE.length - 1 && (
@@ -3573,7 +3632,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                               }}
                               className="px-5 py-2 rounded-xl border border-[#c48c69] text-[#7d3b1b] dark:text-amber-200 hover:bg-amber-500/10 transition font-bold text-xs sm:text-sm cursor-pointer shadow-xs"
                             >
-                              পরের আয়াত / বিষয় →
+                              {isTopicBn ? 'পরের আয়াত / বিষয় →' : 'Next Verse / Topic →'}
                             </button>
                           )}
                         </div>
@@ -3653,7 +3712,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   </h3>
                 </div>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white">
-                  স্ক্রিনশটের মতো খাতাসদৃশ দাগসহ
+                  {selectedLanguage === 'bn' ? 'স্ক্রিনশটের মতো খাতাসদৃশ দাগসহ' : 'Ruled Mushaf Pages'}
                 </span>
               </div>
               <p className="text-xs opacity-90 leading-relaxed">
@@ -3875,14 +3934,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-400 text-black uppercase shrink-0">
-                      তাফসীর
+                      {selectedLanguage === 'bn' ? 'তাফসীর' : 'Tafsir'}
                     </span>
                     <h3 className="font-extrabold text-xs sm:text-sm truncate">
                       {getLocalizedSurahName(surahDetail.number, selectedLanguage)}
                     </h3>
                   </div>
                   <p className="text-[11px] text-[#10b981] font-bold truncate mt-0.5">
-                    আয়াত {activeTafsirAyah.number} / {surahDetail.numberOfAyahs} ({surahDetail.name})
+                    {selectedLanguage === 'bn' ? 'আয়াত' : 'Ayah'} {activeTafsirAyah.number} / {surahDetail.numberOfAyahs} ({surahDetail.name})
                   </p>
                 </div>
               </div>
@@ -3906,7 +3965,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 >
                   {surahDetail.ayahs.map((a) => (
                     <option key={a.number} value={a.number} className="bg-slate-900 text-white">
-                      আয়াত {a.number}
+                      {selectedLanguage === 'bn' ? `আয়াত ${a.number}` : `Ayah ${a.number}`}
                     </option>
                   ))}
                 </select>
@@ -3942,7 +4001,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <button
                   onClick={handleCloseTafsir}
                   className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 active:scale-95 transition cursor-pointer"
-                  title="Close (বন্ধ করুন)"
+                  title={selectedLanguage === 'bn' ? 'বন্ধ করুন' : 'Close'}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -4010,7 +4069,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     ) : (
                       <Play className="w-3 h-3 fill-current" />
                     )}
-                    <span>{isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === activeTafsirAyah.number ? 'থামান' : 'তিলাওয়াত'}</span>
+                    <span>
+                      {isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === activeTafsirAyah.number
+                        ? (selectedLanguage === 'bn' ? 'থামান' : 'Pause')
+                        : (selectedLanguage === 'bn' ? 'তিলাওয়াত' : 'Recite')}
+                    </span>
                   </button>
                 </div>
 
@@ -4038,7 +4101,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 <div className="flex items-center justify-between gap-2 flex-wrap border-b pb-2.5 border-slate-200 dark:border-[#162c3a]">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold">
                     <Book className="w-3.5 h-3.5" />
-                    <span>{tafsirContent?.author || 'তাফসীর ইবনে কাছীর'}</span>
+                    <span>{tafsirContent?.author || (selectedLanguage === 'bn' ? 'তাফসীর ইবনে কাছীর' : 'Tafsir Ibn Kathir')}</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -4053,7 +4116,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       }`}
                     >
                       {isTafsirCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                      <span>{isTafsirCopied ? 'কপি হয়েছে' : 'কপি'}</span>
+                      <span>{isTafsirCopied ? (selectedLanguage === 'bn' ? 'কপি হয়েছে' : 'Copied') : (selectedLanguage === 'bn' ? 'কপি' : 'Copy')}</span>
                     </button>
 
                     <button
@@ -4151,7 +4214,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                   </div>
                 ) : (
                   <div className="py-6 text-center text-xs text-slate-400">
-                    তাফসীর তথ্য পাওয়া যায়নি।
+                    {selectedLanguage === 'bn' ? 'তাফসীর তথ্য পাওয়া যায়নি।' : 'Tafsir information not available.'}
                   </div>
                 )}
               </div>
@@ -4390,7 +4453,9 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     {selectedLanguage === 'bn' ? 'লাইভ প্রিভিউ:' : 'Live Preview:'}
                   </span>
                   <span className="text-emerald-500 font-mono">
-                    {WORD_ANIMATION_OPTIONS.find((o) => o.id === wordAnimationType)?.tagBn}
+                    {selectedLanguage === 'bn'
+                      ? WORD_ANIMATION_OPTIONS.find((o) => o.id === wordAnimationType)?.tagBn
+                      : WORD_ANIMATION_OPTIONS.find((o) => o.id === wordAnimationType)?.tagEn}
                   </span>
                 </div>
 
@@ -4403,7 +4468,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                           isDay ? 'bg-[#d1fae5] text-[#006747] ring-4 ring-emerald-500/20' : 'bg-emerald-950/90 text-emerald-200 border-emerald-400 ring-4 ring-emerald-400/25'
                         }`}>
                           <span className="font-arabic text-3xl font-black">ٱلرَّحْمَٰنِ</span>
-                          <span className="text-xs font-bold mt-1">পরম করুণাময়</span>
+                          <span className="text-xs font-bold mt-1">{selectedLanguage === 'bn' ? 'পরম করুণাময়' : 'The Most Merciful'}</span>
                         </div>
                       );
                     }
@@ -4413,7 +4478,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         isDay ? 'bg-[#ecfdf5] text-[#006747]' : 'bg-emerald-950/70 text-emerald-200 border-emerald-500'
                       }`}>
                         <span className="font-arabic text-3xl font-black">ٱلرَّحْمَٰنِ</span>
-                        <span className="text-xs font-bold mt-1">পরম করুণাময়</span>
+                        <span className="text-xs font-bold mt-1">{selectedLanguage === 'bn' ? 'পরম করুণাময়' : 'The Most Merciful'}</span>
                       </div>
                     );
                   })()}
@@ -4452,7 +4517,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                               <span>{selectedLanguage === 'bn' ? opt.nameBn : opt.nameEn}</span>
                             </div>
                             <span className="inline-block mt-0.5 text-[10px] font-bold px-2 py-0.2 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">
-                              {opt.tagBn}
+                              {selectedLanguage === 'bn' ? opt.tagBn : opt.tagEn}
                             </span>
                           </div>
                         </div>
@@ -4768,7 +4833,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       <span>{selectedLanguage === 'bn' ? 'অফলাইন অডিও ডাউনলোড' : 'Offline Audio Download'}</span>
                       {isAudioCached && (
                         <span className="text-[10px] px-2 py-0.5 rounded-md font-bold bg-emerald-500 text-white">
-                          সেভ করা হয়েছে
+                          {selectedLanguage === 'bn' ? 'সেভ করা হয়েছে' : 'Saved'}
                         </span>
                       )}
                     </div>
@@ -4835,10 +4900,10 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </span>
               <div className="min-w-0">
                 <h4 className="text-xs font-extrabold truncate">
-                  সূরা {surahDetail.name} ({surahDetail.englishName})
+                  {selectedLanguage === 'bn' ? 'সূরা' : 'Surah'} {surahDetail.name} ({surahDetail.englishName})
                 </h4>
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold truncate">
-                  আয়াত #{currentPlayingAyahNum || 1} • {WORD_ANIMATION_OPTIONS.find((o) => o.id === wordAnimationType)?.nameBn.split(' ')[0]}
+                  {selectedLanguage === 'bn' ? 'আয়াত' : 'Ayah'} #{currentPlayingAyahNum || 1} • {(selectedLanguage === 'bn' ? WORD_ANIMATION_OPTIONS.find((o) => o.id === wordAnimationType)?.nameBn : WORD_ANIMATION_OPTIONS.find((o) => o.id === wordAnimationType)?.nameEn)?.split(' ')[0]}
                 </p>
               </div>
             </div>

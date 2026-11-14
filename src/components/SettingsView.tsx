@@ -521,6 +521,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <InstallAppModal
         isOpen={showInstallModal}
         onClose={() => setShowInstallModal(false)}
+        isDay={settings.themeMode === 'day'}
+        selectedLanguage={selectedLanguage}
       />
     </div>
   );

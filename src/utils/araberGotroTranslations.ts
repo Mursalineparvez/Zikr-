@@ -650,3 +650,504 @@ export const TOPIC_TOC_ENGLISH_MAP: Record<string, {
     }
   }
 };
+
+export const SPECIAL_CROSS_INDEX_EN: Record<string, {
+  nameEn: string;
+  clanEn: string;
+  ancestorIntersectionEn: string;
+  significanceEn: string;
+}> = {
+  'ash-1': {
+    nameEn: 'Abu Bakr as-Siddiq (RA)',
+    clanEn: 'Banu Taym ibn Murrah',
+    ancestorIntersectionEn: 'Murrah ibn Ka\'b (6th Gen)',
+    significanceEn: 'Greatest human of the Ummah after the Prophets, first Caliph of Islam, and faithful companion in the Cave.'
+  },
+  'ash-2': {
+    nameEn: 'Umar ibn al-Khattab (RA)',
+    clanEn: 'Banu Adi ibn Ka\'b',
+    ancestorIntersectionEn: 'Ka\'b ibn Lu\'ayy (7th Gen)',
+    significanceEn: 'Amir al-Mu\'minin al-Faruq, before whose footsteps even Satan altered his path.'
+  },
+  'ash-3': {
+    nameEn: 'Uthman ibn Affan (RA)',
+    clanEn: 'Banu Umayyah / Abd Shams',
+    ancestorIntersectionEn: 'Abd Manaf (2nd Gen)',
+    significanceEn: 'Dhun-Nurayn (Possessor of Two Lights), compiler of the Uthmanic Mushaf, and famously generous Caliph.'
+  },
+  'ash-4': {
+    nameEn: 'Ali ibn Abi Talib (RA)',
+    clanEn: 'Banu Hashim (Ahl al-Bayt)',
+    ancestorIntersectionEn: 'Abdul Muttalib (1st Gen)',
+    significanceEn: 'Asadullah al-Ghalib (Invincible Lion of Allah), Gate of Knowledge, and fourth rightly-guided Caliph.'
+  },
+  'ash-5': {
+    nameEn: 'Talhah ibn Ubaydullah (RA)',
+    clanEn: 'Banu Taym ibn Murrah',
+    ancestorIntersectionEn: 'Murrah ibn Ka\'b (6th Gen)',
+    significanceEn: 'The "Living Martyr" who shielded the Prophet (PBUH) at Uhud until his hand was paralyzed.'
+  },
+  'ash-6': {
+    nameEn: 'Az-Zubayr ibn al-Awwam (RA)',
+    clanEn: 'Banu Asad ibn Abd al-Uzza',
+    ancestorIntersectionEn: 'Qusayy ibn Kilab (4th Gen)',
+    significanceEn: 'Devoted disciple (Hawari) of the Messenger of Allah (PBUH) and valiant son of Safiyyah (RA).'
+  },
+  'ash-7': {
+    nameEn: 'Abdur Rahman ibn Awf (RA)',
+    clanEn: 'Banu Zuhrah ibn Kilab',
+    ancestorIntersectionEn: 'Kilab ibn Murrah (5th Gen)',
+    significanceEn: 'Foremost philanthropist and righteous merchant of Islamic history who spent his wealth freely in Allah\'s path.'
+  },
+  'ash-8': {
+    nameEn: 'Sa\'d ibn Abi Waqqas (RA)',
+    clanEn: 'Banu Zuhrah ibn Kilab',
+    ancestorIntersectionEn: 'Kilab ibn Murrah (5th Gen)',
+    significanceEn: 'First archer in the path of Allah, one whose supplications were answered, and victor at al-Qadisiyyah.'
+  },
+  'ash-9': {
+    nameEn: 'Sa\'id ibn Zayd (RA)',
+    clanEn: 'Banu Adi ibn Ka\'b',
+    ancestorIntersectionEn: 'Ka\'b ibn Lu\'ayy (7th Gen)',
+    significanceEn: 'Son of the hanif Zayd ibn Amr and key commander during the conquest of Damascus.'
+  },
+  'ash-10': {
+    nameEn: 'Abu Ubaydah ibn al-Jarrah (RA)',
+    clanEn: 'Banu al-Harith ibn Fihr',
+    ancestorIntersectionEn: 'Fihr ibn Malik (10th Gen)',
+    significanceEn: 'Honored by the Prophet (PBUH) as "Amin al-Ummah" (the most trustworthy custodian of this Ummah).'
+  },
+  'umm-1': {
+    nameEn: 'Khadijah al-Kubra (RA)',
+    clanEn: 'Banu Asad ibn Abd al-Uzza',
+    ancestorIntersectionEn: 'Qusayy ibn Kilab (4th Gen)',
+    significanceEn: 'First wife of the Prophet (PBUH), first believer in Islam, and Chief of the Women of the Worlds.'
+  },
+  'umm-2': {
+    nameEn: 'Sawdah bint Zam\'ah (RA)',
+    clanEn: 'Banu Amir ibn Lu\'ayy',
+    ancestorIntersectionEn: 'Lu\'ayy ibn Ghalib (8th Gen)',
+    significanceEn: 'Devoted Mother of the Believers who joined the Prophet\'s household in Makkah prior to Hijrah.'
+  },
+  'umm-3': {
+    nameEn: 'Aishah as-Siddiqah (RA)',
+    clanEn: 'Banu Taym ibn Murrah',
+    ancestorIntersectionEn: 'Murrah ibn Ka\'b (6th Gen)',
+    significanceEn: 'Foremost female jurist and scholar of the Ummah through whom a quarter of Islamic rulings were transmitted.'
+  },
+  'umm-4': {
+    nameEn: 'Hafsah bint Umar (RA)',
+    clanEn: 'Banu Adi ibn Ka\'b',
+    ancestorIntersectionEn: 'Ka\'b ibn Lu\'ayy (7th Gen)',
+    significanceEn: 'Honored custodian of the original compiled handwritten manuscript of the Holy Quran (Mushaf Hafsah).'
+  },
+  'umm-5': {
+    nameEn: 'Umm Salamah Hind (RA)',
+    clanEn: 'Banu Makhzum ibn Yaqazah',
+    ancestorIntersectionEn: 'Murrah ibn Ka\'b (6th Gen)',
+    significanceEn: 'Wise Mother of the Believers whose decisive counsel guided the Prophet (PBUH) during the crisis at Hudaybiyyah.'
+  },
+  'umm-6': {
+    nameEn: 'Umm Habibah Ramlah (RA)',
+    clanEn: 'Banu Umayyah / Abd Shams',
+    ancestorIntersectionEn: 'Abd Manaf (2nd Gen)',
+    significanceEn: 'Steadfast believer who migrated to Abyssinia and upheld the banner of Islam inside Abu Sufyan\'s household.'
+  },
+  'umm-7': {
+    nameEn: 'Juwayriyyah bint al-Harith (RA)',
+    clanEn: 'Banu al-Mustaliq (Khuza\'ah Branch)',
+    ancestorIntersectionEn: 'Khuza\'ah Tribe',
+    significanceEn: 'Through the blessing of her marriage, hundreds of captives from her entire tribe were freed in an instant.'
+  },
+  'umm-8': {
+    nameEn: 'Safiyyah bint Huyayy (RA)',
+    clanEn: 'Banu Nadir & Descendant of Prophet Harun (AS)',
+    ancestorIntersectionEn: 'Banu Israel (Prophet Harun AS)',
+    significanceEn: 'Joined the noble household of the Prophet (PBUH) after the victory of Khaybar and became a Mother of the Believers.'
+  },
+  'umm-9': {
+    nameEn: 'Maymunah bint al-Harith (RA)',
+    clanEn: 'Banu Hilal ibn Amir',
+    ancestorIntersectionEn: 'Banu Hilal',
+    significanceEn: 'The final Mother of the Believers, wed at Sarif during the journey of Umrat al-Qada.'
+  }
+};
+
+export const QURAYSH_CONVERGENCE_EN: Record<number, {
+  ancestorNameEn: string;
+  significanceEn: string;
+  hadithOrHistoryNoteEn?: string;
+  branches: { clanNameEn: string; roleTitleEn: string; prominentSahabaEn: string[] }[];
+}> = {
+  1: {
+    ancestorNameEn: 'Abdul Muttalib (Shaybat al-Hamd)',
+    significanceEn: 'Re-excavator of the Sacred Zamzam Well and guardian of the Kaaba during the Year of the Elephant',
+    hadithOrHistoryNoteEn: 'Through Abdul Muttalib\'s son Abdullah came Prophet Muhammad (PBUH), and through Abu Talib came Ali and Ja\'far (RA).',
+    branches: [
+      {
+        clanNameEn: 'Banu Hashim (Sacred Ahl al-Bayt)',
+        roleTitleEn: 'Prophethood, Ahl al-Bayt & Siqayah (Watering Pilgrims)',
+        prominentSahabaEn: [
+          'Prophet Muhammad (PBUH) [Seal of the Prophets]',
+          'Ali ibn Abi Talib (RA) [4th Caliph]',
+          'Hamzah ibn Abdul Muttalib (RA) [Chief of Martyrs]',
+          'Ja\'far ibn Abi Talib (RA) [Martyr of Mu\'tah]',
+          'Al-Abbas ibn Abdul Muttalib (RA) [Prophet\'s Uncle]'
+        ]
+      }
+    ]
+  },
+  2: {
+    ancestorNameEn: 'Abd Manaf ibn Qusayy',
+    significanceEn: 'Foremost noble and generous chief of Quraysh (given name: al-Mughirah)',
+    hadithOrHistoryNoteEn: 'Uthman ibn Affan\'s (RA) lineage connects with the Prophet (PBUH) at the 2nd generation via Abd Shams ibn Abd Manaf.',
+    branches: [
+      {
+        clanNameEn: 'Banu Umayyah / Banu Abd Shams',
+        roleTitleEn: 'Carrying the War Banner "Al-Uqab" & Supreme Command',
+        prominentSahabaEn: [
+          'Uthman ibn Affan (RA) [3rd Caliph & Dhun-Nurayn]',
+          'Umm al-Mu\'minin Umm Habibah (RA)',
+          'Abu Sufyan ibn Harb (RA)',
+          'Mu\'awiyah ibn Abi Sufyan (RA)'
+        ]
+      },
+      {
+        clanNameEn: 'Banu al-Muttalib ibn Abd Manaf',
+        roleTitleEn: 'Steadfast Allies of Banu Hashim at Shi\'b Abi Talib',
+        prominentSahabaEn: [
+          'Ubaydah ibn al-Harith (RA) [First Martyr at Badr]',
+          'Paternal clan of Imam al-Shafi\'i (RH)'
+        ]
+      },
+      {
+        clanNameEn: 'Banu Nawfal ibn Abd Manaf',
+        roleTitleEn: 'Diplomatic Envoys & International Trade Pacts',
+        prominentSahabaEn: [
+          'Jubayr ibn Mut\'im (RA) [Renowned Sahabi & Genealogist]',
+          'Mut\'im ibn Adi [Granted protection to the Prophet returning from Ta\'if]'
+        ]
+      }
+    ]
+  },
+  4: {
+    ancestorNameEn: 'Qusayy ibn Kilab (Zayd)',
+    significanceEn: 'Unifier of Quraysh in Makkah (al-Mujammi\') and founder of Dar al-Nadwah',
+    hadithOrHistoryNoteEn: 'Umm al-Mu\'minin Khadijah (RA) and heroic champion az-Zubayr (RA) connect to the Prophet\'s lineage at the 4th generation via Qusayy ibn Kilab.',
+    branches: [
+      {
+        clanNameEn: 'Banu Asad ibn Abd al-Uzza',
+        roleTitleEn: 'Dar al-Nadwah Counsel & Noble Leadership',
+        prominentSahabaEn: [
+          'Umm al-Mu\'minin Khadijah al-Kubra (RA) [First Believer]',
+          'Az-Zubayr ibn al-Awwam (RA) [Hawari of the Prophet & Ashara]',
+          'Waraqah ibn Nawfal [Hanif & Scholar of Scripture]'
+        ]
+      },
+      {
+        clanNameEn: 'Banu Abd al-Dar ibn Qusayy',
+        roleTitleEn: 'Kaaba Keys (Sidanah) & War Standard (Liwa)',
+        prominentSahabaEn: [
+          'Mus\'ab ibn Umayr (RA) [First Ambassador to Madinah & Badr Flagbearer]',
+          'Uthman ibn Talhah (RA) [Custodian of the Keys of the Kaaba]'
+        ]
+      }
+    ]
+  },
+  5: {
+    ancestorNameEn: 'Kilab ibn Murrah (Hakim)',
+    significanceEn: 'Courageous chieftain and central trunk of Makkan nobility',
+    hadithOrHistoryNoteEn: 'The Prophet (PBUH) said: "Sa\'d is my maternal uncle; let anyone show me an uncle like mine!" — (Jami\' at-Tirmidhi)',
+    branches: [
+      {
+        clanNameEn: 'Banu Zuhrah ibn Kilab',
+        roleTitleEn: 'Maternal Clan of the Prophet (PBUH)',
+        prominentSahabaEn: [
+          'Sa\'d ibn Abi Waqqas (RA) [First Archer & Ashara]',
+          'Abdur Rahman ibn Awf (RA) [Great Philanthropist & Ashara]',
+          'Sayyidah Aminah bint Wahb [Blessed Mother of the Prophet PBUH]'
+        ]
+      }
+    ]
+  },
+  6: {
+    ancestorNameEn: 'Murrah ibn Ka\'b',
+    significanceEn: 'Convergence root for vast Quraysh branches producing two mighty pillars of Islam',
+    hadithOrHistoryNoteEn: 'Abu Bakr (RA), Talhah (RA), and Khalid ibn al-Walid (RA) merge with the Prophet\'s root at the 6th generation in Murrah ibn Ka\'b.',
+    branches: [
+      {
+        clanNameEn: 'Banu Taym ibn Murrah',
+        roleTitleEn: 'Blood Money (Diyat) & Financial Arbitration',
+        prominentSahabaEn: [
+          'Abu Bakr as-Siddiq (RA) [1st Caliph & Greatest Human after Prophets]',
+          'Talhah ibn Ubaydullah (RA) [Living Martyr & Ashara]',
+          'Umm al-Mu\'minin Aishah as-Siddiqah (RA)'
+        ]
+      },
+      {
+        clanNameEn: 'Banu Makhzum ibn Yaqazah ibn Murrah',
+        roleTitleEn: 'Cavalry Command (Al-A\'innah) & Encampment (Al-Qubbah)',
+        prominentSahabaEn: [
+          'Khalid ibn al-Walid (RA) [Sayfullah - Drawn Sword of Allah]',
+          'Umm al-Mu\'minin Umm Salamah (RA)',
+          'Ikrimah ibn Abi Jahl (RA) [Hero of Yarmouk]'
+        ]
+      }
+    ]
+  },
+  7: {
+    ancestorNameEn: 'Ka\'b ibn Lu\'ayy',
+    significanceEn: 'First among Quraysh to convene Friday gatherings (Yawm al-Arubah) and foretell the Prophet\'s coming',
+    hadithOrHistoryNoteEn: 'Umar al-Faruq (RA) and Sa\'id ibn Zayd (RA) of Ashara Mubashshara merge at the 7th generation via Ka\'b ibn Lu\'ayy.',
+    branches: [
+      {
+        clanNameEn: 'Banu Adi ibn Ka\'b',
+        roleTitleEn: 'Diplomacy (As-Sifarah), Envoys & Arbitration',
+        prominentSahabaEn: [
+          'Umar ibn al-Khattab (RA) [2nd Caliph & al-Faruq]',
+          'Sa\'id ibn Zayd (RA) [Ashara Mubashshara]',
+          'Umm al-Mu\'minin Hafsah bint Umar (RA)',
+          'Abdullah ibn Umar (RA) [Leading Jurist]'
+        ]
+      }
+    ]
+  },
+  8: {
+    ancestorNameEn: 'Lu\'ayy ibn Ghalib',
+    significanceEn: 'Ancient guardian of Makkah; progenitor of the Sahm, Jumah, and Amir clans',
+    branches: [
+      {
+        clanNameEn: 'Banu Sahm ibn Amr',
+        roleTitleEn: 'Treasury Management & Sacred Offerings (Muqawah / Amwal)',
+        prominentSahabaEn: [
+          'Amr ibn al-As (RA) [Conqueror of Egypt]',
+          'Abdullah ibn Amr ibn al-As (RA) [Author of Sahifah as-Sadiqah]'
+        ]
+      },
+      {
+        clanNameEn: 'Banu Jumah ibn Amr',
+        roleTitleEn: 'Divination Arrows Office (Al-Azlam / Aysar)',
+        prominentSahabaEn: [
+          'Uthman ibn Maz\'un (RA) [First Muhajir buried in Jannat al-Baqi\']',
+          'Khubayb ibn Adi (RA)'
+        ]
+      },
+      {
+        clanNameEn: 'Banu Amir ibn Lu\'ayy',
+        roleTitleEn: 'Foremost Orators & Political Spokesmen of Makkah',
+        prominentSahabaEn: [
+          'Suhayl ibn Amr (RA) [Negotiator at Hudaybiyyah & Noble Companion]',
+          'Umm al-Mu\'minin Sawdah bint Zam\'ah (RA)'
+        ]
+      }
+    ]
+  },
+  10: {
+    ancestorNameEn: 'Fihr ibn Malik (Titled "Quraysh")',
+    significanceEn: 'Patriarch of the Quraysh tribe whose descendants bear the historical title of Quraysh',
+    hadithOrHistoryNoteEn: 'Abu Ubaydah ibn al-Jarrah (RA) of Ashara Mubashshara converges directly at the 10th generation with "Fihr" (Quraysh) himself.',
+    branches: [
+      {
+        clanNameEn: 'Banu al-Harith ibn Fihr',
+        roleTitleEn: 'Military Command & Trustworthiness of the Ummah',
+        prominentSahabaEn: [
+          'Abu Ubaydah ibn al-Jarrah (RA) [Amin al-Ummah & Ashara]',
+          'Iyad ibn Ghanm (RA) [Conqueror of Syria & Mesopotamia]'
+        ]
+      }
+    ]
+  }
+};
+
+export const BANU_HASHIM_GENEALOGY_EN = {
+  rootName: 'Hashim ibn Abd Manaf',
+  son: {
+    name: 'Abdul Muttalib',
+    title: 'Chief of Quraysh & Banu Hashim (Restorer of Zamzam Well)',
+    sons: [
+      {
+        name: 'Abdullah',
+        desc: 'Honored Father of the Messenger of Allah (PBUH)',
+        badge: 'Noble Forefather',
+        children: [
+          {
+            name: 'Muhammad Messenger of Allah (PBUH)',
+            title: 'Sayyid al-Mursalin & Mercy to the Worlds',
+            badge: 'Seal of the Prophets',
+            children: [
+              {
+                name: 'Fatimah az-Zahra (RA)',
+                title: 'Leader of the Women of Paradise',
+                marriageTo: 'Ali ibn Abi Talib (RA)',
+                sons: ['Al-Hasan (RA)', 'Al-Husayn (RA)'],
+                badge: 'Ahl al-Bayt'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Abu Talib',
+        desc: 'Guardian and lifelong protector of the Prophet (PBUH)',
+        badge: 'Protector',
+        children: [
+          { name: 'Ali ibn Abi Talib (RA)', title: '4th Caliph & Gate of Knowledge', badge: 'Asadullah' },
+          { name: 'Ja\'far ibn Abi Talib (RA)', title: 'Martyr of Mu\'tah & Dhul-Janahayn', badge: 'Martyr of Mu\'tah' },
+          { name: 'Aqil ibn Abi Talib (RA)', title: 'Companion & Master Genealogist', badge: 'Sahabi' },
+          { name: 'Umm Hani (RA)', title: 'Fakhitah bint Abi Talib (Night of Isra)', badge: 'Sahabiyyah' }
+        ]
+      },
+      {
+        name: 'Hamzah (RA)',
+        desc: 'Asadullah (Lion of Allah) & Great Martyr of Uhud',
+        badge: 'Chief of Martyrs',
+        children: []
+      },
+      {
+        name: 'Al-Abbas (RA)',
+        desc: 'Noble Custodian of Pilgrim Watering (Siqayah)',
+        badge: 'Prophet\'s Uncle',
+        children: [
+          { name: 'Abdullah ibn Abbas (RA)', title: 'Chief of Exegetes & Scholar of the Ummah', badge: 'Mufassir' },
+          { name: 'Al-Fadl ibn al-Abbas (RA)', title: 'Mount companion of the Prophet at Farewell Hajj', badge: 'Sahabi' }
+        ]
+      },
+      {
+        name: 'Abu Lahab',
+        desc: 'Abd al-Uzza (Open opponent rebuked in Surah al-Masad)',
+        badge: 'Arch-Opponent',
+        children: []
+      }
+    ]
+  }
+};
+
+export const ANSAR_GENEALOGY_EN = {
+  ancestor: 'Azd Tribe (الأزد - Ancient Yemen & Dam of Ma\'rib)',
+  branches: [
+    {
+      name: 'Banu Khazraj (الخزرج)',
+      subClans: [
+        { name: 'Banu an-Najjar (بنو النجار)', leader: 'Abu Ayyub al-Ansari (RA)', note: 'Maternal clan of the Prophet (PBUH) & site of Al-Masjid an-Nabawi' },
+        { name: 'Banu Salamah (بنو سلمة)', leader: 'Jabir ibn Abdullah (RA)', note: 'Quarter of Masjid al-Qiblatayn & clan of Jabir (RA)' },
+        { name: 'Banu Sa\'idah (بنو ساعدة)', leader: 'Sa\'d ibn Ubadah (RA)', note: 'Saqifah Bani Sa\'idah & foremost generous chieftains of the Ansar' },
+        { name: 'Banu Zurayq (بنو زريق)', leader: 'Rafi\' ibn Malik (RA)', note: 'Honorably the first clan to recite the Quran in Madinah' }
+      ]
+    },
+    {
+      name: 'Banu Aws (الأوس)',
+      subClans: [
+        { name: 'Banu Abd al-Ashhal (بنو عبد الأشهل)', leader: 'Sa\'d ibn Mu\'adh (RA)', note: 'Leader of the Ansar whose passing shook the Throne of Allah' },
+        { name: 'Banu Zafar & Mu\'awiyah (بنو ظفر)', leader: 'Qatadah ibn an-Nu\'man (RA)', note: 'Miracle of the restored eye at Uhud & warrior of Badr' },
+        { name: 'Banu Awf & Banu Harithah (بنو عوف)', leader: 'Hanzalah (RA) & Muhammad ibn Maslamah (RA)', note: 'Ghasil al-Mala\'ikah Hanzalah & frontier defender Muhammad ibn Maslamah' }
+      ]
+    }
+  ]
+};
+
+export const ARABIAN_GEO_REGIONS_EN: Record<string, {
+  shortNameEn: string;
+  nameEn: string;
+  detailsEn: string;
+  dominantTribesEn: string[];
+  historicalEventsEn: string[];
+  prominentSahabaEn: string[];
+}> = {
+  'geo-makkah': {
+    shortNameEn: 'Makkah',
+    nameEn: 'Makkah al-Mukarramah & Sacred Haram',
+    detailsEn: 'Spiritual and commercial heart of the Arabian Peninsula. Ten Quraysh branches administered the sanctuaries around the Holy Kaaba.',
+    dominantTribesEn: ['Quraysh (Banu Hashim, Umayyah, Makhzum, Adi, Taym, Zuhrah, Asad)'],
+    historicalEventsEn: ['Building of the Kaaba', 'Birth & Prophethood of Muhammad (PBUH)', 'Hilf al-Fudul', 'Conquest of Makkah (8 AH)'],
+    prominentSahabaEn: ['Prophet Muhammad (PBUH)', 'Abu Bakr (RA)', 'Umar (RA)', 'Uthman (RA)', 'Ali (RA)', 'Khadijah (RA)']
+  },
+  'geo-madinah': {
+    shortNameEn: 'Madinah',
+    nameEn: 'al-Madinah al-Munawwarah (Yathrib)',
+    detailsEn: 'Fertile oasis city surrounded by date groves. The Aws and Khazraj of Yemen\'s Azd lineage embraced Islam and earned the title "Ansar" (The Helpers).',
+    dominantTribesEn: ['Banu Khazraj', 'Banu Aws (Ansar)', 'Banu Qaynuqa', 'Banu Nadir', 'Banu Qurayzah'],
+    historicalEventsEn: ['The Hijrah (622 CE)', 'Constitution of Madinah', 'Construction of Masjid an-Nabawi', 'Defense at Badr, Uhud & Trench'],
+    prominentSahabaEn: ['Sa\'d ibn Mu\'adh (RA)', 'Sa\'d ibn Ubadah (RA)', 'Abu Ayyub al-Ansari (RA)', 'Jabir (RA)']
+  },
+  'geo-taif': {
+    shortNameEn: 'Ta\'if',
+    nameEn: 'At-Ta\'if (Wadi Wajj)',
+    detailsEn: 'Cool highland city famed for orchards near Makkah; summer retreat of Quraysh and fortified stronghold of Banu Thaqif.',
+    dominantTribesEn: ['Banu Thaqif (Ahlaf & Banu Malik)'],
+    historicalEventsEn: ['Prophet\'s Journey to Ta\'if', 'Idol Sanctuary of al-Lat', 'Siege of Ta\'if (8 AH)', 'Call of Urwah ibn Mas\'ud'],
+    prominentSahabaEn: ['Urwah ibn Mas\'ud (RA)', 'Al-Mughirah ibn Shu\'bah (RA)', 'Uthman ibn Abi al-As (RA)']
+  },
+  'geo-hawazin': {
+    shortNameEn: 'Hawazin',
+    nameEn: 'Hawazin & Valley of Hunayn',
+    detailsEn: 'Guardian tribe of the purest classical Arabic tongue. Initially confronted the Muslim army at Hunayn, then embraced Islam wholeheartedly.',
+    dominantTribesEn: ['Banu Hawazin', 'Banu Sa\'d ibn Bakr', 'Banu Nasr'],
+    historicalEventsEn: ['Prophet\'s Infancy among Banu Sa\'d', 'Historic Battle of Hunayn (8 AH)'],
+    prominentSahabaEn: ['Halimah as-Sa\'diyyah (RA) [Foster-Mother]', 'Shayma bint al-Harith (RA)', 'Malik ibn Awf (RA)']
+  },
+  'geo-najd': {
+    shortNameEn: 'Najd',
+    nameEn: 'Najd & Central Arabian Plateau',
+    detailsEn: 'Most populous warrior plateau of Arabia; homeland of famed Arabian poets and skilled archers.',
+    dominantTribesEn: ['Banu Tamim', 'Banu Ghatafan', 'Banu Asad ibn Khuzaymah', 'Banu Abs & Dhubyan'],
+    historicalEventsEn: ['Confederate Coalition at Battle of Trench', 'Ridda Campaigns & Pacification'],
+    prominentSahabaEn: ['Khabbab ibn al-Aratt (RA)', 'Al-Aqra ibn Habis (RA)', 'Hudhayfah ibn al-Yaman (RA)']
+  },
+  'geo-yamama': {
+    shortNameEn: 'Yamamah',
+    nameEn: 'Al-Yamamah Region',
+    detailsEn: 'Fertile grain storehouse of east-central Arabia. Abu Bakr (RA) dispatched Khalid ibn al-Walid to crush Musaylimah\'s rebellion here.',
+    dominantTribesEn: ['Banu Hanifah'],
+    historicalEventsEn: ['Rise of False Prophet Musaylimah', 'Fierce Battle of Yamamah (12 AH)', 'Martyrdom of Hundreds of Huffaz'],
+    prominentSahabaEn: ['Thumamah ibn Uthal (RA) [Converted Chieftain]']
+  },
+  'geo-tihamah': {
+    shortNameEn: 'Tihamah',
+    nameEn: 'Tihamah & Red Sea Coast',
+    detailsEn: 'Coastal mountain passes along the Red Sea. Banu Ghifar controlled caravan corridors and collectively migrated to Madinah to accept Islam.',
+    dominantTribesEn: ['Banu Ghifar', 'Banu Kinanah', 'Banu Khuza\'ah', 'Banu Ashja'],
+    historicalEventsEn: ['Syrian Caravan Route Interdiction', 'Alliance with Khuza\'ah at Hudaybiyyah', 'Preparation for Conquest of Makkah'],
+    prominentSahabaEn: ['Abu Dharr al-Ghifari (RA) [Ascetic Companion]', 'Buraydah al-Aslami (RA)']
+  },
+  'geo-yemen': {
+    shortNameEn: 'Yemen',
+    nameEn: 'Yemen & Southern Arabia (Hadhramaut)',
+    detailsEn: 'Blessed cradle of ancient wisdom and learning. The Prophet (PBUH) said: "Faith is Yemeni and wisdom is Yemeni!" — (Sahih Bukhari)',
+    dominantTribesEn: ['Banu Daws', 'Himyar', 'Banu Bajilah', 'Madhhij', 'Kindah', 'Al-Ash\'ariyyun'],
+    historicalEventsEn: ['Missions of Mu\'adh ibn Jabal & Ali (RA)', 'Destruction of Dhul-Khalasah Idol', 'Prophet\'s Supplication for Yemen'],
+    prominentSahabaEn: ['Abu Hurayrah (RA) [Top Hadith Narrator]', 'Tufayl ibn Amr ad-Dawsi (RA)', 'Jarir ibn Abdullah (RA)', 'Abu Musa al-Ash\'ari (RA)']
+  },
+  'geo-north-sham': {
+    shortNameEn: 'Sham Border',
+    nameEn: 'Northern Frontier & Dumat al-Jandal',
+    detailsEn: 'Strategic northern frontier bordering the Byzantine Empire; primary gateway for the global spread of Islam.',
+    dominantTribesEn: ['Banu Kalb', 'Ghassanids', 'Lakhmids'],
+    historicalEventsEn: ['Expedition of Dumat al-Jandal', 'Tabuk Expedition (9 AH)', 'Battles of Mu\'tah & Yarmouk'],
+    prominentSahabaEn: ['Zayd ibn Harithah (RA)', 'Usamah ibn Zayd (RA)', 'Dihyah al-Kalbi (RA)']
+  },
+  'geo-khaybar': {
+    shortNameEn: 'Khaybar',
+    nameEn: 'Khaybar & Fadak Oases',
+    detailsEn: 'Heavily fortified stone strongholds and lush palm oasis settlement brought under Muslim authority in 7 AH.',
+    dominantTribesEn: ['Jewish Tribes of Khaybar', 'Remnants of Banu Nadir'],
+    historicalEventsEn: ['Battle of Khaybar (7 AH)', 'Conquest of Qamus Fortress', 'Heroism of Ali ibn Abi Talib (RA)'],
+    prominentSahabaEn: ['Ali ibn Abi Talib (RA)', 'Umm al-Mu\'minin Safiyyah bint Huyayy (RA)']
+  }
+};
+
+export const TRIBE_STATISTICS_EN: { nameEn: string; chapterEn: string }[] = [
+  { nameEn: '1. Banu Hashim & Banu al-Muttalib', chapterEn: 'Quraysh of Makkah' },
+  { nameEn: '2. Banu Abd Shams / Banu Umayyah', chapterEn: 'Quraysh of Makkah' },
+  { nameEn: '3. Banu Makhzum', chapterEn: 'Quraysh of Makkah' },
+  { nameEn: '4. Banu Adi & Banu Taym', chapterEn: 'Quraysh of Makkah' },
+  { nameEn: '5. Banu Asad & Banu Zuhrah', chapterEn: 'Quraysh of Makkah' },
+  { nameEn: '6. Banu Khazraj Tribe', chapterEn: 'Ansar of Madinah' },
+  { nameEn: '7. Banu Aws Tribe', chapterEn: 'Ansar of Madinah' },
+  { nameEn: '8. Ta\'if, Hawazin & Regional', chapterEn: 'Other Arabian Tribes' },
+  { nameEn: '9. Jewish Tribes of Madinah & Khaybar', chapterEn: 'Madinah & Khaybar' },
+  { nameEn: '10. Other Quraysh Branches', chapterEn: 'Quraysh of Makkah' },
+  { nameEn: '11. Banu Khuza\'ah & Banu Bakr', chapterEn: 'Hudaybiyyah & Makkah' },
+  { nameEn: '12. Banu Ghifar, Aslam & Banu Daws', chapterEn: 'Bedouin & South Arabia' },
+  { nameEn: '13. Banu Ghatafan & Banu Hanifah', chapterEn: 'Trench & Ridda Wars' }
+];
+

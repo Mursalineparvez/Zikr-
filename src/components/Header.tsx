@@ -187,6 +187,7 @@ export const Header: React.FC<HeaderProps> = ({
             isOpen={showInstallModal}
             onClose={() => setShowInstallModal(false)}
             isDay={isDay}
+            selectedLanguage={selectedLanguage}
           />
         </React.Suspense>
       )}

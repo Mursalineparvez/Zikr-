@@ -437,6 +437,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               war={mapWar}
               allWars={ISLAMIC_WARS_DATA}
               isDay={isDay}
+              selectedLanguage={selectedLanguage}
               soundEnabled={soundEnabled}
               onSelectWar={(id) => setActive3DMapWarId(id)}
               onClose={() => setActive3DMapWarId(null)}
@@ -1057,27 +1058,63 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                 <ul className="space-y-2 text-xs">
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 font-bold">•</span>
-                    <span><strong>تاريخ الرسل والملوك (তারীখে তাবারী):</strong> ইমাম আবু জাফর আত-তাবারী (২২৪–৩১০ হি:) — প্রাচীনতম ও প্রামাণ্য ইতিহাস বিশ্বকোষ।</span>
+                    <span>
+                      {isBn ? (
+                        <><strong>تاريخ الرسل والملوك (তারীখে তাবারী):</strong> ইমাম আবু জাফর আত-তাবারী (২২৪–৩১০ হি:) — প্রাচীনতম ও প্রামাণ্য ইতিহাস বিশ্বকোষ।</>
+                      ) : (
+                        <><strong>Tarikh al-Rusul wa al-Muluk (Tarikh al-Tabari):</strong> Imam Abu Ja'far al-Tabari (224–310 AH) — Earliest authoritative Islamic universal history.</>
+                      )}
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 font-bold">•</span>
-                    <span><strong>البداية والنহাية (আল-বিদায়া ওয়ান নিহায়া):</strong> হাফেজ ইবনে কাসীর (৭০১–৭৭৪ হি:) — বদর, উহুদ, খন্দক ও খিলাফতের বিজয়াভিযানের ধারাবাহিক ইতিহাস।</span>
+                    <span>
+                      {isBn ? (
+                        <><strong>البداية والنهاية (আল-বিদায়া ওয়ান নিহায়া):</strong> হাফেজ ইবনে কাসীর (৭০১–৭৭৪ হি:) — বদর, উহুদ, খন্দক ও খিলাফতের বিজয়াভিযানের ধারাবাহিক ইতিহাস।</>
+                      ) : (
+                        <><strong>Al-Bidaya wa al-Nihaya:</strong> Hafiz Ibn Kathir (701–774 AH) — Chronological history of Badr, Uhud, Khandaq, and the Caliphate campaigns.</>
+                      )}
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 font-bold">•</span>
-                    <span><strong>كتاب المغازي (কিতাবুল মাগাযী):</strong> ইমাম মুহাম্মদ ইবনে উমর আল-ওয়াকিদী (১৩০–২০৭ হি:) — রাসূলুল্লাহ (সা.)-এর পবিত্র সামরিক অভিযানের পুঙ্খানুপুঙ্খ দলিল।</span>
+                    <span>
+                      {isBn ? (
+                        <><strong>كتاب المغازي (কিতাবুল মাগাযী):</strong> ইমাম মুহাম্মদ ইবনে উমর আল-ওয়াকিদী (১৩০–২০৭ হি:) — রাসূলুল্লাহ (সা.)-এর পবিত্র সামরিক অভিযানের পুঙ্খানুপুঙ্খ দলিল।</>
+                      ) : (
+                        <><strong>Kitab al-Maghazi:</strong> Imam Muhammad ibn Umar al-Waqidi (130–207 AH) — Detailed documentation of the Prophet's (peace be upon him) military expeditions.</>
+                      )}
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 font-bold">•</span>
-                    <span><strong>سيرة ابن هشام (সীরাতে ইবনে হিশাম):</strong> আবু মুহাম্মদ আবদুল মালিক ইবনে হিশাম (মৃত্যু ২১৩ হি:) — আদি সীরাতের নির্ভরযোগ্য রূপ।</span>
+                    <span>
+                      {isBn ? (
+                        <><strong>سيرة ابن هشام (সীরাতে ইবনে হিশাম):</strong> আবু মুহাম্মদ আবদুল মালিক ইবনে হিশাম (মৃত্যু ২১৩ হি:) — আদি সীরাতের নির্ভরযোগ্য রূপ।</>
+                      ) : (
+                        <><strong>Sirat Ibn Hisham:</strong> Abu Muhammad Abd al-Malik ibn Hisham (d. 213 AH) — Foundational authoritative biography of the Prophet (peace be upon him).</>
+                      )}
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 font-bold">•</span>
-                    <span><strong>الكامل في التاريخ (আল-কামিল ফিত তারীখ):</strong> আল্লামা ইবনুল আসীর (৫৫৫–৬৩০ হি:) — ইসলামের সার্বিক ইতিহাস ও আন্দালুস/ক্রুসেড প্রতিরোধ।</span>
+                    <span>
+                      {isBn ? (
+                        <><strong>الكامل في التاريخ (আল-কামিল ফিত তারীখ):</strong> আল্লামা ইবনুল আসীর (৫৫৫–৬৩০ হি:) — ইসলামের সার্বিক ইতিহাস ও আন্দালুস/ক্রুসেড প্রতিরোধ।</>
+                      ) : (
+                        <><strong>Al-Kamil fi al-Tarikh:</strong> Allama Ibn al-Athir (555–630 AH) — Comprehensive Islamic history including Andalusia and the Crusades resistance.</>
+                      )}
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-amber-500 font-bold">•</span>
-                    <span><strong>زاد المعاد (যাদুল মা‘আদ):</strong> ইমাম ইবনুল কাইয়্যিম (৬৯১–৭৫১ হি:) — নববি যুদ্ধনীতি, ফিকহ ও সামরিক চুক্তিবিধান।</span>
+                    <span>
+                      {isBn ? (
+                        <><strong>زاد المعاد (যাদুল মা‘আদ):</strong> ইমাম ইবনুল কাইয়্যিম (৬৯১–৭৫১ হি:) — নববি যুদ্ধনীতি, ফিকহ ও সামরিক চুক্তিবিধান।</>
+                      ) : (
+                        <><strong>Zad al-Ma'ad:</strong> Imam Ibn al-Qayyim (691–751 AH) — Prophetic military ethics, jurisprudence, and treaty principles.</>
+                      )}
+                    </span>
                   </li>
                 </ul>
               </div>

@@ -40,11 +40,13 @@ export interface HolyPlaceHotspot {
   historicalSignificanceBn: string;
   historicalSignificanceEn: string;
   quranHadithReference?: string;
+  quranHadithReferenceEn?: string;
   imageUrl: string;
   badgeBn: string;
   badgeEn: string;
   talbiyahOrDua?: string;
   talbiyahOrDuaMeaningBn?: string;
+  talbiyahOrDuaMeaningEn?: string;
 }
 
 export const HOLY_LAND_HOTSPOTS: HolyPlaceHotspot[] = [
@@ -65,9 +67,11 @@ export const HOLY_LAND_HOTSPOTS: HolyPlaceHotspot[] = [
     historicalSignificanceBn: 'হযরত ইবরাহিম ও ইসমাইল (আ.) কর্তৃক কাবা গৃহ নির্মাণ এবং সর্বশ্রেষ্ঠ রাসুল মুহাম্মদ (সা.)-এর পবিত্র জন্মভূমি ও ওহী অবতরণের সূচনাস্থল।',
     historicalSignificanceEn: 'Birthplace of Prophet Muhammad (PBUH) and where Ibrahim & Ismail (AS) raised the foundations of the Holy Kaaba.',
     quranHadithReference: 'إِنَّ أَوَّلَ بَيْتٍ وُضِعَ لِلنَّاسِ لَلَّذِي بِبَكَّةَ مُبَارَكًا (সূরা আলে ইমরান: ৯৬)',
+    quranHadithReferenceEn: 'إِنَّ أَوَّلَ بَيْتٍ وُضِعَ لِلنَّاسِ لَلَّذِي بِبَكَّةَ مُبَارَكًا (Surah Al-Imran 3:96)',
     imageUrl: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1000&q=80',
     talbiyahOrDua: 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لَا شَرِيكَ لَكَ لَبَّيْكَ',
     talbiyahOrDuaMeaningBn: 'আমি হাজির হে আল্লাহ, আমি হাজির! আপনার কোনো শরিক নেই, আমি হাজির!',
+    talbiyahOrDuaMeaningEn: 'Here I am, O Allah, here I am! You have no partner, here I am!',
   },
   {
     id: 'madinah',
@@ -86,9 +90,11 @@ export const HOLY_LAND_HOTSPOTS: HolyPlaceHotspot[] = [
     historicalSignificanceBn: '৬২২ খ্রিস্টাব্দে হিজরতের পর ইসলামী সভ্যতার প্রথম রাষ্ট্র ও সোনালী যুগের কেন্দ্রবিন্দু।',
     historicalSignificanceEn: 'The cradle of Islamic civilization after the Hijrah in 622 CE and the resting place of Prophet Muhammad (PBUH).',
     quranHadithReference: 'মদিনায় এক রাকাত নামাজ মসজিদে নববীতে ১,০০০ রাকাতের চেয়ে উত্তম। (সহিহ বুখারি)',
+    quranHadithReferenceEn: 'One prayer in Masjid an-Nabawi is better than 1,000 prayers elsewhere (except Makkah). (Sahih al-Bukhari)',
     imageUrl: 'https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?auto=format&fit=crop&w=1000&q=80',
     talbiyahOrDua: 'اللَّهُمَّ اجْعَلْ بِالْمَدِينَةِ ضِعْفَيْ مَا جَعَلْتَ بِمَكَّةَ مِنَ الْبَرَكَةِ',
     talbiyahOrDuaMeaningBn: 'হে আল্লাহ! মক্কায় যে বরকত দিয়েছেন, মদিনায় তার দ্বিগুণ বরকত দান করুন।',
+    talbiyahOrDuaMeaningEn: 'O Allah! Bestow upon Madinah twice the blessings You placed upon Makkah.',
   },
   {
     id: 'jeddah',
@@ -163,6 +169,7 @@ export const HOLY_LAND_HOTSPOTS: HolyPlaceHotspot[] = [
     imageUrl: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=1000&q=80',
     talbiyahOrDua: 'لَبَّيْكَ عُمْرَةً وَحَجًّا',
     talbiyahOrDuaMeaningBn: 'আমি উমরাহ ও হজের জন্য আপনার দরবারে হাজির।',
+    talbiyahOrDuaMeaningEn: 'Here I am, O Allah, intending Umrah and Hajj.',
   },
   {
     id: 'al_juhfah',
@@ -404,7 +411,8 @@ export const ArabianIllustratedMapView: React.FC<ArabianIllustratedMapViewProps>
         spot.nameBn.toLowerCase().includes(q) ||
         spot.nameEn.toLowerCase().includes(q) ||
         spot.nameAr.includes(q) ||
-        spot.descriptionBn.toLowerCase().includes(q)
+        spot.descriptionBn.toLowerCase().includes(q) ||
+        spot.descriptionEn.toLowerCase().includes(q)
       );
     });
   }, [activeCategory, searchQuery]);
@@ -498,7 +506,7 @@ export const ArabianIllustratedMapView: React.FC<ArabianIllustratedMapViewProps>
                 ? 'bg-[#e2d5bd] hover:bg-[#d8c8ad] border-[#cfbea0] text-[#33240e]'
                 : 'bg-[#123145] hover:bg-[#1a4058] border-cyan-700/50 text-cyan-200'
             }`}
-            title="Toggle Map Style (ভিন্টেজ পার্চমেন্ট / নক্ষত্র রাত)"
+            title={isBn ? 'ম্যাপ স্টাইল পরিবর্তন করুন (ভিন্টেজ পার্চমেন্ট / নক্ষত্র রাত)' : 'Toggle Map Style (Vintage Parchment / Nocturnal)'}
           >
             {mapStyleMode === 'parchment' ? (
               <>
@@ -1203,7 +1211,7 @@ export const ArabianIllustratedMapView: React.FC<ArabianIllustratedMapViewProps>
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  {selectedHotspot.badgeEn}
+                  {isBn ? selectedHotspot.badgeBn : selectedHotspot.badgeEn}
                 </span>
                 {selectedHotspot.distanceToKaabaKm !== undefined && (
                   <span className="text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400">
@@ -1310,7 +1318,7 @@ export const ArabianIllustratedMapView: React.FC<ArabianIllustratedMapViewProps>
                   title="Play Arabic Supplication"
                 >
                   <Volume2 className={`w-4 h-4 ${isPlayingAudio ? 'animate-bounce' : ''}`} />
-                  <span>{isPlayingAudio ? 'বাজছে...' : isBn ? 'দোয়া শুনুন' : 'Listen Supplication'}</span>
+                  <span>{isPlayingAudio ? (isBn ? 'বাজছে...' : 'Playing...') : isBn ? 'দোয়া শুনুন' : 'Listen Supplication'}</span>
                 </button>
               )}
             </div>
@@ -1332,9 +1340,9 @@ export const ArabianIllustratedMapView: React.FC<ArabianIllustratedMapViewProps>
               <p className="leading-relaxed opacity-90">
                 {isBn ? selectedHotspot.historicalSignificanceBn : selectedHotspot.historicalSignificanceEn}
               </p>
-              {selectedHotspot.quranHadithReference && (
+              {(isBn ? selectedHotspot.quranHadithReference : (selectedHotspot.quranHadithReferenceEn || selectedHotspot.quranHadithReference)) && (
                 <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 mt-1">
-                  📖 {selectedHotspot.quranHadithReference}
+                  📖 {isBn ? selectedHotspot.quranHadithReference : (selectedHotspot.quranHadithReferenceEn || selectedHotspot.quranHadithReference)}
                 </div>
               )}
             </div>
@@ -1354,9 +1362,9 @@ export const ArabianIllustratedMapView: React.FC<ArabianIllustratedMapViewProps>
                 <div className="font-arabic text-sm sm:text-base text-right leading-loose font-bold text-amber-700 dark:text-amber-300">
                   {selectedHotspot.talbiyahOrDua}
                 </div>
-                {selectedHotspot.talbiyahOrDuaMeaningBn && (
+                {(isBn ? selectedHotspot.talbiyahOrDuaMeaningBn : (selectedHotspot.talbiyahOrDuaMeaningEn || selectedHotspot.talbiyahOrDuaMeaningBn)) && (
                   <p className="text-xs opacity-90 italic">
-                    "{selectedHotspot.talbiyahOrDuaMeaningBn}"
+                    "{isBn ? selectedHotspot.talbiyahOrDuaMeaningBn : (selectedHotspot.talbiyahOrDuaMeaningEn || selectedHotspot.talbiyahOrDuaMeaningBn)}"
                   </p>
                 )}
               </div>

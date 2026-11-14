@@ -1197,30 +1197,48 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
               <div className="space-y-1 border-b pb-3 border-teal-500/20 pr-8">
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-500">
-                  {selectedFamilyBioModal.relationTitleBn}
+                  {isBn
+                    ? selectedFamilyBioModal.relationTitleBn
+                    : (selectedFamilyBioModal.relationTitleEn || selectedFamilyBioModal.relationTitleBn)}
                 </span>
                 <h3 className="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400">
-                  {selectedFamilyBioModal.nameBn}
+                  {isBn
+                    ? selectedFamilyBioModal.nameBn
+                    : (selectedFamilyBioModal.nameEn || selectedFamilyBioModal.nameBn)}
                 </h3>
                 {selectedFamilyBioModal.nameAr && (
                   <p className="font-arabic text-sm text-amber-500">{selectedFamilyBioModal.nameAr}</p>
                 )}
-                {selectedFamilyBioModal.birthAndDeathBn && (
-                  <p className="text-xs opacity-75">{selectedFamilyBioModal.birthAndDeathBn}</p>
+                {(isBn ? selectedFamilyBioModal.birthAndDeathBn : (selectedFamilyBioModal.birthAndDeathEn || selectedFamilyBioModal.birthAndDeathBn)) && (
+                  <p className="text-xs opacity-75">
+                    {isBn
+                      ? selectedFamilyBioModal.birthAndDeathBn
+                      : (selectedFamilyBioModal.birthAndDeathEn || selectedFamilyBioModal.birthAndDeathBn)}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2 text-xs sm:text-sm leading-relaxed opacity-95">
-                <p>{selectedFamilyBioModal.biographyBn}</p>
+                <p>
+                  {isBn
+                    ? selectedFamilyBioModal.biographyBn
+                    : (selectedFamilyBioModal.biographyEn || selectedFamilyBioModal.biographyBn)}
+                </p>
               </div>
 
-              {selectedFamilyBioModal.keyContributionsBn && selectedFamilyBioModal.keyContributionsBn.length > 0 && (
+              {(isBn
+                ? selectedFamilyBioModal.keyContributionsBn
+                : (selectedFamilyBioModal.keyContributionsEn || selectedFamilyBioModal.keyContributionsBn)
+              )?.length > 0 && (
                 <div className="space-y-1.5 pt-2 border-t border-teal-500/20 text-xs">
                   <strong className="text-amber-500 block">
                     {isBn ? 'অবদান ও পুণ্যস্মৃতি:' : 'Key Contributions & Virtues:'}
                   </strong>
                   <ul className="space-y-1 opacity-90 pl-2">
-                    {selectedFamilyBioModal.keyContributionsBn.map((c, idx) => (
+                    {(isBn
+                      ? selectedFamilyBioModal.keyContributionsBn
+                      : (selectedFamilyBioModal.keyContributionsEn || selectedFamilyBioModal.keyContributionsBn)
+                    ).map((c, idx) => (
                       <li key={idx} className="flex items-start gap-1.5">
                         <span className="text-emerald-500 font-bold">•</span>
                         <span>{c}</span>
@@ -1230,9 +1248,12 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 </div>
               )}
 
-              {selectedFamilyBioModal.hadithOrSirahRefBn && (
+              {(isBn ? selectedFamilyBioModal.hadithOrSirahRefBn : (selectedFamilyBioModal.hadithOrSirahRefEn || selectedFamilyBioModal.hadithOrSirahRefBn)) && (
                 <p className="text-[11px] opacity-70 border-t pt-2 border-teal-500/20">
-                  {isBn ? 'রেফারেন্স:' : 'References:'} {selectedFamilyBioModal.hadithOrSirahRefBn}
+                  {isBn ? 'রেফারেন্স:' : 'References:'}{' '}
+                  {isBn
+                    ? selectedFamilyBioModal.hadithOrSirahRefBn
+                    : (selectedFamilyBioModal.hadithOrSirahRefEn || selectedFamilyBioModal.hadithOrSirahRefBn)}
                 </p>
               )}
             </div>

@@ -51,11 +51,9 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
     zikr.name;
 
   const displayMeaning =
-    (currentLang === 'bn' ? (zikr.meaningBn || zikr.meaning) : translationData?.meaning) ||
-    translationData?.meaning ||
-    zikr.meaningBn ||
-    zikr.meaning ||
-    '';
+    currentLang === 'bn'
+      ? (zikr.meaningBn || translationData?.meaning || zikr.meaning || '')
+      : (translationData?.meaning || zikr.meaning || zikr.meaningBn || '');
 
   const isUrdu = currentLang === 'ur';
 

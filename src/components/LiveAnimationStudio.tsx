@@ -125,6 +125,7 @@ interface HajjRouteDetail {
   checklistEn: string[];
   duaArabic?: string;
   duaMeaningBn?: string;
+  duaMeaningEn?: string;
 }
 
 const HAJJ_ROUTE_PHOTOS: HajjRouteDetail[] = [
@@ -152,6 +153,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRouteDetail[] = [
     ],
     duaArabic: 'لَبَّيْكَ اللَّهُمَّ حَجًّا، لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ',
     duaMeaningBn: 'আমি হজের উদ্দেশ্যে হাজির হে আল্লাহ, আমি হাজির।',
+    duaMeaningEn: 'Here I am, O Allah, for Hajj; here I am.',
   },
   {
     id: 2,
@@ -177,6 +179,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRouteDetail[] = [
     ],
     duaArabic: 'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ',
     duaMeaningBn: 'আল্লাহ ছাড়া কোনো মাবুদ নেই, তিনি একক, তাঁর কোনো শরিক নেই। রাজত্ব ও প্রশংসা তাঁরই।',
+    duaMeaningEn: 'There is no deity worthy of worship except Allah alone without partner; to Him belongs the dominion and all praise, and He has power over everything.',
   },
   {
     id: 3,
@@ -202,6 +205,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRouteDetail[] = [
     ],
     duaArabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ المَغْفِرَةَ وَالعَافِيَةَ',
     duaMeaningBn: 'হে আল্লাহ, আমি আপনার কাছে ক্ষমা ও নিরাপত্তা প্রার্থনা করছি।',
+    duaMeaningEn: 'O Allah, I ask You for forgiveness and well-being.',
   },
   {
     id: 4,
@@ -227,6 +231,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRouteDetail[] = [
     ],
     duaArabic: 'بِسْمِ اللَّهِ، اللَّهُ أَكْبَرُ، رَغْمًا لِلشَّيْطَانِ وَرِضًا لِلرَّحْمَنِ',
     duaMeaningBn: 'আল্লাহর নামে, আল্লাহ সর্বশ্রেষ্ঠ। শয়তানের অপমানের জন্য এবং দয়াময়ের সন্তুষ্টির জন্য।',
+    duaMeaningEn: 'In the name of Allah, Allah is the Greatest—in defiance of Satan and seeking the pleasure of the Most Merciful.',
   },
   {
     id: 5,
@@ -252,6 +257,7 @@ const HAJJ_ROUTE_PHOTOS: HajjRouteDetail[] = [
     ],
     duaArabic: 'اللَّهُمَّ لَا تَجْعَلْ هَذَا آخِرَ العَهْدِ مِنْ بَيْتِكَ الحَرَامِ',
     duaMeaningBn: 'হে আল্লাহ, আপনি আমার এই সফরকে আপনার পবিত্র ঘরের শেষ সাক্ষাত বানাবেন না।',
+    duaMeaningEn: 'O Allah, do not make this my final visit to Your Sacred House.',
   },
 ];
 
@@ -791,7 +797,7 @@ export const LiveAnimationStudio: React.FC<LiveAnimationStudioProps> = ({
                 </p>
                 <p className="text-xs font-semibold text-slate-300">
                   <strong className="text-amber-400">{isBn ? 'অর্থ: ' : 'Meaning: '}</strong>
-                  {activeRouteDetail.duaMeaningBn}
+                  {isBn ? activeRouteDetail.duaMeaningBn : (activeRouteDetail.duaMeaningEn || activeRouteDetail.duaMeaningBn)}
                 </p>
               </div>
             )}

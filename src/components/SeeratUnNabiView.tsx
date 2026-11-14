@@ -74,6 +74,28 @@ const STORAGE_KEYS = {
   FONT_SIZE: 'zikr_seerat_font_size',
 };
 
+// Convert Bengali digits & Hijri era phrasing for non-Bengali views
+const formatSeeratHijri = (hijri: string, isBn: boolean): string => {
+  if (isBn || !hijri) return hijri;
+  const bnToEnDigits: Record<string, string> = {
+    '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+    '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9',
+  };
+  let out = hijri.replace(/[০-৯]/g, (d) => bnToEnDigits[d] || d);
+  out = out
+    .replace(/নবুওয়াত-পূর্ব\s*(\d+)\s*বছর/g, '$1 Years Pre-Prophethood')
+    .replace(/নবুওয়াত-পূর্ব/g, 'Pre-Prophethood')
+    .replace(/(\d+)(?:ম|য়|য়|র্থ|ষ্ঠ|তম|শে|ই)\s*নবুওয়াত\s*বর্ষ/g, 'Year $1 of Prophethood')
+    .replace(/নবুওয়াত\s*বর্ষ/g, 'Prophetic Year')
+    .replace(/(\d+)(?:ম|য়|য়|র্থ|ষ্ঠ|তম|শে|ই)\s*হিজরি/g, '$1 AH')
+    .replace(/হিজরি/g, 'AH')
+    .replace(/হিজরত ও প্রতিষ্ঠা/g, 'Hijrah & Establishment')
+    .replace(/প্রথমার্ধ/g, 'First Half')
+    .replace(/দ্বিতীয়ার্ধ/g, 'Second Half')
+    .replace(/বছর/g, 'Years');
+  return out;
+};
+
 // Fallback provider for authentic classical sources across any chapter
 export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSourceRef[] => {
   if (item.classicalSources && item.classicalSources.length > 0) {
@@ -87,22 +109,31 @@ export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSource
         bookBn: 'আর-রাহীকুল মাখতূম (صفوة الرحيق المختوم)',
         bookEn: 'Ar-Raheeq Al-Makhtum (The Sealed Nectar)',
         authorBn: 'আল্লামা সফিউর রহমান মুবারকপুরী (র.)',
+        authorEn: 'Allamah Safiur Rahman Mubarakpuri (RA)',
         volumePage: 'অধ্যায়: শুভ জন্ম ও প্রাক-নবুওয়াত কাল (পৃষ্ঠা ৪১ - ৫৮)',
+        volumePageEn: 'Chapter: Blessed Birth & Early Years (pp. 41–58)',
         referenceDetailBn: 'সহিহ সনদে বর্ণিত শৈশব, হালিমা আস-সাদিয়ার পরিবারে বরকত ও প্রথম বক্ষ বিদারণ।',
+        referenceDetailEn: 'Authentic accounts of infancy, blessings in Halima As-Sa\'diyah\'s household, and the first opening of the chest.',
       },
       {
         bookBn: 'সীরাতে ইবনে হিশাম (سيرة ابن هشام)',
         bookEn: 'Seerat Ibn Hisham',
         authorBn: 'আবদুল মালিক ইবনে হিশাম (র.)',
+        authorEn: 'Abd al-Malik ibn Hisham (RA)',
         volumePage: 'খণ্ড ১, পৃষ্ঠা ১৫৫ - ১৮০',
+        volumePageEn: 'Vol. 1, pp. 155–180',
         referenceDetailBn: 'কুরাইশদের প্রথা, মা আমিনার কোলে আগমন ও দাদা আবদুল মুত্তালিবের অভিভাবকত্ব।',
+        referenceDetailEn: 'Quraysh customs, return to Mother Aminah, and guardianship under grandfather Abdul Muttalib.',
       },
       {
         bookBn: 'সহীহ আল-বুখারী (صحيح البخاري)',
         bookEn: 'Sahih al-Bukhari',
         authorBn: 'ইমাম মুহাম্মদ ইবনে ইসমাইল আল-বুখারী (র.)',
+        authorEn: 'Imam Muhammad ibn Ismail al-Bukhari (RA)',
         volumePage: 'কিতাবুম মানাকিব (হাদিস নং ৩৮৮৭, ৩৯৫২)',
+        volumePageEn: 'Kitab al-Manaqib (Hadith 3887, 3952)',
         referenceDetailBn: 'রাসুল (সা.)-এর শুভ জন্ম, দুধপান ও শৈশবের পবিত্র ঘটনাবলী।',
+        referenceDetailEn: 'Blessed birth of the Prophet (PBUH), nursing years, and pure events of childhood.',
       },
     ];
   } else if (phase === 'youth_preprophetic') {
@@ -111,22 +142,31 @@ export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSource
         bookBn: 'আর-রাহীকুল মাখতূম (صفوة الرحيق المختوم)',
         bookEn: 'Ar-Raheeq Al-Makhtum',
         authorBn: 'আল্লামা সফিউর রহমান মুবারকপুরী (র.)',
+        authorEn: 'Allamah Safiur Rahman Mubarakpuri (RA)',
         volumePage: 'অধ্যায়: যৌবন ও আল-আমীন চরিত্র (পৃষ্ঠা ৫৯ - ৭২)',
+        volumePageEn: 'Chapter: Youth & Al-Amin Character (pp. 59–72)',
         referenceDetailBn: 'হিলফুল ফুজুল চুক্তি, ব্যবসা-বাণিজ্য ও খাদিজা (রা.)-এর সাথে মোবারক বিবাহ।',
+        referenceDetailEn: 'Pact of Hilf al-Fudul, trade journeys, and blessed marriage to Khadijah (RA).',
       },
       {
         bookBn: 'জাদুল মাআদ (زاد المعاد في هدي خير العباد)',
         bookEn: 'Zad al-Ma\'ad',
         authorBn: 'ইমাম ইবনুল কাইয়্যিম আল-জাওযিয়্যাহ (র.)',
+        authorEn: 'Imam Ibn Qayyim al-Jawziyya (RA)',
         volumePage: 'খণ্ড ১, পৃষ্ঠা ৮১ - ৯৫',
+        volumePageEn: 'Vol. 1, pp. 81–95',
         referenceDetailBn: 'হাজরে আসওয়াদ পুনর্স্থাপন ও কুরাইশদের মধ্যকার বিবাদ মীমাংসা।',
+        referenceDetailEn: 'Placing the Black Stone (Hajar al-Aswad) and resolving the Quraysh dispute.',
       },
       {
         bookBn: 'সহীহ আল-বুখারী (صحيح البخاري)',
         bookEn: 'Sahih al-Bukhari',
         authorBn: 'ইমাম আল-বুখারী (র.)',
+        authorEn: 'Imam al-Bukhari (RA)',
         volumePage: 'কিতাবুত তিজারাহ (হাদিস নং ২২৮২, ৩৮১৫)',
+        volumePageEn: 'Kitab al-Tijarah (Hadith 2282, 3815)',
         referenceDetailBn: 'সততা ও আমানতদারীর মাধ্যমে ব্যবসায়িক সাফল্য ও আল-আমীন উপাধি।',
+        referenceDetailEn: 'Commercial integrity, trustworthiness, and earning the title Al-Amin.',
       },
     ];
   } else if (phase === 'makki_prophetic') {
@@ -135,29 +175,41 @@ export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSource
         bookBn: 'সহীহ আল-বুখারী (صحيح البخاري)',
         bookEn: 'Sahih al-Bukhari',
         authorBn: 'ইমাম মুহাম্মদ ইবনে ইসমাইল আল-বুখারী (র.)',
+        authorEn: 'Imam Muhammad ibn Ismail al-Bukhari (RA)',
         volumePage: 'কিতাবু বাদইল ওয়াহি (হাদিস নং ৩, ৪, ৩৮৯২)',
+        volumePageEn: 'Kitab Bad\' al-Wahy (Hadith 3, 4, 3892)',
         referenceDetailBn: 'হেরা গুহায় জিব্রাইল (আ.)-এর আগমন, প্রথম ওহী নাজিল ও মিরাজ গমন।',
+        referenceDetailEn: 'Arrival of Jibril (AS) in Cave Hira, first revelation, and Al-Isra wal-Mi\'raj.',
       },
       {
         bookBn: 'সহীহ মুসলিম (صحيح مسلم)',
         bookEn: 'Sahih Muslim',
         authorBn: 'ইমাম মুসলিম ইবনুল হাজ্জাজ (র.)',
+        authorEn: 'Imam Muslim ibn al-Hajjaj (RA)',
         volumePage: 'কিতাবুল ঈমান (হাদিস নং ১৬২ - ১৬৪)',
+        volumePageEn: 'Kitab al-Iman (Hadith 162–164)',
         referenceDetailBn: 'ইসরা ও মিরাজের পূর্ণাঙ্গ বিবরণ এবং পাঁচ ওয়াক্ত সালাত ফরজ হওয়া।',
+        referenceDetailEn: 'Complete account of the Night Journey & Ascension and obligation of the five daily prayers.',
       },
       {
         bookBn: 'সীরাতে ইবনে হিশাম (سيرة ابن هشام)',
         bookEn: 'Seerat Ibn Hisham',
         authorBn: 'আল-হাফিজ ইবনে হিশাম (র.)',
+        authorEn: 'Al-Hafiz Ibn Hisham (RA)',
         volumePage: 'খণ্ড ১-২ (প্রকাশ্য দাওয়াত ও মক্কার নির্যাতন)',
+        volumePageEn: 'Vols. 1–2 (Open Call & Makkan Persecution)',
         referenceDetailBn: 'হাবশায় হিজরত, বয়কট ও শিয়াবে আবি তালিবে ৩ বছর বন্দিদশা।',
+        referenceDetailEn: 'Migration to Abyssinia, social boycott, and three-year siege in Shi\'b Abi Talib.',
       },
       {
         bookBn: 'আল-বিদায়া ওয়ান নিহায়া (البداية والنهاية)',
         bookEn: 'Al-Bidayah wan-Nihayah',
         authorBn: 'আল-হাফিজ ইবনে কাছীর (র.)',
+        authorEn: 'Al-Hafiz Ibn Kathir (RA)',
         volumePage: 'খণ্ড ৩, পৃষ্ঠা ১৫ - ১২০',
+        volumePageEn: 'Vol. 3, pp. 15–120',
         referenceDetailBn: 'তায়েফ সফর, আসহাবে আল-আকাবা বায়আত ও হিজরতের পূর্ব প্রস্তুতি।',
+        referenceDetailEn: 'Journey to Taif, Pledges of Al-Aqabah, and preparations for the Hijrah.',
       },
     ];
   } else if (phase === 'madani_early') {
@@ -166,22 +218,31 @@ export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSource
         bookBn: 'আর-রাহীকুল মাখতূম (صفوة الرحيق المختوم)',
         bookEn: 'Ar-Raheeq Al-Makhtum',
         authorBn: 'আল্লামা সফিউর রহমান মুবারকপুরী (র.)',
+        authorEn: 'Allamah Safiur Rahman Mubarakpuri (RA)',
         volumePage: 'অধ্যায়: হিজরত ও মদিনা রাষ্ট্র গঠন (পৃষ্ঠা ১৫১ - ১৮০)',
+        volumePageEn: 'Chapter: Hijrah & State of Madinah (pp. 151–180)',
         referenceDetailBn: 'সাওর গুহায় আত্মগোপন, কুবা মসজিদ ও আনসার-মুহাজির ভ্রাতৃত্ব।',
+        referenceDetailEn: 'Refuge in Cave Thawr, Quba Mosque, and brotherhood between Ansar and Muhajirun.',
       },
       {
         bookBn: 'সহীহ আল-বুখারী (صحيح البخاري)',
         bookEn: 'Sahih al-Bukhari',
         authorBn: 'ইমাম আল-বুখারী (র.)',
+        authorEn: 'Imam al-Bukhari (RA)',
         volumePage: 'কিতাবুম মানাকিবিল আনসার (হাদিস নং ৩৯০৫, ৩৯১১)',
-        referenceDetailBn: 'মদিনায় শুভ আগমন ও বিশ্ব ইতিহাসের প্রথম লিখিত সংবিধান (মদিনা সনদ)।',
+        volumePageEn: 'Kitab Manaqib al-Ansar (Hadith 3905, 3911)',
+        referenceDetailBn: 'মদিনায় শুভ আগমন ও বিশ্ব ইতিহাসর প্রথম লিখিত সংবিধান (মদিনা সনদ)।',
+        referenceDetailEn: 'Blessed arrival in Madinah and establishment of the Charter of Madinah.',
       },
       {
         bookBn: 'সীরাতে ইবনে হিশাম (سيرة ابن هشام)',
         bookEn: 'Seerat Ibn Hisham',
         authorBn: 'আল-হাফিজ ইবনে হিশাম (র.)',
+        authorEn: 'Al-Hafiz Ibn Hisham (RA)',
         volumePage: 'খণ্ড ২, পৃষ্ঠা ৫০০ - ৫৫০',
+        volumePageEn: 'Vol. 2, pp. 500–550',
         referenceDetailBn: 'মসজিদে নববী নির্মাণ ও কিবলা বায়তুল মাকদিস থেকে কাবার দিকে পরিবর্তন।',
+        referenceDetailEn: 'Construction of Al-Masjid an-Nabawi and the change of Qiblah toward the Kaaba.',
       },
     ];
   } else if (phase === 'madani_battles') {
@@ -190,22 +251,31 @@ export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSource
         bookBn: 'সহীহ আল-বুখারী (صحيح البخاري)',
         bookEn: 'Sahih al-Bukhari',
         authorBn: 'ইমাম আল-বুখারী (র.)',
+        authorEn: 'Imam al-Bukhari (RA)',
         volumePage: 'কিতাবুল মাগাজী (হাদিস নং ৩৯৪৭ - ৪২১২)',
+        volumePageEn: 'Kitab al-Maghazi (Hadith 3947–4212)',
         referenceDetailBn: 'ঐতিহাসিক বদর, উহুদ, খন্দক (আহজাব) ও হুদাইবিয়ার সন্ধির প্রামাণ্য বিবরণ।',
+        referenceDetailEn: 'Authentic narrations of Badr, Uhud, Trench (Al-Ahzab), and Treaty of Hudaybiyyah.',
       },
       {
         bookBn: 'সহীহ মুসলিম (صحيح مسلم)',
         bookEn: 'Sahih Muslim',
         authorBn: 'ইমাম মুসলিম (র.)',
+        authorEn: 'Imam Muslim (RA)',
         volumePage: 'কিতাবুল জিহাদ ওয়াস সিয়ার (হাদিস নং ১৭৬৩ - ১৮০২)',
+        volumePageEn: 'Kitab al-Jihad was-Siyar (Hadith 1763–1802)',
         referenceDetailBn: 'সাহাবিদের আত্মত্যাগ, আল্লাহর আসমানি সাহায্য ও সন্ধির দূরদর্শী শর্তাবলী।',
+        referenceDetailEn: 'Sacrifice of the Companions, divine assistance, and far-sighted treaty terms.',
       },
       {
         bookBn: 'জাদুল মাআদ (زاد المعاد)',
         bookEn: 'Zad al-Ma\'ad',
         authorBn: 'ইমাম ইবনুল কাইয়্যিম (র.)',
+        authorEn: 'Imam Ibn Qayyim al-Jawziyya (RA)',
         volumePage: 'খণ্ড ৩ (গাজওয়াতু বদর ও হুদাইবিয়ার ফিকহ)',
+        volumePageEn: 'Vol. 3 (Fiqh of Badr & Hudaybiyyah)',
         referenceDetailBn: 'যুদ্ধনীতি, বন্দিদের প্রতি মানবিক আচরণ ও বিশ্বনেতাদের নিকট পত্র প্রেরণ।',
+        referenceDetailEn: 'Ethics of engagement, humane treatment of captives, and epistles to world rulers.',
       },
     ];
   } else {
@@ -215,22 +285,31 @@ export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSource
         bookBn: 'সহীহ আল-বুখারী (صحيح البخاري)',
         bookEn: 'Sahih al-Bukhari',
         authorBn: 'ইমাম আল-বুখারী (র.)',
+        authorEn: 'Imam al-Bukhari (RA)',
         volumePage: 'কিতাবুল মাগাজী ও কিতাবুল হজ্জ (হাদিস নং ৪২৮৬, ৪৩৪০)',
+        volumePageEn: 'Kitab al-Maghazi & Kitab al-Hajj (Hadith 4286, 4340)',
         referenceDetailBn: 'রক্তপাতহীন মক্কা বিজয়, সাধারণ ক্ষমা ঘোষণা ও বিদায় হজের মহাসনদ।',
+        referenceDetailEn: 'Bloodless Conquest of Makkah, general amnesty, and the Farewell Pilgrimage sermon.',
       },
       {
         bookBn: 'সহীহ মুসলিম (صحيح مسلم)',
         bookEn: 'Sahih Muslim',
         authorBn: 'ইমাম মুসলিম (র.)',
+        authorEn: 'Imam Muslim (RA)',
         volumePage: 'হাদিস নং ১২১৮ (জাবের রা. বর্ণিত বিদায় হজের বর্ণনা)',
+        volumePageEn: 'Hadith 1218 (Jabir RA narration of Farewell Hajj)',
         referenceDetailBn: 'বিদায় হজের আরাফাত ময়দানে প্রদত্ত ঐতিহাসিক মানবাধিকার ভাষণ।',
+        referenceDetailEn: 'Historic universal human rights sermon delivered on the Plain of Arafat.',
       },
       {
         bookBn: 'আর-রাহীকুল মাখতূম (صفوة الرحيق المختوم)',
         bookEn: 'Ar-Raheeq Al-Makhtum',
         authorBn: 'আল্লামা সফিউর রহমান মুবারকপুরী (র.)',
+        authorEn: 'Allamah Safiur Rahman Mubarakpuri (RA)',
         volumePage: 'অধ্যায়: রফীকুল আলায় যাত্রা ও পবিত্র ওফাত (পৃষ্ঠা ৪৬৫ - ৪৮৫)',
+        volumePageEn: 'Chapter: Journey to Al-Rafiq al-A\'la (pp. 465–485)',
         referenceDetailBn: 'নবীজি (সা.)-এর শেষ অসুস্থতা, উম্মাহর জন্য অসিয়ত ও পরলোকে প্রস্থান।',
+        referenceDetailEn: 'The Prophet\'s final illness, parting counsel to the Ummah, and return to Allah.',
       },
     ];
   }
@@ -255,7 +334,7 @@ export const getChapterKeySahaba = (item: SeeratAgeItem): KeySahabiInvolved[] =>
       { nameBn: 'হজরত খাদিজাতুল কুবরা (রা.)', nameEn: 'Khadijah bint Khuwaylid (R.A.)', roleBn: 'পবিত্র সহধর্মিণী ও প্রথম বিশ্বাসী', roleEn: 'Beloved Wife & 1st Believer' },
       { nameBn: 'আবু তালিব (চাচ্চু)', nameEn: 'Abu Talib', roleBn: 'বাণিজ্য কাফেলা শিক্ষক ও অভিভাবক', roleEn: 'Uncle & Guardian' },
       { nameBn: 'হজরত আবু বকর সিদ্দিক (রা.)', nameEn: 'Abu Bakr Al-Siddiq (R.A.)', roleBn: 'ঘনিষ্ঠ বাল্যবন্ধু ও সত্যনিষ্ঠ সঙ্গী', roleEn: 'Intimate Friend' },
-      { nameBn: 'হজরত জায়েদ ইবনে বনি হারেসা (রা.)', nameEn: 'Zayd ibn Harithah (R.A.)', roleBn: 'পাসंदीदा পালিত পুত্র ও সঙ্গী', roleEn: 'Adopted Son & Companion' },
+      { nameBn: 'হজরত জায়েদ ইবনে বনি হারেসা (রা.)', nameEn: 'Zayd ibn Harithah (R.A.)', roleBn: 'প্রিয় পালিত পুত্র ও সঙ্গী', roleEn: 'Adopted Son & Companion' },
     ];
   } else if (phase === 'makki_prophetic') {
     return [
@@ -292,7 +371,26 @@ export const getChapterKeySahaba = (item: SeeratAgeItem): KeySahabiInvolved[] =>
 };
 
 // Fallback provider for Prophetic character traits
-export const getChapterCharacterTraits = (item: SeeratAgeItem): string[] => {
+export const getChapterCharacterTraits = (item: SeeratAgeItem, isBn = true): string[] => {
+  if (!isBn) {
+    if (item.characterTraitsEn && item.characterTraitsEn.length > 0) {
+      return item.characterTraitsEn;
+    }
+    const phase = item.phaseKey;
+    if (phase === 'infancy_childhood') {
+      return ['Innate Purity', 'Heavenly Blessings', 'Humility & Grace', 'Signs of Truthfulness'];
+    } else if (phase === 'youth_preprophetic') {
+      return ['Al-Amin (Trustworthiness)', 'As-Sadiq (Truthfulness)', 'Justice & Wisdom', 'Dignity & Modesty'];
+    } else if (phase === 'makki_prophetic') {
+      return ['Unwavering Patience (Sabr)', 'Reliance on Allah (Tawakkul)', 'Forgiving Enemies', 'Eloquent Invitation'];
+    } else if (phase === 'madani_early') {
+      return ['Visionary Leadership', 'Brotherhood & Compassion', 'Just Governance', 'Humility & Simplicity'];
+    } else if (phase === 'madani_battles') {
+      return ['Fearless Courage', 'Mercy & Ethics in Battle', 'Honoring Treaties', 'Devotion to Martyrs'];
+    } else {
+      return ['Mercy to the Worlds', 'General Amnesty & Forgiveness', 'Boundless Love for the Ummah', 'Nearness to Allah'];
+    }
+  }
   if (item.characterTraitsBn && item.characterTraitsBn.length > 0) {
     return item.characterTraitsBn;
   }
@@ -543,7 +641,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     const emotional = isBn ? activeItem.emotionalStoryBn : activeItem.emotionalStoryEn;
     const title = isAr && activeItem.titleAr ? activeItem.titleAr : isBn ? activeItem.titleBn : activeItem.titleEn;
 
-    const fullText = `${title}. ${narrative} ${emotional ? 'হৃদয়স্পর্শী ঘটনা: ' + emotional : ''}`;
+    const fullText = `${title}. ${narrative} ${emotional ? (isBn ? 'হৃদয়স্পর্শী ঘটনা: ' : 'Heart-Touching Moment: ') + emotional : ''}`;
 
     const utterance = new SpeechSynthesisUtterance(fullText);
     utterance.rate = speechRate;
@@ -570,15 +668,16 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     const narrative = isBn ? activeItem.historicalNarrativeBn : activeItem.historicalNarrativeEn;
     const emotional = isBn ? activeItem.emotionalStoryBn : activeItem.emotionalStoryEn;
     const sources = getChapterClassicalSources(activeItem);
+    const hijriLabel = formatSeeratHijri(activeItem.yearHijri, isBn);
 
-    let text = `📜 ${title}\n📅 ${isBn ? 'বয়স:' : 'Age:'} ${activeItem.age} ${isBn ? 'বছর' : 'Years'} (${activeItem.yearCE} CE | ${activeItem.yearHijri})\n📍 ${isBn ? 'স্থান:' : 'Location:'} ${loc}\n\n`;
+    let text = `📜 ${title}\n📅 ${isBn ? 'বয়স:' : 'Age:'} ${activeItem.age} ${isBn ? 'বছর' : 'Years'} (${activeItem.yearCE} CE | ${hijriLabel})\n📍 ${isBn ? 'স্থান:' : 'Location:'} ${loc}\n\n`;
     text += `${isBn ? 'পূর্ণাঙ্গ ইতিহাস:' : 'Historical Chronicle:'}\n${narrative}\n\n`;
     if (emotional) {
       text += `${isBn ? 'হৃদয়স্পর্শী ঘটনা:' : 'Heart-Touching Moments:'}\n"${emotional}"\n\n`;
     }
 
     if (activeItem.quranRef) {
-      text += `📖 ${isBn ? 'কুরআনের আয়াত:' : 'Quranic Verse:'} (সূরা ${activeItem.quranRef.surah} : ${activeItem.quranRef.ayah})\n"${activeItem.quranRef.meaningBn}"\n\n`;
+      text += `📖 ${isBn ? 'কুরআনের আয়াত:' : 'Quranic Verse:'} (${isBn ? 'সূরা' : 'Surah'} ${activeItem.quranRef.surah} : ${activeItem.quranRef.ayah})\n"${isBn ? activeItem.quranRef.meaningBn : activeItem.quranRef.meaningEn}"\n\n`;
     }
 
     if (activeItem.hadithRef) {
@@ -586,7 +685,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     }
 
     if (sources.length > 0) {
-      text += `📚 ${isBn ? 'প্রামাণ্য সিরাত বইয়ের সংকেত:' : 'Seerah Source Books:'}\n- ${sources.map((s) => s.bookBn).join('\n- ')}\n\n`;
+      text += `📚 ${isBn ? 'প্রামাণ্য সিরাত বইয়ের সংকেত:' : 'Seerah Source Books:'}\n- ${sources.map((s) => (isBn ? s.bookBn : s.bookEn)).join('\n- ')}\n\n`;
     }
 
     text += `— Zikr+ App (zikrplus.app)`;
@@ -632,7 +731,8 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
     const sources = getChapterClassicalSources(activeItem);
     const keySahaba = getChapterKeySahaba(activeItem);
-    const characterTraits = getChapterCharacterTraits(activeItem);
+    const characterTraits = getChapterCharacterTraits(activeItem, isBn);
+    const hijriLabel = formatSeeratHijri(activeItem.yearHijri, isBn);
 
     const hasPrev = activeItem.age > 1;
     const hasNext = activeItem.age < 63;
@@ -827,7 +927,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                     ? 'bg-white text-slate-700 hover:bg-emerald-100 border border-slate-200'
                     : 'bg-[#08221d] text-emerald-200 hover:bg-[#0f342c] border border-emerald-800/40'
                 }`}
-                title={`Age ${item.age}: ${item.titleBn}`}
+                title={`${isBn ? 'বয়স' : 'Age'} ${item.age}: ${isAr && item.titleAr ? item.titleAr : isBn ? item.titleBn : item.titleEn}`}
               >
                 {item.age}
                 {isMarked && (
@@ -850,7 +950,9 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
               بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
             </p>
             <p className="text-[11px] text-emerald-600 dark:text-emerald-400/80 font-medium mt-0.5">
-              পরম করুণাময় অসীম দয়ালু আল্লাহর নামে শুরু করছি
+              {isBn
+                ? 'পরম করুণাময় অসীম দয়ালু আল্লাহর নামে শুরু করছি'
+                : 'In the Name of Allah, the Most Gracious, the Most Merciful'}
             </p>
           </div>
 
@@ -881,7 +983,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-emerald-300/80">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>{activeItem.yearCE} CE ({activeItem.yearHijri})</span>
+                  <span>{activeItem.yearCE} CE ({hijriLabel})</span>
                 </span>
                 <span>·</span>
                 <button
@@ -1121,23 +1223,23 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                           : 'bg-[#08221d] border-emerald-800/60 text-emerald-100 hover:bg-[#0c2e27]'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <h4 className="text-xs sm:text-sm font-extrabold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
                           <BookOpen className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                          <span>{src.bookBn}</span>
+                          <span>{isBn ? src.bookBn : src.bookEn}</span>
                         </h4>
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 font-bold">
-                          {src.volumePage || 'মূল গ্রন্থ'}
+                          {isBn ? (src.volumePage || 'মূল গ্রন্থ') : (src.volumePageEn || 'Primary Source')}
                         </span>
                       </div>
 
                       <p className="text-xs text-slate-600 dark:text-emerald-300/80 font-medium">
-                        {isBn ? 'লেখক / সংকলক:' : 'Author:'} <span className="font-semibold text-slate-800 dark:text-emerald-100">{src.authorBn}</span>
+                        {isBn ? 'লেখক / সংকলক:' : 'Author:'} <span className="font-semibold text-slate-800 dark:text-emerald-100">{isBn ? src.authorBn : (src.authorEn || src.authorBn)}</span>
                       </p>
 
-                      {src.referenceDetailBn && (
+                      {(isBn ? src.referenceDetailBn : (src.referenceDetailEn || src.referenceDetailBn)) && (
                         <p className="text-xs text-slate-600 dark:text-emerald-200/90 leading-relaxed font-serif bg-white/50 dark:bg-black/30 p-2.5 rounded-xl border border-amber-200/40">
-                          {src.referenceDetailBn}
+                          {isBn ? src.referenceDetailBn : (src.referenceDetailEn || src.referenceDetailBn)}
                         </p>
                       )}
                     </div>
@@ -1321,8 +1423,8 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
               {/* Poster Preview Card */}
               <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-900 via-teal-950 to-emerald-950 text-white space-y-3 border border-emerald-500/30">
                 <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold">
-                  <span>বয়স {activeItem.age} বছর ({activeItem.yearCE} CE)</span>
-                  <span>{activeItem.yearHijri}</span>
+                  <span>{isBn ? `বয়স ${activeItem.age} বছর (${activeItem.yearCE} CE)` : `Age ${activeItem.age} Years (${activeItem.yearCE} CE)`}</span>
+                  <span>{hijriLabel}</span>
                 </div>
 
                 <h4 className="text-base font-black text-amber-300 leading-snug">{title}</h4>
@@ -1333,12 +1435,12 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
                 {activeItem.quranRef && (
                   <div className="p-2.5 rounded-xl bg-white/10 text-[11px] text-teal-200">
-                    📖 সূরা {activeItem.quranRef.surah} ({activeItem.quranRef.ayah}): "{activeItem.quranRef.meaningBn}"
+                    📖 {isBn ? 'সূরা' : 'Surah'} {activeItem.quranRef.surah} ({activeItem.quranRef.ayah}): "{isBn ? activeItem.quranRef.meaningBn : activeItem.quranRef.meaningEn}"
                   </div>
                 )}
 
                 <div className="pt-2 flex items-center justify-between text-[10px] text-emerald-400 border-t border-white/10 font-mono">
-                  <span>রেফারেন্স: আর-রাহীকুল মাখতূম ও সহিহ হাদিস</span>
+                  <span>{isBn ? 'রেফারেন্স: আর-রাহীকুল মাখতূম ও সহিহ হাদিস' : 'Reference: Ar-Raheeq Al-Makhtum & Sahih Hadith'}</span>
                   <span>Zikr+ App</span>
                 </div>
               </div>
@@ -1349,7 +1451,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                   className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm"
                 >
                   <Copy className="w-4 h-4" />
-                  <span>{copiedChapter ? 'কপি করা হয়েছে ✓' : 'টেক্সট কপি করুন'}</span>
+                  <span>{copiedChapter ? (isBn ? 'কপি করা হয়েছে ✓' : 'Copied ✓') : (isBn ? 'টেক্সট কপি করুন' : 'Copy Text')}</span>
                 </button>
               </div>
             </div>

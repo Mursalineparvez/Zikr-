@@ -18,9 +18,14 @@ export interface EventReligiousContext {
     titleBn: string;
     authorBn: string;
     era: string;
+    titleEn?: string;
+    authorEn?: string;
+    eraEn?: string;
   }>;
   keyLessons: string[];
+  keyLessonsEn?: string[];
   spiritualTakeaway: string;
+  spiritualTakeawayEn?: string;
 }
 
 // Specific curated references for iconic Islamic events
@@ -522,18 +527,252 @@ const CATEGORY_TEMPLATES: Record<string, EventReligiousContext> = {
       arabicSnippet: 'أَحَبُّ النَّاسِ إِلَى اللَّهِ يَوْمَ الْقِيَامَةِ إِمَامٌ عَادِلٌ',
     },
     classicalBooks: [
-      { titleBn: 'আল-আহকামুস সুলতানিয়্যাহ (ইসলামী রাষ্ট্রশাসন)', authorBn: 'ইমাম আল-মাওয়ার্দী', era: '৫ম হিজরি' },
-      { titleBn: 'সিয়াসাতনামা (রাষ্ট্রনীতি গ্রন্থ)', authorBn: 'উজির নিজামুল মুলক আত-তূসী', era: '৫ম হিজরি' },
-      { titleBn: 'তারিখুল ইসলাম আল-কবীর', authorBn: 'ইমাম শামসুদ্দীন আয-যাহাবী', era: '৮ম হিজরি' },
+      { titleBn: 'আল-আহকামুস সুলতানিয়্যাহ (ইসলামী রাষ্ট্রশাসন)', titleEn: 'Al-Ahkam as-Sultaniyyah (Islamic Governance)', authorBn: 'ইমাম আল-মাওয়ার্দী', authorEn: 'Imam al-Mawardi', era: '৫ম হিজরি', eraEn: '5th Century AH' },
+      { titleBn: 'সিয়াসাতনামা (রাষ্ট্রনীতি গ্রন্থ)', titleEn: 'Siyasatnama (Book of Government)', authorBn: 'উজির নিজামুল মুলক আত-তূসী', authorEn: 'Nizam al-Mulk at-Tusi', era: '৫ম হিজরি', eraEn: '5th Century AH' },
+      { titleBn: 'তারিখুল ইসলাম আল-কবীর', titleEn: 'Tarikh al-Islam al-Kabir', authorBn: 'ইমাম শামসুদ্দীন আয-যাহাবী', authorEn: 'Imam adh-Dhahabi', era: '৮ম হিজরি', eraEn: '8th Century AH' },
     ],
     keyLessons: [
       'শাসনক্ষমতা ভোগের কোনো মাধ্যম নয়, বরং জনগণের জানমাল ও ঈমানের নিরাপত্তার এক বিশাল পবিত্র আমানত।',
       'ন্যায়পরায়ণতাই সাম্রাজ্য ও সভ্যতার দীর্ঘস্থায়িত্বের মূল চালিকাশক্তি।',
       'আলেম-ওলামা ও ন্যায়নিষ্ঠ উপদেষ্টাদের পরামর্শ নিয়ে দেশ পরিচালনা করাই সফল সুলতানদের ঐতিহ্য।',
     ],
+    keyLessonsEn: [
+      'Leadership is not a privilege for personal gain, but a sacred trust to safeguard the lives, faith, and rights of the people.',
+      'Justice and equity are the true pillars that sustain any civilization.',
+      'Seeking counsel from scholars and righteous advisors was the hallmark of enduring Islamic governance.',
+    ],
     spiritualTakeaway: 'ক্ষমতা ক্ষণস্থায়ী, কিন্তু ইনসাফের রেকর্ড আসমানে চিরস্মরণীয় — একজন ন্যায়পরায়ণ শাসক হাজারো মানুষের শান্তির ছায়া।',
+    spiritualTakeawayEn: 'Power is fleeting, but the legacy of justice is eternal — a righteous ruler is a shade of peace for the people.',
   },
 };
+
+const CATEGORY_ENGLISH_FALLBACKS: Record<string, {
+  keyLessonsEn: string[];
+  spiritualTakeawayEn: string;
+  booksEn: Array<{ titleEn: string; authorEn: string; eraEn: string }>;
+}> = {
+  seerah: {
+    keyLessonsEn: [
+      'Every moment in the life of the Prophet {SAW} serves as a timeless beacon of guidance for humanity.',
+      'Steadfast patience in hardship and devotion to Allah are the true shield of a believer.',
+      'True success in this world and the Hereafter lies in following the noble Sunnah.',
+    ],
+    spiritualTakeawayEn: 'The Sunnah of the Messenger {SAW} is a lighthouse in a turbulent world — loving and following him completes faith.',
+    booksEn: [
+      { titleEn: 'Ar-Raheeq Al-Makhtum (The Sealed Nectar)', authorEn: 'Safiur Rahman Mubarakpuri', eraEn: 'Seerah' },
+      { titleEn: 'Sirat Ibn Hisham', authorEn: 'Imam Ibn Hisham', eraEn: '3rd Century AH' },
+      { titleEn: 'Zad al-Ma‘ad', authorEn: 'Imam Ibn al-Qayyim', eraEn: '8th Century AH' },
+    ],
+  },
+  battle: {
+    keyLessonsEn: [
+      'In Islam, struggle is never for greed or oppression, but to defend truth and protect the vulnerable.',
+      'Strength of faith and reliance upon Allah outweigh mere numbers or weaponry.',
+      'Strict ethical rules protect non-combatants, women, children, and the environment.',
+    ],
+    spiritualTakeawayEn: 'Sacrifice in the path of truth is never in vain — sincerity and courage preserve dignity across generations.',
+    booksEn: [
+      { titleEn: 'Kitab al-Maghazi (Expeditions of the Prophet)', authorEn: 'Imam al-Waqidi', eraEn: '2nd Century AH' },
+      { titleEn: 'Al-Bidayah wan-Nihayah', authorEn: 'Hafiz Ibn Kathir', eraEn: 'Historiography' },
+      { titleEn: 'Tarikh at-Tabari', authorEn: 'Imam at-Tabari', eraEn: 'Islamic History' },
+    ],
+  },
+  spread: {
+    keyLessonsEn: [
+      'Noble character, integrity in trade, and compassion carried the light of Islam across continents.',
+      'Engaging wisely with local cultures while upholding monotheism fostered lasting communities.',
+      'Conveying goodness with wisdom and gentle conduct is a lifelong responsibility.',
+    ],
+    spiritualTakeawayEn: 'Good character is the most persuasive invitation to truth — like fragrance, it reaches every heart naturally.',
+    booksEn: [
+      { titleEn: 'Futuh al-Buldan (Conquest of Lands)', authorEn: 'Imam al-Baladhuri', eraEn: '3rd Century AH' },
+      { titleEn: 'Tarikh al-Umam wal-Muluk', authorEn: 'Imam at-Tabari', eraEn: '4th Century AH' },
+      { titleEn: 'Al-Muqaddimah', authorEn: 'Ibn Khaldun', eraEn: '8th Century AH' },
+    ],
+  },
+  knowledge: {
+    keyLessonsEn: [
+      'Muslim scholars laid enduring foundations in medicine, mathematics, astronomy, and optics.',
+      'Harmonizing sacred revelation with empirical inquiry sparked the Golden Age of learning.',
+      'The highest purpose of knowledge is recognizing the Creator and serving humanity.',
+    ],
+    spiritualTakeawayEn: 'Seeking beneficial knowledge is a path to Paradise — angels spread their wings for the sincere student.',
+    booksEn: [
+      { titleEn: 'Jami‘ Bayan al-‘Ilm wa Fadlihi', authorEn: 'Imam Ibn ‘Abd al-Barr', eraEn: '5th Century AH' },
+      { titleEn: 'Ihya’ ‘Ulum ad-Din', authorEn: 'Imam al-Ghazali', eraEn: '5th Century AH' },
+      { titleEn: 'Siyar A‘lam an-Nubala’', authorEn: 'Imam adh-Dhahabi', eraEn: '8th Century AH' },
+    ],
+  },
+  build: {
+    keyLessonsEn: [
+      'Mosques and endowments are not merely stone structures, but living centers of worship, learning, and unity.',
+      'Sacred Islamic architecture reflects harmony, beauty, and devotion to the One Creator.',
+      'Building public institutions—hospitals, schools, and travelers’ lodges—is an ongoing charity (Sadaqah Jariyah).',
+    ],
+    spiritualTakeawayEn: 'Whoever builds a house for the remembrance of Allah earns an eternal home in Paradise.',
+    booksEn: [
+      { titleEn: 'History of Islamic Architecture', authorEn: 'Dr. Afif Bahnassi', eraEn: 'Architecture' },
+      { titleEn: 'Al-Khitat al-Maqriziyyah', authorEn: 'Taqi ad-Din al-Maqrizi', eraEn: '9th Century AH' },
+      { titleEn: 'Mu‘jam al-Buldan', authorEn: 'Yaqut al-Hamawi', eraEn: '7th Century AH' },
+    ],
+  },
+  bengal: {
+    keyLessonsEn: [
+      'The compassion, humility, and service of scholars and saints opened millions of hearts in Bengal to Islam.',
+      'Islamic brotherhood offered dignity and equality beyond rigid social hierarchies.',
+      'Muslim patronage also nurtured vernacular literature, agriculture, and civic welfare.',
+    ],
+    spiritualTakeawayEn: 'Humility, service to humanity, and spiritual sincerity plant the deepest seeds of faith.',
+    booksEn: [
+      { titleEn: 'Tabaqat-i-Nasiri', authorEn: 'Minhaj-i-Siraj Juzjani', eraEn: '7th Century AH' },
+      { titleEn: 'Riyaz-us-Salatin (History of Bengal)', authorEn: 'Ghulam Husain Salim', eraEn: '18th Century' },
+      { titleEn: 'A History of Sufism in Bengal', authorEn: 'Dr. Muhammad Enamul Haq', eraEn: 'Modern Research' },
+    ],
+  },
+  awliya: {
+    keyLessonsEn: [
+      'Rising above worldly greed to seek Allah’s pleasure defines the path of the righteous.',
+      'Purifying the heart and awakening spiritual consciousness were the core missions of the pious sages.',
+      'Piety and humility carry a moral authority stronger than earthly thrones.',
+    ],
+    spiritualTakeawayEn: 'Drawing near to Allah requires sincerity, self-discipline, and constant remembrance.',
+    booksEn: [
+      { titleEn: 'Hilyat al-Awliya’', authorEn: 'Hafiz Abu Nu‘aym al-Isfahani', eraEn: '5th Century AH' },
+      { titleEn: 'Tadhkirat al-Awliya’', authorEn: 'Farid ad-Din Attar', eraEn: '7th Century AH' },
+      { titleEn: 'Sifat as-Safwah', authorEn: 'Ibn al-Jawzi', eraEn: '6th Century AH' },
+    ],
+  },
+  sultan: {
+    keyLessonsEn: [
+      'Leadership is a sacred trust to protect the faith, dignity, and welfare of every citizen.',
+      'Justice and equity form the true foundation of enduring states.',
+      'Consulting scholars and upright advisors is the tradition of wise Muslim rulers.',
+    ],
+    spiritualTakeawayEn: 'Earthly authority fades, but the record of justice endures forever.',
+    booksEn: [
+      { titleEn: 'Al-Ahkam as-Sultaniyyah', authorEn: 'Imam al-Mawardi', eraEn: '5th Century AH' },
+      { titleEn: 'Siyasatnama', authorEn: 'Nizam al-Mulk at-Tusi', eraEn: '5th Century AH' },
+      { titleEn: 'Tarikh al-Islam al-Kabir', authorEn: 'Imam adh-Dhahabi', eraEn: '8th Century AH' },
+    ],
+  },
+};
+
+const SPECIFIC_EVENT_ENGLISH_OVERRIDES: Record<number, {
+  keyLessonsEn: string[];
+  spiritualTakeawayEn: string;
+  booksEn?: Array<{ titleEn: string; authorEn: string; eraEn: string }>;
+}> = {
+  570: {
+    keyLessonsEn: [
+      'In the Year of the Elephant, Allah protected His Sacred House and honored the blessed birth of the Final Messenger {SAW}.',
+      'Born an orphan, he was nurtured by Divine providence to become the finest moral example for all humanity.',
+      'His coming brought hope, mercy, and liberation to a world steeped in injustice.',
+    ],
+    spiritualTakeawayEn: 'The birth of Rasulullah {SAW} was the dawn of mercy for all worlds — following his Sunnah is the key to salvation.',
+    booksEn: [
+      { titleEn: 'Ar-Raheeq Al-Makhtum (The Sealed Nectar)', authorEn: 'Safiur Rahman Mubarakpuri', eraEn: 'Modern Classic' },
+      { titleEn: 'Sirat Ibn Hisham (Vol. 1)', authorEn: 'Imam Ibn Hisham', eraEn: '3rd Century AH' },
+      { titleEn: 'Al-Bidayah wan-Nihayah (Vol. 2)', authorEn: 'Hafiz Ibn Kathir', eraEn: '8th Century AH' },
+      { titleEn: 'Tarikh al-Umam wal-Muluk', authorEn: 'Imam at-Tabari', eraEn: '4th Century AH' },
+    ],
+  },
+  610: {
+    keyLessonsEn: [
+      'The very first command of Islam was "Read" — seeking knowledge in the name of Allah is the foundation of faith.',
+      'Solitude, reflection, and spiritual devotion prepare the heart to receive divine guidance.',
+      'The unwavering faith and support of Khadijah {RAHA} in moments of trial remain an enduring example of strength.',
+    ],
+    spiritualTakeawayEn: 'When knowledge is sought in the name of the Creator, it elevates humanity from darkness into light.',
+  },
+  622: {
+    keyLessonsEn: [
+      'Hijrah teaches sacrifice for faith — leaving behind falsehood and migrating toward Allah’s obedience.',
+      'Careful planning paired with complete trust in Allah (Tawakkul) overcomes the gravest dangers.',
+      'The brotherhood of the Muhajirun and Ansar remains history’s highest model of social solidarity.',
+    ],
+    spiritualTakeawayEn: 'Whoever places full trust in Allah is never alone — even in the darkest cave, Divine aid is near.',
+  },
+  624: {
+    keyLessonsEn: [
+      'Victory comes not from numbers or weapons, but from faith, sincerity, and Allah’s unseen assistance.',
+      'Humble supplication in moments of crisis is the believer’s greatest source of strength.',
+      'Allah stands with those who remain steadfast upon truth and patience.',
+    ],
+    spiritualTakeawayEn: 'Badr teaches that 313 sincere believers anchored in faith can overcome overwhelming odds.',
+  },
+  628: {
+    keyLessonsEn: [
+      'Foresight and principled diplomacy often achieve greater spiritual victories than open warfare.',
+      'Trusting the leadership of the Prophet {SAW} turns apparent setbacks into clear conquests.',
+      'Within two years of the peace treaty, tribes across Arabia entered Islam in multitudes.',
+    ],
+    spiritualTakeawayEn: 'Patience and wise restraint can become a "Fathun Mubin" — a manifest victory in the sight of Allah.',
+  },
+  630: {
+    keyLessonsEn: [
+      'In the hour of triumph, humility and gratitude — never arrogance — define the believer.',
+      'Conquering hearts through mercy and forgiveness is far mightier than the sword.',
+      'Clearing the Kaaba of idols restored pure monotheism at the heart of Makkah.',
+    ],
+    spiritualTakeawayEn: 'The Conquest of Makkah stands as history’s pinnacle of mercy — forgiveness wins hearts forever.',
+  },
+  632: {
+    keyLessonsEn: [
+      'Islam abolished all racial and tribal supremacy, establishing human equality rooted solely in piety.',
+      'The Farewell Sermon enshrined universal protections for life, property, dignity, and women’s rights.',
+      'Holding fast to the Quran and Sunnah guarantees protection against misguidance.',
+    ],
+    spiritualTakeawayEn: 'True honor lies in righteousness (Taqwa) — the Farewell Sermon is a timeless charter of human dignity.',
+  },
+  637: {
+    keyLessonsEn: [
+      'Entering Jerusalem on foot in humble clothing, Umar {RA} set an immortal standard of justice.',
+      'The Covenant of Umar guaranteed full protection for residents and places of worship.',
+      'Bayt al-Maqdis holds an enduring spiritual place in the heart of the Muslim Ummah.',
+    ],
+    spiritualTakeawayEn: 'Not royal pomp, but humility and justice win the trust of nations.',
+  },
+  650: {
+    keyLessonsEn: [
+      'Compiling the standardized Mushaf preserved unity of recitation across expanding Muslim lands.',
+      'Through this service led by Uthman {RA} and Zayd ibn Thabit {RA}, the Quran remains unchanged to this day.',
+      'Setting aside regional disputes to preserve the shared foundation safeguards the Ummah.',
+    ],
+    spiritualTakeawayEn: 'The Quran is divinely guarded — every letter remains preserved over fourteen centuries.',
+  },
+  1187: {
+    keyLessonsEn: [
+      'Ending 88 years of occupation, Salahuddin showed extraordinary mercy toward defeated inhabitants.',
+      'Moral renewal and unity within the Ummah always precede outward triumph.',
+      'Chivalry and compassion remain the noblest witnesses to Islamic values.',
+    ],
+    spiritualTakeawayEn: 'Greater than conquest is magnanimity — Salahuddin won Jerusalem as much through character as strategy.',
+  },
+  1453: {
+    keyLessonsEn: [
+      'Centuries of discipline, faith, and preparation fulfilled the Prophet’s glad tidings.',
+      'Strategic ingenuity and technological mastery worked hand-in-hand with spiritual resolve.',
+      'Upon entering the city, religious freedom and civic security were granted to its citizens.',
+    ],
+    spiritualTakeawayEn: 'Prophetic promise is realized through unwavering faith paired with disciplined excellence.',
+  },
+};
+
+function bnDigitsToEn(str: string): string {
+  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return str.replace(/[০-৯]/g, (d) => String(bn.indexOf(d)));
+}
+
+function localizeDualLabel(label: string, lang: ZikrLanguage): string {
+  const isBn = lang === 'bn';
+  if (label.includes(' • ')) {
+    const parts = label.split(' • ');
+    if (isBn) return parts[0];
+    const enPart = parts.slice(1).join(' • ');
+    return bnDigitsToEn(enPart.replace(/হাদিস:/g, 'Hadith:'));
+  }
+  return isBn ? label : bnDigitsToEn(label.replace(/হাদিস:/g, 'Hadith:'));
+}
 
 /**
  * Intelligent master resolver that provides rich Quranic Ayat, Sahih Hadith,
@@ -543,25 +782,51 @@ export function getEventReligiousDetails(
   event: HistoryEvent,
   lang: ZikrLanguage = 'bn'
 ): EventReligiousContext {
-  // 1. Look for specific event year override
-  if (SPECIFIC_EVENT_DETAILS[event.y]) {
-    const specific = SPECIFIC_EVENT_DETAILS[event.y];
-    const base = CATEGORY_TEMPLATES[event.cat] || CATEGORY_TEMPLATES.seerah;
-    return {
-      quranAyat: specific.quranAyat || base.quranAyat,
-      hadith: specific.hadith || base.hadith,
-      classicalBooks: specific.classicalBooks || base.classicalBooks,
-      keyLessons: specific.keyLessons || (event.l ? [event.l.bn] : base.keyLessons),
-      spiritualTakeaway: specific.spiritualTakeaway || base.spiritualTakeaway,
-    };
-  }
-
-  // 2. Fallback to category template with event-specific lesson integration
+  const isBn = lang === 'bn';
   const base = CATEGORY_TEMPLATES[event.cat] || CATEGORY_TEMPLATES.seerah;
-  const lessons = event.l?.bn ? [event.l.bn, ...base.keyLessons.slice(0, 2)] : base.keyLessons;
+  const specific = SPECIFIC_EVENT_DETAILS[event.y];
+  const catFallbackEn = CATEGORY_ENGLISH_FALLBACKS[event.cat] || CATEGORY_ENGLISH_FALLBACKS.seerah;
+  const specificEn = SPECIFIC_EVENT_ENGLISH_OVERRIDES[event.y];
+
+  const rawQuran = specific?.quranAyat || base.quranAyat;
+  const rawHadith = specific?.hadith || base.hadith;
+  const rawBooks = specific?.classicalBooks || base.classicalBooks;
+
+  const localizedBooks = rawBooks.map((book, idx) => {
+    const fallbackBook = specificEn?.booksEn?.[idx] || catFallbackEn.booksEn[idx];
+    const titleEn = book.titleEn || fallbackBook?.titleEn || book.titleBn;
+    const authorEn = book.authorEn || fallbackBook?.authorEn || book.authorBn;
+    const eraEn = book.eraEn || fallbackBook?.eraEn || bnDigitsToEn(book.era);
+    return {
+      ...book,
+      titleBn: isBn ? book.titleBn : titleEn,
+      authorBn: isBn ? book.authorBn : authorEn,
+      era: isBn ? book.era : eraEn,
+      titleEn,
+      authorEn,
+      eraEn,
+    };
+  });
+
+  let lessonsBn = specific?.keyLessons || (event.l?.bn ? [event.l.bn, ...base.keyLessons.slice(0, 2)] : base.keyLessons);
+  let lessonsEn = specificEn?.keyLessonsEn || (event.l?.en ? [event.l.en, ...catFallbackEn.keyLessonsEn.slice(0, 2)] : catFallbackEn.keyLessonsEn);
+
+  const takeawayBn = specific?.spiritualTakeaway || base.spiritualTakeaway;
+  const takeawayEn = specificEn?.spiritualTakeawayEn || catFallbackEn.spiritualTakeawayEn;
 
   return {
-    ...base,
-    keyLessons: lessons,
+    quranAyat: {
+      ...rawQuran,
+      surah: localizeDualLabel(rawQuran.surah, lang),
+    },
+    hadith: {
+      ...rawHadith,
+      source: localizeDualLabel(rawHadith.source, lang),
+    },
+    classicalBooks: localizedBooks,
+    keyLessons: isBn ? lessonsBn : lessonsEn,
+    keyLessonsEn: lessonsEn,
+    spiritualTakeaway: isBn ? takeawayBn : takeawayEn,
+    spiritualTakeawayEn: takeawayEn,
   };
 }

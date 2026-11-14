@@ -311,7 +311,7 @@ export const SeeratHistoricMapView: React.FC<SeeratHistoricMapViewProps> = ({
         map.flyTo([loc.lat, loc.lng], Math.max(loc.zoom, 13), { duration: 1.2 });
       });
 
-      marker.bindTooltip(`<b>${locTitle}</b><br/><span style="font-size: 11px; opacity: 0.85;">${loc.modernCityBn}</span>`, {
+      marker.bindTooltip(`<b>${locTitle}</b><br/><span style="font-size: 11px; opacity: 0.85;">${isBn ? loc.modernCityBn : loc.modernCityEn}</span>`, {
         direction: 'top',
         offset: [0, -32],
       });
@@ -360,7 +360,9 @@ export const SeeratHistoricMapView: React.FC<SeeratHistoricMapViewProps> = ({
             <h2 className="text-sm font-extrabold flex items-center gap-1.5">
               <span>{isBn ? 'সিরাত ঐতিহাসিক মানচিত্র' : 'Seerat Historical Map'}</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
-                {Object.keys(SEERAT_LOCATIONS).length}টি স্থান
+                {isBn
+                  ? `${Object.keys(SEERAT_LOCATIONS).length}টি স্থান`
+                  : `${Object.keys(SEERAT_LOCATIONS).length} Sites`}
               </span>
             </h2>
             <p className="text-[11px] text-slate-500 dark:text-emerald-300/70 font-medium">
@@ -589,7 +591,7 @@ export const SeeratHistoricMapView: React.FC<SeeratHistoricMapViewProps> = ({
                     {isBn ? 'বর্তমান অবস্থান' : 'Modern Region'}:
                   </span>
                   <p className="text-slate-800 dark:text-white truncate">
-                    {activeLoc.modernCityBn}
+                    {isBn ? activeLoc.modernCityBn : activeLoc.modernCityEn}
                   </p>
                 </div>
               </div>
@@ -618,7 +620,9 @@ export const SeeratHistoricMapView: React.FC<SeeratHistoricMapViewProps> = ({
                   <span>{isBn ? 'এই স্থানের ঘটনা ও অধ্যায়সমূহ' : 'Events at this Location'}</span>
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                  {associatedChapters.length}টি অধ্যায়
+                  {isBn
+                    ? `${associatedChapters.length}টি অধ্যায়`
+                    : `${associatedChapters.length} Chapters`}
                 </span>
               </div>
 
