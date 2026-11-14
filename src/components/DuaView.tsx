@@ -33,98 +33,17 @@ export const DuaView: React.FC<DuaViewProps> = ({
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   }, [selectedCategory]);
 
-  // GTAF-style category definitions with icons & colors
+  // GTAF-style category definitions with icons & DUA_CATEGORIES integration
   const gtafCategories = [
-    {
-      id: 'all',
-      titleBn: 'সকল দোয়া ও জিকির',
-      titleEn: 'All Supplications',
-      icon: BookOpen,
-      color: 'from-emerald-600 to-teal-700',
-      textColor: 'text-emerald-500',
-      bgLight: 'bg-emerald-50 border-emerald-200',
-      bgDark: 'bg-[#0f333a] border-[#185560]',
-    },
-    {
-      id: 'morning_evening',
-      titleBn: 'সকাল - সন্ধ্যা',
-      titleEn: 'Morning & Evening',
-      icon: Sun,
-      color: 'from-amber-500 to-orange-600',
-      textColor: 'text-amber-500',
-      bgLight: 'bg-amber-50 border-amber-200',
-      bgDark: 'bg-[#332714] border-[#59431f]',
-    },
-    {
-      id: 'sleep_wake',
-      titleBn: 'ঘুম ও জাগরণ',
-      titleEn: 'Sleep & Awakening',
-      icon: Moon,
-      color: 'from-indigo-600 to-purple-700',
-      textColor: 'text-indigo-400',
-      bgLight: 'bg-indigo-50 border-indigo-200',
-      bgDark: 'bg-[#1a1f3a] border-[#2b3566]',
-    },
-    {
-      id: 'salat',
-      titleBn: 'সালাত ও পবিত্রতা',
-      titleEn: 'Salat & Wudu',
-      icon: Compass,
-      color: 'from-teal-600 to-emerald-700',
-      textColor: 'text-teal-400',
-      bgLight: 'bg-teal-50 border-teal-200',
-      bgDark: 'bg-[#0e3630] border-[#175c50]',
-    },
-    {
-      id: 'protection',
-      titleBn: 'আশ্রয় প্রার্থনা',
-      titleEn: 'Protection & Refuge',
-      icon: Shield,
-      color: 'from-sky-600 to-blue-700',
-      textColor: 'text-sky-400',
-      bgLight: 'bg-sky-50 border-sky-200',
-      bgDark: 'bg-[#112d3b] border-[#1c4b62]',
-    },
-    {
-      id: 'forgiveness',
-      titleBn: 'ক্ষমা ও তওবা',
-      titleEn: 'Forgiveness & Repentance',
-      icon: Sparkles,
-      color: 'from-rose-600 to-pink-700',
-      textColor: 'text-rose-400',
-      bgLight: 'bg-rose-50 border-rose-200',
-      bgDark: 'bg-[#38161d] border-[#612733]',
-    },
-    {
-      id: 'hardship',
-      titleBn: 'কষ্ট ও মুসিবত',
-      titleEn: 'Hardship & Debt',
-      icon: AlertCircle,
-      color: 'from-orange-600 to-amber-700',
-      textColor: 'text-orange-400',
-      bgLight: 'bg-orange-50 border-orange-200',
-      bgDark: 'bg-[#362211] border-[#5e3b1c]',
-    },
-    {
-      id: 'daily_living',
-      titleBn: 'রিজিক, পরিবার ও সফর',
-      titleEn: 'Rizq, Family & Travel',
-      icon: Home,
-      color: 'from-emerald-700 to-green-800',
-      textColor: 'text-green-400',
-      bgLight: 'bg-green-50 border-green-200',
-      bgDark: 'bg-[#133623] border-[#20593b]',
-    },
-    {
-      id: 'quran',
-      titleBn: 'কুরআন ও জিকির',
-      titleEn: 'Quran & Zikr',
-      icon: Heart,
-      color: 'from-teal-700 to-cyan-800',
-      textColor: 'text-cyan-400',
-      bgLight: 'bg-cyan-50 border-cyan-200',
-      bgDark: 'bg-[#10343f] border-[#1b586b]',
-    },
+    { id: 'all', icon: BookOpen },
+    { id: 'morning_evening', icon: Sun },
+    { id: 'sleep_wake', icon: Moon },
+    { id: 'salat', icon: Compass },
+    { id: 'protection', icon: Shield },
+    { id: 'forgiveness', icon: Sparkles },
+    { id: 'hardship', icon: AlertCircle },
+    { id: 'daily_living', icon: Home },
+    { id: 'quran', icon: Heart },
   ];
 
   // Filter duas
@@ -134,7 +53,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
       dua.category === selectedCategory ||
       (selectedCategory === 'morning_evening' && dua.category.includes('morning'));
 
-    const t = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage];
+    const t = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
     const curTitle = t?.title || dua.title;
     const curTrans = t?.translation || dua.translation;
     const curVirtue = t?.virtue || dua.virtue || '';
@@ -165,7 +84,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
   };
 
   const handleCopyDua = (dua: DuaItem) => {
-    const t = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage];
+    const t = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
     const curTitle = t?.title || dua.title;
     const curTrans = t?.translation || dua.translation;
     const text = `${curTitle}\n\n${dua.arabic}\n\n${dua.transliteration}\n\n"${curTrans}"\n\nReference: ${dua.reference}`;
@@ -174,7 +93,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const currentCatObj = gtafCategories.find((c) => c.id === selectedCategory);
+  const currentCatTitle = DUA_CATEGORIES[selectedCategory]?.[selectedLanguage] || (selectedLanguage === 'bn' ? 'সকল দোয়া' : 'All Supplications');
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-16">
@@ -189,12 +108,10 @@ export const DuaView: React.FC<DuaViewProps> = ({
             <span>حِصْنُ الْمُسْلِمِ • Fortress of the Muslim (GTAF Portal)</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
-            {selectedLanguage === 'bn' ? 'দোয়া ও জিকির সংগ্রহশালা (হিসনুল মুসলিম)' : 'Authentic Supplications & Azkar'}
+            {DUA_UI.bannerTitle[selectedLanguage]}
           </h2>
           <p className="text-xs sm:text-sm text-teal-100 mt-2 max-w-2xl leading-relaxed">
-            {selectedLanguage === 'bn' 
-              ? 'পবিত্র কুরআন ও সহিহ হাদিস থেকে সংকলিত জীবনঘনিষ্ঠ সকল দোয়া, জিকির ও আমলসমূহ সঠিক উচ্চারণ ও অর্থসহ।' 
-              : 'Authentic prophetic duas and azkar categorized step-by-step for daily spiritual protection and remembrance.'}
+            {DUA_UI.bannerSub[selectedLanguage]}
           </p>
         </div>
       </div>
@@ -206,7 +123,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={selectedLanguage === 'bn' ? 'দোয়া বা আমল খুঁজুন (যেমন: ঘুম, সকাল, রিজিক, ক্ষমা)...' : 'Search duas by title, arabic, or translation...'}
+          placeholder={DUA_UI.searchPlaceholder?.[selectedLanguage] || (selectedLanguage === 'bn' ? 'দোয়া বা আমল খুঁজুন...' : 'Search duas...')}
           className={`w-full rounded-2xl pl-11 pr-4 py-3.5 text-sm font-medium focus:outline-none transition shadow-sm border ${
             isDay
               ? 'bg-white border-teal-200 text-[#0f3630] placeholder-teal-600/70 focus:border-[#006747]'
@@ -236,7 +153,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
               className="text-xs font-bold text-emerald-500 hover:text-emerald-400 flex items-center gap-1 cursor-pointer bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{selectedLanguage === 'bn' ? 'সব ক্যাটাগরি দেখুন' : 'View All'}</span>
+              <span>{DUA_CATEGORIES.all[selectedLanguage] || 'All'}</span>
             </button>
           )}
         </div>
@@ -245,6 +162,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
           {gtafCategories.map((cat) => {
             const IconComp = cat.icon;
             const isSelected = selectedCategory === cat.id;
+            const categoryName = DUA_CATEGORIES[cat.id]?.[selectedLanguage] || cat.id;
             const count = cat.id === 'all' 
               ? AUTHENTIC_DUAS.length 
               : AUTHENTIC_DUAS.filter(d => d.category === cat.id || (cat.id === 'morning_evening' && d.category.includes('morning'))).length;
@@ -279,11 +197,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
                 </div>
                 <div>
                   <h4 className="font-bold text-xs sm:text-sm tracking-tight line-clamp-1">
-                    {selectedLanguage === 'bn' ? cat.titleBn : cat.titleEn}
+                    {categoryName}
                   </h4>
-                  <p className={`text-[11px] mt-0.5 opacity-80 line-clamp-1 ${isSelected ? 'text-teal-100' : isDay ? 'text-teal-800' : 'text-teal-300'}`}>
-                    {selectedLanguage === 'bn' ? cat.titleEn : cat.titleBn}
-                  </p>
                 </div>
               </button>
             );
@@ -297,8 +212,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <h3 className={`text-base font-bold ${isDay ? 'text-[#0f3630]' : 'text-white'}`}>
-              {currentCatObj ? (selectedLanguage === 'bn' ? currentCatObj.titleBn : currentCatObj.titleEn) : 'Duas'}
-              <span className="text-xs font-semibold ml-2 text-emerald-500">({filteredDuas.length} {selectedLanguage === 'bn' ? 'টি দোয়া' : 'Duas'})</span>
+              {currentCatTitle}
+              <span className="text-xs font-semibold ml-2 text-emerald-500">({filteredDuas.length})</span>
             </h3>
           </div>
         </div>
@@ -321,11 +236,11 @@ export const DuaView: React.FC<DuaViewProps> = ({
               const target = dua.suggestedCount || 33;
               const isCompleted = currentCount >= target;
 
-              const t = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage];
-              const currentTitle = t?.title || dua.title;
-              const currentTiming = t?.timing || dua.timing;
-              const currentTranslation = t?.translation || dua.translation;
-              const currentVirtue = t?.virtue || dua.virtue;
+              const t = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
+              const currentTitle = t?.title || dua.translations?.en?.title || dua.title;
+              const currentTiming = t?.timing || dua.translations?.en?.timing || dua.timing;
+              const currentTranslation = t?.translation || dua.translations?.en?.translation || dua.translation;
+              const currentVirtue = t?.virtue || dua.translations?.en?.virtue || dua.virtue;
 
               return (
                 <div
