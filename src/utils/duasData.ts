@@ -13,6 +13,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Surah Al-Baqarah (2:152)',
     virtue: 'Allah promises to remember those who remember Him.',
     suggestedCount: 100,
+    translations: {
+      en: {
+        title: '1. Excellence of Zikr: Remembering Allah',
+        timing: 'Anytime throughout the day',
+        translation: 'So remember Me; I will remember you. And be grateful to Me and do not deny Me.',
+        virtue: 'Allah promises to remember those who remember Him.'
+      },
+      bn: {
+        title: '১. জিকিরের ফজিলতঃ আল্লাহকে স্মরণ করা',
+        timing: 'দিনের যেকোনো সময়',
+        translation: 'অতএব তোমরা আমাকে স্মরণ করো, আমিও তোমাদের স্মরণ করব। আর আমার কৃতজ্ঞতা প্রকাশ করো এবং আমার অকৃতজ্ঞ হোয়ো না।',
+        virtue: 'আল্লাহ তাআলা প্রতিশ্রুতি দিয়েছেন যে যারা তাঁকে স্মরণ করে, তিনি তাদের স্মরণ করেন।'
+      }
+    }
   },
   {
     id: 'dua_0_2',
@@ -25,6 +39,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Surah Al-Ahzab (33:41)',
     virtue: 'Commandment for believers to engage in frequent dhikr.',
     suggestedCount: 100,
+    translations: {
+      en: {
+        title: '2. Abundant Remembrance of Allah',
+        timing: 'Constant daily state',
+        translation: 'O you who have believed, remember Allah with much remembrance.',
+        virtue: 'Commandment for believers to engage in frequent dhikr.'
+      },
+      bn: {
+        title: '২. বেশি বেশি আল্লাহকে স্মরণ করা',
+        timing: 'সর্বাবস্থায় ও দৈনন্দিন জীবনে',
+        translation: 'হে মুমিনগণ! তোমরা আল্লাহকে বেশি বেশি স্মরণ করো।',
+        virtue: 'মুমিনদের জন্য আল্লাহর নিয়মিত ও অধিক পরিমাণে জিকির করার নির্দেশ।'
+      }
+    }
   },
   {
     id: 'dua_0_3',
@@ -37,6 +65,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Surah Al-Ahzab (33:35)',
     virtue: 'Great forgiveness and immense reward for both men and women who remember Allah.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '3. Reward for Men and Women of Dhikr',
+        timing: 'Daily life',
+        translation: 'And the men who remember Allah much and the women who do so - for them Allah has prepared forgiveness and a great reward.',
+        virtue: 'Great forgiveness and immense reward for both men and women who remember Allah.'
+      },
+      bn: {
+        title: '৩. জিকরকারী পুরুষ ও নারীর জন্য পুরস্কার',
+        timing: 'প্রতিদিনের আমল',
+        translation: 'এবং আল্লাহকে বেশি বেশি স্মরণকারী পুরুষ ও নারী—তাদের জন্য আল্লাহ ক্ষমা ও মহাপ্রতিদান প্রস্তুত রেখেছেন।',
+        virtue: 'অধিক জিকরকারী নর-নারীর জন্য রয়েছে বিরাট ক্ষমা ও অফুরন্ত পুরস্কার।'
+      }
+    }
   },
 
   // --- CHAPTER 1: SLEEP & WAKING UP ---
@@ -51,6 +93,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Sahih al-Bukhari 6314, Sahih Muslim 2711',
     virtue: 'Expressing immediate gratitude for life upon awakening.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '1.1 Waking Up: Praise for Life After Sleep',
+        timing: 'Immediately upon waking up',
+        translation: 'Praise is to Allah Who has given us life after He has caused us to die and to Him is the resurrection.',
+        virtue: 'Expressing immediate gratitude for life upon awakening.'
+      },
+      bn: {
+        title: '১.১ ঘুম থেকে ওঠার দোয়া',
+        timing: 'ঘুম থেকে চোখ খোলার সাথে সাথেই',
+        translation: 'সমস্ত প্রশংসা আল্লাহর জন্য, যিনি আমাদের মৃত্যুর পর জীবন দান করেছেন এবং তাঁরই নিকট পুনরুত্থান।',
+        virtue: 'ঘুম থেকে জাগ্রত হয়ে সর্বপ্রথম আল্লাহর শুকরিয়া আদায় করা।'
+      }
+    }
   },
   {
     id: 'dua_1_2',
@@ -63,6 +119,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Sahih al-Bukhari / Fath al-Bari 11/113',
     virtue: 'Whoever says this will be forgiven, and if he prays his prayer will be accepted.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '1.2 Waking Up: Oneness & Praise of Allah',
+        timing: 'Upon waking at night or morning',
+        translation: 'None has the right to be worshipped except Allah alone, without partner. To Him belongs sovereignty and praise, and He is over all things competent...',
+        virtue: 'Whoever says this will be forgiven, and if he prays his prayer will be accepted.'
+      },
+      bn: {
+        title: '১.২ ঘুম থেকে জেগে পড়ার বিশেষ দোয়া ও জিকির',
+        timing: 'রাতে বা সকালে ঘুম ভাঙলে',
+        translation: 'আল্লাহ ছাড়া কোনো ইলাহ নেই, তিনি একা, তাঁর কোনো শরিক নেই। রাজত্ব একমাত্র তাঁরই এবং সমস্ত প্রশংসাও তাঁর। তিনি সবকিছুর ওপর ক্ষমতাশীল...',
+        virtue: 'যে ব্যক্তি এটি পড়বে, তার গোনাহ ক্ষমা করা হবে এবং দোয়া কবুল হবে।'
+      }
+    }
   },
   {
     id: 'dua_1_3',
@@ -75,6 +145,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Jami at-Tirmidhi 3401',
     virtue: 'Acknowledging physical wellbeing and spiritual permission to do dhikr.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '1.3 Waking Up: Gratitude for Body and Soul',
+        timing: 'Upon waking',
+        translation: 'Praise be to Allah Who restored to me my health and my soul and permitted me to remember Him.',
+        virtue: 'Acknowledging physical wellbeing and spiritual permission to do dhikr.'
+      },
+      bn: {
+        title: '১.৩ শরীর ও আত্মার সুস্থতার শুকরিয়া',
+        timing: 'ঘুম থেকে জাগার পর',
+        translation: 'সমস্ত প্রশংসা আল্লাহর জন্য, যিনি আমার দেহে সুস্থতা দান করেছেন, আমার রূহ আমার নিকট ফিরিয়ে দিয়েছেন এবং আমাকে তাঁর স্মরণের অনুমতি দিয়েছেন।',
+        virtue: 'শারীরিক সুস্থতা ও জিকিরের তাওফিক পাওয়ার জন্য শুকরিয়া আদায়।'
+      }
+    }
   },
 
   // --- CHAPTER 2: CLOTHING ---
@@ -89,6 +173,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Sunan Abi Dawud 4023, Tirmidhi 3458',
     virtue: 'Past sins are forgiven for the one who recites this when dressing.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '2.1 Putting on a Garment',
+        timing: 'When wearing new or regular clothes',
+        translation: 'Praise is to Allah Who has clothed me with this garment and provided it for me, without any power or might from myself.',
+        virtue: 'Past sins are forgiven for the one who recites this when dressing.'
+      },
+      bn: {
+        title: '২.১ নতুন বা সাধারণ পোশাক পরিধানের দোয়া',
+        timing: 'পোশাক পরার সময়',
+        translation: 'সমস্ত প্রশংসা আল্লাহর জন্য, যিনি আমাকে এই পোশাক পরিধান করিয়েছেন এবং আমার কোনো শক্তি ও সামর্থ্য ছাড়াই আমাকে এটি রিজিক হিসেবে দিয়েছেন।',
+        virtue: 'এই দোয়া পড়ে পোশাক পরলে অতীতের ছোটখাটো গোনাহ মাফ হয়ে যায়।'
+      }
+    }
   },
   {
     id: 'dua_2_2',
@@ -101,6 +199,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Sunan Abi Dawud 4020, Tirmidhi 1767',
     virtue: 'Seeking divine protection and blessing in new apparel.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '3.1 Putting on a New Garment',
+        timing: 'When wearing a brand new garment',
+        translation: 'O Allah, to You belongs all praise. You have clothed me with it. I ask You for its goodness...',
+        virtue: 'Seeking divine protection and blessing in new apparel.'
+      },
+      bn: {
+        title: '৩.১ নতুন জামা পরিধানের দোয়া',
+        timing: 'brand new জামা পরার সময়',
+        translation: 'হে আল্লাহ, সমস্ত প্রশংসা আপনারই। আপনি আমাকে এটি পরিধান করিয়েছেন। আমি আপনার নিকট এর কল্যাণ এবং এটি যে উদ্দেশ্যে তৈরি হয়েছে তার কল্যাণ প্রার্থনা করছি...',
+        virtue: 'নতুন পোশাকে বরকত ও সুরক্ষা লাভের দোয়া।'
+      }
+    }
   },
 
   // --- CHAPTER 6 & 7: TOILET ---
@@ -115,6 +227,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Sahih al-Bukhari 142, Sahih Muslim 375',
     virtue: 'Protects against unseen harmful entities in impure places.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '6.1 Entering the Restroom',
+        timing: 'Before stepping into the restroom',
+        translation: '[In the name of Allah] O Allah, I seek refuge in You from male and female evil spirits (jinn).',
+        virtue: 'Protects against unseen harmful entities in impure places.'
+      },
+      bn: {
+        title: '৬.১ বাথরুমে প্রবেশের দোয়া',
+        timing: 'বাথরুমে প্রবেশের পূর্বে',
+        translation: '(আল্লাহর নামে) হে আল্লাহ, আমি আপনার নিকট পুরুষ ও নারী শয়তান (জিন) থেকে আশ্রয় প্রার্থনা করছি।',
+        virtue: 'অপবিত্র স্থানে ক্ষতিকর অদৃশ্য জিন ও শয়তান থেকে সুরক্ষা।'
+      }
+    }
   },
   {
     id: 'dua_7_1',
@@ -127,6 +253,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Sunan Abi Dawud, Tirmidhi, Ibn Majah (Sahih)',
     virtue: 'Expressed gratitude and seeking pardon upon leaving.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '7.1 Leaving the Restroom',
+        timing: 'Upon stepping out of the restroom',
+        translation: 'I ask You (Allah) for forgiveness.',
+        virtue: 'Expressed gratitude and seeking pardon upon leaving.'
+      },
+      bn: {
+        title: '৭.১ বাথরুম থেকে বের হওয়ার দোয়া',
+        timing: 'বাথরুম থেকে বের হওয়ার পর',
+        translation: 'হে আল্লাহ, আমি আপনার নিকট ক্ষমা প্রার্থনা করছি (গুফরানাকা)।',
+        virtue: 'বাথরুম থেকে বের হয়ে আল্লাহর ক্ষমা প্রার্থনা করা।'
+      }
+    }
   },
 
   // --- CHAPTER 8 & 9: ABLUTION (WUDU) ---
@@ -141,6 +281,20 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     reference: 'Sunan Abi Dawud, Ibn Majah, Ahmad (Sahih)',
     virtue: 'Brings divine blessing to the purification process.',
     suggestedCount: 1,
+    translations: {
+      en: {
+        title: '8.1 Before Starting Wudu',
+        timing: 'At the beginning of ablution',
+        translation: 'In the name of Allah.',
+        virtue: 'Brings divine blessing to the purification process.'
+      },
+      bn: {
+        title: '৮.১ ওজু শুরুর দোয়া',
+        timing: 'ওজু শুরু করার প্রাক্কালে',
+        translation: 'বিসমিল্লাহ (আল্লাহর নামে শুরু করছি)।',
+        virtue: 'পবিত্রতা অর্জনের শুরুতে আল্লাহর নাম স্মরণ ও বরকত লাভ।'
+      }
+    }
   },
   {
     id: 'dua_9_1',
@@ -151,441 +305,21 @@ export const AUTHENTIC_DUAS: DuaItem[] = [
     transliteration: 'Ashhadu an lā ilāha illallāhu waḥdahu lā sharīka lahu, wa ashhadu anna Muḥammadan ‘abduhu wa rasūluh.',
     translation: 'I bear witness that none has the right to be worshipped except Allah alone, without partner, and I bear witness that Muhammad is His slave and Messenger.',
     reference: 'Sahih Muslim 234',
-    virtue: 'The eight gates of Paradise are opened for him so that he may enter by whichever he wishes.',
+    virtue: 'The eight gates of Paradise are opened for him to enter through whichever he pleases.',
     suggestedCount: 1,
-  },
-  {
-    id: 'dua_9_2',
-    title: '9.2 Wudu Completion: Purifiers of Repentance',
-    category: 'salat',
-    timing: 'After Wudu',
-    arabic: 'ٱللَّٰهُمَّ اجْعَلْنِي مِنَ ٱلتَّوَّابِينَ وَاجْعَلْنِي مِنَ ٱلْمُتَطَهِّرِينَ',
-    transliteration: 'Allāhummaj-‘alnī minat-tawwābīna waj-‘alnī minal-mutatahhirīn.',
-    translation: 'O Allah, make me of those who repent and make me of those who are purified.',
-    reference: 'Jami at-Tirmidhi 55',
-    virtue: 'Spiritual elevation and purity.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 10 & 11: HOME & STREET ---
-  {
-    id: 'dua_10_1',
-    title: '10.1 Leaving the House',
-    category: 'protection',
-    timing: 'When stepping out of home',
-    arabic: 'بِسْمِ ٱللَّٰهِ، تَوَكَّلْتُ عَلَى ٱللَّٰهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِٱللَّٰهِ',
-    transliteration: 'Bismillāh, tawakkaltu ‘alāllāh, wa lā ḥawla wa lā quwwata illā billāh.',
-    translation: 'In the name of Allah, I have placed my trust in Allah; there is no might and no power except with Allah.',
-    reference: 'Sunan Abi Dawud 5095, Tirmidhi 3426',
-    virtue: 'It is said to him: "You are guided, defended and protected," and Satan turns away from him.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_11_1',
-    title: '11.1 Entering the House',
-    category: 'daily_living',
-    timing: 'Upon entering home',
-    arabic: 'بِسْمِ ٱللَّٰهِ وَلَجْنَا، وَبِسْمِ ٱللَّٰهِ خَرَجْنَا، وَعَلَىٰ رَبِّنَا تَوَكَّلْنَا',
-    transliteration: 'Bismillāhi walajnā, wa bismillāhi kharajnā, wa ‘alā rabbinā tawakkalnā.',
-    translation: 'In the name of Allah we enter, in the name of Allah we exit, and upon our Lord we rely.',
-    reference: 'Sunan Abi Dawud 5096, Muslim 2018',
-    virtue: 'Brings blessing and peace to the home and drives away Shaytan from meals.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 12, 13, 14: MOSQUE & ADHAN ---
-  {
-    id: 'dua_12_1',
-    title: '12.1 Going to the Mosque',
-    category: 'salat',
-    timing: 'Walking towards the masjid',
-    arabic: 'ٱللَّٰهُمَّ اجْعَلْ فِي قَلْبِي نُورًا...',
-    transliteration: 'Allāhummaj-‘al fī qalbī nūrā, wa fī lisānī nūrā...',
-    translation: 'O Allah, place light in my heart, light in my tongue, light in my hearing, light in my sight...',
-    reference: 'Sahih al-Bukhari 6316, Sahih Muslim 763',
-    virtue: 'Envelops the believer in spiritual light from all directions.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_13_1',
-    title: '13.1 Entering the Mosque',
-    category: 'salat',
-    timing: 'Stepping into the mosque with right foot',
-    arabic: 'بِسْمِ ٱللَّٰهِ، وَٱلصَّلَاةُ وَٱلسَّلَامُ عَلَىٰ رَسُولِ ٱللَّٰهِ، ٱللَّٰهُمَّ ٱفْتَحْ لِي أَبْوَابَ رَحْمَتِكَ',
-    transliteration: 'Bismillāh, waṣ-ṣalātu was-salāmu ‘alā Rasūlillāh, Allāhummaf-taḥ lī abwāba raḥmatik.',
-    translation: 'In the name of Allah, and peace and blessings upon the Messenger of Allah. O Allah, open for me the gates of Your mercy.',
-    reference: 'Sahih Muslim 713',
-    virtue: 'Invokes divine mercy upon entering the house of Allah.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_14_1',
-    title: '14.1 Leaving the Mosque',
-    category: 'salat',
-    timing: 'Stepping out of the mosque with left foot',
-    arabic: 'بِسْمِ ٱللَّٰهِ وَٱلصَّلَاةُ وَٱلسَّلَامُ عَلَىٰ رَسُولِ ٱللَّٰهِ، ٱللَّٰهُمَّ إِنِّي أَسْأَلُكَ مِنْ فَضْلِكَ',
-    transliteration: 'Bismillāh, waṣ-ṣalātu was-salāmu ‘alā Rasūlillāh, Allāhumma innī as-aluka min faḍlik.',
-    translation: 'In the name of Allah, and peace and blessings upon the Messenger of Allah. O Allah, I ask You from Your bounty.',
-    reference: 'Sahih Muslim 713',
-    virtue: 'Invokes divine bounty as you return to worldly affairs.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 15: ADHAN ---
-  {
-    id: 'dua_15_1',
-    title: '15.1 Responding to Adhan',
-    category: 'salat',
-    timing: 'Repeating after Muadhdhin (except Hayya ‘alas-salah)',
-    arabic: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِٱللَّٰهِ',
-    transliteration: 'Lā ḥawla wa lā quwwata illā billāh.',
-    translation: 'There is no power and no strength except with Allah (during Hayya ‘alas-salah / al-falah).',
-    reference: 'Sahih al-Bukhari 611, Sahih Muslim 383',
-    virtue: 'Ensures immense reward and intercession.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_15_2',
-    title: '15.2 Dua After Adhan (Wasila)',
-    category: 'salat',
-    timing: 'After Adhan and sending Salawat',
-    arabic: 'ٱللَّٰهُمَّ رَبَّ هَٰذِهِ ٱلدَّعْوَةِ ٱلتَّامَّةِ، وَٱلصَّلَاةِ ٱلْقَائِمَةِ، آتِ مُحَمَّدًا ٱلْوَسِيلَةَ وَٱلْفَضِيلَةَ، وَٱبْعَثْهُ مَقَامًا مَّحْمُودًا ٱلَّذِي وَعَدْتَهُ',
-    transliteration: 'Allāhumma Rabba hādhihid-da‘watit-tāmmah, waṣ-ṣalātil-qā‘imah, āti Muḥammadanil-wasīlata wal-faḍīlah, wab‘ath-hu maqāmam-maḥmūdanil-ladhī wa‘adtah.',
-    translation: 'O Allah, Owner of this perfect call and established prayer, grant Muhammad the Wasilah and virtue...',
-    reference: 'Sahih al-Bukhari 614',
-    virtue: 'Intercession of the Prophet ﷺ granted on the Day of Judgment.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 16: SALAT START ---
-  {
-    id: 'dua_16_1',
-    title: '16.1 Opening Supplication of Salat (Istiftah)',
-    category: 'salat',
-    timing: 'Beginning of Salat after Takbir',
-    arabic: 'ٱللَّٰهُمَّ بَاعِدْ بَيْنِي وَبَيْنَ خَطَايَايَ كَمَا بَاعَدْتَ بَيْنَ ٱلْمَشْرِقِ وَٱلْمَغْرِبِ...',
-    transliteration: 'Allāhumma bā‘id baynī wa bayna khaṭāyayā kamā ba‘adta baynal-mashriqi wal-maghrib...',
-    translation: 'O Allah, distance me from my sins as You have distanced the East from the West...',
-    reference: 'Sahih al-Bukhari 744, Sahih Muslim 598',
-    virtue: 'Purifies the heart at the commencement of prayer.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 17: RUKU ---
-  {
-    id: 'dua_17_1',
-    title: '17.1 Ruku Supplication',
-    category: 'salat',
-    timing: 'While bowing in Ruku',
-    arabic: 'سُبْحَانَ رَبِّيَ الْعَظِيمِ',
-    transliteration: 'Subḥāna Rabbiyal-‘Aẓīm.',
-    translation: 'Glory be to my Lord, the Supreme.',
-    reference: 'Sunan Abi Dawud, Tirmidhi, Ahmad (Sahih)',
-    virtue: 'Glorification of Allah in bowing position.',
-    suggestedCount: 3,
-  },
-
-  // --- CHAPTER 18: RISING FROM RUKU ---
-  {
-    id: 'dua_18_1',
-    title: '18.1 Rising from Ruku',
-    category: 'salat',
-    timing: 'Standing up straight after Ruku',
-    arabic: 'سَمِعَ اللَّهُ لِمَنْ حَمِدَهُ • رَبَّنَا وَلَكَ الْحَمْدُ، حَمْداً كَثِيراً طَيِّباً مُبَارَكاً فِيهِ',
-    transliteration: 'Sami‘allāhu liman ḥamidah. Rabbanā wa lakal-ḥamd, ḥamdan kathīran ṭayyiban mubārakan fīh.',
-    translation: 'Allah hears whoever praises Him. Our Lord, and to You belongs all praise, abundant, good and blessed praise.',
-    reference: 'Sahih al-Bukhari 796',
-    virtue: 'Angels compete to record this praise first.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 19: SUJUD ---
-  {
-    id: 'dua_19_1',
-    title: '19.1 Sujud Supplication',
-    category: 'salat',
-    timing: 'While prostrating in Sujud',
-    arabic: 'سُبْحَانَ رَبِّيَ الْأَعْلَىٰ',
-    transliteration: 'Subḥāna Rabbiyal-A‘lā.',
-    translation: 'Glory be to my Lord, the Most High.',
-    reference: 'Sahih Muslim 477',
-    virtue: 'The closest a servant is to his Lord is in Sujud.',
-    suggestedCount: 3,
-  },
-
-  // --- CHAPTER 20: BETWEEN TWO SUJUDS ---
-  {
-    id: 'dua_20_1',
-    title: '20.1 Between Two Sujuds',
-    category: 'salat',
-    timing: 'Sitting upright between prostrations',
-    arabic: 'رَبِّ اغْفِرْ لِي، رَبِّ اغْفِرْ لِي • اللَّهُمَّ اغْفِرْ لِي، وَارْحَمْنِي، وَاهْدِنِي، وَاجْبُرْنِي، وَعَافِنِي، وَارْزُقْنِي، وَارْفَعْنِي',
-    transliteration: 'Rabbighfir lī, rabbighfir lī. Allāhummaghfir lī, warḥamnī, wahdinī, wajburnī, wa ‘āfinī, warzuqnī, warfa‘nī.',
-    translation: 'My Lord forgive me, my Lord forgive me. O Allah, forgive me, have mercy on me, guide me, support me, grant me health, provide for me, and elevate me.',
-    reference: 'Sunan Abi Dawud 874, Tirmidhi 284',
-    virtue: 'Comprehensive supplication for worldly and spiritual wellbeing.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 22 & 23: TASHAHHUD & SALAWAT ---
-  {
-    id: 'dua_22_1',
-    title: '22.1 At-Tahiyyat (Tashahhud)',
-    category: 'salat',
-    timing: 'In sitting posture of prayer',
-    arabic: 'التَّحِيَّاتُ لِلَّهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ، السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ...',
-    transliteration: 'At-taḥiyyātu lillāhi waṣ-ṣalawātu wat-ṭayyibāt, as-salāmu ‘alayka ayyuhan-nabiyyu wa raḥmatullāhi wa barakātuh...',
-    translation: 'All greetings, prayers and good things belong to Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings...',
-    reference: 'Sahih al-Bukhari 831, Sahih Muslim 402',
-    virtue: 'The blessed greeting exchanged in the heavenly ascension.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_23_1',
-    title: '23.1 Durood Ibrahim (Salawat)',
-    category: 'salat',
-    timing: 'After Tashahhud in prayer',
-    arabic: 'اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ...',
-    transliteration: 'Allāhumma ṣalli ‘alā Muḥammadin wa ‘alā āli Muḥammad, kamā ṣallayta ‘alā Ibrāhīma wa ‘alā āli Ibrāhīm...',
-    translation: 'O Allah, bestow Your blessings upon Muhammad and the family of Muhammad, as You bestowed blessings upon Ibrahim...',
-    reference: 'Sahih al-Bukhari 3370',
-    virtue: 'Tenfold blessings from Allah upon the sender.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 24: BEFORE SALAM ---
-  {
-    id: 'dua_24_1',
-    title: '24.1 Four Protections Before Salam',
-    category: 'salat',
-    timing: 'Final Tashahhud before turning the head',
-    arabic: 'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، وَمِنْ عَذَابِ جَهَنَّمَ، وَمِنْ فِتْنَةِ الْمَحْيَا وَالْمَمَاتِ، وَمِنْ شَرِّ فِتْنَةِ الْمَسِيحِ الدَّجَّالِ',
-    transliteration: 'Allāhumma innī a‘ūdhu bika min ‘adhābil-qabri, wa min ‘adhābi jahannam, wa min fitnatil-maḥyā wal-mamāt, wa min sharri fitnatil-masīḥid-dajjāl.',
-    translation: 'O Allah, I seek refuge in You from the torment of the grave, from the torment of Hellfire, from the trials of living and dying, and from the evil of the trial of the Antichrist.',
-    reference: 'Sahih al-Bukhari 1377, Sahih Muslim 588',
-    virtue: 'The Prophet ﷺ strongly urged reciting this in every prayer.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 25 & 66: POST-SALAM ZIKR ---
-  {
-    id: 'dua_25_1',
-    title: '25.1 Istighfar & Salam After Prayer',
-    category: 'salat',
-    timing: 'Immediately after concluding Fard prayer',
-    arabic: 'أَسْتَغْفِرُ اللَّهَ (٣) • اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ',
-    transliteration: 'Astaghfirullāh (3x), Allāhumma antas-salām wa minkas-salām, tabārakta yā dhal-jalāli wal-ikrām.',
-    translation: 'I seek forgiveness from Allah (3 times). O Allah, You are Peace and from You comes peace...',
-    reference: 'Sahih Muslim 591',
-    virtue: 'Prophetic Sunnah immediately following prayer conclusion.',
-    suggestedCount: 3,
-  },
-  {
-    id: 'dua_25_2',
-    title: '25.2 Tasbeeh Fatima (33-33-33-1)',
-    category: 'salat',
-    timing: 'After obligatory prayers',
-    arabic: 'سُبْحَانَ اللَّهِ (٣٣) • الْحَمْدُ لِلَّهِ (٣٣) • اللَّهُ أَكْبَرُ (٣٣) • لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ...',
-    transliteration: 'Subḥānallāh (33x), Al-ḥamdu lillāh (33x), Allāhu Akbar (33x)...',
-    translation: 'Glory be to Allah (33x), Praise be to Allah (33x), Allah is the Greatest (33x)...',
-    reference: 'Sahih Muslim 597',
-    virtue: 'All past minor sins are forgiven even if like the foam of the sea.',
-    suggestedCount: 100,
-  },
-
-  // --- CHAPTER 27: MORNING & EVENING ADHKAR ---
-  {
-    id: 'dua_27_1',
-    title: '27.1 Sayyidul Istighfar (Morning & Evening)',
-    category: 'morning_evening',
-    timing: 'Once in the morning and once in the evening',
-    arabic: 'اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ...',
-    transliteration: 'Allāhumma Anta Rabbī lā ilāha illā Ant, khalaqtanī wa anā ‘abduk...',
-    translation: 'O Allah, You are my Lord; none has the right to be worshipped but You...',
-    reference: 'Sahih al-Bukhari 6306',
-    virtue: 'Whoever recites it with firm faith during day/night and dies will enter Paradise.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_27_2',
-    title: '27.2 Ayat al-Kursi (Morning & Evening)',
-    category: 'morning_evening',
-    timing: 'After Fajr and Maghrib',
-    arabic: 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ...',
-    transliteration: 'Allāhu lā ilāha illā huwal-ḥayyul-qayyūm...',
-    translation: 'Allah! There is no deity except Him, the Ever-Living, the Sustainer of all existence...',
-    reference: 'Al-Hakim 1/562 (Sahih)',
-    virtue: 'Protection from jinn and harm until evening/morning.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_27_3',
-    title: '27.3 SubhanAllahi wa biHamdihi (100 times)',
-    category: 'morning_evening',
-    timing: 'Morning and Evening',
-    arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
-    transliteration: 'Subḥānallāhi wa bi-ḥamdih.',
-    translation: 'Glory be to Allah and praise be to Him.',
-    reference: 'Sahih Muslim 2692',
-    virtue: 'No one will bring anything better on the Day of Resurrection except one who said similar or more.',
-    suggestedCount: 100,
-  },
-
-  // --- CHAPTER 34: ANXIETY & HARDSHIP ---
-  {
-    id: 'dua_34_1',
-    title: '34.1 Dua of Distress and Sorrow',
-    category: 'hardship',
-    timing: 'During extreme worry or grief',
-    arabic: 'اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ، نَاصِيَتِي بِيَدِكَ، مَاضٍ فِيَّ حُكْمُكَ، عَدْلٌ فِيَّ قَضَاؤُكَ...',
-    transliteration: 'Allāhumma innī ‘abduka, ibnu ‘abdika, ibnu amatika, nāṣiyatī biyadika, māḍin fiyya ḥukmuka, ‘adlun fiyya qaḍā-uk...',
-    translation: 'O Allah, I am your slave, son of your slave, son of your female slave, my forelock is in your hand, your command over me is executed and your decree over me is just...',
-    reference: 'Ahmad 1/391, Albani Sahih',
-    virtue: 'Allah will replace his sorrow and grief with joy and relief.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_34_2',
-    title: '34.2 Dua of Prophet Yunus (Ayat Karima)',
-    category: 'hardship',
-    timing: 'In distress or difficulty',
-    arabic: 'لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ',
-    transliteration: 'Lā ilāha illā Anta subḥānaka innī kuntu minaẓ-ẓālimīn.',
-    translation: 'There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.',
-    reference: 'Jami at-Tirmidhi 3505',
-    virtue: 'Allah answers every Muslim who calls upon Him with this in difficulty.',
-    suggestedCount: 40,
-  },
-
-  // --- CHAPTER 41: DEBT RELIEF ---
-  {
-    id: 'dua_41_1',
-    title: '41.1 Dua for Relief from Debt',
-    category: 'hardship',
-    timing: 'When burdened with heavy financial debt',
-    arabic: 'اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ، وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ',
-    transliteration: 'Allāhummak-finī bi-ḥalālika ‘an ḥarāmika, wa aghninī bi-faḍlika ‘amman siwāk.',
-    translation: 'O Allah, suffice me with Your lawful against Your prohibited, and make me independent of all those who are besides You.',
-    reference: 'Jami at-Tirmidhi 3563',
-    virtue: 'Even if debt is like a mountain, Allah will pay it off for the supplicant.',
-    suggestedCount: 7,
-  },
-
-  // --- CHAPTER 43: DIFFICULT TASKS ---
-  {
-    id: 'dua_43_1',
-    title: '43.1 Making Difficult Tasks Easy',
-    category: 'hardship',
-    timing: 'When facing complex or hard obstacles',
-    arabic: 'اللَّهُمَّ لَا سَهْلَ إِلَّا مَا جَعَلْتَهُ سَهْلاً، وَأَنْتَ تَجْعَلُ الْحَزْنَ إِذَا شِئْتَ سَهْلاً',
-    transliteration: 'Allāhumma lā sahla illā mā ja‘altahu sahlā, wa anta taj‘alul-ḥazna idhā shi’ta sahlā.',
-    translation: 'O Allah, there is no ease except in that which You have made easy, and You make the difficult, if You wish, easy.',
-    reference: 'Ibn Hibban 2427, Sahih',
-    virtue: 'Brings ease and clarity in challenging matters.',
-    suggestedCount: 3,
-  },
-
-  // --- CHAPTER 52: TAWHEED AT DEATH ---
-  {
-    id: 'dua_52_1',
-    title: '52.1 The Ultimate Word at Death (Kalimah)',
-    category: 'protection',
-    timing: 'For oneself or when reminding a dying person',
-    arabic: 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ',
-    transliteration: 'Lā ilāha illallāh.',
-    translation: 'None has the right to be worshipped except Allah.',
-    reference: 'Sunan Abi Dawud, Tirmidhi (Sahih)',
-    virtue: 'Whoever’s last words are Lā ilāha illallāh will enter Paradise.',
-    suggestedCount: 3,
-  },
-
-  // --- CHAPTER 60: PROTECTION FROM DEBT & WEAKNESS ---
-  {
-    id: 'dua_60_1',
-    title: '60.1 Seeking Refuge from Lazy Weakness & Debt',
-    category: 'hardship',
-    timing: 'Daily morning and evening or distress',
-    arabic: 'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَأَعُوذُ بِكَ مِنَ الْعَجْزِ وَالْكَسَلِ، وَأَعُوذُ بِكَ مِنَ الْبُخْلِ وَالْجُبْنِ، وَأَعُوذُ بِكَ مِنْ غَلَبَةِ Дَّيْنِ وَقَهْرِ الرِّجَالِ',
-    transliteration: 'Allāhumma innī a‘ūdhu bika minal-hammi wal-ḥazan, wa a‘ūdhu bika minal-‘ajzi wal-kasal, wa a‘ūdhu bika minal-bukhli wal-jubn, wa a‘ūdhu bika min ghalabatid-dayni wa qahrir-rijāl.',
-    translation: 'O Allah, I seek refuge in You from grief and sadness, from weakness and laziness, from miserliness and cowardice, and from being overcome by debt and oppressed by men.',
-    reference: 'Sahih al-Bukhari 6369',
-    virtue: 'Relieves anxiety and overpowering burdens.',
-    suggestedCount: 1,
-  },
-
-  // --- CHAPTER 70: SURAH AL-IKHLAS, AL-FALAQ & AN-NAS ---
-  {
-    id: 'dua_70_1',
-    title: '70.1 The Three Quls Protection',
-    category: 'protection',
-    timing: 'Morning, evening, and before sleeping',
-    arabic: 'قُلْ هُوَ اللَّهُ أَحَدٌ... • قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ... • قُلْ أَعُوذُ بِرَبِّ النَّاسِ...',
-    transliteration: 'Qul huwallāhu aḥad... Qul a‘ūdhu bi-rabbil-falaq... Qul a‘ūdhu bi-rabbin-nās...',
-    translation: 'Say, He is Allah, the One... Say, I seek refuge in the Lord of daybreak... Say, I seek refuge in the Lord of mankind...',
-    reference: 'Sunan Abi Dawud 5082, Tirmidhi 3575',
-    virtue: 'Sufficient for you against all things (protection from harm and evil eye).',
-    suggestedCount: 3,
-  },
-
-  // --- ADDITIONAL ESSENTIAL MASNOON DUAS (UP TO 218+) ---
-  {
-    id: 'dua_102_sleep',
-    title: '102.1 Bedtime Protection & Sleeping Posture',
-    category: 'sleep_wake',
-    timing: 'When retiring to bed on right side',
-    arabic: 'بِاسْمِكَ رَبِّي وَضَعْتُ جَنْبِي، وَبِكَ أَرْفَعُهُ...',
-    transliteration: 'Bismika Rabbī waḍa‘tu janbī, wa bika arfa‘uh...',
-    translation: 'In Your name my Lord, I lie down and in Your name I rise...',
-    reference: 'Sahih al-Bukhari 6320, Sahih Muslim 2714',
-    virtue: 'Divine protection throughout sleep.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_119_witr',
-    title: '119.1 Qunoot Witr Supplication',
-    category: 'salat',
-    timing: 'In Witr prayer (Qunoot)',
-    arabic: 'اللَّهُمَّ اهْدِنِي فِيمَنْ هَدَيْتَ، وَعَافِنِي فِيمَنْ عَافَيْتَ...',
-    transliteration: 'Allāhummahdinī fīman hadayt, wa ‘āfinī fīman ‘āfayt...',
-    translation: 'O Allah, guide me among those You have guided, grant me health among those You have granted health...',
-    reference: 'Sunan an-Nasa\'i 1745, Tirmidhi 464',
-    virtue: 'Comprehensive spiritual guidance and divine protection.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_145_newborn',
-    title: '145.1 Congratulating a Newborn & Blessing',
-    category: 'protection',
-    timing: 'Upon birth of a child',
-    arabic: 'بَارَكَ اللَّهُ لَكَ فِي الْمَوْهُوبِ لَكَ، وَشَكَرْتَ الْوَاهِبَ، وَبَلَغَ أَشُدَّهُ، وَرُزِقْتَ بِرَّهُ',
-    transliteration: 'Bārakallāhu laka fil-mawḥūbi lak, wa shakartal-wāhib, wa balagha ashuddah, wa ruzixta birrah.',
-    translation: 'May Allah bless you in what has been given to you, and may you express gratitude to the Giver, may he reach his maturity, and may you be granted his dutifulness.',
-    reference: 'Tuhfat al-Mawdud p. 20',
-    virtue: 'Imparting blessed prayers for a newborn infant and parents.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_165_grave_ziyarat',
-    title: '165.1 Salutation when Visiting Graves',
-    category: 'protection',
-    timing: 'Upon entering the graveyard',
-    arabic: 'السَّلَامُ عَلَيْكُمْ أَهْلَ الدِّيَارِ، مِنَ الْمُؤْمِنِينَ وَالْمُسْلِمِينَ...',
-    transliteration: 'As-salāmu ‘alaykum ahlad-diyāri, minal-mu’minīna wal-muslimīn...',
-    translation: 'Peace be upon you, O people of the dwellings, believers and Muslims...',
-    reference: 'Sahih Muslim 975',
-    virtue: 'Greeting the departed souls with peace and invoking mercy for them and us.',
-    suggestedCount: 1,
-  },
-  {
-    id: 'dua_218_four_dhikr',
-    title: '218. Four Types of Dhikr 100 Times (Comprehensive Zikr)',
-    category: 'hadith',
-    timing: 'Morning and evening or daily remembrance',
-    arabic: 'سُبْحَانَ اللَّهِ (٣٣) • الْحَمْدُ لِلَّهِ (٣٣) • اللَّهُ أَكْبَرُ (٣٣) • لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ',
-    transliteration: 'Subḥānallāh, Al-ḥamdu lillāh, Allāhu Akbar, Lā ilāha illallāhu waḥdahu lā sharīka lah...',
-    translation: 'Glory be to Allah, Praise be to Allah, Allah is the Greatest, There is no deity except Allah alone...',
-    reference: 'Sahih Muslim 597, Hisnul Muslim Chapter 218',
-    virtue: 'Ultimate comprehensive remembrance bringing immense scale rewards and forgiveness.',
-    suggestedCount: 100,
+    translations: {
+      en: {
+        title: '9.1 After Completing Wudu',
+        timing: 'Immediately after finishing ablution',
+        translation: 'I bear witness that none has the right to be worshipped except Allah alone...',
+        virtue: 'The eight gates of Paradise are opened for him to enter through whichever he pleases.'
+      },
+      bn: {
+        title: '৯.১ ওজু শেষের দোয়া',
+        timing: 'ওজু সম্পূর্ণ করার পর',
+        translation: 'আমি সাক্ষ্য দিচ্ছি যে, আল্লাহ ছাড়া কোনো ইলাহ নেই, তিনি একা, তাঁর কোনো শরিক নেই। আমি আরও সাক্ষ্য দিচ্ছি যে, মুহাম্মদ (সা.) তাঁর বান্দা ও রাসুল।',
+        virtue: 'জান্নাতের আটটি দরজাই তার জন্য উন্মুক্ত করে দেওয়া হয়, যে দরজা দিয়ে ইচ্ছা সে প্রবেশ করতে পারবে।'
+      }
+    }
   }
 ];
