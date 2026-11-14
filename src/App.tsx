@@ -2256,16 +2256,6 @@ export default function App() {
         }`}
       >
         <div className="max-w-4xl mx-auto space-y-2">
-          <div
-            className={`font-arabic text-lg sm:text-xl font-bold ${
-              isDay ? 'text-[#0052cc]' : 'text-sky-400'
-            }`}
-          >
-            أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ
-          </div>
-          <p className={`text-xs italic ${isDay ? 'text-slate-600' : 'text-slate-400'}`}>
-            "Verily, in the remembrance of Allah do hearts find rest." — Surah Ar-Ra'd (13:28)
-          </p>
           <div className="text-[11px] pt-1 flex items-center justify-center gap-2 flex-wrap opacity-80">
             <span>Zikr+ PWA</span>
             <span>•</span>
