@@ -2247,35 +2247,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Serene Islamic Footer */}
-      <footer
-        className={`mt-auto border-t py-6 px-4 text-center transition-colors ${
-          isDay
-            ? 'bg-[#edf3fc] border-blue-100/80 text-slate-600'
-            : 'bg-[#070d1a] border-slate-800 text-slate-400'
-        }`}
-      >
-        <div className="max-w-4xl mx-auto space-y-2">
-          <div className="text-[11px] pt-1 flex items-center justify-center gap-2 flex-wrap opacity-80">
-            <span>Zikr+ PWA</span>
-            <span>•</span>
-            <span>100% Offline &amp; Privacy-First</span>
-            <span>•</span>
-            <button
-              onClick={() => setIsStandaloneModalOpen(true)}
-              className={`hover:underline font-bold cursor-pointer flex items-center gap-1 ${
-                isDay ? 'text-[#0066FF]' : 'text-sky-400'
-              }`}
-            >
-              <span>
-                {selectedLanguage === 'bn'
-                  ? '📱 অ্যান্ড্রয়েড অ্যাপ ইনস্টল ও অফলাইন প্যাকেজ'
-                  : '📱 Android App Install & Offline Package'}
-              </span>
-            </button>
-          </div>
-        </div>
-      </footer>
+
 
       {/* Universal Floating Scroll Navigator (Scroll To Top, Scroll To Bottom & Live Progress) */}
       <QuickScrollNavigator
