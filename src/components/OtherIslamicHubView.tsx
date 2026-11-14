@@ -9,7 +9,6 @@ import {
   Compass,
   Bookmark,
   User,
-  Menu,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
@@ -179,11 +178,37 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [activeSub]);
 
-  const [isHubMenuOpen, setIsHubMenuOpen] = useState(false);
-  const [isClickedAnim, setIsClickedAnim] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
-  const autoHideTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [buttonTopPercent, setButtonTopPercent] = useState(20);
+  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Move the right-edge Zikr+ button dynamically up/down with scroll progress
+  useEffect(() => {
+    const updateScrollPosition = () => {
+      const currentScroll = window.scrollY || document.documentElement.scrollTop || 0;
+      const windowHeight = window.innerHeight || 800;
+      const fullHeight = document.documentElement.scrollHeight || windowHeight;
+      const maxScroll = Math.max(1, fullHeight - windowHeight);
+      const ratio = Math.min(1, Math.max(0, currentScroll / maxScroll));
+      setButtonTopPercent(20 + ratio * 42);
+    };
+
+    window.addEventListener('scroll', updateScrollPosition, { passive: true });
+    window.addEventListener('resize', updateScrollPosition, { passive: true });
+    const rafId = window.requestAnimationFrame(updateScrollPosition);
+
+    return () => {
+      window.removeEventListener('scroll', updateScrollPosition);
+      window.removeEventListener('resize', updateScrollPosition);
+      window.cancelAnimationFrame(rafId);
+    };
+  }, [activeSub]);
+
+  useEffect(() => {
+    return () => {
+      if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+    };
+  }, []);
 
   const handleOpenRightSidebar = () => {
     if (soundEnabled) soundHaptics.playTap();
@@ -431,28 +456,44 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Right Edge Vertical Pop-up Menu Button ("Zikr+") */}
+      {/* Right Edge Scroll-Following Pop-up Menu Button ("Zikr+" with official logo) */}
       {activeSub !== 'hub' && !isRightSidebarOpen && (
-        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-45 pointer-events-auto">
+        <div
+          style={{ top: `${buttonTopPercent}%` }}
+          className="fixed right-0 -translate-y-1/2 z-45 pointer-events-auto transition-[top] duration-200 ease-out"
+        >
           <button
             onClick={handleOpenRightSidebar}
             aria-label="Open Zikr+ Menu"
-            className={`group relative flex flex-col items-center justify-center py-4 px-2 rounded-l-2xl shadow-2xl transition-all duration-300 cursor-pointer active:scale-95 border-y border-l ${
+            className={`group relative flex flex-col items-center justify-center py-3 px-1.5 rounded-l-2xl transition-colors duration-200 cursor-pointer active:scale-95 border-y border-l backdrop-blur-md ${
               isDay
-                ? 'bg-[#006A4E] text-white border-emerald-400 shadow-emerald-950/30 hover:bg-[#005439]'
-                : 'bg-[#0e353c] text-emerald-300 border-teal-500/50 shadow-black/90 hover:bg-[#12424b]'
+                ? 'bg-[#e3ece8]/95 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[0_8px_20px_rgba(15,61,46,0.12)]'
+                : 'bg-[#020f12]/95 hover:bg-[#051b20] text-emerald-200/95 border-[#0c353d] shadow-[0_8px_24px_rgba(0,0,0,0.7)]'
             }`}
           >
             <div className="flex flex-col items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+              <div className={`w-7 h-7 rounded-xl overflow-hidden flex items-center justify-center shadow-xs border ${
+                isDay ? 'border-emerald-700/20 bg-white/60' : 'border-teal-500/30 bg-[#041d22]'
+              }`}>
+                <img
+                  src="/pwa-192x192.png"
+                  alt="Zikr+ Logo"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = '/icon.svg';
+                  }}
+                />
+              </div>
               <span
-                className="text-[11px] font-black tracking-widest uppercase py-1"
+                className="text-[11px] font-black tracking-widest py-0.5"
                 style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
               >
                 Zikr+
               </span>
             </div>
-            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-amber-400 animate-pulse" />
+            <div className={`absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full transition-opacity group-hover:opacity-100 opacity-75 ${
+              isDay ? 'bg-emerald-600/60' : 'bg-teal-400/60'
+            }`} />
           </button>
         </div>
       )}
@@ -473,11 +514,18 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#092226] border-teal-900/50 text-white'
           }`}
         >
-          {/* Header with Zikr+ and icon */}
+          {/* Header with Zikr+ logo */}
           <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-teal-900/40">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-md">
-                <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+              <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md border border-emerald-500/30 bg-[#005740] shrink-0">
+                <img
+                  src="/pwa-192x192.png"
+                  alt="Zikr+ Logo"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = '/icon.svg';
+                  }}
+                />
               </div>
               <div>
                 <h3 className="font-black text-base text-emerald-600 dark:text-emerald-400">Zikr+</h3>
@@ -879,108 +927,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           />
         )}
       </React.Suspense>
-
-      {/* Right Edge Vertical Pop-up Menu Button */}
-      {activeSub !== 'hub' && (
-        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-35 pointer-events-auto">
-          <button
-            onClick={() => {
-              if (soundEnabled) soundHaptics.playTap();
-              setIsClickedAnim(true);
-              setIsHubMenuOpen(true);
-              setTimeout(() => setIsClickedAnim(false), 2500);
-            }}
-            aria-label="Open Menu Hub"
-            className={`group relative flex flex-col items-center justify-center py-4 px-2 rounded-l-2xl shadow-2xl transition-all duration-300 cursor-pointer active:scale-95 border-y border-l ${
-              isClickedAnim
-                ? 'scale-110 bg-amber-600 text-white border-amber-400 shadow-amber-950/50'
-                : isDay
-                ? 'bg-[#006A4E] text-white border-emerald-400 shadow-emerald-950/30 hover:bg-[#005439]'
-                : 'bg-[#0e353c] text-emerald-300 border-teal-500/50 shadow-black/90 hover:bg-[#12424b]'
-            }`}
-          >
-            <div className="flex flex-col items-center gap-1.5">
-              <Layers className={`w-4 h-4 transition-transform ${isClickedAnim ? 'rotate-180 scale-125' : 'animate-pulse text-amber-300'}`} />
-              <span
-                className="text-[10px] font-black tracking-widest uppercase py-1"
-                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-              >
-                {selectedLanguage === 'bn' ? 'মেনু হাব' : 'MENU HUB'}
-              </span>
-            </div>
-            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-amber-400 animate-pulse" />
-          </button>
-        </div>
-      )}
-
-      {/* Hub Menu Modal / Bottom Sheet */}
-      {isHubMenuOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div
-            className={`w-full sm:max-w-xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto rounded-t-[28px] sm:rounded-3xl border shadow-2xl p-5 sm:p-6 space-y-4 animate-in slide-in-from-bottom-5 duration-300 ${
-              isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#092226] border-teal-900/50 text-white'
-            }`}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-teal-900/40">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-600/20 flex items-center justify-center text-emerald-600 dark:text-emerald-300">
-                  <Layers className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black">
-                    {selectedLanguage === 'bn' ? 'সকল ইসলামিক ফিচার ও সূচিপত্র' : 'All Features Menu'}
-                  </h3>
-                  <p className="text-xs opacity-70">
-                    {selectedLanguage === 'bn' ? 'যেকোনো ফিচারে দ্রুত প্রবেশ করুন' : 'Tap any feature to switch instantly'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsHubMenuOpen(false)}
-                className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm cursor-pointer transition ${
-                  isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-[#123840] hover:bg-[#1a4c55] text-emerald-300'
-                }`}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Hub Items Grid */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              {hubItems.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    setIsHubMenuOpen(false);
-                    if ((item as any).action) {
-                      (item as any).action();
-                    } else {
-                      handleSelectSub(item.id);
-                    }
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className={`p-3.5 rounded-2xl border flex items-center gap-3 cursor-pointer transition-all duration-150 active:scale-95 group ${
-                    isDay
-                      ? 'bg-slate-50 hover:bg-emerald-50/60 border-slate-200 hover:border-emerald-400'
-                      : 'bg-[#0e2c33] hover:bg-[#143d46] border-[#16414a] hover:border-emerald-500/50'
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#071c20] flex items-center justify-center shrink-0 shadow-xs">
-                    {item.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-xs sm:text-sm font-black truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                      {item.title}
-                    </h4>
-                    <p className="text-[10px] opacity-70 truncate">{item.badge}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

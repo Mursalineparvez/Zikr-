@@ -41,6 +41,8 @@ import {
   Info,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
+import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
+import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
 import {
   SeeratAgeItem,
   SeeratPhaseKey,
@@ -600,6 +602,18 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     setShowFullMapModal(true);
   };
 
+  const seeratSwipe = useHorizontalSwipe({
+    enabled: Boolean(activeItem) && !showFullMapModal && !showShareModal && !showBibliographyModal,
+    canSwipeLeft: Boolean(activeItem && activeItem.age < 63),
+    canSwipeRight: Boolean(activeItem && activeItem.age > 1),
+    onSwipeLeft: () => {
+      if (activeItem && activeItem.age < 63) handleSelectAge(activeItem.age + 1);
+    },
+    onSwipeRight: () => {
+      if (activeItem && activeItem.age > 1) handleSelectAge(activeItem.age - 1);
+    },
+  });
+
   // =========================================================================
   // CHAPTER READER VIEW (DETAILED BIOGRAPHY FOR A SPECIFIC AGE)
   // =========================================================================
@@ -634,7 +648,24 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
         : 'text-sm sm:text-base leading-relaxed';
 
     return (
-      <div className="w-full space-y-4 pb-28 animate-in fade-in duration-300">
+      <div
+        {...seeratSwipe.touchHandlers}
+        style={
+          seeratSwipe.swipeOffset !== 0
+            ? { transform: `translateX(${seeratSwipe.swipeOffset * 0.35}px)`, transition: 'none' }
+            : { transition: 'transform 180ms ease-out' }
+        }
+        className="w-full space-y-4 pb-28 animate-in fade-in duration-300 relative"
+      >
+        <SwipeFloatingFeedback
+          swipeDirection={seeratSwipe.swipeDirection}
+          isReadyToTrigger={seeratSwipe.isReadyToTrigger}
+          canSwipeLeft={hasNext}
+          canSwipeRight={hasPrev}
+          prevLabel={hasPrev ? `${t('ageLabel')} ${activeItem.age - 1}` : undefined}
+          nextLabel={hasNext ? `${t('ageLabel')} ${activeItem.age + 1}` : undefined}
+          selectedLanguage={selectedLanguage}
+        />
         {/* Sticky Top Header Controls */}
         <div
           className={`sticky top-0 z-40 text-white shadow-xl rounded-2xl px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 border transition-colors ${
@@ -756,6 +787,18 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Direct Chapter Quick-Switcher & Swipe Hint Strip */}
+        <QuickReaderSwitcherStrip
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          hasPrev={hasPrev}
+          hasNext={hasNext}
+          prevLabel={hasPrev ? `${t('ageLabel')} ${activeItem.age - 1}` : null}
+          nextLabel={hasNext ? `${t('ageLabel')} ${activeItem.age + 1}` : null}
+          onPrev={() => hasPrev && handleSelectAge(activeItem.age - 1)}
+          onNext={() => hasNext && handleSelectAge(activeItem.age + 1)}
+        />
 
         {/* Quick Horizontal Age Navigator (1 to 63) */}
         <div

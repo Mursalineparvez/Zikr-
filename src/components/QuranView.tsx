@@ -18,6 +18,8 @@ import {
 } from '../utils/quranService';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
+import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
+import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
 import {
   QURAN_UI,
   SURAH_MEANINGS,
@@ -1476,13 +1478,51 @@ export const QuranView: React.FC<QuranViewProps> = ({
     '2xl': 'text-4xl sm:text-5xl leading-[2.8]',
   }[fontSize];
 
+  const prevSurahNumber = selectedSurahNumber !== null && selectedSurahNumber > 1 ? selectedSurahNumber - 1 : null;
+  const nextSurahNumber = selectedSurahNumber !== null && selectedSurahNumber < 114 ? selectedSurahNumber + 1 : null;
+
+  const surahSwipe = useHorizontalSwipe({
+    enabled: selectedSurahNumber !== null && !showTafsirModal && !showDetailsModal && !cardModalAyah,
+    canSwipeLeft: nextSurahNumber !== null,
+    canSwipeRight: prevSurahNumber !== null,
+    onSwipeLeft: () => {
+      if (nextSurahNumber !== null) {
+        if (soundEnabled) soundHaptics.playTap();
+        loadSurah(nextSurahNumber);
+      }
+    },
+    onSwipeRight: () => {
+      if (prevSurahNumber !== null) {
+        if (soundEnabled) soundHaptics.playTap();
+        loadSurah(prevSurahNumber);
+      }
+    },
+  });
+
   return (
     <div className="space-y-4 pb-24 animate-in fade-in duration-300">
       {/* ======================================================== */}
       {/* 1. READER VIEW (When a Surah is selected)                */}
       {/* ======================================================== */}
       {selectedSurahNumber !== null ? (
-        <div className="space-y-4">
+        <div
+          {...surahSwipe.touchHandlers}
+          style={
+            surahSwipe.swipeOffset !== 0
+              ? { transform: `translateX(${surahSwipe.swipeOffset * 0.35}px)`, transition: 'none' }
+              : { transition: 'transform 180ms ease-out' }
+          }
+          className="space-y-4 relative"
+        >
+          <SwipeFloatingFeedback
+            swipeDirection={surahSwipe.swipeDirection}
+            isReadyToTrigger={surahSwipe.isReadyToTrigger}
+            canSwipeLeft={nextSurahNumber !== null}
+            canSwipeRight={prevSurahNumber !== null}
+            prevLabel={prevSurahNumber ? `${prevSurahNumber}. ${getLocalizedSurahName(prevSurahNumber, selectedLanguage)}` : undefined}
+            nextLabel={nextSurahNumber ? `${nextSurahNumber}. ${getLocalizedSurahName(nextSurahNumber, selectedLanguage)}` : undefined}
+            selectedLanguage={selectedLanguage}
+          />
           {/* TOP ISLAMIC HEADER BAR (Ultra-Attractive & Professional Design) */}
           <div
             className={`sticky top-0 z-40 text-white shadow-xl rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2.5 border backdrop-blur-md transition-all ${
@@ -1574,6 +1614,28 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Direct Surah Quick-Switcher & Swipe Hint Strip */}
+          <QuickReaderSwitcherStrip
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            hasPrev={prevSurahNumber !== null}
+            hasNext={nextSurahNumber !== null}
+            prevLabel={prevSurahNumber ? `${prevSurahNumber}. ${getLocalizedSurahName(prevSurahNumber, selectedLanguage)}` : null}
+            nextLabel={nextSurahNumber ? `${nextSurahNumber}. ${getLocalizedSurahName(nextSurahNumber, selectedLanguage)}` : null}
+            onPrev={() => {
+              if (prevSurahNumber !== null) {
+                if (soundEnabled) soundHaptics.playTap();
+                loadSurah(prevSurahNumber);
+              }
+            }}
+            onNext={() => {
+              if (nextSurahNumber !== null) {
+                if (soundEnabled) soundHaptics.playTap();
+                loadSurah(nextSurahNumber);
+              }
+            }}
+          />
 
           {/* Quick Reciter Switcher Dropdown */}
           {showReciterPicker && (

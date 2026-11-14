@@ -31,6 +31,8 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
+import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
+import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
 import {
   SAHABA_CATEGORIES,
   SAHABA_DATABASE,
@@ -439,6 +441,18 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     };
   };
 
+  const sahabaSwipe = useHorizontalSwipe({
+    enabled: Boolean(activeSahaba) && !selectedFamilyBioModal,
+    canSwipeLeft: Boolean(nextSahaba),
+    canSwipeRight: Boolean(prevSahaba),
+    onSwipeLeft: () => {
+      if (nextSahaba) handleSelectSahaba(nextSahaba.id);
+    },
+    onSwipeRight: () => {
+      if (prevSahaba) handleSelectSahaba(prevSahaba.id);
+    },
+  });
+
   // =========================================================================
   // DETAILED SAHABA READER VIEW
   // =========================================================================
@@ -505,7 +519,25 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     const isBookmarked = bookmarkedSahaba.includes(activeSahaba.id);
 
     return (
-      <div className="w-full space-y-4 pb-28 animate-in fade-in duration-300 relative">
+      <div
+        {...sahabaSwipe.touchHandlers}
+        style={
+          sahabaSwipe.swipeOffset !== 0
+            ? { transform: `translateX(${sahabaSwipe.swipeOffset * 0.35}px)`, transition: 'none' }
+            : { transition: 'transform 180ms ease-out' }
+        }
+        className="w-full space-y-4 pb-28 animate-in fade-in duration-300 relative"
+      >
+        <SwipeFloatingFeedback
+          swipeDirection={sahabaSwipe.swipeDirection}
+          isReadyToTrigger={sahabaSwipe.isReadyToTrigger}
+          canSwipeLeft={Boolean(nextSahaba)}
+          canSwipeRight={Boolean(prevSahaba)}
+          prevLabel={prevSahaba ? getSahabaName(prevSahaba, selectedLanguage) : undefined}
+          nextLabel={nextSahaba ? getSahabaName(nextSahaba, selectedLanguage) : undefined}
+          selectedLanguage={selectedLanguage}
+        />
+
         {/* Floating Toast Notification */}
         {toastMessage && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-2xl bg-[#006747] text-white text-xs font-bold border border-emerald-400/50 shadow-2xl flex items-center gap-2 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
@@ -587,6 +619,18 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Direct Sahaba Quick-Switcher & Swipe Hint Strip */}
+        <QuickReaderSwitcherStrip
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          hasPrev={Boolean(prevSahaba)}
+          hasNext={Boolean(nextSahaba)}
+          prevLabel={prevSahaba ? getSahabaName(prevSahaba, selectedLanguage) : null}
+          nextLabel={nextSahaba ? getSahabaName(nextSahaba, selectedLanguage) : null}
+          onPrev={() => prevSahaba && handleSelectSahaba(prevSahaba.id)}
+          onNext={() => nextSahaba && handleSelectSahaba(nextSahaba.id)}
+        />
 
         {/* Main Content Card */}
         <div

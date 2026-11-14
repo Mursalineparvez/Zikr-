@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { BattleLiveMap } from './BattleLiveMap';
+import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
+import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
 import {
   WarItem,
   BattleMartyr,
@@ -273,6 +275,18 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
     setTimeout(() => setCopiedQuote(false), 2000);
   };
 
+  const warSwipe = useHorizontalSwipe({
+    enabled: Boolean(activeWar) && !active3DMapWarId,
+    canSwipeLeft: Boolean(nextWar),
+    canSwipeRight: Boolean(prevWar),
+    onSwipeLeft: () => {
+      if (nextWar) handleSelectWar(nextWar.id);
+    },
+    onSwipeRight: () => {
+      if (prevWar) handleSelectWar(prevWar.id);
+    },
+  });
+
   // =========================================================================
   // BATTLE DETAILED READER VIEW (BILINGUAL & ENRICHED)
   // =========================================================================
@@ -294,7 +308,24 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
     const warLessons = isBn ? activeWar.historicalLessonsBn : activeWar.historicalLessonsEn;
 
     return (
-      <div className="w-full space-y-4 pb-28 animate-in fade-in duration-300">
+      <div
+        {...warSwipe.touchHandlers}
+        style={
+          warSwipe.swipeOffset !== 0
+            ? { transform: `translateX(${warSwipe.swipeOffset * 0.35}px)`, transition: 'none' }
+            : { transition: 'transform 180ms ease-out' }
+        }
+        className="w-full space-y-4 pb-28 animate-in fade-in duration-300 relative"
+      >
+        <SwipeFloatingFeedback
+          swipeDirection={warSwipe.swipeDirection}
+          isReadyToTrigger={warSwipe.isReadyToTrigger}
+          canSwipeLeft={Boolean(nextWar)}
+          canSwipeRight={Boolean(prevWar)}
+          prevLabel={prevWar ? (isBn ? prevWar.nameBn : prevWar.nameEn) : undefined}
+          nextLabel={nextWar ? (isBn ? nextWar.nameBn : nextWar.nameEn) : undefined}
+          selectedLanguage={selectedLanguage}
+        />
         {/* Sticky Top Header */}
         <div
           className={`sticky top-0 z-40 text-white shadow-xl rounded-2xl px-3 sm:px-4 py-3 flex items-center justify-between gap-3 border transition-colors ${
@@ -379,6 +410,18 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Direct Battle Quick-Switcher & Swipe Hint Strip */}
+        <QuickReaderSwitcherStrip
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          hasPrev={Boolean(prevWar)}
+          hasNext={Boolean(nextWar)}
+          prevLabel={prevWar ? (isBn ? prevWar.nameBn : prevWar.nameEn) : null}
+          nextLabel={nextWar ? (isBn ? nextWar.nameBn : nextWar.nameEn) : null}
+          onPrev={() => prevWar && handleSelectWar(prevWar.id)}
+          onNext={() => nextWar && handleSelectWar(nextWar.id)}
+        />
 
         {/* Floating Toast Notification */}
         {toastMessage && (
