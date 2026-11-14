@@ -92,7 +92,11 @@ export type DuaCategory =
   | 'forgiveness'
   | 'hardship'
   | 'quranic'
-  | 'daily_living';
+  | 'daily_living'
+  | 'hajj'
+  | 'ramadan'
+  | 'family'
+  | 'travel';
 
 export interface DuaItem {
   id: string;
