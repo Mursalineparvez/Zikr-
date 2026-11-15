@@ -240,59 +240,14 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const hubItems = [
     {
-      id: 'my_account' as OtherSubSection,
-      title: selectedLanguage === 'bn' ? 'আমার অ্যাকাউন্ট' : selectedLanguage === 'ar' ? 'حسابي' : 'My Account',
-      arabic: 'حسابي والإعدادات',
-      desc: selectedLanguage === 'bn'
-        ? 'প্রোফাইল, ক্লাউড সিঙ্ক ও সকল অ্যাপ সেটিংস'
-        : selectedLanguage === 'ar'
-        ? 'الملف الشخصي والمزامنة وإعدادات التطبيق'
-        : 'Profile, Cloud Sync & App Settings',
-      icon: userProfile?.photoUrl ? (
-        <img
-          src={userProfile.photoUrl}
-          alt={userProfile.name || (selectedLanguage === 'bn' ? 'আমার অ্যাকাউন্ট' : 'My Account')}
-          className="w-full h-full object-cover rounded-2xl"
-        />
-      ) : (
-        <User className="w-6 h-6 text-[#006A4E] dark:text-emerald-300" />
-      ),
-      color: 'from-emerald-600/20 to-teal-500/10 border-emerald-500/30',
-      badge: selectedLanguage === 'bn' ? 'প্রোফাইল ও সেটিংস' : selectedLanguage === 'ar' ? 'الحساب والإعدادات' : 'Profile & Settings',
-      action: () => {
-        setAccountTab('profile');
-        handleSelectSub('my_account');
-      },
+      id: 'dua' as OtherSubSection,
+      title: NAV_TRANSLATIONS.dua[selectedLanguage],
+      arabic: 'الأدعية المأثورة',
+      desc: OTHER_HUB_UI.duaDesc[selectedLanguage],
+      icon: <Heart className="w-6 h-6 text-rose-500" />,
+      color: 'from-rose-500/15 to-pink-500/10 border-rose-500/30',
+      badge: OTHER_HUB_UI.badgeDua[selectedLanguage],
     },
-    {
-      id: 'saved' as OtherSubSection,
-      title: selectedLanguage === 'bn' ? 'সংরক্ষিত লাইব্রেরি' : selectedLanguage === 'ar' ? 'المحفوظات' : 'Saved',
-      arabic: 'المحفوظات',
-      desc: selectedLanguage === 'bn'
-        ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং নোটসমূহ'
-        : selectedLanguage === 'ar'
-        ? 'الإشارات المرجعية والتمييزات والملاحظات المحفوظة'
-        : 'Your bookmarks, highlights, and notes',
-      icon: <Bookmark className="w-6 h-6 text-[#006A4E] dark:text-emerald-300" />,
-      color: 'from-emerald-600/20 to-teal-500/10 border-emerald-500/30',
-      badge: selectedLanguage === 'bn' ? 'বুকমার্ক ও নোটস' : selectedLanguage === 'ar' ? 'المحفوظات والملاحظات' : 'Bookmarks & Notes',
-    },
-    ...(onNavigateToNamaj
-      ? [
-          {
-            id: 'namaj' as any,
-            title: selectedLanguage === 'bn' ? 'নামাজ শিক্ষা ও পূর্ণাঙ্গ গাইড' : 'Namaz Guide & Rules',
-            arabic: 'تعليم الصلاة والأحكام',
-            desc: selectedLanguage === 'bn'
-              ? '৫ ওয়াক্ত ফরজ ও নফল নামাজের নিয়ম, ১০টি ধারাবাহিক ধাপ, সকল বৈঠকের দোয়া ও কাজা ক্যালকুলেটর'
-              : 'Complete prayer rules, 5 daily fard/nafl rakats, step-by-step procedure and qaza counter.',
-            icon: <span className="text-2xl">🕌</span>,
-            color: 'from-emerald-700/30 via-teal-600/20 to-emerald-500/10 border-emerald-500/50',
-            badge: selectedLanguage === 'bn' ? 'নামাজ শিক্ষা' : 'Prayer Guide',
-            action: onNavigateToNamaj,
-          },
-        ]
-      : []),
     {
       id: 'nobi_24_hours' as OtherSubSection,
       title: NAV_TRANSLATIONS.nobi_24_hours?.[selectedLanguage] || (selectedLanguage === 'bn' ? 'নবীজির ২৪ ঘণ্টা' : "Prophet's 24 Hours"),
@@ -349,15 +304,13 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       badge: selectedLanguage === 'bn' ? '২৬৬+ সাহাবি' : '266+ Sahaba',
     },
     {
-      id: 'arober_gotro' as OtherSubSection,
-      title: selectedLanguage === 'bn' ? 'আরবের গোত্র ও ব্যক্তিত্ব' : 'Arab Tribes & Personalities',
-      arabic: 'قبائل وشخصيات العرب',
-      desc: selectedLanguage === 'bn'
-        ? 'মক্কা, মদিনা ও সমগ্র আরবের ৪০টি ঐতিহাসিক গোত্রের বংশপরিচয়, পবিত্র কাবার দায়িত্ব বণ্টন, বংশধারা ও বিশিষ্ট ব্যক্তিবর্গের পূর্ণাঙ্গ সংকলন'
-        : 'Complete study of Arabian tribes, Makkah & Madinah clans, official duties, genealogy trees, and all 40 clans with Sahaba & citations.',
-      icon: <span className="text-2xl">🛡️</span>,
-      color: 'from-amber-600/25 via-emerald-600/20 to-teal-500/10 border-amber-500/40',
-      badge: selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক সূচিপত্র' : 'Topic-Wise Index',
+      id: 'history_timeline' as OtherSubSection,
+      title: NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা',
+      arabic: 'خريطة التاريخ الإسلامي',
+      desc: selectedLanguage === 'bn' ? '৫৭০ খ্রি. থেকে ২০২৬ খ্রি. পর্যন্ত সকল ঐতিহাসিক ঘটনা, অবস্থান ও ইন্টারঅ্যাক্টিভ মানচিত্র' : 'Interactive history map & events from 570 AD to 2026 AD.',
+      icon: <Compass className="w-6 h-6 text-amber-400 animate-pulse" />,
+      color: 'from-amber-500/15 to-emerald-500/10 border-amber-500/30',
+      badge: selectedLanguage === 'bn' ? 'ইন্টারেক্টিভ ম্যাপ' : 'History Map',
     },
     {
       id: 'islamic_history_wars' as OtherSubSection,
@@ -369,32 +322,24 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       badge: selectedLanguage === 'bn' ? 'বইয়ের সূচিপত্র' : 'Battles',
     },
     {
-      id: 'history_timeline' as OtherSubSection,
-      title: NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা',
-      arabic: 'خريطة التاريخ الإسلامي',
-      desc: selectedLanguage === 'bn' ? '৫৭০ খ্রি. থেকে ২০২৬ খ্রি. পর্যন্ত সকল ঐতিহাসিক ঘটনা, অবস্থান ও ইন্টারঅ্যাক্টিভ মানচিত্র' : 'Interactive history map & events from 570 AD to 2026 AD.',
-      icon: <Compass className="w-6 h-6 text-amber-400 animate-pulse" />,
-      color: 'from-amber-500/15 to-emerald-500/10 border-amber-500/30',
-      badge: selectedLanguage === 'bn' ? 'ইন্টারেক্টিভ ম্যাপ' : 'History Map',
-    },
-
-    {
-      id: 'dua' as OtherSubSection,
-      title: NAV_TRANSLATIONS.dua[selectedLanguage],
-      arabic: 'الأدعية المأثورة',
-      desc: OTHER_HUB_UI.duaDesc[selectedLanguage],
-      icon: <Heart className="w-6 h-6 text-rose-500" />,
-      color: 'from-rose-500/15 to-pink-500/10 border-rose-500/30',
-      badge: OTHER_HUB_UI.badgeDua[selectedLanguage],
+      id: 'arober_gotro' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'আরবের গোত্র ও ব্যক্তিত্ব' : 'Arab Tribes & Personalities',
+      arabic: 'قبائل وشخصيات العرب',
+      desc: selectedLanguage === 'bn'
+        ? 'মক্কা, মদিনা ও সমগ্র আরবের ৪০টি ঐতিহাসিক গোত্রের বংশপরিচয়, পবিত্র কাবার দায়িত্ব বণ্টন, বংশধারা ও বিশিষ্ট ব্যক্তিবর্গের পূর্ণাঙ্গ সংকলন'
+        : 'Complete study of Arabian tribes, Makkah & Madinah clans, official duties, genealogy trees, and all 40 clans with Sahaba & citations.',
+      icon: <span className="text-2xl">🛡️</span>,
+      color: 'from-amber-600/25 via-emerald-600/20 to-teal-500/10 border-amber-500/40',
+      badge: selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক সূচিপত্র' : 'Topic-Wise Index',
     },
     {
-      id: 'hajj_checklist' as OtherSubSection,
-      title: NAV_TRANSLATIONS.hajj_checklist[selectedLanguage],
-      arabic: 'دليل الحج والعمرة',
-      desc: selectedLanguage === 'bn' ? '৩ডি লাইভ অ্যানিমেটেড তাওয়াফ/সাঈ সিমুলেশন, প্রস্তুতকারী চেকলিস্ট, ৫ দিনের হজ ম্যাপ ও মিকাত গাইড' : '3D live animated Tawaf/Sa\'i simulation, preparation checklist, 5 days route map & Miqat guide.',
-      icon: <span className="text-2xl">🕋</span>,
-      color: 'from-teal-500/15 to-amber-500/10 border-teal-500/30',
-      badge: selectedLanguage === 'bn' ? 'কমপ্লিট গাইড' : 'Full Guide',
+      id: 'allah_names' as OtherSubSection,
+      title: NAV_TRANSLATIONS.allah_names[selectedLanguage],
+      arabic: 'أسماء الله الحسنى',
+      desc: OTHER_HUB_UI.allahNamesDesc[selectedLanguage],
+      icon: <Sparkles className="w-6 h-6 text-amber-400" />,
+      color: 'from-amber-500/15 to-orange-500/10 border-amber-500/30',
+      badge: OTHER_HUB_UI.badgeAllahNames[selectedLanguage],
     },
     {
       id: 'tablig' as OtherSubSection,
@@ -406,13 +351,67 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       badge: OTHER_HUB_UI.badgeTablig[selectedLanguage],
     },
     {
-      id: 'allah_names' as OtherSubSection,
-      title: NAV_TRANSLATIONS.allah_names[selectedLanguage],
-      arabic: 'أسماء الله الحسنى',
-      desc: OTHER_HUB_UI.allahNamesDesc[selectedLanguage],
-      icon: <Sparkles className="w-6 h-6 text-amber-400" />,
-      color: 'from-amber-500/15 to-orange-500/10 border-amber-500/30',
-      badge: OTHER_HUB_UI.badgeAllahNames[selectedLanguage],
+      id: 'hajj_checklist' as OtherSubSection,
+      title: NAV_TRANSLATIONS.hajj_checklist[selectedLanguage],
+      arabic: 'دليل الحج والعمرة',
+      desc: selectedLanguage === 'bn' ? '৩ডি লাইভ অ্যানিমেটেড তাওয়াফ/সাঈ সিমুলেশন, প্রস্তুতকারী চেকলিস্ট, ৫ দিনের হজ ম্যাপ ও মিকাত গাইড' : '3D live animated Tawaf/Sa\'i simulation, preparation checklist, 5 days route map & Miqat guide.',
+      icon: <span className="text-2xl">🕋</span>,
+      color: 'from-teal-500/15 to-amber-500/10 border-teal-500/30',
+      badge: selectedLanguage === 'bn' ? 'কমপ্লিট গাইড' : 'Full Guide',
+    },
+    ...(onNavigateToNamaj
+      ? [
+          {
+            id: 'namaj' as any,
+            title: selectedLanguage === 'bn' ? 'নামাজ শিক্ষা ও পূর্ণাঙ্গ গাইড' : 'Namaz Guide & Rules',
+            arabic: 'تعليم الصلاة والأحكام',
+            desc: selectedLanguage === 'bn'
+              ? '৫ ওয়াক্ত ফরজ ও নফল নামাজের নিয়ম, ১০টি ধারাবাহিক ধাপ, সকল বৈঠকের দোয়া ও কাজা ক্যালকুলেটর'
+              : 'Complete prayer rules, 5 daily fard/nafl rakats, step-by-step procedure and qaza counter.',
+            icon: <span className="text-2xl">🕌</span>,
+            color: 'from-emerald-700/30 via-teal-600/20 to-emerald-500/10 border-emerald-500/50',
+            badge: selectedLanguage === 'bn' ? 'নামাজ শিক্ষা' : 'Prayer Guide',
+            action: onNavigateToNamaj,
+          },
+        ]
+      : []),
+    {
+      id: 'saved' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'সংরক্ষিত লাইব্রেরি' : selectedLanguage === 'ar' ? 'المحفوظات' : 'Saved',
+      arabic: 'المحفوظات',
+      desc: selectedLanguage === 'bn'
+        ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং নোটসমূহ'
+        : selectedLanguage === 'ar'
+        ? 'الإشارات المرجعية والتمييزات والملاحظات المحفوظة'
+        : 'Your bookmarks, highlights, and notes',
+      icon: <Bookmark className="w-6 h-6 text-[#006A4E] dark:text-emerald-300" />,
+      color: 'from-emerald-600/20 to-teal-500/10 border-emerald-500/30',
+      badge: selectedLanguage === 'bn' ? 'বুকমার্ক ও নোটস' : selectedLanguage === 'ar' ? 'المحفوظات والملاحظات' : 'Bookmarks & Notes',
+    },
+    {
+      id: 'my_account' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'আমার অ্যাকাউন্ট' : selectedLanguage === 'ar' ? 'حسابي' : 'My Account',
+      arabic: 'حسابي والإعدادات',
+      desc: selectedLanguage === 'bn'
+        ? 'প্রোফাইল, ক্লাউড সিঙ্ক ও সকল অ্যাপ সেটিংস'
+        : selectedLanguage === 'ar'
+        ? 'الملف الشخصي والمزامنة وإعدادات التطبيق'
+        : 'Profile, Cloud Sync & App Settings',
+      icon: userProfile?.photoUrl ? (
+        <img
+          src={userProfile.photoUrl}
+          alt={userProfile.name || (selectedLanguage === 'bn' ? 'আমার অ্যাকাউন্ট' : 'My Account')}
+          className="w-full h-full object-cover rounded-2xl"
+        />
+      ) : (
+        <User className="w-6 h-6 text-[#006A4E] dark:text-emerald-300" />
+      ),
+      color: 'from-emerald-600/20 to-teal-500/10 border-emerald-500/30',
+      badge: selectedLanguage === 'bn' ? 'প্রোফাইল ও সেটিংস' : selectedLanguage === 'ar' ? 'الحساب والإعدادات' : 'Profile & Settings',
+      action: () => {
+        setAccountTab('profile');
+        handleSelectSub('my_account');
+      },
     },
   ];
 
