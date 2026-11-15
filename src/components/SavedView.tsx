@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 import {
   SavedHighlight,
   SavedNote,
@@ -108,6 +110,10 @@ export const SavedView: React.FC<SavedViewProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightColorFilter, setHighlightColorFilter] = useState<HighlightColor | 'all'>('all');
+  const [shareState, setShareState] = useState<{
+    content: ShareableContent;
+    focus: 'share' | 'download';
+  } | null>(null);
 
   // Composer state
   const [showAddBookmark, setShowAddBookmark] = useState(false);
@@ -269,6 +275,44 @@ export const SavedView: React.FC<SavedViewProps> = ({
 
   const totalSaved = bookmarks.length + highlights.length + notes.length;
 
+  const openLibraryShare = (focus: 'share' | 'download') => {
+    const bmText = bookmarks
+      .map((b, i) => `${i + 1}. ${b.title} [${b.sourceLabel}]\n${b.arabic || ''}\n${b.subtitle}`)
+      .join('\n\n');
+    const hlText = highlights
+      .map((h, i) => `${i + 1}. "${h.text}" — ${h.source}`)
+      .join('\n\n');
+    const noteText = notes
+      .map((n, i) => `${i + 1}. ${n.title}\n${n.content}${n.source ? `\n(${n.source})` : ''}`)
+      .join('\n\n');
+
+    const fullDoc = [
+      bookmarks.length ? `=== ${isBn ? 'বুকমার্ক সমূহ' : 'Bookmarks'} (${bookmarks.length}) ===\n${bmText}` : '',
+      highlights.length ? `=== ${isBn ? 'হাইলাইট সমূহ' : 'Highlights'} (${highlights.length}) ===\n${hlText}` : '',
+      notes.length ? `=== ${isBn ? 'নোটস' : 'Notes'} (${notes.length}) ===\n${noteText}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n====================================\n\n');
+
+    setShareState({
+      focus,
+      content: {
+        badge: isBn ? 'সংরক্ষিত লাইব্রেরি' : 'Saved Library',
+        title: isBn ? 'আমার সংরক্ষিত ইসলামিক লাইব্রেরি' : 'My Saved Islamic Library',
+        subtitle: isBn
+          ? `বুকমার্ক: ${bookmarks.length} • হাইলাইট: ${highlights.length} • নোটস: ${notes.length}`
+          : `Bookmarks: ${bookmarks.length} • Highlights: ${highlights.length} • Notes: ${notes.length}`,
+        body:
+          fullDoc ||
+          (isBn
+            ? 'এখনো কোনো বুকমার্ক, হাইলাইট বা নোট সংরক্ষণ করা হয়নি।'
+            : 'No bookmarks, highlights, or notes saved yet.'),
+        fullDocumentText: fullDoc || undefined,
+        fileNamePrefix: 'ZikrPlus-Saved-Library',
+      },
+    });
+  };
+
   return (
     <div
       className={`rounded-3xl border overflow-hidden flex flex-col min-h-[580px] transition-colors ${
@@ -320,29 +364,38 @@ export const SavedView: React.FC<SavedViewProps> = ({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (soundEnabled) soundHaptics.playTap();
-              if (activeTab === 'bookmarks') setShowAddBookmark((p) => !p);
-              else if (activeTab === 'highlights') setShowAddHighlight((p) => !p);
-              else handleOpenEditNote();
-            }}
-            className={`min-h-[44px] px-4 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0 whitespace-nowrap shadow-sm ${
-              isDay
-                ? 'bg-[#006A4E] hover:bg-[#005740] text-white'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-            }`}
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>
-              {activeTab === 'bookmarks'
-                ? isBn ? 'বুকমার্ক' : 'Add Bookmark'
-                : activeTab === 'highlights'
-                ? isBn ? 'হাইলাইট' : 'Add Highlight'
-                : isBn ? 'নতুন নোট' : 'New Note'}
-            </span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <ShareDownloadButtons
+              variant="card"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openLibraryShare('share')}
+              onDownload={() => openLibraryShare('download')}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                if (activeTab === 'bookmarks') setShowAddBookmark((p) => !p);
+                else if (activeTab === 'highlights') setShowAddHighlight((p) => !p);
+                else handleOpenEditNote();
+              }}
+              className={`min-h-[44px] px-4 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0 whitespace-nowrap shadow-sm ${
+                isDay
+                  ? 'bg-[#006A4E] hover:bg-[#005740] text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+              }`}
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>
+                {activeTab === 'bookmarks'
+                  ? isBn ? 'বুকমার্ক' : 'Add Bookmark'
+                  : activeTab === 'highlights'
+                  ? isBn ? 'হাইলাইট' : 'Add Highlight'
+                  : isBn ? 'নতুন নোট' : 'New Note'}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Clean 3-Column Tabular Summary Strip */}
@@ -600,6 +653,35 @@ export const SavedView: React.FC<SavedViewProps> = ({
                           <h4 className="font-bold text-sm sm:text-base leading-snug mt-0.5">{bm.title}</h4>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
+                          <ShareDownloadButtons
+                            variant="compact"
+                            selectedLanguage={selectedLanguage}
+                            themeMode={themeMode}
+                            onShare={() =>
+                              setShareState({
+                                focus: 'share',
+                                content: {
+                                  badge: bm.sourceLabel,
+                                  title: bm.title,
+                                  arabic: bm.arabic,
+                                  body: bm.subtitle || bm.title,
+                                  fileNamePrefix: 'Saved-Bookmark',
+                                },
+                              })
+                            }
+                            onDownload={() =>
+                              setShareState({
+                                focus: 'download',
+                                content: {
+                                  badge: bm.sourceLabel,
+                                  title: bm.title,
+                                  arabic: bm.arabic,
+                                  body: bm.subtitle || bm.title,
+                                  fileNamePrefix: 'Saved-Bookmark',
+                                },
+                              })
+                            }
+                          />
                           <button
                             type="button"
                             onClick={() => handleCopy(bm.id, `${bm.title}\n${bm.arabic || ''}\n${bm.subtitle}`)}
@@ -816,6 +898,35 @@ export const SavedView: React.FC<SavedViewProps> = ({
                             <span className="opacity-65 whitespace-nowrap">{formatDate(hl.createdAt)}</span>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
+                            <ShareDownloadButtons
+                              variant="compact"
+                              selectedLanguage={selectedLanguage}
+                              themeMode={themeMode}
+                              onShare={() =>
+                                setShareState({
+                                  focus: 'share',
+                                  content: {
+                                    badge: isBn ? 'সংরক্ষিত হাইলাইট' : 'Saved Highlight',
+                                    title: hl.source || (isBn ? 'তাফসীর হাইলাইট' : 'Commentary Highlight'),
+                                    body: `"${hl.text}"`,
+                                    reference: hl.source,
+                                    fileNamePrefix: 'Saved-Highlight',
+                                  },
+                                })
+                              }
+                              onDownload={() =>
+                                setShareState({
+                                  focus: 'download',
+                                  content: {
+                                    badge: isBn ? 'সংরক্ষিত হাইলাইট' : 'Saved Highlight',
+                                    title: hl.source || (isBn ? 'তাফসীর হাইলাইট' : 'Commentary Highlight'),
+                                    body: `"${hl.text}"`,
+                                    reference: hl.source,
+                                    fileNamePrefix: 'Saved-Highlight',
+                                  },
+                                })
+                              }
+                            />
                             <button
                               type="button"
                               onClick={() => handleCopy(hl.id, hl.text)}
@@ -979,6 +1090,37 @@ export const SavedView: React.FC<SavedViewProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center gap-0.5 shrink-0">
+                          <ShareDownloadButtons
+                            variant="compact"
+                            selectedLanguage={selectedLanguage}
+                            themeMode={themeMode}
+                            onShare={() =>
+                              setShareState({
+                                focus: 'share',
+                                content: {
+                                  badge: isBn ? 'ব্যক্তিগত নোট' : 'Study Note',
+                                  title: n.title || (isBn ? 'সংরক্ষিত নোট' : 'Saved Note'),
+                                  subtitle: n.source,
+                                  body: n.content,
+                                  reference: n.source,
+                                  fileNamePrefix: 'Saved-Note',
+                                },
+                              })
+                            }
+                            onDownload={() =>
+                              setShareState({
+                                focus: 'download',
+                                content: {
+                                  badge: isBn ? 'ব্যক্তিগত নোট' : 'Study Note',
+                                  title: n.title || (isBn ? 'সংরক্ষিত নোট' : 'Saved Note'),
+                                  subtitle: n.source,
+                                  body: n.content,
+                                  reference: n.source,
+                                  fileNamePrefix: 'Saved-Note',
+                                },
+                              })
+                            }
+                          />
                           <button
                             type="button"
                             onClick={() => handleOpenEditNote(n)}
@@ -1020,6 +1162,14 @@ export const SavedView: React.FC<SavedViewProps> = ({
           </div>
         )}
       </div>
+      <ContentShareModal
+        isOpen={!!shareState}
+        onClose={() => setShareState(null)}
+        content={shareState?.content || null}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareState?.focus}
+      />
     </div>
   );
 };

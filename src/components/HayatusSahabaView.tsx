@@ -33,6 +33,8 @@ import {
 import { soundHaptics } from '../utils/audioHaptics';
 import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
 import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 import {
   SAHABA_CATEGORIES,
   SAHABA_DATABASE,
@@ -271,10 +273,102 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
   const [selectedFamilyBioModal, setSelectedFamilyBioModal] = useState<FamilyMemberBio | null>(null);
   const [showBibliographyModal, setShowBibliographyModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareState, setShareState] = useState<{
+    content: ShareableContent;
+    focus: 'share' | 'download';
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all' | 'prophetic_titles'>('all');
   const [copiedQuote, setCopiedQuote] = useState(false);
+
+  const buildSahabaShareContent = (sahaba: SahabaItem): ShareableContent => {
+    const enProfile = SAHABA_EN_DATABASE[sahaba.id];
+    const name = getSahabaName(sahaba, selectedLanguage);
+    const title = getSahabaTitle(sahaba, selectedLanguage);
+    const summary = getSahabaSummary(sahaba, selectedLanguage);
+    const cat = getSahabaCategory(sahaba, selectedLanguage);
+    const birthDeath = isBn
+      ? sahaba.birthAndDeathBn
+      : (enProfile?.birthAndDeath || sahaba.birthAndDeathEn || '');
+    const islamAcc = isBn
+      ? sahaba.islamAcceptanceBn
+      : (enProfile?.islamAcceptance || sahaba.islamAcceptanceEn || '');
+    const bio = isBn
+      ? sahaba.detailedBiographyBn
+      : (enProfile?.detailedBiography || sahaba.detailedBiographyEn || '');
+    const stories = isBn
+      ? sahaba.emotionalStoriesBn
+      : (enProfile?.emotionalStories || sahaba.emotionalStoriesEn || []);
+    const lessons = isBn
+      ? sahaba.lessonsBn
+      : (enProfile?.lessons || sahaba.lessonsEn || []);
+    const refs = isBn
+      ? sahaba.referencesBn
+      : (enProfile?.references || sahaba.referencesEn || []);
+
+    const fullDoc = [
+      `${name} (${sahaba.nameAr})`,
+      `${title} | ${cat} | #${formatNum(sahaba.rank)}`,
+      birthDeath ? `${isBn ? 'জন্ম ও ইন্তেকাল' : 'Life Span'}: ${birthDeath}` : '',
+      `\n${summary}`,
+      islamAcc ? `\n${isBn ? 'ইসলাম গ্রহণ:' : 'Acceptance of Islam:'}\n${islamAcc}` : '',
+      bio ? `\n${isBn ? 'বিস্তারিত জীবনচরিত:' : 'Detailed Biography:'}\n${bio}` : '',
+      stories.length > 0
+        ? `\n${isBn ? 'হৃদয়স্পর্শী ঘটনা ও স্মৃতি:' : 'Memorable Incidents:'}\n${stories.map((st, idx) => `${idx + 1}. ${st}`).join('\n\n')}`
+        : '',
+      lessons.length > 0
+        ? `\n${isBn ? 'জীবন থেকে শিক্ষা:' : 'Key Lessons:'}\n${lessons.map((l, idx) => `${idx + 1}. ${l}`).join('\n')}`
+        : '',
+      refs.length > 0 ? `\n${isBn ? 'সূত্র:' : 'References:'} ${refs.join(', ')}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      id: sahaba.id,
+      badge: `${cat} • #${formatNum(sahaba.rank)}`,
+      title: name,
+      subtitle: title,
+      arabic: sahaba.nameAr,
+      meta: [
+        ...(birthDeath ? [{ label: isBn ? 'জীবনকাল' : 'Lifespan', value: birthDeath }] : []),
+        { label: isBn ? 'শ্রেণী' : 'Category', value: cat },
+      ],
+      body: summary,
+      highlights: lessons,
+      reference: refs.join(', '),
+      fullDocumentText: fullDoc,
+      fileNamePrefix: `Sahabi-${sahaba.rank}-${sahaba.id}`,
+    };
+  };
+
+  const openSahabaIndexShare = (focus: 'share' | 'download') => {
+    const fullDoc = filteredSahaba
+      .map(
+        (s) =>
+          `#${s.rank}. ${getSahabaName(s, selectedLanguage)} (${s.nameAr})\n${getSahabaTitle(s, selectedLanguage)}\n${getSahabaSummary(s, selectedLanguage)}`
+      )
+      .join('\n\n------------------------------\n\n');
+    setShareState({
+      focus,
+      content: {
+        badge: isBn ? 'হায়াতুস সাহাবা' : 'Hayatus Sahaba',
+        title: isBn
+          ? `হায়াতুস সাহাবা (${formatNum(filteredSahaba.length)} জন বিশিষ্ট সাহাবি)`
+          : `Hayatus Sahaba (${filteredSahaba.length} Companions)`,
+        subtitle: isBn
+          ? 'রাসূলুল্লাহ (সা.)-এর সম্মানিত সাহাবিগণের জীবনচরিত, ত্যাগ ও ঈমানদীপ্ত ঘটনা সংকলন'
+          : 'Biographies, sacrifices, and inspiring events of the noble Sahabah',
+        arabic: 'رَضِيَ اللَّهُ عَنْهُمْ وَرَضُوا عَنْهُ',
+        body: filteredSahaba
+          .slice(0, 6)
+          .map((s) => `${formatNum(s.rank)}. ${getSahabaName(s, selectedLanguage)} — ${getSahabaTitle(s, selectedLanguage)}`)
+          .join('\n'),
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Hayatus-Sahaba-Index',
+      },
+    });
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -598,6 +692,14 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             >
               <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-white' : ''}`} />
             </button>
+
+            <ShareDownloadButtons
+              variant="hero"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => setShareState({ content: buildSahabaShareContent(activeSahaba), focus: 'share' })}
+              onDownload={() => setShareState({ content: buildSahabaShareContent(activeSahaba), focus: 'download' })}
+            />
 
             <button
               onClick={handleCopySahabaSummary}
@@ -1259,6 +1361,14 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             </div>
           </div>
         )}
+        <ContentShareModal
+          isOpen={!!shareState}
+          onClose={() => setShareState(null)}
+          content={shareState?.content || null}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={soundEnabled}
+          initialFocus={shareState?.focus}
+        />
       </div>
     );
   }
@@ -1344,14 +1454,26 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             {isBn ? `${formatNum(totalSahaba)} জন সাহাবি` : `${totalSahaba} Companions`}
           </span>
         </div>
-        <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-          {isBn ? `হায়াতুস সাহাবা (${formatNum(totalSahaba)}+ বিশিষ্ট সাহাবির জীবনী)` : `Hayatus Sahaba (${totalSahaba}+ Prominent Biographies)`}
-        </h2>
-        <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
-          {isBn
-            ? 'মর্যাদা ও জনপ্রিয়তার ক্রমানুসারে নবীপ্রেমিক সাহাবিগণের পূর্ণাঙ্গ জীবন, পরিবার, সন্তানসন্ততি, ইসলাম গ্রহণ, বীরত্ব ও সহিহ হাদিসের প্রামাণিক দলিল।'
-            : 'Ranked biographical accounts of the beloved companions of Prophet Muhammad (PBUH)—their families, Islam acceptance, virtues, and authentic Hadith evidence.'}
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+              {isBn ? `হায়াতুস সাহাবা (${formatNum(totalSahaba)}+ বিশিষ্ট সাহাবির জীবনী)` : `Hayatus Sahaba (${totalSahaba}+ Prominent Biographies)`}
+            </h2>
+            <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
+              {isBn
+                ? 'মর্যাদা ও জনপ্রিয়তার ক্রমানুসারে নবীপ্রেমিক সাহাবিগণের পূর্ণাঙ্গ জীবন, পরিবার, সন্তানসন্ততি, ইসলাম গ্রহণ, বীরত্ব ও সহিহ হাদিসের প্রামাণিক দলিল।'
+                : 'Ranked biographical accounts of the beloved companions of Prophet Muhammad (PBUH)—their families, Islam acceptance, virtues, and authentic Hadith evidence.'}
+            </p>
+          </div>
+          <ShareDownloadButtons
+            variant="hero"
+            selectedLanguage={selectedLanguage}
+            themeMode={themeMode}
+            className="shrink-0 self-start sm:self-end"
+            onShare={() => openSahabaIndexShare('share')}
+            onDownload={() => openSahabaIndexShare('download')}
+          />
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -1537,11 +1659,20 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                     </div>
 
                     <div className="pt-2 border-t border-slate-200/50 dark:border-teal-900/40 flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
-                      <span>{getSahabaCategory(sahaba, selectedLanguage)}</span>
-                      <span className="flex items-center gap-0.5">
-                        <span>{isBn ? 'পড়ুন' : 'View'}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </span>
+                      <span className="truncate">{getSahabaCategory(sahaba, selectedLanguage)}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={selectedLanguage}
+                          themeMode={themeMode}
+                          onShare={() => setShareState({ content: buildSahabaShareContent(sahaba), focus: 'share' })}
+                          onDownload={() => setShareState({ content: buildSahabaShareContent(sahaba), focus: 'download' })}
+                        />
+                        <span className="flex items-center gap-0.5">
+                          <span>{isBn ? 'পড়ুন' : 'View'}</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1625,7 +1756,16 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                           </span>
                           <span className="truncate">{name}</span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <div className="flex items-center gap-1 shrink-0">
+                          <ShareDownloadButtons
+                            variant="compact"
+                            selectedLanguage={selectedLanguage}
+                            themeMode={themeMode}
+                            onShare={() => setShareState({ content: buildSahabaShareContent(sahaba), focus: 'share' })}
+                            onDownload={() => setShareState({ content: buildSahabaShareContent(sahaba), focus: 'download' })}
+                          />
+                          <ChevronRight className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        </div>
                       </div>
                     );
                   })}
@@ -1748,6 +1888,14 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           </div>
         </div>
       )}
+      <ContentShareModal
+        isOpen={!!shareState}
+        onClose={() => setShareState(null)}
+        content={shareState?.content || null}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareState?.focus}
+      />
     </div>
   );
 };

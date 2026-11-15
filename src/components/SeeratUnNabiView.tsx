@@ -30,7 +30,6 @@ import {
   Bookmark,
   CheckCircle2,
   RotateCcw,
-  Share2,
   ExternalLink,
   Sliders,
   Filter,
@@ -56,6 +55,8 @@ import { SEERAT_LOCATIONS, getLocationForAge } from '../data/seeratLocations';
 import { SeeratHistoricMapView } from './SeeratHistoricMapView';
 import { SeeratTimelineView } from './SeeratTimelineView';
 import { SeeratChapterMiniMap } from './SeeratChapterMiniMap';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 interface SeeratUnNabiViewProps {
   themeMode?: ThemeMode;
@@ -439,9 +440,15 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
   const [selectedMapLocationId, setSelectedMapLocationId] = useState<string | null>(null);
   const [showFullMapModal, setShowFullMapModal] = useState(false);
 
-  // Share Card Modal state
-  const [showShareModal, setShowShareModal] = useState(false);
+  // Share & Download Modal state
+  const [shareModalContent, setShareModalContent] = useState<ShareableContent | null>(null);
+  const [shareModalFocus, setShareModalFocus] = useState<'share' | 'download'>('share');
   const [showBibliographyModal, setShowBibliographyModal] = useState(false);
+
+  const openShareModal = (content: ShareableContent, focus: 'share' | 'download') => {
+    setShareModalContent(content);
+    setShareModalFocus(focus);
+  };
 
   // Reader Settings
   const [fontSizeLevel, setFontSizeLevel] = useState<'normal' | 'large' | 'xl'>('normal');
@@ -701,8 +708,140 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     setShowFullMapModal(true);
   };
 
+  const buildSeeratChapterShareContent = (item: SeeratAgeItem): ShareableContent => {
+    const cTitle = isAr && item.titleAr ? item.titleAr : isBn ? item.titleBn : item.titleEn;
+    const cPhase = isAr
+      ? SEERAT_PHASES.find((p) => p.key === item.phaseKey)?.titleAr || item.phaseNameEn
+      : isBn
+      ? item.phaseNameBn
+      : item.phaseNameEn;
+    const cLoc = isBn ? item.locationBn : item.locationEn;
+    const cHighlights = isBn ? item.highlightsBn : item.highlightsEn;
+    const cNarrative = isBn ? item.historicalNarrativeBn : item.historicalNarrativeEn;
+    const cEmotional = isBn ? item.emotionalStoryBn : item.emotionalStoryEn;
+    const cLessons = isBn ? item.lessonsBn : item.lessonsEn;
+    const cSources = getChapterClassicalSources(item);
+    const cSahaba = getChapterKeySahaba(item);
+    const hijri = formatSeeratHijri(item.yearHijri, isBn);
+
+    const docParts: string[] = [
+      `${cPhase} — ${t('ageLabel')} ${item.age} ${isBn ? 'বছর' : 'Years'} (${item.yearCE} CE | ${hijri})`,
+      `${isBn ? 'স্থান' : 'Location'}: ${cLoc}`,
+      '',
+      `${isBn ? 'মূল ঘটনাসমূহ' : 'Key Highlights'}:`,
+      ...cHighlights.map((h) => `• ${h}`),
+      '',
+      `${isBn ? 'পূর্ণাঙ্গ ঐতিহাসিক বিবরণ' : 'Historical Chronicle'}:`,
+      cNarrative,
+    ];
+
+    if (cEmotional) {
+      docParts.push('', `${isBn ? 'হৃদয়স্পর্শী ঘটনা' : 'Heart-Touching Moment'}:`, cEmotional);
+    }
+    if (item.quranRef) {
+      docParts.push(
+        '',
+        `${isBn ? 'কুরআনের আয়াত' : 'Quranic Reference'} (${item.quranRef.surah}:${item.quranRef.ayah}):`,
+        item.quranRef.arabic || '',
+        isBn ? item.quranRef.meaningBn : item.quranRef.meaningEn
+      );
+    }
+    if (item.hadithRef) {
+      docParts.push(
+        '',
+        `${isBn ? 'সহিহ হাদিস' : 'Authentic Hadith'} (${item.hadithRef.source}):`,
+        isBn ? item.hadithRef.textBn : item.hadithRef.textEn
+      );
+    }
+    if (cSahaba.length > 0) {
+      docParts.push(
+        '',
+        `${isBn ? 'সংশ্লিষ্ট সাহাবীগণ' : 'Key Companions'}:`,
+        ...cSahaba.map((s) => `• ${isBn ? s.nameBn : s.nameEn} — ${isBn ? s.roleBn : s.roleEn}`)
+      );
+    }
+    if (cLessons.length > 0) {
+      docParts.push(
+        '',
+        `${isBn ? 'উম্মাহর জন্য শিক্ষা' : 'Lessons for the Ummah'}:`,
+        ...cLessons.map((l, i) => `${i + 1}. ${l}`)
+      );
+    }
+    if (cSources.length > 0) {
+      docParts.push(
+        '',
+        `${isBn ? 'তথ্যসূত্র' : 'Classical Sources'}:`,
+        ...cSources.map((s) => `• ${isBn ? s.bookBn : s.bookEn}`)
+      );
+    }
+
+    return {
+      id: `seerat-age-${item.age}`,
+      badge: isBn ? `সিরাতুন নবী (সা.) • বয়স ${item.age}` : `Seerat-un-Nabi • Age ${item.age}`,
+      title: cTitle,
+      subtitle: `${cPhase} • ${item.yearCE} CE (${hijri})`,
+      arabic: item.titleAr || item.quranRef?.arabic,
+      body: cNarrative,
+      highlights: cHighlights.slice(0, 4),
+      meta: [
+        { label: isBn ? 'বয়স' : 'Age', value: isBn ? `${item.age} বছর` : `${item.age} yrs` },
+        { label: isBn ? 'সন' : 'Year', value: `${item.yearCE} CE` },
+        { label: isBn ? 'হিজরি' : 'Hijri', value: hijri },
+        { label: isBn ? 'স্থান' : 'Location', value: cLoc },
+      ],
+      reference: cSources.map((s) => (isBn ? s.bookBn : s.bookEn)).slice(0, 2).join(' • '),
+      fullDocumentText: docParts.join('\n'),
+      fileNamePrefix: `Seerat-Age-${item.age}`,
+    };
+  };
+
+  const openSeeratOverviewShare = (focus: 'share' | 'download') => {
+    const list = filteredAges.length > 0 ? filteredAges : SEERAT_DATABASE;
+    const summaryBody = isBn
+      ? `নবী করিম (সা.)-এর পবিত্র জীবনের ১ থেকে ৬৩ বছর বয়স পর্যন্ত ধারাবাহিক ইতিহাস ও শিক্ষা (${list.length}টি অধ্যায়)।`
+      : `Chronological biography of Prophet Muhammad (PBUH) from Age 1 to 63 (${list.length} chapters).`;
+
+    const fullDoc = list
+      .map((item) => {
+        const cTitle = isAr && item.titleAr ? item.titleAr : isBn ? item.titleBn : item.titleEn;
+        const cLoc = isBn ? item.locationBn : item.locationEn;
+        const cNar = isBn ? item.historicalNarrativeBn : item.historicalNarrativeEn;
+        const cLes = isBn ? item.lessonsBn : item.lessonsEn;
+        return [
+          `========================================`,
+          `${isBn ? 'বয়স' : 'Age'} ${item.age} (${item.yearCE} CE | ${formatSeeratHijri(item.yearHijri, isBn)}) — ${cTitle}`,
+          `${isBn ? 'স্থান' : 'Location'}: ${cLoc}`,
+          `----------------------------------------`,
+          cNar,
+          cLes.length > 0 ? `\n${isBn ? 'শিক্ষা' : 'Lessons'}:\n${cLes.map((l) => `• ${l}`).join('\n')}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n');
+      })
+      .join('\n\n');
+
+    openShareModal(
+      {
+        id: 'seerat-overview',
+        badge: isBn ? 'সিরাতুন নবী (সা.) বিশ্বকোষ' : 'Seerat-un-Nabi Encyclopedia',
+        title: t('mainTitle'),
+        subtitle: t('subTitle'),
+        body: summaryBody,
+        highlights: list.slice(0, 5).map((item) => `${item.age}. ${isBn ? item.titleBn : item.titleEn} (${item.yearCE} CE)`),
+        meta: [
+          { label: isBn ? 'অধ্যায় সংখ্যা' : 'Chapters', value: `${list.length}` },
+          { label: isBn ? 'সময়কাল' : 'Span', value: '570 – 632 CE' },
+        ],
+        reference: isBn ? 'আর-রাহীকুল মাখতূম, সীরাতে ইবনে হিশাম, সহিহ বুখারি' : 'Ar-Raheeq Al-Makhtum, Ibn Hisham, Sahih Bukhari',
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Seerat-Un-Nabi-Complete',
+      },
+      focus
+    );
+  };
+
   const seeratSwipe = useHorizontalSwipe({
-    enabled: Boolean(activeItem) && !showFullMapModal && !showShareModal && !showBibliographyModal,
+    enabled: Boolean(activeItem) && !showFullMapModal && !shareModalContent && !showBibliographyModal,
     canSwipeLeft: Boolean(activeItem && activeItem.age < 63),
     canSwipeRight: Boolean(activeItem && activeItem.age > 1),
     onSwipeLeft: () => {
@@ -856,14 +995,14 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
               <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-white' : ''}`} />
             </button>
 
-            {/* Share Card Modal Trigger */}
-            <button
-              onClick={() => setShowShareModal(true)}
-              className="p-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 transition cursor-pointer text-white"
-              title="Share Chapter Poster"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
+            {/* Share & Download Buttons */}
+            <ShareDownloadButtons
+              variant="hero"
+              selectedLanguage={lang}
+              themeMode={themeMode}
+              onShare={() => openShareModal(buildSeeratChapterShareContent(activeItem), 'share')}
+              onDownload={() => openShareModal(buildSeeratChapterShareContent(activeItem), 'download')}
+            />
 
             {/* Copy Text */}
             <button
@@ -1399,64 +1538,14 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
           </div>
         </article>
 
-        {/* Share Social Poster Modal */}
-        {showShareModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 animate-in fade-in">
-            <div
-              className={`w-full max-w-lg rounded-3xl p-6 border shadow-2xl space-y-4 relative ${
-                isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#09241e] border-emerald-700 text-white'
-              }`}
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-emerald-800/50">
-                <div className="flex items-center gap-2">
-                  <Share2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="text-base font-extrabold">{t('shareChapter')}</h3>
-                </div>
-                <button
-                  onClick={() => setShowShareModal(false)}
-                  className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-emerald-800 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Poster Preview Card */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-900 via-teal-950 to-emerald-950 text-white space-y-3 border border-emerald-500/30">
-                <div className="flex items-center justify-between text-xs text-emerald-300 font-semibold">
-                  <span>{isBn ? `বয়স ${activeItem.age} বছর (${activeItem.yearCE} CE)` : `Age ${activeItem.age} Years (${activeItem.yearCE} CE)`}</span>
-                  <span>{hijriLabel}</span>
-                </div>
-
-                <h4 className="text-base font-black text-amber-300 leading-snug">{title}</h4>
-
-                <p className="text-xs text-emerald-100/90 italic font-serif leading-relaxed line-clamp-4">
-                  "{narrative.slice(0, 220)}..."
-                </p>
-
-                {activeItem.quranRef && (
-                  <div className="p-2.5 rounded-xl bg-white/10 text-[11px] text-teal-200">
-                    📖 {isBn ? 'সূরা' : 'Surah'} {activeItem.quranRef.surah} ({activeItem.quranRef.ayah}): "{isBn ? activeItem.quranRef.meaningBn : activeItem.quranRef.meaningEn}"
-                  </div>
-                )}
-
-                <div className="pt-2 flex items-center justify-between text-[10px] text-emerald-400 border-t border-white/10 font-mono">
-                  <span>{isBn ? 'রেফারেন্স: আর-রাহীকুল মাখতূম ও সহিহ হাদিস' : 'Reference: Ar-Raheeq Al-Makhtum & Sahih Hadith'}</span>
-                  <span>Zikr+ App</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  onClick={handleCopyChapter}
-                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-sm"
-                >
-                  <Copy className="w-4 h-4" />
-                  <span>{copiedChapter ? (isBn ? 'কপি করা হয়েছে ✓' : 'Copied ✓') : (isBn ? 'টেক্সট কপি করুন' : 'Copy Text')}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ContentShareModal
+          isOpen={Boolean(shareModalContent)}
+          onClose={() => setShareModalContent(null)}
+          content={shareModalContent}
+          selectedLanguage={lang}
+          soundEnabled={soundEnabled}
+          initialFocus={shareModalFocus}
+        />
 
         {/* Full Historic Map Modal if triggered */}
         {showFullMapModal && (
@@ -1517,6 +1606,13 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
           {/* Reading Progress Metric & Resume Button */}
           <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2 shrink-0 pt-1 md:pt-0 border-t md:border-t-0 border-slate-200/60 dark:border-emerald-800/40">
             <div className="flex items-center gap-1.5 flex-wrap">
+              <ShareDownloadButtons
+                variant="card"
+                selectedLanguage={lang}
+                themeMode={themeMode}
+                onShare={() => openSeeratOverviewShare('share')}
+                onDownload={() => openSeeratOverviewShare('download')}
+              />
               {lastReadAge && (
                 <button
                   onClick={() => handleSelectAge(lastReadAge)}
@@ -1822,10 +1918,18 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                       const isItemBookmarked = bookmarkedAges.includes(item.age);
 
                       return (
-                        <button
+                        <div
                           key={item.age}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => handleSelectAge(item.age)}
-                          className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs transition flex items-center justify-between gap-1.5 active:scale-95 cursor-pointer ${
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleSelectAge(item.age);
+                            }
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs transition flex items-center justify-between gap-1.5 cursor-pointer ${
                             isDay
                               ? 'hover:bg-amber-50 text-slate-800'
                               : 'hover:bg-[#0c2e27] text-emerald-100'
@@ -1848,8 +1952,15 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                             <span className="text-[10px] font-mono opacity-60 text-slate-400">
                               {item.yearCE}
                             </span>
+                            <ShareDownloadButtons
+                              variant="compact"
+                              selectedLanguage={lang}
+                              themeMode={themeMode}
+                              onShare={() => openShareModal(buildSeeratChapterShareContent(item), 'share')}
+                              onDownload={() => openShareModal(buildSeeratChapterShareContent(item), 'download')}
+                            />
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -1920,18 +2031,27 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                   </button>
                 </div>
 
-                <div className="pt-3 mt-3 border-t border-slate-100 dark:border-emerald-800/40 flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  <span className="text-[11px] opacity-75 font-medium truncate max-w-[140px]">
+                <div className="pt-3 mt-3 border-t border-slate-100 dark:border-emerald-800/40 flex items-center justify-between gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="text-[11px] opacity-75 font-medium truncate max-w-[115px]">
                     {phaseMeta ? (isAr ? phaseMeta.titleAr : isBn ? phaseMeta.titleBn : phaseMeta.titleEn) : ''}
                   </span>
 
-                  <button
-                    onClick={() => handleSelectAge(item.age)}
-                    className="flex items-center gap-0.5 group-hover:translate-x-1 transition-transform cursor-pointer"
-                  >
-                    <span>{isBn ? 'অধ্যায় পড়ুন' : 'Read Chapter'}</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <ShareDownloadButtons
+                      variant="compact"
+                      selectedLanguage={lang}
+                      themeMode={themeMode}
+                      onShare={() => openShareModal(buildSeeratChapterShareContent(item), 'share')}
+                      onDownload={() => openShareModal(buildSeeratChapterShareContent(item), 'download')}
+                    />
+                    <button
+                      onClick={() => handleSelectAge(item.age)}
+                      className="flex items-center gap-0.5 group-hover:translate-x-1 transition-transform cursor-pointer"
+                    >
+                      <span>{isBn ? 'অধ্যায় পড়ুন' : 'Read Chapter'}</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -2108,6 +2228,15 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
           </div>
         </div>
       )}
+
+      <ContentShareModal
+        isOpen={Boolean(shareModalContent)}
+        onClose={() => setShareModalContent(null)}
+        content={shareModalContent}
+        selectedLanguage={lang}
+        soundEnabled={soundEnabled}
+        initialFocus={shareModalFocus}
+      />
     </div>
   );
 };

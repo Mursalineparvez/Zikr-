@@ -39,12 +39,13 @@ import {
   Bookmark,
   Scroll,
   Lightbulb,
-  Share2,
   ChevronUp,
   ChevronDown,
   X,
   Layers,
 } from 'lucide-react';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 interface HistoryTimelineViewProps {
   themeMode?: ThemeMode;
@@ -241,6 +242,12 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   const [showBanner, setShowBanner] = useState<boolean>(false);
   const [showEraPicker, setShowEraPicker] = useState<boolean>(false);
   const [mobileLayoutMode, setMobileLayoutMode] = useState<'both' | 'map' | 'story'>('both');
+  const [shareModalContent, setShareModalContent] = useState<ShareableContent | null>(null);
+  const [shareModalFocus, setShareModalFocus] = useState<'share' | 'download'>('share');
+  const openShareModal = (content: ShareableContent, focus: 'share' | 'download') => {
+    setShareModalContent(content);
+    setShareModalFocus(focus);
+  };
 
   // Dedicated Content Scroll & Stepper State (Matches Pic 2)
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
@@ -772,6 +779,116 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
     return getEventReligiousDetails(activeEvent, selectedLanguage);
   }, [activeEvent, selectedLanguage]);
 
+  const buildHistoryEventShareContent = (evt: HistoryEvent): ShareableContent => {
+    const isBn = selectedLanguage === 'bn';
+    const eTitle = formatHonorifics(getLangText(evt.t, selectedLanguage), selectedLanguage);
+    const eDesc = formatHonorifics(getLangText(evt.d, selectedLanguage), selectedLanguage);
+    const eLesson = formatHonorifics(getLangText(evt.l, selectedLanguage), selectedLanguage);
+    const thenPlace = getLangText(evt.p, selectedLanguage);
+    const nowPlace = getLangText(evt.n, selectedLanguage);
+    const yearStr = formatYearSuffix(evt.y, selectedLanguage);
+    const hijriStr = getEraYearText(evt, selectedLanguage);
+    const catInfo = CATEGORY_INFO[evt.cat];
+    const catLabel = isBn ? catInfo.labelBn : catInfo.labelEn;
+    const rel = getEventReligiousDetails(evt, selectedLanguage);
+
+    const docParts: string[] = [
+      `${eTitle}`,
+      `${yearStr} (${hijriStr}) • ${catLabel}`,
+      `${isBn ? 'তখন' : 'Then'}: ${thenPlace} → ${isBn ? 'বর্তমানে' : 'Now'}: ${nowPlace}`,
+      '',
+      `${isBn ? 'ঘটনার বিস্তারিত ঐতিহাসিক বিবরণ' : 'Detailed Historical Narrative'}:`,
+      eDesc,
+    ];
+
+    if (eLesson) {
+      docParts.push('', `${isBn ? 'মূল শিক্ষা' : 'Key Lesson'}:`, eLesson);
+    }
+
+    docParts.push(
+      '',
+      `${isBn ? 'প্রাসঙ্গিক কুরআনের আয়াত' : 'Relevant Quranic Ayah'} (${rel.quranAyat.surah}):`,
+      rel.quranAyat.arabic,
+      isBn ? rel.quranAyat.translationBn : rel.quranAyat.translationEn,
+      '',
+      `${isBn ? 'সহীহ হাদিস' : 'Authentic Hadith'} (${rel.hadith.source}):`,
+      rel.hadith.arabicSnippet ? `«${rel.hadith.arabicSnippet}»` : '',
+      formatHonorifics(isBn ? rel.hadith.textBn : rel.hadith.textEn, selectedLanguage),
+      '',
+      `${isBn ? 'মূল ঐতিহাসিক কিতাবসমূহ' : 'Classical Historical Sources'}:`,
+      ...rel.classicalBooks.map(
+        (b, i) =>
+          `${i + 1}. ${isBn ? b.titleBn : b.titleEn || b.titleBn} — ${isBn ? b.authorBn : b.authorEn || b.authorBn} (${isBn ? b.era : b.eraEn || b.era})`
+      ),
+      '',
+      `${isBn ? 'মূল শিক্ষণীয় বিষয়' : 'Key Lessons'}:`,
+      ...rel.keyLessons.map((kl, i) => `${i + 1}. ${formatHonorifics(kl, selectedLanguage)}`),
+      '',
+      `${isBn ? 'হিকমত' : 'Wisdom'}: "${formatHonorifics(rel.spiritualTakeaway, selectedLanguage)}"`
+    );
+
+    return {
+      id: `history-evt-${evt.y}-${evt.cat}`,
+      badge: isBn ? `ইতিহাসের পাতা • ${yearStr}` : `Pages of History • ${yearStr}`,
+      title: eTitle,
+      subtitle: `${catLabel} • ${thenPlace} → ${nowPlace}`,
+      arabic: rel.quranAyat.arabic,
+      body: eDesc,
+      highlights: rel.keyLessons.slice(0, 3).map((kl) => formatHonorifics(kl, selectedLanguage)),
+      meta: [
+        { label: isBn ? 'সন' : 'Year', value: `${yearStr} (${hijriStr})` },
+        { label: isBn ? 'তখন' : 'Then', value: thenPlace },
+        { label: isBn ? 'বর্তমানে' : 'Now', value: nowPlace },
+      ],
+      reference: rel.classicalBooks
+        .slice(0, 2)
+        .map((b) => (isBn ? b.titleBn : b.titleEn || b.titleBn))
+        .join(' • '),
+      fullDocumentText: docParts.filter(Boolean).join('\n'),
+      fileNamePrefix: `History-${evt.y}-${eTitle}`,
+    };
+  };
+
+  const openTimelineOverviewShare = (focus: 'share' | 'download') => {
+    const isBn = selectedLanguage === 'bn';
+    const eraName = getLangText(activeEra.name, selectedLanguage);
+    const list = filteredEvents.length > 0 ? filteredEvents : ISLAMIC_HISTORY_EVENTS;
+
+    const fullDoc = list
+      .map((evt, idx) => {
+        const eTitle = formatHonorifics(getLangText(evt.t, selectedLanguage), selectedLanguage);
+        const eDesc = formatHonorifics(getLangText(evt.d, selectedLanguage), selectedLanguage);
+        const thenPlace = getLangText(evt.p, selectedLanguage);
+        const nowPlace = getLangText(evt.n, selectedLanguage);
+        return `${idx + 1}. [${formatYearSuffix(evt.y, selectedLanguage)} | ${getEraYearText(evt, selectedLanguage)}] ${eTitle}\n${isBn ? 'স্থান' : 'Location'}: ${thenPlace} → ${nowPlace}\n${eDesc}`;
+      })
+      .join('\n\n----------------------------------------\n\n');
+
+    openShareModal(
+      {
+        id: `history-timeline-${selectedCategoryFilter}`,
+        badge: isBn ? 'ইতিহাসের পাতা • বিশ্ব মানচিত্র ও কালপঞ্জি' : 'Pages of Islamic History',
+        title: isBn ? `ইসলামের গৌরবময় ইতিহাসের পাতা — ${eraName}` : `Islamic History Timeline — ${eraName}`,
+        subtitle: formattedEraSum,
+        body: isBn
+          ? `৫৭০ খ্রি. থেকে আধুনিক যুগ পর্যন্ত ইসলামের ${toBengaliDigits(list.length)}টি ঐতিহাসিক ঘটনা, স্থান ও প্রামাণ্য কুরআন-হাদিসের দলিল।`
+          : `Comprehensive chronological atlas of ${list.length} Islamic historical milestones from 570 CE to present.`,
+        highlights: list.slice(0, 5).map(
+          (evt) => `${formatYearSuffix(evt.y, selectedLanguage)}: ${formatHonorifics(getLangText(evt.t, selectedLanguage), selectedLanguage)}`
+        ),
+        meta: [
+          { label: isBn ? 'বর্তমান যুগ' : 'Active Era', value: eraName },
+          { label: isBn ? 'মোট ঘটনা' : 'Events', value: formatDigits(list.length, selectedLanguage) },
+          { label: isBn ? 'সময়কাল' : 'Span', value: isBn ? '৫৭০ – ২০২৬ খ্রি.' : '570 – 2026 CE' },
+        ],
+        reference: isBn ? 'আল-বিদায়া ওয়ান নিহায়া, তারীখে তাবারী, আর-রাহীকুল মাখতূম' : 'Al-Bidayah wan-Nihayah, Tarikh al-Tabari, Ar-Raheeq Al-Makhtum',
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Islamic-History-Timeline',
+      },
+      focus
+    );
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -1178,10 +1295,19 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
         </div>
 
         {/* Segmented Timeline Chapter Jump buttons - Ultra Slim Capsule */}
-        <div className="z-10 flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-2 shrink-0 pt-1 md:pt-0 border-t md:border-t-0 border-white/5">
-          <span className="text-[10px] font-bold tracking-wide text-emerald-300/80">
-            {selectedLanguage === 'bn' ? 'অধ্যায় পরিবর্তন করুন' : 'Jump to Chapter'}
-          </span>
+        <div className="z-10 flex flex-col items-start md:items-end justify-between w-full md:w-auto gap-2 shrink-0 pt-1 md:pt-0 border-t md:border-t-0 border-white/5">
+          <div className="flex items-center justify-between w-full md:w-auto gap-2 flex-wrap">
+            <ShareDownloadButtons
+              variant="hero"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openTimelineOverviewShare('share')}
+              onDownload={() => openTimelineOverviewShare('download')}
+            />
+            <span className="text-[10px] font-bold tracking-wide text-emerald-300/80">
+              {selectedLanguage === 'bn' ? 'অধ্যায় পরিবর্তন করুন' : 'Jump to Chapter'}
+            </span>
+          </div>
           <div className="flex items-center gap-1 bg-[#041317]/80 backdrop-blur-md px-1.5 py-1 rounded-full border border-teal-500/20 shadow-inner">
             {ISLAMIC_HISTORY_ERAS.map((era, index) => {
               const isSelected = activeEra.id === era.id;
@@ -1658,8 +1784,8 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
               onScroll={updateScrollState}
               className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-2 space-y-3 scrollbar-none select-text"
             >
-              {/* Category pill with dot */}
-              <div className="flex items-center gap-2">
+              {/* Category pill with dot + Event Share/Download */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
                     isDay ? 'bg-emerald-100/90 text-emerald-950 border border-emerald-200' : 'bg-emerald-950/80 text-emerald-200 border border-emerald-800/60'
@@ -1668,6 +1794,13 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_INFO[activeEvent.cat].color }} />
                   <span>{selectedLanguage === 'bn' ? CATEGORY_INFO[activeEvent.cat].labelBn : CATEGORY_INFO[activeEvent.cat].labelEn}</span>
                 </span>
+                <ShareDownloadButtons
+                  variant="card"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  onShare={() => openShareModal(buildHistoryEventShareContent(activeEvent), 'share')}
+                  onDownload={() => openShareModal(buildHistoryEventShareContent(activeEvent), 'download')}
+                />
               </div>
 
               {/* Event Title with Golden Honorifics Highlighting (as in Pic 2) */}
@@ -2524,6 +2657,15 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
           </button>
         </div>
       </div>
+
+      <ContentShareModal
+        isOpen={Boolean(shareModalContent)}
+        onClose={() => setShareModalContent(null)}
+        content={shareModalContent}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareModalFocus}
+      />
     </div>
   );
 };

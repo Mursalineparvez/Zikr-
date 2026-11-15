@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { ALLAH_NAMES_UI } from '../utils/appTranslations';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 interface AllahNamesViewProps {
   soundEnabled: boolean;
@@ -62,9 +64,64 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
 
   const memorizedCount = Object.values(memorizedMap).filter(Boolean).length;
 
+  const [shareState, setShareState] = useState<{
+    content: ShareableContent;
+    focus: 'share' | 'download';
+  } | null>(null);
+
   const handleSpeakName = (name: AllahNameItem) => {
     if (soundEnabled) soundHaptics.playTap();
     playArabicVoice(name.arabic, voiceGender);
+  };
+
+  const openPageShare = (focus: 'share' | 'download') => {
+    const isBn = selectedLanguage === 'bn';
+    const fullDoc = filteredNames
+      .map(
+        (n) =>
+          `${n.id}. ${n.arabic} — ${isBn ? n.nameBn : n.transliteration}\n` +
+          `${isBn ? 'অর্থ' : 'Meaning'}: ${isBn ? n.meaningBn : n.meaningEn}\n` +
+          `${isBn ? 'ফযীলত' : 'Virtue'}: ${isBn ? n.benefitBn : n.benefitEn || n.benefitBn}`
+      )
+      .join('\n\n');
+    setShareState({
+      focus,
+      content: {
+        badge: isBn ? 'আসমাউল হুসনা • ৯৯ নাম' : 'Asmaul Husna • 99 Names',
+        title: ALLAH_NAMES_UI.bannerTitle[selectedLanguage],
+        subtitle: ALLAH_NAMES_UI.bannerSub[selectedLanguage],
+        arabic: 'وَلِلَّهِ الْأَسْمَاءُ الْحُسْنَىٰ فَادْعُوهُ بِهَا',
+        body: isBn
+          ? `মোট প্রদর্শিত নাম: ${filteredNames.length}টি | মুখস্থ সম্পন্ন: ${memorizedCount}/৯৯টি।\n\n${filteredNames
+              .slice(0, 5)
+              .map((n) => `${n.id}. ${n.arabic} (${n.nameBn}) — ${n.meaningBn}`)
+              .join('\n')}`
+          : `Displayed Names: ${filteredNames.length} | Memorized: ${memorizedCount}/99.\n\n${filteredNames
+              .slice(0, 5)
+              .map((n) => `${n.id}. ${n.arabic} (${n.transliteration}) — ${n.meaningEn}`)
+              .join('\n')}`,
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Asmaul-Husna',
+      },
+    });
+  };
+
+  const openNameShare = (name: AllahNameItem, focus: 'share' | 'download') => {
+    const isBn = selectedLanguage === 'bn';
+    const title = isBn ? name.nameBn : name.transliteration;
+    const meaning = isBn ? name.meaningBn : name.meaningEn;
+    const benefit = isBn ? name.benefitBn : name.benefitEn || name.benefitBn;
+    setShareState({
+      focus,
+      content: {
+        badge: `${isBn ? 'আল্লাহর নাম #' : 'Name #'}${name.id}`,
+        title,
+        subtitle: isBn ? `${name.transliteration} • ${name.meaningEn}` : name.meaningEn,
+        arabic: name.arabic,
+        body: `${isBn ? 'অর্থ:' : 'Meaning:'} ${meaning}\n\n${isBn ? 'ফযীলত ও আমল:' : 'Virtue & Practice:'} ${benefit}`,
+        fileNamePrefix: `Allah-Name-${name.id}`,
+      },
+    });
   };
 
   return (
@@ -91,7 +148,14 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <ShareDownloadButtons
+              variant="hero"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openPageShare('share')}
+              onDownload={() => openPageShare('download')}
+            />
             <div
               className={`px-4 py-2.5 rounded-2xl border shadow-lg flex items-center gap-2.5 ${
                 isDay
@@ -199,18 +263,27 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-teal-900/30">
-                <button
-                  onClick={() => handleSpeakName(name)}
-                  className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer flex items-center justify-center ${
-                    isDay
-                      ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-                      : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-emerald-300'
-                  }`}
-                  title={selectedLanguage === 'bn' ? (voiceGender === 'female' ? 'অডিও শুনুন (নারী কণ্ঠে)' : 'অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Audio (Female Voice)' : 'Play Audio (Male Voice)')}
-                >
-                  <Volume2 className="w-4 h-4 text-emerald-500" />
-                </button>
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-teal-900/30">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleSpeakName(name)}
+                    className={`p-2 rounded-xl border transition active:scale-95 cursor-pointer flex items-center justify-center ${
+                      isDay
+                        ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                        : 'bg-[#081f24] hover:bg-[#12363d] border-[#17464f] text-emerald-300'
+                    }`}
+                    title={selectedLanguage === 'bn' ? (voiceGender === 'female' ? 'অডিও শুনুন (নারী কণ্ঠে)' : 'অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Audio (Female Voice)' : 'Play Audio (Male Voice)')}
+                  >
+                    <Volume2 className="w-4 h-4 text-emerald-500" />
+                  </button>
+                  <ShareDownloadButtons
+                    variant="compact"
+                    selectedLanguage={selectedLanguage}
+                    themeMode={themeMode}
+                    onShare={() => openNameShare(name, 'share')}
+                    onDownload={() => openNameShare(name, 'download')}
+                  />
+                </div>
 
                 <button
                   onClick={() => toggleMemorized(name.id)}
@@ -234,6 +307,15 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
           );
         })}
       </div>
+
+      <ContentShareModal
+        isOpen={!!shareState}
+        onClose={() => setShareState(null)}
+        content={shareState?.content || null}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareState?.focus}
+      />
     </div>
   );
 };

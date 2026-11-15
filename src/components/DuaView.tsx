@@ -33,6 +33,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 interface DuaViewProps {
   onAddDuaToCounters: (dua: DuaItem) => void;
@@ -67,6 +69,10 @@ export const DuaView: React.FC<DuaViewProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [inlineCounts, setInlineCounts] = useState<{ [key: string]: number }>({});
   const [visibleLimit, setVisibleLimit] = useState<number>(40);
+  const [shareState, setShareState] = useState<{
+    content: ShareableContent;
+    focus: 'share' | 'download';
+  } | null>(null);
 
   // Reset pagination & scroll smoothly when filters change
   useEffect(() => {
@@ -230,6 +236,76 @@ export const DuaView: React.FC<DuaViewProps> = ({
 
   const isChapterSelected = browseMode === 'chapters' && selectedChapter !== null;
 
+  const openPageShare = (focus: 'share' | 'download') => {
+    const isBn = selectedLanguage === 'bn';
+    const itemsToExport = filteredDuas;
+    const fullDoc = itemsToExport
+      .map((dua, i) => {
+        const tr = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
+        const title = tr?.title || dua.translations?.en?.title || dua.title;
+        const trans = tr?.translation || dua.translations?.en?.translation || dua.translation;
+        const virtue = tr?.virtue || dua.translations?.en?.virtue || dua.virtue;
+        return (
+          `${dua.hisnulNumber ? `#${dua.hisnulNumber}` : i + 1}. ${title}\n` +
+          `${dua.arabic}\n` +
+          `${dua.transliteration}\n` +
+          `${trans}\n` +
+          (virtue ? `${isBn ? 'ফযীলত' : 'Virtue'}: ${virtue}\n` : '') +
+          `${isBn ? 'সূত্র' : 'Ref'}: ${dua.reference}`
+        );
+      })
+      .join('\n\n------------------------------\n\n');
+
+    setShareState({
+      focus,
+      content: {
+        badge: isBn ? 'হিসনুল মুসলিম • দোয়া ও যিকির' : 'Hisnul Muslim • Duas & Adhkar',
+        title: currentCatTitle || DUA_UI.bannerTitle[selectedLanguage],
+        subtitle: DUA_UI.bannerSub[selectedLanguage],
+        body: isBn
+          ? `এই সংগ্রহে মোট ${formatNum(itemsToExport.length, 'bn')}টি মাসনুন দোয়া রয়েছে। নিচে নির্বাচিত কিছু দোয়া দেওয়া হলো:\n\n${itemsToExport
+              .slice(0, 3)
+              .map((d) => `• ${d.translations?.bn?.title || d.title}`)
+              .join('\n')}`
+          : `This collection includes ${itemsToExport.length} authentic supplications.\n\n${itemsToExport
+              .slice(0, 3)
+              .map((d) => `• ${d.translations?.en?.title || d.title}`)
+              .join('\n')}`,
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Hisnul-Muslim-Duas',
+      },
+    });
+  };
+
+  const openDuaShare = (dua: DuaItem, focus: 'share' | 'download') => {
+    const isBn = selectedLanguage === 'bn';
+    const tr = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
+    const currentTitle = tr?.title || dua.translations?.en?.title || dua.title;
+    const currentTiming = tr?.timing || dua.translations?.en?.timing || dua.timing;
+    const currentTranslation = tr?.translation || dua.translations?.en?.translation || dua.translation;
+    const currentVirtue = tr?.virtue || dua.translations?.en?.virtue || dua.virtue;
+    const chMeta = dua.chapterNumber !== undefined ? chapterMetaMap[dua.chapterNumber] : undefined;
+    const chTitle = chMeta ? (isBn ? chMeta.titleBn : chMeta.titleEn) : undefined;
+
+    setShareState({
+      focus,
+      content: {
+        badge: dua.hisnulNumber
+          ? `${isBn ? 'হিসনুল মুসলিম #' : 'Hisnul Muslim #'}${formatNum(dua.hisnulNumber, selectedLanguage)}`
+          : isBn
+            ? 'মাসনুন দোয়া'
+            : 'Authentic Dua',
+        title: currentTitle,
+        subtitle: chTitle || currentTiming,
+        arabic: dua.arabic,
+        transliteration: dua.transliteration,
+        body: `"${currentTranslation}"${currentVirtue ? `\n\n${isBn ? 'ফযীলত:' : 'Virtue:'} ${currentVirtue}` : ''}`,
+        reference: dua.reference,
+        fileNamePrefix: `Dua-${dua.hisnulNumber || dua.id}`,
+      },
+    });
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-16">
       {/* GTAF-Inspired Hisnul Muslim Portal Banner */}
@@ -257,35 +333,45 @@ export const DuaView: React.FC<DuaViewProps> = ({
           </div>
 
           {/* Step-by-Step Mode Switcher: Topics vs 132 Chapters */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <button
-              onClick={() => {
-                setBrowseMode('topics');
-                setSelectedChapter(null);
-              }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-                browseMode === 'topics'
-                  ? 'bg-white text-[#005a3e] shadow-lg'
-                  : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span>{DUA_UI.topicsTab[selectedLanguage]}</span>
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  setBrowseMode('topics');
+                  setSelectedChapter(null);
+                }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  browseMode === 'topics'
+                    ? 'bg-white text-[#005a3e] shadow-lg'
+                    : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span>{DUA_UI.topicsTab[selectedLanguage]}</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setBrowseMode('chapters');
-              }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-                browseMode === 'chapters'
-                  ? 'bg-white text-[#005a3e] shadow-lg'
-                  : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
-              }`}
-            >
-              <ListOrdered className="w-4 h-4" />
-              <span>{DUA_UI.chaptersTab[selectedLanguage]}</span>
-            </button>
+              <button
+                onClick={() => {
+                  setBrowseMode('chapters');
+                }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+                  browseMode === 'chapters'
+                    ? 'bg-white text-[#005a3e] shadow-lg'
+                    : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
+                }`}
+              >
+                <ListOrdered className="w-4 h-4" />
+                <span>{DUA_UI.chaptersTab[selectedLanguage]}</span>
+              </button>
+            </div>
+
+            <ShareDownloadButtons
+              variant="hero"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openPageShare('share')}
+              onDownload={() => openPageShare('download')}
+            />
           </div>
         </div>
       </div>
@@ -644,6 +730,15 @@ export const DuaView: React.FC<DuaViewProps> = ({
                           )}
                         </button>
 
+                        {/* Share & Download Buttons */}
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={selectedLanguage}
+                          themeMode={themeMode}
+                          onShare={() => openDuaShare(dua, 'share')}
+                          onDownload={() => openDuaShare(dua, 'download')}
+                        />
+
                         {/* Add to Counter */}
                         <button
                           onClick={() => onAddDuaToCounters(dua)}
@@ -767,6 +862,14 @@ export const DuaView: React.FC<DuaViewProps> = ({
           )}
         </div>
       )}
+      <ContentShareModal
+        isOpen={!!shareState}
+        onClose={() => setShareState(null)}
+        content={shareState?.content || null}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareState?.focus}
+      />
     </div>
   );
 };

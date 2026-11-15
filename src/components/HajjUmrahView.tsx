@@ -44,6 +44,8 @@ import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptic
 import { HAJJ_UMRAH_UI } from '../utils/appTranslations';
 import { LiveAnimationStudio } from './LiveAnimationStudio';
 import { ArabianIllustratedMapView } from './ArabianIllustratedMapView';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 interface HajjUmrahViewProps {
   soundEnabled: boolean;
@@ -268,8 +270,45 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
     playArabicVoice(text, voiceGender);
   };
 
+  const [shareState, setShareState] = useState<{
+    content: ShareableContent;
+    focus: 'share' | 'download';
+  } | null>(null);
+
   // Selected Hajj Route Photo Item
   const activeRouteDetail = HAJJ_ROUTE_PHOTOS.find((r) => r.id === activeHajjMapDay) || HAJJ_ROUTE_PHOTOS[0];
+
+  const openHajjPageShare = (focus: 'share' | 'download') => {
+    const fullDoc = [
+      `=== ${isBn ? 'ওমরাহের ধাপসমূহ' : 'Umrah Steps'} ===\n` +
+        UMRAH_STEPS.map(
+          (s) =>
+            `${isBn ? s.dayOrStageBn : s.dayOrStageEn}: ${isBn ? s.titleBn : s.titleEn}\n${isBn ? s.summaryBn : s.summaryEn}\n` +
+            (isBn ? s.actionItems : s.actionItemsEn).map((a) => `• ${a}`).join('\n')
+        ).join('\n\n'),
+      `=== ${isBn ? 'হজের ৫ দিন' : '5 Days of Hajj'} ===\n` +
+        HAJJ_ROUTE_PHOTOS.map(
+          (r) =>
+            `${isBn ? r.nameBn : r.nameEn} (${isBn ? r.placeBn : r.placeEn})\n${isBn ? r.descBn : r.descEn}\n` +
+            (isBn ? r.checklistBn : r.checklistEn).map((c) => `• ${c}`).join('\n')
+        ).join('\n\n'),
+    ].join('\n\n====================================\n\n');
+
+    setShareState({
+      focus,
+      content: {
+        badge: isBn ? 'হজ্জ ও ওমরাহ গাইড' : 'Hajj & Umrah Complete Guide',
+        title: HAJJ_UMRAH_UI.bannerTitle[selectedLanguage],
+        subtitle: HAJJ_UMRAH_UI.bannerSub[selectedLanguage],
+        arabic: 'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لَا شَرِيكَ لَكَ لَبَّيْكَ',
+        body: isBn
+          ? 'ওমরাহ ও হজের ৫ দিনের পূর্ণাঙ্গ গাইড, সচিত্র মানচিত্র, করণীয় চেকলিস্ট, মিকাত এবং প্রামাণ্য দোয়া সমূহ।'
+          : 'Complete guide to Umrah, 5 Days of Hajj, Miqat locations, action checklists, and authentic supplications.',
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Hajj-Umrah-Complete-Guide',
+      },
+    });
+  };
 
   // If user opened the dedicated Studio Page
   if (showStudioModal) {
@@ -316,27 +355,36 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
             </p>
           </div>
 
-          <button
-            onClick={() =>
-              handleSpeakArabic(
-                'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لَا شَرِيكَ لَكَ لَبَّيْكَ، إِنَّ الْحَمْدَ وَالنِّعْمَةَ لَكَ وَالْمُلْكَ، لَا شَرِيكَ لَكَ'
-              )
-            }
-            className="px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer shrink-0 border border-amber-200"
-            title={isBn ? (voiceGender === 'female' ? 'তালবিয়া অডিও শুনুন (নারী কণ্ঠে)' : 'তালবিয়া অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Talbiyah Audio (Female Voice)' : 'Play Talbiyah Audio (Male Voice)')}
-          >
-            <div className="w-8 h-8 rounded-xl bg-slate-950/15 flex items-center justify-center">
-              <Volume2 className="w-4 h-4 text-slate-950" />
-            </div>
-            <div className="text-left">
-              <div className="text-[10px] uppercase font-bold text-slate-900 tracking-wider">
-                {isBn ? 'তালবিয়া শোনেন' : 'Listen Talbiyah'}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <ShareDownloadButtons
+              variant="hero"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openHajjPageShare('share')}
+              onDownload={() => openHajjPageShare('download')}
+            />
+            <button
+              onClick={() =>
+                handleSpeakArabic(
+                  'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لَا شَرِيكَ لَكَ لَبَّيْكَ، إِنَّ الْحَمْدَ وَالنِّعْمَةَ لَكَ وَالْمُلْكَ، لَا شَرِيكَ لَكَ'
+                )
+              }
+              className="px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer shrink-0 border border-amber-200"
+              title={isBn ? (voiceGender === 'female' ? 'তালবিয়া অডিও শুনুন (নারী কণ্ঠে)' : 'তালবিয়া অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Talbiyah Audio (Female Voice)' : 'Play Talbiyah Audio (Male Voice)')}
+            >
+              <div className="w-8 h-8 rounded-xl bg-slate-950/15 flex items-center justify-center">
+                <Volume2 className="w-4 h-4 text-slate-950" />
               </div>
-              <div className="text-xs font-black">
-                {isBn ? 'তালবিয়াহ অডিও চালান' : 'Play Talbiyah Audio'}
+              <div className="text-left">
+                <div className="text-[10px] uppercase font-bold text-slate-900 tracking-wider">
+                  {isBn ? 'তালবিয়া শোনেন' : 'Listen Talbiyah'}
+                </div>
+                <div className="text-xs font-black">
+                  {isBn ? 'তালবিয়াহ অডিও চালান' : 'Play Talbiyah Audio'}
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -444,11 +492,46 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                       {isBn ? step.titleBn : step.titleEn}
                     </h4>
                   </div>
-                  {step.arabicTitle && (
-                    <span className="font-arabic text-base text-amber-600 dark:text-amber-400 font-bold px-3 py-1 rounded-xl bg-amber-500/10">
-                      {step.arabicTitle}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {step.arabicTitle && (
+                      <span className="font-arabic text-base text-amber-600 dark:text-amber-400 font-bold px-3 py-1 rounded-xl bg-amber-500/10">
+                        {step.arabicTitle}
+                      </span>
+                    )}
+                    <ShareDownloadButtons
+                      variant="compact"
+                      selectedLanguage={selectedLanguage}
+                      themeMode={themeMode}
+                      onShare={() => {
+                        const actions = (isBn ? step.actionItems : step.actionItemsEn) || [];
+                        setShareState({
+                          focus: 'share',
+                          content: {
+                            badge: isBn ? step.dayOrStageBn : step.dayOrStageEn,
+                            title: isBn ? step.titleBn : step.titleEn,
+                            arabic: step.arabicTitle,
+                            body: isBn ? step.summaryBn : step.summaryEn,
+                            highlights: actions,
+                            fileNamePrefix: `Umrah-${step.id}`,
+                          },
+                        });
+                      }}
+                      onDownload={() => {
+                        const actions = (isBn ? step.actionItems : step.actionItemsEn) || [];
+                        setShareState({
+                          focus: 'download',
+                          content: {
+                            badge: isBn ? step.dayOrStageBn : step.dayOrStageEn,
+                            title: isBn ? step.titleBn : step.titleEn,
+                            arabic: step.arabicTitle,
+                            body: isBn ? step.summaryBn : step.summaryEn,
+                            highlights: actions,
+                            fileNamePrefix: `Umrah-${step.id}`,
+                          },
+                        });
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-emerald-300 leading-relaxed">
@@ -623,9 +706,43 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                 </div>
               </div>
 
-              <p className="text-xs sm:text-sm text-slate-700 dark:text-teal-100 leading-relaxed font-medium">
-                {isBn ? activeRouteDetail.descBn : activeRouteDetail.descEn}
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-teal-100 leading-relaxed font-medium">
+                  {isBn ? activeRouteDetail.descBn : activeRouteDetail.descEn}
+                </p>
+                <ShareDownloadButtons
+                  variant="card"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  className="shrink-0"
+                  onShare={() =>
+                    setShareState({
+                      focus: 'share',
+                      content: {
+                        badge: isBn ? activeRouteDetail.nameBn : activeRouteDetail.nameEn,
+                        title: isBn ? activeRouteDetail.placeBn : activeRouteDetail.placeEn,
+                        arabic: activeRouteDetail.duaArabic || activeRouteDetail.arabicName,
+                        body: isBn ? activeRouteDetail.descBn : activeRouteDetail.descEn,
+                        highlights: isBn ? activeRouteDetail.checklistBn : activeRouteDetail.checklistEn,
+                        fileNamePrefix: `Hajj-Day-${activeRouteDetail.id}`,
+                      },
+                    })
+                  }
+                  onDownload={() =>
+                    setShareState({
+                      focus: 'download',
+                      content: {
+                        badge: isBn ? activeRouteDetail.nameBn : activeRouteDetail.nameEn,
+                        title: isBn ? activeRouteDetail.placeBn : activeRouteDetail.placeEn,
+                        arabic: activeRouteDetail.duaArabic || activeRouteDetail.arabicName,
+                        body: isBn ? activeRouteDetail.descBn : activeRouteDetail.descEn,
+                        highlights: isBn ? activeRouteDetail.checklistBn : activeRouteDetail.checklistEn,
+                        fileNamePrefix: `Hajj-Day-${activeRouteDetail.id}`,
+                      },
+                    })
+                  }
+                />
+              </div>
 
               {/* Action Checklist */}
               <div className="space-y-2 pt-1">
@@ -754,11 +871,44 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                           {isBn ? step.titleBn : step.titleEn}
                         </h4>
                       </div>
-                      {step.arabicTitle && (
-                        <span className="font-arabic text-base text-amber-600 dark:text-amber-400 font-bold px-3 py-1 rounded-xl bg-amber-500/10">
-                          {step.arabicTitle}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {step.arabicTitle && (
+                          <span className="font-arabic text-base text-amber-600 dark:text-amber-400 font-bold px-3 py-1 rounded-xl bg-amber-500/10">
+                            {step.arabicTitle}
+                          </span>
+                        )}
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={selectedLanguage}
+                          themeMode={themeMode}
+                          onShare={() =>
+                            setShareState({
+                              focus: 'share',
+                              content: {
+                                badge: isBn ? step.phaseBn : step.phaseEn,
+                                title: isBn ? step.titleBn : step.titleEn,
+                                arabic: step.arabicTitle,
+                                body: isBn ? step.descriptionBn : step.descriptionEn,
+                                highlights: isBn ? step.actionChecklistBn : step.actionChecklistEn,
+                                fileNamePrefix: `Umrah-Journey-${step.id}`,
+                              },
+                            })
+                          }
+                          onDownload={() =>
+                            setShareState({
+                              focus: 'download',
+                              content: {
+                                badge: isBn ? step.phaseBn : step.phaseEn,
+                                title: isBn ? step.titleBn : step.titleEn,
+                                arabic: step.arabicTitle,
+                                body: isBn ? step.descriptionBn : step.descriptionEn,
+                                highlights: isBn ? step.actionChecklistBn : step.actionChecklistEn,
+                                fileNamePrefix: `Umrah-Journey-${step.id}`,
+                              },
+                            })
+                          }
+                        />
+                      </div>
                     </div>
 
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-emerald-300 leading-relaxed">
@@ -873,11 +1023,44 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                           {isBn ? step.titleBn : step.titleEn}
                         </h4>
                       </div>
-                      {step.arabicTitle && (
-                        <span className="font-arabic text-base text-emerald-600 dark:text-emerald-400 font-bold px-3 py-1 rounded-xl bg-emerald-500/10">
-                          {step.arabicTitle}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {step.arabicTitle && (
+                          <span className="font-arabic text-base text-emerald-600 dark:text-emerald-400 font-bold px-3 py-1 rounded-xl bg-emerald-500/10">
+                            {step.arabicTitle}
+                          </span>
+                        )}
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={selectedLanguage}
+                          themeMode={themeMode}
+                          onShare={() =>
+                            setShareState({
+                              focus: 'share',
+                              content: {
+                                badge: isBn ? step.phaseBn : step.phaseEn,
+                                title: isBn ? step.titleBn : step.titleEn,
+                                arabic: step.arabicTitle,
+                                body: isBn ? step.descriptionBn : step.descriptionEn,
+                                highlights: isBn ? step.actionChecklistBn : step.actionChecklistEn,
+                                fileNamePrefix: `Hajj-Journey-${step.id}`,
+                              },
+                            })
+                          }
+                          onDownload={() =>
+                            setShareState({
+                              focus: 'download',
+                              content: {
+                                badge: isBn ? step.phaseBn : step.phaseEn,
+                                title: isBn ? step.titleBn : step.titleEn,
+                                arabic: step.arabicTitle,
+                                body: isBn ? step.descriptionBn : step.descriptionEn,
+                                highlights: isBn ? step.actionChecklistBn : step.actionChecklistEn,
+                                fileNamePrefix: `Hajj-Journey-${step.id}`,
+                              },
+                            })
+                          }
+                        />
+                      </div>
                     </div>
 
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-emerald-300 leading-relaxed">
@@ -982,6 +1165,14 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
           </div>
         </div>
       )}
+      <ContentShareModal
+        isOpen={!!shareState}
+        onClose={() => setShareState(null)}
+        content={shareState?.content || null}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareState?.focus}
+      />
     </div>
   );
 };

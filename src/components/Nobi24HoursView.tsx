@@ -38,6 +38,8 @@ import {
   getLocalizedDua,
   getLocalizedCheckItem,
 } from '../utils/nobi24Translations';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 interface Nobi24HoursViewProps {
   themeMode?: ThemeMode;
@@ -137,6 +139,185 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
 
   // Copy feedback state
   const [copiedItemId, setCopiedItemId] = useState<string | null>(null);
+
+  // Share & Download modal state
+  const [shareModalContent, setShareModalContent] = useState<ShareableContent | null>(null);
+  const [shareModalFocus, setShareModalFocus] = useState<'share' | 'download'>('share');
+  const openShareModal = (content: ShareableContent, focus: 'share' | 'download') => {
+    setShareModalContent(content);
+    setShareModalFocus(focus);
+  };
+
+  const buildSlotShareContent = (slot: NobiTimeSlot, index: number): ShareableContent => {
+    const loc = getLocalizedSlot(slot, lang);
+    const dur = formatDurationLabel(slot.startHour, slot.endHour, isBn);
+    const docLines: string[] = [
+      `${loc.timeSpan} (${dur}) • ${loc.categoryLabel}`,
+      '',
+      loc.summary,
+      '',
+      `${strings.wheel.sunnahActions}:`,
+      ...loc.actions.map((a, i) => `${i + 1}. ${a}`),
+    ];
+    if (loc.hadith) {
+      docLines.push('', `${strings.wheel.hadithQuote}:`, `"${loc.hadith}"`, slot.hadithRef ? `— ${slot.hadithRef}` : '');
+    }
+    if (slot.dua) {
+      docLines.push(
+        '',
+        `${strings.wheel.duaOfSlot}:`,
+        slot.dua.arabic,
+        slot.dua.transliteration,
+        loc.duaTranslation || ''
+      );
+    }
+
+    return {
+      id: `nobi24-slot-${slot.id}`,
+      badge: isBn
+        ? `নবীজির ২৪ ঘণ্টা • পর্ব ${toBnDigits(index + 1)}`
+        : `Prophet's 24 Hours • Phase ${index + 1}`,
+      title: `${slot.icon} ${loc.title}`,
+      subtitle: `${loc.timeSpan} (${dur})`,
+      arabic: slot.dua?.arabic,
+      transliteration: slot.dua?.transliteration,
+      body: loc.summary,
+      highlights: loc.actions.slice(0, 4),
+      meta: [
+        { label: isBn ? 'সময়কাল' : 'Time', value: loc.timeSpan },
+        { label: isBn ? 'স্থিতিকাল' : 'Duration', value: dur },
+        { label: isBn ? 'ক্যাটাগরি' : 'Category', value: loc.categoryLabel },
+      ],
+      reference: slot.hadithRef || undefined,
+      fullDocumentText: docLines.filter(Boolean).join('\n'),
+      fileNamePrefix: `Nobi24Hours-Phase-${index + 1}`,
+    };
+  };
+
+  const buildChapterShareContent = (chapter: (typeof NOBI_24_CHAPTERS)[number], idx: number): ShareableContent => {
+    const loc = getLocalizedChapter(chapter, lang);
+    const docLines: string[] = [
+      `${loc.subtitle}`,
+      '',
+      ...loc.content,
+    ];
+    if (loc.hadithList && loc.hadithList.length > 0) {
+      docLines.push('', `${strings.articles.hadithRef}:`);
+      loc.hadithList.forEach((h) => {
+        docLines.push(`"${h.text}" — ${h.reference}`);
+      });
+    }
+    if (chapter.quranAyat) {
+      docLines.push(
+        '',
+        `${strings.articles.quranRef} (${chapter.quranAyat.surah}):`,
+        chapter.quranAyat.arabic,
+        loc.quranTranslation || ''
+      );
+    }
+
+    return {
+      id: `nobi24-chapter-${chapter.id}`,
+      badge: isBn
+        ? `নবীজির ২৪ ঘণ্টা • অধ্যায় ${toBnDigits(idx + 1)}`
+        : `Prophet's 24 Hours • Chapter ${idx + 1}`,
+      title: `${chapter.icon} ${loc.title}`,
+      subtitle: loc.subtitle,
+      arabic: chapter.quranAyat?.arabic,
+      body: loc.content.join('\n\n'),
+      highlights: loc.hadithList?.slice(0, 3).map((h) => `${h.text} (${h.reference})`),
+      meta: [
+        { label: isBn ? 'অধ্যায়' : 'Chapter', value: isBn ? `${toBnDigits(idx + 1)}` : `${idx + 1}` },
+        { label: isBn ? 'পাঠ সময়' : 'Read Time', value: `3 ${strings.articles.readingTime}` },
+      ],
+      reference: chapter.quranAyat?.surah || loc.hadithList?.[0]?.reference,
+      fullDocumentText: docLines.filter(Boolean).join('\n\n'),
+      fileNamePrefix: `Nobi24Hours-Chapter-${idx + 1}`,
+    };
+  };
+
+  const buildDuaShareContent = (dua: (typeof NOBI_24_DUAS)[number]): ShareableContent => {
+    const loc = getLocalizedDua(dua, lang);
+    const fullDoc = [
+      `${loc.timing}`,
+      '',
+      dua.arabic,
+      '',
+      `${isBn ? 'উচ্চারণ' : 'Pronunciation'}: ${loc.pronunciation}`,
+      `${isBn ? 'অর্থ' : 'Meaning'}: ${loc.meaning}`,
+      `${isBn ? 'ফজিলত' : 'Benefit'}: ${loc.benefit}`,
+      `${isBn ? 'সূত্র' : 'Reference'}: ${dua.reference}`,
+    ].join('\n');
+
+    return {
+      id: `nobi24-dua-${dua.id}`,
+      badge: isBn ? 'নবীজির ২৪ ঘণ্টা • মাসনুন দোয়া' : "Prophet's 24 Hours • Sunnah Dua",
+      title: loc.title,
+      subtitle: loc.timing,
+      arabic: dua.arabic,
+      transliteration: loc.pronunciation,
+      body: `${loc.meaning}\n\n${loc.benefit}`,
+      meta: [
+        { label: isBn ? 'সময়' : 'Timing', value: loc.timing },
+        { label: isBn ? 'সূত্র' : 'Source', value: dua.reference },
+      ],
+      reference: dua.reference,
+      fullDocumentText: fullDoc,
+      fileNamePrefix: `Nobi24Hours-Dua-${dua.id}`,
+    };
+  };
+
+  const openFullRoutineShare = (focus: 'share' | 'download') => {
+    const slotsDoc = NOBI_24_TIME_SLOTS.map((slot, idx) => {
+      const loc = getLocalizedSlot(slot, lang);
+      return [
+        `${idx + 1}. ${slot.icon} ${loc.title} [${loc.timeSpan}] (${loc.categoryLabel})`,
+        loc.summary,
+        ...loc.actions.map((a) => `   • ${a}`),
+        loc.hadith ? `   Hadith: "${loc.hadith}" (${slot.hadithRef || ''})` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+    }).join('\n\n');
+
+    const chaptersDoc = NOBI_24_CHAPTERS.map((chap, idx) => {
+      const loc = getLocalizedChapter(chap, lang);
+      return `--- ${isBn ? 'অধ্যায়' : 'Chapter'} ${idx + 1}: ${loc.title} ---\n${loc.content.join('\n\n')}`;
+    }).join('\n\n');
+
+    const duasDoc = NOBI_24_DUAS.map((d, idx) => {
+      const loc = getLocalizedDua(d, lang);
+      return `${idx + 1}. ${loc.title} (${loc.timing})\n${d.arabic}\n${loc.pronunciation}\n${loc.meaning} (${d.reference})`;
+    }).join('\n\n');
+
+    const fullDoc = `${strings.title}\n${strings.subtitle}\n\n=== ${strings.timeline.title} ===\n\n${slotsDoc}\n\n=== ${strings.articles.title} ===\n\n${chaptersDoc}\n\n=== ${strings.duas.title} ===\n\n${duasDoc}`;
+
+    openShareModal(
+      {
+        id: 'nobi24-full-guide',
+        badge: isBn ? 'নবী করিম (সা.)-এর ২৪ ঘণ্টা' : "Prophet's 24-Hour Routine",
+        title: strings.title,
+        subtitle: strings.subtitle,
+        arabic: strings.arabicTitle,
+        body: isBn
+          ? `রাসূলুল্লাহ (সা.)-এর ভোর থেকে গভীর রাত পর্যন্ত ১৪টি সময় পর্বের সুন্নাহ রুটিন, ৮টি অধ্যায় এবং ১২টি মাসনুন দোয়ার পূর্ণাঙ্গ গাইড।`
+          : `Complete 24-hour Prophetic daily routine featuring 14 chronological phases, 8 detailed chapters, and 12 Masnun duas.`,
+        highlights: NOBI_24_TIME_SLOTS.slice(0, 5).map((s) => {
+          const l = getLocalizedSlot(s, lang);
+          return `${s.icon} ${l.title} (${l.timeSpan})`;
+        }),
+        meta: [
+          { label: isBn ? 'সময় পর্ব' : 'Phases', value: `${NOBI_24_TIME_SLOTS.length}` },
+          { label: isBn ? 'অধ্যায়' : 'Chapters', value: `${NOBI_24_CHAPTERS.length}` },
+          { label: isBn ? 'মাসনুন দোয়া' : 'Duas', value: `${NOBI_24_DUAS.length}` },
+        ],
+        reference: isBn ? 'সহিহ বুখারি, সহিহ মুসলিম ও শামায়েলে তিরমিযি' : 'Sahih Bukhari, Sahih Muslim & Shama’il Tirmidhi',
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Nobi-24-Hours-Complete-Guide',
+      },
+      focus
+    );
+  };
 
   // Audio speech synthesis state
   const [isPlayingAudio, setIsPlayingAudio] = useState<string | null>(null);
@@ -467,11 +648,20 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <Clock className="w-3.5 h-3.5 text-amber-300" />
-              <span className="text-xs sm:text-sm font-mono font-black tabular-nums tracking-tight text-amber-200">
-                {formattedLiveClock}
-              </span>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              <ShareDownloadButtons
+                variant="hero"
+                selectedLanguage={lang}
+                themeMode={themeMode}
+                onShare={() => openFullRoutineShare('share')}
+                onDownload={() => openFullRoutineShare('download')}
+              />
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-amber-300" />
+                <span className="text-xs sm:text-sm font-mono font-black tabular-nums tracking-tight text-amber-200">
+                  {formattedLiveClock}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1134,7 +1324,14 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                  <ShareDownloadButtons
+                    variant="compact"
+                    selectedLanguage={lang}
+                    themeMode={themeMode}
+                    onShare={() => openShareModal(buildSlotShareContent(activeSlot, activeSlotIndex), 'share')}
+                    onDownload={() => openShareModal(buildSlotShareContent(activeSlot, activeSlotIndex), 'download')}
+                  />
                   <button
                     type="button"
                     onClick={() =>
@@ -1433,7 +1630,14 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                         </div>
                       </div>
 
-                      <div className="shrink-0 flex items-center gap-1.5">
+                      <div className="shrink-0 flex items-center gap-1.5 flex-wrap">
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={lang}
+                          themeMode={themeMode}
+                          onShare={() => openShareModal(buildSlotShareContent(slot, globalIdx), 'share')}
+                          onDownload={() => openShareModal(buildSlotShareContent(slot, globalIdx), 'download')}
+                        />
                         <button
                           type="button"
                           onClick={() => {
@@ -1682,7 +1886,14 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="shrink-0">
+                    <div className="shrink-0 flex items-center gap-2">
+                      <ShareDownloadButtons
+                        variant="compact"
+                        selectedLanguage={lang}
+                        themeMode={themeMode}
+                        onShare={() => openShareModal(buildChapterShareContent(chapter, idx), 'share')}
+                        onDownload={() => openShareModal(buildChapterShareContent(chapter, idx), 'download')}
+                      />
                       <ChevronRight
                         className={`w-5 h-5 transition-transform duration-200 text-slate-400 ${
                           isExpanded ? 'rotate-90 text-amber-500' : ''
@@ -1719,7 +1930,14 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                           </span>
                         </button>
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <ShareDownloadButtons
+                            variant="card"
+                            selectedLanguage={lang}
+                            themeMode={themeMode}
+                            onShare={() => openShareModal(buildChapterShareContent(chapter, idx), 'share')}
+                            onDownload={() => openShareModal(buildChapterShareContent(chapter, idx), 'download')}
+                          />
                           <button
                             type="button"
                             onClick={() =>
@@ -1913,7 +2131,14 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                         </h3>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={lang}
+                          themeMode={themeMode}
+                          onShare={() => openShareModal(buildDuaShareContent(dua), 'share')}
+                          onDownload={() => openShareModal(buildDuaShareContent(dua), 'download')}
+                        />
                         <button
                           type="button"
                           onClick={() => handlePlaySpeech(dua.arabic, dua.id, true)}
@@ -1995,9 +2220,18 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
             }`}
           >
             <div className="space-y-3 text-center md:text-left flex-1">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#006A4E] dark:text-emerald-400">
-                <Flame className="w-4 h-4 text-amber-500" />
-                <span>{strings.tracker.title}</span>
+              <div className="flex items-center justify-center md:justify-between gap-2 flex-wrap">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#006A4E] dark:text-emerald-400">
+                  <Flame className="w-4 h-4 text-amber-500" />
+                  <span>{strings.tracker.title}</span>
+                </div>
+                <ShareDownloadButtons
+                  variant="card"
+                  selectedLanguage={lang}
+                  themeMode={themeMode}
+                  onShare={() => openFullRoutineShare('share')}
+                  onDownload={() => openFullRoutineShare('download')}
+                />
               </div>
               <h2 className={`text-xl sm:text-2xl font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
                 {strings.tracker.progressLabel}: {isBn ? toBnDigits(checklistProgressPercent) : checklistProgressPercent}%
@@ -2184,6 +2418,15 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
           </div>
         </div>
       )}
+
+      <ContentShareModal
+        isOpen={Boolean(shareModalContent)}
+        onClose={() => setShareModalContent(null)}
+        content={shareModalContent}
+        selectedLanguage={lang}
+        soundEnabled={soundEnabled}
+        initialFocus={shareModalFocus}
+      />
     </div>
   );
 };

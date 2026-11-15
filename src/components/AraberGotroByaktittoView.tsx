@@ -60,10 +60,11 @@ import {
   X,
   Flame,
   RotateCcw,
-  Volume2,
-  Share2
+  Volume2
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice } from '../utils/audioHaptics';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 import {
   ARABER_GOTRO_TRANSLATIONS,
@@ -345,6 +346,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   const [ansarTab, setAnsarTab] = useState<'tree' | 'comparison' | 'virtues'>('tree');
   const [statsSort, setStatsSort] = useState<'highest' | 'alphabetical'>('highest');
 
+  const [shareModalContent, setShareModalContent] = useState<ShareableContent | null>(null);
+  const [shareModalFocus, setShareModalFocus] = useState<'share' | 'download'>('share');
+  const openShareModal = (content: ShareableContent, focus: 'share' | 'download') => {
+    setShareModalContent(content);
+    setShareModalFocus(focus);
+  };
+
   const handlePlayVoice = (text: string, voiceKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (soundEnabled) soundHaptics.playTap();
@@ -623,6 +631,178 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const buildClanShareContent = (sec: TribeSection): ShareableContent => {
+    const secEn = ARABER_GOTRO_DATABASE_EN[sec.id];
+    const tribeName = isBn ? sec.tribeNameBn : (secEn?.tribeNameEn || sec.tribeNameEn || sec.tribeNameBn);
+    const location = isBn ? sec.locationOrContextBn : (secEn?.locationOrContextEn || sec.locationOrContextEn || sec.locationOrContextBn);
+    const role = isBn ? sec.responsibilityOrRoleBn : (secEn?.responsibilityOrRoleEn || sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn);
+    const intro = isBn ? sec.introductionBn : (secEn?.introductionEn || sec.introductionEn || sec.introductionBn);
+    const refs = (isBn ? sec.referencesBn : (secEn?.referencesEn || sec.referencesEn || sec.referencesBn)) || [];
+
+    const docLines: string[] = [
+      `${tribeName}${sec.tribeNameAr ? ` (${sec.tribeNameAr})` : ''}`,
+      `${isBn ? 'অবস্থান ও প্রেক্ষাপট' : 'Location'}: ${location}`,
+      `${t.dignityTitle}: ${role}`,
+      '',
+      `${t.introTitle}:`,
+      intro,
+    ];
+
+    if (sec.subClans && sec.subClans.length > 0) {
+      docLines.push('', `${t.subClansHeader(sec.subClans.length)}:`);
+      sec.subClans.forEach((sc, idx) => {
+        const scEn = secEn?.subClansEn?.[idx];
+        docLines.push(
+          `• ${isBn ? sc.nameBn : (scEn?.nameEn || sc.nameEn || sc.nameBn)}: ${isBn ? sc.descriptionBn : (scEn?.descriptionEn || sc.descriptionEn || sc.descriptionBn)}`
+        );
+      });
+    }
+
+    if (sec.personalities.length > 0) {
+      docLines.push('', `${t.notableFiguresHeader(sec.personalities.length)}:`);
+      sec.personalities.forEach((p, idx) => {
+        const pEn = secEn?.personalitiesEn[p.id] || PERSONALITIES_BY_ID_EN[p.id];
+        const pName = isBn ? p.nameBn : (pEn?.nameEn || p.nameEn || p.nameBn);
+        const pRole = isBn ? p.roleBn : (pEn?.roleEn || p.roleEn || p.roleBn);
+        const pBio = isBn ? p.bioBn : (pEn?.bioEn || p.bioEn || p.bioBn);
+        docLines.push(`${idx + 1}. ${pName} (${pRole})\n   ${pBio}`);
+      });
+    }
+
+    if (refs.length > 0) {
+      docLines.push('', `${t.referencesTitle}:`, ...refs.map((r, i) => `${i + 1}. ${r}`));
+    }
+
+    return {
+      id: `gotro-clan-${sec.id}`,
+      badge: isBn ? `আরবের গোত্র ও ব্যক্তিত্ব • ${sec.sectionCode}` : `Arab Clans • ${toWesternDigits(sec.sectionCode)}`,
+      title: tribeName,
+      subtitle: `${location} • ${role}`,
+      arabic: sec.tribeNameAr,
+      body: intro,
+      highlights: sec.personalities.slice(0, 4).map((p) => {
+        const pEn = secEn?.personalitiesEn[p.id] || PERSONALITIES_BY_ID_EN[p.id];
+        return `${isBn ? p.nameBn : (pEn?.nameEn || p.nameEn || p.nameBn)} — ${isBn ? p.roleBn : (pEn?.roleEn || p.roleEn || p.roleBn)}`;
+      }),
+      meta: [
+        { label: isBn ? 'ব্যক্তিত্ব' : 'Figures', value: `${sec.personalities.length}` },
+        { label: isBn ? 'দায়িত্ব' : 'Role', value: role },
+      ],
+      reference: refs.slice(0, 2).join(' • ') || undefined,
+      fullDocumentText: docLines.filter(Boolean).join('\n'),
+      fileNamePrefix: `Gotro-${tribeName}`,
+    };
+  };
+
+  const buildPersonalityShareContent = (pers: TribePersonality, clanLabel?: string): ShareableContent => {
+    const pEn = PERSONALITIES_BY_ID_EN[pers.id];
+    const pName = isBn ? pers.nameBn : (pEn?.nameEn || pers.nameEn || pers.nameBn);
+    const pRole = isBn ? pers.roleBn : (pEn?.roleEn || pers.roleEn || pers.roleBn);
+    const pBio = isBn ? pers.bioBn : (pEn?.bioEn || pers.bioEn || pers.bioBn);
+    const pRef = isBn ? pers.referenceBn : (pEn?.referenceEn || pers.referenceEn || pers.referenceBn);
+
+    return {
+      id: `gotro-pers-${pers.id}`,
+      badge: clanLabel ? `${t.mainHeaderTitle} • ${clanLabel}` : t.mainHeaderTitle,
+      title: pName,
+      subtitle: pRole,
+      arabic: pers.nameAr,
+      body: pBio,
+      meta: [
+        { label: isBn ? 'পরিচিতি' : 'Role', value: pRole },
+        ...(clanLabel ? [{ label: isBn ? 'গোত্র' : 'Clan', value: clanLabel }] : []),
+      ],
+      reference: pRef,
+      fullDocumentText: [
+        `${pName}${pers.nameAr ? ` (${pers.nameAr})` : ''}`,
+        `${pRole}${clanLabel ? ` — ${clanLabel}` : ''}`,
+        '',
+        pBio,
+        '',
+        `${t.referencesTitle}: ${pRef}`,
+      ].join('\n'),
+      fileNamePrefix: `Personality-${pName}`,
+    };
+  };
+
+  const buildAppendixTribeShareContent = (tribe: AppendixTribe): ShareableContent => {
+    const tribeEn = ALL_40_APPENDIX_TRIBES_EN[tribe.id];
+    const tribeName = isBn ? tribe.nameBn : (tribeEn?.nameEn || tribe.nameEn || tribe.nameBn);
+    const categoryText = isBn ? tribe.categoryBn : (tribeEn?.categoryEn || tribe.categoryEn || tribe.categoryBn);
+    const regionText = isBn ? tribe.regionBn : (tribeEn?.regionEn || tribe.regionEn || tribe.regionBn);
+    const significanceText = isBn ? tribe.historicalSignificanceBn : (tribeEn?.historicalSignificanceEn || tribe.historicalSignificanceEn || tribe.historicalSignificanceBn);
+    const sahabaArr = isBn ? tribe.sahabaListBn : (tribeEn?.sahabaListEn || tribe.sahabaListEn || tribe.sahabaListBn);
+    const negativeArr = (isBn ? tribe.negativeFiguresBn : (tribeEn?.negativeFiguresEn || tribe.negativeFiguresEn || tribe.negativeFiguresBn)) || [];
+    const referenceText = isBn ? tribe.referenceBn : (tribeEn?.referenceEn || tribe.referenceEn || tribe.referenceBn);
+
+    const docLines: string[] = [
+      `#${tribe.index} ${tribeName} (${categoryText} • ${regionText})`,
+      '',
+      significanceText,
+      sahabaArr.length > 0 ? `\n${t.appendixSahabaTitle}:\n${sahabaArr.join(', ')}` : '',
+      negativeArr.length > 0 ? `\n${t.appendixNegativeTitle}:\n${negativeArr.join(', ')}` : '',
+      `\n${t.referencesTitle}: ${referenceText}`,
+    ];
+
+    return {
+      id: `gotro-app-${tribe.id}`,
+      badge: isBn ? `আরবের ৪০টি গোত্র • #${tribe.index}` : `40 Arab Tribes • #${tribe.index}`,
+      title: tribeName,
+      subtitle: `${categoryText} • ${regionText}`,
+      body: significanceText,
+      highlights: sahabaArr.slice(0, 4),
+      meta: [
+        { label: isBn ? 'অঞ্চল' : 'Region', value: regionText },
+        { label: isBn ? 'শ্রেণী' : 'Category', value: categoryText },
+      ],
+      reference: referenceText,
+      fullDocumentText: docLines.filter(Boolean).join('\n'),
+      fileNamePrefix: `Arab-Tribe-${tribe.index}-${tribeName}`,
+    };
+  };
+
+  const openGotroDirectoryShare = (focus: 'share' | 'download') => {
+    const clans = filteredClans.length > 0 ? filteredClans : ARABER_GOTRO_DATABASE;
+    const clansDoc = clans
+      .map((sec, idx) => {
+        const secEn = ARABER_GOTRO_DATABASE_EN[sec.id];
+        const name = isBn ? sec.tribeNameBn : (secEn?.tribeNameEn || sec.tribeNameEn || sec.tribeNameBn);
+        const role = isBn ? sec.responsibilityOrRoleBn : (secEn?.responsibilityOrRoleEn || sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn);
+        const intro = isBn ? sec.introductionBn : (secEn?.introductionEn || sec.introductionEn || sec.introductionBn);
+        const figs = sec.personalities
+          .map((p) => `   • ${isBn ? p.nameBn : (secEn?.personalitiesEn[p.id]?.nameEn || p.nameEn || p.nameBn)} (${isBn ? p.roleBn : (secEn?.personalitiesEn[p.id]?.roleEn || p.roleEn || p.roleBn)})`)
+          .join('\n');
+        return `${idx + 1}. ${name}\n   ${role}\n${intro}\n${figs}`;
+      })
+      .join('\n\n----------------------------------------\n\n');
+
+    openShareModal(
+      {
+        id: 'gotro-complete-directory',
+        badge: t.subHeaderBadge,
+        title: t.mainHeaderTitle,
+        subtitle: t.mainHeaderDesc,
+        arabic: BOOK_METADATA.titleAr,
+        body: isBn
+          ? `মক্কা-মদিনা ও সমগ্র আরবের ${clans.length}টি প্রধান গোত্র, কুরাইশ বংশলতিকা ও প্রখ্যাত সাহাবী-ব্যক্তিত্বদের প্রামাণ্য বিশ্বকোষ।`
+          : `Comprehensive encyclopedia of ${clans.length} major Arab clans, Quraysh lineage, and prominent Sahaba & historical personalities.`,
+        highlights: clans.slice(0, 5).map((sec) => {
+          const secEn = ARABER_GOTRO_DATABASE_EN[sec.id];
+          return isBn ? sec.tribeNameBn : (secEn?.tribeNameEn || sec.tribeNameEn || sec.tribeNameBn);
+        }),
+        meta: [
+          { label: t.metricDomainLabel, value: t.metricDomainValue },
+          { label: t.metricTribeLabel, value: t.metricTribeValue },
+          { label: t.metricSourceLabel, value: t.metricSourceValue },
+        ],
+        reference: isBn ? 'সীরাতে ইবনে হিশাম, তাবাকাতে ইবনে সা’দ, আর-রাহীকুল মাখতূম' : 'Seerat Ibn Hisham, Tabaqat Ibn Sa\'d, Ar-Raheeq Al-Makhtum',
+        fullDocumentText: clansDoc,
+        fileNamePrefix: 'Araber-Gotro-O-Byaktitto',
+      },
+      focus
+    );
+  };
+
   return (
     <div className={`min-h-screen pb-24 transition-colors duration-200 ${
       isDay ? 'text-slate-800' : 'text-[#e6f4f2]'
@@ -653,13 +833,20 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               </button>
             )}
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 ml-auto flex-wrap">
               <span className="text-[10px] font-arabic text-emerald-200/90 tracking-wide font-medium">
                 {BOOK_METADATA.titleAr}
               </span>
               <span className="text-[9px] px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold whitespace-nowrap">
                 {t.subHeaderBadge}
               </span>
+              <ShareDownloadButtons
+                variant="hero"
+                selectedLanguage={selectedLanguage}
+                themeMode={themeMode}
+                onShare={() => openGotroDirectoryShare('share')}
+                onDownload={() => openGotroDirectoryShare('download')}
+              />
             </div>
           </div>
 
@@ -1049,6 +1236,20 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                                 }`}>
                                   {isChart ? t.badgeChart : t.badgeRead}
                                 </span>
+                                {!isChart && !sub.id.startsWith('appendix-') && (() => {
+                                  const resolvedId = CLAN_ID_ALIASES[sub.id] || sub.id;
+                                  const matchedClan = ARABER_GOTRO_DATABASE.find((c) => c.id === resolvedId);
+                                  if (!matchedClan) return null;
+                                  return (
+                                    <ShareDownloadButtons
+                                      variant="compact"
+                                      selectedLanguage={selectedLanguage}
+                                      themeMode={themeMode}
+                                      onShare={() => openShareModal(buildClanShareContent(matchedClan), 'share')}
+                                      onDownload={() => openShareModal(buildClanShareContent(matchedClan), 'download')}
+                                    />
+                                  );
+                                })()}
                                 <ChevronRight className="w-3 h-3 text-emerald-500" />
                               </div>
                             </div>
@@ -1342,14 +1543,18 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     )}
                   </div>
 
-                  <div className="pt-2 border-t border-dashed border-black/10 dark:border-white/10 flex items-center justify-between text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                    <span className="flex items-center gap-1 group-hover:translate-x-0.5 transition">
+                  <div className="pt-2 border-t border-dashed border-black/10 dark:border-white/10 flex items-center justify-between gap-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="flex items-center gap-1 group-hover:translate-x-0.5 transition truncate">
                       <span>{t.readSeerahBtn}</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      <ChevronRight className="w-3.5 h-3.5 shrink-0" />
                     </span>
-                    <span className="text-[9px] opacity-70">
-                      {sec.subClans ? t.subClansCount(sec.subClans.length) : t.mainBranchLabel}
-                    </span>
+                    <ShareDownloadButtons
+                      variant="compact"
+                      selectedLanguage={selectedLanguage}
+                      themeMode={themeMode}
+                      onShare={() => openShareModal(buildClanShareContent(sec), 'share')}
+                      onDownload={() => openShareModal(buildClanShareContent(sec), 'download')}
+                    />
                   </div>
                 </div>
               );
@@ -1434,7 +1639,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 self-end sm:self-center">
+              <div className="flex items-center gap-1.5 self-end sm:self-center flex-wrap">
+                <ShareDownloadButtons
+                  variant="card"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  onShare={() => openShareModal(buildClanShareContent(activeClan), 'share')}
+                  onDownload={() => openShareModal(buildClanShareContent(activeClan), 'download')}
+                />
                 <button
                   disabled={!hasPrevClan}
                   onClick={handlePrevClan}
@@ -1677,17 +1889,26 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                             )}
                           </div>
 
-                          <button
-                            onClick={(e) => toggleBookmark(pers.id, e)}
-                            title={isBookmarked ? 'Remove Bookmark' : 'Add Bookmark'}
-                            className={`p-1.5 rounded-lg border transition ${
-                              isBookmarked
-                                ? 'bg-amber-500 text-white border-amber-400'
-                                : isDay ? 'bg-slate-100 text-slate-400 hover:text-slate-700 border-slate-200' : 'bg-[#082226] text-emerald-400/60 hover:text-emerald-300 border-[#153e46]'
-                            }`}
-                          >
-                            <Bookmark className="w-3.5 h-3.5 fill-current" />
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <ShareDownloadButtons
+                              variant="compact"
+                              selectedLanguage={selectedLanguage}
+                              themeMode={themeMode}
+                              onShare={() => openShareModal(buildPersonalityShareContent(pers, activeTribeName), 'share')}
+                              onDownload={() => openShareModal(buildPersonalityShareContent(pers, activeTribeName), 'download')}
+                            />
+                            <button
+                              onClick={(e) => toggleBookmark(pers.id, e)}
+                              title={isBookmarked ? 'Remove Bookmark' : 'Add Bookmark'}
+                              className={`p-1.5 rounded-lg border transition ${
+                                isBookmarked
+                                  ? 'bg-amber-500 text-white border-amber-400'
+                                  : isDay ? 'bg-slate-100 text-slate-400 hover:text-slate-700 border-slate-200' : 'bg-[#082226] text-emerald-400/60 hover:text-emerald-300 border-[#153e46]'
+                              }`}
+                            >
+                              <Bookmark className="w-3.5 h-3.5 fill-current" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Role Badge */}
@@ -1998,10 +2219,17 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 self-end sm:self-center">
+                      <div className="flex items-center gap-2.5 self-end sm:self-center flex-wrap">
                         <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400">
                           {t.figureCountBadge(clan.personalities.length)}
                         </span>
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={selectedLanguage}
+                          themeMode={themeMode}
+                          onShare={() => openShareModal(buildClanShareContent(clan), 'share')}
+                          onDownload={() => openShareModal(buildClanShareContent(clan), 'download')}
+                        />
                         <button
                           onClick={() => openClanInReader(clan.id)}
                           className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
@@ -3366,15 +3594,24 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     )}
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 dark:border-teal-900/30 flex items-center justify-between text-[11px] opacity-75">
-                    <span className="truncate max-w-[280px]">📚 {referenceText}</span>
-                    <button
-                      onClick={(e) => handleCopy(`${tribeName}\n${significanceText}\n${t.referencesTitle}: ${referenceText}`, `app-${tribe.id}`, e)}
-                      className="hover:text-amber-500 transition cursor-pointer flex items-center gap-1"
-                    >
-                      {copiedId === `app-${tribe.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedId === `app-${tribe.id}` ? t.copiedBtn : t.copyBtn}</span>
-                    </button>
+                  <div className="pt-2 border-t border-slate-100 dark:border-teal-900/30 flex items-center justify-between gap-2 text-[11px] opacity-85">
+                    <span className="truncate max-w-[200px]">📚 {referenceText}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <ShareDownloadButtons
+                        variant="compact"
+                        selectedLanguage={selectedLanguage}
+                        themeMode={themeMode}
+                        onShare={() => openShareModal(buildAppendixTribeShareContent(tribe), 'share')}
+                        onDownload={() => openShareModal(buildAppendixTribeShareContent(tribe), 'download')}
+                      />
+                      <button
+                        onClick={(e) => handleCopy(`${tribeName}\n${significanceText}\n${t.referencesTitle}: ${referenceText}`, `app-${tribe.id}`, e)}
+                        className="hover:text-amber-500 transition cursor-pointer flex items-center gap-1"
+                      >
+                        {copiedId === `app-${tribe.id}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedId === `app-${tribe.id}` ? t.copiedBtn : t.copyBtn}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -3428,17 +3665,26 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                       isDay ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#082226] border-[#153e46]'
                     }`}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
                         <h4 className="font-bold text-sm">{persName}</h4>
                         <span className="text-xs text-amber-500">{clanDisplayName}</span>
                       </div>
-                      <button
-                        onClick={(e) => toggleBookmark(pers.id, e)}
-                        className="p-1.5 rounded-lg bg-amber-500 text-white cursor-pointer"
-                      >
-                        <Bookmark className="w-3.5 h-3.5 fill-current" />
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={selectedLanguage}
+                          themeMode={themeMode}
+                          onShare={() => openShareModal(buildPersonalityShareContent(pers, clanDisplayName), 'share')}
+                          onDownload={() => openShareModal(buildPersonalityShareContent(pers, clanDisplayName), 'download')}
+                        />
+                        <button
+                          onClick={(e) => toggleBookmark(pers.id, e)}
+                          className="p-1.5 rounded-lg bg-amber-500 text-white cursor-pointer"
+                        >
+                          <Bookmark className="w-3.5 h-3.5 fill-current" />
+                        </button>
+                      </div>
                     </div>
                     <p className="text-xs opacity-90 line-clamp-2">{persBio}</p>
                     <div className="text-[11px] opacity-75 pt-2 border-t border-dashed border-slate-200 dark:border-slate-800">
@@ -3490,7 +3736,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
+                <ShareDownloadButtons
+                  variant="compact"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  onShare={() => openShareModal(buildPersonalityShareContent(activePersonalityModal), 'share')}
+                  onDownload={() => openShareModal(buildPersonalityShareContent(activePersonalityModal), 'download')}
+                />
                 <button
                   onClick={(e) => toggleBookmark(activePersonalityModal.id, e)}
                   className={`p-2 rounded-xl border transition ${
@@ -3859,6 +4112,15 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           </div>
         </div>
       )}
+
+      <ContentShareModal
+        isOpen={Boolean(shareModalContent)}
+        onClose={() => setShareModalContent(null)}
+        content={shareModalContent}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareModalFocus}
+      />
     </div>
   );
 };

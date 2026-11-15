@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { TABLIG_UI, TABLIG_CHAPTER_TRANSLATIONS } from '../utils/appTranslations';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 interface DailyTabligViewProps {
   soundEnabled: boolean;
@@ -158,6 +160,10 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   const [expandedChapter, setExpandedChapter] = useState<string>('sifats_intro');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [chapterPartFilter, setChapterPartFilter] = useState<Record<string, string>>({});
+  const [shareState, setShareState] = useState<{
+    content: ShareableContent;
+    focus: 'share' | 'download';
+  } | null>(null);
 
   const getChapterTitle = (chap: TabligChapterDetail): string => {
     const t = TABLIG_CHAPTER_TRANSLATIONS[chap.id];
@@ -345,6 +351,66 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
               {TABLIG_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
+          <ShareDownloadButtons
+            variant="hero"
+            selectedLanguage={selectedLanguage}
+            themeMode={themeMode}
+            className="shrink-0 self-start sm:self-center"
+            onShare={() => {
+              const fullDoc = filteredChapters
+                .map((c, i) => {
+                  const secText = c.sections
+                    .map(
+                      (s, si) =>
+                        `### ${getLocalizedSectionHeading(c.id, s.heading, si)}\n${getLocalizedSectionContent(c.id, s.content, si)}`
+                    )
+                    .join('\n\n');
+                  return `${i + 1}. ${getChapterTitle(c)}\n${getChapterSubtitle(c)}\n\n${secText}`;
+                })
+                .join('\n\n====================================\n\n');
+              setShareState({
+                focus: 'share',
+                content: {
+                  badge: isBn ? 'দাওয়াত ও তাবলীগ সিলেবাস' : 'Dawah & Tabligh Syllabus',
+                  title: TABLIG_UI.bannerTitle[selectedLanguage],
+                  subtitle: TABLIG_UI.bannerSub[selectedLanguage],
+                  arabic: 'وَمَنْ أَحْسَنُ قَوْلًا مِّمَّن دَعَا إِلَى اللَّهِ',
+                  body: filteredChapters
+                    .map((c, i) => `${i + 1}. ${getChapterTitle(c)} — ${getChapterSubtitle(c)}`)
+                    .join('\n'),
+                  fullDocumentText: fullDoc,
+                  fileNamePrefix: 'Dawah-Tabligh-Guide',
+                },
+              });
+            }}
+            onDownload={() => {
+              const fullDoc = filteredChapters
+                .map((c, i) => {
+                  const secText = c.sections
+                    .map(
+                      (s, si) =>
+                        `### ${getLocalizedSectionHeading(c.id, s.heading, si)}\n${getLocalizedSectionContent(c.id, s.content, si)}`
+                    )
+                    .join('\n\n');
+                  return `${i + 1}. ${getChapterTitle(c)}\n${getChapterSubtitle(c)}\n\n${secText}`;
+                })
+                .join('\n\n====================================\n\n');
+              setShareState({
+                focus: 'download',
+                content: {
+                  badge: isBn ? 'দাওয়াত ও তাবলীগ সিলেবাস' : 'Dawah & Tabligh Syllabus',
+                  title: TABLIG_UI.bannerTitle[selectedLanguage],
+                  subtitle: TABLIG_UI.bannerSub[selectedLanguage],
+                  arabic: 'وَمَنْ أَحْسَنُ قَوْلًا مِّمَّن دَعَا إِلَى اللَّهِ',
+                  body: filteredChapters
+                    .map((c, i) => `${i + 1}. ${getChapterTitle(c)} — ${getChapterSubtitle(c)}`)
+                    .join('\n'),
+                  fullDocumentText: fullDoc,
+                  fileNamePrefix: 'Dawah-Tabligh-Guide',
+                },
+              });
+            }}
+          />
         </div>
       </div>
 
@@ -419,6 +485,51 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                       {chap.arabic}
                     </span>
                   )}
+                  <ShareDownloadButtons
+                    variant="compact"
+                    selectedLanguage={selectedLanguage}
+                    themeMode={themeMode}
+                    onShare={() => {
+                      const fullChapter = chap.sections
+                        .map(
+                          (s, si) =>
+                            `${getLocalizedSectionHeading(chap.id, s.heading, si)}\n\n${getLocalizedSectionContent(chap.id, s.content, si)}`
+                        )
+                        .join('\n\n------------------------------\n\n');
+                      setShareState({
+                        focus: 'share',
+                        content: {
+                          badge: isBn ? `অধ্যায় ${chapterNumber}` : `Chapter ${chapterNumber}`,
+                          title: chapterTitle,
+                          subtitle: chapterSubtitle,
+                          arabic: chap.arabic,
+                          body: fullChapter.slice(0, 620),
+                          fullDocumentText: fullChapter,
+                          fileNamePrefix: `Tabligh-Chapter-${chap.id}`,
+                        },
+                      });
+                    }}
+                    onDownload={() => {
+                      const fullChapter = chap.sections
+                        .map(
+                          (s, si) =>
+                            `${getLocalizedSectionHeading(chap.id, s.heading, si)}\n\n${getLocalizedSectionContent(chap.id, s.content, si)}`
+                        )
+                        .join('\n\n------------------------------\n\n');
+                      setShareState({
+                        focus: 'download',
+                        content: {
+                          badge: isBn ? `অধ্যায় ${chapterNumber}` : `Chapter ${chapterNumber}`,
+                          title: chapterTitle,
+                          subtitle: chapterSubtitle,
+                          arabic: chap.arabic,
+                          body: fullChapter.slice(0, 620),
+                          fullDocumentText: fullChapter,
+                          fileNamePrefix: `Tabligh-Chapter-${chap.id}`,
+                        },
+                      });
+                    }}
+                  />
                   {isExpanded ? (
                     <ChevronDown className="w-5 h-5 text-slate-400" />
                   ) : (
@@ -527,18 +638,49 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                               : 'bg-[#071d22] border-teal-900/40 text-teal-100'
                           }`}
                         >
-                          {localizedHeading && (
-                            <h4
-                              className={`font-bold text-xs sm:text-sm mb-2.5 flex items-center gap-1.5 ${
-                                isMunajat
-                                  ? 'text-amber-600 dark:text-amber-400'
-                                  : 'text-emerald-600 dark:text-emerald-400'
-                              }`}
-                            >
-                              <BookmarkCheck className="w-4 h-4 shrink-0" />
-                              <span>{localizedHeading}</span>
-                            </h4>
-                          )}
+                          <div className="flex items-start justify-between gap-2 mb-2.5">
+                            {localizedHeading ? (
+                              <h4
+                                className={`font-bold text-xs sm:text-sm flex items-center gap-1.5 ${
+                                  isMunajat
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-emerald-600 dark:text-emerald-400'
+                                }`}
+                              >
+                                <BookmarkCheck className="w-4 h-4 shrink-0" />
+                                <span>{localizedHeading}</span>
+                              </h4>
+                            ) : <span />}
+                            <ShareDownloadButtons
+                              variant="compact"
+                              selectedLanguage={selectedLanguage}
+                              themeMode={themeMode}
+                              onShare={() =>
+                                setShareState({
+                                  focus: 'share',
+                                  content: {
+                                    badge: chapterTitle,
+                                    title: localizedHeading || chapterTitle,
+                                    subtitle: chapterSubtitle,
+                                    body: localizedContent,
+                                    fileNamePrefix: `Tabligh-Bayan-${sIdx + 1}`,
+                                  },
+                                })
+                              }
+                              onDownload={() =>
+                                setShareState({
+                                  focus: 'download',
+                                  content: {
+                                    badge: chapterTitle,
+                                    title: localizedHeading || chapterTitle,
+                                    subtitle: chapterSubtitle,
+                                    body: localizedContent,
+                                    fileNamePrefix: `Tabligh-Bayan-${sIdx + 1}`,
+                                  },
+                                })
+                              }
+                            />
+                          </div>
                           <p className="leading-relaxed whitespace-pre-line text-xs sm:text-sm">
                             {localizedContent}
                           </p>
@@ -551,6 +693,14 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
           );
         })}
       </div>
+      <ContentShareModal
+        isOpen={!!shareState}
+        onClose={() => setShareState(null)}
+        content={shareState?.content || null}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareState?.focus}
+      />
     </div>
   );
 };

@@ -32,6 +32,8 @@ import { soundHaptics } from '../utils/audioHaptics';
 import { BattleLiveMap } from './BattleLiveMap';
 import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
 import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 import {
   WarItem,
   BattleMartyr,
@@ -173,6 +175,99 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [active3DMapWarId, setActive3DMapWarId] = useState<string | null>(null);
   const [copiedQuote, setCopiedQuote] = useState(false);
+  const [shareState, setShareState] = useState<{
+    content: ShareableContent;
+    focus: 'share' | 'download';
+  } | null>(null);
+
+  const buildWarShareContent = (w: WarItem): ShareableContent => {
+    const name = isBn ? w.nameBn : (w.nameEn || w.nameBn);
+    const era = isBn ? w.eraBn : (w.eraEn || w.eraBn);
+    const date = isBn ? w.dateBn : (w.dateEn || w.dateBn);
+    const location = isBn ? w.locationBn : (w.locationEn || w.locationBn);
+    const cause = isBn ? w.causeBn : (w.causeEn || w.causeBn);
+    const commanderMuslim = isBn ? w.commanderMuslimsBn : (w.commanderMuslimsEn || w.commanderMuslimsBn);
+    const commanderEnemy = isBn ? w.commanderEnemyBn : (w.commanderEnemyEn || w.commanderEnemyBn);
+    const muslimForces = isBn ? w.muslimForcesBn : (w.muslimForcesEn || w.muslimForcesBn);
+    const enemyForces = isBn ? w.enemyForcesBn : (w.enemyForcesEn || w.enemyForcesBn);
+    const muslimMartyrs = isBn ? w.muslimMartyrsBn : (w.muslimMartyrsEn || w.muslimMartyrsBn);
+    const story = isBn ? w.emotionalStoryBn : (w.emotionalStoryEn || w.emotionalStoryBn);
+    const history = isBn ? w.detailedHistoryBn : (w.detailedHistoryEn || w.detailedHistoryBn);
+    const lessons = isBn ? w.historicalLessonsBn : (w.historicalLessonsEn || w.historicalLessonsBn);
+
+    const shuhadaText =
+      w.shuhada && w.shuhada.length > 0
+        ? `\n\n${isBn ? 'অমর শহীদ সাহাবিগণ:' : 'Honored Martyrs:'}\n` +
+          w.shuhada.map((s) => `• ${isBn ? s.nameBn : s.nameEn} — ${isBn ? s.roleBn : s.roleEn}`).join('\n')
+        : '';
+
+    const fullDoc = [
+      `${name} (${w.nameAr})`,
+      `${era} | ${date} | ${location}`,
+      `${isBn ? 'মুসলিম সেনাপতি' : 'Muslim Commander'}: ${commanderMuslim}`,
+      `${isBn ? 'প্রতিপক্ষ সেনাপতি' : 'Opponent Commander'}: ${commanderEnemy}`,
+      `${isBn ? 'মুসলিম বাহিনী' : 'Muslim Forces'}: ${muslimForces} | ${isBn ? 'প্রতিপক্ষ' : 'Opponents'}: ${enemyForces}`,
+      `${isBn ? 'মুসলিম শাহাদাত' : 'Muslim Martyrs'}: ${muslimMartyrs}`,
+      `\n${isBn ? 'পটভূমি ও কারণ:' : 'Background & Cause:'}\n${cause}`,
+      `\n${isBn ? 'হৃদয়স্পর্শী প্রেক্ষাপট:' : 'Heart-Touching Account:'}\n${story}`,
+      `\n${isBn ? 'বিস্তারিত ইতিহাস:' : 'Detailed History:'}\n${history}`,
+      shuhadaText,
+      lessons && lessons.length > 0
+        ? `\n${isBn ? 'ঐতিহাসিক শিক্ষা:' : 'Historical Lessons:'}\n${lessons.map((l, idx) => `${idx + 1}. ${l}`).join('\n')}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    return {
+      id: w.id,
+      badge: `${era} • #${formatNum(w.orderNumber)}`,
+      title: name,
+      subtitle: `${date} • ${location}`,
+      arabic: w.nameAr,
+      meta: [
+        { label: isBn ? 'মুসলিম সেনাপতি' : 'Muslim Commander', value: commanderMuslim },
+        { label: isBn ? 'সৈন্য সংখ্যা' : 'Forces', value: `${muslimForces} vs ${enemyForces}` },
+        { label: isBn ? 'শাহাদাত' : 'Martyrs', value: muslimMartyrs },
+        { label: isBn ? 'স্থান' : 'Location', value: location },
+      ],
+      body: `${cause}\n\n${story}`,
+      highlights: lessons,
+      fullDocumentText: fullDoc,
+      fileNamePrefix: `Battle-${w.orderNumber}-${w.id}`,
+    };
+  };
+
+  const openWarsIndexShare = (focus: 'share' | 'download') => {
+    const fullDoc = filteredWars
+      .map(
+        (w, i) =>
+          `${i + 1}. ${isBn ? w.nameBn : w.nameEn} (${w.nameAr}) — ${isBn ? w.dateBn : w.dateEn}\n` +
+          `${isBn ? 'স্থান' : 'Location'}: ${isBn ? w.locationBn : w.locationEn}\n` +
+          `${isBn ? 'সেনাপতি' : 'Commander'}: ${isBn ? w.commanderMuslimsBn : w.commanderMuslimsEn || w.commanderMuslimsBn}\n` +
+          `${isBn ? w.causeBn : w.causeEn}`
+      )
+      .join('\n\n------------------------------\n\n');
+    setShareState({
+      focus,
+      content: {
+        badge: isBn ? 'ইসলামের ইতিহাসের যুদ্ধ' : 'Islamic History Wars',
+        title: isBn
+          ? `ইসলামের ইতিহাসের যুদ্ধসমূহ (${formatNum(filteredWars.length)}টি)`
+          : `Battles in Islamic History (${filteredWars.length})`,
+        subtitle: isBn
+          ? 'নববি যুগ থেকে খিলাফতে রাশিদা ও পরবর্তী ঐতিহাসিক বিজয়সমূহের কালানুক্রমিক সংকলন'
+          : 'Chronological compilation of historic Islamic battles',
+        arabic: 'وَمَا النَّصْرُ إِلَّا مِنْ عِندِ اللَّهِ الْعَزِيزِ الْحَكِيمِ',
+        body: filteredWars
+          .slice(0, 6)
+          .map((w, i) => `${formatNum(i + 1)}. ${isBn ? w.nameBn : w.nameEn} (${isBn ? w.dateBn : w.dateEn})`)
+          .join('\n'),
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Islamic-History-Wars',
+      },
+    });
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -392,6 +487,13 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               <Compass className="w-4 h-4 text-amber-300" />
               <span className="hidden sm:inline text-[11px]">{isBn ? 'মানচিত্র' : 'Map'}</span>
             </button>
+            <ShareDownloadButtons
+              variant="hero"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => setShareState({ content: buildWarShareContent(activeWar), focus: 'share' })}
+              onDownload={() => setShareState({ content: buildWarShareContent(activeWar), focus: 'download' })}
+            />
             <button
               onClick={handleCopyWarSummary}
               className="p-2 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer text-xs font-bold flex items-center gap-1"
@@ -834,14 +936,26 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
           </span>
         </div>
 
-        <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-          {isBn ? `ইসলামের ইতিহাসের যুদ্ধসমূহ (${formatNum(totalWars)}টি ঐতিহাসিক যুদ্ধ)` : `Battles in Islamic History (${totalWars} Epic Battles)`}
-        </h2>
-        <p className="text-xs sm:text-sm text-amber-100/90 mt-1 max-w-xl">
-          {isBn
-            ? 'নববি যুগ থেকে খিলাফতে রাশিদা, উমাইয়া, আব্বাসি, আন্দালুস ও আধুনিক প্রতিরোধের ঐতিহাসিক যুদ্ধসমূহের পূর্ণাঙ্গ কালানুক্রমিক সূচি ও বিবরণ।'
-            : 'Chronological master guide to the foundational and heroic battles shaping Islamic history.'}
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+              {isBn ? `ইসলামের ইতিহাসের যুদ্ধসমূহ (${formatNum(totalWars)}টি ঐতিহাসিক যুদ্ধ)` : `Battles in Islamic History (${totalWars} Epic Battles)`}
+            </h2>
+            <p className="text-xs sm:text-sm text-amber-100/90 mt-1 max-w-xl">
+              {isBn
+                ? 'নববি যুগ থেকে খিলাফতে রাশিদা, উমাইয়া, আব্বাসি, আন্দালুস ও আধুনিক প্রতিরোধের ঐতিহাসিক যুদ্ধসমূহের পূর্ণাঙ্গ কালানুক্রমিক সূচি ও বিবরণ।'
+                : 'Chronological master guide to the foundational and heroic battles shaping Islamic history.'}
+            </p>
+          </div>
+          <ShareDownloadButtons
+            variant="hero"
+            selectedLanguage={selectedLanguage}
+            themeMode={themeMode}
+            className="shrink-0 self-start sm:self-end"
+            onShare={() => openWarsIndexShare('share')}
+            onDownload={() => openWarsIndexShare('download')}
+          />
+        </div>
       </div>
 
       {/* Search Bar (Matching Hayatus Sahaba) */}
@@ -921,7 +1035,16 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                     </div>
                     <div className="pt-2 border-t border-slate-200/50 dark:border-amber-900/40 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-bold">
                       <span>{isBn ? 'বিস্তারিত পড়ুন' : 'Read'}</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      <div className="flex items-center gap-1.5">
+                        <ShareDownloadButtons
+                          variant="compact"
+                          selectedLanguage={selectedLanguage}
+                          themeMode={themeMode}
+                          onShare={() => setShareState({ content: buildWarShareContent(war), focus: 'share' })}
+                          onDownload={() => setShareState({ content: buildWarShareContent(war), focus: 'download' })}
+                        />
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </div>
                     </div>
                   </div>
                 );
@@ -1005,7 +1128,16 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                               {warName}
                             </span>
                           </div>
-                          <ChevronRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          <div className="flex items-center gap-1 shrink-0">
+                            <ShareDownloadButtons
+                              variant="compact"
+                              selectedLanguage={selectedLanguage}
+                              themeMode={themeMode}
+                              onShare={() => setShareState({ content: buildWarShareContent(war), focus: 'share' })}
+                              onDownload={() => setShareState({ content: buildWarShareContent(war), focus: 'download' })}
+                            />
+                            <ChevronRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          </div>
                         </div>
                       );
                     })}
@@ -1146,6 +1278,14 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
           </div>
         </div>
       )}
+      <ContentShareModal
+        isOpen={!!shareState}
+        onClose={() => setShareState(null)}
+        content={shareState?.content || null}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareState?.focus}
+      />
     </div>
   );
 };

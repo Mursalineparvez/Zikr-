@@ -26,6 +26,8 @@ import {
   Minus,
   AlertCircle,
 } from 'lucide-react';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
 
 interface NamajViewProps {
   soundEnabled: boolean;
@@ -47,6 +49,10 @@ export const NamajView: React.FC<NamajViewProps> = ({
   const [activeTab, setActiveTab] = useState<NamajTab>('five_fard');
   const [expandedPrayerId, setExpandedPrayerId] = useState<string | null>('Fajr');
   const [expandedStep, setExpandedStep] = useState<number | null>(1);
+  const [shareState, setShareState] = useState<{
+    content: ShareableContent;
+    focus: 'share' | 'download';
+  } | null>(null);
 
   // Qaza Namaz Tracking State stored in localStorage
   const [qazaCounts, setQazaCounts] = useState<{
@@ -86,6 +92,44 @@ export const NamajView: React.FC<NamajViewProps> = ({
   const naflList = useMemo(() => getLocalizedNaflPrayers(lang), [lang]);
   const qazaItems = useMemo(() => getLocalizedQazaItems(lang), [lang]);
 
+  const openNamajPageShare = (focus: 'share' | 'download') => {
+    const isBn = lang === 'bn';
+    const fullDoc = [
+      `=== ${NAMAJ_UI.daily5Title[lang] || '5 Daily Prayers'} ===\n` +
+        prayersList
+          .map(
+            (p) =>
+              `${p.name} (${p.totalRakats} Rakats)\n${p.breakdown}\n${p.timeRange}\n${p.virtue}\n${p.hadithText || ''}`
+          )
+          .join('\n\n'),
+      `=== ${NAMAJ_UI.tabRulesSteps[lang] || 'Prayer Steps'} ===\n` +
+        stepsList
+          .map((s) => `${s.stepNumber}. ${s.title}\n${s.action}\n${s.recitation}\n${s.tip}`)
+          .join('\n\n'),
+      `=== ${NAMAJ_UI.tabPrayerDuas[lang] || 'Prayer Duas'} ===\n` +
+        duasList
+          .map((d) => `${d.title}\n${d.arabic}\n${d.transliteration}\n${d.meaning}\nRef: ${d.reference}`)
+          .join('\n\n'),
+      `=== ${NAMAJ_UI.tabNaflPrayers[lang] || 'Nafl & Sunnah'} ===\n` +
+        naflList.map((n) => `${n.title} (${n.rakats})\n${n.time}\n${n.benefit}\n${n.steps}`).join('\n\n'),
+    ].join('\n\n====================================\n\n');
+
+    setShareState({
+      focus,
+      content: {
+        badge: NAMAJ_UI.guideBadge[lang] || NAMAJ_UI.guideBadge.en,
+        title: NAMAJ_UI.bannerTitle[lang] || NAMAJ_UI.bannerTitle.en,
+        subtitle: NAMAJ_UI.bannerSubtitle[lang] || NAMAJ_UI.bannerSubtitle.en,
+        arabic: 'وَأَقِيمُوا الصَّلَاةَ وَآتُوا الزَّكَاةَ',
+        body: isBn
+          ? `৫ ওয়াক্ত ফরজ নামাজ, ধাপে ধাপে নামাজের নিয়মাবলি, সালাতের জরুরি দোয়া সমূহ, নফল ও সুন্নত নামাজ এবং ক্বাজা হিসাবের পূর্ণাঙ্গ গাইড।`
+          : `Complete guide to 5 Daily Fard Prayers, step-by-step Salah posture & recitations, essential Duas, Nafl & Sunnah prayers, and Qaza tracker.`,
+        fullDocumentText: fullDoc,
+        fileNamePrefix: 'Namaj-Complete-Guide',
+      },
+    });
+  };
+
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
       {/* Top Banner / Hero */}
@@ -109,18 +153,27 @@ export const NamajView: React.FC<NamajViewProps> = ({
             </p>
           </div>
 
-          {onNavigateToSalatTime && (
-            <button
-              onClick={() => {
-                if (soundEnabled) soundHaptics.playTap();
-                onNavigateToSalatTime();
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-[#006A4E] font-bold text-xs sm:text-sm shadow-lg hover:bg-emerald-50 active:scale-95 transition cursor-pointer self-start sm:self-auto shrink-0"
-            >
-              <Clock className="w-4 h-4 text-[#006A4E]" />
-              <span>{NAMAJ_UI.viewSalatTimes[lang] || NAMAJ_UI.viewSalatTimes.en}</span>
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+            <ShareDownloadButtons
+              variant="hero"
+              selectedLanguage={lang}
+              themeMode={themeMode}
+              onShare={() => openNamajPageShare('share')}
+              onDownload={() => openNamajPageShare('download')}
+            />
+            {onNavigateToSalatTime && (
+              <button
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  onNavigateToSalatTime();
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-[#006A4E] font-bold text-xs sm:text-sm shadow-lg hover:bg-emerald-50 active:scale-95 transition cursor-pointer shrink-0"
+              >
+                <Clock className="w-4 h-4 text-[#006A4E]" />
+                <span>{NAMAJ_UI.viewSalatTimes[lang] || NAMAJ_UI.viewSalatTimes.en}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -214,8 +267,49 @@ export const NamajView: React.FC<NamajViewProps> = ({
                       </p>
                     </div>
 
-                    <div className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0 mt-1">
-                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+                      <ShareDownloadButtons
+                        variant="compact"
+                        selectedLanguage={lang}
+                        themeMode={themeMode}
+                        onShare={() =>
+                          setShareState({
+                            focus: 'share',
+                            content: {
+                              badge: `${prayer.totalRakats} ${NAMAJ_UI.rakatsUnit[lang] || 'Rakats'}`,
+                              title: prayer.name,
+                              subtitle: prayer.timeRange,
+                              body: `${prayer.breakdown}\n\n${prayer.virtue}${prayer.hadithText ? `\n\n"${prayer.hadithText}"` : ''}`,
+                              meta: prayer.rakatsBreakdownList?.map((r) => ({
+                                label: r.type,
+                                value: `${r.rakats}`,
+                              })),
+                              reference: prayer.hadithRef,
+                              fileNamePrefix: `Namaj-${prayer.id}`,
+                            },
+                          })
+                        }
+                        onDownload={() =>
+                          setShareState({
+                            focus: 'download',
+                            content: {
+                              badge: `${prayer.totalRakats} ${NAMAJ_UI.rakatsUnit[lang] || 'Rakats'}`,
+                              title: prayer.name,
+                              subtitle: prayer.timeRange,
+                              body: `${prayer.breakdown}\n\n${prayer.virtue}${prayer.hadithText ? `\n\n"${prayer.hadithText}"` : ''}`,
+                              meta: prayer.rakatsBreakdownList?.map((r) => ({
+                                label: r.type,
+                                value: `${r.rakats}`,
+                              })),
+                              reference: prayer.hadithRef,
+                              fileNamePrefix: `Namaj-${prayer.id}`,
+                            },
+                          })
+                        }
+                      />
+                      <div className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
                     </div>
                   </button>
 
@@ -318,8 +412,37 @@ export const NamajView: React.FC<NamajViewProps> = ({
                         {step.title}
                       </h3>
                     </div>
-                    <div className="text-slate-400">
-                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    <div className="flex items-center gap-1.5">
+                      <ShareDownloadButtons
+                        variant="compact"
+                        selectedLanguage={lang}
+                        themeMode={themeMode}
+                        onShare={() =>
+                          setShareState({
+                            focus: 'share',
+                            content: {
+                              badge: `${lang === 'bn' ? 'ধাপ' : 'Step'} ${step.stepNumber}`,
+                              title: step.title,
+                              body: `${step.action}\n\n${step.recitation}\n\n${step.tip}`,
+                              fileNamePrefix: `Namaj-Step-${step.stepNumber}`,
+                            },
+                          })
+                        }
+                        onDownload={() =>
+                          setShareState({
+                            focus: 'download',
+                            content: {
+                              badge: `${lang === 'bn' ? 'ধাপ' : 'Step'} ${step.stepNumber}`,
+                              title: step.title,
+                              body: `${step.action}\n\n${step.recitation}\n\n${step.tip}`,
+                              fileNamePrefix: `Namaj-Step-${step.stepNumber}`,
+                            },
+                          })
+                        }
+                      />
+                      <div className="text-slate-400">
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
                     </div>
                   </button>
 
@@ -377,9 +500,46 @@ export const NamajView: React.FC<NamajViewProps> = ({
                   <h3 className={`text-sm sm:text-base font-bold ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}>
                     {dua.title}
                   </h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    {dua.reference}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {dua.reference}
+                    </span>
+                    <ShareDownloadButtons
+                      variant="compact"
+                      selectedLanguage={lang}
+                      themeMode={themeMode}
+                      onShare={() =>
+                        setShareState({
+                          focus: 'share',
+                          content: {
+                            badge: lang === 'bn' ? 'নামাজের দোয়া' : 'Prayer Dua',
+                            title: dua.title,
+                            subtitle: dua.context,
+                            arabic: dua.arabic,
+                            transliteration: dua.transliteration,
+                            body: dua.meaning,
+                            reference: dua.reference,
+                            fileNamePrefix: `Namaj-Dua-${dua.id}`,
+                          },
+                        })
+                      }
+                      onDownload={() =>
+                        setShareState({
+                          focus: 'download',
+                          content: {
+                            badge: lang === 'bn' ? 'নামাজের দোয়া' : 'Prayer Dua',
+                            title: dua.title,
+                            subtitle: dua.context,
+                            arabic: dua.arabic,
+                            transliteration: dua.transliteration,
+                            body: dua.meaning,
+                            reference: dua.reference,
+                            fileNamePrefix: `Namaj-Dua-${dua.id}`,
+                          },
+                        })
+                      }
+                    />
+                  </div>
                 </div>
 
                 {/* Arabic */}
@@ -434,9 +594,40 @@ export const NamajView: React.FC<NamajViewProps> = ({
                 <h3 className={`text-base font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
                   {nafl.title}
                 </h3>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#006A4E]/10 text-[#006A4E] dark:bg-emerald-500/20 dark:text-emerald-300">
-                  {nafl.rakats}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#006A4E]/10 text-[#006A4E] dark:bg-emerald-500/20 dark:text-emerald-300">
+                    {nafl.rakats}
+                  </span>
+                  <ShareDownloadButtons
+                    variant="compact"
+                    selectedLanguage={lang}
+                    themeMode={themeMode}
+                    onShare={() =>
+                      setShareState({
+                        focus: 'share',
+                        content: {
+                          badge: nafl.rakats,
+                          title: nafl.title,
+                          subtitle: nafl.time,
+                          body: `${nafl.benefit}\n\n${nafl.steps}`,
+                          fileNamePrefix: `Nafl-Prayer-${idx + 1}`,
+                        },
+                      })
+                    }
+                    onDownload={() =>
+                      setShareState({
+                        focus: 'download',
+                        content: {
+                          badge: nafl.rakats,
+                          title: nafl.title,
+                          subtitle: nafl.time,
+                          body: `${nafl.benefit}\n\n${nafl.steps}`,
+                          fileNamePrefix: `Nafl-Prayer-${idx + 1}`,
+                        },
+                      })
+                    }
+                  />
+                </div>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 <span className="font-bold text-slate-700 dark:text-slate-300">
@@ -526,6 +717,14 @@ export const NamajView: React.FC<NamajViewProps> = ({
           </div>
         </div>
       )}
+      <ContentShareModal
+        isOpen={!!shareState}
+        onClose={() => setShareState(null)}
+        content={shareState?.content || null}
+        selectedLanguage={lang}
+        soundEnabled={soundEnabled}
+        initialFocus={shareState?.focus}
+      />
     </div>
   );
 };
