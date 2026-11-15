@@ -464,14 +464,14 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           <button
             onClick={handleOpenRightSidebar}
             aria-label="Open Zikr+ Menu"
-            className={`group relative flex flex-col items-center justify-center py-3 px-1.5 rounded-l-2xl transition-colors duration-200 cursor-pointer active:scale-95 border-y border-l backdrop-blur-md ${
+            className={`group relative flex flex-col items-center justify-center py-2.5 px-1 rounded-l-xl transition-colors duration-200 cursor-pointer active:scale-95 border-y border-l backdrop-blur-md ${
               isDay
-                ? 'bg-[#e3ece8]/95 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[0_8px_20px_rgba(15,61,46,0.12)]'
-                : 'bg-[#020f12]/95 hover:bg-[#051b20] text-emerald-200/95 border-[#0c353d] shadow-[0_8px_24px_rgba(0,0,0,0.7)]'
+                ? 'bg-[#e3ece8]/95 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[0_6px_16px_rgba(15,61,46,0.12)]'
+                : 'bg-[#020f12]/95 hover:bg-[#051b20] text-emerald-200/95 border-[#0c353d] shadow-[0_6px_20px_rgba(0,0,0,0.7)]'
             }`}
           >
-            <div className="flex flex-col items-center gap-1.5">
-              <div className={`w-7 h-7 rounded-xl overflow-hidden flex items-center justify-center shadow-xs border ${
+            <div className="flex flex-col items-center gap-1">
+              <div className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center shadow-xs border ${
                 isDay ? 'border-emerald-700/20 bg-white/60' : 'border-teal-500/30 bg-[#041d22]'
               }`}>
                 <img
@@ -484,20 +484,25 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                 />
               </div>
               <span
-                className="text-[11px] font-black tracking-widest py-0.5"
+                className="text-[10px] font-black tracking-widest py-0.5"
                 style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
               >
                 Zikr+
               </span>
             </div>
-            <div className={`absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full transition-opacity group-hover:opacity-100 opacity-75 ${
-              isDay ? 'bg-emerald-600/60' : 'bg-teal-400/60'
-            }`} />
           </button>
         </div>
       )}
 
-      {/* Right-Side Auto-Hiding Zikr+ Sidebar Panel */}
+      {/* Subtle Backdrop to Close Slim Sidebar */}
+      {isRightSidebarOpen && (
+        <div
+          onClick={() => setIsRightSidebarOpen(false)}
+          className="fixed inset-0 z-45 bg-black/15 backdrop-blur-[1px] animate-in fade-in duration-200"
+        />
+      )}
+
+      {/* Slim Auto-Hiding Zikr+ Sidebar Panel */}
       {isRightSidebarOpen && (
         <div
           onMouseEnter={() => {
@@ -509,14 +514,18 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               setIsRightSidebarOpen(false);
             }, 3000);
           }}
-          className={`fixed right-4 top-4 bottom-4 z-50 w-72 flex flex-col rounded-3xl border shadow-2xl p-4 space-y-3 overflow-y-auto animate-in slide-in-from-right duration-300 ${
-            isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#092226] border-teal-900/50 text-white'
+          className={`fixed right-2.5 top-3 bottom-3 z-50 w-52 sm:w-56 flex flex-col rounded-2xl border shadow-2xl p-2.5 space-y-2 overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
+            isDay
+              ? 'bg-white/95 border-emerald-200/80 text-slate-800'
+              : 'bg-[#061b20]/95 border-teal-500/25 text-white'
           }`}
         >
-          {/* Header with Zikr+ logo */}
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-teal-900/40">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md border border-emerald-500/30 bg-[#005740] shrink-0">
+          {/* Slim Header with Zikr+ logo */}
+          <div className={`flex items-center justify-between pb-2 border-b ${
+            isDay ? 'border-slate-200/80' : 'border-teal-900/50'
+          }`}>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm border border-emerald-500/30 bg-[#005740] shrink-0">
                 <img
                   src="/pwa-192x192.png"
                   alt="Zikr+ Logo"
@@ -526,33 +535,42 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   }}
                 />
               </div>
-              <div>
-                <h3 className="font-black text-base text-emerald-600 dark:text-emerald-400">Zikr+</h3>
-                <p className="text-[10px] opacity-70">Islamic Knowledge Hub</p>
+              <div className="min-w-0">
+                <h3 className="font-black text-sm leading-tight text-emerald-600 dark:text-emerald-400">Zikr+</h3>
+                <p className="text-[9px] font-medium opacity-65 truncate">Islamic Hub</p>
               </div>
             </div>
             <button
               onClick={() => setIsRightSidebarOpen(false)}
-              className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#123840] flex items-center justify-center font-bold cursor-pointer transition"
+              aria-label="Close menu"
+              className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer transition active:scale-90 ${
+                isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'bg-[#103038] hover:bg-[#16424d] text-emerald-200'
+              }`}
             >
               ✕
             </button>
           </div>
 
-          {/* Navigation Items List */}
-          <div className="space-y-1.5 flex-1">
+          {/* Slim Navigation Items List */}
+          <div className="space-y-0.5 flex-1">
             <button
               onClick={() => {
                 handleSelectSub('hub');
                 setIsRightSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                activeSub === 'hub' ? 'bg-emerald-600 text-white shadow-md' : isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#123840] text-emerald-300'
+              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+                activeSub === 'hub'
+                  ? 'bg-gradient-to-r from-[#006A4E] to-emerald-600 text-white shadow-sm'
+                  : isDay
+                  ? 'hover:bg-emerald-50 text-slate-700'
+                  : 'hover:bg-[#103038] text-emerald-200/90'
               }`}
             >
-              <Layers className="w-4 h-4 shrink-0" />
+              <Layers className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
             </button>
+
+            <div className={`my-1 border-t ${isDay ? 'border-slate-100' : 'border-teal-900/35'}`} />
 
             {hubItems.map((item) => {
               const isActive = activeSub === item.id;
@@ -567,12 +585,19 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     }
                     setIsRightSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                    isActive ? 'bg-emerald-600 text-white shadow-md' : isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-[#123840] text-emerald-300'
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer group ${
+                    isActive
+                      ? 'bg-gradient-to-r from-[#006A4E] to-emerald-600 text-white shadow-sm'
+                      : isDay
+                      ? 'hover:bg-emerald-50/90 text-slate-700'
+                      : 'hover:bg-[#103038] text-slate-200'
                   }`}
                 >
-                  <div className="w-5 h-5 flex items-center justify-center text-base shrink-0">{item.icon}</div>
-                  <span className="truncate">{item.title}</span>
+                  <div className="w-4 h-4 flex items-center justify-center shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5 [&>span]:text-sm [&>img]:rounded-full">
+                    {item.icon}
+                  </div>
+                  <span className="truncate flex-1 text-left">{item.title}</span>
+                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-amber-300 shrink-0" />}
                 </button>
               );
             })}

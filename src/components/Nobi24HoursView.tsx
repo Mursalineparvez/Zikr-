@@ -141,6 +141,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
   // Audio speech synthesis state
   const [isPlayingAudio, setIsPlayingAudio] = useState<string | null>(null);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const detailSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     return () => {
@@ -397,9 +398,10 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
     });
   }, [duaSearch, duaCategory]);
 
-  const locLiveSlot = getLocalizedSlot(currentLiveSlot, lang);
   const locNextSlot = getLocalizedSlot(nextLiveSlot, lang);
   const locActiveSlot = getLocalizedSlot(activeSlot, lang);
+  const activeNextSlot = NOBI_24_TIME_SLOTS[(activeSlotIndex + 1) % NOBI_24_TIME_SLOTS.length];
+  const locActiveNextSlot = getLocalizedSlot(activeNextSlot, lang);
 
   const formattedLiveClock = useMemo(() => {
     return nowDate.toLocaleTimeString(lang === 'bn' ? 'bn-BD' : 'en-US', {
@@ -420,71 +422,177 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
         </div>
       )}
 
-      {/* 1. EDITORIAL HERO & LIVE SUNNAH COMMAND BANNER */}
+      {/* 1. SLIM EDITORIAL HERO & INTEGRATED 24-HOUR SUNNAH WATCH CARD */}
       <div
-        className={`relative overflow-hidden rounded-[28px] p-5 sm:p-7 border shadow-lg transition-all duration-300 ${
+        className={`relative overflow-hidden rounded-3xl px-4 py-4 sm:px-6 sm:py-5 border shadow-xl transition-all duration-300 ${
           isDay
-            ? 'bg-gradient-to-br from-[#005941] via-[#006A4E] to-[#024735] text-white border-emerald-700/40'
-            : 'bg-gradient-to-br from-[#061c21] via-[#0a2a31] to-[#041418] text-white border-[#154550]'
+            ? 'bg-gradient-to-br from-[#014b36] via-[#015f45] to-[#013426] text-white border-emerald-500/30'
+            : 'bg-gradient-to-br from-[#04171c] via-[#08262d] to-[#031014] text-white border-teal-500/25'
         }`}
       >
-        {/* Subtle geometric Islamic lattice watermark (clean, no blurred AI blobs) */}
+        {/* Subtle gold/emerald accent hairline glow along top edge */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-300/60 to-transparent"
+        />
+
+        {/* Subtle geometric Islamic lattice watermark */}
         <svg
           aria-hidden="true"
-          className="pointer-events-none absolute right-0 top-0 h-full w-64 opacity-[0.06] text-white"
+          className="pointer-events-none absolute -right-4 -top-4 h-64 w-64 opacity-[0.05] text-amber-200"
           viewBox="0 0 200 200"
           fill="none"
         >
-          <circle cx="150" cy="50" r="78" stroke="currentColor" strokeWidth="1" />
-          <circle cx="150" cy="50" r="56" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
-          <polygon points="150,2 184,36 184,84 150,118 116,84 116,36" stroke="currentColor" strokeWidth="0.9" />
-          <circle cx="150" cy="170" r="44" stroke="currentColor" strokeWidth="0.8" />
+          <circle cx="120" cy="80" r="76" stroke="currentColor" strokeWidth="1" />
+          <circle cx="120" cy="80" r="56" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 4" />
+          <polygon points="120,16 168,48 168,112 120,144 72,112 72,48" stroke="currentColor" strokeWidth="0.8" />
         </svg>
 
-        <div className="relative z-10 space-y-5">
-          {/* Top Bar: Back + Arabic Header */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            {onBackToHub ? (
-              <button
-                type="button"
-                onClick={onBackToHub}
-                className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-emerald-50 transition active:scale-95 cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>{strings.backToHub}</span>
-              </button>
-            ) : (
-              <span />
-            )}
+        <div className="relative z-10 space-y-3.5">
+          {/* Ultra-Slim Top Row: Back + Arabic Title + Live Digital Clock */}
+          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {onBackToHub && (
+                <button
+                  type="button"
+                  onClick={onBackToHub}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-50 transition active:scale-95 cursor-pointer shrink-0"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>{strings.backToHub}</span>
+                </button>
+              )}
+              <span className="font-arabic text-xs sm:text-sm font-bold text-amber-300/95 tracking-wide truncate">
+                {strings.arabicTitle}
+              </span>
+            </div>
 
-            <span className="font-arabic text-sm sm:text-base font-bold text-amber-200/95 tracking-wide">
-              {strings.arabicTitle}
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <Clock className="w-3.5 h-3.5 text-amber-300" />
+              <span className="text-xs sm:text-sm font-mono font-black tabular-nums tracking-tight text-amber-200">
+                {formattedLiveClock}
+              </span>
+            </div>
           </div>
 
-          {/* Main Grid: Title + Live Phase Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
-              <div className="space-y-2">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+          {/* Main Slim Split Row: Info + Live Phase (Left) & Precision 24H Watch Dial (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-center">
+            {/* Left Column: Title, Active Phase Readout & Hairline Metrics */}
+            <div className="lg:col-span-7 flex flex-col justify-between space-y-3">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-snug text-white">
                   {strings.title}
                 </h1>
-                <p className="text-xs sm:text-sm text-emerald-100/90 max-w-xl leading-relaxed">
+                <p className="text-[11px] sm:text-xs text-emerald-100/80 max-w-xl leading-relaxed mt-0.5 line-clamp-1">
                   {strings.subtitle}
                 </p>
               </div>
 
-              {/* 4-Metric Informative Summary Strip (Tabular Numbers) */}
-              <div className="grid grid-cols-4 gap-2 pt-1">
+              {/* Active / Selected Watch Phase Readout (Sleek, Zero Nested Heavy Boxes) */}
+              <div className="py-2.5 border-y border-white/10 space-y-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xl shrink-0">{activeSlot.icon}</span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-amber-300 tabular-nums">
+                        <span>{locActiveSlot.timeSpan}</span>
+                        <span aria-hidden="true" className="text-white/30">·</span>
+                        <span className="text-emerald-200/90">
+                          {formatDurationLabel(activeSlot.startHour, activeSlot.endHour, isBn)}
+                        </span>
+                        {activeSlot.id === currentLiveSlot.id && (
+                          <>
+                            <span aria-hidden="true" className="text-white/30">·</span>
+                            <span className="text-emerald-300 font-black">
+                              {isBn ? 'এখন চলছে' : 'LIVE'}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <h2 className="text-sm sm:text-base font-black text-white leading-tight truncate">
+                        {locActiveSlot.title}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {selectedSlotId !== currentLiveSlot.id && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSlotId(currentLiveSlot.id);
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold bg-white/10 hover:bg-white/20 text-amber-200 border border-white/15 transition cursor-pointer whitespace-nowrap"
+                      >
+                        {isBn ? 'এখনকার সময়' : 'Live'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('wheel');
+                        if (soundEnabled) soundHaptics.playTap();
+                        detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-black inline-flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
+                    >
+                      <span>{strings.liveBanner.viewDetails}</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-emerald-100/80 line-clamp-1">
+                  {locActiveSlot.summary}
+                </p>
+
+                {/* Slim Progress Bar & Next Up */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-semibold text-emerald-100/75 tabular-nums">
+                    <span>
+                      {activeSlot.id === currentLiveSlot.id
+                        ? liveSlotTiming.remainingText
+                        : isBn
+                        ? `পর্ব ${toBnDigits(activeSlotIndex + 1)}/${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
+                        : `Phase ${activeSlotIndex + 1}/${NOBI_24_TIME_SLOTS.length}`}
+                    </span>
+                    <span className="truncate max-w-[65%] text-right">
+                      {activeSlot.id === currentLiveSlot.id
+                        ? isBn
+                          ? `পরবর্তী: ${locNextSlot.title}`
+                          : `Next: ${locNextSlot.title}`
+                        : isBn
+                        ? `পরবর্তী পর্ব: ${locActiveNextSlot.title}`
+                        : `Next phase: ${locActiveNextSlot.title}`}
+                    </span>
+                  </div>
+                  <div className="h-1 w-full rounded-full bg-white/15 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-400 transition-all duration-500"
+                      style={{
+                        width: `${
+                          activeSlot.id === currentLiveSlot.id
+                            ? liveSlotTiming.pct
+                            : Math.round(((activeSlotIndex + 1) / NOBI_24_TIME_SLOTS.length) * 100)
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Slim Unboxed 4-Metric Hairline Strip */}
+              <div className="grid grid-cols-4 divide-x divide-white/15">
                 <button
                   type="button"
                   onClick={() => setActiveTab('timeline')}
-                  className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-left transition cursor-pointer"
+                  className="pr-2 text-left hover:opacity-80 transition cursor-pointer group"
                 >
-                  <div className="text-base sm:text-lg font-black tabular-nums">
+                  <div className="text-sm sm:text-base font-black tabular-nums text-white group-hover:text-amber-300 transition-colors">
                     {isBn ? toBnDigits(NOBI_24_TIME_SLOTS.length) : NOBI_24_TIME_SLOTS.length}
                   </div>
-                  <div className="text-[10px] sm:text-[11px] text-emerald-100/80 font-medium truncate">
+                  <div className="text-[10px] text-emerald-100/70 font-medium truncate">
                     {isBn ? 'সময় পর্ব' : 'Phases'}
                   </div>
                 </button>
@@ -492,12 +600,12 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab('articles')}
-                  className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-left transition cursor-pointer"
+                  className="px-2.5 text-left hover:opacity-80 transition cursor-pointer group"
                 >
-                  <div className="text-base sm:text-lg font-black tabular-nums">
+                  <div className="text-sm sm:text-base font-black tabular-nums text-white group-hover:text-amber-300 transition-colors">
                     {isBn ? toBnDigits(NOBI_24_CHAPTERS.length) : NOBI_24_CHAPTERS.length}
                   </div>
-                  <div className="text-[10px] sm:text-[11px] text-emerald-100/80 font-medium truncate">
+                  <div className="text-[10px] text-emerald-100/70 font-medium truncate">
                     {isBn ? 'অধ্যায়' : 'Chapters'}
                   </div>
                 </button>
@@ -505,12 +613,12 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab('duas')}
-                  className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-left transition cursor-pointer"
+                  className="px-2.5 text-left hover:opacity-80 transition cursor-pointer group"
                 >
-                  <div className="text-base sm:text-lg font-black tabular-nums">
+                  <div className="text-sm sm:text-base font-black tabular-nums text-white group-hover:text-amber-300 transition-colors">
                     {isBn ? toBnDigits(NOBI_24_DUAS.length) : NOBI_24_DUAS.length}
                   </div>
-                  <div className="text-[10px] sm:text-[11px] text-emerald-100/80 font-medium truncate">
+                  <div className="text-[10px] text-emerald-100/70 font-medium truncate">
                     {isBn ? 'মাসনুন দোয়া' : 'Duas'}
                   </div>
                 </button>
@@ -518,81 +626,221 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab('tracker')}
-                  className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-left transition cursor-pointer"
+                  className="pl-2.5 text-left hover:opacity-80 transition cursor-pointer group"
                 >
-                  <div className="text-base sm:text-lg font-black tabular-nums text-amber-300">
+                  <div className="text-sm sm:text-base font-black tabular-nums text-amber-300">
                     {isBn
                       ? `${toBnDigits(completedChecklistCount)}/${toBnDigits(NOBI_DAILY_CHECKLIST.length)}`
                       : `${completedChecklistCount}/${NOBI_DAILY_CHECKLIST.length}`}
                   </div>
-                  <div className="text-[10px] sm:text-[11px] text-emerald-100/80 font-medium truncate">
+                  <div className="text-[10px] text-emerald-100/70 font-medium truncate">
                     {isBn ? 'আজকের সুন্নাহ' : 'Checked'}
                   </div>
                 </button>
               </div>
             </div>
 
-            {/* Live Clock & Active Phase Progress Card */}
-            <div className="lg:col-span-5 p-4 sm:p-5 rounded-2xl bg-black/25 border border-white/15 flex flex-col justify-between space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-200">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+            {/* Right Column: Precision Integrated 24-Hour Sunnah Watch Dial */}
+            <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-2">
+              <div className="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center">
+                <svg viewBox="0 0 320 320" className="w-full h-full drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
+                  <defs>
+                    <linearGradient id="watchBezelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#fde68a" stopOpacity="0.55" />
+                      <stop offset="50%" stopColor="#10b981" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.55" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Outer Metallic Watch Bezel */}
+                  <circle cx="160" cy="160" r="154" fill="rgba(0,0,0,0.22)" stroke="url(#watchBezelGrad)" strokeWidth="2" />
+                  <circle cx="160" cy="160" r="147" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+
+                  {/* 24-Hour Precision Tick Marks & Cardinal Labels */}
+                  {Array.from({ length: 24 }).map((_, hr) => {
+                    const angleDeg = (hr / 24) * 360 - 90;
+                    const rad = (angleDeg * Math.PI) / 180;
+                    const isMajor = hr % 3 === 0;
+                    const r1 = 136;
+                    const r2 = isMajor ? 144 : 140;
+                    const x1 = 160 + r1 * Math.cos(rad);
+                    const y1 = 160 + r1 * Math.sin(rad);
+                    const x2 = 160 + r2 * Math.cos(rad);
+                    const y2 = 160 + r2 * Math.sin(rad);
+                    const labelR = 150;
+                    const lx = 160 + labelR * Math.cos(rad);
+                    const ly = 160 + labelR * Math.sin(rad);
+
+                    return (
+                      <g key={hr}>
+                        <line
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke={isMajor ? '#fcd34d' : 'rgba(255,255,255,0.28)'}
+                          strokeWidth={isMajor ? 2 : 1}
+                          strokeLinecap="round"
+                        />
+                        {hr % 6 === 0 && (
+                          <text
+                            x={lx}
+                            y={ly}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fontSize="8.5"
+                            fontWeight="800"
+                            fill="#fde68a"
+                          >
+                            {hr === 0 ? '12AM' : hr === 6 ? '6AM' : hr === 12 ? '12PM' : '6PM'}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+
+                  <g transform="rotate(-90 160 160)">
+                    {/* Track Ring */}
+                    <circle cx="160" cy="160" r="118" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="20" />
+
+                    {/* 14 Clickable Sunnah Phase Arcs */}
+                    {NOBI_24_TIME_SLOTS.map((slot) => {
+                      const totalHoursInSlot =
+                        slot.endHour >= slot.startHour
+                          ? slot.endHour - slot.startHour
+                          : 24 - slot.startHour + slot.endHour;
+
+                      const startAngle = (slot.startHour / 24) * 360;
+                      const sliceAngle = (totalHoursInSlot / 24) * 360;
+                      const isSelected = slot.id === activeSlot.id;
+                      const isLive = slot.id === currentLiveSlot.id;
+
+                      const radius = 118;
+                      const strokeW = isSelected ? 24 : 17;
+                      const circumference = 2 * Math.PI * radius;
+                      const strokeDasharray = `${Math.max(2, (sliceAngle / 360) * circumference - 2)} ${circumference}`;
+                      const strokeDashoffset = -((startAngle / 360) * circumference);
+
+                      return (
+                        <circle
+                          key={slot.id}
+                          cx="160"
+                          cy="160"
+                          r={radius}
+                          fill="none"
+                          stroke={slot.color}
+                          strokeWidth={strokeW}
+                          strokeDasharray={strokeDasharray}
+                          strokeDashoffset={strokeDashoffset}
+                          opacity={isSelected ? 1 : isLive ? 0.92 : 0.65}
+                          className="cursor-pointer transition-all duration-200 hover:opacity-100"
+                          onClick={() => {
+                            setSelectedSlotId(slot.id);
+                            setActiveTab('wheel');
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                        />
+                      );
+                    })}
+
+                    {/* Live Precision Gold Watch Hand */}
+                    {(() => {
+                      const angleRad = ((currentHourVal / 24) * 360 * Math.PI) / 180;
+                      const handX = 160 + 102 * Math.cos(angleRad);
+                      const handY = 160 + 102 * Math.sin(angleRad);
+                      return (
+                        <g>
+                          <line
+                            x1="160"
+                            y1="160"
+                            x2={handX}
+                            y2={handY}
+                            stroke="#fbbf24"
+                            strokeWidth="2.8"
+                            strokeLinecap="round"
+                          />
+                          <circle cx={handX} cy={handY} r="4.5" fill="#fbbf24" stroke="#ffffff" strokeWidth="1.2" />
+                        </g>
+                      );
+                    })()}
+
+                    {/* Inner Watch Dial Face */}
+                    <circle cx="160" cy="160" r="84" fill={isDay ? '#013b2b' : '#041419'} />
+                    <circle cx="160" cy="160" r="84" fill="none" stroke="rgba(253,230,138,0.22)" strokeWidth="1.5" />
+                  </g>
+                </svg>
+
+                {/* Center Watch Face Readout */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-7 pointer-events-none text-center">
+                  <span className="text-xl leading-none">{activeSlot.icon}</span>
+                  <span className="text-[11px] font-mono font-black tabular-nums text-amber-300 mt-1">
+                    {formatHourClock(activeSlot.startHour, isBn)}
                   </span>
-                  <span>{strings.liveBanner.nowInRoutine}</span>
-                </div>
-                <span className="text-xs font-mono font-bold tabular-nums text-white/90">
-                  {formattedLiveClock}
-                </span>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <span className="text-2xl p-2 rounded-xl bg-white/10 shrink-0">
-                  {currentLiveSlot.icon}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-semibold text-amber-300 truncate">
-                    {locLiveSlot.timeSpan}
-                  </div>
-                  <h2 className="text-sm sm:text-base font-black text-white leading-snug line-clamp-1">
-                    {locLiveSlot.title}
-                  </h2>
-                  <p className="text-[11px] text-emerald-100/80 line-clamp-2 mt-0.5 leading-relaxed">
-                    {locLiveSlot.summary}
-                  </p>
-                </div>
-              </div>
-
-              {/* Phase Progress Bar & Next Up */}
-              <div className="space-y-1.5 pt-1">
-                <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-100/85 tabular-nums">
-                  <span>{liveSlotTiming.remainingText}</span>
-                  <span>
-                    {isBn ? `পরবর্তী: ${locNextSlot.title}` : `Next: ${locNextSlot.title}`}
+                  <span className="text-[10px] font-bold text-white/95 line-clamp-1 mt-0.5 max-w-[96px]">
+                    {locActiveSlot.title}
+                  </span>
+                  <span className="text-[9px] font-mono font-semibold text-emerald-200/75 mt-0.5 tabular-nums">
+                    {isBn
+                      ? `পর্ব ${toBnDigits(activeSlotIndex + 1)}/${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
+                      : `${activeSlotIndex + 1}/${NOBI_24_TIME_SLOTS.length}`}
                   </span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-white/15 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-amber-400 transition-all duration-500"
-                    style={{ width: `${liveSlotTiming.pct}%` }}
-                  />
-                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSlotId(currentLiveSlot.id);
-                  setActiveTab('wheel');
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className="w-full min-h-[40px] py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
-              >
-                <span>{strings.liveBanner.viewDetails}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              {/* Compact Watch Stepper Bar */}
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepSlot(-1)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-100 transition active:scale-95 cursor-pointer"
+                  title={isBn ? 'পূর্ববর্তী পর্ব' : 'Previous phase'}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[10px] font-mono font-bold tabular-nums text-amber-200/90 px-1.5">
+                  {isBn
+                    ? `${toBnDigits(activeSlotIndex + 1)} / ${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
+                    : `${activeSlotIndex + 1} / ${NOBI_24_TIME_SLOTS.length}`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleStepSlot(1)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-100 transition active:scale-95 cursor-pointer"
+                  title={isBn ? 'পরবর্তী পর্ব' : 'Next phase'}
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
+          </div>
+
+          {/* Slim Bottom 14-Phase Interactive Strip */}
+          <div className="flex items-center gap-1 overflow-x-auto pt-1 pb-0.5 scrollbar-none">
+            {NOBI_24_TIME_SLOTS.map((slot, idx) => {
+              const isSelected = slot.id === activeSlot.id;
+              const isLive = slot.id === currentLiveSlot.id;
+              return (
+                <button
+                  key={slot.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSlotId(slot.id);
+                    setActiveTab('wheel');
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`px-2 py-1 rounded-lg border text-[10px] font-bold whitespace-nowrap flex items-center gap-1 transition shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm'
+                      : isLive
+                      ? 'bg-emerald-500/25 text-emerald-100 border-emerald-400/50 hover:bg-emerald-500/35'
+                      : 'bg-white/5 hover:bg-white/15 text-emerald-100/80 border-white/10'
+                  }`}
+                >
+                  <span>{slot.icon}</span>
+                  <span className="font-mono tabular-nums">{isBn ? toBnDigits(idx + 1) : idx + 1}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -699,12 +947,12 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
         </button>
       </div>
 
-      {/* 3. TAB 1: 24-HOUR SUNNAH WHEEL + LIFE BALANCE + SLOT INSPECTOR */}
+      {/* 3. TAB 1: LIFE BALANCE + QUICK 14-PHASE INDEX + ACTIVE SLOT INSPECTOR */}
       {activeTab === 'wheel' && (
-        <div className="space-y-6">
-          {/* 24-Hour Life Balance Distribution Bar */}
+        <div ref={detailSectionRef} className="space-y-5">
+          {/* Slim 24-Hour Life Balance Distribution Bar */}
           <div
-            className={`p-4 sm:p-5 rounded-3xl border shadow-2xs space-y-3 ${
+            className={`px-4 py-3.5 rounded-2xl border shadow-2xs space-y-2.5 ${
               isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
             }`}
           >
@@ -721,7 +969,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
             </div>
 
             {/* Stacked Progress Bar */}
-            <div className="h-3 w-full rounded-full overflow-hidden flex gap-0.5 bg-slate-200/60 dark:bg-slate-800/60">
+            <div className="h-2.5 w-full rounded-full overflow-hidden flex gap-0.5 bg-slate-200/60 dark:bg-slate-800/60">
               {categoryBreakdown.map((cat) => (
                 <div
                   key={cat.key}
@@ -736,7 +984,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
             </div>
 
             {/* Clean Legend Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {categoryBreakdown.map((cat) => {
                 const pct = Math.round((cat.hours / 24) * 100);
                 return (
@@ -748,15 +996,15 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                       setTimelineFilter('all');
                       setActiveTab('timeline');
                     }}
-                    className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-left transition cursor-pointer ${
+                    className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl border text-left transition cursor-pointer ${
                       isDay
                         ? 'bg-slate-50/80 hover:bg-slate-100 border-slate-200/80'
                         : 'bg-[#07191e] hover:bg-[#0d2b33] border-[#133841]'
                     }`}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: cat.color }}
                       />
                       <span className={`text-[11px] font-bold truncate ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
@@ -772,23 +1020,17 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Wheel Dial Column */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* Compact 14-Phase Interactive Directory Column */}
             <div
-              className={`lg:col-span-6 p-5 sm:p-7 rounded-[28px] border shadow-sm flex flex-col items-center justify-between text-center transition-colors space-y-4 ${
+              className={`lg:col-span-5 p-4 rounded-3xl border shadow-sm space-y-2.5 ${
                 isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
               }`}
             >
-              <div className="w-full flex items-center justify-between gap-2">
-                <div className="text-left">
-                  <h2 className={`text-base sm:text-lg font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    {strings.wheel.title}
-                  </h2>
-                  <p className={`text-xs ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {strings.wheel.subtitle}
-                  </p>
-                </div>
-
+              <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-200/70 dark:border-[#153c45]">
+                <h3 className={`text-xs sm:text-sm font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                  {strings.wheel.title}
+                </h3>
                 {selectedSlotId !== currentLiveSlot.id && (
                   <button
                     type="button"
@@ -796,234 +1038,71 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                       setSelectedSlotId(currentLiveSlot.id);
                       if (soundEnabled) soundHaptics.playTap();
                     }}
-                    className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-amber-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/40 hover:bg-amber-400/30 transition cursor-pointer shrink-0"
+                    className="text-[11px] font-bold text-amber-600 dark:text-amber-300 hover:underline cursor-pointer"
                   >
                     {isBn ? 'এখনকার সময়' : 'Jump to Live'}
                   </button>
                 )}
               </div>
 
-              {/* Circular SVG 24-Hour Wheel with 24h Dial Ticks */}
-              <div className="relative w-72 h-72 sm:w-80 sm:h-80 my-1 flex items-center justify-center">
-                <svg viewBox="0 0 420 420" className="w-full h-full">
-                  {/* 24-Hour Radial Tick Marks & Cardinal Hour Labels */}
-                  {Array.from({ length: 24 }).map((_, hr) => {
-                    const angleDeg = (hr / 24) * 360 - 90;
-                    const rad = (angleDeg * Math.PI) / 180;
-                    const isMajor = hr % 3 === 0;
-                    const r1 = 192;
-                    const r2 = isMajor ? 200 : 196;
-                    const x1 = 210 + r1 * Math.cos(rad);
-                    const y1 = 210 + r1 * Math.sin(rad);
-                    const x2 = 210 + r2 * Math.cos(rad);
-                    const y2 = 210 + r2 * Math.sin(rad);
-                    const labelR = 207;
-                    const lx = 210 + labelR * Math.cos(rad);
-                    const ly = 210 + labelR * Math.sin(rad);
+              <div className="space-y-1.5 max-h-[520px] overflow-y-auto pr-0.5">
+                {NOBI_24_TIME_SLOTS.map((slot, idx) => {
+                  const locSlot = getLocalizedSlot(slot, lang);
+                  const isSelected = slot.id === activeSlot.id;
+                  const isLive = slot.id === currentLiveSlot.id;
+                  return (
+                    <button
+                      key={slot.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSlotId(slot.id);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`w-full px-3 py-2.5 rounded-2xl border text-left flex items-center justify-between gap-2.5 transition cursor-pointer ${
+                        isSelected
+                          ? isDay
+                            ? 'bg-emerald-50 border-emerald-500 shadow-2xs'
+                            : 'bg-[#103840] border-emerald-400/70 shadow-2xs'
+                          : isDay
+                          ? 'bg-slate-50/70 hover:bg-slate-100 border-slate-200/70'
+                          : 'bg-[#07191e] hover:bg-[#0d2b33] border-[#133841]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className="w-7 h-7 rounded-xl flex items-center justify-center text-sm shrink-0"
+                          style={{ backgroundColor: `${slot.color}22`, border: `1px solid ${slot.color}55` }}
+                        >
+                          {slot.icon}
+                        </span>
+                        <div className="min-w-0">
+                          <div className={`text-xs font-extrabold truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                            {isBn ? `${toBnDigits(idx + 1)}. ` : `${idx + 1}. `}
+                            {locSlot.title}
+                          </div>
+                          <div className={`text-[10px] font-semibold truncate ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {locSlot.timeSpan}
+                          </div>
+                        </div>
+                      </div>
 
-                    return (
-                      <g key={hr}>
-                        <line
-                          x1={x1}
-                          y1={y1}
-                          x2={x2}
-                          y2={y2}
-                          stroke={isDay ? (isMajor ? '#64748b' : '#cbd5e1') : isMajor ? '#5eead4' : '#1e4e59'}
-                          strokeWidth={isMajor ? 2 : 1}
-                          strokeLinecap="round"
-                        />
-                        {hr % 6 === 0 && (
-                          <text
-                            x={lx}
-                            y={ly}
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fontSize="10"
-                            fontWeight="700"
-                            fill={isDay ? '#475569' : '#94a3b8'}
-                          >
-                            {hr === 0 ? '12AM' : hr === 6 ? '6AM' : hr === 12 ? '12PM' : '6PM'}
-                          </text>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isLive && (
+                          <span className="text-[10px] font-black text-amber-600 dark:text-amber-300">
+                            {isBn ? 'এখন' : 'LIVE'}
+                          </span>
                         )}
-                      </g>
-                    );
-                  })}
-
-                  <g transform="rotate(-90 210 210)">
-                    {/* Background Outer Ring */}
-                    <circle
-                      cx="210"
-                      cy="210"
-                      r="164"
-                      fill="none"
-                      stroke={isDay ? '#e2e8f0' : '#143840'}
-                      strokeWidth="28"
-                    />
-
-                    {/* 14 Slices */}
-                    {NOBI_24_TIME_SLOTS.map((slot) => {
-                      const totalHoursInSlot =
-                        slot.endHour >= slot.startHour
-                          ? slot.endHour - slot.startHour
-                          : 24 - slot.startHour + slot.endHour;
-
-                      const startAngle = (slot.startHour / 24) * 360;
-                      const sliceAngle = (totalHoursInSlot / 24) * 360;
-                      const isSelected = slot.id === activeSlot.id;
-                      const isLive = slot.id === currentLiveSlot.id;
-
-                      const radius = 164;
-                      const strokeW = isSelected ? 34 : 25;
-                      const circumference = 2 * Math.PI * radius;
-                      const strokeDasharray = `${Math.max(2, (sliceAngle / 360) * circumference - 2)} ${circumference}`;
-                      const strokeDashoffset = -((startAngle / 360) * circumference);
-
-                      return (
-                        <circle
-                          key={slot.id}
-                          cx="210"
-                          cy="210"
-                          r={radius}
-                          fill="none"
-                          stroke={slot.color}
-                          strokeWidth={strokeW}
-                          strokeDasharray={strokeDasharray}
-                          strokeDashoffset={strokeDashoffset}
-                          opacity={isSelected ? 1 : isLive ? 0.92 : 0.62}
-                          className="cursor-pointer transition-all duration-300 hover:opacity-100"
-                          onClick={() => {
-                            setSelectedSlotId(slot.id);
-                            if (soundEnabled) soundHaptics.playTap();
-                          }}
-                        />
-                      );
-                    })}
-
-                    {/* Current Live Hour Needle */}
-                    {(() => {
-                      const angleRad = ((currentHourVal / 24) * 360 * Math.PI) / 180;
-                      const handX = 210 + 138 * Math.cos(angleRad);
-                      const handY = 210 + 138 * Math.sin(angleRad);
-                      return (
-                        <g>
-                          <line
-                            x1="210"
-                            y1="210"
-                            x2={handX}
-                            y2={handY}
-                            stroke="#f59e0b"
-                            strokeWidth="3.5"
-                            strokeLinecap="round"
-                          />
-                          <circle cx={handX} cy={handY} r="6.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
-                        </g>
-                      );
-                    })()}
-
-                    {/* Center Hub */}
-                    <circle cx="210" cy="210" r="114" fill={isDay ? '#ffffff' : '#07181c'} />
-                    <circle
-                      cx="210"
-                      cy="210"
-                      r="114"
-                      fill="none"
-                      stroke={isDay ? '#e2e8f0' : '#143840'}
-                      strokeWidth="2"
-                    />
-                  </g>
-                </svg>
-
-                {/* Center Content Inside Wheel */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-10 pointer-events-none text-center">
-                  <span className="text-3xl mb-1">{activeSlot.icon}</span>
-                  <span className="text-[10px] font-black font-mono uppercase tracking-wider text-amber-500">
-                    {isBn
-                      ? `পর্ব ${toBnDigits(activeSlotIndex + 1)}/${toBnDigits(NOBI_24_TIME_SLOTS.length)} · ${formatDurationLabel(activeSlot.startHour, activeSlot.endHour, true)}`
-                      : `Step ${activeSlotIndex + 1}/${NOBI_24_TIME_SLOTS.length} · ${formatDurationLabel(activeSlot.startHour, activeSlot.endHour, false)}`}
-                  </span>
-                  <h3
-                    className={`text-sm sm:text-base font-black line-clamp-2 mt-1 leading-snug ${
-                      isDay ? 'text-slate-900' : 'text-white'
-                    }`}
-                  >
-                    {locActiveSlot.title}
-                  </h3>
-                  <span className={`text-[11px] font-semibold mt-1 ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                    {formatHourClock(activeSlot.startHour, isBn)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Prev / Next Stepper & Quick 14-Slot Selector Strip */}
-              <div className="w-full space-y-2.5 pt-1">
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleStepSlot(-1)}
-                    className={`min-h-[40px] px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer ${
-                      isDay
-                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                        : 'bg-[#07191e] hover:bg-[#0e2d35] border-[#153e46] text-emerald-300'
-                    }`}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    <span>{isBn ? 'পূর্ববর্তী' : 'Prev'}</span>
-                  </button>
-
-                  <span className={`text-xs font-mono font-bold tabular-nums ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
-                    {isBn
-                      ? `${toBnDigits(activeSlotIndex + 1)} / ${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
-                      : `${activeSlotIndex + 1} / ${NOBI_24_TIME_SLOTS.length}`}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => handleStepSlot(1)}
-                    className={`min-h-[40px] px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer ${
-                      isDay
-                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                        : 'bg-[#07191e] hover:bg-[#0e2d35] border-[#153e46] text-emerald-300'
-                    }`}
-                  >
-                    <span>{isBn ? 'পরবর্তী' : 'Next'}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Horizontal Quick 14-Slot Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                  {NOBI_24_TIME_SLOTS.map((slot, idx) => {
-                    const isSelected = slot.id === activeSlot.id;
-                    const isLive = slot.id === currentLiveSlot.id;
-                    return (
-                      <button
-                        key={slot.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedSlotId(slot.id);
-                          if (soundEnabled) soundHaptics.playTap();
-                        }}
-                        className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#006A4E] text-white border-emerald-500 shadow-sm'
-                            : isDay
-                            ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                            : 'bg-[#07181d] hover:bg-[#103038] border-[#143a43] text-slate-300'
-                        }`}
-                      >
-                        <span>{slot.icon}</span>
-                        <span className="font-mono tabular-nums">{isBn ? toBnDigits(idx + 1) : idx + 1}</span>
-                        {isLive && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
-                      </button>
-                    );
-                  })}
-                </div>
+                        <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-emerald-500' : 'text-slate-400'}`} />
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Active Slot Detailed Inspection Column */}
             <div
-              className={`lg:col-span-6 p-5 sm:p-7 rounded-[28px] border shadow-sm space-y-5 transition-colors ${
+              className={`lg:col-span-7 p-5 sm:p-6 rounded-3xl border shadow-sm space-y-5 transition-colors ${
                 isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
               }`}
             >
