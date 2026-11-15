@@ -115,6 +115,8 @@ export interface DuaItem {
   virtue?: string;
   suggestedCount?: number;
   timing?: string;
+  chapterNumber?: number;
+  hisnulNumber?: string;
   translations?: Partial<Record<ZikrLanguage, {
     title?: string;
     translation?: string;
