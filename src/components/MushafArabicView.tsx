@@ -37,6 +37,14 @@ import {
   getBareSurahName,
   getLocalizedSurahMeaning,
 } from '../utils/surahNamesMultiLang';
+import {
+  HIGHLIGHT_COLOR_STYLES,
+  HighlightColor,
+  removeItemHighlight,
+  setItemHighlight,
+} from '../utils/savedItems';
+import { useSavedHighlightsStore } from './HighlightableText';
+import { Highlighter, Trash2 } from 'lucide-react';
 
 // Exact standard 604-page Madani Mushaf page start mapping for all 114 surahs
 export const MADANI_SURAH_PAGES: Record<number, number> = {
@@ -116,6 +124,8 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
   bookmarks,
   onToggleBookmark,
 }) => {
+  const { byItemKey: highlightByItemKey } = useSavedHighlightsStore();
+
   // Persistence for user preferences
   const [mushafTheme, setMushafTheme] = useState<MushafTheme>(() => {
     try {
@@ -708,6 +718,8 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               ((playingMode === 'ayah' && currentPlayingAyahNum === ayah.number) ||
                 (playingMode === 'surah' && currentPlayingAyahNum === ayah.number));
             const isBookmarked = isAyahBookmarked(ayah.number);
+            const mushafHl = highlightByItemKey[`quran:${surahDetail.number}:${ayah.number}`];
+            const mushafHlStyle = mushafHl ? HIGHLIGHT_COLOR_STYLES[mushafHl.color] : null;
 
             return (
               <span
@@ -717,6 +729,10 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 className={`inline rounded-xl px-1 py-0.5 transition cursor-pointer select-text hover:bg-emerald-500/15 active:opacity-90 ${
                   isThisAyahPlaying
                     ? themeStyles.ayahHighlightBg
+                    : mushafHlStyle
+                    ? mushafTheme === 'night'
+                      ? mushafHlStyle.markNightClass
+                      : mushafHlStyle.markDayClass
                     : isBookmarked
                     ? 'bg-amber-300/20 underline decoration-amber-400 decoration-wavy'
                     : ''
@@ -938,6 +954,62 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                   {activePopover.ayah.translation || (selectedLanguage === 'bn' ? 'অর্থ লোড হচ্ছে...' : selectedLanguage === 'ar' ? 'جاري التحميل...' : 'Loading translation...')}
                 </p>
               </div>
+
+              {/* Quick Highlight Marker Strip inside Mushaf Popover */}
+              {(() => {
+                const mKey = `quran:${surahDetail.number}:${activePopover.ayah.number}`;
+                const mExisting = highlightByItemKey[mKey];
+                const mSource = `${getBareSurahName(surahDetail.number, selectedLanguage)} (${surahDetail.number}:${activePopover.ayah.number})`;
+                return (
+                  <div className="mb-2.5 px-2.5 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold opacity-85">
+                      <Highlighter className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span>{selectedLanguage === 'bn' ? 'হাইলাইট:' : selectedLanguage === 'ar' ? 'تمييز:' : 'Highlight:'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {(['amber', 'emerald', 'rose', 'teal'] as HighlightColor[]).map((c) => {
+                        const st = HIGHLIGHT_COLOR_STYLES[c];
+                        const isSel = mExisting?.color === c;
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => {
+                              setItemHighlight(
+                                mKey,
+                                `${activePopover.ayah.arabic}\n${activePopover.ayah.translation || ''}`,
+                                mSource,
+                                'quran',
+                                c
+                              );
+                              if (soundEnabled) soundHaptics.playMilestone();
+                            }}
+                            className={`w-6 h-6 rounded-full ${st.dotClass} border-2 flex items-center justify-center transition cursor-pointer active:scale-90 ${
+                              isSel ? 'border-slate-900 dark:border-white scale-110 shadow' : 'border-transparent opacity-80 hover:opacity-100'
+                            }`}
+                            title={selectedLanguage === 'bn' ? st.labelBn : st.labelEn}
+                          >
+                            {isSel && <Check className="w-3 h-3 text-white" />}
+                          </button>
+                        );
+                      })}
+                      {mExisting && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            removeItemHighlight(mKey);
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                          className="p-1 rounded-lg text-rose-500 hover:bg-rose-500/15 cursor-pointer"
+                          title={selectedLanguage === 'bn' ? 'হাইলাইট মুছুন' : 'Remove Highlight'}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Compact Mini Action Buttons */}
               <div className="grid grid-cols-4 gap-1.5 text-[11px] font-bold">

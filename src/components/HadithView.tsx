@@ -18,9 +18,11 @@ import {
   Info,
   CheckCircle2,
   ArrowLeft,
-  Share2,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
+import { HIGHLIGHT_COLOR_STYLES } from '../utils/savedItems';
+import { HighlightMarkerButton } from './HighlightMarkerButton';
+import { HighlightableText, useSavedHighlightsStore } from './HighlightableText';
 
 interface HadithViewProps {
   soundEnabled: boolean;
@@ -36,6 +38,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
   selectedLanguage = 'bn',
 }) => {
   const isDay = themeMode === 'day';
+  const { byItemKey: highlightByItemKey } = useSavedHighlightsStore();
   const [activeTab, setActiveTab] = useState<HadithTab>('topics');
   const [selectedTopic, setSelectedTopic] = useState<string>('all');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -164,7 +167,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
   }, [activeTab, selectedTopic, selectedBookId, searchQuery, favoriteHadiths, recentHadithIds, selectedLanguage]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div data-highlight-section="hadith" className="space-y-6 animate-in fade-in duration-300">
       {/* Top Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#005a3e] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
         <div className="relative z-10">
@@ -288,11 +291,23 @@ export const HadithView: React.FC<HadithViewProps> = ({
       </div>
 
       {/* Featured: Hadith of the Day */}
-      {activeTab !== 'books' && !selectedBookId && (
+      {activeTab !== 'books' && !selectedBookId && (() => {
+        const dailyKey = `hadith:${dailyHadith.id}`;
+        const dailyHl = highlightByItemKey[dailyKey];
+        const dailyHlStyle = dailyHl ? HIGHLIGHT_COLOR_STYLES[dailyHl.color] : null;
+        const dailySource = `${dailyHadith.book} #${dailyHadith.hadithNumber}`;
+
+        return (
         <div
           onClick={() => addToRecents(dailyHadith.id)}
+          data-highlight-section="hadith"
+          data-highlight-source={dailySource}
           className={`p-6 rounded-3xl border shadow-sm relative overflow-hidden transition hover:border-[#006747] cursor-pointer ${
-            isDay
+            dailyHlStyle
+              ? isDay
+                ? dailyHlStyle.cardDayClass
+                : dailyHlStyle.cardNightClass
+              : isDay
               ? 'bg-white border-[#dcebe8] text-[#103e42]'
               : 'bg-[#0e2f36] border-[#1a515c] text-white'
           }`}
@@ -319,19 +334,31 @@ export const HadithView: React.FC<HadithViewProps> = ({
 
           <div
             dir="rtl"
-            className={`font-arabic text-xl sm:text-2xl leading-relaxed font-bold my-3 ${
+            className={`font-arabic text-xl sm:text-2xl leading-relaxed font-bold my-3 select-text ${
               isDay ? 'text-[#0d4f54]' : 'text-emerald-300'
             }`}
           >
-            {dailyHadith.arabicText}
+            <HighlightableText
+              text={dailyHadith.arabicText}
+              section="hadith"
+              themeMode={themeMode}
+              selectedLanguage={selectedLanguage}
+              soundEnabled={soundEnabled}
+            />
           </div>
 
           <p
-            className={`text-sm sm:text-base font-medium leading-relaxed my-3 ${
+            className={`text-sm sm:text-base font-medium leading-relaxed my-3 select-text ${
               isDay ? 'text-[#1e3b3e]' : 'text-slate-200'
             }`}
           >
-            "{dailyTranslation}"
+            "<HighlightableText
+              text={dailyTranslation}
+              section="hadith"
+              themeMode={themeMode}
+              selectedLanguage={selectedLanguage}
+              soundEnabled={soundEnabled}
+            />"
           </p>
 
           <div
@@ -343,6 +370,16 @@ export const HadithView: React.FC<HadithViewProps> = ({
               {HADITH_UI.narrator[selectedLanguage]}: {dailyHadith.narrator}
             </span>
             <div className="flex items-center gap-2">
+              <HighlightMarkerButton
+                itemKey={dailyKey}
+                text={`${dailyHadith.arabicText}\n\n"${dailyTranslation}"`}
+                source={dailySource}
+                section="hadith"
+                selectedLanguage={selectedLanguage}
+                themeMode={themeMode}
+                soundEnabled={soundEnabled}
+                variant="icon"
+              />
               <button
                 onClick={(e) => toggleFavorite(dailyHadith.id, e)}
                 className={`p-1.5 rounded-lg transition active:scale-90 border ${
@@ -378,7 +415,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* HADITH BOOKS VIEW (Matching User Screenshot Image) */}
       {activeTab === 'books' && !selectedBookId && (
@@ -617,13 +655,23 @@ export const HadithView: React.FC<HadithViewProps> = ({
               const translation = t?.translation || hadith.englishTranslation;
               const reflection = t?.reflection || hadith.reflection;
               const topicLabel = HADITH_TOPICS[hadith.topic]?.[selectedLanguage] || hadith.topic;
+              const hadithKey = `hadith:${hadith.id}`;
+              const hadithHl = highlightByItemKey[hadithKey];
+              const hadithHlStyle = hadithHl ? HIGHLIGHT_COLOR_STYLES[hadithHl.color] : null;
+              const hadithSource = `${hadith.book} #${hadith.hadithNumber}`;
 
               return (
                 <div
                   key={hadith.id}
                   onClick={() => addToRecents(hadith.id)}
+                  data-highlight-section="hadith"
+                  data-highlight-source={hadithSource}
                   className={`p-5 sm:p-6 rounded-3xl border transition-all duration-200 shadow-sm hover:shadow-md ${
-                    isFavorite
+                    hadithHlStyle
+                      ? isDay
+                        ? hadithHlStyle.cardDayClass
+                        : hadithHlStyle.cardNightClass
+                      : isFavorite
                       ? isDay
                         ? 'bg-[#fffdf5] border-amber-300 shadow-sm'
                         : 'bg-[#142e2b] border-amber-500/50 shadow-sm'
@@ -659,6 +707,17 @@ export const HadithView: React.FC<HadithViewProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1.5">
+                      <HighlightMarkerButton
+                        itemKey={hadithKey}
+                        text={`${hadith.arabicText}\n\n"${translation}"`}
+                        source={hadithSource}
+                        section="hadith"
+                        selectedLanguage={selectedLanguage}
+                        themeMode={themeMode}
+                        soundEnabled={soundEnabled}
+                        variant="icon"
+                      />
+
                       <button
                         onClick={(e) => toggleFavorite(hadith.id, e)}
                         className={`p-1.5 rounded-lg transition active:scale-90 cursor-pointer border ${
@@ -694,26 +753,38 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   {/* ARABIC TEXT - ALWAYS PRESERVED IN ARABIC FONTS */}
                   <div
                     dir="rtl"
-                    className={`font-arabic text-lg sm:text-xl font-bold leading-relaxed mb-3 ${
+                    className={`font-arabic text-lg sm:text-xl font-bold leading-relaxed mb-3 select-text ${
                       isDay ? 'text-[#0d4f54]' : 'text-emerald-300'
                     }`}
                   >
-                    {hadith.arabicText}
+                    <HighlightableText
+                      text={hadith.arabicText}
+                      section="hadith"
+                      themeMode={themeMode}
+                      selectedLanguage={selectedLanguage}
+                      soundEnabled={soundEnabled}
+                    />
                   </div>
 
                   {/* DYNAMIC TRANSLATION IN SELECTED LANGUAGE */}
                   <p
-                    className={`text-xs sm:text-sm font-sans leading-relaxed ${
+                    className={`text-xs sm:text-sm font-sans leading-relaxed select-text ${
                       isDay ? 'text-[#1e3b3e]' : 'text-slate-200'
                     }`}
                   >
-                    "{translation}"
+                    "<HighlightableText
+                      text={translation}
+                      section="hadith"
+                      themeMode={themeMode}
+                      selectedLanguage={selectedLanguage}
+                      soundEnabled={soundEnabled}
+                    />"
                   </p>
 
                   {/* SPIRITUAL REFLECTION */}
                   {reflection && (
                     <div
-                      className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2 ${
+                      className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2 select-text ${
                         isDay
                           ? 'bg-[#eef7f6] border-[#d0e6e3] text-[#006747]'
                           : 'bg-[#092226] border-[#133c44] text-[#94a3b8]'
@@ -721,7 +792,14 @@ export const HadithView: React.FC<HadithViewProps> = ({
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                       <span>
-                        <strong>{HADITH_UI.reflection[selectedLanguage]}:</strong> {reflection}
+                        <strong>{HADITH_UI.reflection[selectedLanguage]}:</strong>{' '}
+                        <HighlightableText
+                          text={reflection}
+                          section="hadith"
+                          themeMode={themeMode}
+                          selectedLanguage={selectedLanguage}
+                          soundEnabled={soundEnabled}
+                        />
                       </span>
                     </div>
                   )}

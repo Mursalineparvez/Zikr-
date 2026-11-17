@@ -34,6 +34,7 @@ import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
 import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
+import { HighlightMarkerButton } from './HighlightMarkerButton';
 import {
   WarItem,
   BattleMartyr,
@@ -487,6 +488,16 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               <Compass className="w-4 h-4 text-amber-300" />
               <span className="hidden sm:inline text-[11px]">{isBn ? 'মানচিত্র' : 'Map'}</span>
             </button>
+            <HighlightMarkerButton
+              itemKey={`war:${activeWar.id}`}
+              text={`${warName}\n${warDate} • ${warCause}`}
+              source={warName}
+              section="islamic_history_wars"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              soundEnabled={soundEnabled}
+              variant="icon"
+            />
             <ShareDownloadButtons
               variant="hero"
               selectedLanguage={selectedLanguage}

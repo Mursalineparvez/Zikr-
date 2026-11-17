@@ -11,7 +11,85 @@ export interface SavedHighlight {
   source: string;
   color: HighlightColor;
   createdAt: number;
+  section?: string;
+  itemKey?: string;
+  note?: string;
 }
+
+export const HIGHLIGHT_COLOR_STYLES: Record<
+  HighlightColor,
+  {
+    id: HighlightColor;
+    labelEn: string;
+    labelBn: string;
+    labelAr: string;
+    dotHex: string;
+    dotClass: string;
+    markDayClass: string;
+    markNightClass: string;
+    cardDayClass: string;
+    cardNightClass: string;
+    badgeDayClass: string;
+    badgeNightClass: string;
+  }
+> = {
+  amber: {
+    id: 'amber',
+    labelEn: 'Gold',
+    labelBn: 'সোনালি',
+    labelAr: 'ذهبي',
+    dotHex: '#f59e0b',
+    dotClass: 'bg-amber-400',
+    markDayClass: 'bg-amber-200/80 text-slate-950 decoration-amber-400/70',
+    markNightClass: 'bg-amber-400/25 text-amber-100 decoration-amber-400/60',
+    cardDayClass: 'bg-amber-50/75 border-amber-300 ring-1 ring-amber-300/40',
+    cardNightClass: 'bg-amber-950/25 border-amber-500/45 ring-1 ring-amber-500/20',
+    badgeDayClass: 'bg-amber-100 text-amber-900 border-amber-300',
+    badgeNightClass: 'bg-amber-500/20 text-amber-200 border-amber-500/40',
+  },
+  emerald: {
+    id: 'emerald',
+    labelEn: 'Emerald',
+    labelBn: 'সবুজ',
+    labelAr: 'زمردي',
+    dotHex: '#10b981',
+    dotClass: 'bg-emerald-500',
+    markDayClass: 'bg-emerald-200/80 text-emerald-950 decoration-emerald-500/60',
+    markNightClass: 'bg-emerald-500/25 text-emerald-100 decoration-emerald-400/60',
+    cardDayClass: 'bg-emerald-50/75 border-emerald-300 ring-1 ring-emerald-300/40',
+    cardNightClass: 'bg-emerald-950/25 border-emerald-500/45 ring-1 ring-emerald-500/20',
+    badgeDayClass: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+    badgeNightClass: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40',
+  },
+  rose: {
+    id: 'rose',
+    labelEn: 'Crimson',
+    labelBn: 'গোলাপি',
+    labelAr: 'وردي',
+    dotHex: '#f43f5e',
+    dotClass: 'bg-rose-500',
+    markDayClass: 'bg-rose-200/80 text-rose-950 decoration-rose-400/70',
+    markNightClass: 'bg-rose-500/25 text-rose-100 decoration-rose-400/60',
+    cardDayClass: 'bg-rose-50/75 border-rose-300 ring-1 ring-rose-300/40',
+    cardNightClass: 'bg-rose-950/25 border-rose-500/45 ring-1 ring-rose-500/20',
+    badgeDayClass: 'bg-rose-100 text-rose-900 border-rose-300',
+    badgeNightClass: 'bg-rose-500/20 text-rose-200 border-rose-500/40',
+  },
+  teal: {
+    id: 'teal',
+    labelEn: 'Teal',
+    labelBn: 'আকাশি',
+    labelAr: 'فيروزي',
+    dotHex: '#06b6d4',
+    dotClass: 'bg-cyan-500',
+    markDayClass: 'bg-cyan-200/80 text-cyan-950 decoration-cyan-500/70',
+    markNightClass: 'bg-cyan-500/25 text-cyan-100 decoration-cyan-400/60',
+    cardDayClass: 'bg-cyan-50/75 border-cyan-300 ring-1 ring-cyan-300/40',
+    cardNightClass: 'bg-cyan-950/25 border-cyan-500/45 ring-1 ring-cyan-500/20',
+    badgeDayClass: 'bg-cyan-100 text-cyan-900 border-cyan-300',
+    badgeNightClass: 'bg-cyan-500/20 text-cyan-200 border-cyan-500/40',
+  },
+};
 
 export interface SavedNote {
   id: string;
@@ -64,32 +142,123 @@ export function getSavedHighlights(): SavedHighlight[] {
   }
 }
 
-export function addSavedHighlight(
-  text: string,
-  source = 'Commentary',
-  color: HighlightColor = 'amber'
-): SavedHighlight {
-  const item: SavedHighlight = {
-    id: `hl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    text: text.trim(),
-    source: source.trim() || 'Commentary',
-    color,
-    createdAt: Date.now(),
-  };
-  const next = [item, ...getSavedHighlights()];
+function writeHighlights(next: SavedHighlight[]) {
   try {
     localStorage.setItem(HIGHLIGHTS_KEY, JSON.stringify(next));
     notifySavedUpdated();
   } catch {}
+}
+
+export interface AddHighlightOptions {
+  section?: string;
+  itemKey?: string;
+  note?: string;
+}
+
+export function addSavedHighlight(
+  text: string,
+  source = 'Commentary',
+  color: HighlightColor = 'amber',
+  options?: AddHighlightOptions
+): SavedHighlight {
+  const trimmedText = text.trim();
+  const trimmedSource = source.trim() || 'Commentary';
+  const existingList = getSavedHighlights();
+
+  // If itemKey matches or exact same text+source exists, update in-place instead of creating duplicates
+  const existingIdx = existingList.findIndex((h) =>
+    options?.itemKey
+      ? h.itemKey === options.itemKey
+      : !h.itemKey && h.text === trimmedText && h.source === trimmedSource
+  );
+
+  if (existingIdx >= 0) {
+    const updated: SavedHighlight = {
+      ...existingList[existingIdx],
+      text: trimmedText || existingList[existingIdx].text,
+      source: trimmedSource,
+      color,
+      section: options?.section ?? existingList[existingIdx].section,
+      itemKey: options?.itemKey ?? existingList[existingIdx].itemKey,
+      note: options?.note !== undefined ? (options.note.trim() || undefined) : existingList[existingIdx].note,
+    };
+    const next = [...existingList];
+    next[existingIdx] = updated;
+    writeHighlights(next);
+    return updated;
+  }
+
+  const item: SavedHighlight = {
+    id: `hl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    text: trimmedText,
+    source: trimmedSource,
+    color,
+    createdAt: Date.now(),
+    ...(options?.section ? { section: options.section } : {}),
+    ...(options?.itemKey ? { itemKey: options.itemKey } : {}),
+    ...(options?.note?.trim() ? { note: options.note.trim() } : {}),
+  };
+  writeHighlights([item, ...existingList]);
   return item;
+}
+
+export function updateSavedHighlightColor(id: string, color: HighlightColor): void {
+  const list = getSavedHighlights();
+  const next = list.map((h) => (h.id === id ? { ...h, color } : h));
+  writeHighlights(next);
+}
+
+export function updateSavedHighlightNote(id: string, note: string): void {
+  const list = getSavedHighlights();
+  const cleanNote = note.trim();
+  const next = list.map((h) => (h.id === id ? { ...h, note: cleanNote || undefined } : h));
+  writeHighlights(next);
+}
+
+export function getHighlightByItemKey(itemKey: string): SavedHighlight | undefined {
+  if (!itemKey) return undefined;
+  return getSavedHighlights().find((h) => h.itemKey === itemKey);
+}
+
+export function setItemHighlight(
+  itemKey: string,
+  text: string,
+  source: string,
+  section: string,
+  color: HighlightColor = 'amber',
+  note?: string
+): SavedHighlight {
+  return addSavedHighlight(text, source, color, { section, itemKey, note });
+}
+
+export function removeItemHighlight(itemKey: string): void {
+  if (!itemKey) return;
+  const next = getSavedHighlights().filter((h) => h.itemKey !== itemKey);
+  writeHighlights(next);
 }
 
 export function removeSavedHighlight(id: string): void {
   const next = getSavedHighlights().filter((h) => h.id !== id);
-  try {
-    localStorage.setItem(HIGHLIGHTS_KEY, JSON.stringify(next));
-    notifySavedUpdated();
-  } catch {}
+  writeHighlights(next);
+}
+
+export function mergeSavedHighlights(remoteHighlights: SavedHighlight[]): SavedHighlight[] {
+  if (!Array.isArray(remoteHighlights) || remoteHighlights.length === 0) {
+    return getSavedHighlights();
+  }
+  const local = getSavedHighlights();
+  const map = new Map<string, SavedHighlight>();
+  [...remoteHighlights, ...local].forEach((h) => {
+    if (!h || !h.id) return;
+    const dedupKey = h.itemKey ? `key:${h.itemKey}` : `id:${h.id}`;
+    const existing = map.get(dedupKey);
+    if (!existing || (h.createdAt || 0) >= (existing.createdAt || 0)) {
+      map.set(dedupKey, h);
+    }
+  });
+  const merged = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  writeHighlights(merged);
+  return merged;
 }
 
 export function getSavedNotes(): SavedNote[] {

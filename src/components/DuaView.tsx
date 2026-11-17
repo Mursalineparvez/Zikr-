@@ -35,6 +35,9 @@ import {
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
+import { HIGHLIGHT_COLOR_STYLES } from '../utils/savedItems';
+import { HighlightMarkerButton } from './HighlightMarkerButton';
+import { HighlightableText, useSavedHighlightsStore } from './HighlightableText';
 
 interface DuaViewProps {
   onAddDuaToCounters: (dua: DuaItem) => void;
@@ -51,6 +54,39 @@ function formatNum(value: string | number, lang: ZikrLanguage): string {
   if (lang !== 'bn') return str;
   return str.replace(/\d/g, (d) => BN_DIGITS[Number(d)]);
 }
+
+const DuaCardHighlightWrapper: React.FC<{
+  duaHlKey: string;
+  duaSourceLabel: string;
+  isDay: boolean;
+  isCompleted: boolean;
+  children: React.ReactNode;
+}> = ({ duaHlKey, duaSourceLabel, isDay, isCompleted, children }) => {
+  const { byItemKey } = useSavedHighlightsStore();
+  const hl = byItemKey[duaHlKey];
+  const hlStyle = hl ? HIGHLIGHT_COLOR_STYLES[hl.color] : null;
+  return (
+    <div
+      data-highlight-section="dua"
+      data-highlight-source={duaSourceLabel}
+      className={`p-5 sm:p-7 rounded-3xl border transition-all duration-200 shadow-md ${
+        hlStyle
+          ? isDay
+            ? hlStyle.cardDayClass
+            : hlStyle.cardNightClass
+          : isDay
+          ? isCompleted
+            ? 'bg-white border-amber-400/80 shadow-amber-500/10'
+            : 'bg-white border-teal-100 shadow-teal-900/5'
+          : isCompleted
+          ? 'bg-[#0f2e35] border-amber-500/70 shadow-amber-950/30'
+          : 'bg-[#0f2e35] border-[#184d57] shadow-black/40'
+      }`}
+    >
+      {children}
+    </div>
+  );
+};
 
 export const DuaView: React.FC<DuaViewProps> = ({
   onAddDuaToCounters,
@@ -307,7 +343,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 pb-16">
+    <div data-highlight-section="dua" className="space-y-6 animate-in fade-in duration-300 pb-16">
       {/* GTAF-Inspired Hisnul Muslim Portal Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#005a3e] via-[#0d4d4d] to-[#13656c] border border-teal-400/30 p-6 sm:p-8 shadow-2xl text-white">
         <div className="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
@@ -635,19 +671,16 @@ export const DuaView: React.FC<DuaViewProps> = ({
                     ? chMeta.titleBn
                     : chMeta.titleEn
                   : '';
+                const duaHlKey = `dua:${dua.id}`;
+                const duaSourceLabel = `${currentTitle}${dua.reference ? ` • ${dua.reference}` : ''}`;
 
                 return (
-                  <div
+                  <DuaCardHighlightWrapper
                     key={dua.id}
-                    className={`p-5 sm:p-7 rounded-3xl border transition-all duration-200 shadow-md ${
-                      isDay
-                        ? isCompleted
-                          ? 'bg-white border-amber-400/80 shadow-amber-500/10'
-                          : 'bg-white border-teal-100 shadow-teal-900/5'
-                        : isCompleted
-                        ? 'bg-[#0f2e35] border-amber-500/70 shadow-amber-950/30'
-                        : 'bg-[#0f2e35] border-[#184d57] shadow-black/40'
-                    }`}
+                    duaHlKey={duaHlKey}
+                    duaSourceLabel={duaSourceLabel}
+                    isDay={isDay}
+                    isCompleted={isCompleted}
                   >
                     {/* Top Metadata & Action Bar */}
                     <div
@@ -730,6 +763,18 @@ export const DuaView: React.FC<DuaViewProps> = ({
                           )}
                         </button>
 
+                        {/* Highlight / Marker Button */}
+                        <HighlightMarkerButton
+                          itemKey={duaHlKey}
+                          text={`${dua.arabic}\n\n${currentTranslation}`}
+                          source={duaSourceLabel}
+                          section="dua"
+                          selectedLanguage={selectedLanguage}
+                          themeMode={themeMode}
+                          soundEnabled={soundEnabled}
+                          variant="icon"
+                        />
+
                         {/* Share & Download Buttons */}
                         <ShareDownloadButtons
                           variant="compact"
@@ -769,29 +814,47 @@ export const DuaView: React.FC<DuaViewProps> = ({
                     {/* Arabic Text */}
                     <div
                       dir="rtl"
-                      className={`text-right font-arabic font-bold text-xl sm:text-2xl leading-[2.2] my-4 select-none ${
+                      className={`text-right font-arabic font-bold text-xl sm:text-2xl leading-[2.2] my-4 select-text ${
                         isDay ? 'text-[#063327]' : 'text-emerald-100'
                       }`}
                     >
-                      {dua.arabic}
+                      <HighlightableText
+                        text={dua.arabic}
+                        section="dua"
+                        themeMode={themeMode}
+                        selectedLanguage={selectedLanguage}
+                        soundEnabled={soundEnabled}
+                      />
                     </div>
 
                     {/* Transliteration */}
                     <div
-                      className={`text-xs sm:text-sm font-semibold mb-2 ${
+                      className={`text-xs sm:text-sm font-semibold mb-2 select-text ${
                         isDay ? 'text-emerald-700' : 'text-emerald-300'
                       }`}
                     >
-                      {dua.transliteration}
+                      <HighlightableText
+                        text={dua.transliteration}
+                        section="dua"
+                        themeMode={themeMode}
+                        selectedLanguage={selectedLanguage}
+                        soundEnabled={soundEnabled}
+                      />
                     </div>
 
                     {/* Translation */}
                     <p
-                      className={`text-xs sm:text-sm leading-relaxed font-sans mb-4 font-medium ${
+                      className={`text-xs sm:text-sm leading-relaxed font-sans mb-4 font-medium select-text ${
                         isDay ? 'text-slate-800' : 'text-teal-100'
                       }`}
                     >
-                      "{currentTranslation}"
+                      "<HighlightableText
+                        text={currentTranslation}
+                        section="dua"
+                        themeMode={themeMode}
+                        selectedLanguage={selectedLanguage}
+                        soundEnabled={soundEnabled}
+                      />"
                     </p>
 
                     {/* Reference & Inline Bead Counter */}
@@ -823,17 +886,25 @@ export const DuaView: React.FC<DuaViewProps> = ({
 
                     {currentVirtue && (
                       <div
-                        className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2.5 ${
+                        className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2.5 select-text ${
                           isDay
                             ? 'bg-teal-50/70 border-teal-200 text-teal-900'
                             : 'bg-[#113943] border-[#185360] text-teal-200'
                         }`}
                       >
                         <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed">{currentVirtue}</span>
+                        <span className="leading-relaxed">
+                          <HighlightableText
+                            text={currentVirtue}
+                            section="dua"
+                            themeMode={themeMode}
+                            selectedLanguage={selectedLanguage}
+                            soundEnabled={soundEnabled}
+                          />
+                        </span>
                       </div>
                     )}
-                  </div>
+                  </DuaCardHighlightWrapper>
                 );
               })}
 

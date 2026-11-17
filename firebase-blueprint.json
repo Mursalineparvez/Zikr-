@@ -29,6 +29,7 @@
         "historyJson": { "type": "string" },
         "streakJson": { "type": "string" },
         "settingsJson": { "type": "string" },
+        "savedHighlightsJson": { "type": "string" },
         "totalCount": { "type": "number" },
         "updatedAt": { "type": "string" }
       },

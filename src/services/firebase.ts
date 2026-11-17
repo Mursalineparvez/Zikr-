@@ -903,6 +903,57 @@ export function maskEmailOrPhone(target: string): string {
 }
 
 /**
+ * Save user's saved highlights to Firestore sub-document (/users/{userId}/data/libraryDoc)
+ */
+export async function saveLibraryHighlightsToCloud(
+  emailOrPhone: string,
+  highlightsJson: string
+): Promise<boolean> {
+  if (!emailOrPhone) return false;
+  const userKey = sanitizeUserKey(emailOrPhone);
+  try {
+    const libraryDocRef = doc(db, 'users', userKey, 'data', 'libraryDoc');
+    await Promise.race([
+      setDoc(
+        libraryDocRef,
+        {
+          userId: userKey,
+          savedHighlightsJson: highlightsJson,
+          updatedAt: new Date().toISOString(),
+          updatedAtMs: Date.now(),
+        },
+        { merge: true }
+      ),
+      new Promise((resolve) => setTimeout(resolve, 5000)),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Load user's saved highlights from Firestore sub-document (/users/{userId}/data/libraryDoc)
+ */
+export async function loadLibraryHighlightsFromCloud(
+  emailOrPhone: string
+): Promise<any[] | null> {
+  if (!emailOrPhone) return null;
+  const userKey = sanitizeUserKey(emailOrPhone);
+  try {
+    const libraryDocRef = doc(db, 'users', userKey, 'data', 'libraryDoc');
+    const snap = await getDoc(libraryDocRef);
+    if (!snap.exists()) return null;
+    const raw = snap.data()?.savedHighlightsJson;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Check if a user account already exists in Firebase Firestore
  */
 export async function checkUserExistsInCloud(emailOrPhone: string): Promise<boolean> {

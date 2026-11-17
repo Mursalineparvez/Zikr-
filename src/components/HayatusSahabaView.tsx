@@ -35,6 +35,7 @@ import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
 import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
+import { HighlightMarkerButton } from './HighlightMarkerButton';
 import {
   SAHABA_CATEGORIES,
   SAHABA_DATABASE,
@@ -692,6 +693,17 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             >
               <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-white' : ''}`} />
             </button>
+
+            <HighlightMarkerButton
+              itemKey={`sahaba:${activeSahaba.id}`}
+              text={`${activeName}${activeTitle ? ` — ${activeTitle}` : ''}\n${activeSummary}`}
+              source={activeName}
+              section="hayatus_sahaba"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              soundEnabled={soundEnabled}
+              variant="icon"
+            />
 
             <ShareDownloadButtons
               variant="hero"

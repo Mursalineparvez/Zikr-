@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
+import { HighlightMarkerButton } from './HighlightMarkerButton';
 
 interface HistoryTimelineViewProps {
   themeMode?: ThemeMode;
@@ -1263,7 +1264,11 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
   const isNameDifferent = getLangText(activeEvent.p, selectedLanguage).trim().toLowerCase() !== getLangText(activeEvent.n, selectedLanguage).trim().toLowerCase();
 
   return (
-    <div className={`space-y-4 sm:space-y-5 animate-in fade-in duration-500 select-none pb-24 sm:pb-12 ${selectedLanguage === 'bn' ? 'font-bengali' : ''}`}>
+    <div
+      data-highlight-section="history_timeline"
+      data-highlight-source={getLangText(activeEvent.t, selectedLanguage)}
+      className={`space-y-4 sm:space-y-5 animate-in fade-in duration-500 pb-24 sm:pb-12 ${selectedLanguage === 'bn' ? 'font-bengali' : ''}`}
+    >
       
       {/* 1. TOP PREMIUM WIDE HERO BANNER - ULTRA SLIM & GORGEOUS EPOCH DASHBOARD */}
       <div className="relative w-full rounded-2xl overflow-hidden border border-[#1d5763]/70 bg-gradient-to-r from-[#05171d] via-[#0a272f] to-[#0e353f] p-3.5 sm:p-4 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 transition-all">
@@ -1782,6 +1787,8 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
             <div
               ref={contentScrollRef}
               onScroll={updateScrollState}
+              data-highlight-section="history_timeline"
+              data-highlight-source={formattedTitle}
               className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-2 space-y-3 scrollbar-none select-text"
             >
               {/* Category pill with dot + Event Share/Download */}
@@ -1794,13 +1801,25 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_INFO[activeEvent.cat].color }} />
                   <span>{selectedLanguage === 'bn' ? CATEGORY_INFO[activeEvent.cat].labelBn : CATEGORY_INFO[activeEvent.cat].labelEn}</span>
                 </span>
-                <ShareDownloadButtons
-                  variant="card"
-                  selectedLanguage={selectedLanguage}
-                  themeMode={themeMode}
-                  onShare={() => openShareModal(buildHistoryEventShareContent(activeEvent), 'share')}
-                  onDownload={() => openShareModal(buildHistoryEventShareContent(activeEvent), 'download')}
-                />
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <HighlightMarkerButton
+                    itemKey={`history:${activeEvent.y}:${activeEvent.cat}:${activeEvent.t.en.slice(0, 28)}`}
+                    text={`${formattedTitle}\n${formatHonorifics(getLangText(activeEvent.d, selectedLanguage), selectedLanguage)}`}
+                    source={`${formattedTitle} (${formatYearSuffix(activeEvent.y, selectedLanguage)})`}
+                    section="history_timeline"
+                    selectedLanguage={selectedLanguage}
+                    themeMode={themeMode}
+                    soundEnabled={soundEnabled}
+                    variant="pill"
+                  />
+                  <ShareDownloadButtons
+                    variant="card"
+                    selectedLanguage={selectedLanguage}
+                    themeMode={themeMode}
+                    onShare={() => openShareModal(buildHistoryEventShareContent(activeEvent), 'share')}
+                    onDownload={() => openShareModal(buildHistoryEventShareContent(activeEvent), 'download')}
+                  />
+                </div>
               </div>
 
               {/* Event Title with Golden Honorifics Highlighting (as in Pic 2) */}

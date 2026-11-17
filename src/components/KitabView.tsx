@@ -3,6 +3,8 @@ import { ISLAMIC_KITABS, KitabItem, KitabChapter } from '../utils/kitabData';
 import { BookMarked, Search, ArrowLeft, Check, Copy, ChevronRight, Sparkles } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { KITAB_UI } from '../utils/appTranslations';
+import { HighlightMarkerButton } from './HighlightMarkerButton';
+import { HighlightableText } from './HighlightableText';
 
 interface KitabViewProps {
   themeMode?: ThemeMode;
@@ -81,30 +83,43 @@ export const KitabView: React.FC<KitabViewProps> = ({
               {selectedKitab.title}
             </span>
 
-            <button
-              onClick={() => handleCopyChapter(selectedChapter)}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer ${
-                isDay
-                  ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#006747] border-[#d2ece9]'
-                  : 'bg-[#0a262c] text-emerald-300 border-[#184850]'
-              }`}
-            >
-              {copiedId === selectedChapter.id ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-teal-600" />
-                  <span className="text-teal-600">{KITAB_UI.copied[selectedLanguage]}</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-teal-600" />
-                  <span>{KITAB_UI.copyText[selectedLanguage]}</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <HighlightMarkerButton
+                itemKey={`kitab:${selectedKitab.id}:${selectedChapter.id}`}
+                text={`${selectedChapter.title}\n\n${selectedChapter.content.slice(0, 320)}`}
+                source={`${selectedKitab.title} • ${selectedChapter.title}`}
+                section="kitab"
+                selectedLanguage={selectedLanguage}
+                themeMode={themeMode}
+                variant="pill"
+              />
+              <button
+                onClick={() => handleCopyChapter(selectedChapter)}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer ${
+                  isDay
+                    ? 'bg-[#f0f7f6] hover:bg-[#e4f2f0] text-[#006747] border-[#d2ece9]'
+                    : 'bg-[#0a262c] text-emerald-300 border-[#184850]'
+                }`}
+              >
+                {copiedId === selectedChapter.id ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-teal-600" />
+                    <span className="text-teal-600">{KITAB_UI.copied[selectedLanguage]}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-teal-600" />
+                    <span>{KITAB_UI.copyText[selectedLanguage]}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Chapter Content Card */}
           <div
+            data-highlight-section="kitab"
+            data-highlight-source={`${selectedKitab.title} • ${selectedChapter.title}`}
             className={`p-6 rounded-3xl border shadow-sm space-y-6 ${
               isDay
                 ? 'bg-white border-[#dcebe8] text-[#103e42]'
@@ -119,7 +134,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
                 {selectedChapter.title}
               </h3>
               {selectedChapter.arabicTitle && (
-                <div className="font-arabic text-teal-700 dark:text-emerald-300 text-xl font-bold mt-2">
+                <div className="font-arabic text-teal-700 dark:text-emerald-300 text-xl font-bold mt-2 select-text">
                   {selectedChapter.arabicTitle}
                 </div>
               )}
@@ -127,17 +142,22 @@ export const KitabView: React.FC<KitabViewProps> = ({
 
             {/* Chapter Body */}
             <div
-              className={`text-sm sm:text-base leading-relaxed font-sans whitespace-pre-line ${
+              className={`text-sm sm:text-base leading-relaxed font-sans whitespace-pre-line select-text ${
                 isDay ? 'text-[#1e3b3e]' : 'text-slate-200'
               }`}
             >
-              {selectedChapter.content}
+              <HighlightableText
+                text={selectedChapter.content}
+                section="kitab"
+                themeMode={themeMode}
+                selectedLanguage={selectedLanguage}
+              />
             </div>
 
             {/* Spiritual Key Takeaways */}
             {selectedChapter.keyTakeaways.length > 0 && (
               <div
-                className={`p-4 rounded-2xl border space-y-2 ${
+                className={`p-4 rounded-2xl border space-y-2 select-text ${
                   isDay
                     ? 'bg-[#f0f7f6] border-[#d2ece9]'
                     : 'bg-[#0a262c] border-[#184850]'
@@ -155,7 +175,14 @@ export const KitabView: React.FC<KitabViewProps> = ({
                   {selectedChapter.keyTakeaways.map((takeaway, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <span className="text-teal-600 font-bold">•</span>
-                      <span>{takeaway}</span>
+                      <span>
+                        <HighlightableText
+                          text={takeaway}
+                          section="kitab"
+                          themeMode={themeMode}
+                          selectedLanguage={selectedLanguage}
+                        />
+                      </span>
                     </li>
                   ))}
                 </ul>

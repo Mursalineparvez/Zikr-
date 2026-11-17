@@ -57,6 +57,7 @@ import { SeeratTimelineView } from './SeeratTimelineView';
 import { SeeratChapterMiniMap } from './SeeratChapterMiniMap';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
+import { HighlightMarkerButton } from './HighlightMarkerButton';
 
 interface SeeratUnNabiViewProps {
   themeMode?: ThemeMode;
@@ -994,6 +995,18 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
             >
               <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-white' : ''}`} />
             </button>
+
+            {/* Highlight / Marker Button */}
+            <HighlightMarkerButton
+              itemKey={`seerat:${activeItem.age}`}
+              text={`${title}\n${narrative}`}
+              source={`${t('ageLabel')} ${activeItem.age} — ${title}`}
+              section="seerat_un_nabi"
+              selectedLanguage={lang}
+              themeMode={themeMode}
+              soundEnabled={soundEnabled}
+              variant="icon"
+            />
 
             {/* Share & Download Buttons */}
             <ShareDownloadButtons

@@ -98,3 +98,26 @@ export async function signOutFirebaseUser(): Promise<void> {
     console.warn('[FirebaseLazy] signOut notice:', err);
   }
 }
+
+export async function saveLibraryHighlightsToCloud(
+  emailOrPhone: string,
+  highlightsJson: string
+): Promise<boolean> {
+  try {
+    const fb = await loadFirebase();
+    return await fb.saveLibraryHighlightsToCloud(emailOrPhone, highlightsJson);
+  } catch {
+    return false;
+  }
+}
+
+export async function loadLibraryHighlightsFromCloud(
+  emailOrPhone: string
+): Promise<any[] | null> {
+  try {
+    const fb = await loadFirebase();
+    return await fb.loadLibraryHighlightsFromCloud(emailOrPhone);
+  } catch {
+    return null;
+  }
+}

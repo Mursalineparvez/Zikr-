@@ -75,10 +75,11 @@ import {
   CheckCircle2,
   Download,
   WifiOff,
-  Pencil,
 } from 'lucide-react';
 
-import { addSavedHighlight } from '../utils/savedItems';
+import { HIGHLIGHT_COLOR_STYLES } from '../utils/savedItems';
+import { HighlightMarkerButton } from './HighlightMarkerButton';
+import { HighlightableText, useSavedHighlightsStore } from './HighlightableText';
 import { getFormattedTransliteration, normalizeArabicPronunciationBn } from '../utils/transliterationHelper';
 import { QuranAyahCardModal } from './QuranAyahCardModal';
 import { MushafArabicView, MADANI_SURAH_PAGES } from './MushafArabicView';
@@ -174,6 +175,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   onSelectLanguage,
 }) => {
   const isDay = themeMode === 'day';
+  const { byItemKey: highlightByItemKey } = useSavedHighlightsStore();
 
   // Navigation & Selection state
   const [selectedSurahNumber, setSelectedSurahNumber] = useState<number | null>(() => {
@@ -390,7 +392,6 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [selectedTafsirId, setSelectedTafsirId] = useState<number>(165); // Default: Tafsir Ibn Kathir
   const [tafsirFontSize, setTafsirFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
   const [isTafsirCopied, setIsTafsirCopied] = useState(false);
-  const [isTafsirHighlighted, setIsTafsirHighlighted] = useState(false);
   const tafsirScrollRef = useRef<HTMLDivElement | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
@@ -2385,6 +2386,11 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
               {displayedAyahs.map((ayah, index) => {
                 const bookmarked = isAyahBookmarked(surahDetail.number, ayah.number);
+                const ayahItemKey = `quran:${surahDetail.number}:${ayah.number}`;
+                const ayahHighlight = highlightByItemKey[ayahItemKey];
+                const ayahHighlightStyle = ayahHighlight ? HIGHLIGHT_COLOR_STYLES[ayahHighlight.color] : null;
+                const ayahSourceLabel = `${getLocalizedSurahName(surahDetail.number, selectedLanguage)} (${surahDetail.number}:${ayah.number})`;
+                const ayahShareText = `${ayah.arabic}\n${ayah.translation}`;
                 const isCopied = copiedAyah === ayah.number;
                 const isThisAyahPlaying =
                   isPlaying && playingMode === 'ayah' && currentPlayingAyahNum === ayah.number;
@@ -2398,11 +2404,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       else ayahRefs.current.delete(ayah.number);
                     }}
                     id={`ayah-${ayah.number}`}
+                    data-highlight-section="quran"
+                    data-highlight-source={ayahSourceLabel}
                     className={`rounded-[26px] border transition-all duration-300 overflow-hidden ${
                       isThisAyahPlaying
                         ? isDay
                           ? 'bg-[#eef8f7] border-2 border-[#006747] shadow-xl ring-2 ring-[#006747]/20'
                           : 'bg-[#122836] border-2 border-[#10b981] shadow-xl ring-2 ring-[#10b981]/25'
+                        : ayahHighlightStyle
+                        ? isDay
+                          ? `${ayahHighlightStyle.cardDayClass} shadow-md`
+                          : `${ayahHighlightStyle.cardNightClass} shadow-xl shadow-black/40`
                         : isNuraniMode
                         ? isDay
                           ? 'bg-[#fffdf7] border-2 border-amber-400 shadow-lg ring-1 ring-amber-400/20'
@@ -2485,6 +2497,18 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 : selectedLanguage === 'bn' ? 'শুনুন' : 'Play'}
                             </span>
                           </button>
+
+                          {/* Quick Highlight / Marker Button */}
+                          <HighlightMarkerButton
+                            itemKey={ayahItemKey}
+                            text={ayahShareText}
+                            source={ayahSourceLabel}
+                            section="quran"
+                            selectedLanguage={selectedLanguage}
+                            themeMode={themeMode}
+                            soundEnabled={soundEnabled}
+                            variant="icon"
+                          />
 
                           {/* Quick Card & HD Download Button */}
                           <button
@@ -2581,6 +2605,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                     : 'Bookmark Ayah'}
                                 </span>
                               </button>
+                              <HighlightMarkerButton
+                                itemKey={ayahItemKey}
+                                text={ayahShareText}
+                                source={ayahSourceLabel}
+                                section="quran"
+                                selectedLanguage={selectedLanguage}
+                                themeMode={themeMode}
+                                soundEnabled={soundEnabled}
+                                variant="menu-item"
+                                onCloseParentMenu={() => setActiveAyahActionMenu(null)}
+                              />
                               <button
                                 onClick={() => handleCopyAyah(ayah)}
                                 className={`w-full px-4 py-2.5 text-left flex items-center gap-2.5 cursor-pointer font-medium ${
@@ -2716,11 +2751,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                         /* CONTINUOUS FLOWING ARABIC CALLIGRAPHY (When 'Without word' is toggled) */
                         <div
                           dir="rtl"
-                          className={`font-arabic font-bold ${
+                          className={`font-arabic font-bold select-text ${
                             isDay ? 'text-[#0f172a]' : 'text-[#f8fafc]'
                           } ${arabicFontClass} text-right my-2 leading-[2.4] drop-shadow-sm`}
                         >
-                          {ayah.arabic}
+                          <HighlightableText
+                            text={ayah.arabic}
+                            section="quran"
+                            themeMode={themeMode}
+                            selectedLanguage={selectedLanguage}
+                            soundEnabled={soundEnabled}
+                          />
                           <span
                             className={`inline-flex items-center justify-center w-7 h-7 mx-1.5 rounded-full border text-xs font-mono font-bold align-middle ${
                               isDay
@@ -2832,11 +2873,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                     <span>{trans.translator}</span>
                                   </div>
                                   <div
-                                    className={`text-xs sm:text-sm leading-relaxed font-sans font-medium ${
+                                    className={`text-xs sm:text-sm leading-relaxed font-sans font-medium select-text ${
                                       isDay ? 'text-slate-800' : 'text-slate-100'
                                     }`}
                                   >
-                                    {trans.text}
+                                    <HighlightableText
+                                      text={trans.text}
+                                      section="quran"
+                                      themeMode={themeMode}
+                                      selectedLanguage={selectedLanguage}
+                                      soundEnabled={soundEnabled}
+                                    />
                                   </div>
                                 </div>
                               ))
@@ -2861,11 +2908,17 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                   </span>
                                 </div>
                                 <div
-                                  className={`text-xs sm:text-sm leading-relaxed font-sans font-medium ${
+                                  className={`text-xs sm:text-sm leading-relaxed font-sans font-medium select-text ${
                                     isDay ? 'text-slate-800' : 'text-slate-100'
                                   }`}
                                 >
-                                  {fallbackText}
+                                  <HighlightableText
+                                    text={fallbackText}
+                                    section="quran"
+                                    themeMode={themeMode}
+                                    selectedLanguage={selectedLanguage}
+                                    soundEnabled={soundEnabled}
+                                  />
                                 </div>
                               </div>
                             ) : (
@@ -3360,22 +3413,44 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 const isPlayingThisAyah = isTopicAudioPlaying && activeTopicAudioId === ayah.id;
                                 const sDisplay = isTopicBn ? ayah.surahNameBn : getLocalizedSurahName(ayah.surahNumber, selectedLanguage);
                                 const ayahTrans = isTopicBn ? ayah.translationBn : ayah.translationEn;
+                                const topicAyahKey = `quran:${ayah.surahNumber}:${ayah.ayahNumber}`;
+                                const topicAyahHl = highlightByItemKey[topicAyahKey];
+                                const topicAyahHlStyle = topicAyahHl ? HIGHLIGHT_COLOR_STYLES[topicAyahHl.color] : null;
+                                const topicAyahSource = `${sDisplay} (${ayah.surahNumber}:${ayah.ayahNumber})`;
 
                                 return (
                                   <div
                                     key={ayah.id}
+                                    data-highlight-section="quran"
+                                    data-highlight-source={topicAyahSource}
                                     className={`space-y-2.5 pt-3.5 first:pt-0 border-t first:border-t-0 border-slate-100 dark:border-teal-900/30 rounded-xl transition ${
-                                      isPlayingThisAyah ? 'p-3 bg-emerald-500/10 border-l-4 border-l-emerald-500' : ''
+                                      isPlayingThisAyah
+                                        ? 'p-3 bg-emerald-500/10 border-l-4 border-l-emerald-500'
+                                        : topicAyahHlStyle
+                                        ? `p-3 border ${isDay ? topicAyahHlStyle.cardDayClass : topicAyahHlStyle.cardNightClass}`
+                                        : ''
                                     }`}
                                   >
                                     {/* Arabic Verse (Clean Uthmani right-aligned font) */}
                                     <p className="font-arabic text-right text-lg sm:text-2xl leading-loose font-bold text-slate-900 dark:text-emerald-100 dir-rtl select-text">
-                                      {ayah.arabic}
+                                      <HighlightableText
+                                        text={ayah.arabic}
+                                        section="quran"
+                                        themeMode={themeMode}
+                                        selectedLanguage={selectedLanguage}
+                                        soundEnabled={soundEnabled}
+                                      />
                                     </p>
 
                                     {/* Translation (Directly beneath Arabic) */}
-                                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
-                                      {ayahTrans}
+                                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-normal select-text">
+                                      <HighlightableText
+                                        text={ayahTrans}
+                                        section="quran"
+                                        themeMode={themeMode}
+                                        selectedLanguage={selectedLanguage}
+                                        soundEnabled={soundEnabled}
+                                      />
                                     </p>
 
                                     {/* Clickable blue link & quick actions bar */}
@@ -3394,6 +3469,18 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                       </button>
 
                                       <div className="flex items-center gap-1.5 ml-auto">
+                                        {/* Highlight / Marker button */}
+                                        <HighlightMarkerButton
+                                          itemKey={topicAyahKey}
+                                          text={`${ayah.arabic}\n${ayahTrans}`}
+                                          source={topicAyahSource}
+                                          section="quran"
+                                          selectedLanguage={selectedLanguage}
+                                          themeMode={themeMode}
+                                          soundEnabled={soundEnabled}
+                                          variant="icon"
+                                        />
+
                                         {/* Tafsir reader button */}
                                         <button
                                           onClick={() => handleOpenTopicAyahTafsir(ayah)}
@@ -3496,11 +3583,21 @@ export const QuranView: React.FC<QuranViewProps> = ({
                               const hRef = getLocalizedHadithRef(h.referenceBn, selectedLanguage);
                               const hGrade = h.gradeBn ? getLocalizedHadithGrade(h.gradeBn, selectedLanguage) : '';
                               const hChap = h.chapterBn ? getLocalizedHadithChapter(h.chapterBn, selectedLanguage) : '';
+                              const topicHadithKey = `topic_hadith:${currentTopic.id}:${h.id || hIdx}`;
+                              const topicHadithHl = highlightByItemKey[topicHadithKey];
+                              const topicHadithHlStyle = topicHadithHl ? HIGHLIGHT_COLOR_STYLES[topicHadithHl.color] : null;
+                              const topicHadithSource = `${hRef || topicTitle} · ${hNar}`;
                               return (
                               <div
                                 key={h.id || hIdx}
+                                data-highlight-section="hadith"
+                                data-highlight-source={topicHadithSource}
                                 className={`rounded-2xl border p-4 sm:p-5 shadow-xs space-y-3 transition ${
-                                  isDay
+                                  topicHadithHlStyle
+                                    ? isDay
+                                      ? topicHadithHlStyle.cardDayClass
+                                      : topicHadithHlStyle.cardNightClass
+                                    : isDay
                                     ? 'bg-amber-50/50 border-amber-200/80 text-slate-900'
                                     : 'bg-[#091f28] border-amber-500/25 text-white'
                                 }`}
@@ -3526,26 +3623,50 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 {/* Arabic Matn if available */}
                                 {h.arabic && (
                                   <p className="font-arabic text-right text-base sm:text-lg leading-loose font-bold text-amber-950 dark:text-amber-100 dir-rtl select-text pt-1">
-                                    {h.arabic}
+                                    <HighlightableText
+                                      text={h.arabic}
+                                      section="hadith"
+                                      themeMode={themeMode}
+                                      selectedLanguage={selectedLanguage}
+                                      soundEnabled={soundEnabled}
+                                    />
                                   </p>
                                 )}
 
                                 {/* Translation */}
-                                <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 italic font-medium">
-                                  "{hTrans}"
+                                <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 italic font-medium select-text">
+                                  "<HighlightableText
+                                    text={hTrans}
+                                    section="hadith"
+                                    themeMode={themeMode}
+                                    selectedLanguage={selectedLanguage}
+                                    soundEnabled={soundEnabled}
+                                  />"
                                 </p>
 
-                                {/* Bottom Chapter & Copy Action */}
-                                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-amber-200/40 dark:border-amber-500/10">
+                                {/* Bottom Chapter, Highlight & Copy Action */}
+                                <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-amber-200/40 dark:border-amber-500/10">
                                   <span>{hChap ? `${isTopicBn ? 'অধ্যায়:' : 'Chapter:'} ${hChap}` : (isTopicBn ? 'সহীহ হাদীস সংকলন' : 'Sahih Hadith Collection')}</span>
-                                  <button
-                                    onClick={() => handleCopyHadith(h)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 font-bold transition cursor-pointer text-[11px]"
-                                    title={isTopicBn ? 'হাদীসটি কপি করুন' : 'Copy Hadith'}
-                                  >
-                                    <Copy className="w-3 h-3" />
-                                    <span>{isTopicBn ? 'কপি হাদীস' : 'Copy Hadith'}</span>
-                                  </button>
+                                  <div className="flex items-center gap-1.5">
+                                    <HighlightMarkerButton
+                                      itemKey={topicHadithKey}
+                                      text={`${h.arabic ? h.arabic + '\n' : ''}"${hTrans}"`}
+                                      source={topicHadithSource}
+                                      section="hadith"
+                                      selectedLanguage={selectedLanguage}
+                                      themeMode={themeMode}
+                                      soundEnabled={soundEnabled}
+                                      variant="icon"
+                                    />
+                                    <button
+                                      onClick={() => handleCopyHadith(h)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/30 text-amber-900 dark:text-amber-200 font-bold transition cursor-pointer text-[11px]"
+                                      title={isTopicBn ? 'হাদীসটি কপি করুন' : 'Copy Hadith'}
+                                    >
+                                      <Copy className="w-3 h-3" />
+                                      <span>{isTopicBn ? 'কপি হাদীস' : 'Copy Hadith'}</span>
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             )})}
@@ -4009,7 +4130,12 @@ export const QuranView: React.FC<QuranViewProps> = ({
             </div>
 
             {/* SCROLLABLE MODAL CONTENT BODY (Smoothly resets to top) */}
-            <div ref={tafsirScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+            <div
+              ref={tafsirScrollRef}
+              data-highlight-section="tafsir"
+              data-highlight-source={`${getLocalizedSurahName(surahDetail.number, selectedLanguage)} (${surahDetail.number}:${activeTafsirAyah.number}) • ${tafsirContent?.author || 'Tafsir'}`}
+              className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
+            >
               {/* Tafsir Book & Language Selector Ribbon */}
               <div
                 className={`p-3 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
@@ -4079,15 +4205,27 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
                 <div
                   dir="rtl"
-                  className={`font-arabic text-xl sm:text-2xl font-bold text-right leading-[2.2] py-1 ${
+                  className={`font-arabic text-xl sm:text-2xl font-bold text-right leading-[2.2] py-1 select-text ${
                     isDay ? 'text-[#0f172a]' : 'text-[#f8fafc]'
                   }`}
                 >
-                  {activeTafsirAyah.arabic}
+                  <HighlightableText
+                    text={activeTafsirAyah.arabic}
+                    section="tafsir"
+                    themeMode={themeMode}
+                    selectedLanguage={selectedLanguage}
+                    soundEnabled={soundEnabled}
+                  />
                 </div>
 
-                <div className={`text-xs sm:text-sm italic font-sans leading-relaxed ${isDay ? 'text-slate-700' : 'text-[#e2e8f0]'}`}>
-                  "{surahDetail?.ayahs.find((a) => a.number === activeTafsirAyah.number)?.translation || activeTafsirAyah.translation}"
+                <div className={`text-xs sm:text-sm italic font-sans leading-relaxed select-text ${isDay ? 'text-slate-700' : 'text-[#e2e8f0]'}`}>
+                  "<HighlightableText
+                    text={surahDetail?.ayahs.find((a) => a.number === activeTafsirAyah.number)?.translation || activeTafsirAyah.translation}
+                    section="tafsir"
+                    themeMode={themeMode}
+                    selectedLanguage={selectedLanguage}
+                    soundEnabled={soundEnabled}
+                  />"
                 </div>
               </div>
 
@@ -4139,33 +4277,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       />
                     </button>
 
-                    <button
-                      onClick={() => {
-                        const selectedText = typeof window !== 'undefined' ? window.getSelection()?.toString().trim() : '';
-                        const textToHighlight = selectedText || tafsirContent?.text?.slice(0, 260) || activeTafsirAyah.translation;
-                        if (textToHighlight) {
-                          addSavedHighlight(
-                            textToHighlight,
-                            `${surahDetail.englishName} (${surahDetail.number}:${activeTafsirAyah.number}) • ${tafsirContent?.author || 'Tafsir'}`,
-                            'amber'
-                          );
-                          setIsTafsirHighlighted(true);
-                          if (soundEnabled) soundHaptics.playMilestone();
-                          setTimeout(() => setIsTafsirHighlighted(false), 2000);
-                        }
-                      }}
-                      className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 cursor-pointer active:scale-95 ${
-                        isTafsirHighlighted
-                          ? 'bg-amber-500 text-slate-950 border-amber-400'
-                          : isDay
-                          ? 'bg-slate-100 hover:bg-amber-50 border-slate-200 text-slate-700'
-                          : 'bg-[#07131b] hover:bg-[#152e3c] border-[#162c3a] text-amber-300'
-                      }`}
-                      title={selectedLanguage === 'bn' ? 'তাফসীরের নির্বাচিত অংশ হাইলাইট করুন' : 'Highlight selected commentary'}
-                    >
-                      {isTafsirHighlighted ? <Check className="w-3 h-3" /> : <Pencil className="w-3 h-3" />}
-                      <span>{isTafsirHighlighted ? (selectedLanguage === 'bn' ? 'সংরক্ষিত' : 'Saved') : (selectedLanguage === 'bn' ? 'হাইলাইট' : 'Highlight')}</span>
-                    </button>
+                    <HighlightMarkerButton
+                      itemKey={`tafsir:${surahDetail.number}:${activeTafsirAyah.number}:${selectedTafsirId}`}
+                      text={tafsirContent?.text?.slice(0, 320) || activeTafsirAyah.translation}
+                      source={`${getLocalizedSurahName(surahDetail.number, selectedLanguage)} (${surahDetail.number}:${activeTafsirAyah.number}) • ${tafsirContent?.author || 'Tafsir'}`}
+                      section="tafsir"
+                      selectedLanguage={selectedLanguage}
+                      themeMode={themeMode}
+                      soundEnabled={soundEnabled}
+                      variant="pill"
+                    />
 
                     <button
                       onClick={() => handleShareAyah(activeTafsirAyah)}
@@ -4188,7 +4309,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     </p>
                   </div>
                 ) : tafsirContent?.text ? (
-                  <div className="space-y-3">
+                  <div className="space-y-3 select-text">
                     {tafsirContent.text
                       .split(/\n{2,}|\n(?=[১-৯0-9]+\.|\([১-৯0-9]+\)|\[[১-৯0-9]+\])/g)
                       .map((paragraph, pIdx) => {
@@ -4207,7 +4328,13 @@ export const QuranView: React.FC<QuranViewProps> = ({
                                 : 'text-base sm:text-lg leading-relaxed'
                             } ${isDay ? 'text-slate-800' : 'text-[#e2e8f0]'}`}
                           >
-                            {cleanP}
+                            <HighlightableText
+                              text={cleanP}
+                              section="tafsir"
+                              themeMode={themeMode}
+                              selectedLanguage={selectedLanguage}
+                              soundEnabled={soundEnabled}
+                            />
                           </div>
                         );
                       })}

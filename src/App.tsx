@@ -12,8 +12,10 @@ import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { ZikirCounterView } from './components/ZikirCounterView';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
+import { UniversalSelectionHighlighter } from './components/UniversalSelectionHighlighter';
 import type { OtherSubSection } from './components/OtherIslamicHubView';
 import { prefetchView, warmupViewsIdle } from './utils/viewPreloader';
+import { getSavedHighlights, mergeSavedHighlights } from './utils/savedItems';
 
 // Code-split heavy non-initial views and modals to make initial app launch instantaneous
 const QuranView = React.lazy(() => import('./components/QuranView').then((m) => ({ default: m.QuranView })));
@@ -62,6 +64,8 @@ import {
   checkGoogleRedirectResult,
   listenToAuthChanges,
   signOutFirebaseUser,
+  saveLibraryHighlightsToCloud,
+  loadLibraryHighlightsFromCloud,
 } from './services/firebaseLazy';
 import type { CloudZikrState } from './services/firebase';
 import { BookmarkCheck, Sparkles, WifiOff, Plus } from 'lucide-react';
@@ -1028,7 +1032,31 @@ export default function App() {
       }
     });
 
+    // Also pull and merge user's saved highlights from Firestore on sign-in
+    loadLibraryHighlightsFromCloud(targetKey)
+      .then((remoteHighlights) => {
+        if (remoteHighlights && remoteHighlights.length > 0) {
+          mergeSavedHighlights(remoteHighlights);
+        }
+      })
+      .catch(() => {});
+
+    // Listen to local highlight mutations & debounce-sync them to Firestore
+    let hlSyncTimer: number | null = null;
+    const handleSavedHighlightsChanged = () => {
+      if (hlSyncTimer) window.clearTimeout(hlSyncTimer);
+      hlSyncTimer = window.setTimeout(() => {
+        const list = getSavedHighlights();
+        if (list.length >= 0) {
+          saveLibraryHighlightsToCloud(targetKey, JSON.stringify(list.slice(0, 500))).catch(() => {});
+        }
+      }, 2500);
+    };
+    window.addEventListener('zikrplus-saved-updated', handleSavedHighlightsChanged);
+
     return () => {
+      if (hlSyncTimer) window.clearTimeout(hlSyncTimer);
+      window.removeEventListener('zikrplus-saved-updated', handleSavedHighlightsChanged);
       if (unsubCloudPromise) {
         unsubCloudPromise.then((unsub) => {
           if (typeof unsub === 'function') unsub();
@@ -2248,6 +2276,15 @@ export default function App() {
       </main>
 
 
+
+      {/* Universal Text-Selection Highlighter (Works across Quran, Hadith, Dua, Stories & all views) */}
+      <UniversalSelectionHighlighter
+        activeModule={activeModule}
+        themeMode={settings.themeMode}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={settings.soundEnabled}
+        onHighlightSaved={(msg) => showToast(msg)}
+      />
 
       {/* Universal Floating Scroll Navigator (Scroll To Top, Scroll To Bottom & Live Progress) */}
       <QuickScrollNavigator
