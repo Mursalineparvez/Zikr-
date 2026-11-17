@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem, AppSettings, UserProfile, NavModule, HistorySession } from '../types';
 import {
   Heart,
@@ -9,6 +9,7 @@ import {
   Compass,
   Bookmark,
   User,
+  ChevronLeft,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
@@ -179,30 +180,19 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [activeSub]);
 
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
-  const [buttonTopPercent, setButtonTopPercent] = useState(20);
+  const [sidebarClickY, setSidebarClickY] = useState<number | null>(null);
+  const [menuTopPx, setMenuTopPx] = useState<number>(12);
+  const menuPanelRef = useRef<HTMLDivElement | null>(null);
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Move the right-edge Zikr+ button dynamically up/down with scroll progress
-  useEffect(() => {
-    const updateScrollPosition = () => {
-      const currentScroll = window.scrollY || document.documentElement.scrollTop || 0;
-      const windowHeight = window.innerHeight || 800;
-      const fullHeight = document.documentElement.scrollHeight || windowHeight;
-      const maxScroll = Math.max(1, fullHeight - windowHeight);
-      const ratio = Math.min(1, Math.max(0, currentScroll / maxScroll));
-      setButtonTopPercent(20 + ratio * 42);
-    };
-
-    window.addEventListener('scroll', updateScrollPosition, { passive: true });
-    window.addEventListener('resize', updateScrollPosition, { passive: true });
-    const rafId = window.requestAnimationFrame(updateScrollPosition);
-
-    return () => {
-      window.removeEventListener('scroll', updateScrollPosition);
-      window.removeEventListener('resize', updateScrollPosition);
-      window.cancelAnimationFrame(rafId);
-    };
-  }, [activeSub]);
+  useLayoutEffect(() => {
+    if (!isRightSidebarOpen || !menuPanelRef.current) return;
+    const vh = window.innerHeight || 800;
+    const panelH = menuPanelRef.current.offsetHeight;
+    const targetCenter = sidebarClickY ?? vh / 2;
+    const clampedTop = Math.round(Math.max(8, Math.min(targetCenter - panelH / 2, vh - panelH - 8)));
+    setMenuTopPx(clampedTop);
+  }, [isRightSidebarOpen, sidebarClickY, selectedLanguage]);
 
   useEffect(() => {
     return () => {
@@ -210,8 +200,9 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     };
   }, []);
 
-  const handleOpenRightSidebar = () => {
+  const handleOpenRightSidebar = (clientY?: number) => {
     if (soundEnabled) soundHaptics.playTap();
+    setSidebarClickY(typeof clientY === 'number' && clientY > 0 ? clientY : (window.innerHeight || 800) / 2);
     setIsRightSidebarOpen(true);
     if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
     autoHideTimerRef.current = setTimeout(() => {
@@ -455,43 +446,42 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Right Edge Scroll-Following Pop-up Menu Button ("Zikr+" with official logo) */}
+      {/* Full-Height Slim Right-Edge Sidebar Rail ("Zikr+") */}
       {activeSub !== 'hub' && !isRightSidebarOpen && (
-        <div
-          style={{ top: `${buttonTopPercent}%` }}
-          className="fixed right-0 -translate-y-1/2 z-45 pointer-events-auto transition-[top] duration-200 ease-out"
+        <button
+          type="button"
+          onClick={(e) => handleOpenRightSidebar(e.clientY)}
+          aria-label="Open Zikr+ Menu"
+          className={`group fixed right-0 top-0 bottom-0 z-45 w-6 sm:w-7 flex flex-col items-center justify-center border-l transition-colors duration-200 cursor-pointer backdrop-blur-md ${
+            isDay
+              ? 'bg-[#e3ece8]/90 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[-4px_0_16px_rgba(15,61,46,0.08)]'
+              : 'bg-[#031418]/92 hover:bg-[#062229] text-emerald-200/95 border-[#0e3a43] shadow-[-4px_0_20px_rgba(0,0,0,0.6)]'
+          }`}
         >
-          <button
-            onClick={handleOpenRightSidebar}
-            aria-label="Open Zikr+ Menu"
-            className={`group relative flex flex-col items-center justify-center py-2.5 px-1 rounded-l-xl transition-colors duration-200 cursor-pointer active:scale-95 border-y border-l backdrop-blur-md ${
-              isDay
-                ? 'bg-[#e3ece8]/95 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[0_6px_16px_rgba(15,61,46,0.12)]'
-                : 'bg-[#020f12]/95 hover:bg-[#051b20] text-emerald-200/95 border-[#0c353d] shadow-[0_6px_20px_rgba(0,0,0,0.7)]'
-            }`}
-          >
-            <div className="flex flex-col items-center gap-1">
-              <div className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center shadow-xs border ${
-                isDay ? 'border-emerald-700/20 bg-white/60' : 'border-teal-500/30 bg-[#041d22]'
-              }`}>
-                <img
-                  src="/pwa-192x192.png"
-                  alt="Zikr+ Logo"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/icon.svg';
-                  }}
-                />
-              </div>
-              <span
-                className="text-[10px] font-black tracking-widest py-0.5"
-                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-              >
-                Zikr+
-              </span>
+          <div className="flex flex-col items-center gap-1.5">
+            <ChevronLeft className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:-translate-x-0.5 transition-all" />
+            <div
+              className={`w-5 h-5 rounded-md overflow-hidden flex items-center justify-center shadow-xs border ${
+                isDay ? 'border-emerald-700/20 bg-white/70' : 'border-teal-500/30 bg-[#041d22]'
+              }`}
+            >
+              <img
+                src="/pwa-192x192.png"
+                alt="Zikr+ Logo"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/icon.svg';
+                }}
+              />
             </div>
-          </button>
-        </div>
+            <span
+              className="text-[10px] font-black tracking-widest py-0.5"
+              style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+            >
+              Zikr+
+            </span>
+          </div>
+        </button>
       )}
 
       {/* Subtle Backdrop to Close Slim Sidebar */}
@@ -502,9 +492,11 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
         />
       )}
 
-      {/* Slim Auto-Hiding Zikr+ Sidebar Panel */}
+      {/* Tight Menu-Only Sidebar Panel anchored cleanly at the opened vertical position */}
       {isRightSidebarOpen && (
         <div
+          ref={menuPanelRef}
+          style={{ top: `${menuTopPx}px` }}
           onMouseEnter={() => {
             if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
           }}
@@ -514,51 +506,20 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               setIsRightSidebarOpen(false);
             }, 3000);
           }}
-          className={`fixed right-2.5 top-3 bottom-3 z-50 w-52 sm:w-56 flex flex-col rounded-2xl border shadow-2xl p-2.5 space-y-2 overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
+          className={`fixed right-1.5 sm:right-2 z-50 w-52 sm:w-56 max-h-[calc(100vh-16px)] flex flex-col rounded-2xl border shadow-2xl p-1.5 overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
             isDay
               ? 'bg-white/95 border-emerald-200/80 text-slate-800'
               : 'bg-[#061b20]/95 border-teal-500/25 text-white'
           }`}
         >
-          {/* Slim Header with Zikr+ logo */}
-          <div className={`flex items-center justify-between pb-2 border-b ${
-            isDay ? 'border-slate-200/80' : 'border-teal-900/50'
-          }`}>
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg overflow-hidden shadow-sm border border-emerald-500/30 bg-[#005740] shrink-0">
-                <img
-                  src="/pwa-192x192.png"
-                  alt="Zikr+ Logo"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/icon.svg';
-                  }}
-                />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-black text-sm leading-tight text-emerald-600 dark:text-emerald-400">Zikr+</h3>
-                <p className="text-[9px] font-medium opacity-65 truncate">Islamic Hub</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsRightSidebarOpen(false)}
-              aria-label="Close menu"
-              className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer transition active:scale-90 ${
-                isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-600' : 'bg-[#103038] hover:bg-[#16424d] text-emerald-200'
-              }`}
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Slim Navigation Items List */}
-          <div className="space-y-0.5 flex-1">
+          {/* Compact Navigation Items Only — Zero Header, Zero Empty Top/Bottom Space */}
+          <div className="space-y-0.5">
             <button
               onClick={() => {
                 handleSelectSub('hub');
                 setIsRightSidebarOpen(false);
               }}
-              className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                 activeSub === 'hub'
                   ? 'bg-gradient-to-r from-[#006A4E] to-emerald-600 text-white shadow-sm'
                   : isDay
@@ -570,7 +531,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               <span className="truncate">{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
             </button>
 
-            <div className={`my-1 border-t ${isDay ? 'border-slate-100' : 'border-teal-900/35'}`} />
+            <div className={`my-0.5 border-t ${isDay ? 'border-slate-100' : 'border-teal-900/35'}`} />
 
             {hubItems.map((item) => {
               const isActive = activeSub === item.id;
@@ -597,7 +558,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     {item.icon}
                   </div>
                   <span className="truncate flex-1 text-left">{item.title}</span>
-                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-amber-300 shrink-0" />}
                 </button>
               );
             })}

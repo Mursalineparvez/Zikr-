@@ -29,7 +29,6 @@ import {
   Stethoscope,
   ListOrdered,
   LayoutGrid,
-  ChevronDown,
   ChevronRight,
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
@@ -99,8 +98,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
   const isDay = themeMode === 'day';
   const [browseMode, setBrowseMode] = useState<'topics' | 'chapters'>('topics');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
-  const [showAllTopics, setShowAllTopics] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [inlineCounts, setInlineCounts] = useState<{ [key: string]: number }>({});
@@ -114,29 +113,173 @@ export const DuaView: React.FC<DuaViewProps> = ({
   useEffect(() => {
     setVisibleLimit(40);
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-  }, [selectedCategory, selectedChapter, browseMode]);
+  }, [selectedCategory, activeTopicId, selectedChapter, browseMode]);
 
   // Complete GTAF-style topic categories covering ALL 132 Hisnul Muslim chapters
   const gtafCategories = useMemo(
     () => [
-      { id: 'all', icon: BookOpen },
-      { id: 'morning_evening', icon: Sun },
-      { id: 'salat', icon: Compass },
-      { id: 'sleep_wake', icon: Moon },
-      { id: 'purification', icon: Droplet },
-      { id: 'mosque', icon: Building2 },
-      { id: 'protection', icon: Shield },
-      { id: 'hardship', icon: AlertCircle },
-      { id: 'forgiveness', icon: Sparkles },
-      { id: 'food_drink', icon: Utensils },
-      { id: 'ramadan', icon: Moon },
-      { id: 'sickness_funeral', icon: Stethoscope },
-      { id: 'weather_nature', icon: CloudRain },
-      { id: 'family', icon: Heart },
-      { id: 'social_etiquette', icon: Users },
-      { id: 'travel', icon: Plane },
-      { id: 'hajj', icon: Compass },
-      { id: 'daily_living', icon: Home },
+      {
+        id: 'all',
+        icon: BookOpen,
+        arSub: 'جميع الأدعية',
+        dayIcon: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+        nightIcon: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
+        dayHover: 'hover:border-emerald-300 hover:bg-emerald-50/40',
+        nightHover: 'hover:border-emerald-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'morning_evening',
+        icon: Sun,
+        arSub: 'أذكار الصباح والمساء',
+        dayIcon: 'bg-amber-50 text-amber-700 border-amber-200/80',
+        nightIcon: 'bg-amber-500/15 text-amber-300 border-amber-500/25',
+        dayHover: 'hover:border-amber-300 hover:bg-amber-50/40',
+        nightHover: 'hover:border-amber-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'salat',
+        icon: Compass,
+        arSub: 'أدعية الصلاة',
+        dayIcon: 'bg-teal-50 text-teal-700 border-teal-200/80',
+        nightIcon: 'bg-teal-500/15 text-teal-300 border-teal-500/25',
+        dayHover: 'hover:border-teal-300 hover:bg-teal-50/40',
+        nightHover: 'hover:border-teal-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'sleep_wake',
+        icon: Moon,
+        arSub: 'النوم والاستيقاظ',
+        dayIcon: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
+        nightIcon: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/25',
+        dayHover: 'hover:border-indigo-300 hover:bg-indigo-50/40',
+        nightHover: 'hover:border-indigo-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'purification',
+        icon: Droplet,
+        arSub: 'الطهارة والوضوء',
+        dayIcon: 'bg-sky-50 text-sky-700 border-sky-200/80',
+        nightIcon: 'bg-sky-500/15 text-sky-300 border-sky-500/25',
+        dayHover: 'hover:border-sky-300 hover:bg-sky-50/40',
+        nightHover: 'hover:border-sky-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'mosque',
+        icon: Building2,
+        arSub: 'المسجد والأذان',
+        dayIcon: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+        nightIcon: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
+        dayHover: 'hover:border-emerald-300 hover:bg-emerald-50/40',
+        nightHover: 'hover:border-emerald-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'protection',
+        icon: Shield,
+        arSub: 'الحفظ والرقية',
+        dayIcon: 'bg-teal-50 text-teal-700 border-teal-200/80',
+        nightIcon: 'bg-teal-500/15 text-teal-300 border-teal-500/25',
+        dayHover: 'hover:border-teal-300 hover:bg-teal-50/40',
+        nightHover: 'hover:border-teal-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'hardship',
+        icon: AlertCircle,
+        arSub: 'تفريج الكرب',
+        dayIcon: 'bg-orange-50 text-orange-700 border-orange-200/80',
+        nightIcon: 'bg-orange-500/15 text-orange-300 border-orange-500/25',
+        dayHover: 'hover:border-orange-300 hover:bg-orange-50/40',
+        nightHover: 'hover:border-orange-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'forgiveness',
+        icon: Sparkles,
+        arSub: 'الاستغفار والتوبة',
+        dayIcon: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+        nightIcon: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
+        dayHover: 'hover:border-emerald-300 hover:bg-emerald-50/40',
+        nightHover: 'hover:border-emerald-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'food_drink',
+        icon: Utensils,
+        arSub: 'الطعام والشراب',
+        dayIcon: 'bg-lime-50 text-lime-700 border-lime-200/80',
+        nightIcon: 'bg-lime-500/15 text-lime-300 border-lime-500/25',
+        dayHover: 'hover:border-lime-300 hover:bg-lime-50/40',
+        nightHover: 'hover:border-lime-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'ramadan',
+        icon: Moon,
+        arSub: 'رمضان والصيام',
+        dayIcon: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
+        nightIcon: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/25',
+        dayHover: 'hover:border-indigo-300 hover:bg-indigo-50/40',
+        nightHover: 'hover:border-indigo-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'sickness_funeral',
+        icon: Stethoscope,
+        arSub: 'المرض والجنازة',
+        dayIcon: 'bg-rose-50 text-rose-700 border-rose-200/80',
+        nightIcon: 'bg-rose-500/15 text-rose-300 border-rose-500/25',
+        dayHover: 'hover:border-rose-300 hover:bg-rose-50/40',
+        nightHover: 'hover:border-rose-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'weather_nature',
+        icon: CloudRain,
+        arSub: 'الطقس والطبيعة',
+        dayIcon: 'bg-cyan-50 text-cyan-700 border-cyan-200/80',
+        nightIcon: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/25',
+        dayHover: 'hover:border-cyan-300 hover:bg-cyan-50/40',
+        nightHover: 'hover:border-cyan-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'family',
+        icon: Heart,
+        arSub: 'الأسرة والزواج',
+        dayIcon: 'bg-rose-50 text-rose-700 border-rose-200/80',
+        nightIcon: 'bg-rose-500/15 text-rose-300 border-rose-500/25',
+        dayHover: 'hover:border-rose-300 hover:bg-rose-50/40',
+        nightHover: 'hover:border-rose-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'social_etiquette',
+        icon: Users,
+        arSub: 'الآداب الاجتماعية',
+        dayIcon: 'bg-teal-50 text-teal-700 border-teal-200/80',
+        nightIcon: 'bg-teal-500/15 text-teal-300 border-teal-500/25',
+        dayHover: 'hover:border-teal-300 hover:bg-teal-50/40',
+        nightHover: 'hover:border-teal-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'travel',
+        icon: Plane,
+        arSub: 'السفر والركوب',
+        dayIcon: 'bg-sky-50 text-sky-700 border-sky-200/80',
+        nightIcon: 'bg-sky-500/15 text-sky-300 border-sky-500/25',
+        dayHover: 'hover:border-sky-300 hover:bg-sky-50/40',
+        nightHover: 'hover:border-sky-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'hajj',
+        icon: Compass,
+        arSub: 'الحج والعمرة',
+        dayIcon: 'bg-amber-50 text-amber-700 border-amber-200/80',
+        nightIcon: 'bg-amber-500/15 text-amber-300 border-amber-500/25',
+        dayHover: 'hover:border-amber-300 hover:bg-amber-50/40',
+        nightHover: 'hover:border-amber-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'daily_living',
+        icon: Home,
+        arSub: 'الحياة اليومية',
+        dayIcon: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+        nightIcon: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
+        dayHover: 'hover:border-emerald-300 hover:bg-emerald-50/40',
+        nightHover: 'hover:border-emerald-500/50 hover:bg-[#123840]',
+      },
     ],
     []
   );
@@ -271,6 +414,11 @@ export const DuaView: React.FC<DuaViewProps> = ({
         (selectedLanguage === 'bn' ? 'সকল দোয়া' : 'All Supplications');
 
   const isChapterSelected = browseMode === 'chapters' && selectedChapter !== null;
+  const isTopicSelected = browseMode === 'topics' && activeTopicId !== null;
+  const activeTopicIndex = isTopicSelected
+    ? gtafCategories.findIndex((c) => c.id === activeTopicId)
+    : -1;
+  const shouldShowDuaList = isTopicSelected || isChapterSelected || searchQuery.trim().length > 0;
 
   const openPageShare = (focus: 'share' | 'download') => {
     const isBn = selectedLanguage === 'bn';
@@ -375,6 +523,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
                 onClick={() => {
                   setBrowseMode('topics');
                   setSelectedChapter(null);
+                  setActiveTopicId(null);
+                  setSelectedCategory('all');
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
                   browseMode === 'topics'
@@ -389,6 +539,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
               <button
                 onClick={() => {
                   setBrowseMode('chapters');
+                  setActiveTopicId(null);
+                  setSelectedCategory('all');
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
                   browseMode === 'chapters'
@@ -436,97 +588,189 @@ export const DuaView: React.FC<DuaViewProps> = ({
         )}
       </div>
 
-      {/* MODE 1: TOPIC CATEGORIES GRID (dua.gtaf.org style) */}
-      {browseMode === 'topics' && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <h3 className={`text-sm sm:text-base font-bold flex items-center gap-2 ${isDay ? 'text-[#0f3630]' : 'text-emerald-100'}`}>
-              <LayoutGrid className="w-4 h-4 text-emerald-500" />
-              <span>{DUA_UI.topicsTab[selectedLanguage]}</span>
-            </h3>
-            <div className="flex items-center gap-2">
-              {selectedCategory !== 'all' && (
-                <button
-                  onClick={() => setSelectedCategory('all')}
-                  className="text-xs font-bold text-emerald-500 hover:text-emerald-400 flex items-center gap-1 cursor-pointer bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>{DUA_CATEGORIES.all[selectedLanguage]}</span>
-                </button>
-              )}
-              <button
-                onClick={() => setShowAllTopics((prev) => !prev)}
-                className={`text-xs font-bold px-3 py-1 rounded-full border cursor-pointer flex items-center gap-1 ${
-                  isDay
-                    ? 'bg-white border-teal-200 text-teal-800 hover:bg-teal-50'
-                    : 'bg-[#10333b] border-[#1b5461] text-teal-200 hover:bg-[#15424d]'
-                }`}
-              >
-                <span>
-                  {showAllTopics
-                    ? selectedLanguage === 'bn'
-                      ? 'সংক্ষিপ্ত করুন'
-                      : 'Collapse'
-                    : selectedLanguage === 'bn'
-                    ? 'সব বিষয় দেখুন'
-                    : 'Expand Topics'}
-                </span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAllTopics ? 'rotate-180' : ''}`} />
-              </button>
+      {/* MODE 1: TOPIC CATEGORIES GRID (shown only when no specific topic is opened & not searching) */}
+      {browseMode === 'topics' && activeTopicId === null && searchQuery.trim().length === 0 && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-2 px-1">
+            <div>
+              <h3 className={`text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 ${isDay ? 'text-[#0f3630]' : 'text-emerald-50'}`}>
+                <LayoutGrid className={`w-4 h-4 ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`} />
+                <span>{DUA_UI.topicsTab[selectedLanguage]}</span>
+              </h3>
+              <p className={`text-xs mt-0.5 ${isDay ? 'text-teal-700/80' : 'text-teal-200/70'}`}>
+                {selectedLanguage === 'bn'
+                  ? 'যেকোনো বিষয়ভিত্তিক কার্ডে ক্লিক করলে সংশ্লিষ্ট মাসনুন দোয়া ও যিকির দেখাবে'
+                  : selectedLanguage === 'ar'
+                  ? 'انقر على أي موضوع لعرض الأدعية والأذكار الخاصة به'
+                  : 'Select any topic card below to read its authentic duas and adhkar'}
+              </p>
+            </div>
+            <div className={`text-xs font-mono tabular-nums font-semibold ${isDay ? 'text-teal-800/80' : 'text-teal-300/80'}`}>
+              {formatNum(gtafCategories.length, selectedLanguage)}{' '}
+              {selectedLanguage === 'bn' ? 'টি বিষয়' : selectedLanguage === 'ar' ? 'موضوعاً' : 'Topics'}
+              <span aria-hidden="true" className="mx-1.5 opacity-50">·</span>
+              {formatNum(AUTHENTIC_DUAS.length, selectedLanguage)}{' '}
+              {selectedLanguage === 'bn' ? 'টি দোয়া' : selectedLanguage === 'ar' ? 'دعاء' : 'Duas'}
             </div>
           </div>
 
-          {showAllTopics && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
-              {gtafCategories.map((cat) => {
-                const IconComp = cat.icon;
-                const isSelected = selectedCategory === cat.id;
-                const categoryName = DUA_CATEGORIES[cat.id]?.[selectedLanguage] || cat.id;
-                const count = categoryCounts[cat.id] || 0;
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {gtafCategories.map((cat) => {
+              const IconComp = cat.icon;
+              const categoryName = DUA_CATEGORIES[cat.id]?.[selectedLanguage] || cat.id;
+              const count = categoryCounts[cat.id] || 0;
+              const duaWord =
+                selectedLanguage === 'bn'
+                  ? 'টি দোয়া'
+                  : selectedLanguage === 'ar'
+                  ? 'أدعية'
+                  : count === 1
+                  ? 'Dua'
+                  : 'Duas';
 
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`p-3.5 rounded-2xl border transition-all duration-200 text-left flex flex-col justify-between gap-2.5 cursor-pointer active:scale-95 group ${
-                      isSelected
-                        ? 'ring-2 ring-emerald-500 shadow-lg ' +
-                          (isDay ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-700 text-white border-emerald-500')
-                        : isDay
-                        ? 'bg-white hover:bg-teal-50/80 border-teal-100 shadow-sm text-[#0f3630]'
-                        : 'bg-[#0e2c33] hover:bg-[#143c46] border-[#184d57] text-slate-200'
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setActiveTopicId(cat.id);
+                    setSelectedCategory(cat.id);
+                  }}
+                  className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 border text-left transition-all duration-200 cursor-pointer group flex items-center justify-between gap-3.5 active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                    isDay
+                      ? `bg-white border-teal-100/90 shadow-sm hover:shadow-md hover:-translate-y-0.5 text-[#0f3630] ${cat.dayHover}`
+                      : `bg-[#0e2d34] border-[#184d57] shadow-sm hover:shadow-lg hover:-translate-y-0.5 text-slate-100 ${cat.nightHover}`
+                  }`}
+                >
+                  {/* Subtle Islamic 8-point star geometric ornament on hover */}
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 64 64"
+                    className={`pointer-events-none absolute -right-3 -bottom-3 w-20 h-20 transition-opacity duration-300 ${
+                      isDay ? 'text-emerald-700 opacity-[0.035] group-hover:opacity-[0.08]' : 'text-emerald-300 opacity-[0.04] group-hover:opacity-[0.1]'
                     }`}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div
-                        className={`p-2 rounded-xl ${
-                          isSelected
-                            ? 'bg-white/20 text-white'
-                            : isDay
-                            ? 'bg-teal-50 text-emerald-600 group-hover:bg-emerald-100'
-                            : 'bg-[#153f4a] text-emerald-400 group-hover:bg-[#1c5462]'
-                        }`}
-                      >
-                        <IconComp className="w-4 h-4" />
-                      </div>
-                      <span
-                        className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                          isSelected
-                            ? 'bg-white/20 text-white'
-                            : isDay
-                            ? 'bg-teal-100/70 text-emerald-800'
-                            : 'bg-[#154652] text-teal-300'
-                        }`}
-                      >
-                        {formatNum(count, selectedLanguage)}
-                      </span>
+                    <rect x="14" y="14" width="36" height="36" rx="2" />
+                    <rect x="14" y="14" width="36" height="36" rx="2" transform="rotate(45 32 32)" />
+                    <circle cx="32" cy="32" r="7" />
+                  </svg>
+
+                  <div className="relative z-10 flex items-center gap-3.5 min-w-0 flex-1">
+                    <div
+                      className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105 ${
+                        isDay ? cat.dayIcon : cat.nightIcon
+                      }`}
+                    >
+                      <IconComp className="w-5 h-5" />
                     </div>
-                    <h4 className="font-bold text-xs tracking-tight line-clamp-2 leading-snug">{categoryName}</h4>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm sm:text-[15px] leading-snug tracking-tight truncate">
+                        {categoryName}
+                      </h4>
+                      <div
+                        className={`mt-1 flex items-center gap-1.5 text-xs font-medium truncate ${
+                          isDay ? 'text-teal-700/80' : 'text-teal-200/75'
+                        }`}
+                      >
+                        <span className="font-mono tabular-nums font-semibold">
+                          {formatNum(count, selectedLanguage)} {duaWord}
+                        </span>
+                        {selectedLanguage !== 'ar' && (
+                          <>
+                            <span aria-hidden="true" className="opacity-45">·</span>
+                            <span className="font-arabic text-[12px] opacity-80 truncate">{cat.arSub}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <ChevronRight
+                    className={`relative z-10 w-4 h-4 shrink-0 transition-all duration-200 ${
+                      isDay
+                        ? 'text-teal-600/50 group-hover:text-emerald-700 group-hover:translate-x-0.5'
+                        : 'text-teal-300/45 group-hover:text-emerald-300 group-hover:translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* SELECTED TOPIC STEP-BY-STEP HEADER & PREV/NEXT TOPIC CONTROLS */}
+      {isTopicSelected && activeTopicId !== null && searchQuery.trim().length === 0 && (
+        <div
+          className={`p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-3 ${
+            isDay ? 'bg-emerald-50/80 border-emerald-200 text-[#0f3630]' : 'bg-[#10363f] border-[#1b5563] text-white'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              if (soundEnabled) soundHaptics.playTap();
+              setActiveTopicId(null);
+              setSelectedCategory('all');
+            }}
+            className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-[#006747] text-white hover:bg-[#00553a] cursor-pointer transition active:scale-95"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>
+              {selectedLanguage === 'bn'
+                ? 'সব বিষয় (ক্যাটাগরি)'
+                : selectedLanguage === 'ar'
+                ? 'جميع المواضيع'
+                : 'All Topics'}
+            </span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={activeTopicIndex <= 0}
+              onClick={() => {
+                if (activeTopicIndex > 0) {
+                  const prevCat = gtafCategories[activeTopicIndex - 1];
+                  if (soundEnabled) soundHaptics.playTap();
+                  setActiveTopicId(prevCat.id);
+                  setSelectedCategory(prevCat.id);
+                }
+              }}
+              className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                isDay ? 'bg-white border border-teal-200 text-teal-800 hover:bg-teal-50' : 'bg-[#0b272e] border border-[#194b57] text-teal-200 hover:bg-[#123942]'
+              }`}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>
+                {selectedLanguage === 'bn' ? 'আগের বিষয়' : selectedLanguage === 'ar' ? 'السابق' : 'Prev Topic'}
+              </span>
+            </button>
+            <button
+              type="button"
+              disabled={activeTopicIndex < 0 || activeTopicIndex >= gtafCategories.length - 1}
+              onClick={() => {
+                if (activeTopicIndex >= 0 && activeTopicIndex < gtafCategories.length - 1) {
+                  const nextCat = gtafCategories[activeTopicIndex + 1];
+                  if (soundEnabled) soundHaptics.playTap();
+                  setActiveTopicId(nextCat.id);
+                  setSelectedCategory(nextCat.id);
+                }
+              }}
+              className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                isDay ? 'bg-white border border-teal-200 text-teal-800 hover:bg-teal-50' : 'bg-[#0b272e] border border-[#194b57] text-teal-200 hover:bg-[#123942]'
+              }`}
+            >
+              <span>
+                {selectedLanguage === 'bn' ? 'পরের বিষয়' : selectedLanguage === 'ar' ? 'التالي' : 'Next Topic'}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -620,15 +864,21 @@ export const DuaView: React.FC<DuaViewProps> = ({
         </div>
       )}
 
-      {/* DUAS LIST (Shown in Topic mode, or when a specific Chapter is selected, or when searching) */}
-      {(browseMode === 'topics' || isChapterSelected || searchQuery.trim().length > 0) && (
+      {/* DUAS LIST (Shown only after clicking a Topic card, clicking a Chapter, or searching) */}
+      {shouldShowDuaList && (
         <div className="space-y-4 pt-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <h3 className={`text-base font-bold ${isDay ? 'text-[#0f3630]' : 'text-white'}`}>
-                {currentCatTitle}
-                <span className="text-xs font-semibold ml-2 text-emerald-500">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2.5">
+              <BookOpen className={`w-4 h-4 shrink-0 ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`} />
+              <h3 className={`text-base sm:text-lg font-bold tracking-tight ${isDay ? 'text-[#0f3630]' : 'text-white'}`}>
+                {searchQuery.trim().length > 0 && !isTopicSelected && !isChapterSelected
+                  ? selectedLanguage === 'bn'
+                    ? 'অনুসন্ধানের ফলাফল'
+                    : selectedLanguage === 'ar'
+                    ? 'نتائج البحث'
+                    : 'Search Results'
+                  : currentCatTitle}
+                <span className={`text-xs font-mono tabular-nums font-semibold ml-2 ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`}>
                   ({formatNum(filteredDuas.length, selectedLanguage)})
                 </span>
               </h3>
