@@ -1803,7 +1803,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                 </span>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <HighlightMarkerButton
-                    itemKey={`history:${activeEvent.y}:${activeEvent.cat}:${activeEvent.t.en.slice(0, 28)}`}
+                    itemKey={`history:${activeEvent.y}:${activeEvent.cat}:${(activeEvent.t?.en || activeEvent.t?.bn || '').slice(0, 28)}`}
                     text={`${formattedTitle}\n${formatHonorifics(getLangText(activeEvent.d, selectedLanguage), selectedLanguage)}`}
                     source={`${formattedTitle} (${formatYearSuffix(activeEvent.y, selectedLanguage)})`}
                     section="history_timeline"

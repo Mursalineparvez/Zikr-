@@ -136,7 +136,26 @@ export function getSavedHighlights(): SavedHighlight[] {
     const raw = localStorage.getItem(HIGHLIGHTS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((h): h is Record<string, any> => Boolean(h && typeof h === 'object'))
+      .map((h) => {
+        const rawColor = String(h.color || 'amber');
+        const safeColor: HighlightColor =
+          rawColor === 'amber' || rawColor === 'emerald' || rawColor === 'rose' || rawColor === 'teal'
+            ? rawColor
+            : 'amber';
+        return {
+          id: String(h.id || `hl_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`),
+          text: typeof h.text === 'string' ? h.text : String(h.text ?? ''),
+          source: typeof h.source === 'string' ? h.source : String(h.source ?? 'Saved'),
+          color: safeColor,
+          createdAt: typeof h.createdAt === 'number' && Number.isFinite(h.createdAt) ? h.createdAt : Date.now(),
+          ...(typeof h.section === 'string' && h.section ? { section: h.section } : {}),
+          ...(typeof h.itemKey === 'string' && h.itemKey ? { itemKey: h.itemKey } : {}),
+          ...(typeof h.note === 'string' && h.note.trim() ? { note: h.note.trim() } : {}),
+        };
+      });
   } catch {
     return [];
   }
@@ -161,8 +180,8 @@ export function addSavedHighlight(
   color: HighlightColor = 'amber',
   options?: AddHighlightOptions
 ): SavedHighlight {
-  const trimmedText = text.trim();
-  const trimmedSource = source.trim() || 'Commentary';
+  const trimmedText = (typeof text === 'string' ? text : String(text ?? '')).trim();
+  const trimmedSource = (typeof source === 'string' ? source : String(source ?? '')).trim() || 'Commentary';
   const existingList = getSavedHighlights();
 
   // If itemKey matches or exact same text+source exists, update in-place instead of creating duplicates
@@ -249,15 +268,32 @@ export function mergeSavedHighlights(remoteHighlights: SavedHighlight[]): SavedH
   const local = getSavedHighlights();
   const map = new Map<string, SavedHighlight>();
   [...remoteHighlights, ...local].forEach((h) => {
-    if (!h || !h.id) return;
-    const dedupKey = h.itemKey ? `key:${h.itemKey}` : `id:${h.id}`;
+    if (!h || typeof h !== 'object' || !h.id) return;
+    const rawColor = String(h.color || 'amber');
+    const safeColor: HighlightColor =
+      rawColor === 'amber' || rawColor === 'emerald' || rawColor === 'rose' || rawColor === 'teal'
+        ? rawColor
+        : 'amber';
+    const clean: SavedHighlight = {
+      id: String(h.id),
+      text: typeof h.text === 'string' ? h.text : String(h.text ?? ''),
+      source: typeof h.source === 'string' ? h.source : String(h.source ?? 'Saved'),
+      color: safeColor,
+      createdAt: typeof h.createdAt === 'number' && Number.isFinite(h.createdAt) ? h.createdAt : Date.now(),
+      ...(typeof h.section === 'string' && h.section ? { section: h.section } : {}),
+      ...(typeof h.itemKey === 'string' && h.itemKey ? { itemKey: h.itemKey } : {}),
+      ...(typeof h.note === 'string' && h.note.trim() ? { note: h.note.trim() } : {}),
+    };
+    const dedupKey = clean.itemKey ? `key:${clean.itemKey}` : `id:${clean.id}`;
     const existing = map.get(dedupKey);
-    if (!existing || (h.createdAt || 0) >= (existing.createdAt || 0)) {
-      map.set(dedupKey, h);
+    if (!existing || clean.createdAt >= existing.createdAt) {
+      map.set(dedupKey, clean);
     }
   });
   const merged = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-  writeHighlights(merged);
+  if (JSON.stringify(merged) !== JSON.stringify(local)) {
+    writeHighlights(merged);
+  }
   return merged;
 }
 

@@ -110,8 +110,8 @@ export const UniversalSelectionHighlighter: React.FC<UniversalSelectionHighlight
 
       // Ignore selections inside inputs, textareas, buttons, or [data-no-highlight="true"]
       const anchorEl =
-        sel.anchorNode instanceof HTMLElement ? sel.anchorNode : sel.anchorNode?.parentElement;
-      if (!anchorEl) return;
+        sel.anchorNode instanceof Element ? sel.anchorNode : sel.anchorNode?.parentElement;
+      if (!anchorEl || typeof anchorEl.closest !== 'function') return;
       if (
         anchorEl.closest(
           'input, textarea, [contenteditable="true"], [data-no-highlight="true"]'
@@ -120,8 +120,13 @@ export const UniversalSelectionHighlighter: React.FC<UniversalSelectionHighlight
         return;
       }
 
-      const range = sel.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
+      let rect: DOMRect;
+      try {
+        const range = sel.getRangeAt(0);
+        rect = range.getBoundingClientRect();
+      } catch {
+        return;
+      }
       if (!rect || (rect.width === 0 && rect.height === 0)) {
         return;
       }
@@ -206,7 +211,9 @@ export const UniversalSelectionHighlighter: React.FC<UniversalSelectionHighlight
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(selectionState.text);
+    try {
+      navigator.clipboard?.writeText?.(selectionState.text)?.catch?.(() => {});
+    } catch {}
     setCopied(true);
     if (soundEnabled) soundHaptics.playTap();
     setTimeout(() => {

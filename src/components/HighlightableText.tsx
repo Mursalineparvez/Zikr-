@@ -70,12 +70,13 @@ interface MatchSegment {
   highlight?: SavedHighlight;
 }
 
-function splitTextWithHighlights(text: string, candidates: SavedHighlight[]): MatchSegment[] {
+function splitTextWithHighlights(rawText: string, candidates: SavedHighlight[]): MatchSegment[] {
+  const text = typeof rawText === 'string' ? rawText : String(rawText ?? '');
   if (!text || candidates.length === 0) return [{ text }];
 
   // Sort longest snippet first so longer phrases win cleanly
   const sorted = [...candidates]
-    .filter((h) => h.text && h.text.length >= 2 && h.text.length <= text.length + 10)
+    .filter((h) => h && typeof h.text === 'string' && h.text.length >= 2 && h.text.length <= text.length + 10)
     .sort((a, b) => b.text.length - a.text.length);
 
   if (sorted.length === 0) return [{ text }];
@@ -150,19 +151,21 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   const [noteDraft, setNoteDraft] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
 
+  const safeText = typeof text === 'string' ? text : String(text ?? '');
+
   const sectionSnippets = useMemo(() => {
-    if (!highlights.length || !text) return [];
+    if (!highlights.length || !safeText) return [];
     return highlights.filter((h) => {
-      if (h.itemKey) return false; // Card-level marks tint the card directly
-      if (!h.text || h.text.length < 2) return false;
+      if (!h || h.itemKey) return false; // Card-level marks tint the card directly
+      if (typeof h.text !== 'string' || h.text.length < 2) return false;
       if (!section || !h.section) return true;
       return h.section === section;
     });
-  }, [highlights, text, section]);
+  }, [highlights, safeText, section]);
 
   const segments = useMemo(
-    () => splitTextWithHighlights(text, sectionSnippets),
-    [text, sectionSnippets]
+    () => splitTextWithHighlights(safeText, sectionSnippets),
+    [safeText, sectionSnippets]
   );
 
   useEffect(() => {
@@ -337,7 +340,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   if (segments.length === 1 && !segments[0].highlight) {
     return (
       <span className={className} dir={dir}>
-        {text}
+        {safeText}
       </span>
     );
   }

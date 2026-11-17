@@ -172,8 +172,8 @@ export const SavedView: React.FC<SavedViewProps> = ({
       if (!colorOk) return false;
       if (!q) return true;
       return (
-        h.text.toLowerCase().includes(q) ||
-        h.source.toLowerCase().includes(q) ||
+        (h.text || '').toLowerCase().includes(q) ||
+        (h.source || '').toLowerCase().includes(q) ||
         (h.section && h.section.toLowerCase().includes(q)) ||
         (h.note && h.note.toLowerCase().includes(q))
       );
@@ -185,14 +185,16 @@ export const SavedView: React.FC<SavedViewProps> = ({
     if (!q) return notes;
     return notes.filter(
       (n) =>
-        n.title.toLowerCase().includes(q) ||
-        n.content.toLowerCase().includes(q) ||
+        (n.title || '').toLowerCase().includes(q) ||
+        (n.content || '').toLowerCase().includes(q) ||
         (n.source && n.source.toLowerCase().includes(q))
     );
   }, [notes, searchQuery]);
 
   const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
+    try {
+      navigator.clipboard?.writeText?.(text)?.catch?.(() => {});
+    } catch {}
     setCopiedId(id);
     if (soundEnabled) soundHaptics.playTap();
     setTimeout(() => setCopiedId(null), 1800);
