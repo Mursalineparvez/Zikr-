@@ -3918,19 +3918,6 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
         );
       })()}
 
-      {/* Floating Quick-TOC Button */}
-      <button
-        onClick={() => {
-          if (soundEnabled) soundHaptics.playTap();
-          setIsTocDrawerOpen(true);
-        }}
-        className="fixed bottom-20 right-4 sm:right-6 z-40 px-4 py-2.5 rounded-full shadow-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 border-2 border-amber-300 ring-4 ring-amber-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-        title={t.floatingTocBtn}
-      >
-        <BookOpen className="w-4 h-4" />
-        <span>📑 {t.floatingTocBtn}</span>
-      </button>
-
       {/* Sliding Quick-TOC Drawer Modal */}
       {isTocDrawerOpen && (
         <div

@@ -9,7 +9,6 @@ import {
   Compass,
   Bookmark,
   User,
-  ChevronLeft,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
@@ -180,10 +179,37 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [activeSub]);
 
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+  const [buttonTopPx, setButtonTopPx] = useState<number>(84);
   const [sidebarClickY, setSidebarClickY] = useState<number | null>(null);
   const [menuTopPx, setMenuTopPx] = useState<number>(12);
+  const tabButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Move the compact Zikr+ button dynamically with scroll all the way from top to bottom
+  useEffect(() => {
+    const updateScrollPosition = () => {
+      const currentScroll = window.scrollY || document.documentElement.scrollTop || 0;
+      const windowHeight = window.innerHeight || 800;
+      const fullHeight = document.documentElement.scrollHeight || windowHeight;
+      const maxScroll = Math.max(1, fullHeight - windowHeight);
+      const ratio = Math.min(1, Math.max(0, currentScroll / maxScroll));
+      const tabH = tabButtonRef.current?.offsetHeight || 92;
+      const minTop = 76;
+      const maxTop = Math.max(minTop, windowHeight - tabH - 68);
+      setButtonTopPx(Math.round(minTop + ratio * (maxTop - minTop)));
+    };
+
+    window.addEventListener('scroll', updateScrollPosition, { passive: true });
+    window.addEventListener('resize', updateScrollPosition, { passive: true });
+    const rafId = window.requestAnimationFrame(updateScrollPosition);
+
+    return () => {
+      window.removeEventListener('scroll', updateScrollPosition);
+      window.removeEventListener('resize', updateScrollPosition);
+      window.cancelAnimationFrame(rafId);
+    };
+  }, [activeSub]);
 
   useLayoutEffect(() => {
     if (!isRightSidebarOpen || !menuPanelRef.current) return;
@@ -202,7 +228,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const handleOpenRightSidebar = (clientY?: number) => {
     if (soundEnabled) soundHaptics.playTap();
-    setSidebarClickY(typeof clientY === 'number' && clientY > 0 ? clientY : (window.innerHeight || 800) / 2);
+    const fallbackCenter = buttonTopPx + (tabButtonRef.current?.offsetHeight || 92) / 2;
+    setSidebarClickY(typeof clientY === 'number' && clientY > 0 ? clientY : fallbackCenter);
     setIsRightSidebarOpen(true);
     if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
     autoHideTimerRef.current = setTimeout(() => {
@@ -446,23 +473,24 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Full-Height Slim Right-Edge Sidebar Rail ("Zikr+") */}
+      {/* Compact Scroll-Following Zikr+ Edge Tab (No long background strip) */}
       {activeSub !== 'hub' && !isRightSidebarOpen && (
         <button
+          ref={tabButtonRef}
           type="button"
+          style={{ top: `${buttonTopPx}px` }}
           onClick={(e) => handleOpenRightSidebar(e.clientY)}
           aria-label="Open Zikr+ Menu"
-          className={`group fixed right-0 top-0 bottom-0 z-45 w-6 sm:w-7 flex flex-col items-center justify-center border-l transition-colors duration-200 cursor-pointer backdrop-blur-md ${
+          className={`group fixed right-0 z-45 flex flex-col items-center justify-center py-2.5 px-1 rounded-l-xl border-y border-l backdrop-blur-md transition-[top,background-color] duration-100 ease-out cursor-pointer active:scale-95 ${
             isDay
-              ? 'bg-[#e3ece8]/90 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[-4px_0_16px_rgba(15,61,46,0.08)]'
-              : 'bg-[#031418]/92 hover:bg-[#062229] text-emerald-200/95 border-[#0e3a43] shadow-[-4px_0_20px_rgba(0,0,0,0.6)]'
+              ? 'bg-[#e3ece8]/95 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[0_6px_16px_rgba(15,61,46,0.12)]'
+              : 'bg-[#020f12]/95 hover:bg-[#051b20] text-emerald-200/95 border-[#0c353d] shadow-[0_6px_20px_rgba(0,0,0,0.7)]'
           }`}
         >
-          <div className="flex flex-col items-center gap-1.5">
-            <ChevronLeft className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:-translate-x-0.5 transition-all" />
+          <div className="flex flex-col items-center gap-1">
             <div
-              className={`w-5 h-5 rounded-md overflow-hidden flex items-center justify-center shadow-xs border ${
-                isDay ? 'border-emerald-700/20 bg-white/70' : 'border-teal-500/30 bg-[#041d22]'
+              className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center shadow-xs border ${
+                isDay ? 'border-emerald-700/20 bg-white/60' : 'border-teal-500/30 bg-[#041d22]'
               }`}
             >
               <img
