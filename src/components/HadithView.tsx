@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AUTHENTIC_HADITHS, HADITH_BOOKS_DATA } from '../utils/hadithData';
+import { copyToClipboard } from '../utils/clipboard';
 import { HadithItem, ThemeMode, ZikrLanguage, HadithBookMeta } from '../types';
 import { HADITH_TRANSLATIONS, HADITH_TOPICS, HADITH_UI } from '../utils/appTranslations';
 import {
@@ -121,7 +122,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
     const gradeText = HADITH_UI.grade[selectedLanguage] || 'Grade';
 
     const text = `${hadith.arabicText}\n\n"${trans}"\n\n[${hadith.book} #${hadith.hadithNumber} • ${narratorText}: ${hadith.narrator} • ${gradeText}: ${hadith.grade}]`;
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     setCopiedId(hadith.id);
     setTimeout(() => setCopiedId(null), 2000);
   };

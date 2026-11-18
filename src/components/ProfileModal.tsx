@@ -904,7 +904,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     if (feedbackChannel === 'whatsapp') {
       const url = `https://wa.me/8801567963471?text=${encodeURIComponent(formattedText)}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else {
       window.location.href = `mailto:mdmursalineparvez@gmail.com?subject=Zikr+ Feedback&body=${encodeURIComponent(formattedText)}`;
     }

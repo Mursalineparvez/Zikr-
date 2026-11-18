@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   Clock,
   BookOpen,
@@ -580,13 +581,11 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
   };
 
   const handleCopyText = (text: string, id: string) => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedItemId(id);
-      if (soundEnabled) soundHaptics.playTap();
-      showNotice(strings.duas.copied);
-      setTimeout(() => setCopiedItemId(null), 2000);
-    }
+    void copyToClipboard(text);
+    setCopiedItemId(id);
+    if (soundEnabled) soundHaptics.playTap();
+    showNotice(strings.duas.copied);
+    setTimeout(() => setCopiedItemId(null), 2000);
   };
 
   const completedChecklistCount = Object.values(trackedItems).filter(Boolean).length;

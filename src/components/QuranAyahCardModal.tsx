@@ -16,6 +16,7 @@ import { sanitizeClonedDocForHtml2Canvas } from '../utils/html2canvasSanitizer';
 import { QuranAyah } from '../utils/quranService';
 import { ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
+import { copyToClipboard } from '../utils/clipboard';
 
 interface QuranAyahCardModalProps {
   isOpen: boolean;
@@ -230,7 +231,7 @@ export const QuranAyahCardModal: React.FC<QuranAyahCardModalProps> = ({
         ? `[${surahName} : آية ${ayah.number}]`
         : `[Surah ${surahEnglishName} : Ayah ${ayah.number}]`;
     const text = `${ayah.arabic}\n\n"${ayah.translation}"\n\n${refLabel}\n- Zikr+ App (zikrplus.app)`;
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     setCopied(true);
     if (soundEnabled) soundHaptics.playMilestone();
     setTimeout(() => setCopied(false), 2500);

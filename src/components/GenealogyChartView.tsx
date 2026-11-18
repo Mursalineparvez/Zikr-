@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   GENEALOGY_BRANCHES,
   INTERMARRIAGE_HIGHLIGHTS,
@@ -87,7 +88,7 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
       ? `🌳 প্রামাণিক শাজারা শরীফ — আহলে বাইত ও সাহাবিগণের বংশলতিকা চার্ট\n\nরঙের নির্দেশিকা:\n🔴 লাল ওভাল: আহলে বাইত (Ahl al-Bayt)\n🟢 সবুজ ওভাল: সাহাবায়ে কেরাম (Sahabi RA)\n🔵 নীল ওভাল: তাবেয়ী ও পরবর্তী সন্তানগণ (Tabi'i)\n\nউৎস: সহিহ হাদিস, সীরাতে ইবনে হিশাম ও হায়াতুস সাহাবাহ সংকলন।`
       : `🌳 Authentic Lineage & Genealogy Chart of Ahl al-Bayt & Sahaba\n\nColor Legend:\n🔴 Red Oval: Ahl al-Bayt\n🟢 Green Oval: Sahaba (RA)\n🔵 Blue Oval: Tabi'in & Descendants\n\nSource: Sahih Hadith, Sirah Ibn Hisham & Hayatus Sahaba.`;
 
-    navigator.clipboard.writeText(summaryText);
+    void copyToClipboard(summaryText);
     setCopiedNote(true);
     if (soundEnabled) soundHaptics.playTargetChime();
     setTimeout(() => setCopiedNote(false), 2000);

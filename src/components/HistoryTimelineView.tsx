@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   ISLAMIC_HISTORY_EVENTS,
   ISLAMIC_HISTORY_ERAS,
@@ -232,12 +233,10 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
 
   const handleCopyText = (text: string, id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    try {
-      navigator.clipboard.writeText(text);
-      setCopiedTextId(id);
-      setTimeout(() => setCopiedTextId(null), 2000);
-      if (soundEnabled) soundHaptics.playTap();
-    } catch {}
+    void copyToClipboard(text);
+    setCopiedTextId(id);
+    setTimeout(() => setCopiedTextId(null), 2000);
+    if (soundEnabled) soundHaptics.playTap();
   };
   const [nowMapStyle, setNowMapStyle] = useState<'satellite' | 'street' | 'dark'>('satellite');
   const [showBanner, setShowBanner] = useState<boolean>(false);

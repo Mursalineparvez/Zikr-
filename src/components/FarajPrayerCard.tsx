@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   FormattedPrayerTimes,
   FardPrayerItem,
@@ -172,12 +173,10 @@ export const FarajPrayerCard: React.FC<FarajPrayerCardProps> = ({
 
   const handleCopy = (text: string, id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-      if (soundEnabled) soundHaptics.playTap();
-    } catch {}
+    void copyToClipboard(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+    if (soundEnabled) soundHaptics.playTap();
   };
 
   // Sync completed prayers when date changes

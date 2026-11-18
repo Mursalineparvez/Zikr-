@@ -57,9 +57,16 @@ try {
   console.log(`[PostBuild] Secondary on-demand assets: ${secondaryUrls.length} assets.`);
 
   const swSource = fs.readFileSync(publicSwPath, 'utf8');
+  const buildCacheName = `zikrmate-v17-${Date.now().toString(36)}`;
+
+  // Bump CACHE_NAME per build so browsers automatically purge stale cached bundles
+  let updatedSw = swSource.replace(
+    /const CACHE_NAME = ['"][^'"]+['"];/,
+    `const CACHE_NAME = '${buildCacheName}';`
+  );
 
   // Replace ESSENTIAL_PRECACHE_URLS array in sw.js
-  let updatedSw = swSource.replace(
+  updatedSw = updatedSw.replace(
     /const ESSENTIAL_PRECACHE_URLS = \[[\s\S]*?\];/,
     `const ESSENTIAL_PRECACHE_URLS = ${JSON.stringify(coreUrls, null, 2)};`
   );
@@ -71,7 +78,7 @@ try {
   );
 
   fs.writeFileSync(distSwPath, updatedSw, 'utf8');
-  console.log(`[PostBuild] Successfully updated dist/sw.js (Core: ${coreUrls.length}, Secondary: ${secondaryUrls.length}).`);
+  console.log(`[PostBuild] Successfully updated dist/sw.js (${buildCacheName}, Core: ${coreUrls.length}, Secondary: ${secondaryUrls.length}).`);
 } catch (err) {
   console.error('[PostBuild] Error updating Service Worker:', err);
 }

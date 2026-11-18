@@ -4,6 +4,7 @@ import { Check, Copy, Highlighter, MessageSquarePlus, X } from 'lucide-react';
 import { NavModule, ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
 import { addSavedHighlight, HIGHLIGHT_COLOR_STYLES, HighlightColor } from '../utils/savedItems';
+import { copyToClipboard } from '../utils/clipboard';
 
 interface UniversalSelectionHighlighterProps {
   activeModule: NavModule;
@@ -211,9 +212,7 @@ export const UniversalSelectionHighlighter: React.FC<UniversalSelectionHighlight
   };
 
   const handleCopy = () => {
-    try {
-      navigator.clipboard?.writeText?.(selectionState.text)?.catch?.(() => {});
-    } catch {}
+    void copyToClipboard(selectionState.text);
     setCopied(true);
     if (soundEnabled) soundHaptics.playTap();
     setTimeout(() => {

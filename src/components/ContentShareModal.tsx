@@ -24,6 +24,7 @@ import {
   printDocumentViaHiddenIframe,
   sanitizeFileName,
 } from '../utils/shareDownload';
+import { copyToClipboard } from '../utils/clipboard';
 
 type CardTheme = 'emerald' | 'midnight' | 'pearl' | 'amber';
 
@@ -133,8 +134,8 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
 
   const handleCopyText = async () => {
     const fullText = formatShareablePlainText(content, selectedLanguage);
-    try {
-      await navigator.clipboard.writeText(fullText);
+    const ok = await copyToClipboard(fullText);
+    if (ok) {
       setCopied(true);
       if (soundEnabled) soundHaptics.playMilestone();
       notifyStatus(
@@ -145,8 +146,6 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
             : 'Full text copied to clipboard!'
       );
       setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Fallback
     }
   };
 

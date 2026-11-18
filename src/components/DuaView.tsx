@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AUTHENTIC_DUAS, HISNUL_CHAPTERS, DuaItem } from '../utils/duasData';
+import { copyToClipboard } from '../utils/clipboard';
 import { ZikrItem, ThemeMode, ZikrLanguage } from '../types';
 import { DUA_TRANSLATIONS, DUA_CATEGORIES, DUA_UI } from '../utils/appTranslations';
 import {
@@ -452,7 +453,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
       currentGrade ? ` (${isBn ? 'মান' : 'Grade'}: ${currentGrade})` : ''
     }`;
     const text = `${currentTitle}\n\n${dua.arabic}\n\n${dua.transliteration}\n\n"${currentTranslation}"${virtueSection}${refSection}`;
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     setCopiedId(dua.id);
     setTimeout(() => setCopiedId(null), 2000);
   };

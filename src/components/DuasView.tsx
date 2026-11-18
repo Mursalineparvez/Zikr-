@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DuaCategory, DuaItem, ZikrItem } from '../types';
 import { AUTHENTIC_DUAS } from '../utils/duasData';
+import { copyToClipboard } from '../utils/clipboard';
 import { calculatePrayerTimes, FormattedPrayerTimes } from '../utils/prayerTimes';
 import { BookOpen, Compass, Search, Plus, Copy, Check, Sparkles, Clock, MapPin, Volume2 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -40,7 +41,7 @@ export const DuasView: React.FC<DuasViewProps> = ({
   // Request user geolocation for local prayer times
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      console.warn('Geolocation is not supported by this browser.');
       return;
     }
 
@@ -53,21 +54,18 @@ export const DuasView: React.FC<DuasViewProps> = ({
         setIsLocating(false);
       },
       () => {
-        // Geolocation denied, fallback to Makkah
+        // Geolocation denied, fallback cleanly to Makkah
         setIsLocating(false);
-        alert('Could not retrieve your location. Showing Makkah al-Mukarramah prayer times.');
       }
     );
   };
 
   const handleCopyText = async (dua: DuaItem) => {
-    try {
-      const text = `${dua.title}\n\n${dua.arabic}\n\n${dua.transliteration}\n\n"${dua.translation}"\n\nReference: ${dua.reference}`;
-      await navigator.clipboard.writeText(text);
+    const text = `${dua.title}\n\n${dua.arabic}\n\n${dua.transliteration}\n\n"${dua.translation}"\n\nReference: ${dua.reference}`;
+    const ok = await copyToClipboard(text);
+    if (ok) {
       setCopiedId(dua.id);
       setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      // Fallback
     }
   };
 

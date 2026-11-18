@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ThemeMode, ZikrLanguage } from '../types';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   Users,
   Search,
@@ -257,7 +258,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     if (isAr && hp.arabic) parts.push(hp.arabic);
     parts.push(`"${isBn ? hp.textBn : (hp.textEn || '')}"`);
     parts.push(`— ${isBn ? hp.source : localizeRefToEn(hp.source)}`);
-    navigator.clipboard.writeText(parts.join('\n\n'));
+    void copyToClipboard(parts.join('\n\n'));
     showToast(isBn ? 'হাদীস শরীফ কপি করা হয়েছে' : 'Hadith Copied');
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -267,7 +268,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     if (isAr && qr.arabic) parts.push(qr.arabic);
     parts.push(`"${isBn ? qr.translationBn : (qr.translationEn || '')}"`);
     parts.push(`— ${isBn ? qr.surah : localizeRefToEn(qr.surah)} (${isBn ? 'আয়াত:' : 'Verse:'} ${formatNum(qr.verse)}) ${isBn ? '[পবিত্র কুরআন]' : '[Holy Quran]'}`);
-    navigator.clipboard.writeText(parts.join('\n\n'));
+    void copyToClipboard(parts.join('\n\n'));
     showToast(isBn ? 'কুরআনের আয়াত কপি করা হয়েছে' : 'Quranic Verse Copied');
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -482,7 +483,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
     const textToCopy = `📖 ${name}\n🏆 ${isBn ? 'উপাধি:' : 'Title:'} ${title}\n⭐ ${isBn ? 'মর্যাদা:' : 'Rank:'} #${formatNum(activeSahaba.rank)} | ${cat}${birthDeath ? `\n📅 ${birthDeath}` : ''}\n\n${summary}`;
 
-    navigator.clipboard.writeText(textToCopy);
+    void copyToClipboard(textToCopy);
     setCopiedQuote(true);
     if (soundEnabled) soundHaptics.playTargetChime();
     setTimeout(() => setCopiedQuote(false), 2000);
@@ -832,7 +833,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                         <button
                           onClick={() => {
                             const quote = `👑 রাসূলুল্লাহ (সা.)-এর দেয়া উপাধি:\n"${propheticProfile.titleBn}"\n\n📖 হাদিস: "${propheticProfile.hadithBn}"\nসূত্র: ${propheticProfile.sourcesBn.join(', ')}`;
-                            navigator.clipboard.writeText(quote);
+                            void copyToClipboard(quote);
                             showToast('উপাধি ও হাদিস কপি করা হয়েছে');
                             if (soundEnabled) soundHaptics.playTap();
                           }}
@@ -860,7 +861,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                     <button
                       onClick={() => {
                         const quote = `👑 Prophetic Title:\n"${propheticProfile.titleEn}"\n\nSources: ${propheticProfile.sourcesBn.map(localizeRefToEn).join(', ')}`;
-                        navigator.clipboard.writeText(quote);
+                        void copyToClipboard(quote);
                         showToast('Title Copied');
                         if (soundEnabled) soundHaptics.playTap();
                       }}

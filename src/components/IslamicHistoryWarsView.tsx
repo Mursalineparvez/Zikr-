@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ThemeMode, ZikrLanguage } from '../types';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   Shield,
   Sword,
@@ -158,7 +159,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
     if (hr.arabic) parts.push(hr.arabic);
     parts.push(`"${isBn ? hr.textBn : (hr.textEn || hr.textBn)}"`);
     parts.push(`— ${isBn ? hr.sourceBn : hr.sourceEn}`);
-    navigator.clipboard.writeText(parts.join('\n\n'));
+    void copyToClipboard(parts.join('\n\n'));
     showToast(isBn ? 'হাদীস শরীফ কপি করা হয়েছে' : 'Hadith Copied');
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -168,7 +169,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
     if (qr.arabic) parts.push(qr.arabic);
     parts.push(`"${isBn ? qr.translationBn : (qr.translationEn || qr.translationBn)}"`);
     parts.push(`— ${isBn ? qr.surahNameBn : qr.surahNameEn} (আয়াত: ${qr.verseNo}) [পবিত্র কুরআন]`);
-    navigator.clipboard.writeText(parts.join('\n\n'));
+    void copyToClipboard(parts.join('\n\n'));
     showToast(isBn ? 'কুরআনের আয়াত কপি করা হয়েছে' : 'Quranic Verse Copied');
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -365,7 +366,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
       textToCopy += `\n\n${isBn ? 'অমর শহীদ সাহাবিগণ:' : 'Honored Martyrs:'}\n${shuhadaList}`;
     }
 
-    navigator.clipboard.writeText(textToCopy);
+    void copyToClipboard(textToCopy);
     setCopiedQuote(true);
     if (soundEnabled) soundHaptics.playTargetChime();
     setTimeout(() => setCopiedQuote(false), 2000);

@@ -13,6 +13,7 @@ import { BottomNav } from './components/BottomNav';
 import { ZikirCounterView } from './components/ZikirCounterView';
 import { QuickScrollNavigator } from './components/QuickScrollNavigator';
 import { UniversalSelectionHighlighter } from './components/UniversalSelectionHighlighter';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import type { OtherSubSection } from './components/OtherIslamicHubView';
 import { prefetchView, warmupViewsIdle } from './utils/viewPreloader';
 import { getSavedHighlights, mergeSavedHighlights } from './utils/savedItems';
@@ -1706,13 +1707,15 @@ export default function App() {
 
     if (isGoalJustReached) {
       import('canvas-confetti').then((module) => {
-        const confettiFn = module.default || module;
-        confettiFn({
-          particleCount: 50,
-          spread: 60,
-          origin: { y: 0.7 },
-          colors: ['#006747', '#10b981', '#f59e0b', '#10b981'],
-        });
+        const confettiFn = (module.default ?? module) as unknown as (opts?: Record<string, unknown>) => void;
+        if (typeof confettiFn === 'function') {
+          confettiFn({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.7 },
+            colors: ['#006747', '#10b981', '#f59e0b', '#10b981'],
+          });
+        }
       }).catch(() => {});
       showToast(`Mabrook! Goal completed for ${targetZikr.name}!`);
     }
@@ -2092,6 +2095,7 @@ export default function App() {
         )}
 
         {/* 1. ZIKIR COUNTER VIEW (HOME PAGE) */}
+        <ErrorBoundary resetKey={`${activeModule}_${otherNavTick}`}>
         {activeModule === 'zikir_counter' && (
           <div key="zikir_counter" className="animate-view-entrance">
             <ZikirCounterView
@@ -2273,6 +2277,7 @@ export default function App() {
             </React.Suspense>
           </div>
         )}
+        </ErrorBoundary>
       </main>
 
 

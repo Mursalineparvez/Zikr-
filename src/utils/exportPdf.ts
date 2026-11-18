@@ -543,35 +543,50 @@ export async function generateComprehensiveHistoryPdfReport(
     window.print();
     return true;
   } catch (printErr) {
-    console.warn('In-page print failed, attempting popup fallback:', printErr);
-    const printWin = window.open('', '_blank');
-    if (printWin) {
-      printWin.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Zikr+ Report - ${reportData.rangeLabel}</title>
-            <style>
-              body { margin: 0; padding: 20px; font-family: system-ui, sans-serif; }
-              @media print {
-                body { padding: 0; }
-                @page { size: A4; margin: 10mm; }
-              }
-            </style>
-          </head>
-          <body>
-            ${container.innerHTML}
-            <script>
-              window.onload = function() {
-                window.print();
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWin.document.close();
-      return true;
-    }
+    console.warn('In-page print failed, attempting hidden iframe print fallback:', printErr);
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.opacity = '0';
+      document.body.appendChild(iframe);
+      const doc = iframe.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Zikr+ Report - ${reportData.rangeLabel}</title>
+              <style>
+                body { margin: 0; padding: 20px; font-family: system-ui, sans-serif; }
+                @media print {
+                  body { padding: 0; }
+                  @page { size: A4; margin: 10mm; }
+                }
+              </style>
+            </head>
+            <body>${container.innerHTML}</body>
+          </html>
+        `);
+        doc.close();
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+          } catch {}
+          setTimeout(() => {
+            if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+          }, 30000);
+        }, 200);
+        return true;
+      }
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    } catch {}
     return false;
   } finally {
     if (document.body.contains(container)) {

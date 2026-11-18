@@ -337,16 +337,18 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     );
   };
 
+  const spanClass = className ? `select-text ${className}` : 'select-text';
+
   if (segments.length === 1 && !segments[0].highlight) {
     return (
-      <span className={className} dir={dir}>
+      <span className={spanClass} dir={dir}>
         {safeText}
       </span>
     );
   }
 
   return (
-    <span className={className} dir={dir}>
+    <span className={spanClass} dir={dir}>
       {segments.map((seg, idx) => {
         if (!seg.highlight) {
           return <React.Fragment key={idx}>{seg.text}</React.Fragment>;

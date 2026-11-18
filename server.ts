@@ -219,7 +219,8 @@ app.get('/api/sync-user/:userKey', (req, res) => {
     const currentUsers = loadServerUsers();
     const user = currentUsers[userKey];
     if (user) {
-      return res.json({ success: true, user });
+      const { password: _p, ...safeUser } = user;
+      return res.json({ success: true, user: safeUser });
     }
     return res.status(404).json({ error: 'User not found' });
   } catch (err: any) {
@@ -321,6 +322,13 @@ async function startServer() {
   }
 
 
+
+  // Safe Express error handler so malformed JSON or unexpected route errors never crash the server
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.warn('[Server] Handled request error:', err?.message || err);
+    if (res.headersSent) return;
+    res.status(err?.status || 500).json({ error: err?.message || 'Internal server error' });
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`ZikrMate server running at http://0.0.0.0:${PORT}`);

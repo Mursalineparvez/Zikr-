@@ -199,6 +199,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
   const [showDetailedTrajectory, setShowDetailedTrajectory] = useState<boolean>(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState<boolean>(false);
   const [selectedQuickPrayer, setSelectedQuickPrayer] = useState<any | null>(null);
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
 
   // 1-Second live ticker for live clock & countdowns
   useEffect(() => {
@@ -370,8 +371,17 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
 
   // GPS Auto-detector
   const handleDetectLocation = () => {
+    const showLocationNotice = (msg: string) => {
+      setLocationNotice(msg);
+      setTimeout(() => setLocationNotice(null), 4500);
+    };
+
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      showLocationNotice(
+        lang === 'bn'
+          ? 'আপনার ব্রাউজারে লোকেশন সার্ভিস সাপোর্ট করে না। তালিকা থেকে শহর বেছে নিন।'
+          : 'Geolocation is not supported by your browser. Please pick your city manually.'
+      );
       return;
     }
     setIsLocating(true);
@@ -391,7 +401,11 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
       },
       (err) => {
         setIsLocating(false);
-        alert(`Location detection: ${err.message}`);
+        showLocationNotice(
+          lang === 'bn'
+            ? `লোকেশন পাওয়া যায়নি (${err.message})। নিচে থেকে শহর বেছে নিতে পারেন।`
+            : `Location detection: ${err.message}`
+        );
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
@@ -615,6 +629,25 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
     <div className="relative space-y-4 animate-in fade-in duration-300 max-w-xl mx-auto pb-24 px-2 select-none sm:select-auto">
       {/* 0. Serene Mosque Skyline Backdrop Silhouette */}
       <MosqueSkylineBackdrop />
+
+      {locationNotice && (
+        <div
+          className={`relative z-20 px-3.5 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-2 ${
+            isDay
+              ? 'bg-amber-50 border-amber-200 text-amber-900'
+              : 'bg-amber-500/15 border-amber-400/30 text-amber-200'
+          }`}
+        >
+          <span>{locationNotice}</span>
+          <button
+            type="button"
+            onClick={() => setLocationNotice(null)}
+            className="text-xs font-bold opacity-70 hover:opacity-100 cursor-pointer shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* 1. Top Bar: Greeting, Hijri & Gregorian Dates, Weather Badge */}
       <div className="relative z-10 flex items-start justify-between gap-3 pt-2">

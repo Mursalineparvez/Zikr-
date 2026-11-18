@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ThemeMode, ZikrLanguage } from '../types';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   BOOK_METADATA,
   ARABER_GOTRO_CHAPTERS,
@@ -428,7 +429,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   const handleCopy = (text: string, id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (soundEnabled) soundHaptics.playTap();
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };

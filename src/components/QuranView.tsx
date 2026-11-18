@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   ALL_114_SURAHS,
   SurahMeta,
@@ -443,7 +444,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     const sName = isBn ? ayah.surahNameBn : getLocalizedSurahName(ayah.surahNumber, selectedLanguage);
     const transText = isBn ? ayah.translationBn : ayah.translationEn;
     const text = `${ayah.arabic}\n\n${transText}\n— ${sName} (${isBn ? 'আয়াত' : 'Ayah'} : ${ayah.ayahNumber})\n[${isBn ? 'পবিত্র আল-কুরআন' : 'The Noble Quran'}]`;
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     showTopicToast(isBn ? `আয়াত ${ayah.surahNameBn}:${ayah.ayahNumber} কপি করা হয়েছে` : `Ayah ${sName}:${ayah.ayahNumber} copied`);
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -459,7 +460,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     const refText = getLocalizedHadithRef(h.referenceBn, selectedLanguage);
     const gradeText = h.gradeBn ? getLocalizedHadithGrade(h.gradeBn, selectedLanguage) : '';
     parts.push(`— ${refText}${gradeText ? ` [${isBn ? 'মান' : 'Grade'}: ${gradeText}]` : ''}`);
-    navigator.clipboard.writeText(parts.join('\n\n'));
+    void copyToClipboard(parts.join('\n\n'));
     showTopicToast(isBn ? 'হাদীস শরীফ কপি করা হয়েছে' : 'Hadith copied');
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -482,7 +483,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     const full = isBn
       ? `【 বিষয়: ${topic.nameBn} 】\n\n📖 পবিত্র কুরআনের আয়াত:\n${ayahsText}\n\n📜 নির্ভরযোগ্য হাদীস শরীফ:\n${hadithsText}\n\n[পবিত্র কুরআন ও সহীহ হাদীস সংকলন]`
       : `【 Topic: ${tName} 】\n\n📖 Quranic Verses:\n${ayahsText}\n\n📜 Authentic Hadith:\n${hadithsText}\n\n[Quran & Sahih Hadith Collection]`;
-    navigator.clipboard.writeText(full);
+    void copyToClipboard(full);
     showTopicToast(isBn ? `${topic.nameBn} বিষয়ের সম্পূর্ণ বিবরণ কপি করা হয়েছে` : `${tName} copied`);
     if (soundEnabled) soundHaptics.playTap();
   };
@@ -1209,7 +1210,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     setIsCachingAudio(true);
     try {
       if ('caches' in window) {
-        const cache = await caches.open('zikrmate-audio-v2');
+        const cache = await caches.open('zikrmate-audio-v6');
         const urls = surahDetail.ayahs.map(
           (a) => a.audioUrl || `https://cdn.islamic.network/quran/audio/128/${selectedReciterId}/${a.globalNumber}.mp3`
         );
@@ -1261,7 +1262,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
           // Non-blocking offline cache after audio has already started smoothly
           if ('caches' in window) {
             setTimeout(() => {
-              caches.open('zikrmate-audio-v2').then((cache) => {
+              caches.open('zikrmate-audio-v6').then((cache) => {
                 cache.add(audioUrl).catch(() => {});
               }).catch(() => {});
             }, 1000);
@@ -1419,7 +1420,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
     const textToCopy = isBn
       ? `【${tafsirContent.author}】\nসূরা ${surahDetail.englishName} (${surahDetail.name}) : আয়াত ${activeTafsirAyah.number}\n\n${activeTafsirAyah.arabic}\n\n"${activeTafsirAyah.translation}"\n\nতাফসীর ও ব্যাখ্যা:\n${tafsirContent.text}`
       : `【${tafsirContent.author}】\n${sLabel} (${surahDetail.name}) : Ayah ${activeTafsirAyah.number}\n\n${activeTafsirAyah.arabic}\n\n"${activeTafsirAyah.translation}"\n\nTafsir & Commentary:\n${tafsirContent.text}`;
-    navigator.clipboard.writeText(textToCopy);
+    void copyToClipboard(textToCopy);
     setIsTafsirCopied(true);
     if (soundEnabled) soundHaptics.playMilestone();
     setTimeout(() => setIsTafsirCopied(false), 2200);
@@ -1434,7 +1435,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       transFormatted = ayah.translations.map((t) => `【${t.translator}】\n${t.text}`).join('\n\n');
     }
     const text = `${ayah.arabic}\n\n${transFormatted}\n\n[${isBn ? `সূরা ${surahDetail.englishName} : আয়াত ${ayah.number}` : `${getLocalizedSurahName(surahDetail.number, selectedLanguage)} : Ayah ${ayah.number}`}]`;
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     setCopiedAyah(ayah.number);
     setTimeout(() => setCopiedAyah(null), 2000);
     setActiveAyahActionMenu(null);
@@ -1453,12 +1454,20 @@ export const QuranView: React.FC<QuranViewProps> = ({
       : `${getLocalizedSurahName(surahDetail.number, selectedLanguage)} (${ayah.number})`;
     const text = `${ayah.arabic}\n\n${transFormatted}\n\n- ${refLabel}`;
     if (navigator.share) {
-      navigator.share({
-        title: isBn ? `সূরা ${surahDetail.englishName} - আয়াত ${ayah.number}` : `${getLocalizedSurahName(surahDetail.number, selectedLanguage)} - Ayah ${ayah.number}`,
-        text: text,
-      });
+      navigator
+        .share({
+          title: isBn
+            ? `সূরা ${surahDetail.englishName} - আয়াত ${ayah.number}`
+            : `${getLocalizedSurahName(surahDetail.number, selectedLanguage)} - Ayah ${ayah.number}`,
+          text: text,
+        })
+        .catch(() => {
+          void copyToClipboard(text);
+          setCopiedAyah(ayah.number);
+          setTimeout(() => setCopiedAyah(null), 2000);
+        });
     } else {
-      navigator.clipboard.writeText(text);
+      void copyToClipboard(text);
       setCopiedAyah(ayah.number);
       setTimeout(() => setCopiedAyah(null), 2000);
     }

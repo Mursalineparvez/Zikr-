@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   ALL_114_SURAHS,
   SurahMeta,
@@ -282,7 +283,7 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
         ? `— ${surahDetail.name}، آية: ${ayah.number}`
         : `— Surah ${surahDetail.englishName}, Ayah ${ayah.number}`;
     const text = `${ayah.arabic} ﴿${toArabicNumerals(ayah.number)}﴾\n\n${refLine}`;
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     setCopiedAyah(ayah.number);
     if (soundEnabled) soundHaptics.playTap();
     setTimeout(() => setCopiedAyah(null), 2000);

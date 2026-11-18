@@ -5,6 +5,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ThemeMode, ZikrLanguage } from '../types';
+import { copyToClipboard } from '../utils/clipboard';
 import {
   BookOpen,
   Calendar,
@@ -698,7 +699,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
     text += `— Zikr+ App (zikrplus.app)`;
 
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     setCopiedChapter(true);
     if (soundEnabled) soundHaptics.playTargetChime();
     setTimeout(() => setCopiedChapter(false), 2000);

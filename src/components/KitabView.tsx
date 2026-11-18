@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ISLAMIC_KITABS, KitabItem, KitabChapter } from '../utils/kitabData';
+import { copyToClipboard } from '../utils/clipboard';
 import { BookMarked, Search, ArrowLeft, Check, Copy, ChevronRight, Sparkles } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { KITAB_UI } from '../utils/appTranslations';
@@ -37,7 +38,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
 
   const handleCopyChapter = (chapter: KitabChapter) => {
     const text = `${chapter.title}\n\n${chapter.content}\n\nKey Takeaways:\n${chapter.keyTakeaways.map((t) => `- ${t}`).join('\n')}\n\n[From ${selectedKitab?.title}]`;
-    navigator.clipboard.writeText(text);
+    void copyToClipboard(text);
     setCopiedId(chapter.id);
     setTimeout(() => setCopiedId(null), 2000);
   };
