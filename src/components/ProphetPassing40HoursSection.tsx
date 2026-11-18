@@ -28,6 +28,7 @@ import {
   SpecialCollectionId,
 } from '../data/prophet40HoursExtended';
 import { LAST_10_DAYS_EVENTS, LAST_10_DAYS_PARTS } from '../data/prophetLast10DaysData';
+import { CHILDREN_EVENTS, CHILDREN_PARTS } from '../data/prophetChildrenData';
 import { copyToClipboard } from '../utils/clipboard';
 import { soundHaptics } from '../utils/audioHaptics';
 import { ShareDownloadButtons } from './ContentShareModal';
@@ -94,6 +95,16 @@ const getCollectionData = (
       events: LAST_10_DAYS_EVENTS,
     };
   }
+  if (id === 'prophet-children-biography') {
+    return {
+      parts: CHILDREN_PARTS.map((p) => ({
+        ...p,
+        dayTagBn: p.childNameBn,
+        dayTagEn: p.childNameEn,
+      })),
+      events: CHILDREN_EVENTS,
+    };
+  }
   return {
     parts: PASSING_40_PARTS,
     events: PASSING_40_EVENTS.map((ev) => {
@@ -142,6 +153,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
   >({
     'prophet-40-hours': { 1: true },
     'prophet-last-10-days': { 1: true },
+    'prophet-children-biography': { 1: true },
   });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -425,6 +437,8 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
       fileNamePrefix:
         col.id === 'prophet-last-10-days'
           ? 'Rasulullah-Last-10-Days'
+          : col.id === 'prophet-children-biography'
+          ? 'Rasulullah-Children-Biography'
           : 'Rasulullah-40-Hours-After-Passing',
     };
   };
@@ -433,7 +447,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
     <>
       {/* ====================================================================
           LEVEL 1: SCALABLE SPECIAL SEERAH COLLECTIONS INDEX (সূচিপত্র)
-          Cleanly displays Collection 01 & Collection 02 side-by-side
+          Cleanly displays Collection 01, 02 & 03 side-by-side
           ==================================================================== */}
       <section
         aria-labelledby="special-seerah-collections-heading"
@@ -479,22 +493,26 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
           </span>
         </div>
 
-        {/* Scalable 2-Column Illuminated Collection Folio Grid */}
+        {/* Scalable 3-Column Illuminated Collection Folio Grid */}
         <div
           className={`grid gap-5 items-stretch ${
-            SEERAT_SPECIAL_COLLECTIONS.length > 1 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
+            SEERAT_SPECIAL_COLLECTIONS.length > 1 ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'
           }`}
         >
           {SEERAT_SPECIAL_COLLECTIONS.map((col, idx) => {
             const { parts } = getCollectionData(col.id);
             const coverGradient =
-              idx % 2 === 0
+              idx === 0
                 ? 'from-[#053328] via-[#062b22] to-[#041d17]'
-                : 'from-[#092d34] via-[#062724] to-[#041b17]';
+                : idx === 1
+                ? 'from-[#092d34] via-[#062724] to-[#041b17]'
+                : 'from-[#331f05] via-[#2d1b06] to-[#1c1003]';
             const topRibbon =
-              idx % 2 === 0
+              idx === 0
                 ? 'linear-gradient(90deg, #059669 0%, #d97706 48%, #fbbf24 75%, rgba(16,185,129,0.2) 100%)'
-                : 'linear-gradient(90deg, #0d9488 0%, #f59e0b 50%, #fde68a 78%, rgba(13,148,136,0.2) 100%)';
+                : idx === 1
+                ? 'linear-gradient(90deg, #0d9488 0%, #f59e0b 50%, #fde68a 78%, rgba(13,148,136,0.2) 100%)'
+                : 'linear-gradient(90deg, #d97706 0%, #f59e0b 50%, #fef3c7 78%, rgba(217,119,6,0.2) 100%)';
 
             return (
               <article
@@ -605,7 +623,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   </div>
                 </div>
 
-                {/* Quick 7-Part Table of Contents Strip (Direct Jump Links) */}
+                {/* Quick Part Table of Contents Strip */}
                 <div
                   className={`p-4 space-y-3 border-t flex-1 flex flex-col justify-between ${
                     isDay ? 'border-stone-200/80' : 'border-emerald-800/60'
@@ -704,7 +722,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
 
       {/* ====================================================================
           LEVEL 2: COLLECTION-AGNOSTIC FULL-VIEWPORT ARCHIVAL MANUSCRIPT READER
-          Supports both Collection 01 (32 events) & Collection 02 (35 events)
+          Supports Collection 01, 02 & 03 seamlessly
           ==================================================================== */}
       {isReaderOpen &&
         activeCollectionMeta &&

@@ -25,7 +25,10 @@ export interface Passing40ExtendedDetail {
   references: HadithReferenceItem[];
 }
 
-export type SpecialCollectionId = 'prophet-40-hours' | 'prophet-last-10-days';
+export type SpecialCollectionId =
+  | 'prophet-40-hours'
+  | 'prophet-last-10-days'
+  | 'prophet-children-biography';
 
 export interface SeeratSpecialCollectionMeta {
   id: SpecialCollectionId;
@@ -58,10 +61,10 @@ export const SEERAT_SPECIAL_COLLECTIONS: SeeratSpecialCollectionMeta[] = [
     titleBn: 'রাসূলুল্লাহ ﷺ-এর ইন্তেকালের পরের ৪০ ঘণ্টা',
     titleEn: '40 Hours After the Passing of Prophet Muhammad ﷺ',
     arabicTitle: 'الأربعون ساعة بعد وفاة النبي ﷺ',
-    eraLabelBn: '১১ হিজরি · ১২–১৪ রবিউল আউয়াল',
+    eraLabelBn: '১১ হিজরি · ১২– রবিউল আউয়াল',
     eraLabelEn: '11 AH · 12–14 Rabi al-Awwal',
     summaryBn:
-      'সোমবার দুপুরে আয়েশা (রা.)-এর হুজরায় প্রিয় নবীর শেষ বিদায় থেকে শুরু করে আবু বকর (রা.)-এর অবিচল ভাষণ, সাকিফা বনু সাইদায় খিলাফত পরামর্শ, সাধারণ বাইয়াত, জামাসহ গোসল, দলে দলে জানাজা ও বুধবার রাতে রওজা শরিফে পবিত্র দাফন পর্যন্ত ৭টি পর্বে ৩২টি প্রামাণ্য ঘটনার পূর্ণাঙ্গ ঐতিহাসিক দলিল।',
+      'সোমবার দুপুরে আয়েশা (را.)-এর হুজরায় প্রিয় নবীর শেষ বিদায় থেকে শুরু করে আবু বকর (ਰਾ.)-এর অবিচল ভাষণ, সাকিফা বনু সাইদায় খিলাফত পরামর্শ, সাধারণ বাইয়াত, জামাসহ গোসল, দলে দলে জানাজা ও বুধবার রাতে রওজা শরিফে পবিত্র দাফন পর্যন্ত ৭টি পর্বে ৩২টি প্রামাণ্য ঘটনার পূর্ণাঙ্গ ঐতিহাসিক দলিল।',
     summaryEn:
       'A complete chronological chronicle of 32 verified events across 7 parts—from the Prophet’s ﷺ final moments in Aisha’s (RA) chamber on Monday midday through Abu Bakr’s historic address, Saqifah, the general pledge, his Ghusl, funeral prayers, and sacred burial on Wednesday night.',
     partsCount: 7,
@@ -90,6 +93,26 @@ export const SEERAT_SPECIAL_COLLECTIONS: SeeratSpecialCollectionMeta[] = [
     durationEn: '~10–14 Days (35 Events)',
     primarySourcesBn: 'সহীহ বুখারী, সহীহ মুসলিম, সুনান আবু দাউদ, জামে আত-তিরমিযী, সুনান ইবনে মাজাহ ও মুসনাদে আহমাদ',
     primarySourcesEn: 'Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, Jami‘ at-Tirmidhi, Sunan Ibn Majah & Musnad Ahmad',
+  },
+  {
+    id: 'prophet-children-biography',
+    volumeNoBn: 'সংকলন ০৩',
+    volumeNoEn: 'Collection 03',
+    titleBn: 'রাসূলুল্লাহ ﷺ-এর সন্তানদের জীবনী',
+    titleEn: 'The Lives of the Children of Prophet Muhammad ﷺ',
+    arabicTitle: 'أولاد النبي محمد ﷺ وبناته',
+    eraLabelBn: 'মক্কা ও মদিনা · জন্ম, বিয়ে ও ইন্তেকাল',
+    eraLabelEn: 'Makkah & Madinah · Birth, Marriage & Passing',
+    summaryBn:
+      'রাসূলুল্লাহ ﷺ-এর ৭ জন সন্তান (কাসিম, যায়নাব, রুকাইয়া, উম্মে কুলসুম, ফাতিমা, আব্দুল্লাহ ও ইবরাহীম)-এর জন্ম, শৈশব, হিজরত, বদরের মুক্তিপণ, উসমান (ਰਾ.)-এর সঙ্গে দুই কন্যার বিবাহ, ফাতিমা (रा.)-এর জান্নাতের নেত্রী হওয়া এবং ইবরাহীমের বিদায় পর্যন্ত ১৪টি প্রামাণ্য ঐতিহাসিক ঘটনা।',
+    summaryEn:
+      'A comprehensive 7-part chronicle of all 7 children of Prophet Muhammad ﷺ (Qasim, Zaynab, Ruqayyah, Umm Kulthum, Fatimah, Abdullah, and Ibrahim)—covering their births, marriages, Hijrah, Badr ransom, Dhun-Nurayn, Fatimah as leader of women in Paradise, and Ibrahim’s passing with verified Hadith citations.',
+    partsCount: 7,
+    eventsCount: 14,
+    durationBn: '৭ জন সন্তান · ১৪টি ঘটনা',
+    durationEn: '7 Children · 14 Events',
+    primarySourcesBn: 'সহীহ বুখারী, সহীহ মুসলিম, সুনান আবু দাউদ, জামে আত-তিরমিযী ও ইবনে সা‘দের আত-তাবাকাতুল কুবরা',
+    primarySourcesEn: 'Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, Jami‘ at-Tirmidhi & Ibn Sa‘d’s Tabaqat',
   },
 ];
 
