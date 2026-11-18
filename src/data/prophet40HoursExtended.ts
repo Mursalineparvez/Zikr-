@@ -25,8 +25,10 @@ export interface Passing40ExtendedDetail {
   references: HadithReferenceItem[];
 }
 
+export type SpecialCollectionId = 'prophet-40-hours' | 'prophet-last-10-days';
+
 export interface SeeratSpecialCollectionMeta {
-  id: 'prophet-40-hours';
+  id: SpecialCollectionId;
   volumeNoBn: string;
   volumeNoEn: string;
   titleBn: string;
@@ -68,6 +70,26 @@ export const SEERAT_SPECIAL_COLLECTIONS: SeeratSpecialCollectionMeta[] = [
     durationEn: '~36–40 Hours',
     primarySourcesBn: 'সহীহ বুখারী, সহীহ মুসলিম, সুনান আবু দাউদ, তিরমিযী, ইবনে মাজাহ, মুসনাদে আহমাদ ও ইবনে হিশাম',
     primarySourcesEn: 'Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, at-Tirmidhi, Ibn Majah, Musnad Ahmad & Ibn Hisham',
+  },
+  {
+    id: 'prophet-last-10-days',
+    volumeNoBn: 'সংকলন ০২',
+    volumeNoEn: 'Collection 02',
+    titleBn: 'রাসূলুল্লাহ ﷺ-এর ইন্তেকালের আগের শেষ ১০ দিন',
+    titleEn: 'The Final 10 Days Before the Passing of Prophet Muhammad ﷺ',
+    arabicTitle: 'الأيام العشرة الأخيرة قبل وفاة النبي ﷺ',
+    eraLabelBn: '১০–১১ হিজরি · বিদায়ের ইঙ্গিত থেকে দাফন',
+    eraLabelEn: '10–11 AH · From Farewell Signs to Burial',
+    summaryBn:
+      'সূরা আন-নাসর ও শেষ রমজানে দুবার কুরআন দাওর থেকে শুরু করে শেষ অসুস্থতা (প্রায় ১০–১৪ দিন), সাত মশক পানি, বৃহস্পতিবারের অসিয়ত, শেষ ইমামতি, শেষ দিনার দান, সোমবার ফজরের হাসি, শেষ মিসওয়াক, আর-রাফীকুল আ‘লা ও দাফন পর্যন্ত ৭টি পর্বে ৩৫টি প্রামাণ্য ঘটনার ধারাবাহিক টাইমলাইন।',
+    summaryEn:
+      'A chronological 7-part timeline of 35 authentic events—from Surah An-Nasr and the double Quran review through his 10–14 day final illness, Thursday’s counsels, last Maghrib prayer, final charity, Monday’s Fajr smile, last Siwak, Ar-Rafiq al-A‘la, and burial.',
+    partsCount: 7,
+    eventsCount: 35,
+    durationBn: 'প্রায় ১০–১৪ দিন (৩৫টি ঘটনা)',
+    durationEn: '~10–14 Days (35 Events)',
+    primarySourcesBn: 'সহীহ বুখারী, সহীহ মুসলিম, সুনান আবু দাউদ, জামে আত-তিরমিযী, সুনান ইবনে মাজাহ ও মুসনাদে আহমাদ',
+    primarySourcesEn: 'Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, Jami‘ at-Tirmidhi, Sunan Ibn Majah & Musnad Ahmad',
   },
 ];
 

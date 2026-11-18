@@ -178,6 +178,7 @@ import { SEERAT_PART_2 } from './seeratDataPart2';
 import { SEERAT_PART_3 } from './seeratDataPart3';
 import { SEERAT_PART_4 } from './seeratDataPart4';
 import { SEERAT_PDF_EVENTS_BY_AGE, SeeratVerifiedEvent } from './seeratPdfEvents';
+import { LAST_10_DAYS_AGE_VERIFIED_EVENTS } from './prophetLast10DaysData';
 
 export type { SeeratVerifiedEvent };
 
@@ -189,11 +190,13 @@ const RAW_SEERAT_DATABASE: SeeratAgeItem[] = [
 ];
 
 export const SEERAT_DATABASE: SeeratAgeItem[] = RAW_SEERAT_DATABASE.map((item) => {
-  const ageEvents = SEERAT_PDF_EVENTS_BY_AGE[item.age];
-  if (!ageEvents || ageEvents.length === 0) return item;
+  const baseEvents = SEERAT_PDF_EVENTS_BY_AGE[item.age] || [];
+  const last10Events = item.age === 63 ? LAST_10_DAYS_AGE_VERIFIED_EVENTS : [];
+  const combined = [...baseEvents, ...last10Events];
+  if (combined.length === 0) return item;
   return {
     ...item,
-    verifiedEvents: ageEvents,
+    verifiedEvents: combined,
   };
 });
 
