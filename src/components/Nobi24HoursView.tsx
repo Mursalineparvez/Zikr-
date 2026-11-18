@@ -12,11 +12,13 @@ import {
   Heart,
   Volume2,
   VolumeX,
+  ArrowLeft,
   ArrowRight,
   Calendar,
   BookMarked,
   RotateCcw,
   Sun,
+  Sunrise,
   Moon,
   Flame,
   Compass,
@@ -95,8 +97,12 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
   // Sub-tabs: 'wheel' | 'timeline' | 'articles' | 'duas' | 'tracker'
   const [activeTab, setActiveTab] = useState<'wheel' | 'timeline' | 'articles' | 'duas' | 'tracker'>('wheel');
 
-  // Currently selected slot in Wheel view
+  // Currently selected slot in Hero Watch Dial
   const [selectedSlotId, setSelectedSlotId] = useState<string>('subh_sadiq_fajr');
+  // Opened phase ID in the 14-phase gallery (null = show 14 creative cards; string = show full details)
+  const [openedSlotId, setOpenedSlotId] = useState<string | null>(null);
+  // Celestial period filter in the 14-phase gallery
+  const [dialPeriodFilter, setDialPeriodFilter] = useState<'all' | 'morning' | 'midday' | 'night'>('all');
 
   // Filters in Timeline view
   const [timelineFilter, setTimelineFilter] = useState<'all' | 'dawn' | 'midday' | 'night'>('all');
@@ -453,9 +459,73 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
 
   const handleStepSlot = (dir: -1 | 1) => {
     const nextIdx = (activeSlotIndex + dir + NOBI_24_TIME_SLOTS.length) % NOBI_24_TIME_SLOTS.length;
-    setSelectedSlotId(NOBI_24_TIME_SLOTS[nextIdx].id);
+    const nextId = NOBI_24_TIME_SLOTS[nextIdx].id;
+    setSelectedSlotId(nextId);
+    if (openedSlotId !== null) {
+      setOpenedSlotId(nextId);
+    }
     if (soundEnabled) soundHaptics.playTap();
   };
+
+  const openPhaseDetail = (slotId: string, shouldScroll = true) => {
+    setSelectedSlotId(slotId);
+    setOpenedSlotId(slotId);
+    setActiveTab('wheel');
+    if (soundEnabled) soundHaptics.playTap();
+    if (shouldScroll) {
+      window.requestAnimationFrame(() => {
+        detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  };
+
+  const celestialGroups = useMemo(
+    () => [
+      {
+        key: 'morning' as const,
+        label: isBn ? 'ভোর ও সকাল' : lang === 'ar' ? 'الفجر والصباح' : 'Dawn & Morning',
+        subLabel: isBn ? 'সুবহে সাদিক থেকে বেলা ১১:৩০ · ৪টি পর্ব' : '04:30 AM – 11:30 AM · 4 Phases',
+        arabic: 'الفجر والضحى',
+        indices: [0, 1, 2, 3],
+        icon: Sunrise,
+        dayHeaderTint: 'text-amber-700',
+        nightHeaderTint: 'text-amber-300',
+        cardTintDay: 'from-amber-50/70 via-white to-white',
+        cardTintNight: 'from-amber-500/[0.06] via-[#0a2127] to-[#091d23]',
+      },
+      {
+        key: 'midday' as const,
+        label: isBn ? 'দুপুর ও বিকাল' : lang === 'ar' ? 'الظهر والعصر' : 'Midday & Afternoon',
+        subLabel: isBn ? 'বেলা ১১:৩০ থেকে মাগরিব (সন্ধ্যা ৬:০০) · ৫টি পর্ব' : '11:30 AM – 06:00 PM · 5 Phases',
+        arabic: 'الظهر والعصر',
+        indices: [4, 5, 6, 7, 8],
+        icon: Sun,
+        dayHeaderTint: 'text-emerald-700',
+        nightHeaderTint: 'text-emerald-300',
+        cardTintDay: 'from-emerald-50/70 via-white to-white',
+        cardTintNight: 'from-emerald-500/[0.07] via-[#0a2127] to-[#091d23]',
+      },
+      {
+        key: 'night' as const,
+        label: isBn ? 'সন্ধ্যা ও গভীর রাত' : lang === 'ar' ? 'المساء والليل' : 'Evening & Night',
+        subLabel: isBn ? 'মাগরিব থেকে শেষ রাত ও তাহাজ্জুদ · ৫টি পর্ব' : '06:00 PM – 04:30 AM · 5 Phases',
+        arabic: 'المساء والتهجد',
+        indices: [9, 10, 11, 12, 13],
+        icon: Moon,
+        dayHeaderTint: 'text-indigo-700',
+        nightHeaderTint: 'text-indigo-300',
+        cardTintDay: 'from-indigo-50/60 via-white to-white',
+        cardTintNight: 'from-indigo-500/[0.08] via-[#0a2127] to-[#091d23]',
+      },
+    ],
+    [isBn, lang]
+  );
+
+  // Normalized 0..100 position along the Prophet's day starting at 04:30 (Subh Sadiq)
+  const liveDayHorizonPercent = useMemo(() => {
+    const shifted = (currentHourVal - 4.5 + 24) % 24;
+    return Math.min(98, Math.max(2, (shifted / 24) * 100));
+  }, [currentHourVal]);
 
   // Life Balance distribution calculated directly from the 14 slots
   const categoryBreakdown = useMemo(() => {
@@ -720,11 +790,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                     )}
                     <button
                       type="button"
-                      onClick={() => {
-                        setActiveTab('wheel');
-                        if (soundEnabled) soundHaptics.playTap();
-                        detailSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }}
+                      onClick={() => openPhaseDetail(activeSlot.id, true)}
                       className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-black inline-flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
                     >
                       <span>{strings.liveBanner.viewDetails}</span>
@@ -926,6 +992,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                           className="cursor-pointer transition-all duration-200 hover:opacity-100"
                           onClick={() => {
                             setSelectedSlotId(slot.id);
+                            if (openedSlotId !== null) setOpenedSlotId(slot.id);
                             setActiveTab('wheel');
                             if (soundEnabled) soundHaptics.playTap();
                           }}
@@ -1013,11 +1080,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                 <button
                   key={slot.id}
                   type="button"
-                  onClick={() => {
-                    setSelectedSlotId(slot.id);
-                    setActiveTab('wheel');
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
+                  onClick={() => openPhaseDetail(slot.id, true)}
                   className={`px-2 py-1 rounded-lg border text-[10px] font-bold whitespace-nowrap flex items-center gap-1 transition shrink-0 cursor-pointer ${
                     isSelected
                       ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm'
@@ -1035,454 +1098,703 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
         </div>
       </div>
 
-      {/* 2. NAVIGATION SUB-TABS */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('wheel');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`min-h-[44px] flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeTab === 'wheel'
-              ? 'bg-[#006A4E] text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Clock className="w-4 h-4" />
-          <span>{strings.tabs.wheel}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('timeline');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`min-h-[44px] flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeTab === 'timeline'
-              ? 'bg-[#006A4E] text-white border-emerald-500 shadow-md'
-              : isDay
-              ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Calendar className="w-4 h-4" />
-          <span>{strings.tabs.timeline}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('articles');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`min-h-[44px] flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeTab === 'articles'
-              ? 'bg-amber-600 text-white border-amber-500 shadow-md'
-              : isDay
-              ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <BookOpen className="w-4 h-4" />
-          <span>{strings.tabs.articles}</span>
-          <span className="text-[11px] font-mono tabular-nums opacity-85">
-            ({isBn ? toBnDigits(NOBI_24_CHAPTERS.length) : NOBI_24_CHAPTERS.length})
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('duas');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`min-h-[44px] flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeTab === 'duas'
-              ? 'bg-rose-600 text-white border-rose-500 shadow-md'
-              : isDay
-              ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <Heart className="w-4 h-4" />
-          <span>{strings.tabs.duas}</span>
-          <span className="text-[11px] font-mono tabular-nums opacity-85">
-            ({isBn ? toBnDigits(NOBI_24_DUAS.length) : NOBI_24_DUAS.length})
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('tracker');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`min-h-[44px] flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition active:scale-95 cursor-pointer shrink-0 border ${
-            activeTab === 'tracker'
-              ? 'bg-teal-600 text-white border-teal-500 shadow-md'
-              : isDay
-              ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
-              : 'bg-[#092226] hover:bg-[#123840] border-[#153e46] text-emerald-300'
-          }`}
-        >
-          <CheckCircle2 className="w-4 h-4" />
-          <span>{strings.tabs.tracker}</span>
-          <span className="text-[11px] font-mono tabular-nums opacity-85">
-            {completedChecklistCount}/{NOBI_DAILY_CHECKLIST.length}
-          </span>
-        </button>
+      {/* 2. COHESIVE SEGMENTED NAVIGATION TABS */}
+      <div
+        className={`flex items-center gap-1.5 overflow-x-auto p-1.5 rounded-2xl border scrollbar-none ${
+          isDay ? 'bg-slate-100/90 border-slate-200/80' : 'bg-[#07181d] border-[#143942]'
+        }`}
+      >
+        {[
+          {
+            id: 'wheel' as const,
+            label: strings.tabs.wheel,
+            count: isBn ? toBnDigits(NOBI_24_TIME_SLOTS.length) : String(NOBI_24_TIME_SLOTS.length),
+            icon: Clock,
+          },
+          {
+            id: 'timeline' as const,
+            label: strings.tabs.timeline,
+            count: null,
+            icon: Calendar,
+          },
+          {
+            id: 'articles' as const,
+            label: strings.tabs.articles,
+            count: isBn ? toBnDigits(NOBI_24_CHAPTERS.length) : String(NOBI_24_CHAPTERS.length),
+            icon: BookOpen,
+          },
+          {
+            id: 'duas' as const,
+            label: strings.tabs.duas,
+            count: isBn ? toBnDigits(NOBI_24_DUAS.length) : String(NOBI_24_DUAS.length),
+            icon: Heart,
+          },
+          {
+            id: 'tracker' as const,
+            label: strings.tabs.tracker,
+            count: isBn
+              ? `${toBnDigits(completedChecklistCount)}/${toBnDigits(NOBI_DAILY_CHECKLIST.length)}`
+              : `${completedChecklistCount}/${NOBI_DAILY_CHECKLIST.length}`,
+            icon: CheckCircle2,
+          },
+        ].map((tab) => {
+          const IconComp = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.id);
+                if (tab.id === 'wheel') setOpenedSlotId(null);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`min-h-[42px] flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all active:scale-[0.98] cursor-pointer shrink-0 ${
+                isActive
+                  ? 'bg-[#006A4E] text-white shadow-sm'
+                  : isDay
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+                  : 'text-teal-200/80 hover:text-white hover:bg-[#0e2d35]'
+              }`}
+            >
+              <IconComp className="w-4 h-4 shrink-0" />
+              <span>{tab.label}</span>
+              {tab.count && (
+                <span
+                  className={`text-[11px] font-mono tabular-nums ${
+                    isActive ? 'text-amber-200' : 'opacity-65'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
-      {/* 3. TAB 1: LIFE BALANCE + QUICK 14-PHASE INDEX + ACTIVE SLOT INSPECTOR */}
+      {/* 3. TAB 1: CREATIVE 14-PHASE CELESTIAL GALLERY + CLICK-TO-OPEN DETAIL READER */}
       {activeTab === 'wheel' && (
         <div ref={detailSectionRef} className="space-y-5">
-          {/* Slim 24-Hour Life Balance Distribution Bar */}
-          <div
-            className={`px-4 py-3.5 rounded-2xl border shadow-2xs space-y-2.5 ${
-              isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Compass className={`w-4 h-4 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
-                <h2 className={`text-xs sm:text-sm font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                  {isBn ? '২৪ ঘণ্টার ভারসাম্যপূর্ণ জীবনবণ্টন' : '24-Hour Prophetic Life Balance'}
-                </h2>
-              </div>
-              <span className={`text-[11px] font-mono font-semibold tabular-nums ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                {isBn ? 'মোট: ২৪ ঘণ্টা · ১৪ পর্ব' : 'Total: 24.0 Hours · 14 Phases'}
-              </span>
-            </div>
-
-            {/* Stacked Progress Bar */}
-            <div className="h-2.5 w-full rounded-full overflow-hidden flex gap-0.5 bg-slate-200/60 dark:bg-slate-800/60">
-              {categoryBreakdown.map((cat) => (
-                <div
-                  key={cat.key}
-                  style={{
-                    width: `${(cat.hours / 24) * 100}%`,
-                    backgroundColor: cat.color,
-                  }}
-                  title={`${cat.label}: ${cat.hours}h`}
-                  className="h-full transition-all duration-300"
-                />
-              ))}
-            </div>
-
-            {/* Clean Legend Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {categoryBreakdown.map((cat) => {
-                const pct = Math.round((cat.hours / 24) * 100);
-                return (
-                  <button
-                    key={cat.key}
-                    type="button"
-                    onClick={() => {
-                      setCategoryFilter(cat.key);
-                      setTimelineFilter('all');
-                      setActiveTab('timeline');
-                    }}
-                    className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl border text-left transition cursor-pointer ${
-                      isDay
-                        ? 'bg-slate-50/80 hover:bg-slate-100 border-slate-200/80'
-                        : 'bg-[#07191e] hover:bg-[#0d2b33] border-[#133841]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      <span className={`text-[11px] font-bold truncate ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
-                        {cat.label}
-                      </span>
-                    </div>
-                    <span className={`text-[11px] font-mono font-black tabular-nums shrink-0 ${isDay ? 'text-slate-900' : 'text-emerald-300'}`}>
-                      {isBn ? `${toBnDigits(cat.hours)}ঘ (${toBnDigits(pct)}%)` : `${cat.hours}h`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-            {/* Compact 14-Phase Interactive Directory Column */}
-            <div
-              className={`lg:col-span-5 p-4 rounded-3xl border shadow-sm space-y-2.5 ${
-                isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
-              }`}
-            >
-              <div className="flex items-center justify-between px-1 pb-1 border-b border-slate-200/70 dark:border-[#153c45]">
-                <h3 className={`text-xs sm:text-sm font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                  {strings.wheel.title}
-                </h3>
-                {selectedSlotId !== currentLiveSlot.id && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedSlotId(currentLiveSlot.id);
-                      if (soundEnabled) soundHaptics.playTap();
-                    }}
-                    className="text-[11px] font-bold text-amber-600 dark:text-amber-300 hover:underline cursor-pointer"
-                  >
-                    {isBn ? 'এখনকার সময়' : 'Jump to Live'}
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-1.5 max-h-[520px] overflow-y-auto pr-0.5">
-                {NOBI_24_TIME_SLOTS.map((slot, idx) => {
-                  const locSlot = getLocalizedSlot(slot, lang);
-                  const isSelected = slot.id === activeSlot.id;
-                  const isLive = slot.id === currentLiveSlot.id;
-                  return (
-                    <button
-                      key={slot.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedSlotId(slot.id);
-                        if (soundEnabled) soundHaptics.playTap();
-                      }}
-                      className={`w-full px-3 py-2.5 rounded-2xl border text-left flex items-center justify-between gap-2.5 transition cursor-pointer ${
-                        isSelected
-                          ? isDay
-                            ? 'bg-emerald-50 border-emerald-500 shadow-2xs'
-                            : 'bg-[#103840] border-emerald-400/70 shadow-2xs'
-                          : isDay
-                          ? 'bg-slate-50/70 hover:bg-slate-100 border-slate-200/70'
-                          : 'bg-[#07191e] hover:bg-[#0d2b33] border-[#133841]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span
-                          className="w-7 h-7 rounded-xl flex items-center justify-center text-sm shrink-0"
-                          style={{ backgroundColor: `${slot.color}22`, border: `1px solid ${slot.color}55` }}
-                        >
-                          {slot.icon}
-                        </span>
-                        <div className="min-w-0">
-                          <div className={`text-xs font-extrabold truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                            {isBn ? `${toBnDigits(idx + 1)}. ` : `${idx + 1}. `}
-                            {locSlot.title}
-                          </div>
-                          <div className={`text-[10px] font-semibold truncate ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {locSlot.timeSpan}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {isLive && (
-                          <span className="text-[10px] font-black text-amber-600 dark:text-amber-300">
-                            {isBn ? 'এখন' : 'LIVE'}
-                          </span>
-                        )}
-                        <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-emerald-500' : 'text-slate-400'}`} />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Active Slot Detailed Inspection Column */}
-            <div
-              className={`lg:col-span-7 p-5 sm:p-6 rounded-3xl border shadow-sm space-y-5 transition-colors ${
-                isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
-              }`}
-            >
-              {/* Header with Title and Actions */}
-              <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200/70 dark:border-[#153c45]">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xl">{activeSlot.icon}</span>
-                    <span
-                      className="px-2.5 py-0.5 rounded-md text-[11px] font-bold text-white"
-                      style={{ backgroundColor: activeSlot.color }}
-                    >
-                      {locActiveSlot.categoryLabel}
-                    </span>
-                    <span className={`text-[11px] font-mono font-bold tabular-nums ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                      {formatDurationLabel(activeSlot.startHour, activeSlot.endHour, isBn)}
-                    </span>
-                    {activeSlot.id === currentLiveSlot.id && (
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-400 text-slate-950">
-                        LIVE NOW
-                      </span>
-                    )}
-                  </div>
-                  <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    {locActiveSlot.title}
-                  </h3>
-                  <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                    {locActiveSlot.timeSpan}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                  <ShareDownloadButtons
-                    variant="compact"
-                    selectedLanguage={lang}
-                    themeMode={themeMode}
-                    onShare={() => openShareModal(buildSlotShareContent(activeSlot, activeSlotIndex), 'share')}
-                    onDownload={() => openShareModal(buildSlotShareContent(activeSlot, activeSlotIndex), 'download')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleCopyText(
-                        `${locActiveSlot.title} (${locActiveSlot.timeSpan})\n${locActiveSlot.summary}\n\n${locActiveSlot.actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}`,
-                        `slot_${activeSlot.id}`
-                      )
-                    }
-                    className={`min-w-[40px] min-h-[40px] p-2 rounded-xl border transition active:scale-95 cursor-pointer flex items-center justify-center ${
-                      copiedItemId === `slot_${activeSlot.id}`
-                        ? 'bg-emerald-600 text-white border-emerald-500'
-                        : isDay
-                        ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                        : 'bg-[#123138] hover:bg-[#18444e] text-emerald-300 border-[#1c4d57]'
-                    }`}
-                    title={strings.common.copy}
-                  >
-                    {copiedItemId === `slot_${activeSlot.id}` ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePlaySpeech(`${locActiveSlot.title}. ${locActiveSlot.summary}`, activeSlot.id)}
-                    className={`min-w-[40px] min-h-[40px] p-2 rounded-xl border transition active:scale-95 cursor-pointer flex items-center justify-center ${
-                      isPlayingAudio === activeSlot.id
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
-                        : isDay
-                        ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                        : 'bg-[#123138] hover:bg-[#18444e] text-emerald-300 border-[#1c4d57]'
-                    }`}
-                    title={isPlayingAudio === activeSlot.id ? strings.duas.stopAudio : strings.duas.listenDua}
-                  >
-                    {isPlayingAudio === activeSlot.id ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Summary Callout */}
+          {/* OVERVIEW MODE: Show Celestial Horizon + 14 Beautiful Cards (No bottom/side detail clutter) */}
+          {openedSlotId === null ? (
+            <div className="space-y-5">
+              {/* Celestial 24-Hour Sky Horizon & Life Balance Card */}
               <div
-                className={`p-4 rounded-2xl border text-xs sm:text-sm leading-relaxed font-medium ${
-                  isDay
-                    ? 'bg-[#f4faf7] border-emerald-200/80 text-emerald-950'
-                    : 'bg-emerald-950/30 border-emerald-800/40 text-emerald-100'
+                className={`relative overflow-hidden p-4 sm:p-5 rounded-3xl border shadow-xs space-y-4 ${
+                  isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
                 }`}
               >
-                {locActiveSlot.summary}
-              </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Compass className={`w-4 h-4 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
+                      <h2 className={`text-sm sm:text-base font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                        {strings.wheel.title}
+                      </h2>
+                    </div>
+                    <p className={`text-xs mt-0.5 ${isDay ? 'text-slate-500' : 'text-teal-200/70'}`}>
+                      {isBn
+                        ? 'যেকোনো সময় পর্বের কার্ডে ক্লিক করলেই সেই সময়ের সুন্নাহ আমল, হাদিস ও মাসনুন দোয়া বিস্তারিত দেখাবে'
+                        : 'Click any phase card below to open its full Sunnah actions, Hadith proof, and Masnun dua'}
+                    </p>
+                  </div>
 
-              {/* Numbered Action Points */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <h4 className={`text-xs font-black uppercase tracking-wider ${isDay ? 'text-slate-700' : 'text-slate-300'}`}>
-                    {strings.wheel.sunnahActions}
-                  </h4>
-                  <span className={`text-[11px] font-mono font-bold tabular-nums ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                    {isBn ? `${toBnDigits(locActiveSlot.actions.length)}টি আমল` : `${locActiveSlot.actions.length} steps`}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => openPhaseDetail(currentLiveSlot.id, true)}
+                    className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-extrabold inline-flex items-center gap-1.5 transition active:scale-95 cursor-pointer border ${
+                      isDay
+                        ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300/80'
+                        : 'bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border-amber-400/35'
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{isBn ? 'এখনকার পর্ব খুলুন' : 'Open Live Phase'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <div className="space-y-2">
-                  {locActiveSlot.actions.map((act, idx) => (
+
+                {/* Artistic 24-Hour Solar-Lunar Sky Arc Bar */}
+                <div className="space-y-1.5">
+                  <div className="relative h-3 w-full rounded-full overflow-hidden shadow-inner">
                     <div
-                      key={idx}
-                      className={`p-3 rounded-2xl border flex items-start gap-3 text-xs sm:text-sm leading-relaxed ${
-                        isDay ? 'bg-slate-50/70 border-slate-200/70 text-slate-700' : 'bg-[#07191e] border-[#133841] text-slate-200'
-                      }`}
-                    >
-                      <span
-                        className={`w-6 h-6 rounded-lg font-mono text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5 tabular-nums ${
-                          isDay ? 'bg-emerald-100 text-[#006A4E]' : 'bg-emerald-900/50 text-emerald-300'
+                      className="absolute inset-0"
+                      style={{
+                        background:
+                          'linear-gradient(90deg, #f59e0b 0%, #eab308 18%, #0d9488 38%, #0284c7 52%, #f97316 64%, #4f46e5 78%, #1e1b4b 92%, #065f46 100%)',
+                      }}
+                    />
+                    {/* Live Solar/Lunar Position Marker */}
+                    <div
+                      style={{ left: `${liveDayHorizonPercent}%` }}
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-slate-950 shadow-md"
+                      title={formattedLiveClock}
+                    />
+                  </div>
+                  <div className={`flex items-center justify-between text-[10px] sm:text-[11px] font-semibold font-mono tabular-nums ${isDay ? 'text-slate-500' : 'text-teal-200/70'}`}>
+                    <span>{isBn ? 'ফজর ৪:৩০' : '04:30 Fajr'}</span>
+                    <span className="hidden sm:inline">{isBn ? 'সকাল ৮:০০' : '08:00 AM'}</span>
+                    <span>{isBn ? 'যোহর ১:০০' : '01:00 PM'}</span>
+                    <span className="hidden md:inline">{isBn ? 'মাগরিব ৬:০০' : '06:00 PM'}</span>
+                    <span>{isBn ? 'তাহাজ্জুদ ৩:০০' : '03:00 AM'}</span>
+                  </div>
+                </div>
+
+                {/* Clean 4-Part Life Balance & Period Filter Row */}
+                <div className={`pt-3 border-t flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${isDay ? 'border-slate-100' : 'border-[#143a43]'}`}>
+                  {/* Interactive Period Filter Tabs */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                    {[
+                      { id: 'all' as const, label: isBn ? `সব (${toBnDigits(14)})` : 'All (14)' },
+                      { id: 'morning' as const, label: isBn ? `ভোর ও সকাল (${toBnDigits(4)})` : 'Morning (4)' },
+                      { id: 'midday' as const, label: isBn ? `দুপুর ও বিকাল (${toBnDigits(5)})` : 'Midday (5)' },
+                      { id: 'night' as const, label: isBn ? `সন্ধ্যা ও রাত (${toBnDigits(5)})` : 'Night (5)' },
+                    ].map((pf) => {
+                      const active = dialPeriodFilter === pf.id;
+                      return (
+                        <button
+                          key={pf.id}
+                          type="button"
+                          onClick={() => {
+                            setDialPeriodFilter(pf.id);
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                          className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+                            active
+                              ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-xs'
+                              : isDay
+                              ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                              : 'bg-[#07191e] hover:bg-[#0e2d35] text-teal-200/85 border-[#143942]'
+                          }`}
+                        >
+                          {pf.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Unboxed Tabular Life Balance Summary */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium">
+                    {categoryBreakdown.map((cat) => (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => {
+                          setCategoryFilter(cat.key);
+                          setTimelineFilter('all');
+                          setActiveTab('timeline');
+                        }}
+                        className={`inline-flex items-center gap-1.5 cursor-pointer hover:underline ${
+                          isDay ? 'text-slate-600' : 'text-teal-200/80'
                         }`}
                       >
-                        {isBn ? toBnDigits(String(idx + 1).padStart(2, '0')) : String(idx + 1).padStart(2, '0')}
-                      </span>
-                      <span>{act}</span>
-                    </div>
-                  ))}
+                        <span className="w-2 h-2 rounded-xs shrink-0" style={{ backgroundColor: cat.color }} />
+                        <span>{cat.label}</span>
+                        <span className={`font-mono font-bold tabular-nums ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                          {isBn ? `${toBnDigits(cat.hours)}ঘ` : `${cat.hours}h`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Hadith Citation */}
-              {locActiveSlot.hadith && (
-                <div
-                  className={`p-4 rounded-2xl border text-xs sm:text-sm space-y-1.5 ${
-                    isDay
-                      ? 'bg-amber-50/70 border-amber-200 text-amber-950'
-                      : 'bg-amber-950/20 border-amber-800/40 text-amber-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
-                    <BookMarked className="w-3.5 h-3.5" />
-                    <span>{strings.wheel.hadithQuote}</span>
-                  </div>
-                  <p className="italic leading-relaxed font-serif">"{locActiveSlot.hadith}"</p>
-                  {activeSlot.hadithRef && (
-                    <div className="text-[11px] font-semibold text-right opacity-80">
-                      — {activeSlot.hadithRef}
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* 14 CHRONOLOGICAL PHASE CARDS — GROUPED BY CELESTIAL DAY PERIOD */}
+              <div className="space-y-6">
+                {celestialGroups
+                  .filter((grp) => dialPeriodFilter === 'all' || dialPeriodFilter === grp.key)
+                  .map((grp) => {
+                    const GrpIcon = grp.icon;
+                    return (
+                      <section key={grp.key} className="space-y-3">
+                        {/* Celestial Period Editorial Section Header */}
+                        <div className="flex items-end justify-between gap-2 px-1">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${
+                                isDay
+                                  ? 'bg-white border-slate-200 shadow-2xs'
+                                  : 'bg-[#0a2127] border-[#163f49]'
+                              }`}
+                            >
+                              <GrpIcon className={`w-4 h-4 ${isDay ? grp.dayHeaderTint : grp.nightHeaderTint}`} />
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className={`text-sm sm:text-base font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                                {grp.label}
+                              </h3>
+                              <p className={`text-[11px] font-medium truncate ${isDay ? 'text-slate-500' : 'text-teal-200/65'}`}>
+                                {grp.subLabel}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`font-arabic text-sm font-bold shrink-0 opacity-75 ${isDay ? grp.dayHeaderTint : grp.nightHeaderTint}`}>
+                            {grp.arabic}
+                          </span>
+                        </div>
 
-              {/* Masnun Dua If Applicable */}
-              {activeSlot.dua && (
-                <div
-                  className={`p-4 rounded-2xl border space-y-2.5 ${
-                    isDay
-                      ? 'bg-teal-50/70 border-teal-200 text-teal-950'
-                      : 'bg-[#0e2c33] border-[#184954] text-teal-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-teal-800 dark:text-teal-300">
-                      {strings.wheel.duaOfSlot}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handlePlaySpeech(activeSlot.dua!.arabic, `dua_${activeSlot.id}`, true)}
-                        className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
-                        title={strings.duas.listenDua}
-                      >
-                        <Volume2 className="w-4 h-4 text-teal-700 dark:text-teal-300" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyText(activeSlot.dua!.arabic, `dua_${activeSlot.id}`)}
-                        className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
-                        title={strings.common.copy}
-                      >
-                        {copiedItemId === `dua_${activeSlot.id}` ? (
-                          <Check className="w-4 h-4 text-emerald-500" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-teal-700 dark:text-teal-300" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                        {/* Spacious Creative Cards Grid (Zero inner scrollbars, zero text clipping) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                          {grp.indices.map((slotIdx) => {
+                            const slot = NOBI_24_TIME_SLOTS[slotIdx];
+                            if (!slot) return null;
+                            const locSlot = getLocalizedSlot(slot, lang);
+                            const isLive = slot.id === currentLiveSlot.id;
+                            const durLabel = formatDurationLabel(slot.startHour, slot.endHour, isBn);
+                            const phaseNum = isBn
+                              ? toBnDigits(String(slotIdx + 1).padStart(2, '0'))
+                              : String(slotIdx + 1).padStart(2, '0');
 
-                  <div dir="rtl" className="text-lg sm:text-xl font-arabic font-bold text-right leading-[2.1] tracking-wide">
-                    {activeSlot.dua.arabic}
-                  </div>
-                  <div className="text-xs italic opacity-85">
-                    {activeSlot.dua.transliteration}
-                  </div>
-                  <div className="text-xs font-medium border-t border-teal-300/40 dark:border-teal-700/40 pt-2">
-                    {locActiveSlot.duaTranslation}
-                  </div>
-                </div>
-              )}
+                            return (
+                              <button
+                                key={slot.id}
+                                type="button"
+                                onClick={() => openPhaseDetail(slot.id, true)}
+                                className={`group relative overflow-hidden rounded-2xl p-4 sm:p-5 border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3.5 active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 bg-gradient-to-br ${
+                                  isLive
+                                    ? isDay
+                                      ? 'from-emerald-50/90 via-white to-amber-50/40 border-emerald-500 shadow-md ring-1 ring-emerald-500/30 hover:-translate-y-0.5'
+                                      : 'from-[#0d353d] via-[#0a2329] to-[#0b272d] border-emerald-400/75 shadow-lg ring-1 ring-emerald-400/25 hover:-translate-y-0.5'
+                                    : isDay
+                                    ? `${grp.cardTintDay} border-slate-200/90 hover:border-emerald-400/80 shadow-xs hover:shadow-md hover:-translate-y-0.5`
+                                    : `${grp.cardTintNight} border-[#153c45] hover:border-emerald-400/50 shadow-xs hover:shadow-lg hover:-translate-y-0.5`
+                                }`}
+                              >
+                                {/* Top Hairline Phase Color Bar */}
+                                <div
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute inset-x-0 top-0 h-[2.5px] opacity-80 group-hover:opacity-100 transition-opacity"
+                                  style={{ backgroundColor: slot.color }}
+                                />
+
+                                {/* Subtle Islamic Geometric Star Ornament in Bottom-Right */}
+                                <svg
+                                  aria-hidden="true"
+                                  viewBox="0 0 64 64"
+                                  className={`pointer-events-none absolute -right-3 -bottom-3 w-20 h-20 transition-opacity duration-300 ${
+                                    isDay
+                                      ? 'text-emerald-800 opacity-[0.03] group-hover:opacity-[0.08]'
+                                      : 'text-emerald-300 opacity-[0.04] group-hover:opacity-[0.11]'
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.4"
+                                >
+                                  <rect x="14" y="14" width="36" height="36" rx="2" />
+                                  <rect x="14" y="14" width="36" height="36" rx="2" transform="rotate(45 32 32)" />
+                                  <circle cx="32" cy="32" r="7" />
+                                </svg>
+
+                                {/* Top Row: Phase Icon + Phase Number & Live Marker */}
+                                <div className="relative z-10 flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-transform duration-200 group-hover:scale-105"
+                                      style={{
+                                        backgroundColor: `${slot.color}1a`,
+                                        border: `1px solid ${slot.color}44`,
+                                      }}
+                                    >
+                                      {slot.icon}
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold tabular-nums">
+                                        <span style={{ color: isDay ? slot.color : undefined }} className={isDay ? '' : 'text-amber-300'}>
+                                          {isBn ? `পর্ব ${phaseNum}` : `Phase ${phaseNum}`}
+                                        </span>
+                                        <span aria-hidden="true" className="opacity-35">·</span>
+                                        <span className={isDay ? 'text-slate-500' : 'text-teal-200/70'}>{durLabel}</span>
+                                      </div>
+                                      <div className={`text-[11px] font-semibold mt-0.5 ${isDay ? 'text-amber-700' : 'text-amber-300/90'}`}>
+                                        {locSlot.timeSpan}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {isLive && (
+                                    <span className={`text-[10px] font-black tracking-wide shrink-0 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                                      {isBn ? 'এখন চলছে' : 'LIVE'}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Middle: Full Readable Title + Concise 2-line Preview */}
+                                <div className="relative z-10 space-y-1.5">
+                                  <h4 className={`text-[15px] font-black leading-snug tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                                    {locSlot.title}
+                                  </h4>
+                                  <p className={`text-xs leading-relaxed line-clamp-2 ${isDay ? 'text-slate-600' : 'text-slate-300/85'}`}>
+                                    {locSlot.summary}
+                                  </p>
+                                </div>
+
+                                {/* Footer: Unboxed Clean Metadata & Open Affordance */}
+                                <div
+                                  className={`relative z-10 pt-2.5 border-t flex items-center justify-between gap-2 text-[11px] font-semibold ${
+                                    isDay ? 'border-slate-100 text-slate-500' : 'border-[#153c45] text-teal-200/75'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-1.5 truncate font-mono tabular-nums">
+                                    <span>
+                                      {isBn
+                                        ? `${toBnDigits(locSlot.actions.length)}টি সুন্নাহ`
+                                        : `${locSlot.actions.length} Sunnahs`}
+                                    </span>
+                                    {slot.dua && (
+                                      <>
+                                        <span aria-hidden="true" className="opacity-40">·</span>
+                                        <span className={isDay ? 'text-emerald-700' : 'text-emerald-300'}>
+                                          {isBn ? 'দোয়া' : 'Dua'}
+                                        </span>
+                                      </>
+                                    )}
+                                    {locSlot.hadith && (
+                                      <>
+                                        <span aria-hidden="true" className="opacity-40">·</span>
+                                        <span>{isBn ? 'হাদিস' : 'Hadith'}</span>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  <span className={`inline-flex items-center gap-1 font-bold shrink-0 transition-transform group-hover:translate-x-0.5 ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}>
+                                    <span>{isBn ? 'বিস্তারিত' : 'Read'}</span>
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    );
+                  })}
+              </div>
             </div>
-          </div>
+          ) : (
+            /* DETAIL READER MODE: Full-Width Immersive View Opened on Clicking Any Phase Card */
+            <div className="space-y-4 animate-in fade-in duration-200">
+              {/* Top Reader Back & Stepper Navigation Bar */}
+              <div
+                className={`p-3.5 sm:p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-3 ${
+                  isDay ? 'bg-emerald-50/75 border-emerald-200/90 text-slate-900' : 'bg-[#0b272e] border-[#184853] text-white'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenedSlotId(null);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className="min-h-[40px] flex items-center gap-1.5 text-xs font-extrabold px-3.5 py-2 rounded-xl bg-[#006A4E] text-white hover:bg-[#00553e] cursor-pointer transition active:scale-95 shadow-xs"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>{isBn ? 'সকল ১৪টি সময় পর্ব' : 'All 14 Phases'}</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleStepSlot(-1)}
+                    className={`min-h-[40px] flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border active:scale-95 ${
+                      isDay
+                        ? 'bg-white border-teal-200 text-teal-900 hover:bg-teal-50'
+                        : 'bg-[#071b20] border-[#194b57] text-teal-200 hover:bg-[#10343d]'
+                    }`}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>{isBn ? 'আগের পর্ব' : 'Prev'}</span>
+                  </button>
+                  <span className={`text-xs font-mono font-bold tabular-nums px-1.5 ${isDay ? 'text-emerald-900' : 'text-amber-300'}`}>
+                    {isBn
+                      ? `${toBnDigits(activeSlotIndex + 1)} / ${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
+                      : `${activeSlotIndex + 1} / ${NOBI_24_TIME_SLOTS.length}`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleStepSlot(1)}
+                    className={`min-h-[40px] flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border active:scale-95 ${
+                      isDay
+                        ? 'bg-white border-teal-200 text-teal-900 hover:bg-teal-50'
+                        : 'bg-[#071b20] border-[#194b57] text-teal-200 hover:bg-[#10343d]'
+                    }`}
+                  >
+                    <span>{isBn ? 'পরের পর্ব' : 'Next'}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Full-Width Active Slot Detailed Inspection Card */}
+              <div
+                className={`relative overflow-hidden p-5 sm:p-7 rounded-3xl border shadow-sm space-y-6 transition-colors ${
+                  isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
+                }`}
+              >
+                {/* Top Phase Accent Hairline */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 top-0 h-[3px]"
+                  style={{ backgroundColor: activeSlot.color }}
+                />
+
+                {/* Header with Title and Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-slate-200/70 dark:border-[#153c45]">
+                  <div className="flex items-start gap-3.5">
+                    <div
+                      className="w-13 h-13 rounded-2xl flex items-center justify-center text-2xl shrink-0"
+                      style={{
+                        backgroundColor: `${activeSlot.color}1a`,
+                        border: `1px solid ${activeSlot.color}44`,
+                      }}
+                    >
+                      {activeSlot.icon}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap text-xs font-semibold">
+                        <span className="font-mono font-bold tabular-nums" style={{ color: isDay ? activeSlot.color : '#fcd34d' }}>
+                          {isBn ? `পর্ব ${toBnDigits(activeSlotIndex + 1)}` : `Phase ${activeSlotIndex + 1}`}
+                        </span>
+                        <span aria-hidden="true" className="opacity-35">·</span>
+                        <span className={isDay ? 'text-slate-600' : 'text-teal-200/85'}>
+                          {locActiveSlot.categoryLabel}
+                        </span>
+                        <span aria-hidden="true" className="opacity-35">·</span>
+                        <span className={`font-mono tabular-nums ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {formatDurationLabel(activeSlot.startHour, activeSlot.endHour, isBn)}
+                        </span>
+                        {activeSlot.id === currentLiveSlot.id && (
+                          <>
+                            <span aria-hidden="true" className="opacity-35">·</span>
+                            <span className="font-black text-emerald-600 dark:text-emerald-400">
+                              {isBn ? 'এখন চলছে' : 'LIVE NOW'}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <h3 className={`text-xl sm:text-2xl font-black tracking-tight leading-snug ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                        {locActiveSlot.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400">
+                        {locActiveSlot.timeSpan}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-start sm:justify-end">
+                    <ShareDownloadButtons
+                      variant="compact"
+                      selectedLanguage={lang}
+                      themeMode={themeMode}
+                      onShare={() => openShareModal(buildSlotShareContent(activeSlot, activeSlotIndex), 'share')}
+                      onDownload={() => openShareModal(buildSlotShareContent(activeSlot, activeSlotIndex), 'download')}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCopyText(
+                          `${locActiveSlot.title} (${locActiveSlot.timeSpan})\n${locActiveSlot.summary}\n\n${locActiveSlot.actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}`,
+                          `slot_${activeSlot.id}`
+                        )
+                      }
+                      className={`min-w-[40px] min-h-[40px] p-2 rounded-xl border transition active:scale-95 cursor-pointer flex items-center justify-center ${
+                        copiedItemId === `slot_${activeSlot.id}`
+                          ? 'bg-emerald-600 text-white border-emerald-500'
+                          : isDay
+                          ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                          : 'bg-[#123138] hover:bg-[#18444e] text-emerald-300 border-[#1c4d57]'
+                      }`}
+                      title={strings.common.copy}
+                    >
+                      {copiedItemId === `slot_${activeSlot.id}` ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePlaySpeech(`${locActiveSlot.title}. ${locActiveSlot.summary}`, activeSlot.id)}
+                      className={`min-w-[40px] min-h-[40px] p-2 rounded-xl border transition active:scale-95 cursor-pointer flex items-center justify-center ${
+                        isPlayingAudio === activeSlot.id
+                          ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md'
+                          : isDay
+                          ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                          : 'bg-[#123138] hover:bg-[#18444e] text-emerald-300 border-[#1c4d57]'
+                      }`}
+                      title={isPlayingAudio === activeSlot.id ? strings.duas.stopAudio : strings.duas.listenDua}
+                    >
+                      {isPlayingAudio === activeSlot.id ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Summary Callout */}
+                <div
+                  className={`p-4 sm:p-5 rounded-2xl border text-sm leading-relaxed font-medium ${
+                    isDay
+                      ? 'bg-[#f4faf7] border-emerald-200/80 text-emerald-950'
+                      : 'bg-emerald-950/30 border-emerald-800/40 text-emerald-100'
+                  }`}
+                >
+                  {locActiveSlot.summary}
+                </div>
+
+                {/* Numbered Action Points (2-column manuscript grid on desktop) */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className={`text-sm font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                      {strings.wheel.sunnahActions}
+                    </h4>
+                    <span className={`text-xs font-mono font-bold tabular-nums ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                      {isBn ? `${toBnDigits(locActiveSlot.actions.length)}টি আমল` : `${locActiveSlot.actions.length} steps`}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {locActiveSlot.actions.map((act, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-3.5 rounded-2xl border flex items-start gap-3 text-xs sm:text-sm leading-relaxed ${
+                          isDay ? 'bg-slate-50/75 border-slate-200/80 text-slate-700' : 'bg-[#07191e] border-[#133841] text-slate-200'
+                        }`}
+                      >
+                        <span
+                          className={`w-6 h-6 rounded-lg font-mono text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5 tabular-nums ${
+                            isDay ? 'bg-emerald-100 text-[#006A4E]' : 'bg-emerald-900/50 text-emerald-300'
+                          }`}
+                        >
+                          {isBn ? toBnDigits(String(idx + 1).padStart(2, '0')) : String(idx + 1).padStart(2, '0')}
+                        </span>
+                        <span>{act}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Hadith Citation */}
+                {locActiveSlot.hadith && (
+                  <div
+                    className={`p-4 sm:p-5 rounded-2xl border text-xs sm:text-sm space-y-2 ${
+                      isDay
+                        ? 'bg-amber-50/70 border-amber-200 text-amber-950'
+                        : 'bg-amber-950/20 border-amber-800/40 text-amber-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
+                      <BookMarked className="w-4 h-4" />
+                      <span>{strings.wheel.hadithQuote}</span>
+                    </div>
+                    <p className="italic leading-relaxed font-serif text-sm sm:text-[15px]">"{locActiveSlot.hadith}"</p>
+                    {activeSlot.hadithRef && (
+                      <div className="text-xs font-semibold text-right opacity-80">
+                        — {activeSlot.hadithRef}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Masnun Dua If Applicable */}
+                {activeSlot.dua && (
+                  <div
+                    className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
+                      isDay
+                        ? 'bg-teal-50/70 border-teal-200 text-teal-950'
+                        : 'bg-[#0e2c33] border-[#184954] text-teal-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs sm:text-sm font-bold text-teal-800 dark:text-teal-300">
+                        {strings.wheel.duaOfSlot}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handlePlaySpeech(activeSlot.dua!.arabic, `dua_${activeSlot.id}`, true)}
+                          className="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                          title={strings.duas.listenDua}
+                        >
+                          <Volume2 className="w-4 h-4 text-teal-700 dark:text-teal-300" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(activeSlot.dua!.arabic, `dua_${activeSlot.id}`)}
+                          className="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                          title={strings.common.copy}
+                        >
+                          {copiedItemId === `dua_${activeSlot.id}` ? (
+                            <Check className="w-4 h-4 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-teal-700 dark:text-teal-300" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div dir="rtl" className="text-xl sm:text-2xl font-arabic font-bold text-right leading-[2.2] tracking-wide">
+                      {activeSlot.dua.arabic}
+                    </div>
+                    <div className="text-xs sm:text-sm italic opacity-85">
+                      {activeSlot.dua.transliteration}
+                    </div>
+                    <div className="text-xs sm:text-sm font-medium border-t border-teal-300/40 dark:border-teal-700/40 pt-2.5">
+                      {locActiveSlot.duaTranslation}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bottom Book-Like Prev / Next Phase Switcher Cards */}
+                <div className={`pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-3 ${isDay ? 'border-slate-100' : 'border-[#153c45]'}`}>
+                  {(() => {
+                    const prevIdx = (activeSlotIndex - 1 + NOBI_24_TIME_SLOTS.length) % NOBI_24_TIME_SLOTS.length;
+                    const nextIdx = (activeSlotIndex + 1) % NOBI_24_TIME_SLOTS.length;
+                    const prevSlot = NOBI_24_TIME_SLOTS[prevIdx];
+                    const nextSlot = NOBI_24_TIME_SLOTS[nextIdx];
+                    const locPrev = getLocalizedSlot(prevSlot, lang);
+                    const locNext = getLocalizedSlot(nextSlot, lang);
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => openPhaseDetail(prevSlot.id, true)}
+                          className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition cursor-pointer group ${
+                            isDay
+                              ? 'bg-slate-50/70 hover:bg-emerald-50/70 border-slate-200 hover:border-emerald-300'
+                              : 'bg-[#07191e] hover:bg-[#0d2c34] border-[#133841] hover:border-emerald-500/40'
+                          }`}
+                        >
+                          <ChevronLeft className="w-4 h-4 shrink-0 opacity-60 group-hover:-translate-x-0.5 transition-transform" />
+                          <div className="min-w-0">
+                            <div className="text-[10px] font-bold opacity-65">
+                              {isBn ? `আগের পর্ব (${toBnDigits(prevIdx + 1)})` : `Previous (${prevIdx + 1})`}
+                            </div>
+                            <div className="text-xs sm:text-sm font-bold truncate">
+                              {prevSlot.icon} {locPrev.title}
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openPhaseDetail(nextSlot.id, true)}
+                          className={`p-3.5 rounded-2xl border text-right flex items-center justify-end gap-3 transition cursor-pointer group ${
+                            isDay
+                              ? 'bg-slate-50/70 hover:bg-emerald-50/70 border-slate-200 hover:border-emerald-300'
+                              : 'bg-[#07191e] hover:bg-[#0d2c34] border-[#133841] hover:border-emerald-500/40'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <div className="text-[10px] font-bold opacity-65">
+                              {isBn ? `পরের পর্ব (${toBnDigits(nextIdx + 1)})` : `Next (${nextIdx + 1})`}
+                            </div>
+                            <div className="text-xs sm:text-sm font-bold truncate">
+                              {nextSlot.icon} {locNext.title}
+                            </div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 shrink-0 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1640,18 +1952,14 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                         />
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedSlotId(slot.id);
-                            setActiveTab('wheel');
-                            if (soundEnabled) soundHaptics.playTap();
-                          }}
+                          onClick={() => openPhaseDetail(slot.id, true)}
                           className={`min-h-[36px] px-3 py-1 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
                             isDay
                               ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
                               : 'bg-[#102d34] hover:bg-[#17404a] border-[#1c4d57] text-emerald-300'
                           }`}
                         >
-                          {isBn ? 'ঘড়িতে দেখুন' : 'Inspect'}
+                          {isBn ? 'বিস্তারিত দেখুন' : 'Inspect'}
                         </button>
                         <button
                           type="button"

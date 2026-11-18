@@ -347,9 +347,12 @@ export const DuaView: React.FC<DuaViewProps> = ({
 
       const curTitle = (t?.title || '').toLowerCase();
       const curTrans = (t?.translation || '').toLowerCase();
-      const curVirtue = (t?.virtue || '').toLowerCase();
+      const curVirtue = (t?.virtue || dua.translations?.[selectedLanguage]?.virtue || '').toLowerCase();
+      const curBenefits = (dua.translations?.[selectedLanguage]?.benefits || dua.benefits || []).join(' ').toLowerCase();
       const bnTitle = (bnT?.title || '').toLowerCase();
       const bnTrans = (bnT?.translation || '').toLowerCase();
+      const bnVirtue = (bnT?.virtue || '').toLowerCase();
+      const bnBenefits = (bnT?.benefits || []).join(' ').toLowerCase();
       const enTitle = (enT?.title || dua.title).toLowerCase();
       const enTrans = (enT?.translation || dua.translation).toLowerCase();
       const hisnulNum = (dua.hisnulNumber || '').toLowerCase();
@@ -359,12 +362,17 @@ export const DuaView: React.FC<DuaViewProps> = ({
         curTitle.includes(q) ||
         curTrans.includes(q) ||
         curVirtue.includes(q) ||
+        curBenefits.includes(q) ||
         bnTitle.includes(q) ||
         bnTrans.includes(q) ||
+        bnVirtue.includes(q) ||
+        bnBenefits.includes(q) ||
         enTitle.includes(q) ||
         enTrans.includes(q) ||
         dua.transliteration.toLowerCase().includes(q) ||
         dua.reference.toLowerCase().includes(q) ||
+        (dua.referenceBn || '').toLowerCase().includes(q) ||
+        (dua.gradeBn || '').toLowerCase().includes(q) ||
         dua.arabic.includes(searchQuery.trim()) ||
         hisnulNum === q ||
         hisnulNumBn === q ||
@@ -395,11 +403,55 @@ export const DuaView: React.FC<DuaViewProps> = ({
     });
   };
 
+  const getDuaLocalizedMeta = (dua: DuaItem) => {
+    const isBn = selectedLanguage === 'bn';
+    const tr = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
+    const langTrans = dua.translations?.[selectedLanguage];
+    const currentTitle = tr?.title || langTrans?.title || dua.translations?.en?.title || dua.title;
+    const currentTiming = tr?.timing || langTrans?.timing || dua.translations?.en?.timing || dua.timing;
+    const currentTranslation =
+      tr?.translation || langTrans?.translation || dua.translations?.en?.translation || dua.translation;
+    const currentVirtue =
+      tr?.virtue || langTrans?.virtue || dua.translations?.en?.virtue || dua.virtue;
+    const currentBenefits =
+      (isBn ? dua.translations?.bn?.benefits : dua.translations?.en?.benefits) || dua.benefits || [];
+    const currentReference =
+      (isBn ? dua.referenceBn || dua.translations?.bn?.reference : dua.translations?.en?.reference) ||
+      dua.reference;
+    const currentGrade =
+      (isBn ? dua.gradeBn || dua.translations?.bn?.grade : dua.grade || dua.translations?.en?.grade) || '';
+
+    return {
+      currentTitle,
+      currentTiming,
+      currentTranslation,
+      currentVirtue,
+      currentBenefits,
+      currentReference,
+      currentGrade,
+    };
+  };
+
   const handleCopyDua = (dua: DuaItem) => {
-    const t = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
-    const curTitle = t?.title || dua.translations?.en?.title || dua.title;
-    const curTrans = t?.translation || dua.translations?.en?.translation || dua.translation;
-    const text = `${curTitle}\n\n${dua.arabic}\n\n${dua.transliteration}\n\n"${curTrans}"\n\nReference: ${dua.reference}`;
+    const isBn = selectedLanguage === 'bn';
+    const {
+      currentTitle,
+      currentTranslation,
+      currentVirtue,
+      currentBenefits,
+      currentReference,
+      currentGrade,
+    } = getDuaLocalizedMeta(dua);
+    const benefitsBlock = currentBenefits.length
+      ? `\n${currentBenefits.map((b) => `• ${b}`).join('\n')}`
+      : '';
+    const virtueSection = currentVirtue
+      ? `\n\n${isBn ? 'লাভ, ফায়দা ও ফযীলত' : 'Virtues & Benefits'}:\n${currentVirtue}${benefitsBlock}`
+      : '';
+    const refSection = `\n\n${isBn ? 'প্রামাণিক সূত্র' : 'Reference'}: ${currentReference}${
+      currentGrade ? ` (${isBn ? 'মান' : 'Grade'}: ${currentGrade})` : ''
+    }`;
+    const text = `${currentTitle}\n\n${dua.arabic}\n\n${dua.transliteration}\n\n"${currentTranslation}"${virtueSection}${refSection}`;
     navigator.clipboard.writeText(text);
     setCopiedId(dua.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -425,17 +477,24 @@ export const DuaView: React.FC<DuaViewProps> = ({
     const itemsToExport = filteredDuas;
     const fullDoc = itemsToExport
       .map((dua, i) => {
-        const tr = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
-        const title = tr?.title || dua.translations?.en?.title || dua.title;
-        const trans = tr?.translation || dua.translations?.en?.translation || dua.translation;
-        const virtue = tr?.virtue || dua.translations?.en?.virtue || dua.virtue;
+        const {
+          currentTitle,
+          currentTranslation,
+          currentVirtue,
+          currentBenefits,
+          currentReference,
+          currentGrade,
+        } = getDuaLocalizedMeta(dua);
+        const benefitsStr = currentBenefits.length
+          ? `${currentBenefits.map((b) => `  • ${b}`).join('\n')}\n`
+          : '';
         return (
-          `${dua.hisnulNumber ? `#${dua.hisnulNumber}` : i + 1}. ${title}\n` +
+          `${dua.hisnulNumber ? `#${dua.hisnulNumber}` : i + 1}. ${currentTitle}\n` +
           `${dua.arabic}\n` +
           `${dua.transliteration}\n` +
-          `${trans}\n` +
-          (virtue ? `${isBn ? 'ফযীলত' : 'Virtue'}: ${virtue}\n` : '') +
-          `${isBn ? 'সূত্র' : 'Ref'}: ${dua.reference}`
+          `${currentTranslation}\n` +
+          (currentVirtue ? `${isBn ? 'লাভ ও ফযীলত' : 'Virtue & Benefits'}: ${currentVirtue}\n${benefitsStr}` : '') +
+          `${isBn ? 'সূত্র' : 'Reference'}: ${currentReference}${currentGrade ? ` [${currentGrade}]` : ''}`
         );
       })
       .join('\n\n------------------------------\n\n');
@@ -447,11 +506,11 @@ export const DuaView: React.FC<DuaViewProps> = ({
         title: currentCatTitle || DUA_UI.bannerTitle[selectedLanguage],
         subtitle: DUA_UI.bannerSub[selectedLanguage],
         body: isBn
-          ? `এই সংগ্রহে মোট ${formatNum(itemsToExport.length, 'bn')}টি মাসনুন দোয়া রয়েছে। নিচে নির্বাচিত কিছু দোয়া দেওয়া হলো:\n\n${itemsToExport
+          ? `এই সংগ্রহে মোট ${formatNum(itemsToExport.length, 'bn')}টি মাসনুন দোয়া (লাভ, ফায়দা ও প্রামাণিক রেফারেন্সসহ) রয়েছে। নিচে নির্বাচিত কিছু দোয়া দেওয়া হলো:\n\n${itemsToExport
               .slice(0, 3)
               .map((d) => `• ${d.translations?.bn?.title || d.title}`)
               .join('\n')}`
-          : `This collection includes ${itemsToExport.length} authentic supplications.\n\n${itemsToExport
+          : `This collection includes ${itemsToExport.length} authentic supplications with benefits and verified references.\n\n${itemsToExport
               .slice(0, 3)
               .map((d) => `• ${d.translations?.en?.title || d.title}`)
               .join('\n')}`,
@@ -463,13 +522,20 @@ export const DuaView: React.FC<DuaViewProps> = ({
 
   const openDuaShare = (dua: DuaItem, focus: 'share' | 'download') => {
     const isBn = selectedLanguage === 'bn';
-    const tr = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
-    const currentTitle = tr?.title || dua.translations?.en?.title || dua.title;
-    const currentTiming = tr?.timing || dua.translations?.en?.timing || dua.timing;
-    const currentTranslation = tr?.translation || dua.translations?.en?.translation || dua.translation;
-    const currentVirtue = tr?.virtue || dua.translations?.en?.virtue || dua.virtue;
+    const {
+      currentTitle,
+      currentTiming,
+      currentTranslation,
+      currentVirtue,
+      currentBenefits,
+      currentReference,
+      currentGrade,
+    } = getDuaLocalizedMeta(dua);
     const chMeta = dua.chapterNumber !== undefined ? chapterMetaMap[dua.chapterNumber] : undefined;
     const chTitle = chMeta ? (isBn ? chMeta.titleBn : chMeta.titleEn) : undefined;
+    const benefitsText = currentBenefits.length
+      ? `\n${currentBenefits.map((b) => `• ${b}`).join('\n')}`
+      : '';
 
     setShareState({
       focus,
@@ -483,8 +549,12 @@ export const DuaView: React.FC<DuaViewProps> = ({
         subtitle: chTitle || currentTiming,
         arabic: dua.arabic,
         transliteration: dua.transliteration,
-        body: `"${currentTranslation}"${currentVirtue ? `\n\n${isBn ? 'ফযীলত:' : 'Virtue:'} ${currentVirtue}` : ''}`,
-        reference: dua.reference,
+        body: `"${currentTranslation}"${
+          currentVirtue
+            ? `\n\n${isBn ? 'লাভ, ফায়দা ও ফযীলত:' : 'Virtues & Benefits:'}\n${currentVirtue}${benefitsText}`
+            : ''
+        }`,
+        reference: `${currentReference}${currentGrade ? ` • ${isBn ? 'মান' : 'Grade'}: ${currentGrade}` : ''}`,
         fileNamePrefix: `Dua-${dua.hisnulNumber || dua.id}`,
       },
     });
@@ -909,11 +979,15 @@ export const DuaView: React.FC<DuaViewProps> = ({
                 const target = dua.suggestedCount || 1;
                 const isCompleted = currentCount >= target;
 
-                const t = DUA_TRANSLATIONS[dua.id]?.[selectedLanguage] || dua.translations?.[selectedLanguage];
-                const currentTitle = t?.title || dua.translations?.en?.title || dua.title;
-                const currentTiming = t?.timing || dua.translations?.en?.timing || dua.timing;
-                const currentTranslation = t?.translation || dua.translations?.en?.translation || dua.translation;
-                const currentVirtue = t?.virtue || dua.translations?.en?.virtue || dua.virtue;
+                const {
+                  currentTitle,
+                  currentTiming,
+                  currentTranslation,
+                  currentVirtue,
+                  currentBenefits,
+                  currentReference,
+                  currentGrade,
+                } = getDuaLocalizedMeta(dua);
 
                 const chMeta = dua.chapterNumber !== undefined ? chapterMetaMap[dua.chapterNumber] : undefined;
                 const chapterLabelText = chMeta
@@ -922,7 +996,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
                     : chMeta.titleEn
                   : '';
                 const duaHlKey = `dua:${dua.id}`;
-                const duaSourceLabel = `${currentTitle}${dua.reference ? ` • ${dua.reference}` : ''}`;
+                const duaSourceLabel = `${currentTitle}${currentReference ? ` • ${currentReference}` : ''}`;
 
                 return (
                   <DuaCardHighlightWrapper
@@ -1107,18 +1181,134 @@ export const DuaView: React.FC<DuaViewProps> = ({
                       />"
                     </p>
 
-                    {/* Reference & Inline Bead Counter */}
+                    {/* Virtues & Key Benefits Panel */}
+                    {(currentVirtue || currentBenefits.length > 0) && (
+                      <div
+                        className={`mb-4 p-4 rounded-2xl border select-text ${
+                          isDay
+                            ? 'bg-emerald-50/60 border-emerald-200/80 text-[#0f3630]'
+                            : 'bg-[#103640]/90 border-[#1b5663] text-teal-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles
+                            className={`w-4 h-4 shrink-0 ${
+                              isDay ? 'text-amber-600' : 'text-amber-400'
+                            }`}
+                          />
+                          <h5
+                            className={`text-xs sm:text-[13px] font-extrabold tracking-tight ${
+                              isDay ? 'text-emerald-900' : 'text-emerald-300'
+                            }`}
+                          >
+                            {selectedLanguage === 'bn'
+                              ? 'লাভ, ফায়দা ও ফযীলত'
+                              : selectedLanguage === 'ar'
+                              ? 'الفضل والفوائد'
+                              : 'Virtues & Benefits'}
+                          </h5>
+                        </div>
+
+                        {currentVirtue && (
+                          <p
+                            className={`text-xs sm:text-[13px] leading-relaxed font-medium ${
+                              isDay ? 'text-slate-800' : 'text-teal-50/95'
+                            }`}
+                          >
+                            <HighlightableText
+                              text={currentVirtue}
+                              section="dua"
+                              themeMode={themeMode}
+                              selectedLanguage={selectedLanguage}
+                              soundEnabled={soundEnabled}
+                            />
+                          </p>
+                        )}
+
+                        {currentBenefits.length > 0 && (
+                          <ul
+                            className={`mt-2.5 pt-2.5 border-t space-y-1.5 ${
+                              isDay ? 'border-emerald-200/70' : 'border-[#1b5360]'
+                            }`}
+                          >
+                            {currentBenefits.map((benefit, bIdx) => (
+                              <li
+                                key={bIdx}
+                                className={`flex items-start gap-2 text-xs leading-relaxed ${
+                                  isDay ? 'text-teal-900' : 'text-teal-200/95'
+                                }`}
+                              >
+                                <Check
+                                  className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+                                    isDay ? 'text-emerald-700' : 'text-emerald-400'
+                                  }`}
+                                />
+                                <span>
+                                  <HighlightableText
+                                    text={benefit}
+                                    section="dua"
+                                    themeMode={themeMode}
+                                    selectedLanguage={selectedLanguage}
+                                    soundEnabled={soundEnabled}
+                                  />
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Authentic Reference & Inline Bead Counter */}
                     <div
-                      className={`pt-3 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
-                        isDay ? 'border-teal-50 text-teal-800' : 'border-[#174852] text-teal-300'
+                      className={`pt-3.5 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+                        isDay ? 'border-teal-100 text-teal-800' : 'border-[#174852] text-teal-300'
                       }`}
                     >
-                      <span className={`font-semibold ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                        📌 {dua.reference}
-                      </span>
+                      <div className="flex items-start gap-2 min-w-0 flex-1 select-text">
+                        <BookOpen
+                          className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+                            isDay ? 'text-emerald-700' : 'text-emerald-400'
+                          }`}
+                        />
+                        <div className="min-w-0 leading-relaxed">
+                          <span className={`font-bold ${isDay ? 'text-[#0f3630]' : 'text-emerald-200'}`}>
+                            {selectedLanguage === 'bn'
+                              ? 'সূত্র: '
+                              : selectedLanguage === 'ar'
+                              ? 'المصدر: '
+                              : 'Reference: '}
+                          </span>
+                          <span className={`font-semibold ${isDay ? 'text-emerald-800' : 'text-emerald-300'}`}>
+                            <HighlightableText
+                              text={currentReference}
+                              section="dua"
+                              themeMode={themeMode}
+                              selectedLanguage={selectedLanguage}
+                              soundEnabled={soundEnabled}
+                            />
+                          </span>
+                          {currentGrade && (
+                            <span
+                              className={`block sm:inline sm:ml-2 mt-0.5 sm:mt-0 text-[11px] font-semibold ${
+                                isDay ? 'text-amber-700' : 'text-amber-300/90'
+                              }`}
+                            >
+                              <span aria-hidden="true" className="hidden sm:inline mr-2 opacity-50">
+                                ·
+                              </span>
+                              {selectedLanguage === 'bn'
+                                ? `মান: ${currentGrade}`
+                                : selectedLanguage === 'ar'
+                                ? `الدرجة: ${currentGrade}`
+                                : `Grade: ${currentGrade}`}
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px]">
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <span className="text-[11px] font-mono tabular-nums">
                           {DUA_UI.recited[selectedLanguage]}:{' '}
                           <strong className={isDay ? 'text-[#0f3630]' : 'text-white'}>
                             {formatNum(currentCount, selectedLanguage)}
@@ -1127,33 +1317,12 @@ export const DuaView: React.FC<DuaViewProps> = ({
                         </span>
                         <button
                           onClick={() => handleInlineIncrement(dua.id, target)}
-                          className="px-3 py-1 rounded-xl bg-[#006747] hover:bg-[#00553a] text-white font-bold text-xs active:scale-95 transition cursor-pointer flex items-center gap-1 shadow-sm"
+                          className="px-3 py-1.5 rounded-xl bg-[#006747] hover:bg-[#00553a] text-white font-bold text-xs active:scale-95 transition cursor-pointer flex items-center gap-1 shadow-sm"
                         >
                           <span>{DUA_UI.oneBead[selectedLanguage]}</span>
                         </button>
                       </div>
                     </div>
-
-                    {currentVirtue && (
-                      <div
-                        className={`mt-3 p-3 rounded-2xl border text-xs flex items-start gap-2.5 select-text ${
-                          isDay
-                            ? 'bg-teal-50/70 border-teal-200 text-teal-900'
-                            : 'bg-[#113943] border-[#185360] text-teal-200'
-                        }`}
-                      >
-                        <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed">
-                          <HighlightableText
-                            text={currentVirtue}
-                            section="dua"
-                            themeMode={themeMode}
-                            selectedLanguage={selectedLanguage}
-                            soundEnabled={soundEnabled}
-                          />
-                        </span>
-                      </div>
-                    )}
                   </DuaCardHighlightWrapper>
                 );
               })}
