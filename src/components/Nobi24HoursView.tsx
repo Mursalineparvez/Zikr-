@@ -1256,66 +1256,65 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
           {openedSlotId === null ? (
             <div className="space-y-6">
               {/* 14 CHRONOLOGICAL PHASE CARDS — GROUPED BY CELESTIAL DAY PERIOD */}
-              <div className="space-y-8">
+              <div className="space-y-5">
                 {celestialGroups
                   .filter((grp) => dialPeriodFilter === 'all' || dialPeriodFilter === grp.key)
                   .map((grp) => {
                     const GrpIcon = grp.icon;
-                    const isOddCount = grp.indices.length % 2 === 1;
                     return (
-                      <section key={grp.key} className="space-y-4">
-                        {/* Illuminated Celestial Period Editorial Section Header */}
-                        <div className="flex items-center justify-between gap-3 px-0.5">
-                          <div className="flex items-center gap-3 min-w-0">
+                      <section key={grp.key} className="space-y-2.5">
+                        {/* Slim Illuminated Celestial Period Section Header */}
+                        <div className="flex items-center justify-between gap-2.5 px-0.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             <div
-                              className={`relative w-10 h-10 rounded-2xl border bg-gradient-to-br flex items-center justify-center shrink-0 shadow-xs ${
+                              className={`relative w-8 h-8 rounded-xl border bg-gradient-to-br flex items-center justify-center shrink-0 ${
                                 isDay ? grp.dayIconBg : grp.nightIconBg
                               }`}
                               style={{
                                 boxShadow: isDay
-                                  ? `0 6px 16px -6px ${grp.accentHex}38, inset 0 1px 0 rgba(255,255,255,0.9)`
-                                  : `0 6px 18px -6px ${grp.accentHex}45, inset 0 1px 0 rgba(255,255,255,0.08)`,
+                                  ? `0 4px 12px -4px ${grp.accentHex}38, inset 0 1px 0 rgba(255,255,255,0.9)`
+                                  : `0 4px 14px -4px ${grp.accentHex}45, inset 0 1px 0 rgba(255,255,255,0.08)`,
                               }}
                             >
-                              <GrpIcon className={`w-[18px] h-[18px] ${isDay ? grp.dayHeaderTint : grp.nightHeaderTint}`} />
+                              <GrpIcon className={`w-4 h-4 ${isDay ? grp.dayHeaderTint : grp.nightHeaderTint}`} />
                             </div>
-                            <div className="min-w-0">
-                              <h3 className={`text-[15px] sm:text-[17px] font-black tracking-tight leading-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                            <div className="min-w-0 flex flex-wrap items-baseline gap-x-2">
+                              <h3 className={`text-[13.5px] sm:text-[14.5px] font-black tracking-tight leading-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
                                 {grp.label}
                               </h3>
-                              <p className={`text-[11.5px] font-medium truncate mt-0.5 ${isDay ? 'text-slate-500' : 'text-teal-200/70'}`}>
+                              <p className={`text-[10.5px] font-medium truncate ${isDay ? 'text-slate-500' : 'text-teal-200/65'}`}>
                                 {grp.subLabel}
                               </p>
                             </div>
                           </div>
 
-                          {/* Ornamental Hairline Connector */}
-                          <div className="hidden sm:flex items-center flex-1 gap-2 px-2">
+                          {/* Delicate Hairline Connector */}
+                          <div className="hidden sm:flex items-center flex-1 gap-1.5 px-1.5">
                             <div
                               className="h-px flex-1"
                               style={{
                                 background: isDay
-                                  ? `linear-gradient(90deg, ${grp.accentHex}38, ${grp.accentHex}14 60%, transparent)`
-                                  : `linear-gradient(90deg, ${grp.accentHex}55, ${grp.accentHex}18 60%, transparent)`,
+                                  ? `linear-gradient(90deg, ${grp.accentHex}35, ${grp.accentHex}12 60%, transparent)`
+                                  : `linear-gradient(90deg, ${grp.accentHex}50, ${grp.accentHex}18 60%, transparent)`,
                               }}
                             />
                             <span
                               aria-hidden="true"
-                              className="w-1.5 h-1.5 rotate-45 rounded-[1px] shrink-0 opacity-60"
+                              className="w-1 h-1 rotate-45 rounded-[1px] shrink-0 opacity-60"
                               style={{ backgroundColor: grp.accentHex }}
                             />
                             <div
-                              className="h-px w-8"
+                              className="h-px w-6"
                               style={{
                                 background: isDay
-                                  ? `linear-gradient(270deg, ${grp.accentHex}38, transparent)`
-                                  : `linear-gradient(270deg, ${grp.accentHex}55, transparent)`,
+                                  ? `linear-gradient(270deg, ${grp.accentHex}35, transparent)`
+                                  : `linear-gradient(270deg, ${grp.accentHex}50, transparent)`,
                               }}
                             />
                           </div>
 
                           <span
-                            className={`font-arabic text-[15px] sm:text-[17px] font-bold shrink-0 tracking-wide ${
+                            className={`font-arabic text-[13.5px] sm:text-[14.5px] font-bold shrink-0 tracking-wide ${
                               isDay ? grp.dayHeaderTint : grp.nightHeaderTint
                             }`}
                             style={{ opacity: isDay ? 0.85 : 0.9 }}
@@ -1324,45 +1323,40 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                           </span>
                         </div>
 
-                        {/* Spacious 2-Column Luxury Editorial Grid (Symmetrical, Zero Orphan Cards) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-4.5">
-                          {grp.indices.map((slotIdx, posInGroup) => {
+                        {/* Compact Jewel-Box Phase Cards Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+                          {grp.indices.map((slotIdx) => {
                             const slot = NOBI_24_TIME_SLOTS[slotIdx];
                             if (!slot) return null;
                             const locSlot = getLocalizedSlot(slot, lang);
                             const isLive = slot.id === currentLiveSlot.id;
-                            const isWideFeature = isOddCount && posInGroup === grp.indices.length - 1;
                             const durLabel = formatDurationLabel(slot.startHour, slot.endHour, isBn);
                             const phaseNum = isBn
                               ? toBnDigits(String(slotIdx + 1).padStart(2, '0'))
                               : String(slotIdx + 1).padStart(2, '0');
-                            const primaryAction = locSlot.actions[0];
-                            const categoryLabel = strings.categories[slot.category];
 
                             return (
                               <button
                                 key={slot.id}
                                 type="button"
                                 onClick={() => openPhaseDetail(slot.id, true)}
-                                className={`group relative overflow-hidden rounded-[22px] p-5 sm:p-6 border text-left transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 active:scale-[0.988] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 bg-gradient-to-br ${
-                                  isWideFeature ? 'md:col-span-2' : ''
-                                } ${
+                                className={`group relative overflow-hidden rounded-2xl p-3 sm:p-3.5 border text-left transition-all duration-250 cursor-pointer flex flex-col justify-between gap-2.5 active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 bg-gradient-to-br ${
                                   isLive
                                     ? isDay
-                                      ? 'from-emerald-50/90 via-white to-amber-50/55 border-emerald-500/85 ring-1 ring-emerald-500/20 shadow-[0_12px_32px_-10px_rgba(16,185,129,0.26),0_2px_6px_rgba(15,23,42,0.04)] hover:-translate-y-1 hover:shadow-[0_20px_42px_-12px_rgba(16,185,129,0.34)]'
-                                      : 'from-[#0e3942] via-[#09242c] to-[#0b2a31] border-emerald-400/80 ring-1 ring-emerald-400/25 shadow-[0_14px_36px_-10px_rgba(16,185,129,0.32)] hover:-translate-y-1 hover:shadow-[0_22px_44px_-12px_rgba(16,185,129,0.4)]'
+                                      ? 'from-emerald-50/95 via-white to-amber-50/50 border-emerald-500/85 ring-1 ring-emerald-500/20 shadow-[0_8px_22px_-8px_rgba(16,185,129,0.28)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-10px_rgba(16,185,129,0.34)]'
+                                      : 'from-[#0e3942] via-[#09242c] to-[#0b2a31] border-emerald-400/80 ring-1 ring-emerald-400/25 shadow-[0_10px_26px_-8px_rgba(16,185,129,0.32)] hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-10px_rgba(16,185,129,0.4)]'
                                     : isDay
-                                    ? `${grp.cardTintDay} border-slate-200/85 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.08),0_1px_2px_rgba(15,23,42,0.03)] hover:border-emerald-500/55 hover:-translate-y-1 hover:shadow-[0_18px_36px_-12px_rgba(0,106,78,0.16),0_4px_12px_-4px_rgba(15,23,42,0.05)]`
-                                    : `${grp.cardTintNight} border-[#18434e] ring-1 ring-inset ring-white/[0.04] shadow-[0_6px_22px_-8px_rgba(0,0,0,0.45)] hover:border-emerald-400/55 hover:-translate-y-1 hover:shadow-[0_20px_38px_-12px_rgba(16,185,129,0.22)]`
+                                    ? `${grp.cardTintDay} border-slate-200/85 shadow-[0_3px_14px_-6px_rgba(15,23,42,0.07),0_1px_2px_rgba(15,23,42,0.03)] hover:border-emerald-500/55 hover:-translate-y-0.5 hover:shadow-[0_12px_26px_-10px_rgba(0,106,78,0.16)]`
+                                    : `${grp.cardTintNight} border-[#18434e] ring-1 ring-inset ring-white/[0.04] shadow-[0_4px_16px_-6px_rgba(0,0,0,0.42)] hover:border-emerald-400/55 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-10px_rgba(16,185,129,0.22)]`
                                 }`}
                               >
                                 {/* Luminous Tapered Gradient Top Ribbon */}
                                 <div
                                   aria-hidden="true"
-                                  className="pointer-events-none absolute inset-x-0 top-0 h-[3px] opacity-85 group-hover:opacity-100 transition-opacity duration-300"
+                                  className="pointer-events-none absolute inset-x-0 top-0 h-[2.5px] opacity-85 group-hover:opacity-100 transition-opacity duration-250"
                                   style={{
                                     background: isLive
-                                      ? 'linear-gradient(90deg, #059669 0%, #10b981 48%, #f59e0b 85%, transparent 100%)'
+                                      ? 'linear-gradient(90deg, #059669 0%, #10b981 50%, #f59e0b 85%, transparent 100%)'
                                       : `linear-gradient(90deg, ${slot.color} 0%, ${slot.color}bb 48%, #d4af3766 82%, transparent 100%)`,
                                   }}
                                 />
@@ -1370,33 +1364,33 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                                 {/* Subtle Atmospheric Radial Corner Aura */}
                                 <div
                                   aria-hidden="true"
-                                  className="pointer-events-none absolute inset-0 opacity-70 group-hover:opacity-100 transition-opacity duration-300"
+                                  className="pointer-events-none absolute inset-0 opacity-65 group-hover:opacity-100 transition-opacity duration-250"
                                   style={{
                                     background: isDay
-                                      ? `radial-gradient(240px circle at 0% 0%, ${slot.color}16 0%, transparent 70%)`
-                                      : `radial-gradient(260px circle at 0% 0%, ${slot.color}24 0%, transparent 72%)`,
+                                      ? `radial-gradient(170px circle at 0% 0%, ${slot.color}16 0%, transparent 72%)`
+                                      : `radial-gradient(185px circle at 0% 0%, ${slot.color}24 0%, transparent 74%)`,
                                   }}
                                 />
 
-                                {/* Oversized Editorial Phase Numeral Watermark (Top-Right) */}
+                                {/* Subtle Editorial Phase Numeral Watermark (Top-Right) */}
                                 {!isLive && (
                                   <span
                                     aria-hidden="true"
-                                    className={`pointer-events-none select-none absolute top-3 right-5 font-mono text-[44px] sm:text-[50px] font-black leading-none tracking-tighter transition-all duration-300 group-hover:scale-105 ${
+                                    className={`pointer-events-none select-none absolute top-2 right-3 font-mono text-[28px] font-black leading-none tracking-tighter transition-all duration-300 group-hover:scale-105 ${
                                       isDay
-                                        ? 'text-slate-900/[0.04] group-hover:text-emerald-900/[0.07]'
-                                        : 'text-white/[0.04] group-hover:text-emerald-300/[0.08]'
+                                        ? 'text-slate-900/[0.045] group-hover:text-emerald-900/[0.08]'
+                                        : 'text-white/[0.045] group-hover:text-emerald-300/[0.09]'
                                     }`}
                                   >
                                     {phaseNum}
                                   </span>
                                 )}
 
-                                {/* Illuminated 8-Point Rub el Hizb Star Filigree (Bottom-Right) */}
+                                {/* Delicate 8-Point Rub el Hizb Star Filigree (Bottom-Right) */}
                                 <svg
                                   aria-hidden="true"
                                   viewBox="0 0 80 80"
-                                  className={`pointer-events-none absolute -right-4 -bottom-4 w-24 h-24 transition-all duration-500 group-hover:rotate-12 ${
+                                  className={`pointer-events-none absolute -right-3 -bottom-3 w-16 h-16 transition-all duration-500 group-hover:rotate-12 ${
                                     isDay
                                       ? 'text-emerald-800 opacity-[0.035] group-hover:opacity-[0.09]'
                                       : 'text-emerald-300 opacity-[0.045] group-hover:opacity-[0.12]'
@@ -1411,28 +1405,28 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                                   <circle cx="40" cy="40" r="3" fill="currentColor" />
                                 </svg>
 
-                                {/* Top Header: Jewel Icon Medallion + Phase/Time/Category + Live Beacon */}
-                                <div className="relative z-10 flex items-start justify-between gap-3">
-                                  <div className="flex items-center gap-3.5 min-w-0">
+                                {/* Compact Header: Mini Jewel Icon + Phase/Time + Live Dot */}
+                                <div className="relative z-10 flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-2.5 min-w-0">
                                     <div
-                                      className="relative w-12 h-12 rounded-2xl flex items-center justify-center text-[22px] shrink-0 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3"
+                                      className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[17px] shrink-0 transition-transform duration-250 group-hover:scale-105 group-hover:-rotate-3"
                                       style={{
                                         background: isDay
                                           ? `linear-gradient(145deg, #ffffff 0%, ${slot.color}1e 100%)`
                                           : `linear-gradient(145deg, ${slot.color}32 0%, rgba(7,25,31,0.85) 100%)`,
                                         border: `1px solid ${slot.color}${isDay ? '42' : '55'}`,
                                         boxShadow: isDay
-                                          ? `0 8px 18px -6px ${slot.color}38, inset 0 1px 0 rgba(255,255,255,0.95)`
-                                          : `0 8px 20px -6px ${slot.color}48, inset 0 1px 0 rgba(255,255,255,0.12)`,
+                                          ? `0 5px 12px -4px ${slot.color}38, inset 0 1px 0 rgba(255,255,255,0.95)`
+                                          : `0 5px 14px -4px ${slot.color}48, inset 0 1px 0 rgba(255,255,255,0.12)`,
                                       }}
                                     >
-                                      <span className="drop-shadow-2xs">{slot.icon}</span>
+                                      <span>{slot.icon}</span>
                                     </div>
 
                                     <div className="min-w-0">
-                                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] font-bold">
+                                      <div className="flex items-center gap-1.5 text-[10.5px] font-bold font-mono tabular-nums">
                                         <span
-                                          className="inline-flex items-center gap-1.5 font-mono tabular-nums tracking-tight"
+                                          className="inline-flex items-center gap-1 tracking-tight shrink-0"
                                           style={{ color: isDay ? slot.color : undefined }}
                                         >
                                           <span
@@ -1445,17 +1439,12 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                                           </span>
                                         </span>
                                         <span aria-hidden="true" className="opacity-30">·</span>
-                                        <span className={`inline-flex items-center gap-1 font-mono tabular-nums ${isDay ? 'text-slate-500' : 'text-teal-200/75'}`}>
-                                          <Clock className="w-3 h-3 opacity-75" />
+                                        <span className={`truncate ${isDay ? 'text-slate-500' : 'text-teal-200/70'}`}>
                                           {durLabel}
-                                        </span>
-                                        <span aria-hidden="true" className="hidden sm:inline opacity-30">·</span>
-                                        <span className={`hidden sm:inline text-[11px] font-semibold truncate ${isDay ? 'text-slate-500/90' : 'text-teal-200/60'}`}>
-                                          {categoryLabel}
                                         </span>
                                       </div>
 
-                                      <div className={`text-[12px] font-bold mt-0.5 leading-snug ${isDay ? 'text-amber-800/90' : 'text-amber-300/95'}`}>
+                                      <div className={`text-[10.5px] font-bold mt-0.5 truncate ${isDay ? 'text-amber-800/90' : 'text-amber-300/95'}`}>
                                         {locSlot.timeSpan}
                                       </div>
                                     </div>
@@ -1463,97 +1452,77 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
 
                                   {isLive && (
                                     <span
-                                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-black tracking-wide shrink-0 border ${
+                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-black tracking-wide shrink-0 border ${
                                         isDay
-                                          ? 'bg-emerald-600 text-white border-emerald-700/20 shadow-xs shadow-emerald-600/25'
+                                          ? 'bg-emerald-600 text-white border-emerald-700/20'
                                           : 'bg-emerald-400/20 text-emerald-200 border-emerald-400/40'
                                       }`}
                                     >
-                                      <span className="relative flex h-2 w-2">
+                                      <span className="relative flex h-1.5 w-1.5">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-80" />
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-300" />
+                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-300" />
                                       </span>
-                                      {isBn ? 'এখন চলছে' : 'LIVE'}
+                                      {isBn ? 'এখন' : 'LIVE'}
                                     </span>
                                   )}
                                 </div>
 
-                                {/* Middle Editorial Body: Title + Summary + Highlighted Primary Sunnah */}
-                                <div className={`relative z-10 ${isWideFeature ? 'grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6 items-start' : 'space-y-2.5'}`}>
-                                  <div className={isWideFeature ? 'md:col-span-7 space-y-1.5' : 'space-y-1.5'}>
-                                    <h4
-                                      className={`text-[16px] sm:text-[17px] font-black leading-snug tracking-tight transition-colors duration-200 ${
-                                        isDay
-                                          ? 'text-slate-900 group-hover:text-[#006A4E]'
-                                          : 'text-white group-hover:text-emerald-300'
-                                      }`}
-                                    >
-                                      {locSlot.title}
-                                    </h4>
-                                    <p className={`text-[12.5px] sm:text-[13px] leading-relaxed line-clamp-2 ${isDay ? 'text-slate-600' : 'text-slate-300/85'}`}>
-                                      {locSlot.summary}
-                                    </p>
-                                  </div>
-
-                                  {primaryAction && (
-                                    <div
-                                      className={`${isWideFeature ? 'md:col-span-5 md:mt-0.5' : ''} pl-3 py-1.5 border-l-2 rounded-r-lg ${
-                                        isDay
-                                          ? 'bg-emerald-950/[0.025] text-slate-700'
-                                          : 'bg-white/[0.03] text-teal-100/85'
-                                      }`}
-                                      style={{ borderLeftColor: `${slot.color}99` }}
-                                    >
-                                      <div className={`text-[10px] font-extrabold uppercase tracking-wider mb-0.5 ${isDay ? 'text-emerald-800/75' : 'text-amber-300/85'}`}>
-                                        {isBn ? 'মূল সুন্নাহ আমল' : 'Key Sunnah'}
-                                      </div>
-                                      <p className="text-[11.5px] font-medium leading-snug line-clamp-1">
-                                        {primaryAction}
-                                      </p>
-                                    </div>
-                                  )}
+                                {/* Crisp Compact Title + 2-Line Preview */}
+                                <div className="relative z-10 space-y-1">
+                                  <h4
+                                    className={`text-[13.5px] font-black leading-snug tracking-tight line-clamp-2 transition-colors duration-200 ${
+                                      isDay
+                                        ? 'text-slate-900 group-hover:text-[#006A4E]'
+                                        : 'text-white group-hover:text-emerald-300'
+                                    }`}
+                                  >
+                                    {locSlot.title}
+                                  </h4>
+                                  <p className={`text-[11px] leading-[1.45] line-clamp-2 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
+                                    {locSlot.summary}
+                                  </p>
                                 </div>
 
-                                {/* Sleek Footer: Crisp Icon Metadata + Tactile Interactive CTA */}
+                                {/* Slim Luxury Footer Strip */}
                                 <div
-                                  className={`relative z-10 pt-3 border-t flex items-center justify-between gap-2 text-[11.5px] font-semibold ${
-                                    isDay ? 'border-slate-200/75 text-slate-500' : 'border-white/[0.08] text-teal-200/75'
+                                  className={`relative z-10 pt-2 border-t flex items-center justify-between gap-1.5 text-[10px] font-semibold ${
+                                    isDay ? 'border-slate-200/75 text-slate-500' : 'border-white/[0.08] text-teal-200/70'
                                   }`}
                                 >
-                                  <div className="flex items-center flex-wrap gap-x-3 gap-y-1 font-mono tabular-nums">
-                                    <span className="inline-flex items-center gap-1">
-                                      <Sparkles className={`w-3.5 h-3.5 ${isDay ? 'text-amber-600/80' : 'text-amber-300/80'}`} />
+                                  <div className="flex items-center gap-2 truncate font-mono tabular-nums">
+                                    <span className="inline-flex items-center gap-0.5">
+                                      <Sparkles className={`w-3 h-3 ${isDay ? 'text-amber-600/80' : 'text-amber-300/80'}`} />
                                       <span>
                                         {isBn
-                                          ? `${toBnDigits(locSlot.actions.length)}টি সুন্নাহ`
-                                          : `${locSlot.actions.length} Sunnahs`}
+                                          ? `${toBnDigits(locSlot.actions.length)}টি`
+                                          : `${locSlot.actions.length}`}
                                       </span>
                                     </span>
 
                                     {slot.dua && (
-                                      <span className={`inline-flex items-center gap-1 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
-                                        <Heart className="w-3.5 h-3.5" />
+                                      <span className={`inline-flex items-center gap-0.5 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                                        <Heart className="w-2.5 h-2.5" />
                                         <span>{isBn ? 'দোয়া' : 'Dua'}</span>
                                       </span>
                                     )}
 
                                     {locSlot.hadith && (
-                                      <span className="inline-flex items-center gap-1">
-                                        <BookOpen className="w-3.5 h-3.5 opacity-75" />
+                                      <span className="inline-flex items-center gap-0.5">
+                                        <BookOpen className="w-2.5 h-2.5 opacity-75" />
                                         <span>{isBn ? 'হাদিস' : 'Hadith'}</span>
                                       </span>
                                     )}
                                   </div>
 
                                   <span
-                                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[11.5px] font-extrabold shrink-0 border transition-all duration-200 ${
+                                    className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-[10px] font-extrabold shrink-0 border transition-all duration-200 ${
                                       isDay
-                                        ? 'bg-emerald-50/90 text-[#006A4E] border-emerald-200/80 group-hover:bg-[#006A4E] group-hover:text-white group-hover:border-[#006A4E] group-hover:shadow-xs'
+                                        ? 'bg-emerald-50/90 text-[#006A4E] border-emerald-200/80 group-hover:bg-[#006A4E] group-hover:text-white group-hover:border-[#006A4E]'
                                         : 'bg-emerald-400/10 text-emerald-300 border-emerald-400/30 group-hover:bg-emerald-400 group-hover:text-[#04211a] group-hover:border-emerald-300'
                                     }`}
                                   >
-                                    <span>{isBn ? 'বিস্তারিত' : 'Explore'}</span>
-                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                    <span>{isBn ? 'বিস্তারিত' : 'Open'}</span>
+                                    <ArrowRight className="w-2.5 h-2.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                                   </span>
                                 </div>
                               </button>

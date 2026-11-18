@@ -59,6 +59,7 @@ import { SeeratChapterMiniMap } from './SeeratChapterMiniMap';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
+import { ProphetPassing40HoursSection } from './ProphetPassing40HoursSection';
 
 interface SeeratUnNabiViewProps {
   themeMode?: ThemeMode;
@@ -100,7 +101,7 @@ const formatSeeratHijri = (hijri: string, isBn: boolean): string => {
 };
 
 // Fallback provider for authentic classical sources across any chapter
-export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSourceRef[] => {
+const getBaseClassicalSources = (item: SeeratAgeItem): ClassicalSourceRef[] => {
   if (item.classicalSources && item.classicalSources.length > 0) {
     return item.classicalSources;
   }
@@ -316,6 +317,37 @@ export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSource
       },
     ];
   }
+};
+
+export const getChapterClassicalSources = (item: SeeratAgeItem): ClassicalSourceRef[] => {
+  const baseSources = getBaseClassicalSources(item);
+  if (!item.verifiedEvents || item.verifiedEvents.length === 0) {
+    return baseSources;
+  }
+
+  const existingKeys = new Set(
+    baseSources.map((s) => `${s.bookBn}|${s.volumePage || ''}`.toLowerCase())
+  );
+
+  const eventSources: ClassicalSourceRef[] = [];
+  item.verifiedEvents.forEach((ev) => {
+    const key = `${ev.sourceBn}|${ev.titleBn}`.toLowerCase();
+    if (!existingKeys.has(key)) {
+      existingKeys.add(key);
+      eventSources.push({
+        bookBn: ev.sourceBn,
+        bookEn: ev.sourceEn,
+        authorBn: ev.partLabelBn,
+        authorEn: ev.partLabelEn,
+        volumePage: ev.titleBn,
+        volumePageEn: ev.titleEn,
+        referenceDetailBn: ev.pointsBn.join(' '),
+        referenceDetailEn: ev.pointsEn.join(' '),
+      });
+    }
+  });
+
+  return [...baseSources, ...eventSources];
 };
 
 // Fallback provider for Key Sahaba involved
@@ -623,6 +655,12 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
       const locBn = item.locationBn.toLowerCase();
       const locEn = item.locationEn.toLowerCase();
       const highlights = [...item.highlightsBn, ...item.highlightsEn].join(' ').toLowerCase();
+      const verifiedEventsText = (item.verifiedEvents || [])
+        .map((ev) =>
+          [ev.titleBn, ev.titleEn, ...ev.pointsBn, ...ev.pointsEn, ev.sourceBn, ev.sourceEn].join(' ')
+        )
+        .join(' ')
+        .toLowerCase();
 
       return (
         ageStr.includes(query) ||
@@ -632,7 +670,8 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
         titleAr.includes(query) ||
         locBn.includes(query) ||
         locEn.includes(query) ||
-        highlights.includes(query)
+        highlights.includes(query) ||
+        verifiedEventsText.includes(query)
       );
     });
   }, [activePhaseFilter, searchQuery, filterOnlyBookmarked, bookmarkedAges]);
@@ -680,6 +719,13 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     const hijriLabel = formatSeeratHijri(activeItem.yearHijri, isBn);
 
     let text = `📜 ${title}\n📅 ${isBn ? 'বয়স:' : 'Age:'} ${activeItem.age} ${isBn ? 'বছর' : 'Years'} (${activeItem.yearCE} CE | ${hijriLabel})\n📍 ${isBn ? 'স্থান:' : 'Location:'} ${loc}\n\n`;
+    if (activeItem.verifiedEvents && activeItem.verifiedEvents.length > 0) {
+      text += `${isBn ? 'বয়সভিত্তিক প্রামাণ্য ঘটনাবলি:' : 'Verified Chronological Events:'}\n`;
+      activeItem.verifiedEvents.forEach((ev) => {
+        text += `• ${isBn ? ev.titleBn : ev.titleEn}\n  ${(isBn ? ev.pointsBn : ev.pointsEn).join(' ')}\n  (${isBn ? 'সূত্র' : 'Source'}: ${isBn ? ev.sourceBn : ev.sourceEn})\n`;
+      });
+      text += '\n';
+    }
     text += `${isBn ? 'পূর্ণাঙ্গ ইতিহাস:' : 'Historical Chronicle:'}\n${narrative}\n\n`;
     if (emotional) {
       text += `${isBn ? 'হৃদয়স্পর্শী ঘটনা:' : 'Heart-Touching Moments:'}\n"${emotional}"\n\n`;
@@ -732,6 +778,16 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
       '',
       `${isBn ? 'মূল ঘটনাসমূহ' : 'Key Highlights'}:`,
       ...cHighlights.map((h) => `• ${h}`),
+      ...(item.verifiedEvents && item.verifiedEvents.length > 0
+        ? [
+            '',
+            `${isBn ? 'বয়সভিত্তিক প্রামাণ্য সীরাত ঘটনাবলি' : 'Verified Chronological Seerah Events'}:`,
+            ...item.verifiedEvents.map(
+              (ev) =>
+                `• ${isBn ? ev.titleBn : ev.titleEn}: ${(isBn ? ev.pointsBn : ev.pointsEn).join(' ')} (${isBn ? 'সূত্র' : 'Source'}: ${isBn ? ev.sourceBn : ev.sourceEn})`
+            ),
+          ]
+        : []),
       '',
       `${isBn ? 'পূর্ণাঙ্গ ঐতিহাসিক বিবরণ' : 'Historical Chronicle'}:`,
       cNarrative,
@@ -1253,6 +1309,80 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
                   ))}
                 </ul>
               </div>
+
+              {/* Age-Matched Verified Seerah Events with Sources */}
+              {activeItem.verifiedEvents && activeItem.verifiedEvents.length > 0 && (
+                <div
+                  className={`rounded-2xl p-4 sm:p-5 border space-y-3 transition-all ${
+                    isDay
+                      ? 'bg-gradient-to-br from-amber-50/60 via-white to-emerald-50/50 border-emerald-200/90 text-slate-900'
+                      : 'bg-gradient-to-br from-[#07211b] via-[#092721] to-[#081f1a] border-emerald-700/50 text-emerald-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-emerald-200/70 dark:border-emerald-800/50">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-emerald-800 dark:text-emerald-300">
+                      <BookMarked className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>
+                        {isBn
+                          ? 'প্রামাণ্য সীরাত ঘটনাবলি (সূত্রসহ)'
+                          : 'Verified Seerah Events & Sources'}
+                      </span>
+                    </div>
+                    <span className="text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 shrink-0">
+                      {isBn
+                        ? `${String(activeItem.verifiedEvents.length).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)])}টি ঘটনা`
+                        : `${activeItem.verifiedEvents.length} ${activeItem.verifiedEvents.length === 1 ? 'Event' : 'Events'}`}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {activeItem.verifiedEvents.map((ev) => (
+                      <div
+                        key={ev.slideNo}
+                        className={`rounded-xl p-3.5 sm:p-4 border space-y-2 ${
+                          isDay
+                            ? 'bg-white/95 border-emerald-200/80 shadow-2xs'
+                            : 'bg-[#061b17]/90 border-emerald-800/60'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h4 className="text-xs sm:text-sm font-black text-emerald-900 dark:text-amber-300">
+                            {isBn ? ev.titleBn : ev.titleEn}
+                          </h4>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                            {isBn ? ev.partLabelBn : ev.partLabelEn}
+                          </span>
+                        </div>
+
+                        <ul className="space-y-1.5 text-xs sm:text-[13px]">
+                          {(isBn ? ev.pointsBn : ev.pointsEn).map((pt, idx) => (
+                            <li key={idx} className="flex items-start gap-2 leading-relaxed">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                              <span className={isDay ? 'text-slate-800 font-medium' : 'text-emerald-100/95'}>
+                                {pt}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        <div
+                          className={`pt-2 border-t flex items-start gap-1.5 text-[11px] font-semibold ${
+                            isDay
+                              ? 'border-slate-100 text-slate-600'
+                              : 'border-emerald-800/40 text-emerald-300/85'
+                          }`}
+                        >
+                          <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                          <span>
+                            {isBn ? 'সূত্র: ' : 'Source: '}
+                            {isBn ? ev.sourceBn : ev.sourceEn}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Geographic Location & Mini-Map */}
               <SeeratChapterMiniMap
@@ -2082,6 +2212,14 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
           </p>
         </div>
       )}
+
+      {/* 40 Hours After Passing of the Prophet (PBUH) — 7 Parts, 32 Authentic Events */}
+      <ProphetPassing40HoursSection
+        themeMode={themeMode}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        onOpenShareModal={openShareModal}
+      />
 
       {/* Global Historic Map Modal */}
       {showFullMapModal && (
