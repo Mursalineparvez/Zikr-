@@ -1066,6 +1066,102 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Slim Integrated 24H Celestial Horizon Ribbon + Compact Period Filter & Life-Balance Footer */}
+          <div className="pt-2.5 border-t border-white/10 space-y-2">
+            {/* Ultra-Slim 24-Hour Solar-Lunar Horizon Bar */}
+            <div className="space-y-1">
+              <div className="relative h-1.5 w-full rounded-full overflow-hidden bg-black/25">
+                <div
+                  className="absolute inset-0 opacity-95"
+                  style={{
+                    background:
+                      'linear-gradient(90deg, #f59e0b 0%, #eab308 18%, #14b8a6 38%, #38bdf8 52%, #fb923c 64%, #818cf8 78%, #312e81 92%, #10b981 100%)',
+                  }}
+                />
+                <div
+                  style={{ left: `${liveDayHorizonPercent}%` }}
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#013426] shadow-[0_0_8px_rgba(255,255,255,0.9)]"
+                  title={formattedLiveClock}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono font-semibold tabular-nums text-emerald-100/65">
+                <span>{isBn ? 'ফজর ৪:৩০' : '04:30 Fajr'}</span>
+                <span className="hidden sm:inline">{isBn ? 'সকাল ৮:০০' : '08:00 AM'}</span>
+                <span>{isBn ? 'যোহর ১:০০' : '01:00 PM'}</span>
+                <span className="hidden md:inline">{isBn ? 'মাগরিব ৬:০০' : '06:00 PM'}</span>
+                <span>{isBn ? 'তাহাজ্জুদ ৩:০০' : '03:00 AM'}</span>
+              </div>
+            </div>
+
+            {/* Concise Single-Line Period Filter + Short 4-Category Life Balance */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pt-0.5">
+              {/* Compact Period Filter Controls */}
+              <div className="flex flex-wrap items-center gap-1">
+                {[
+                  { id: 'all' as const, label: isBn ? `সব (${toBnDigits(14)})` : 'All (14)' },
+                  { id: 'morning' as const, label: isBn ? `ভোর ও সকাল (${toBnDigits(4)})` : 'Morning (4)' },
+                  { id: 'midday' as const, label: isBn ? `দুপুর ও বিকাল (${toBnDigits(5)})` : 'Midday (5)' },
+                  { id: 'night' as const, label: isBn ? `সন্ধ্যা ও রাত (${toBnDigits(5)})` : 'Night (5)' },
+                ].map((pf) => {
+                  const active = activeTab === 'wheel' && dialPeriodFilter === pf.id;
+                  return (
+                    <button
+                      key={pf.id}
+                      type="button"
+                      onClick={() => {
+                        setDialPeriodFilter(pf.id);
+                        setActiveTab('wheel');
+                        setOpenedSlotId(null);
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold whitespace-nowrap transition cursor-pointer border ${
+                        active
+                          ? 'bg-amber-300 text-slate-950 border-amber-200 shadow-xs'
+                          : 'bg-white/[0.07] hover:bg-white/[0.15] text-emerald-50/90 border-white/12'
+                      }`}
+                    >
+                      {pf.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Concise 4-Part Life Balance Hours */}
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] sm:text-[11px] text-emerald-100/80">
+                {categoryBreakdown.map((cat) => {
+                  const shortLabel =
+                    cat.key === 'spiritual'
+                      ? isBn ? 'আধ্যাত্মিক' : 'Spiritual'
+                      : cat.key === 'social'
+                      ? isBn ? 'সামাজিক' : 'Social'
+                      : cat.key === 'physical'
+                      ? isBn ? 'বিশ্রাম' : 'Rest'
+                      : isBn ? 'পরিবার' : 'Family';
+                  return (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => {
+                        setCategoryFilter(cat.key);
+                        setTimelineFilter('all');
+                        setActiveTab('timeline');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className="inline-flex items-center gap-1 hover:text-amber-200 transition cursor-pointer whitespace-nowrap"
+                      title={cat.label}
+                    >
+                      <span className="w-2 h-2 rounded-xs shrink-0" style={{ backgroundColor: cat.color }} />
+                      <span>{shortLabel}</span>
+                      <strong className="font-mono font-bold tabular-nums text-white">
+                        {isBn ? `${toBnDigits(cat.hours)}ঘ` : `${cat.hours}h`}
+                      </strong>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1147,130 +1243,9 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
       {/* 3. TAB 1: CREATIVE 14-PHASE CELESTIAL GALLERY + CLICK-TO-OPEN DETAIL READER */}
       {activeTab === 'wheel' && (
         <div ref={detailSectionRef} className="space-y-5">
-          {/* OVERVIEW MODE: Show Celestial Horizon + 14 Beautiful Cards (No bottom/side detail clutter) */}
+          {/* OVERVIEW MODE: 14 Beautiful Sunnah Phase Cards directly below navigation */}
           {openedSlotId === null ? (
-            <div className="space-y-5">
-              {/* Celestial 24-Hour Sky Horizon & Life Balance Card */}
-              <div
-                className={`relative overflow-hidden p-4 sm:p-5 rounded-3xl border shadow-xs space-y-4 ${
-                  isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
-                }`}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Compass className={`w-4 h-4 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
-                      <h2 className={`text-sm sm:text-base font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                        {strings.wheel.title}
-                      </h2>
-                    </div>
-                    <p className={`text-xs mt-0.5 ${isDay ? 'text-slate-500' : 'text-teal-200/70'}`}>
-                      {isBn
-                        ? 'যেকোনো সময় পর্বের কার্ডে ক্লিক করলেই সেই সময়ের সুন্নাহ আমল, হাদিস ও মাসনুন দোয়া বিস্তারিত দেখাবে'
-                        : 'Click any phase card below to open its full Sunnah actions, Hadith proof, and Masnun dua'}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => openPhaseDetail(currentLiveSlot.id, true)}
-                    className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-extrabold inline-flex items-center gap-1.5 transition active:scale-95 cursor-pointer border ${
-                      isDay
-                        ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300/80'
-                        : 'bg-amber-400/15 hover:bg-amber-400/25 text-amber-200 border-amber-400/35'
-                    }`}
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{isBn ? 'এখনকার পর্ব খুলুন' : 'Open Live Phase'}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Artistic 24-Hour Solar-Lunar Sky Arc Bar */}
-                <div className="space-y-1.5">
-                  <div className="relative h-3 w-full rounded-full overflow-hidden shadow-inner">
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background:
-                          'linear-gradient(90deg, #f59e0b 0%, #eab308 18%, #0d9488 38%, #0284c7 52%, #f97316 64%, #4f46e5 78%, #1e1b4b 92%, #065f46 100%)',
-                      }}
-                    />
-                    {/* Live Solar/Lunar Position Marker */}
-                    <div
-                      style={{ left: `${liveDayHorizonPercent}%` }}
-                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-slate-950 shadow-md"
-                      title={formattedLiveClock}
-                    />
-                  </div>
-                  <div className={`flex items-center justify-between text-[10px] sm:text-[11px] font-semibold font-mono tabular-nums ${isDay ? 'text-slate-500' : 'text-teal-200/70'}`}>
-                    <span>{isBn ? 'ফজর ৪:৩০' : '04:30 Fajr'}</span>
-                    <span className="hidden sm:inline">{isBn ? 'সকাল ৮:০০' : '08:00 AM'}</span>
-                    <span>{isBn ? 'যোহর ১:০০' : '01:00 PM'}</span>
-                    <span className="hidden md:inline">{isBn ? 'মাগরিব ৬:০০' : '06:00 PM'}</span>
-                    <span>{isBn ? 'তাহাজ্জুদ ৩:০০' : '03:00 AM'}</span>
-                  </div>
-                </div>
-
-                {/* Clean 4-Part Life Balance & Period Filter Row */}
-                <div className={`pt-3 border-t flex flex-col xl:flex-row xl:items-center justify-between gap-3 ${isDay ? 'border-slate-100' : 'border-[#143a43]'}`}>
-                  {/* Interactive Period Filter Tabs */}
-                  <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-                    {[
-                      { id: 'all' as const, label: isBn ? `সব (${toBnDigits(14)})` : 'All (14)' },
-                      { id: 'morning' as const, label: isBn ? `ভোর ও সকাল (${toBnDigits(4)})` : 'Morning (4)' },
-                      { id: 'midday' as const, label: isBn ? `দুপুর ও বিকাল (${toBnDigits(5)})` : 'Midday (5)' },
-                      { id: 'night' as const, label: isBn ? `সন্ধ্যা ও রাত (${toBnDigits(5)})` : 'Night (5)' },
-                    ].map((pf) => {
-                      const active = dialPeriodFilter === pf.id;
-                      return (
-                        <button
-                          key={pf.id}
-                          type="button"
-                          onClick={() => {
-                            setDialPeriodFilter(pf.id);
-                            if (soundEnabled) soundHaptics.playTap();
-                          }}
-                          className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
-                            active
-                              ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-xs'
-                              : isDay
-                              ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                              : 'bg-[#07191e] hover:bg-[#0e2d35] text-teal-200/85 border-[#143942]'
-                          }`}
-                        >
-                          {pf.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Unboxed Tabular Life Balance Summary */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium">
-                    {categoryBreakdown.map((cat) => (
-                      <button
-                        key={cat.key}
-                        type="button"
-                        onClick={() => {
-                          setCategoryFilter(cat.key);
-                          setTimelineFilter('all');
-                          setActiveTab('timeline');
-                        }}
-                        className={`inline-flex items-center gap-1.5 cursor-pointer hover:underline ${
-                          isDay ? 'text-slate-600' : 'text-teal-200/80'
-                        }`}
-                      >
-                        <span className="w-2 h-2 rounded-xs shrink-0" style={{ backgroundColor: cat.color }} />
-                        <span>{cat.label}</span>
-                        <span className={`font-mono font-bold tabular-nums ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                          {isBn ? `${toBnDigits(cat.hours)}ঘ` : `${cat.hours}h`}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
+            <div className="space-y-6">
               {/* 14 CHRONOLOGICAL PHASE CARDS — GROUPED BY CELESTIAL DAY PERIOD */}
               <div className="space-y-6">
                 {celestialGroups
