@@ -489,10 +489,13 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
         arabic: 'الفجر والضحى',
         indices: [0, 1, 2, 3],
         icon: Sunrise,
+        accentHex: '#d97706',
         dayHeaderTint: 'text-amber-700',
         nightHeaderTint: 'text-amber-300',
-        cardTintDay: 'from-amber-50/70 via-white to-white',
-        cardTintNight: 'from-amber-500/[0.06] via-[#0a2127] to-[#091d23]',
+        dayIconBg: 'from-amber-50 via-orange-50/80 to-white border-amber-200/80',
+        nightIconBg: 'from-amber-500/20 via-amber-500/10 to-[#0a2127] border-amber-400/30',
+        cardTintDay: 'from-amber-50/45 via-white to-[#fcfdfb]',
+        cardTintNight: 'from-[#142a2f] via-[#0a2127] to-[#081a20]',
       },
       {
         key: 'midday' as const,
@@ -501,10 +504,13 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
         arabic: 'الظهر والعصر',
         indices: [4, 5, 6, 7, 8],
         icon: Sun,
+        accentHex: '#059669',
         dayHeaderTint: 'text-emerald-700',
         nightHeaderTint: 'text-emerald-300',
-        cardTintDay: 'from-emerald-50/70 via-white to-white',
-        cardTintNight: 'from-emerald-500/[0.07] via-[#0a2127] to-[#091d23]',
+        dayIconBg: 'from-emerald-50 via-teal-50/80 to-white border-emerald-200/80',
+        nightIconBg: 'from-emerald-500/20 via-teal-500/10 to-[#0a2127] border-emerald-400/30',
+        cardTintDay: 'from-emerald-50/45 via-white to-[#fafdfb]',
+        cardTintNight: 'from-[#0d2d34] via-[#092027] to-[#07191f]',
       },
       {
         key: 'night' as const,
@@ -513,10 +519,13 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
         arabic: 'المساء والتهجد',
         indices: [9, 10, 11, 12, 13],
         icon: Moon,
+        accentHex: '#4f46e5',
         dayHeaderTint: 'text-indigo-700',
         nightHeaderTint: 'text-indigo-300',
-        cardTintDay: 'from-indigo-50/60 via-white to-white',
-        cardTintNight: 'from-indigo-500/[0.08] via-[#0a2127] to-[#091d23]',
+        dayIconBg: 'from-indigo-50 via-violet-50/80 to-white border-indigo-200/80',
+        nightIconBg: 'from-indigo-500/25 via-indigo-500/10 to-[#0a2127] border-indigo-400/30',
+        cardTintDay: 'from-indigo-50/40 via-white to-[#fbfbfe]',
+        cardTintNight: 'from-[#11233a] via-[#0a1e29] to-[#071721]',
       },
     ],
     [isBn, lang]
@@ -1247,165 +1256,304 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
           {openedSlotId === null ? (
             <div className="space-y-6">
               {/* 14 CHRONOLOGICAL PHASE CARDS — GROUPED BY CELESTIAL DAY PERIOD */}
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {celestialGroups
                   .filter((grp) => dialPeriodFilter === 'all' || dialPeriodFilter === grp.key)
                   .map((grp) => {
                     const GrpIcon = grp.icon;
+                    const isOddCount = grp.indices.length % 2 === 1;
                     return (
-                      <section key={grp.key} className="space-y-3">
-                        {/* Celestial Period Editorial Section Header */}
-                        <div className="flex items-end justify-between gap-2 px-1">
-                          <div className="flex items-center gap-2.5 min-w-0">
+                      <section key={grp.key} className="space-y-4">
+                        {/* Illuminated Celestial Period Editorial Section Header */}
+                        <div className="flex items-center justify-between gap-3 px-0.5">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div
-                              className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${
-                                isDay
-                                  ? 'bg-white border-slate-200 shadow-2xs'
-                                  : 'bg-[#0a2127] border-[#163f49]'
+                              className={`relative w-10 h-10 rounded-2xl border bg-gradient-to-br flex items-center justify-center shrink-0 shadow-xs ${
+                                isDay ? grp.dayIconBg : grp.nightIconBg
                               }`}
+                              style={{
+                                boxShadow: isDay
+                                  ? `0 6px 16px -6px ${grp.accentHex}38, inset 0 1px 0 rgba(255,255,255,0.9)`
+                                  : `0 6px 18px -6px ${grp.accentHex}45, inset 0 1px 0 rgba(255,255,255,0.08)`,
+                              }}
                             >
-                              <GrpIcon className={`w-4 h-4 ${isDay ? grp.dayHeaderTint : grp.nightHeaderTint}`} />
+                              <GrpIcon className={`w-[18px] h-[18px] ${isDay ? grp.dayHeaderTint : grp.nightHeaderTint}`} />
                             </div>
                             <div className="min-w-0">
-                              <h3 className={`text-sm sm:text-base font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                              <h3 className={`text-[15px] sm:text-[17px] font-black tracking-tight leading-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
                                 {grp.label}
                               </h3>
-                              <p className={`text-[11px] font-medium truncate ${isDay ? 'text-slate-500' : 'text-teal-200/65'}`}>
+                              <p className={`text-[11.5px] font-medium truncate mt-0.5 ${isDay ? 'text-slate-500' : 'text-teal-200/70'}`}>
                                 {grp.subLabel}
                               </p>
                             </div>
                           </div>
-                          <span className={`font-arabic text-sm font-bold shrink-0 opacity-75 ${isDay ? grp.dayHeaderTint : grp.nightHeaderTint}`}>
+
+                          {/* Ornamental Hairline Connector */}
+                          <div className="hidden sm:flex items-center flex-1 gap-2 px-2">
+                            <div
+                              className="h-px flex-1"
+                              style={{
+                                background: isDay
+                                  ? `linear-gradient(90deg, ${grp.accentHex}38, ${grp.accentHex}14 60%, transparent)`
+                                  : `linear-gradient(90deg, ${grp.accentHex}55, ${grp.accentHex}18 60%, transparent)`,
+                              }}
+                            />
+                            <span
+                              aria-hidden="true"
+                              className="w-1.5 h-1.5 rotate-45 rounded-[1px] shrink-0 opacity-60"
+                              style={{ backgroundColor: grp.accentHex }}
+                            />
+                            <div
+                              className="h-px w-8"
+                              style={{
+                                background: isDay
+                                  ? `linear-gradient(270deg, ${grp.accentHex}38, transparent)`
+                                  : `linear-gradient(270deg, ${grp.accentHex}55, transparent)`,
+                              }}
+                            />
+                          </div>
+
+                          <span
+                            className={`font-arabic text-[15px] sm:text-[17px] font-bold shrink-0 tracking-wide ${
+                              isDay ? grp.dayHeaderTint : grp.nightHeaderTint
+                            }`}
+                            style={{ opacity: isDay ? 0.85 : 0.9 }}
+                          >
                             {grp.arabic}
                           </span>
                         </div>
 
-                        {/* Spacious Creative Cards Grid (Zero inner scrollbars, zero text clipping) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-                          {grp.indices.map((slotIdx) => {
+                        {/* Spacious 2-Column Luxury Editorial Grid (Symmetrical, Zero Orphan Cards) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-4.5">
+                          {grp.indices.map((slotIdx, posInGroup) => {
                             const slot = NOBI_24_TIME_SLOTS[slotIdx];
                             if (!slot) return null;
                             const locSlot = getLocalizedSlot(slot, lang);
                             const isLive = slot.id === currentLiveSlot.id;
+                            const isWideFeature = isOddCount && posInGroup === grp.indices.length - 1;
                             const durLabel = formatDurationLabel(slot.startHour, slot.endHour, isBn);
                             const phaseNum = isBn
                               ? toBnDigits(String(slotIdx + 1).padStart(2, '0'))
                               : String(slotIdx + 1).padStart(2, '0');
+                            const primaryAction = locSlot.actions[0];
+                            const categoryLabel = strings.categories[slot.category];
 
                             return (
                               <button
                                 key={slot.id}
                                 type="button"
                                 onClick={() => openPhaseDetail(slot.id, true)}
-                                className={`group relative overflow-hidden rounded-2xl p-4 sm:p-5 border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3.5 active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 bg-gradient-to-br ${
+                                className={`group relative overflow-hidden rounded-[22px] p-5 sm:p-6 border text-left transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 active:scale-[0.988] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 bg-gradient-to-br ${
+                                  isWideFeature ? 'md:col-span-2' : ''
+                                } ${
                                   isLive
                                     ? isDay
-                                      ? 'from-emerald-50/90 via-white to-amber-50/40 border-emerald-500 shadow-md ring-1 ring-emerald-500/30 hover:-translate-y-0.5'
-                                      : 'from-[#0d353d] via-[#0a2329] to-[#0b272d] border-emerald-400/75 shadow-lg ring-1 ring-emerald-400/25 hover:-translate-y-0.5'
+                                      ? 'from-emerald-50/90 via-white to-amber-50/55 border-emerald-500/85 ring-1 ring-emerald-500/20 shadow-[0_12px_32px_-10px_rgba(16,185,129,0.26),0_2px_6px_rgba(15,23,42,0.04)] hover:-translate-y-1 hover:shadow-[0_20px_42px_-12px_rgba(16,185,129,0.34)]'
+                                      : 'from-[#0e3942] via-[#09242c] to-[#0b2a31] border-emerald-400/80 ring-1 ring-emerald-400/25 shadow-[0_14px_36px_-10px_rgba(16,185,129,0.32)] hover:-translate-y-1 hover:shadow-[0_22px_44px_-12px_rgba(16,185,129,0.4)]'
                                     : isDay
-                                    ? `${grp.cardTintDay} border-slate-200/90 hover:border-emerald-400/80 shadow-xs hover:shadow-md hover:-translate-y-0.5`
-                                    : `${grp.cardTintNight} border-[#153c45] hover:border-emerald-400/50 shadow-xs hover:shadow-lg hover:-translate-y-0.5`
+                                    ? `${grp.cardTintDay} border-slate-200/85 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.08),0_1px_2px_rgba(15,23,42,0.03)] hover:border-emerald-500/55 hover:-translate-y-1 hover:shadow-[0_18px_36px_-12px_rgba(0,106,78,0.16),0_4px_12px_-4px_rgba(15,23,42,0.05)]`
+                                    : `${grp.cardTintNight} border-[#18434e] ring-1 ring-inset ring-white/[0.04] shadow-[0_6px_22px_-8px_rgba(0,0,0,0.45)] hover:border-emerald-400/55 hover:-translate-y-1 hover:shadow-[0_20px_38px_-12px_rgba(16,185,129,0.22)]`
                                 }`}
                               >
-                                {/* Top Hairline Phase Color Bar */}
+                                {/* Luminous Tapered Gradient Top Ribbon */}
                                 <div
                                   aria-hidden="true"
-                                  className="pointer-events-none absolute inset-x-0 top-0 h-[2.5px] opacity-80 group-hover:opacity-100 transition-opacity"
-                                  style={{ backgroundColor: slot.color }}
+                                  className="pointer-events-none absolute inset-x-0 top-0 h-[3px] opacity-85 group-hover:opacity-100 transition-opacity duration-300"
+                                  style={{
+                                    background: isLive
+                                      ? 'linear-gradient(90deg, #059669 0%, #10b981 48%, #f59e0b 85%, transparent 100%)'
+                                      : `linear-gradient(90deg, ${slot.color} 0%, ${slot.color}bb 48%, #d4af3766 82%, transparent 100%)`,
+                                  }}
                                 />
 
-                                {/* Subtle Islamic Geometric Star Ornament in Bottom-Right */}
+                                {/* Subtle Atmospheric Radial Corner Aura */}
+                                <div
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute inset-0 opacity-70 group-hover:opacity-100 transition-opacity duration-300"
+                                  style={{
+                                    background: isDay
+                                      ? `radial-gradient(240px circle at 0% 0%, ${slot.color}16 0%, transparent 70%)`
+                                      : `radial-gradient(260px circle at 0% 0%, ${slot.color}24 0%, transparent 72%)`,
+                                  }}
+                                />
+
+                                {/* Oversized Editorial Phase Numeral Watermark (Top-Right) */}
+                                {!isLive && (
+                                  <span
+                                    aria-hidden="true"
+                                    className={`pointer-events-none select-none absolute top-3 right-5 font-mono text-[44px] sm:text-[50px] font-black leading-none tracking-tighter transition-all duration-300 group-hover:scale-105 ${
+                                      isDay
+                                        ? 'text-slate-900/[0.04] group-hover:text-emerald-900/[0.07]'
+                                        : 'text-white/[0.04] group-hover:text-emerald-300/[0.08]'
+                                    }`}
+                                  >
+                                    {phaseNum}
+                                  </span>
+                                )}
+
+                                {/* Illuminated 8-Point Rub el Hizb Star Filigree (Bottom-Right) */}
                                 <svg
                                   aria-hidden="true"
-                                  viewBox="0 0 64 64"
-                                  className={`pointer-events-none absolute -right-3 -bottom-3 w-20 h-20 transition-opacity duration-300 ${
+                                  viewBox="0 0 80 80"
+                                  className={`pointer-events-none absolute -right-4 -bottom-4 w-24 h-24 transition-all duration-500 group-hover:rotate-12 ${
                                     isDay
-                                      ? 'text-emerald-800 opacity-[0.03] group-hover:opacity-[0.08]'
-                                      : 'text-emerald-300 opacity-[0.04] group-hover:opacity-[0.11]'
+                                      ? 'text-emerald-800 opacity-[0.035] group-hover:opacity-[0.09]'
+                                      : 'text-emerald-300 opacity-[0.045] group-hover:opacity-[0.12]'
                                   }`}
                                   fill="none"
                                   stroke="currentColor"
-                                  strokeWidth="1.4"
+                                  strokeWidth="1.2"
                                 >
-                                  <rect x="14" y="14" width="36" height="36" rx="2" />
-                                  <rect x="14" y="14" width="36" height="36" rx="2" transform="rotate(45 32 32)" />
-                                  <circle cx="32" cy="32" r="7" />
+                                  <rect x="18" y="18" width="44" height="44" rx="2.5" />
+                                  <rect x="18" y="18" width="44" height="44" rx="2.5" transform="rotate(45 40 40)" />
+                                  <circle cx="40" cy="40" r="10" />
+                                  <circle cx="40" cy="40" r="3" fill="currentColor" />
                                 </svg>
 
-                                {/* Top Row: Phase Icon + Phase Number & Live Marker */}
-                                <div className="relative z-10 flex items-start justify-between gap-2">
-                                  <div className="flex items-center gap-3">
+                                {/* Top Header: Jewel Icon Medallion + Phase/Time/Category + Live Beacon */}
+                                <div className="relative z-10 flex items-start justify-between gap-3">
+                                  <div className="flex items-center gap-3.5 min-w-0">
                                     <div
-                                      className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-transform duration-200 group-hover:scale-105"
+                                      className="relative w-12 h-12 rounded-2xl flex items-center justify-center text-[22px] shrink-0 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3"
                                       style={{
-                                        backgroundColor: `${slot.color}1a`,
-                                        border: `1px solid ${slot.color}44`,
+                                        background: isDay
+                                          ? `linear-gradient(145deg, #ffffff 0%, ${slot.color}1e 100%)`
+                                          : `linear-gradient(145deg, ${slot.color}32 0%, rgba(7,25,31,0.85) 100%)`,
+                                        border: `1px solid ${slot.color}${isDay ? '42' : '55'}`,
+                                        boxShadow: isDay
+                                          ? `0 8px 18px -6px ${slot.color}38, inset 0 1px 0 rgba(255,255,255,0.95)`
+                                          : `0 8px 20px -6px ${slot.color}48, inset 0 1px 0 rgba(255,255,255,0.12)`,
                                       }}
                                     >
-                                      {slot.icon}
+                                      <span className="drop-shadow-2xs">{slot.icon}</span>
                                     </div>
-                                    <div>
-                                      <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold tabular-nums">
-                                        <span style={{ color: isDay ? slot.color : undefined }} className={isDay ? '' : 'text-amber-300'}>
-                                          {isBn ? `পর্ব ${phaseNum}` : `Phase ${phaseNum}`}
+
+                                    <div className="min-w-0">
+                                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] font-bold">
+                                        <span
+                                          className="inline-flex items-center gap-1.5 font-mono tabular-nums tracking-tight"
+                                          style={{ color: isDay ? slot.color : undefined }}
+                                        >
+                                          <span
+                                            aria-hidden="true"
+                                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                                            style={{ backgroundColor: slot.color }}
+                                          />
+                                          <span className={isDay ? '' : 'text-amber-300'}>
+                                            {isBn ? `পর্ব ${phaseNum}` : `Phase ${phaseNum}`}
+                                          </span>
                                         </span>
-                                        <span aria-hidden="true" className="opacity-35">·</span>
-                                        <span className={isDay ? 'text-slate-500' : 'text-teal-200/70'}>{durLabel}</span>
+                                        <span aria-hidden="true" className="opacity-30">·</span>
+                                        <span className={`inline-flex items-center gap-1 font-mono tabular-nums ${isDay ? 'text-slate-500' : 'text-teal-200/75'}`}>
+                                          <Clock className="w-3 h-3 opacity-75" />
+                                          {durLabel}
+                                        </span>
+                                        <span aria-hidden="true" className="hidden sm:inline opacity-30">·</span>
+                                        <span className={`hidden sm:inline text-[11px] font-semibold truncate ${isDay ? 'text-slate-500/90' : 'text-teal-200/60'}`}>
+                                          {categoryLabel}
+                                        </span>
                                       </div>
-                                      <div className={`text-[11px] font-semibold mt-0.5 ${isDay ? 'text-amber-700' : 'text-amber-300/90'}`}>
+
+                                      <div className={`text-[12px] font-bold mt-0.5 leading-snug ${isDay ? 'text-amber-800/90' : 'text-amber-300/95'}`}>
                                         {locSlot.timeSpan}
                                       </div>
                                     </div>
                                   </div>
 
                                   {isLive && (
-                                    <span className={`text-[10px] font-black tracking-wide shrink-0 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                                    <span
+                                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-black tracking-wide shrink-0 border ${
+                                        isDay
+                                          ? 'bg-emerald-600 text-white border-emerald-700/20 shadow-xs shadow-emerald-600/25'
+                                          : 'bg-emerald-400/20 text-emerald-200 border-emerald-400/40'
+                                      }`}
+                                    >
+                                      <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-80" />
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-300" />
+                                      </span>
                                       {isBn ? 'এখন চলছে' : 'LIVE'}
                                     </span>
                                   )}
                                 </div>
 
-                                {/* Middle: Full Readable Title + Concise 2-line Preview */}
-                                <div className="relative z-10 space-y-1.5">
-                                  <h4 className={`text-[15px] font-black leading-snug tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                                    {locSlot.title}
-                                  </h4>
-                                  <p className={`text-xs leading-relaxed line-clamp-2 ${isDay ? 'text-slate-600' : 'text-slate-300/85'}`}>
-                                    {locSlot.summary}
-                                  </p>
+                                {/* Middle Editorial Body: Title + Summary + Highlighted Primary Sunnah */}
+                                <div className={`relative z-10 ${isWideFeature ? 'grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-6 items-start' : 'space-y-2.5'}`}>
+                                  <div className={isWideFeature ? 'md:col-span-7 space-y-1.5' : 'space-y-1.5'}>
+                                    <h4
+                                      className={`text-[16px] sm:text-[17px] font-black leading-snug tracking-tight transition-colors duration-200 ${
+                                        isDay
+                                          ? 'text-slate-900 group-hover:text-[#006A4E]'
+                                          : 'text-white group-hover:text-emerald-300'
+                                      }`}
+                                    >
+                                      {locSlot.title}
+                                    </h4>
+                                    <p className={`text-[12.5px] sm:text-[13px] leading-relaxed line-clamp-2 ${isDay ? 'text-slate-600' : 'text-slate-300/85'}`}>
+                                      {locSlot.summary}
+                                    </p>
+                                  </div>
+
+                                  {primaryAction && (
+                                    <div
+                                      className={`${isWideFeature ? 'md:col-span-5 md:mt-0.5' : ''} pl-3 py-1.5 border-l-2 rounded-r-lg ${
+                                        isDay
+                                          ? 'bg-emerald-950/[0.025] text-slate-700'
+                                          : 'bg-white/[0.03] text-teal-100/85'
+                                      }`}
+                                      style={{ borderLeftColor: `${slot.color}99` }}
+                                    >
+                                      <div className={`text-[10px] font-extrabold uppercase tracking-wider mb-0.5 ${isDay ? 'text-emerald-800/75' : 'text-amber-300/85'}`}>
+                                        {isBn ? 'মূল সুন্নাহ আমল' : 'Key Sunnah'}
+                                      </div>
+                                      <p className="text-[11.5px] font-medium leading-snug line-clamp-1">
+                                        {primaryAction}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
 
-                                {/* Footer: Unboxed Clean Metadata & Open Affordance */}
+                                {/* Sleek Footer: Crisp Icon Metadata + Tactile Interactive CTA */}
                                 <div
-                                  className={`relative z-10 pt-2.5 border-t flex items-center justify-between gap-2 text-[11px] font-semibold ${
-                                    isDay ? 'border-slate-100 text-slate-500' : 'border-[#153c45] text-teal-200/75'
+                                  className={`relative z-10 pt-3 border-t flex items-center justify-between gap-2 text-[11.5px] font-semibold ${
+                                    isDay ? 'border-slate-200/75 text-slate-500' : 'border-white/[0.08] text-teal-200/75'
                                   }`}
                                 >
-                                  <div className="flex items-center gap-1.5 truncate font-mono tabular-nums">
-                                    <span>
-                                      {isBn
-                                        ? `${toBnDigits(locSlot.actions.length)}টি সুন্নাহ`
-                                        : `${locSlot.actions.length} Sunnahs`}
+                                  <div className="flex items-center flex-wrap gap-x-3 gap-y-1 font-mono tabular-nums">
+                                    <span className="inline-flex items-center gap-1">
+                                      <Sparkles className={`w-3.5 h-3.5 ${isDay ? 'text-amber-600/80' : 'text-amber-300/80'}`} />
+                                      <span>
+                                        {isBn
+                                          ? `${toBnDigits(locSlot.actions.length)}টি সুন্নাহ`
+                                          : `${locSlot.actions.length} Sunnahs`}
+                                      </span>
                                     </span>
+
                                     {slot.dua && (
-                                      <>
-                                        <span aria-hidden="true" className="opacity-40">·</span>
-                                        <span className={isDay ? 'text-emerald-700' : 'text-emerald-300'}>
-                                          {isBn ? 'দোয়া' : 'Dua'}
-                                        </span>
-                                      </>
+                                      <span className={`inline-flex items-center gap-1 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                                        <Heart className="w-3.5 h-3.5" />
+                                        <span>{isBn ? 'দোয়া' : 'Dua'}</span>
+                                      </span>
                                     )}
+
                                     {locSlot.hadith && (
-                                      <>
-                                        <span aria-hidden="true" className="opacity-40">·</span>
+                                      <span className="inline-flex items-center gap-1">
+                                        <BookOpen className="w-3.5 h-3.5 opacity-75" />
                                         <span>{isBn ? 'হাদিস' : 'Hadith'}</span>
-                                      </>
+                                      </span>
                                     )}
                                   </div>
 
-                                  <span className={`inline-flex items-center gap-1 font-bold shrink-0 transition-transform group-hover:translate-x-0.5 ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}>
-                                    <span>{isBn ? 'বিস্তারিত' : 'Read'}</span>
-                                    <ChevronRight className="w-3.5 h-3.5" />
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-[11.5px] font-extrabold shrink-0 border transition-all duration-200 ${
+                                      isDay
+                                        ? 'bg-emerald-50/90 text-[#006A4E] border-emerald-200/80 group-hover:bg-[#006A4E] group-hover:text-white group-hover:border-[#006A4E] group-hover:shadow-xs'
+                                        : 'bg-emerald-400/10 text-emerald-300 border-emerald-400/30 group-hover:bg-emerald-400 group-hover:text-[#04211a] group-hover:border-emerald-300'
+                                    }`}
+                                  >
+                                    <span>{isBn ? 'বিস্তারিত' : 'Explore'}</span>
+                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                                   </span>
                                 </div>
                               </button>

@@ -106,7 +106,7 @@ export const QuickScrollNavigator: React.FC<QuickScrollNavigatorProps> = ({
   const positionClasses =
     activeModule === 'zikir_counter'
       ? 'bottom-36 sm:bottom-28 right-3 sm:right-6'
-      : 'bottom-20 sm:bottom-20 right-8 sm:right-9';
+      : 'bottom-20 sm:bottom-20 right-10 sm:right-11';
 
   const circumference = 2 * Math.PI * 18; // r=18
   const strokeDashoffset = circumference - (scrollPercent / 100) * circumference;
