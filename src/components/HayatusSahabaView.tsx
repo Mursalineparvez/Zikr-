@@ -36,6 +36,7 @@ import { useHorizontalSwipe } from '../hooks/useHorizontalSwipe';
 import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigationOverlay';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
+import { ProphetPassing40HoursSection } from './ProphetPassing40HoursSection';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
 import {
   SAHABA_CATEGORIES,
@@ -1909,6 +1910,16 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         soundEnabled={soundEnabled}
         initialFocus={shareState?.focus}
       />
+
+      {/* Special Seerah Collections Shelf (40 Hours, Last 10 Days, Children, Family) */}
+      <div className="mt-8 pt-8 border-t border-amber-500/20">
+        <ProphetPassing40HoursSection
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={soundEnabled}
+          onOpenShareModal={(content, focus) => setShareState({ content, focus })}
+        />
+      </div>
     </div>
   );
 };

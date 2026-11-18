@@ -28,7 +28,8 @@ export interface Passing40ExtendedDetail {
 export type SpecialCollectionId =
   | 'prophet-40-hours'
   | 'prophet-last-10-days'
-  | 'prophet-children-biography';
+  | 'prophet-children-biography'
+  | 'prophet-family-47';
 
 export interface SeeratSpecialCollectionMeta {
   id: SpecialCollectionId;
@@ -113,6 +114,26 @@ export const SEERAT_SPECIAL_COLLECTIONS: SeeratSpecialCollectionMeta[] = [
     durationEn: '7 Children · 14 Events',
     primarySourcesBn: 'সহীহ বুখারী, সহীহ মুসলিম, সুনান আবু দাউদ, জামে আত-তিরমিযী ও ইবনে সা‘দের আত-তাবাকাতুল কুবরা',
     primarySourcesEn: 'Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, Jami‘ at-Tirmidhi & Ibn Sa‘d’s Tabaqat',
+  },
+  {
+    id: 'prophet-family-47',
+    volumeNoBn: 'সংকলন ০৪',
+    volumeNoEn: 'Collection 04',
+    titleBn: 'রাসূলুল্লাহ ﷺ-এর পরিবার ও নিকটজন (৪৯ জনের পরিচয়)',
+    titleEn: 'The Close Family & Relatives of Prophet Muhammad ﷺ (47 Members)',
+    arabicTitle: 'أهل بيت النبي ﷺ وأقاربه الكرام',
+    eraLabelBn: 'মক্কা ও মদিনা · বাবা-মা, স্ত্রী, সন্তান, নাতি, জামাতা, চাচা ও ফুফু',
+    eraLabelEn: 'Makkah & Madinah · Parents, Wives, Children, Grandchildren, Uncles & Aunts',
+    summaryBn:
+      'রাসূলুল্লাহ ﷺ-এর পরিবার ও নিকটজনদের ঐতিহাসিক পরিচয়—বাবা-মা (২ জন), দাদা-দাদি (২ জন), উম্মাহাতুল মুমিনীন (১১ জন স্ত্রী), সন্তানগণ (৭ জন), নাতি-নাতনি (৭ জন), জামাতাগণ (৩ জন), চাচাগণ (৯ জন) ও ফুফুগণ (৬ জন) মিলে মোট ৪৭ জন প্রামাণ্য নিকটজনের জন্ম, পরিচয়, অবদান ও হাদিসভিত্তিক ঐতিহাসিক দলিল।',
+    summaryEn:
+      'A comprehensive 8-part archival chronicle of 47 close family members and relatives of Prophet Muhammad ﷺ—covering parents (2), grandparents (2), wives (11), children (7), grandchildren (7), sons-in-law (3), uncles (9), and aunts (6) with verified Hadith and historical sources.',
+    partsCount: 8,
+    eventsCount: 47,
+    durationBn: '৮টি সম্পর্ক · ৪৭ জন নিকটজন',
+    durationEn: '8 Relations · 47 Members',
+    primarySourcesBn: 'সহীহ বুখারী, সহীহ মুসলিম, সুনান আবু দাউদ, জামে আত-তিরমিযী, আল-ইসাবা ও ইবনে সা‘দের আত-তাবাকাতুল কুবরা',
+    primarySourcesEn: 'Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, Jami‘ at-Tirmidhi, Al-Isaba & Ibn Sa‘d’s Tabaqat',
   },
 ];
 
