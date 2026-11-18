@@ -673,35 +673,43 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
         </div>
       )}
 
-      {/* 1. SLIM EDITORIAL HERO & INTEGRATED 24-HOUR SUNNAH WATCH CARD */}
+      {/* 1. ULTRA-SLIM CELESTIAL EMERALD-GOLD HERO & INTERACTIVE 24-HOUR WATCH CARD */}
       <div
-        className={`relative overflow-hidden rounded-3xl px-4 py-4 sm:px-6 sm:py-5 border shadow-xl transition-all duration-300 ${
+        className={`relative overflow-hidden rounded-3xl px-4 py-3.5 sm:px-6 sm:py-4 border shadow-lg transition-all duration-300 ${
           isDay
-            ? 'bg-gradient-to-br from-[#014b36] via-[#015f45] to-[#013426] text-white border-emerald-500/30'
-            : 'bg-gradient-to-br from-[#04171c] via-[#08262d] to-[#031014] text-white border-teal-500/25'
+            ? 'bg-gradient-to-br from-[#014734] via-[#025b42] to-[#012f23] text-white border-emerald-400/25'
+            : 'bg-gradient-to-br from-[#04171c] via-[#07242c] to-[#030f13] text-white border-teal-500/25'
         }`}
       >
-        {/* Subtle gold/emerald accent hairline glow along top edge */}
+        {/* Soft luminous ambient glow & top gold hairline */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-amber-300/60 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-300/75 to-transparent"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-12 -top-12 w-56 h-56 rounded-full bg-amber-400/[0.08] blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-16 -bottom-16 w-48 h-48 rounded-full bg-emerald-300/[0.08] blur-3xl"
         />
 
-        {/* Subtle geometric Islamic lattice watermark */}
+        {/* Delicate Islamic geometric star lattice watermark */}
         <svg
           aria-hidden="true"
-          className="pointer-events-none absolute -right-4 -top-4 h-64 w-64 opacity-[0.05] text-amber-200"
+          className="pointer-events-none absolute right-2 -top-4 h-48 w-48 opacity-[0.06] text-amber-200"
           viewBox="0 0 200 200"
           fill="none"
         >
-          <circle cx="120" cy="80" r="76" stroke="currentColor" strokeWidth="1" />
-          <circle cx="120" cy="80" r="56" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 4" />
-          <polygon points="120,16 168,48 168,112 120,144 72,112 72,48" stroke="currentColor" strokeWidth="0.8" />
+          <circle cx="110" cy="95" r="72" stroke="currentColor" strokeWidth="1" />
+          <circle cx="110" cy="95" r="52" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 4" />
+          <polygon points="110,23 160,59 160,131 110,167 60,131 60,59" stroke="currentColor" strokeWidth="0.8" />
         </svg>
 
-        <div className="relative z-10 space-y-3.5">
-          {/* Ultra-Slim Top Row: Back + Arabic Title + Live Digital Clock */}
-          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/10">
+        <div className="relative z-10 space-y-3">
+          {/* Sleek Single-Line Top Utility Bar */}
+          <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/10">
             <div className="flex items-center gap-2.5 min-w-0">
               {onBackToHub && (
                 <button
@@ -726,35 +734,41 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                 onShare={() => openFullRoutineShare('share')}
                 onDownload={() => openFullRoutineShare('download')}
               />
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 pl-1 border-l border-white/15">
                 <Clock className="w-3.5 h-3.5 text-amber-300" />
-                <span className="text-xs sm:text-sm font-mono font-black tabular-nums tracking-tight text-amber-200">
+                <span className="text-xs font-mono font-black tabular-nums tracking-tight text-amber-200">
                   {formattedLiveClock}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Main Slim Split Row: Info + Live Phase (Left) & Precision 24H Watch Dial (Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-center">
-            {/* Left Column: Title, Active Phase Readout & Hairline Metrics */}
-            <div className="lg:col-span-7 flex flex-col justify-between space-y-3">
+          {/* Slim 2-Column Main Stage: Compact Editorial Left + Jewel 24H Watch Right */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 lg:gap-5 items-center">
+            {/* Left Column: Title + Sleek Active Phase Bar + Inline Hairline Metrics */}
+            <div className="lg:col-span-8 flex flex-col justify-between space-y-2.5 min-w-0">
+              {/* Crisp Headline & 1-Line Subtitle */}
               <div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-snug text-white">
+                <h1 className="text-lg sm:text-[22px] font-black tracking-tight leading-snug text-white">
                   {strings.title}
                 </h1>
-                <p className="text-[11px] sm:text-xs text-emerald-100/80 max-w-xl leading-relaxed mt-0.5 line-clamp-1">
+                <p className="text-[11px] sm:text-xs text-emerald-100/75 leading-relaxed mt-0.5 truncate">
                   {strings.subtitle}
                 </p>
               </div>
 
-              {/* Active / Selected Watch Phase Readout (Sleek, Zero Nested Heavy Boxes) */}
-              <div className="py-2.5 border-y border-white/10 space-y-2">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xl shrink-0">{activeSlot.icon}</span>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-amber-300 tabular-nums">
+              {/* Compact Translucent Active Phase Spotlight Strip */}
+              <div className="rounded-2xl bg-white/[0.06] border border-white/12 px-3.5 py-2.5 backdrop-blur-xs space-y-2">
+                <div className="flex items-center justify-between gap-2.5 flex-wrap">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 border border-white/15 bg-black/20"
+                      style={{ boxShadow: `inset 0 0 12px ${activeSlot.color}33` }}
+                    >
+                      {activeSlot.icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-amber-300/95 tabular-nums flex-wrap">
                         <span>{locActiveSlot.timeSpan}</span>
                         <span aria-hidden="true" className="text-white/30">·</span>
                         <span className="text-emerald-200/90">
@@ -764,12 +778,12 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                           <>
                             <span aria-hidden="true" className="text-white/30">·</span>
                             <span className="text-emerald-300 font-black">
-                              {isBn ? 'এখন চলছে' : 'LIVE'}
+                              {isBn ? 'এখন চলছে' : 'Live'}
                             </span>
                           </>
                         )}
                       </div>
-                      <h2 className="text-sm sm:text-base font-black text-white leading-tight truncate">
+                      <h2 className="text-sm sm:text-[15px] font-extrabold text-white leading-snug truncate">
                         {locActiveSlot.title}
                       </h2>
                     </div>
@@ -783,7 +797,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                           setSelectedSlotId(currentLiveSlot.id);
                           if (soundEnabled) soundHaptics.playTap();
                         }}
-                        className="px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold bg-white/10 hover:bg-white/20 text-amber-200 border border-white/15 transition cursor-pointer whitespace-nowrap"
+                        className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-white/10 hover:bg-white/20 text-amber-200 border border-white/15 transition cursor-pointer whitespace-nowrap"
                       >
                         {isBn ? 'এখনকার সময়' : 'Live'}
                       </button>
@@ -791,7 +805,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                     <button
                       type="button"
                       onClick={() => openPhaseDetail(activeSlot.id, true)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-black inline-flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
+                      className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-amber-400 hover:from-amber-200 hover:to-amber-300 text-slate-950 text-[11px] font-black inline-flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-sm whitespace-nowrap"
                     >
                       <span>{strings.liveBanner.viewDetails}</span>
                       <ArrowRight className="w-3 h-3" />
@@ -799,13 +813,9 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                   </div>
                 </div>
 
-                <p className="text-[11px] text-emerald-100/80 line-clamp-1">
-                  {locActiveSlot.summary}
-                </p>
-
-                {/* Slim Progress Bar & Next Up */}
+                {/* Hairline Progress Bar + Next Phase Label */}
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-semibold text-emerald-100/75 tabular-nums">
+                  <div className="flex items-center justify-between gap-2 text-[10px] font-medium text-emerald-100/75 tabular-nums">
                     <span>
                       {activeSlot.id === currentLiveSlot.id
                         ? liveSlotTiming.remainingText
@@ -813,19 +823,19 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                         ? `পর্ব ${toBnDigits(activeSlotIndex + 1)}/${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
                         : `Phase ${activeSlotIndex + 1}/${NOBI_24_TIME_SLOTS.length}`}
                     </span>
-                    <span className="truncate max-w-[65%] text-right">
+                    <span className="truncate text-right">
                       {activeSlot.id === currentLiveSlot.id
                         ? isBn
                           ? `পরবর্তী: ${locNextSlot.title}`
                           : `Next: ${locNextSlot.title}`
                         : isBn
-                        ? `পরবর্তী পর্ব: ${locActiveNextSlot.title}`
-                        : `Next phase: ${locActiveNextSlot.title}`}
+                        ? `পরবর্তী: ${locActiveNextSlot.title}`
+                        : `Next: ${locActiveNextSlot.title}`}
                     </span>
                   </div>
                   <div className="h-1 w-full rounded-full bg-white/15 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-400 transition-all duration-500"
+                      className="h-full rounded-full bg-gradient-to-r from-amber-300 via-amber-400 to-emerald-300 transition-all duration-500"
                       style={{
                         width: `${
                           activeSlot.id === currentLiveSlot.id
@@ -838,79 +848,71 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                 </div>
               </div>
 
-              {/* Slim Unboxed 4-Metric Hairline Strip */}
-              <div className="grid grid-cols-4 divide-x divide-white/15">
+              {/* Ultra-Slim Inline Clickable Quick-Metrics Strip (Unboxed Editorial Typography) */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs text-emerald-100/80 pt-0.5">
                 <button
                   type="button"
                   onClick={() => setActiveTab('timeline')}
-                  className="pr-2 text-left hover:opacity-80 transition cursor-pointer group"
+                  className="inline-flex items-baseline gap-1 hover:text-amber-300 transition cursor-pointer"
                 >
-                  <div className="text-sm sm:text-base font-black tabular-nums text-white group-hover:text-amber-300 transition-colors">
+                  <strong className="font-mono font-black tabular-nums text-white">
                     {isBn ? toBnDigits(NOBI_24_TIME_SLOTS.length) : NOBI_24_TIME_SLOTS.length}
-                  </div>
-                  <div className="text-[10px] text-emerald-100/70 font-medium truncate">
-                    {isBn ? 'সময় পর্ব' : 'Phases'}
-                  </div>
+                  </strong>
+                  <span>{isBn ? 'সময় পর্ব' : 'Phases'}</span>
                 </button>
-
+                <span aria-hidden="true" className="text-white/25">·</span>
                 <button
                   type="button"
                   onClick={() => setActiveTab('articles')}
-                  className="px-2.5 text-left hover:opacity-80 transition cursor-pointer group"
+                  className="inline-flex items-baseline gap-1 hover:text-amber-300 transition cursor-pointer"
                 >
-                  <div className="text-sm sm:text-base font-black tabular-nums text-white group-hover:text-amber-300 transition-colors">
+                  <strong className="font-mono font-black tabular-nums text-white">
                     {isBn ? toBnDigits(NOBI_24_CHAPTERS.length) : NOBI_24_CHAPTERS.length}
-                  </div>
-                  <div className="text-[10px] text-emerald-100/70 font-medium truncate">
-                    {isBn ? 'অধ্যায়' : 'Chapters'}
-                  </div>
+                  </strong>
+                  <span>{isBn ? 'অধ্যায়' : 'Chapters'}</span>
                 </button>
-
+                <span aria-hidden="true" className="text-white/25">·</span>
                 <button
                   type="button"
                   onClick={() => setActiveTab('duas')}
-                  className="px-2.5 text-left hover:opacity-80 transition cursor-pointer group"
+                  className="inline-flex items-baseline gap-1 hover:text-amber-300 transition cursor-pointer"
                 >
-                  <div className="text-sm sm:text-base font-black tabular-nums text-white group-hover:text-amber-300 transition-colors">
+                  <strong className="font-mono font-black tabular-nums text-white">
                     {isBn ? toBnDigits(NOBI_24_DUAS.length) : NOBI_24_DUAS.length}
-                  </div>
-                  <div className="text-[10px] text-emerald-100/70 font-medium truncate">
-                    {isBn ? 'মাসনুন দোয়া' : 'Duas'}
-                  </div>
+                  </strong>
+                  <span>{isBn ? 'মাসনুন দোয়া' : 'Duas'}</span>
                 </button>
-
+                <span aria-hidden="true" className="text-white/25">·</span>
                 <button
                   type="button"
                   onClick={() => setActiveTab('tracker')}
-                  className="pl-2.5 text-left hover:opacity-80 transition cursor-pointer group"
+                  className="inline-flex items-baseline gap-1 hover:text-amber-200 transition cursor-pointer"
                 >
-                  <div className="text-sm sm:text-base font-black tabular-nums text-amber-300">
+                  <strong className="font-mono font-black tabular-nums text-amber-300">
                     {isBn
                       ? `${toBnDigits(completedChecklistCount)}/${toBnDigits(NOBI_DAILY_CHECKLIST.length)}`
                       : `${completedChecklistCount}/${NOBI_DAILY_CHECKLIST.length}`}
-                  </div>
-                  <div className="text-[10px] text-emerald-100/70 font-medium truncate">
-                    {isBn ? 'আজকের সুন্নাহ' : 'Checked'}
-                  </div>
+                  </strong>
+                  <span>{isBn ? 'আজকের সুন্নাহ' : 'Checked'}</span>
                 </button>
               </div>
             </div>
 
-            {/* Right Column: Precision Integrated 24-Hour Sunnah Watch Dial */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-2">
-              <div className="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center">
-                <svg viewBox="0 0 320 320" className="w-full h-full drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
+            {/* Right Column: Jewel-Sized Precision 24-Hour Sunnah Watch Dial */}
+            <div className="lg:col-span-4 flex sm:flex-row lg:flex-col items-center justify-center gap-3 lg:gap-1.5">
+              <div className="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 320 320" className="w-full h-full drop-shadow-[0_6px_16px_rgba(0,0,0,0.4)]">
                   <defs>
                     <linearGradient id="watchBezelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#fde68a" stopOpacity="0.55" />
-                      <stop offset="50%" stopColor="#10b981" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.55" />
+                      <stop offset="0%" stopColor="#fde68a" stopOpacity="0.65" />
+                      <stop offset="50%" stopColor="#34d399" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.65" />
                     </linearGradient>
                   </defs>
 
-                  {/* Outer Metallic Watch Bezel */}
-                  <circle cx="160" cy="160" r="154" fill="rgba(0,0,0,0.22)" stroke="url(#watchBezelGrad)" strokeWidth="2" />
-                  <circle cx="160" cy="160" r="147" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+                  {/* Outer Brushed-Gold Watch Bezel */}
+                  <circle cx="160" cy="160" r="154" fill="rgba(0,0,0,0.26)" stroke="url(#watchBezelGrad)" strokeWidth="2.2" />
+                  <circle cx="160" cy="160" r="146" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
 
                   {/* 24-Hour Precision Tick Marks & Cardinal Labels */}
                   {Array.from({ length: 24 }).map((_, hr) => {
@@ -923,7 +925,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                     const y1 = 160 + r1 * Math.sin(rad);
                     const x2 = 160 + r2 * Math.cos(rad);
                     const y2 = 160 + r2 * Math.sin(rad);
-                    const labelR = 150;
+                    const labelR = 149;
                     const lx = 160 + labelR * Math.cos(rad);
                     const ly = 160 + labelR * Math.sin(rad);
 
@@ -944,11 +946,11 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                             y={ly}
                             textAnchor="middle"
                             dominantBaseline="central"
-                            fontSize="8.5"
+                            fontSize="9"
                             fontWeight="800"
                             fill="#fde68a"
                           >
-                            {hr === 0 ? '12AM' : hr === 6 ? '6AM' : hr === 12 ? '12PM' : '6PM'}
+                            {hr === 0 ? '12A' : hr === 6 ? '6A' : hr === 12 ? '12P' : '6P'}
                           </text>
                         )}
                       </g>
@@ -1022,39 +1024,34 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                     })()}
 
                     {/* Inner Watch Dial Face */}
-                    <circle cx="160" cy="160" r="84" fill={isDay ? '#013b2b' : '#041419'} />
-                    <circle cx="160" cy="160" r="84" fill="none" stroke="rgba(253,230,138,0.22)" strokeWidth="1.5" />
+                    <circle cx="160" cy="160" r="84" fill={isDay ? '#013426' : '#031217'} />
+                    <circle cx="160" cy="160" r="84" fill="none" stroke="rgba(253,230,138,0.28)" strokeWidth="1.5" />
                   </g>
                 </svg>
 
                 {/* Center Watch Face Readout */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-7 pointer-events-none text-center">
-                  <span className="text-xl leading-none">{activeSlot.icon}</span>
-                  <span className="text-[11px] font-mono font-black tabular-nums text-amber-300 mt-1">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-5 pointer-events-none text-center">
+                  <span className="text-base leading-none">{activeSlot.icon}</span>
+                  <span className="text-[10px] font-mono font-black tabular-nums text-amber-300 mt-1">
                     {formatHourClock(activeSlot.startHour, isBn)}
                   </span>
-                  <span className="text-[10px] font-bold text-white/95 line-clamp-1 mt-0.5 max-w-[96px]">
+                  <span className="text-[9px] font-bold text-white/95 line-clamp-1 mt-0.5 max-w-[76px]">
                     {locActiveSlot.title}
-                  </span>
-                  <span className="text-[9px] font-mono font-semibold text-emerald-200/75 mt-0.5 tabular-nums">
-                    {isBn
-                      ? `পর্ব ${toBnDigits(activeSlotIndex + 1)}/${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
-                      : `${activeSlotIndex + 1}/${NOBI_24_TIME_SLOTS.length}`}
                   </span>
                 </div>
               </div>
 
-              {/* Compact Watch Stepper Bar */}
-              <div className="flex items-center justify-center gap-2">
+              {/* Tight Watch Stepper Controls */}
+              <div className="flex items-center justify-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => handleStepSlot(-1)}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-100 transition active:scale-95 cursor-pointer"
+                  className="p-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-100 transition active:scale-95 cursor-pointer"
                   title={isBn ? 'পূর্ববর্তী পর্ব' : 'Previous phase'}
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                <span className="text-[10px] font-mono font-bold tabular-nums text-amber-200/90 px-1.5">
+                <span className="text-[10px] font-mono font-bold tabular-nums text-amber-200/95 px-1.5">
                   {isBn
                     ? `${toBnDigits(activeSlotIndex + 1)} / ${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
                     : `${activeSlotIndex + 1} / ${NOBI_24_TIME_SLOTS.length}`}
@@ -1062,38 +1059,13 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                 <button
                   type="button"
                   onClick={() => handleStepSlot(1)}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-100 transition active:scale-95 cursor-pointer"
+                  className="p-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-100 transition active:scale-95 cursor-pointer"
                   title={isBn ? 'পরবর্তী পর্ব' : 'Next phase'}
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Slim Bottom 14-Phase Interactive Strip */}
-          <div className="flex items-center gap-1 overflow-x-auto pt-1 pb-0.5 scrollbar-none">
-            {NOBI_24_TIME_SLOTS.map((slot, idx) => {
-              const isSelected = slot.id === activeSlot.id;
-              const isLive = slot.id === currentLiveSlot.id;
-              return (
-                <button
-                  key={slot.id}
-                  type="button"
-                  onClick={() => openPhaseDetail(slot.id, true)}
-                  className={`px-2 py-1 rounded-lg border text-[10px] font-bold whitespace-nowrap flex items-center gap-1 transition shrink-0 cursor-pointer ${
-                    isSelected
-                      ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm'
-                      : isLive
-                      ? 'bg-emerald-500/25 text-emerald-100 border-emerald-400/50 hover:bg-emerald-500/35'
-                      : 'bg-white/5 hover:bg-white/15 text-emerald-100/80 border-white/10'
-                  }`}
-                >
-                  <span>{slot.icon}</span>
-                  <span className="font-mono tabular-nums">{isBn ? toBnDigits(idx + 1) : idx + 1}</span>
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>
@@ -1242,9 +1214,9 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                 </div>
 
                 {/* Clean 4-Part Life Balance & Period Filter Row */}
-                <div className={`pt-3 border-t flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${isDay ? 'border-slate-100' : 'border-[#143a43]'}`}>
+                <div className={`pt-3 border-t flex flex-col xl:flex-row xl:items-center justify-between gap-3 ${isDay ? 'border-slate-100' : 'border-[#143a43]'}`}>
                   {/* Interactive Period Filter Tabs */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                  <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                     {[
                       { id: 'all' as const, label: isBn ? `সব (${toBnDigits(14)})` : 'All (14)' },
                       { id: 'morning' as const, label: isBn ? `ভোর ও সকাল (${toBnDigits(4)})` : 'Morning (4)' },
