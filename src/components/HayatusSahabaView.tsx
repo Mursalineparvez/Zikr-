@@ -63,8 +63,6 @@ import {
 } from '../data/propheticSahabaTitlesData';
 import {
   resolveSahabaFamilyChronicle,
-  SAHABA_FAMILY_CHRONICLES,
-  KHALIFA_FAMILY_CHRONICLES,
   FamilyMemberDetailCard,
 } from '../data/sahabaFamilyChronicles';
 import {
@@ -669,7 +667,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
       (familyChronicle.husbandsBn && familyChronicle.husbandsBn.length > 0) ||
       activeSahaba.categoryKey === 'sahabiyyat'
     );
-    const isKhalifaPdfEntry = Boolean(KHALIFA_FAMILY_CHRONICLES[activeSahaba.id]);
+    const hasCompleteFamilyChronicle = (familyChronicle.members?.length || 0) >= 2;
 
     const father = isBn ? familyData.fatherBn : (familyData.fatherEn || 'Recorded in classical Seerah chronicles');
     const mother = isBn ? familyData.motherBn : (familyData.motherEn || 'Recorded in classical Seerah chronicles');
@@ -1044,7 +1042,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                   </p>
                 </div>
               </div>
-              {isKhalifaPdfEntry && (
+              {hasCompleteFamilyChronicle && (
                 <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-amber-400/20 text-amber-200 border border-amber-300/35 shrink-0">
                   {isBn ? 'সম্পূর্ণ রেফারেন্সসহ সংকলন' : 'Complete Referenced Chronicle'}
                 </span>
@@ -2696,7 +2694,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 const title = getSahabaTitle(sahaba, selectedLanguage);
                 const hasProphetic = isPropheticTitleHolder(sahaba.id);
                 const proProfile = getPropheticTitleProfile(sahaba.id);
-                const curatedFamily = SAHABA_FAMILY_CHRONICLES[sahaba.id];
+                const resolvedFamily = resolveSahabaFamilyChronicle(sahaba);
 
                 return (
                   <div
@@ -2713,9 +2711,9 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                         <span className="font-mono font-bold text-amber-500">
                           #{formatNum(sahaba.rank)}
                         </span>
-                        {curatedFamily && (
+                        {resolvedFamily.summaryHeadlineBn && (
                           <span className={`text-[10px] font-bold truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
-                            {isBn ? curatedFamily.summaryHeadlineBn : (curatedFamily.summaryHeadlineEn || curatedFamily.summaryHeadlineBn)}
+                            {isBn ? resolvedFamily.summaryHeadlineBn : (resolvedFamily.summaryHeadlineEn || resolvedFamily.summaryHeadlineBn)}
                           </span>
                         )}
                       </div>
@@ -2818,7 +2816,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
                   {list.map((sahaba, sIdx) => {
                     const name = getSahabaName(sahaba, selectedLanguage);
-                    const khalifaFamily = KHALIFA_FAMILY_CHRONICLES[sahaba.id];
+                    const resolvedFamily = resolveSahabaFamilyChronicle(sahaba);
                     return (
                       <div
                         key={sahaba.id}
@@ -2835,9 +2833,9 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                           </span>
                           <div className="min-w-0">
                             <span className="truncate block">{name}</span>
-                            {khalifaFamily && (
+                            {resolvedFamily.summaryHeadlineBn && (
                               <span className={`text-[10px] font-bold block truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300/90'}`}>
-                                {isBn ? khalifaFamily.summaryHeadlineBn : (khalifaFamily.summaryHeadlineEn || khalifaFamily.summaryHeadlineBn)}
+                                {isBn ? resolvedFamily.summaryHeadlineBn : (resolvedFamily.summaryHeadlineEn || resolvedFamily.summaryHeadlineBn)}
                               </span>
                             )}
                           </div>

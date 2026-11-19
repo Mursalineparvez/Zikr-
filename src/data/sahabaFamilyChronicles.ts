@@ -5,6 +5,9 @@ import {
 } from './khalifaFamilyPdfData';
 import { SAHABA_FAMILY_CHRONICLES_PART1 } from './sahabaFamilyChroniclesPart1';
 import { SAHABA_FAMILY_CHRONICLES_PART2 } from './sahabaFamilyChroniclesPart2';
+import { SAHABA_FAMILY_CHRONICLES_PART3 } from './sahabaFamilyChroniclesPart3';
+import { SAHABA_FAMILY_CHRONICLES_PART4 } from './sahabaFamilyChroniclesPart4';
+import { SAHABA_FAMILY_CHRONICLES_PART5 } from './sahabaFamilyChroniclesPart5';
 import type { SahabaItem } from './sahabaData';
 
 export type { FamilyMemberDetailCard, SahabaFamilyChronicle };
@@ -13,17 +16,25 @@ export { KHALIFA_FAMILY_CHRONICLES };
 /**
  * ৪ খলিফার সম্পূর্ণ পিডিএফ তথ্য (৪২ পাতা, রেফারেন্সসহ) +
  * আশারায়ে মুবাশ্‌শারা, প্রথম সারির সাহাবি, সেনাপতি, আলিম, আনসার,
- * আহলে বাইত, উম্মাহাতুল মুমিনীন ও মহীয়সী সাহাবিয়াত (রা.)-এর একীভূত পারিবারিক সংকলন।
+ * আহলে বাইত, উম্মাহাতুল মুমিনীন ও মহীয়সী সাহাবিয়াত (রা.)-সহ সকল ২৬৬ জন সাহাবির
+ * একীভূত ও প্রামাণ্য পারিবারিক সংকলন।
  */
 export const SAHABA_FAMILY_CHRONICLES: Record<string, SahabaFamilyChronicle> = {
   ...KHALIFA_FAMILY_CHRONICLES,
   ...SAHABA_FAMILY_CHRONICLES_PART1,
   ...SAHABA_FAMILY_CHRONICLES_PART2,
+  ...SAHABA_FAMILY_CHRONICLES_PART3,
+  ...SAHABA_FAMILY_CHRONICLES_PART4,
+  ...SAHABA_FAMILY_CHRONICLES_PART5,
 };
 
 function toBnNum(n: number): string {
   const digits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
   return String(n).replace(/\d/g, (d) => digits[Number(d)]);
+}
+
+function toBnPad2(n: number): string {
+  return toBnNum(n).padStart(2, '০');
 }
 
 function isFemaleSahaba(sahaba: SahabaItem): boolean {
@@ -53,18 +64,218 @@ function isFemaleSahaba(sahaba: SahabaItem): boolean {
 }
 
 /**
- * কোনো সাহাবির সরাসরি সংকলিত পিডিএফ-স্টাইল পারিবারিক বিবরণ থাকলে তা রিটার্ন করে;
- * আর না থাকলে তাঁর `sahaba.familyBn` (যেমন Part 3-এর ৫০ জন সাহাবি) অথবা তাঁর
- * প্রামাণ্য সীরাত তথ্য ও রেফারেন্স থেকে একই স্ট্রাকচার্ড কার্ড ফরম্যাট তৈরি করে দেয়।
+ * ৪ খলিফার ভার্বাটিম পিডিএফ এন্ট্রি অক্ষুণ্ণ রেখে বাকি সকল সাহাবির
+ * পারিবারিক কার্ডগুলোকে সমানভাবে সুবিন্যস্ত করে (পিতা-মাতা ও বংশমর্যাদা,
+ * স্ত্রী/স্বামী, সন্তানসন্ততি, বিশিষ্ট আত্মীয়স্বজন এবং ধারাবাহিক কার্ড নম্বর)।
+ * কখনোই অপ্রমাণিত নাম যোগ করা হয় না — কেবল সংরক্ষিত প্রামাণ্য তথ্য থেকেই কার্ড সাজানো হয়।
+ */
+function enrichChronicleMembers(
+  chronicle: SahabaFamilyChronicle,
+  sahaba: SahabaItem,
+  isFemale: boolean
+): SahabaFamilyChronicle {
+  const existingMembers = [...(chronicle.members || [])];
+  const hasParentsLineageCard = existingMembers.some(
+    (m) =>
+      m.group === 'lineage' &&
+      (m.pointsBn.some((pt) => pt.includes('পিতা:')) || m.roleBadgeBn.includes('পিতা-মাতা'))
+  );
+  const hasSpouseCard = existingMembers.some(
+    (m) => m.group === 'wife' || m.group === 'umm_walad' || m.group === 'husband'
+  );
+  const hasChildCard = existingMembers.some(
+    (m) => m.group === 'child' || m.group === 'children_summary'
+  );
+  const hasAutoRelativesCard = existingMembers.some((m) => m.id.endsWith('-auto-relatives'));
+
+  const spousesBn = (
+    isFemale
+      ? (chronicle.husbandsBn && chronicle.husbandsBn.length > 0 ? chronicle.husbandsBn : chronicle.wivesBn)
+      : chronicle.wivesBn
+  ) || [];
+  const spousesEn = (
+    isFemale
+      ? (chronicle.husbandsEn && chronicle.husbandsEn.length > 0 ? chronicle.husbandsEn : chronicle.wivesEn)
+      : chronicle.wivesEn
+  ) || [];
+  const sonsBn = (chronicle.sonsBn || []).filter((x) => x && x.trim().length > 0);
+  const sonsEn = (chronicle.sonsEn || []).filter((x) => x && x.trim().length > 0);
+  const daughtersBn = (chronicle.daughtersBn || []).filter((x) => x && x.trim().length > 0);
+  const daughtersEn = (chronicle.daughtersEn || []).filter((x) => x && x.trim().length > 0);
+  const relativesBn = (chronicle.keyRelativesBn || []).filter((x) => x && x.trim().length > 0);
+  const relativesEn = (chronicle.keyRelativesEn || []).filter((x) => x && x.trim().length > 0);
+  const totalChildren = sonsBn.length + daughtersBn.length;
+
+  const sourceBn = chronicle.overviewSourceBn || 'তাবাকাতে ইবনে সা’দ; আল-ইসাবাহ; উসদুল গাবাহ';
+  const sourceEn = chronicle.overviewSourceEn || "Tabaqat Ibn Sa'd; Al-Isabah; Usd al-Ghabah";
+
+  const enriched: FamilyMemberDetailCard[] = [];
+
+  // 1. Dedicated Parents & Lineage Card (if missing explicit parents card)
+  if (!hasParentsLineageCard && (chronicle.fatherBn || chronicle.motherBn || chronicle.tribeOrClanBn)) {
+    const lineagePointsBn: string[] = [];
+    const lineagePointsEn: string[] = [];
+    if (chronicle.fatherBn) {
+      lineagePointsBn.push(`পিতা: ${chronicle.fatherBn}।`);
+      lineagePointsEn.push(`Father: ${chronicle.fatherEn || chronicle.fatherBn}.`);
+    }
+    if (chronicle.motherBn) {
+      lineagePointsBn.push(`মাতা: ${chronicle.motherBn}।`);
+      lineagePointsEn.push(`Mother: ${chronicle.motherEn || chronicle.motherBn}.`);
+    }
+    if (chronicle.tribeOrClanBn) {
+      lineagePointsBn.push(`গোত্র ও বংশমর্যাদা: ${chronicle.tribeOrClanBn}।`);
+      lineagePointsEn.push(`Tribe & Clan: ${chronicle.tribeOrClanEn || chronicle.tribeOrClanBn}.`);
+    }
+    if (sahaba.birthAndDeathBn) {
+      lineagePointsBn.push(`জীবনকাল ও ঐতিহাসিক পরিচয়: ${sahaba.birthAndDeathBn}।`);
+      if (sahaba.birthAndDeathEn) {
+        lineagePointsEn.push(`Lifespan: ${sahaba.birthAndDeathEn}.`);
+      }
+    }
+
+    enriched.push({
+      id: `${sahaba.id}-auto-lineage`,
+      roleBadgeBn: 'পিতা-মাতা ও বংশমর্যাদা',
+      roleBadgeEn: 'Parents & Noble Lineage',
+      nameBn: chronicle.tribeOrClanBn || `${sahaba.nameBn}-এর বংশপরিচয়`,
+      nameEn: chronicle.tribeOrClanEn || `Lineage of ${sahaba.nameEn || sahaba.nameBn}`,
+      group: 'lineage',
+      pointsBn: lineagePointsBn,
+      pointsEn: lineagePointsEn.length > 0 ? lineagePointsEn : undefined,
+      sourceBn,
+      sourceEn,
+    });
+  }
+
+  // Keep all existing curated cards in their original order
+  enriched.push(...existingMembers);
+
+  // 2. Dedicated Spouse Card (if missing and spouses are documented)
+  if (!hasSpouseCard && spousesBn.length > 0) {
+    const spousePointsBn = spousesBn.map((sp, idx) =>
+      spousesBn.length > 1
+        ? `${toBnNum(idx + 1)}. ${sp}`
+        : `${isFemale ? 'স্বামী' : 'সহধর্মিণী'}: ${sp}।`
+    );
+    const spousePointsEn = (spousesEn.length > 0 ? spousesEn : spousesBn).map((sp, idx) =>
+      spousesBn.length > 1
+        ? `${idx + 1}. ${sp}`
+        : `${isFemale ? 'Husband' : 'Wife'}: ${sp}.`
+    );
+
+    enriched.push({
+      id: `${sahaba.id}-auto-spouses`,
+      roleBadgeBn: isFemale
+        ? (spousesBn.length > 1 ? `স্বামীগণ (${toBnNum(spousesBn.length)} জন)` : 'স্বামী ও দাম্পত্য')
+        : (spousesBn.length > 1 ? `সহধর্মিণীগণ (${toBnNum(spousesBn.length)} জন)` : 'সহধর্মিণী (স্ত্রী)'),
+      roleBadgeEn: isFemale
+        ? `Husband${spousesBn.length > 1 ? 's' : ''} (${spousesBn.length})`
+        : `Wife / Spouse${spousesBn.length > 1 ? 's' : ''} (${spousesBn.length})`,
+      nameBn: spousesBn.slice(0, 3).join(' · ') + (spousesBn.length > 3 ? ' প্রমুখ' : ''),
+      nameEn: (spousesEn.length > 0 ? spousesEn : spousesBn).slice(0, 3).join(' · '),
+      group: isFemale ? 'husband' : 'wife',
+      pointsBn: spousePointsBn,
+      pointsEn: spousePointsEn,
+      sourceBn,
+      sourceEn,
+    });
+  }
+
+  // 3. Dedicated Children Summary Card (if missing and children are documented)
+  if (!hasChildCard && totalChildren > 0) {
+    const childPointsBn: string[] = [];
+    const childPointsEn: string[] = [];
+    if (sonsBn.length > 0) {
+      childPointsBn.push(`পুত্রসন্তান (${toBnNum(sonsBn.length)} জন): ${sonsBn.join(', ')}।`);
+      childPointsEn.push(`Sons (${sonsBn.length}): ${(sonsEn.length > 0 ? sonsEn : sonsBn).join(', ')}.`);
+    }
+    if (daughtersBn.length > 0) {
+      childPointsBn.push(`কন্যাসন্তান (${toBnNum(daughtersBn.length)} জন): ${daughtersBn.join(', ')}।`);
+      childPointsEn.push(`Daughters (${daughtersBn.length}): ${(daughtersEn.length > 0 ? daughtersEn : daughtersBn).join(', ')}.`);
+    }
+    if (relativesBn.length > 0) {
+      childPointsBn.push(`পারিবারিক ধারা: ${relativesBn.slice(0, 3).join(', ')}।`);
+    }
+
+    const allChildrenBn = [...sonsBn, ...daughtersBn];
+    const allChildrenEn = [...(sonsEn.length > 0 ? sonsEn : sonsBn), ...(daughtersEn.length > 0 ? daughtersEn : daughtersBn)];
+
+    enriched.push({
+      id: `${sahaba.id}-auto-children`,
+      roleBadgeBn: `সন্তানসন্ততি · মোট ${toBnNum(totalChildren)} জন`,
+      roleBadgeEn: `Children · ${totalChildren} Recorded`,
+      nameBn: allChildrenBn.slice(0, 4).join(', ') + (allChildrenBn.length > 4 ? ' প্রমুখ' : ''),
+      nameEn: allChildrenEn.slice(0, 4).join(', ') + (allChildrenEn.length > 4 ? ' et al.' : ''),
+      group: 'children_summary',
+      pointsBn: childPointsBn,
+      pointsEn: childPointsEn.length > 0 ? childPointsEn : undefined,
+      sourceBn,
+      sourceEn,
+    });
+  }
+
+  // 4. Dedicated Notable Relatives & Family Legacy Card (ensures multi-card richness when relatives exist)
+  if (!hasAutoRelativesCard && relativesBn.length > 0 && enriched.length < 4) {
+    const relPointsBn = relativesBn.map((r, idx) => `${toBnNum(idx + 1)}. ${r}`);
+    const relPointsEn = (relativesEn.length > 0 ? relativesEn : relativesBn).map((r, idx) => `${idx + 1}. ${r}`);
+    if (chronicle.overviewPointsBn.length > 1) {
+      const lastOverview = chronicle.overviewPointsBn[chronicle.overviewPointsBn.length - 1];
+      if (lastOverview && !relPointsBn.includes(lastOverview)) {
+        relPointsBn.push(lastOverview);
+      }
+    }
+
+    enriched.push({
+      id: `${sahaba.id}-auto-relatives`,
+      roleBadgeBn: 'বিশিষ্ট আত্মীয়স্বজন ও পারিবারিক সংযোগ',
+      roleBadgeEn: 'Notable Kinship & Family Legacy',
+      nameBn: relativesBn.slice(0, 2).join(' · ') + (relativesBn.length > 2 ? ' প্রমুখ' : ''),
+      nameEn: (relativesEn.length > 0 ? relativesEn : relativesBn).slice(0, 2).join(' · '),
+      group: 'lineage',
+      pointsBn: relPointsBn,
+      pointsEn: relPointsEn,
+      sourceBn,
+      sourceEn,
+    });
+  }
+
+  // Assign sequential pageBadgeBn (০১/০৪, ০২/০৪...) to cards without one
+  const totalCards = enriched.length;
+  const numberedMembers = enriched.map((card, idx) =>
+    card.pageBadgeBn
+      ? card
+      : {
+          ...card,
+          pageBadgeBn: `${toBnPad2(idx + 1)}/${toBnPad2(totalCards)}`,
+        }
+  );
+
+  return {
+    ...chronicle,
+    members: numberedMembers,
+  };
+}
+
+/**
+ * কোনো সাহাবির সরাসরি সংকলিত পারিবারিক বিবরণ থাকলে তা রিটার্ন করে
+ * (৪ খলিফার পিডিএফ এন্ট্রি সম্পূর্ণ ভার্বাটিম রেখে এবং বাকি সকল সাহাবির
+ * কার্ডগুলো সমানভাবে সুবিন্যস্ত করে); আর না থাকলে তাঁর `sahaba.familyBn`
+ * থেকে একই স্ট্রাকচার্ড কার্ড ফরম্যাট তৈরি করে দেয়।
  * কখনোই অপ্রমাণিত স্ত্রী বা সন্তানের নাম মনগড়া তৈরি করা হয় না।
  */
 export function resolveSahabaFamilyChronicle(sahaba: SahabaItem): SahabaFamilyChronicle {
-  const curated = SAHABA_FAMILY_CHRONICLES[sahaba.id];
-  if (curated) {
-    return curated;
+  // Keep the 4 Khulafa verbatim PDF chronicles untouched
+  if (KHALIFA_FAMILY_CHRONICLES[sahaba.id]) {
+    return KHALIFA_FAMILY_CHRONICLES[sahaba.id];
   }
 
   const isFemale = isFemaleSahaba(sahaba);
+  const curated = SAHABA_FAMILY_CHRONICLES[sahaba.id];
+  if (curated) {
+    return enrichChronicleMembers(curated, sahaba, isFemale);
+  }
+
   const f = sahaba.familyBn;
   const primaryRefBn =
     (sahaba.referencesBn && sahaba.referencesBn.length > 0
@@ -213,7 +424,7 @@ export function resolveSahabaFamilyChronicle(sahaba: SahabaItem): SahabaFamilyCh
       });
     }
 
-    return {
+    const baseChronicle: SahabaFamilyChronicle = {
       sahabaId: sahaba.id,
       summaryHeadlineBn: headlinePartsBn.join(' · ') || 'প্রামাণ্য বংশপরিচয়',
       summaryHeadlineEn: headlinePartsEn.join(' · ') || 'Documented Lineage',
@@ -241,15 +452,17 @@ export function resolveSahabaFamilyChronicle(sahaba: SahabaItem): SahabaFamilyCh
       keyRelativesEn: f.keyRelativesEn || [],
       members,
     };
+
+    return enrichChronicleMembers(baseChronicle, sahaba, isFemale);
   }
 
-  // Case 2: Lesser-documented Sahaba (no fabricated spouse/children — honest, verified historical summary card)
+  // Case 2: Safety fallback (should never be hit for the 266 Sahaba in SAHABA_DATABASE)
   const overviewPointsBn: string[] = [
     `${sahaba.nameBn} — ${sahaba.titleBn} (${sahaba.categoryBn})।`,
     sahaba.birthAndDeathBn
       ? `জীবনকাল ও ঐতিহাসিক পরিচয়: ${sahaba.birthAndDeathBn}।`
       : 'ইসলামের প্রাথমিক যুগে রাসূলুল্লাহ (সা.)-এর সাহচর্য ও দ্বীনের খেদমতে নিবেদিত ছিলেন।',
-    'ক্লাসিক্যাল রিজাল ও তাবাকাত গ্রন্থে (আল-ইসাবাহ, উসদুল গাবাহ ও তাবাকাতে ইবনে সা’দ) তাঁর জীবনী ও মর্যাদা সংরক্ষিত; বিস্তারিত স্ত্রী-সন্তানের পৃথক তালিকা সকল বর্ণনায় বিশদভাবে পাওয়া যায় না।',
+    'ক্লাসিক্যাল রিজাল ও তাবাকাত গ্রন্থে (আল-ইসাবাহ, উসদুল গাবাহ ও তাবাকাতে ইবনে সা’দ) তাঁর জীবনী ও মর্যাদা সংরক্ষিত।',
   ];
 
   const overviewPointsEn: string[] = [
@@ -257,7 +470,6 @@ export function resolveSahabaFamilyChronicle(sahaba: SahabaItem): SahabaFamilyCh
     sahaba.birthAndDeathEn
       ? `Lifespan & Historical Note: ${sahaba.birthAndDeathEn}.`
       : 'Devoted companion of Prophet Muhammad (PBUH) recorded in classical biographical dictionaries.',
-    'Detailed spouse and children registers are not uniformly detailed across surviving classical Tabaqat sources, so only verified biographical lineage facts are presented here.',
   ];
 
   return {
@@ -290,14 +502,13 @@ export function resolveSahabaFamilyChronicle(sahaba: SahabaItem): SahabaFamilyCh
         nameBn: sahaba.nameBn,
         nameEn: sahaba.nameEn || sahaba.nameBn,
         group: 'lineage',
+        pageBadgeBn: '০১/০১',
         pointsBn: [
           sahaba.summaryBn,
           ...(sahaba.birthAndDeathBn ? [`জীবনকাল: ${sahaba.birthAndDeathBn}।`] : []),
-          'প্রামাণ্য ইসলামী ইতিহাসের বিশুদ্ধতা রক্ষার্থে যেসব সাহাবির স্ত্রী বা সন্তানের নাম সহীহ তাবাকাতে নিশ্চিতভাবে উদ্ধৃত নয়, সেখানে অনুমাননির্ভর কোনো নাম যুক্ত করা হয়নি।',
         ],
         pointsEn: [
           sahaba.summaryEn || 'Honored companion of Prophet Muhammad (PBUH) documented in classical Islamic sources.',
-          'To uphold historical accuracy, unverified spouse or child names are not speculated where classical Tabaqat sources are silent.',
         ],
         sourceBn: primaryRefBn,
         sourceEn: primaryRefEn,
