@@ -193,14 +193,15 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
   const isDay = themeMode === 'day';
   const lang = selectedLanguage || 'bn';
 
-  // Navigation Subtabs: prayers | qibla
-  const [salatSubTab, setSalatSubTab] = useState<'prayers' | 'qibla'>('prayers');
+  // Interactive Qibla Compass Modal state
+  const [showQiblaModal, setShowQiblaModal] = useState<boolean>(false);
   const [liveTick, setLiveTick] = useState<number>(0);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState<boolean>(false);
   const [selectedQuickPrayer, setSelectedQuickPrayer] = useState<any | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
 
   // Register Salat overlays for step-by-step reverse back navigation
+  useBackLayer(showQiblaModal, () => setShowQiblaModal(false), 'salat-qibla');
   useBackLayer(showSettingsDrawer, () => setShowSettingsDrawer(false), 'salat-settings');
   useBackLayer(Boolean(selectedQuickPrayer), () => setSelectedQuickPrayer(null), 'salat-quick-prayer');
 
@@ -427,7 +428,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
       setHasCompassSensor(true);
     };
 
-    if (salatSubTab === 'qibla') {
+    if (showQiblaModal) {
       if (typeof window !== 'undefined' && 'ondeviceorientation' in window) {
         if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
           (DeviceOrientationEvent as any)
@@ -447,7 +448,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation);
     };
-  }, [salatSubTab]);
+  }, [showQiblaModal]);
 
   // Localized Hijri & Gregorian strings
   const hijriGregorian = useMemo(() => {
@@ -671,77 +672,56 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
         </button>
       </div>
 
-      {/* 2. Location Bar with City & GPS Auto Detect */}
-      <div className="relative z-10 flex items-center justify-between p-2.5 px-3.5 rounded-2xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-xs">
+      {/* 2. Location Bar with City, GPS Auto Detect & Sleek Qibla Quick Action */}
+      <div className="relative z-10 flex items-center justify-between gap-2 p-2 px-3 rounded-2xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-xs">
         <button
           type="button"
           onClick={() => {
             setShowSettingsDrawer(true);
             if (soundEnabled) soundHaptics.playTap();
           }}
-          className="flex items-center gap-2 min-w-0 cursor-pointer text-left hover:text-emerald-600 transition"
+          className="flex items-center gap-1.5 min-w-0 cursor-pointer text-left hover:text-emerald-600 transition"
         >
           <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-emerald-100 truncate">
             {selectedCity.name}, {selectedCity.country}
           </span>
-          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hidden xs:inline">
-            ({(SALAT_TEXTS.tracker.changeCity as any)[lang] || 'Change'})
-          </span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
             onClick={handleDetectLocation}
             disabled={isLocating}
-            className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition cursor-pointer active:scale-95"
+            className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition cursor-pointer active:scale-95"
             title="Auto detect location via GPS"
           >
             <Radio className={`w-3 h-3 ${isLocating ? 'animate-spin' : 'animate-pulse'}`} />
             <span>{isLocating ? '...' : (SALAT_TEXTS.qibla.autoGps as any)[lang] || 'GPS'}</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowQiblaModal(true);
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className="flex items-center gap-1.5 text-[11px] font-extrabold px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#005a40] to-[#007a56] hover:opacity-95 text-white shadow-xs shadow-emerald-950/20 transition cursor-pointer active:scale-95 tabular-nums"
+            title={(SALAT_TEXTS.qibla.title as any)[lang] || 'Qibla Compass'}
+          >
+            <Compass className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span>{lang === 'bn' ? 'কিবলা' : lang === 'ar' ? 'القبلة' : 'Qibla'}</span>
+            <span className="font-mono text-[10.5px] text-amber-200 font-black">
+              {formatLocalizedNumber(qiblaDeg, lang)}°
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* 3. 2 Modern Segmented Tabs: Prayers | Qibla */}
-      <div className="relative z-10 p-1.5 rounded-2xl bg-[#e3eae6] dark:bg-[#08201b] border border-slate-200/90 dark:border-emerald-900/50 grid grid-cols-2 gap-1 shadow-inner">
-        <button
-          onClick={() => {
-            setSalatSubTab('prayers');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold flex flex-col sm:flex-row items-center justify-center gap-1 transition-all cursor-pointer ${
-            salatSubTab === 'prayers'
-              ? 'bg-[#004d35] text-white shadow-md shadow-emerald-950/20 scale-[1.01]'
-              : 'text-slate-700 dark:text-emerald-200/70 hover:text-emerald-900 dark:hover:text-white'
-          }`}
-        >
-          <span>🕌</span>
-          <span className="truncate">{(SALAT_TEXTS.tabs.prayers as any)[lang] || 'Prayers'}</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setSalatSubTab('qibla');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold flex flex-col sm:flex-row items-center justify-center gap-1 transition-all cursor-pointer ${
-            salatSubTab === 'qibla'
-              ? 'bg-[#004d35] text-white shadow-md shadow-emerald-950/20 scale-[1.01]'
-              : 'text-slate-700 dark:text-emerald-200/70 hover:text-emerald-900 dark:hover:text-white'
-          }`}
-        >
-          <span>🧭</span>
-          <span className="truncate">{(SALAT_TEXTS.tabs.qibla as any)[lang] || 'Qibla'}</span>
-        </button>
-      </div>
-
       {/* ========================================================================= */}
-      {/* TAB 1: PRAYERS (Unified Arc & Active Waqt Card + 5 Prayer Cards + Prohibited Times) */}
+      {/* MAIN PRAYERS CONTENT (Arc Card + 5 Prayer Cards + Qibla Banner + Prohibited) */}
       {/* ========================================================================= */}
-      {salatSubTab === 'prayers' && (
-        <div className="relative z-10 space-y-3.5 animate-in fade-in duration-200">
+      <div className="relative z-10 space-y-3.5 animate-in fade-in duration-200">
           {/* Unified Curved Salat Time, Active Waqt & Daily Amal Horizon Arc Card */}
           <SalatAmalArcCard
             prayerData={prayerData}
@@ -853,125 +833,201 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               ))}
             </div>
           </div>
-        </div>
-      )}
+          {/* Sleek Interactive Qibla Compass Card */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowQiblaModal(true);
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className="w-full text-left group relative overflow-hidden p-3.5 sm:p-4 rounded-3xl bg-gradient-to-br from-[#06382b] via-[#074736] to-[#0a5a44] border border-emerald-500/30 text-white shadow-md hover:shadow-lg transition-all active:scale-[0.99] cursor-pointer flex items-center justify-between gap-3.5"
+          >
+            {/* Subtle decorative glow */}
+            <div className="pointer-events-none absolute -right-10 -top-10 w-32 h-32 rounded-full bg-amber-400/15 blur-2xl" />
 
-      {/* ========================================================================= */}
-      {/* TAB 2: QIBLA COMPASS (Interactive 360 Watch Dial, Bearing & Distance)     */}
-      {/* ========================================================================= */}
-      {salatSubTab === 'qibla' && (
-        <div className="relative z-10 space-y-4 animate-in fade-in duration-200">
-          <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-md text-center flex flex-col items-center justify-center space-y-4">
-            <div>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
-                {(SALAT_TEXTS.qibla.title as any)[lang] || 'Holy Kaaba Direction'}
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-emerald-300/70 mt-0.5">
-                {(SALAT_TEXTS.qibla.turnDevice as any)[lang] || 'Rotate device to align with Holy Kaaba'}
-              </p>
-            </div>
-
-            {/* Circular 360-Degree Watch Dial Compass */}
-            <div className="relative w-52 h-52 sm:w-60 sm:h-60 flex items-center justify-center my-2 select-none">
-              <svg viewBox="0 0 160 160" className="w-full h-full drop-shadow-md">
-                <circle cx="80" cy="80" r="76" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="2 3" opacity="0.6" />
-                <circle cx="80" cy="80" r="70" className="fill-[#f8faf9] dark:fill-[#061d18] stroke-[#e2e8f0] dark:stroke-emerald-800/50" strokeWidth="3" />
-
-                {/* 24 Angle ticks */}
-                {Array.from({ length: 24 }).map((_, i) => {
-                  const angle = i * 15;
-                  const isMajor = angle % 30 === 0;
-                  return (
-                    <line
-                      key={angle}
-                      x1="80"
-                      y1={isMajor ? '13' : '16'}
-                      x2="80"
-                      y2="20"
-                      stroke={isMajor ? '#64748b' : '#cbd5e1'}
-                      strokeWidth={isMajor ? '1.5' : '0.8'}
-                      transform={`rotate(${angle} 80 80)`}
-                    />
-                  );
-                })}
-
-                {/* Center Rosette */}
-                <g opacity="0.15" className="fill-emerald-800 dark:fill-emerald-400">
-                  <polygon points="80,68 83,77 92,80 83,83 80,92 77,83 68,80 77,77" />
-                  <polygon points="80,68 83,77 92,80 83,83 80,92 77,83 68,80 77,77" transform="rotate(45 80 80)" />
+            {/* Left: Mini Watch-Dial Qibla Preview */}
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
+              <svg viewBox="0 0 80 80" className="w-full h-full drop-shadow-sm">
+                <circle cx="40" cy="40" r="36" fill="rgba(4,24,19,0.75)" stroke="rgba(251,191,36,0.45)" strokeWidth="2" />
+                <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" strokeDasharray="2 3" />
+                <text x="40" y="15" textAnchor="middle" className="text-[7px] font-black fill-amber-300 font-mono">N</text>
+                <g transform={`rotate(${qiblaDeg} 40 40)`}>
+                  <polygon points="40,14 44,40 40,36 36,40" fill="#fbbf24" />
+                  <polygon points="40,66 44,40 40,44 36,40" fill="rgba(255,255,255,0.35)" />
                 </g>
-
-                {/* Cardinal Points */}
-                <polygon points="80,10 76,16 84,16" fill="#00875a" />
-                <text x="80" y="27" textAnchor="middle" className="text-[11px] font-black fill-[#00875a] font-mono">N</text>
-                <text x="144" y="84" textAnchor="middle" className="text-[10px] font-bold fill-slate-400 dark:fill-emerald-300/60 font-mono">E</text>
-                <text x="80" y="145" textAnchor="middle" className="text-[10px] font-bold fill-slate-400 dark:fill-emerald-300/60 font-mono">S</text>
-                <text x="16" y="84" textAnchor="middle" className="text-[10px] font-bold fill-slate-400 dark:fill-emerald-300/60 font-mono">W</text>
-
-                {/* Rotating Compass Needle pointing toward Qibla */}
-                <g transform={`rotate(${effectiveCompassAngle} 80 80)`} className="transition-transform duration-500 ease-out">
-                  <polygon points="80,24 86,76 80,71 74,76" fill={isFacingKaaba ? '#eab308' : '#00a36c'} />
-                  <polygon points="80,24 86,76 80,71" fill={isFacingKaaba ? '#ca8a04' : '#059669'} />
-                  <polygon points="80,24 74,76 80,71" fill={isFacingKaaba ? '#facc15' : '#10b981'} />
-                  <polygon points="80,136 86,84 80,89 74,84" fill="#94a3b8" opacity="0.8" />
-                </g>
-
-                {/* Brass Pivot */}
-                <circle cx="80" cy="80" r="7" fill="#004d35" />
-                <circle cx="80" cy="80" r="4.5" fill={isFacingKaaba ? '#facc15' : '#f59e0b'} />
-                <circle cx="80" cy="80" r="2" fill="#ffffff" />
-
-                {/* Kaaba marker on the dial */}
-                <foreignObject x={kaabaDialX - 14} y={kaabaDialY - 14} width="28" height="28" className="overflow-visible pointer-events-none">
-                  <div className={`w-7 h-7 transform transition-transform ${isFacingKaaba ? 'scale-125 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : ''}`}>
-                    <Kaaba3DIcon className="w-7 h-7" />
-                  </div>
-                </foreignObject>
+                <circle cx="40" cy="40" r="4" fill="#06382b" stroke="#fbbf24" strokeWidth="1.5" />
               </svg>
             </div>
 
-            {/* Alignment Banner */}
-            <div className={`px-4 py-2 rounded-2xl border text-xs font-bold transition-all ${
-              isFacingKaaba
-                ? 'bg-amber-400/20 text-amber-800 dark:text-amber-200 border-amber-400/60 shadow-sm scale-105 animate-pulse'
-                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 border-emerald-500/30'
-            }`}>
-              {isFacingKaaba
-                ? (SALAT_TEXTS.qibla.facingKaaba as any)[lang] || '✨ Facing directly towards the Holy Kaaba!'
-                : (SALAT_TEXTS.qibla.turnDevice as any)[lang] || 'Rotate device until arrow aligns with Kaaba'}
-            </div>
-
-            {/* Kaaba Bearing & Distance Stat Row */}
-            <div className="grid grid-cols-2 gap-3 w-full max-w-sm pt-2">
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#071f1a] border border-slate-200/80 dark:border-emerald-900/40 text-center">
-                <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                  {(SALAT_TEXTS.qibla.degreeFromNorth as any)[lang] || 'Degrees from North'}
-                </div>
-                <div className="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
-                  {formatLocalizedNumber(qiblaDeg, lang)}°
-                </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">
-                  {prayerData.qiblaCardinal}
-                </div>
+            {/* Center: Bearing & Distance to Holy Makkah */}
+            <div className="flex-1 min-w-0 relative z-10">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                  {(SALAT_TEXTS.tabs.qibla as any)[lang] || 'Qibla Compass'}
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#071f1a] border border-slate-200/80 dark:border-emerald-900/40 text-center">
-                <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                  {(SALAT_TEXTS.qibla.distanceKm as any)[lang] || 'Distance to Holy Makkah'}
-                </div>
-                <div className="text-xl sm:text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
-                  {formatLocalizedNumber(prayerData.kaabaDistanceKm, lang)}
-                </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">
-                  KM (Kilometers)
-                </div>
+              <div className="text-sm sm:text-base font-black text-white leading-tight mt-0.5 truncate">
+                {(SALAT_TEXTS.qibla.title as any)[lang] || 'Holy Kaaba Direction'}
+              </div>
+              <div className="flex items-center gap-2.5 mt-1 text-[11px] font-mono font-bold text-emerald-100/90 tabular-nums">
+                <span className="text-amber-300">
+                  {formatLocalizedNumber(qiblaDeg, lang)}° {prayerData.qiblaCardinal}
+                </span>
+                <span className="opacity-40">•</span>
+                <span>
+                  {formatLocalizedNumber(prayerData.kaabaDistanceKm, lang)} {lang === 'bn' ? 'কিমি (মক্কা)' : 'km to Makkah'}
+                </span>
               </div>
             </div>
 
-            {/* Device Gyro Calibration Notice */}
-            <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1.5 pt-1">
-              <Radio className="w-3.5 h-3.5 text-emerald-500" />
-              <span>{hasCompassSensor ? (SALAT_TEXTS.qibla.sensorCalibrated as any)[lang] || 'Gyro sensor calibrated' : 'Sensor simulation active'}</span>
+            {/* Right: Crisp Action Cue */}
+            <div className="relative z-10 shrink-0 w-9 h-9 rounded-2xl bg-white/15 group-hover:bg-amber-400 group-hover:text-emerald-950 text-amber-300 flex items-center justify-center transition-colors">
+              <ChevronRight className="w-5 h-5" />
+            </div>
+          </button>
+        </div>
+
+      {/* ========================================================================= */}
+      {/* INTERACTIVE 360° QIBLA COMPASS MODAL                                      */}
+      {/* ========================================================================= */}
+      {showQiblaModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
+          onClick={() => setShowQiblaModal(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-4 py-3.5 border-b border-slate-100 dark:border-emerald-900/50 flex items-center justify-between bg-emerald-50/60 dark:bg-emerald-950/40">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-amber-300 flex items-center justify-center shrink-0 shadow-xs">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate">
+                    {(SALAT_TEXTS.qibla.title as any)[lang] || 'Holy Kaaba Direction'}
+                  </h2>
+                  <p className="text-[11px] font-semibold text-slate-500 dark:text-emerald-300/75 truncate">
+                    {selectedCity.name}, {selectedCity.country}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowQiblaModal(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-200/80 dark:hover:bg-emerald-900/60 text-slate-500 dark:text-emerald-200 cursor-pointer transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto p-5 text-center flex flex-col items-center justify-center space-y-4">
+              {/* Circular 360-Degree Watch Dial Compass */}
+              <div className="relative w-52 h-52 sm:w-56 sm:h-56 flex items-center justify-center select-none">
+                <svg viewBox="0 0 160 160" className="w-full h-full drop-shadow-md">
+                  <circle cx="80" cy="80" r="76" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="2 3" opacity="0.6" />
+                  <circle cx="80" cy="80" r="70" className="fill-[#f8faf9] dark:fill-[#061d18] stroke-[#e2e8f0] dark:stroke-emerald-800/50" strokeWidth="3" />
+
+                  {/* 24 Angle ticks */}
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const angle = i * 15;
+                    const isMajor = angle % 30 === 0;
+                    return (
+                      <line
+                        key={angle}
+                        x1="80"
+                        y1={isMajor ? '13' : '16'}
+                        x2="80"
+                        y2="20"
+                        stroke={isMajor ? '#64748b' : '#cbd5e1'}
+                        strokeWidth={isMajor ? '1.5' : '0.8'}
+                        transform={`rotate(${angle} 80 80)`}
+                      />
+                    );
+                  })}
+
+                  {/* Center Rosette */}
+                  <g opacity="0.15" className="fill-emerald-800 dark:fill-emerald-400">
+                    <polygon points="80,68 83,77 92,80 83,83 80,92 77,83 68,80 77,77" />
+                    <polygon points="80,68 83,77 92,80 83,83 80,92 77,83 68,80 77,77" transform="rotate(45 80 80)" />
+                  </g>
+
+                  {/* Cardinal Points */}
+                  <polygon points="80,10 76,16 84,16" fill="#00875a" />
+                  <text x="80" y="27" textAnchor="middle" className="text-[11px] font-black fill-[#00875a] font-mono">N</text>
+                  <text x="144" y="84" textAnchor="middle" className="text-[10px] font-bold fill-slate-400 dark:fill-emerald-300/60 font-mono">E</text>
+                  <text x="80" y="145" textAnchor="middle" className="text-[10px] font-bold fill-slate-400 dark:fill-emerald-300/60 font-mono">S</text>
+                  <text x="16" y="84" textAnchor="middle" className="text-[10px] font-bold fill-slate-400 dark:fill-emerald-300/60 font-mono">W</text>
+
+                  {/* Rotating Compass Needle pointing toward Qibla */}
+                  <g transform={`rotate(${effectiveCompassAngle} 80 80)`} className="transition-transform duration-500 ease-out">
+                    <polygon points="80,24 86,76 80,71 74,76" fill={isFacingKaaba ? '#eab308' : '#00a36c'} />
+                    <polygon points="80,24 86,76 80,71" fill={isFacingKaaba ? '#ca8a04' : '#059669'} />
+                    <polygon points="80,24 74,76 80,71" fill={isFacingKaaba ? '#facc15' : '#10b981'} />
+                    <polygon points="80,136 86,84 80,89 74,84" fill="#94a3b8" opacity="0.8" />
+                  </g>
+
+                  {/* Brass Pivot */}
+                  <circle cx="80" cy="80" r="7" fill="#004d35" />
+                  <circle cx="80" cy="80" r="4.5" fill={isFacingKaaba ? '#facc15' : '#f59e0b'} />
+                  <circle cx="80" cy="80" r="2" fill="#ffffff" />
+
+                  {/* Kaaba marker on the dial */}
+                  <foreignObject x={kaabaDialX - 14} y={kaabaDialY - 14} width="28" height="28" className="overflow-visible pointer-events-none">
+                    <div className={`w-7 h-7 transform transition-transform ${isFacingKaaba ? 'scale-125 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : ''}`}>
+                      <Kaaba3DIcon className="w-7 h-7" />
+                    </div>
+                  </foreignObject>
+                </svg>
+              </div>
+
+              {/* Alignment Banner */}
+              <div className={`px-4 py-2 rounded-2xl border text-xs font-bold transition-all ${
+                isFacingKaaba
+                  ? 'bg-amber-400/20 text-amber-800 dark:text-amber-200 border-amber-400/60 shadow-sm scale-105 animate-pulse'
+                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 border-emerald-500/30'
+              }`}>
+                {isFacingKaaba
+                  ? (SALAT_TEXTS.qibla.facingKaaba as any)[lang] || '✨ Facing directly towards the Holy Kaaba!'
+                  : (SALAT_TEXTS.qibla.turnDevice as any)[lang] || 'Rotate device until arrow aligns with Kaaba'}
+              </div>
+
+              {/* Kaaba Bearing & Distance Stat Row */}
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#071f1a] border border-slate-200/80 dark:border-emerald-900/40 text-center tabular-nums">
+                  <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    {(SALAT_TEXTS.qibla.degreeFromNorth as any)[lang] || 'Degrees from North'}
+                  </div>
+                  <div className="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    {formatLocalizedNumber(qiblaDeg, lang)}°
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    {prayerData.qiblaCardinal}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#071f1a] border border-slate-200/80 dark:border-emerald-900/40 text-center tabular-nums">
+                  <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    {(SALAT_TEXTS.qibla.distanceKm as any)[lang] || 'Distance to Holy Makkah'}
+                  </div>
+                  <div className="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    {formatLocalizedNumber(prayerData.kaabaDistanceKm, lang)}
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">
+                    KM
+                  </div>
+                </div>
+              </div>
+
+              {/* Device Gyro Calibration Notice */}
+              <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1.5">
+                <Radio className="w-3.5 h-3.5 text-emerald-500" />
+                <span>{hasCompassSensor ? (SALAT_TEXTS.qibla.sensorCalibrated as any)[lang] || 'Gyro sensor calibrated' : 'Sensor simulation active'}</span>
+              </div>
             </div>
           </div>
         </div>
