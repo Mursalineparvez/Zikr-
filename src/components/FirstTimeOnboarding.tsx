@@ -30,10 +30,11 @@ import {
   PenLine,
   Search,
 } from 'lucide-react';
-import { AppTheme, ThemeMode, ZikrLanguage } from '../types';
+import { AppTheme, ThemeMode, ZikrLanguage, ZikrItem } from '../types';
 import { CityOption, POPULAR_CITIES } from '../utils/prayerTimes';
 import { DEFAULT_ZIKRS } from '../utils/constants';
 import { DEFAULT_AAMAL_ITEMS } from '../utils/aamalTrackerData';
+import { AUTHENTIC_DUAS } from '../utils/duasData';
 import { APP_LIGHT_THEMES, getLightThemePalette } from '../utils/appThemes';
 import { soundHaptics } from '../utils/audioHaptics';
 import { stepBackOr, useBackLayer } from '../utils/backNavigation';
@@ -91,10 +92,11 @@ interface FirstTimeOnboardingProps {
   onApplyTheme: (themeMode: ThemeMode, appTheme: AppTheme) => void;
   soundEnabled?: boolean;
   onComplete: (options: {
-    startPreset: 'preset' | 'custom';
+    startPreset: 'preset' | 'custom' | 'custom_270';
     gender: 'brother' | 'sister';
     notificationsEnabled: boolean;
     selectedCity: CityOption | null;
+    customSelectedZikrs?: ZikrItem[];
   }) => void;
   onSignIn: () => void;
 }
@@ -120,7 +122,37 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
   const [gpsNotice, setGpsNotice] = useState<string | null>(null);
   const [citySearch, setCitySearch] = useState('');
   const [notificationsMode, setNotificationsMode] = useState<'enable' | 'later'>('later');
-  const [startPreset, setStartPreset] = useState<'preset' | 'custom'>('preset');
+  const [startPreset, setStartPreset] = useState<'preset' | 'custom' | 'custom_270'>('preset');
+  const [selectedCustomZikrs, setSelectedCustomZikrs] = useState<ZikrItem[]>(DEFAULT_ZIKRS);
+  const [isDuaPickerOpen, setIsDuaPickerOpen] = useState(false);
+  const [duaSearchQuery, setDuaSearchQuery] = useState('');
+
+  const handleToggleDuaSelection = (dua: (typeof AUTHENTIC_DUAS)[0]) => {
+    if (soundEnabled) soundHaptics.playTap();
+    const exists = selectedCustomZikrs.some((z) => z.id === dua.id || z.name === dua.title);
+    if (exists) {
+      setSelectedCustomZikrs((prev) => prev.filter((z) => z.id !== dua.id && z.name !== dua.title));
+    } else {
+      const newZikr: ZikrItem = {
+        id: dua.id || `dua_${Date.now()}_${Math.random()}`,
+        name: dua.title,
+        arabic: dua.arabic,
+        pronunciationBn: dua.translations?.bn?.title || dua.title,
+        meaningBn: dua.translations?.bn?.translation || dua.translation,
+        meaning: dua.translation,
+        transliteration: dua.transliteration,
+        count: 0,
+        target: dua.suggestedCount || 100,
+        fardTarget: dua.suggestedCount || 100,
+        maghribTarget: (dua.suggestedCount || 100) * 5,
+        manualTarget: (dua.suggestedCount || 100) * 10,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        color: 'emerald',
+      };
+      setSelectedCustomZikrs((prev) => [...prev, newZikr]);
+    }
+  };
 
   const isBn = selectedLanguage === 'bn';
   // Always keep onboarding in crisp light theme tinted by the user's selected light palette
@@ -179,6 +211,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
         gender,
         notificationsEnabled: notificationsMode === 'enable',
         selectedCity,
+        customSelectedZikrs: startPreset === 'custom_270' ? selectedCustomZikrs : undefined,
       });
     }
   };
@@ -285,24 +318,25 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
               <div
                 className={`rounded-3xl border px-6 py-10 text-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] space-y-4 ${cardBaseClass}`}
               >
-                <div className="w-16 h-16 mx-auto rounded-full bg-[#f8f0d2] border border-[#ebd999] flex items-center justify-center shadow-xs">
-                  {/* Minimal Mosque Dome Icon */}
-                  <svg viewBox="0 0 36 36" className="w-8 h-8 text-[#d99b00]" fill="currentColor" aria-hidden="true">
-                    <path d="M18 6c-1.1 1.7-3.4 3.6-5.8 5.2-1.2.8-1.9 2.1-1.9 3.5V16h15.4v-1.3c0-1.4-.7-2.7-1.9-3.5C21.4 9.6 19.1 7.7 18 6z" />
-                    <rect x="6" y="12" width="2.8" height="16" rx="1.2" />
-                    <rect x="27.2" y="12" width="2.8" height="16" rx="1.2" />
-                    <path d="M10.3 17.5h15.4V28h-4.6v-4.2a3.1 3.1 0 1 0-6.2 0V28h-4.6V17.5z" />
-                  </svg>
+                <div className="w-16 h-16 mx-auto rounded-full bg-[var(--app-surface-soft,#e9f6ef)] border border-[var(--app-border,#cbe6d8)] flex items-center justify-center shadow-md overflow-hidden p-1 shrink-0">
+                  <img
+                    src="/pwa-192x192.png"
+                    alt="Zikr+ Logo"
+                    className="w-full h-full object-cover rounded-full"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/icon.svg';
+                    }}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-                    Zikr+
+                    Zikr<span style={{ color: activeThemeObj.primary }}>+</span>
                   </h1>
-                  <p className={`text-sm leading-relaxed max-w-xs mx-auto font-medium ${subtleTextClass}`}>
+                  <p className={`text-xs sm:text-sm leading-relaxed max-w-xs mx-auto font-medium ${subtleTextClass}`}>
                     {isBn
-                      ? 'প্রতিদিনের সালাত, জিকির, কুরআন তিলাওয়াত ও আমলের রুটিন সাজান প্রশান্ত ও পরিচ্ছন্নভাবে।'
-                      : 'Build your daily prayer, dhikr, Quran reading and amal routine with clarity.'}
+                      ? 'প্রতিদিনের জিকির, সালাত, দোয়া, সীরাত ও হায়াতুস সাহাবার অনন্য সংগ্রহ নিয়ে সাজান আপনার প্রশান্ত রুটিন।'
+                      : 'Build your serene routine with daily Zikr, prayer, Dua, Seerat and Hayatus Sahaba.'}
                   </p>
                 </div>
               </div>
@@ -1185,10 +1219,160 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     </div>
                   )}
                 </button>
+
+                {/* Option 3: 270+ Zikr / Dua Custom Selection */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setStartPreset('custom_270');
+                    setIsDuaPickerOpen(true);
+                  }}
+                  className={`w-full text-left rounded-2xl border p-3.5 flex items-center gap-3 transition-all cursor-pointer ${
+                    startPreset === 'custom_270' ? cardActiveClass : cardBaseClass
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center shrink-0">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-extrabold">
+                      {isBn ? '২৭০+ জিকির/দোয়া থেকে পছন্দ অনুযায়ী জিকির বাছাই করুন' : 'Choose Zikr from 270+ Zikrs & Duas'}
+                    </div>
+                    <div className={`text-xs mt-0.5 ${subtleTextClass}`}>
+                      {isBn
+                        ? selectedCustomZikrs.length > 0
+                          ? `(${toBnDigits(selectedCustomZikrs.length)}টি জিকির নির্বাচিত হয়েছে) — পরিবর্তন করতে ক্লিক করুন`
+                          : '২৭০+ প্রামাণিক জিকির ও দোয়া থেকে আপনার পছন্দমতো জিকির ও তাসবিহ বেছে নিন।'
+                        : selectedCustomZikrs.length > 0
+                          ? `(${selectedCustomZikrs.length} Zikrs selected) — Click to modify`
+                          : 'Select your preferred Zikrs and Duas from 270+ authentic invocations.'}
+                    </div>
+                  </div>
+                  {startPreset === 'custom_270' && (
+                    <div className="w-7 h-7 rounded-full bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                  )}
+                </button>
               </div>
             </div>
           )}
         </div>
+
+        {/* 270+ Zikr / Dua Custom Picker Modal */}
+        {isDuaPickerOpen && (
+          <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden text-slate-900 animate-in fade-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    {isBn ? '২৭০+ জিকির ও দোয়া থেকে বাছাই করুন' : 'Choose from 270+ Zikrs & Duas'}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    {isBn
+                      ? `${toBnDigits(selectedCustomZikrs.length)}টি জিকির নির্বাচিত হয়েছে (প্রয়োজনমতো সিলেক্ট/আনসিলেক্ট করুন)`
+                      : `${selectedCustomZikrs.length} Zikrs selected (select or deselect as needed)`}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDuaPickerOpen(false)}
+                  className="w-9 h-9 rounded-full bg-slate-200/70 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Search Input */}
+              <div className="p-4 border-b border-slate-100 bg-white">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={duaSearchQuery}
+                    onChange={(e) => setDuaSearchQuery(e.target.value)}
+                    placeholder={isBn ? 'নাম বা অর্থ দিয়ে খুঁজুন (যেমন: সুবহানাল্লাহ, ইস্তিগফার)...' : 'Search by name or translation...'}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs outline-none bg-slate-50 text-slate-900 focus:bg-white focus:border-[#006A4E]"
+                  />
+                </div>
+              </div>
+
+              {/* Duas List (270+ Items) */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+                {AUTHENTIC_DUAS.filter((d) => {
+                  const q = duaSearchQuery.trim().toLowerCase();
+                  if (!q) return true;
+                  return (
+                    d.title.toLowerCase().includes(q) ||
+                    d.translation.toLowerCase().includes(q) ||
+                    d.arabic.includes(q) ||
+                    (d.translations?.bn?.title || '').toLowerCase().includes(q) ||
+                    (d.translations?.bn?.translation || '').toLowerCase().includes(q)
+                  );
+                }).map((dua) => {
+                  const isSelected = selectedCustomZikrs.some((z) => z.id === dua.id || z.name === dua.title);
+                  return (
+                    <button
+                      key={dua.id}
+                      type="button"
+                      onClick={() => handleToggleDuaSelection(dua)}
+                      className={`w-full text-left rounded-2xl border p-3.5 flex items-start gap-3.5 transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#e9f6ef] border-[#006A4E] ring-1 ring-[#006A4E]/30 shadow-2xs'
+                          : 'bg-white border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition ${
+                          isSelected ? 'bg-[#006A4E] border-[#006A4E] text-white' : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs sm:text-sm font-black text-slate-900">
+                            {isBn ? dua.translations?.bn?.title || dua.title : dua.title}
+                          </span>
+                          <span className="font-arabic text-sm text-[#006A4E] shrink-0 font-bold" dir="rtl">
+                            {dua.arabic}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 line-clamp-1 mt-1 font-medium">
+                          {isBn ? dua.translations?.bn?.translation || dua.translation : dua.translation}
+                        </p>
+                        {dua.reference && (
+                          <span className="inline-block text-[10px] text-slate-400 font-semibold mt-1">
+                            {dua.reference}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+                <span className="text-xs font-bold text-slate-600">
+                  {isBn ? `${toBnDigits(selectedCustomZikrs.length)}টি জিকির নির্বাচিত` : `${selectedCustomZikrs.length} Zikrs selected`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setIsDuaPickerOpen(false);
+                  }}
+                  className="px-6 py-2.5 rounded-full bg-[#006A4E] text-white text-xs font-extrabold shadow-md hover:bg-[#005840] transition cursor-pointer"
+                >
+                  {isBn ? 'নিশ্চিত করুন' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* BOTTOM STICKY ACTION AREA */}
         <div className="space-y-3 pt-3 shrink-0">

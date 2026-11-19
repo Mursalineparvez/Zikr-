@@ -2472,7 +2472,7 @@ export default function App() {
               }));
             }}
             soundEnabled={settings.soundEnabled}
-            onComplete={({ selectedCity }) => {
+            onComplete={({ selectedCity, startPreset, customSelectedZikrs }) => {
               try {
                 localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
                 localStorage.setItem('zikrmate_onboarding_completed', 'true');
@@ -2480,6 +2480,12 @@ export default function App() {
                   localStorage.setItem('zikrmate_salat_city', JSON.stringify(selectedCity));
                 }
               } catch {}
+              if (startPreset === 'custom_270' && customSelectedZikrs && customSelectedZikrs.length > 0) {
+                setZikrs(customSelectedZikrs);
+                try {
+                  localStorage.setItem('zikrmate_zikrs_list', JSON.stringify(customSelectedZikrs));
+                } catch {}
+              }
               setShowFirstDownloadWelcome(false);
               try {
                 if (!localStorage.getItem(TOUR_STORAGE_KEY)) {
