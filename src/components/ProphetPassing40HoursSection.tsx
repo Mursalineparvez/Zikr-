@@ -1056,26 +1056,32 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   : 'bg-[#041d17] border-emerald-800/80 text-white'
               }`}
             >
-              <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-3">
+              <div className="max-w-7xl mx-auto px-2.5 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-3">
                 {/* Back + Active Collection Title */}
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   <button
                     type="button"
                     onClick={closeCollection}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-bold text-amber-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                    className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-bold text-amber-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>{isBn ? 'সীরাতে ফিরুন' : 'Back'}</span>
+                    <span className={activeCollectionId === 'prophet-family-47' ? 'hidden sm:inline' : ''}>
+                      {isBn ? 'সীরাতে ফিরুন' : 'Back'}
+                    </span>
                   </button>
                   <div className="min-w-0">
-                    <h2 className="text-sm sm:text-base font-black truncate text-white">
+                    <h2
+                      className={`text-xs sm:text-base font-black truncate text-white ${
+                        activeCollectionId === 'prophet-family-47' ? 'hidden md:block' : ''
+                      }`}
+                    >
                       {isBn ? activeCollectionMeta.titleBn : activeCollectionMeta.titleEn}
                     </h2>
                   </div>
                 </div>
 
                 {/* View Mode Toggle (Family Tree) + Mobile Switcher + Share + Close */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   {activeCollectionId === 'prophet-family-47' && (
                     <div className="flex items-center p-0.5 rounded-lg bg-black/30 border border-white/15">
                       <button
@@ -1084,7 +1090,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                           if (soundEnabled) soundHaptics.playTap();
                           setFamilyViewMode('tree');
                         }}
-                        className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                        className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                           familyViewMode === 'tree'
                             ? 'bg-amber-400 text-emerald-950 shadow-xs'
                             : 'text-emerald-100 hover:text-white'
@@ -1099,7 +1105,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                           if (soundEnabled) soundHaptics.playTap();
                           setFamilyViewMode('reader');
                         }}
-                        className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                        className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                           familyViewMode === 'reader'
                             ? 'bg-amber-400 text-emerald-950 shadow-xs'
                             : 'text-emerald-100 hover:text-white'
@@ -1116,7 +1122,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                       <button
                         type="button"
                         onClick={() => setMobilePane('index')}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
                           mobilePane === 'index'
                             ? 'bg-amber-400 text-emerald-950'
                             : 'text-emerald-100 hover:text-white'
@@ -1128,7 +1134,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                       <button
                         type="button"
                         onClick={() => setMobilePane('reader')}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
                           mobilePane === 'reader'
                             ? 'bg-amber-400 text-emerald-950'
                             : 'text-emerald-100 hover:text-white'
@@ -1189,6 +1195,15 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   visitedEvents={visitedEvents}
                   onPlayTap={() => {
                     if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  onMarkVisited={(memberNo) => {
+                    setVisitedByCollection((prev) => ({
+                      ...prev,
+                      'prophet-family-47': {
+                        ...(prev['prophet-family-47'] || {}),
+                        [memberNo]: true,
+                      },
+                    }));
                   }}
                   onSelectMemberForReader={(memberNo) => {
                     if (soundEnabled) soundHaptics.playTap();
