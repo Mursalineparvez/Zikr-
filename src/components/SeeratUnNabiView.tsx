@@ -465,7 +465,6 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
   const [viewMode, setViewMode] = useState<ViewMode>('toc');
   const [selectedAge, setSelectedAge] = useState<number | null>(null);
   const [readerTab, setReaderTab] = useState<ReaderTab>('biography');
-  const [activePhaseFilter, setActivePhaseFilter] = useState<SeeratPhaseKey | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedChapter, setCopiedChapter] = useState(false);
   const [filterOnlyBookmarked, setFilterOnlyBookmarked] = useState(false);
@@ -642,9 +641,6 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
         return false;
       }
 
-      const matchesPhase = activePhaseFilter === 'all' || item.phaseKey === activePhaseFilter;
-      if (!matchesPhase) return false;
-
       if (!query) return true;
 
       const ageStr = String(item.age);
@@ -674,7 +670,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
         verifiedEventsText.includes(query)
       );
     });
-  }, [activePhaseFilter, searchQuery, filterOnlyBookmarked, bookmarkedAges]);
+  }, [searchQuery, filterOnlyBookmarked, bookmarkedAges]);
 
   const handleToggleAudio = () => {
     if (!('speechSynthesis' in window) || !activeItem) return;
@@ -1918,67 +1914,27 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
       {/* Search Bar */}
       {viewMode !== 'map' && (
-        <div className="flex flex-col sm:flex-row items-center gap-2">
-          <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('searchPlaceholder')}
-              className={`w-full pl-9 pr-8 py-2.5 rounded-2xl text-xs sm:text-sm font-medium border transition-colors outline-none ${
-                isDay
-                  ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-500 shadow-xs'
-                  : 'bg-[#061b17] border-emerald-800/60 text-emerald-100 placeholder:text-emerald-500/60 focus:border-emerald-500 shadow-xs'
-              }`}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto scrollbar-none py-1">
+        <div className="relative w-full">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className={`w-full pl-9 pr-8 py-2.5 rounded-2xl text-xs sm:text-sm font-medium border transition-colors outline-none ${
+              isDay
+                ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-500 shadow-xs'
+                : 'bg-[#061b17] border-emerald-800/60 text-emerald-100 placeholder:text-emerald-500/60 focus:border-emerald-500 shadow-xs'
+            }`}
+          />
+          {searchQuery && (
             <button
-              onClick={() => {
-                if (soundEnabled) soundHaptics.playTap();
-                setActivePhaseFilter('all');
-              }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer border ${
-                activePhaseFilter === 'all'
-                  ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                  : isDay
-                  ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                  : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
-              }`}
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
             >
-              {t('allAges')}
+              <X className="w-3.5 h-3.5" />
             </button>
-
-            {SEERAT_PHASES.map((phase) => (
-              <button
-                key={phase.key}
-                onClick={() => {
-                  if (soundEnabled) soundHaptics.playTap();
-                  setActivePhaseFilter(phase.key);
-                }}
-                className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition active:scale-95 cursor-pointer border ${
-                  activePhaseFilter === phase.key
-                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                    : isDay
-                    ? 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                    : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
-                }`}
-              >
-                <span>{phase.icon}</span>{' '}
-                <span>{isBn ? phase.ageRangeBn || phase.ageRange : phase.ageRangeEn || phase.ageRange}</span>
-              </button>
-            ))}
-          </div>
+          )}
         </div>
       )}
 
