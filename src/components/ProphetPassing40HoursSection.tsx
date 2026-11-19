@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Copy,
   Download,
+  GitBranch,
   List,
   Search,
   Share2,
@@ -36,6 +37,7 @@ import { copyToClipboard } from '../utils/clipboard';
 import { soundHaptics } from '../utils/audioHaptics';
 import { ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
+import { ProphetFamilyTreeView } from './ProphetFamilyTreeView';
 
 interface ProphetPassing40HoursSectionProps {
   themeMode?: ThemeMode;
@@ -161,6 +163,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
   const [searchQuery, setSearchQuery] = useState('');
   const [activeEventNo, setActiveEventNo] = useState<number>(1);
   const [mobilePane, setMobilePane] = useState<'index' | 'reader'>('index');
+  const [familyViewMode, setFamilyViewMode] = useState<'tree' | 'reader'>('tree');
   const [visitedByCollection, setVisitedByCollection] = useState<
     Record<SpecialCollectionId, Record<number, boolean>>
   >({
@@ -207,7 +210,8 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
     collectionId: SpecialCollectionId,
     initialPart: 'all' | number = 'all',
     initialEvent?: number,
-    openReaderDirectlyOnMobile = false
+    openReaderDirectlyOnMobile = false,
+    initialFamilyMode?: 'tree' | 'reader'
   ) => {
     if (soundEnabled) soundHaptics.playTap();
     const { events } = getCollectionData(collectionId);
@@ -221,6 +225,9 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
       ...prev,
       [collectionId]: { ...(prev[collectionId] || {}), [targetEvent]: true },
     }));
+    if (collectionId === 'prophet-family-47') {
+      setFamilyViewMode(initialFamilyMode ?? (initialPart === 'all' ? 'tree' : 'reader'));
+    }
     setMobilePane(openReaderDirectlyOnMobile ? 'reader' : 'index');
     setActiveCollectionId(collectionId);
   };
@@ -900,8 +907,17 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                         }}
                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-[11.5px] font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer shadow-sm shadow-emerald-600/20 active:scale-95"
                       >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>{isBn ? 'পড়ুন' : 'Read'}</span>
+                        {col.id === 'prophet-family-47' ? (
+                          <>
+                            <GitBranch className="w-3.5 h-3.5" />
+                            <span>{isBn ? 'বংশতালিকা' : 'Family Tree'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <BookOpen className="w-3.5 h-3.5" />
+                            <span>{isBn ? 'পড়ুন' : 'Read'}</span>
+                          </>
+                        )}
                         <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                       </button>
                     </div>
@@ -929,7 +945,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                       </span>
                       <button
                         type="button"
-                        onClick={() => openCollection(col.id, 'all', 1, false)}
+                        onClick={() => openCollection(col.id, 'all', 1, false, 'reader')}
                         className={`text-[11px] font-bold hover:underline cursor-pointer whitespace-nowrap shrink-0 ${
                           isDay ? 'text-emerald-700' : 'text-amber-300'
                         }`}
@@ -1058,34 +1074,71 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   </div>
                 </div>
 
-                {/* Mobile Switcher + Share + Close */}
+                {/* View Mode Toggle (Family Tree) + Mobile Switcher + Share + Close */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <div className="flex lg:hidden items-center p-0.5 rounded-lg bg-black/25 border border-white/10">
-                    <button
-                      type="button"
-                      onClick={() => setMobilePane('index')}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
-                        mobilePane === 'index'
-                          ? 'bg-amber-400 text-emerald-950'
-                          : 'text-emerald-100 hover:text-white'
-                      }`}
-                    >
-                      <List className="w-3 h-3" />
-                      <span>{isBn ? 'সূচি' : 'Index'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMobilePane('reader')}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
-                        mobilePane === 'reader'
-                          ? 'bg-amber-400 text-emerald-950'
-                          : 'text-emerald-100 hover:text-white'
-                      }`}
-                    >
-                      <BookOpen className="w-3 h-3" />
-                      <span>{isBn ? 'পাঠ' : 'Read'}</span>
-                    </button>
-                  </div>
+                  {activeCollectionId === 'prophet-family-47' && (
+                    <div className="flex items-center p-0.5 rounded-lg bg-black/30 border border-white/15">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (soundEnabled) soundHaptics.playTap();
+                          setFamilyViewMode('tree');
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                          familyViewMode === 'tree'
+                            ? 'bg-amber-400 text-emerald-950 shadow-xs'
+                            : 'text-emerald-100 hover:text-white'
+                        }`}
+                      >
+                        <GitBranch className="w-3.5 h-3.5" />
+                        <span>{isBn ? 'বংশতালিকা' : 'Family Tree'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (soundEnabled) soundHaptics.playTap();
+                          setFamilyViewMode('reader');
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                          familyViewMode === 'reader'
+                            ? 'bg-amber-400 text-emerald-950 shadow-xs'
+                            : 'text-emerald-100 hover:text-white'
+                        }`}
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>{isBn ? 'জীবনী পাঠ' : 'Biography'}</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {!(activeCollectionId === 'prophet-family-47' && familyViewMode === 'tree') && (
+                    <div className="flex lg:hidden items-center p-0.5 rounded-lg bg-black/25 border border-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setMobilePane('index')}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                          mobilePane === 'index'
+                            ? 'bg-amber-400 text-emerald-950'
+                            : 'text-emerald-100 hover:text-white'
+                        }`}
+                      >
+                        <List className="w-3 h-3" />
+                        <span>{isBn ? 'সূচি' : 'Index'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMobilePane('reader')}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                          mobilePane === 'reader'
+                            ? 'bg-amber-400 text-emerald-950'
+                            : 'text-emerald-100 hover:text-white'
+                        }`}
+                      >
+                        <BookOpen className="w-3 h-3" />
+                        <span>{isBn ? 'পাঠ' : 'Read'}</span>
+                      </button>
+                    </div>
+                  )}
 
                   {onOpenShareModal && (
                     <div className="hidden sm:block">
@@ -1126,7 +1179,38 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
               </div>
             </header>
 
-            {/* Main Archival Two-Pane Body */}
+            {/* Main Body: Interactive Family Tree (Collection 04) OR Archival Two-Pane Reader */}
+            {activeCollectionId === 'prophet-family-47' && familyViewMode === 'tree' ? (
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                <ProphetFamilyTreeView
+                  themeMode={themeMode}
+                  selectedLanguage={selectedLanguage}
+                  soundEnabled={soundEnabled}
+                  visitedEvents={visitedEvents}
+                  onPlayTap={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  onSelectMemberForReader={(memberNo) => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setSelectedPart('all');
+                    setSearchQuery('');
+                    setActiveEventNo(memberNo);
+                    setVisitedByCollection((prev) => ({
+                      ...prev,
+                      'prophet-family-47': {
+                        ...(prev['prophet-family-47'] || {}),
+                        [memberNo]: true,
+                      },
+                    }));
+                    setMobilePane('reader');
+                    setFamilyViewMode('reader');
+                    if (readerScrollRef.current) {
+                      readerScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                />
+              </div>
+            ) : (
             <div className="flex-1 min-h-0 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-[360px_1fr]">
               {/* LEFT RAIL: CHRONOLOGICAL সূচিপত্র (TABLE OF CONTENTS) */}
               <aside
@@ -1801,6 +1885,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                 </article>
               </main>
             </div>
+            )}
           </div>,
           document.body
         )}
