@@ -422,19 +422,19 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
     ? `أي وقت - ${formatLocalizedNumber(stats.anytimeDone, lang)}/${formatLocalizedNumber(stats.anytimeTotal, lang)}`
     : `Any time - ${stats.anytimeDone}/${stats.anytimeTotal}`;
 
-  // Theme colors crafted to mirror the warm ivory cream reference in Day mode and refined emerald-obsidian in Night mode
+  // Theme colors crafted to harmonize with the selected light color palette in Day mode and deep emerald in Night mode
   const cardBg = isDay
-    ? 'bg-[#FAF9F3] border-[#E7E5DA] text-[#1F2421]'
+    ? 'bg-white border-[var(--app-border,#E7E5DA)] text-[#1F2421]'
     : 'bg-[#09211c] border-emerald-800/60 text-emerald-50';
-  const trayFill = isDay ? '#EFEEE7' : '#051612';
-  const horizonStroke = isDay ? '#D4D2C7' : '#1e4b40';
-  const dottedArcStroke = isDay ? '#CFCDBE' : '#255c4e';
+  const trayFill = isDay ? 'var(--app-surface-soft, #EFEEE7)' : '#051612';
+  const horizonStroke = isDay ? 'var(--app-border, #D4D2C7)' : '#1e4b40';
+  const dottedArcStroke = isDay ? 'var(--app-border, #CFCDBE)' : '#255c4e';
   const nodeFill = isDay ? '#FFFFFF' : '#0c2c25';
-  const nodeRingDefault = isDay ? '#E3E2D8' : '#1d4a3f';
+  const nodeRingDefault = isDay ? 'var(--app-border, #E3E2D8)' : '#1d4a3f';
   const nodeTextColor = isDay ? '#1F2421' : '#F1F5F9';
   const nodeLabelColor = isDay ? '#2B302C' : '#CBD5E1';
-  const labelPillFill = isDay ? '#FAF9F3' : '#09211c';
-  const labelPillTrayFill = isDay ? '#F6F5EE' : '#0a251f';
+  const labelPillFill = isDay ? '#FFFFFF' : '#09211c';
+  const labelPillTrayFill = isDay ? 'var(--app-surface-soft, #F6F5EE)' : '#0a251f';
 
   return (
     <section
@@ -463,17 +463,17 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
       {activePrayerName && liveCountdownStr && (
         <div
           className={`px-4 sm:px-5 pt-1.5 pb-2.5 border-b ${
-            isDay ? 'border-[#E9E7DC]' : 'border-emerald-800/45'
+            isDay ? 'border-[var(--app-border,#E9E7DC)]' : 'border-emerald-800/45'
           }`}
         >
           {/* Active Waqt + Countdown + Play Adhan button */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-baseline gap-2 min-w-0 flex-wrap">
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-[var(--app-primary-mid,#10b981)] animate-pulse shrink-0" />
                 <span
                   className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
-                    isDay ? 'text-[#054A37]' : 'text-amber-200'
+                    isDay ? 'text-[var(--app-primary,#054A37)]' : 'text-amber-200'
                   }`}
                 >
                   {activePrayerName}
@@ -507,7 +507,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
                   isPlayingAdhan
                     ? 'bg-[#E5A900] text-white border-[#D49A00] shadow-sm shadow-amber-500/25 animate-pulse'
                     : isDay
-                    ? 'bg-[#054A37]/8 hover:bg-[#054A37]/14 text-[#054A37] border-[#054A37]/15'
+                    ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:opacity-90 text-[var(--app-primary,#054A37)] border-[var(--app-border,#cbe6d8)]'
                     : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-100 border-emerald-400/25'
                 }`}
               >
@@ -522,11 +522,11 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
           {/* Slim Waqt Elapsed Progress Hairline */}
           <div
             className={`relative w-full h-1.5 rounded-full mt-2 overflow-hidden ${
-              isDay ? 'bg-[#E6E4D8]' : 'bg-emerald-950/90'
+              isDay ? 'bg-[var(--app-surface-soft,#E6E4D8)]' : 'bg-emerald-950/90'
             }`}
           >
             <div
-              className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-[#E5A900] rounded-full transition-all duration-1000"
+              className="h-full bg-gradient-to-r from-[var(--app-primary,#006A4E)] via-[var(--app-primary-mid,#059669)] to-[#E5A900] rounded-full transition-all duration-1000"
               style={{ width: `${Math.max(0, Math.min(100, activeWaqtProgress))}%` }}
             />
           </div>

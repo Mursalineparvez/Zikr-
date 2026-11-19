@@ -84,8 +84,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 transition-all duration-300">
-      {/* Top Main Header Bar (#006A4E Deep Forest Emerald Green) */}
-      <div className="bg-[#006A4E] text-white px-4 py-2.5 shadow-md">
+      {/* Top Main Header Bar (Dynamic Light Color Theme Primary) */}
+      <div className="bg-[var(--app-primary,#006A4E)] text-white px-4 py-2.5 shadow-md transition-colors duration-300">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
           {/* Brand Logo & Name: Zikr+ PWA */}
           <div
@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onModuleChange('zikir_counter')}
           >
             {/* Zikr+ Official Logo Circle Badge */}
-            <div className="w-9 h-9 rounded-full bg-[#005740] border border-emerald-400/50 flex items-center justify-center shadow-md transition transform group-hover:scale-105 overflow-hidden p-0.5 shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[var(--app-primary-dark,#005740)] border border-white/35 flex items-center justify-center shadow-md transition transform group-hover:scale-105 overflow-hidden p-0.5 shrink-0">
               <img
                 src="/pwa-192x192.png"
                 alt="Zikr+ Logo"
@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="flex items-center gap-1.5">
               <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-0.5">
-                Zikr<span className="text-emerald-300 font-black">+</span>
+                Zikr<span className="text-[var(--app-primary-light,#6ee7b7)] font-black">+</span>
               </h1>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/30 bg-white/10 text-white shadow-xs">
                 PWA
@@ -130,13 +130,13 @@ export const Header: React.FC<HeaderProps> = ({
 
 
       {/* Sub-Header Salam & Date Banner */}
-      <div className="bg-white border-b border-slate-200/80 px-4 py-2 text-slate-700 shadow-xs">
+      <div className="bg-white/95 backdrop-blur-md border-b border-[var(--app-border,#e2e8f0)] px-4 py-2 text-slate-700 shadow-xs transition-colors duration-300">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 text-xs">
           {/* Left Salam Greeting + Signed-in User Name Below */}
           <div className="flex items-center gap-2 min-w-0">
-            <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+            <Sparkles className="w-4 h-4 text-[var(--app-primary-mid,#059669)] shrink-0" />
             <div className="flex flex-col min-w-0">
-              <span className="text-sm sm:text-base text-[#006A4E] font-extrabold leading-tight select-none truncate">
+              <span className="text-sm sm:text-base text-[var(--app-primary,#006A4E)] font-extrabold leading-tight select-none truncate">
                 {selectedLanguage === 'bn'
                   ? 'আসসালামু আলাইকুম'
                   : selectedLanguage === 'ar' || selectedLanguage === 'ur'

@@ -54,7 +54,7 @@ export interface HistorySession {
   }>;
 }
 
-export type AppTheme = 'emerald' | 'midnight' | 'teal' | 'gold' | 'light';
+export type AppTheme = 'emerald' | 'gold' | 'sky' | 'violet' | 'rose' | 'teal' | 'midnight' | 'light';
 
 export type ThemeMode = 'day' | 'night';
 

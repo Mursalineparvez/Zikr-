@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage, UserProfile, ZikrRefreshMode } from './types';
 import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES, getTargetForZikrMode } from './utils/constants';
+import { getLightThemePalette } from './utils/appThemes';
 import { soundHaptics } from './utils/audioHaptics';
 import { NAV_TRANSLATIONS } from './utils/navTranslations';
 import { Header } from './components/Header';
@@ -276,16 +277,26 @@ export default function App() {
       vibrationEnabled: true,
       screenAwake: false,
       theme: 'emerald',
-      themeMode: 'night', // Black type requested by user
+      themeMode: 'day',
       voiceGender: 'male',
     };
   });
 
-  // Sync document theme classes with settings.themeMode
+  // Sync document theme classes & dynamic color theme attribute with settings
   useEffect(() => {
     try {
       localStorage.setItem('noor_zikr_settings', JSON.stringify(settings));
     } catch {}
+    const activeTheme = settings.theme || 'emerald';
+    document.documentElement.dataset.appTheme = activeTheme;
+    const palette = getLightThemePalette(activeTheme);
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute(
+        'content',
+        settings.themeMode === 'day' ? palette.primary : '#03171b'
+      );
+    }
     if (settings.themeMode === 'day') {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark', 'theme-night');
@@ -1369,6 +1380,7 @@ export default function App() {
       console.error('Failed to save settings to localStorage', e);
     }
     const isDay = settings.themeMode === 'day';
+    document.documentElement.dataset.appTheme = settings.theme || 'emerald';
     document.body.classList.toggle('theme-day', isDay);
     document.body.classList.toggle('theme-night', !isDay);
     document.documentElement.classList.toggle('dark', !isDay);
@@ -2058,8 +2070,8 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-8 selection:bg-[#007e8a] selection:text-white ${
-        isDay ? 'bg-[#f8fafc] text-slate-900' : 'bg-[#03171b] text-[#e6f4f2]'
+      className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-8 selection:bg-[var(--app-primary,#006A4E)] selection:text-white ${
+        isDay ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-900' : 'bg-[#03171b] text-[#e6f4f2]'
       }`}
     >
       {/* Top Header */}
@@ -2088,11 +2100,11 @@ export default function App() {
         <div
           className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 border ${
             isDay
-              ? 'bg-[#006A4E] text-white border-emerald-300 shadow-[#006A4E]/30'
+              ? 'bg-[var(--app-primary,#006A4E)] text-white border-white/25'
               : 'bg-[#061f24] text-emerald-300 border-emerald-800/60 shadow-black/80'
           }`}
         >
-          <BookmarkCheck className="w-4 h-4 text-emerald-400" />
+          <BookmarkCheck className="w-4 h-4 text-[var(--app-primary-light,#6ee7b7)]" />
           <span>{toastMessage}</span>
         </div>
       )}

@@ -34,85 +34,12 @@ import { AppTheme, ThemeMode, ZikrLanguage } from '../types';
 import { CityOption, POPULAR_CITIES } from '../utils/prayerTimes';
 import { DEFAULT_ZIKRS } from '../utils/constants';
 import { DEFAULT_AAMAL_ITEMS } from '../utils/aamalTrackerData';
+import { APP_LIGHT_THEMES, getLightThemePalette } from '../utils/appThemes';
 import { soundHaptics } from '../utils/audioHaptics';
 import { stepBackOr, useBackLayer } from '../utils/backNavigation';
 
 export const ONBOARDING_STORAGE_KEY = 'zikr_onboarding_v1_completed';
 export const TOUR_STORAGE_KEY = 'zikr_tour_v1_completed';
-
-export interface OnboardingThemeOption {
-  id: string;
-  nameEn: string;
-  nameBn: string;
-  themeMode: ThemeMode;
-  appTheme: AppTheme;
-  previewBg: string;
-  previewBorder: string;
-  accentBar: string;
-}
-
-const ONBOARDING_THEMES: OnboardingThemeOption[] = [
-  {
-    id: 'minimal_white',
-    nameEn: 'Minimal White',
-    nameBn: 'মিনিমাল সাদা',
-    themeMode: 'day',
-    appTheme: 'emerald',
-    previewBg: '#ffffff',
-    previewBorder: '#e2e8f0',
-    accentBar: '#006747',
-  },
-  {
-    id: 'soft_green',
-    nameEn: 'Soft Green',
-    nameBn: 'সফট গ্রিন',
-    themeMode: 'day',
-    appTheme: 'emerald',
-    previewBg: '#f0fdf4',
-    previewBorder: '#bbf7d0',
-    accentBar: '#059669',
-  },
-  {
-    id: 'ivory_gold',
-    nameEn: 'Ivory Gold',
-    nameBn: 'আইভরি গোল্ড',
-    themeMode: 'day',
-    appTheme: 'gold',
-    previewBg: '#fffbeb',
-    previewBorder: '#fde68a',
-    accentBar: '#b45309',
-  },
-  {
-    id: 'emerald_night',
-    nameEn: 'Emerald Night',
-    nameBn: 'এমেরাল্ড নাইট',
-    themeMode: 'night',
-    appTheme: 'emerald',
-    previewBg: '#062026',
-    previewBorder: '#134e4a',
-    accentBar: '#10b981',
-  },
-  {
-    id: 'black_gold',
-    nameEn: 'Black Gold',
-    nameBn: 'ব্ল্যাক গোল্ড',
-    themeMode: 'night',
-    appTheme: 'gold',
-    previewBg: '#111111',
-    previewBorder: '#451a03',
-    accentBar: '#d97706',
-  },
-  {
-    id: 'midnight_blue',
-    nameEn: 'Midnight Blue',
-    nameBn: 'মিডনাইট ব্লু',
-    themeMode: 'night',
-    appTheme: 'midnight',
-    previewBg: '#0a1628',
-    previewBorder: '#1e3a8a',
-    accentBar: '#3b82f6',
-  },
-];
 
 const EXTRA_BD_CITIES: CityOption[] = [
   { name: 'Rajshahi', country: 'Bangladesh', lat: 24.3745, lng: 88.6042 },
@@ -184,14 +111,9 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
 }) => {
   const [step, setStep] = useState<number>(0); // 0..6 (7 steps)
   const [gender, setGender] = useState<'brother' | 'sister'>('brother');
-  const [selectedThemeId, setSelectedThemeId] = useState<string>(() => {
-    if (currentThemeMode === 'day') {
-      return currentAppTheme === 'gold' ? 'ivory_gold' : 'minimal_white';
-    }
-    if (currentAppTheme === 'gold') return 'black_gold';
-    if (currentAppTheme === 'midnight') return 'midnight_blue';
-    return 'emerald_night';
-  });
+  const [selectedThemeId, setSelectedThemeId] = useState<AppTheme>(() =>
+    getLightThemePalette(currentAppTheme).id
+  );
   const [locationMode, setLocationMode] = useState<'gps' | 'manual' | 'skip'>('skip');
   const [selectedCity, setSelectedCity] = useState<CityOption | null>(null);
   const [isDetectingGps, setIsDetectingGps] = useState(false);
@@ -201,7 +123,8 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
   const [startPreset, setStartPreset] = useState<'preset' | 'custom'>('preset');
 
   const isBn = selectedLanguage === 'bn';
-  const isDarkCanvas = currentThemeMode === 'night' && step >= 3;
+  // Always keep onboarding in crisp light theme tinted by the user's selected light palette
+  const isDarkCanvas = false;
 
   // Step-by-step hardware/browser Back support across steps 1..6
   useBackLayer(step >= 1, () => setStep(0), 'onboarding-s1');
@@ -220,7 +143,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
   }, [citySearch]);
 
   const activeThemeObj = useMemo(
-    () => ONBOARDING_THEMES.find((t) => t.id === selectedThemeId) || ONBOARDING_THEMES[0],
+    () => getLightThemePalette(selectedThemeId),
     [selectedThemeId]
   );
 
@@ -315,30 +238,25 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
     } catch {}
   };
 
-  const canvasClass = isDarkCanvas
-    ? 'bg-[#041418] text-slate-100'
-    : 'bg-[#f6f6ef] text-slate-900';
+  const cardBaseClass = 'bg-white border-[var(--app-border,#e2e8f0)] text-slate-900';
 
-  const cardBaseClass = isDarkCanvas
-    ? 'bg-[#0a2329] border-[#16414b] text-slate-100'
-    : 'bg-[#fafaf4] border-[#e7e4d5] text-slate-900';
+  const cardActiveClass =
+    'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-primary,#006A4E)] ring-1 ring-[var(--app-primary,#006A4E)]/30 text-slate-900';
 
-  const cardActiveClass = isDarkCanvas
-    ? 'bg-[#0f2f36] border-amber-400/80 ring-1 ring-amber-400/40 text-white'
-    : 'bg-[#fdfbf0] border-[#d9a20b] ring-1 ring-[#d9a20b]/30 text-slate-900';
-
-  const subtleTextClass = isDarkCanvas ? 'text-slate-300/85' : 'text-slate-600';
+  const subtleTextClass = 'text-slate-600';
 
   return (
-    <div className={`fixed inset-0 z-[120] overflow-y-auto transition-colors duration-300 ${canvasClass}`}>
+    <div
+      className="fixed inset-0 z-[120] overflow-y-auto transition-colors duration-300 text-slate-900"
+      style={{ backgroundColor: activeThemeObj.canvasBg }}
+    >
       <div className="min-h-[100dvh] max-w-lg mx-auto px-5 pt-5 pb-7 flex flex-col justify-between">
         {/* TOP HEADER & 7-SEGMENT PROGRESS BAR */}
         <div className="space-y-3 shrink-0">
           <div className="flex items-center gap-2">
             <CurrentHeaderIcon
-              className={`w-4 h-4 ${
-                isFinishStep ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#d9a20b]'
-              }`}
+              className="w-4 h-4 transition-colors duration-300"
+              style={{ color: activeThemeObj.primary }}
             />
             <span className="text-xs font-extrabold tracking-tight">{stepHeaders[step].label}</span>
           </div>
@@ -349,15 +267,10 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
               return (
                 <div
                   key={idx}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    filled
-                      ? isFinishStep
-                        ? 'bg-[#00a86b]'
-                        : 'bg-[#d9a20b]'
-                      : isDarkCanvas
-                      ? 'bg-white/15'
-                      : 'bg-[#e5e3d8]'
-                  }`}
+                  className="h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    backgroundColor: filled ? activeThemeObj.primary : activeThemeObj.border,
+                  }}
                 />
               );
             })}
@@ -448,10 +361,10 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       <div
                         className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${
                           active
-                            ? 'bg-[#f8efc8] border-[#e7cf72] text-[#c78d00]'
+                            ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]'
                             : isDarkCanvas
                             ? 'bg-white/10 border-white/15 text-amber-300'
-                            : 'bg-[#f6f1db] border-[#eae2bf] text-[#c78d00]'
+                            : 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]'
                         }`}
                       >
                         <IconComp className="w-5 h-5" />
@@ -461,7 +374,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                         <div className={`text-xs mt-0.5 ${subtleTextClass}`}>{opt.subtitle}</div>
                       </div>
                       {active && (
-                        <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                           <Check className="w-4 h-4 stroke-[2.5]" />
                         </div>
                       )}
@@ -531,10 +444,10 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       <div
                         className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${
                           active
-                            ? 'bg-[#f8efc8] border-[#e7cf72] text-[#c78d00]'
+                            ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]'
                             : isDarkCanvas
                             ? 'bg-white/10 border-white/15 text-amber-300'
-                            : 'bg-[#f6f1db] border-[#eae2bf] text-[#c78d00]'
+                            : 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]'
                         }`}
                       >
                         {opt.icon}
@@ -546,7 +459,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                         </div>
                       </div>
                       {active && (
-                        <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                           <Check className="w-4 h-4 stroke-[2.5]" />
                         </div>
                       )}
@@ -557,22 +470,22 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
             </div>
           )}
 
-          {/* STEP 3: THEME */}
+          {/* STEP 3: LIGHT COLOR THEME PICKER (All distinct soothing light palettes) */}
           {step === 3 && (
             <div className="space-y-4 mb-auto pt-2">
               <div className="space-y-1">
-                <h2 className="text-xl font-black tracking-tight">
-                  {isBn ? 'আপনার পছন্দের থিম বেছে নিন' : 'Choose your theme'}
+                <h2 className="text-xl font-black tracking-tight text-slate-900">
+                  {isBn ? 'আপনার পছন্দের হালকা কালার বেছে নিন' : 'Choose your light color theme'}
                 </h2>
                 <p className={`text-xs sm:text-sm font-medium ${subtleTextClass}`}>
                   {isBn
-                    ? 'প্রতিদিনের ব্যবহারের জন্য শান্ত ও আরামদায়ক থিম নির্বাচন করুন।'
-                    : 'Pick the look that feels calm and comfortable for daily use.'}
+                    ? 'যে কালারটি সিলেক্ট করবেন, পুরো অ্যাপের ভেতরের সবকিছু সেই কালারে সেজে যাবে।'
+                    : 'Whichever light color you pick, the entire app will adapt to that palette.'}
                 </p>
               </div>
 
               <div className="space-y-2.5">
-                {ONBOARDING_THEMES.map((t) => {
+                {APP_LIGHT_THEMES.map((t) => {
                   const active = selectedThemeId === t.id;
                   return (
                     <button
@@ -581,38 +494,57 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       onClick={() => {
                         if (soundEnabled) soundHaptics.playTap();
                         setSelectedThemeId(t.id);
-                        onApplyTheme(t.themeMode, t.appTheme);
+                        onApplyTheme('day', t.id);
                       }}
-                      className={`w-full text-left rounded-2xl border px-4 py-3.5 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] ${
-                        active ? cardActiveClass : cardBaseClass
-                      }`}
+                      className="w-full text-left rounded-2xl border px-4 py-3.5 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] shadow-2xs"
+                      style={{
+                        backgroundColor: active ? t.softBg : '#ffffff',
+                        borderColor: active ? t.primary : t.border,
+                        boxShadow: active ? `0 0 0 1px ${t.primary}40` : undefined,
+                      }}
                     >
-                      {/* Mini Surface Preview Box */}
+                      {/* Light Surface Preview Swatch */}
                       <div
-                        className="w-16 h-10 rounded-xl border shrink-0 shadow-2xs"
+                        className="w-16 h-10 rounded-xl border shrink-0 shadow-2xs flex items-center justify-center relative overflow-hidden"
                         style={{
-                          backgroundColor: t.previewBg,
-                          borderColor: t.previewBorder,
+                          backgroundColor: t.canvasBg,
+                          borderColor: t.border,
                         }}
-                      />
-                      {/* Vertical Accent Bar (matches Screenshot 4) */}
+                      >
+                        <div
+                          className="w-full h-2.5 absolute top-0 left-0 right-0"
+                          style={{ backgroundColor: t.primary }}
+                        />
+                        <div
+                          className="w-7 h-2 rounded-full mt-2.5"
+                          style={{ backgroundColor: t.softBg, border: `1px solid ${t.border}` }}
+                        />
+                      </div>
+
+                      {/* Vertical Theme Color Accent Bar */}
                       <div
-                        className="w-1 h-10 rounded-full shrink-0"
-                        style={{ backgroundColor: t.accentBar }}
+                        className="w-1.5 h-10 rounded-full shrink-0"
+                        style={{ backgroundColor: t.primary }}
                       />
+
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-extrabold truncate">
+                        <div
+                          className="text-sm font-extrabold truncate"
+                          style={{ color: t.ink }}
+                        >
                           {isBn ? t.nameBn : t.nameEn}
                         </div>
-                        <div className={`text-[11px] ${subtleTextClass}`}>
-                          {t.themeMode === 'day'
-                            ? isBn ? 'দিনের আলো (Light)' : 'Light mode'
-                            : isBn ? 'রাতের প্রশান্তি (Dark)' : 'Dark mode'}
+                        <div className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">
+                          {isBn ? t.descBn : t.descEn}
                         </div>
                       </div>
+
                       {active && (
-                        <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
-                          <Check className="w-4 h-4 stroke-[2.5]" />
+                        <div
+                          className="w-7 h-7 rounded-full text-white flex items-center justify-center shrink-0 shadow-xs"
+                          style={{ backgroundColor: t.primary }}
+                        >
+                          <Check className="w-4 h-4 stroke-[2.8]" />
                         </div>
                       )}
                     </button>
@@ -695,7 +627,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     </div>
                   </div>
                   {locationMode === 'gps' && !isDetectingGps && (
-                    <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                       <Check className="w-4 h-4 stroke-[2.5]" />
                     </div>
                   )}
@@ -731,7 +663,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       </div>
                     </div>
                     {locationMode === 'manual' && selectedCity && (
-                      <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                         <Check className="w-4 h-4 stroke-[2.5]" />
                       </div>
                     )}
@@ -884,7 +816,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     </div>
                   </div>
                   {notificationsMode === 'enable' && (
-                    <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                       <Check className="w-4 h-4 stroke-[2.5]" />
                     </div>
                   )}
@@ -987,7 +919,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       : 'Not set yet',
                     tint: isDarkCanvas
                       ? 'bg-amber-950/25 border-amber-800/35 text-amber-300'
-                      : 'bg-[#faf4e0] border-[#ece0b6] text-[#c78d00]',
+                      : 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]',
                   },
                   {
                     icon: ShieldCheck,
@@ -997,7 +929,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       : 'Hanafi · University of Islamic Sciences, Karachi',
                     tint: isDarkCanvas
                       ? 'bg-amber-950/25 border-amber-800/35 text-amber-300'
-                      : 'bg-[#faf4e0] border-[#ece0b6] text-[#c78d00]',
+                      : 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]',
                   },
                   {
                     icon: Bell,
@@ -1008,7 +940,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                         : isBn ? 'এখন নয়' : 'Not now',
                     tint: isDarkCanvas
                       ? 'bg-amber-950/25 border-amber-800/35 text-amber-300'
-                      : 'bg-[#faf4e0] border-[#ece0b6] text-[#c78d00]',
+                      : 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]',
                   },
                 ].map((row, idx) => {
                   const IconComp = row.icon;
@@ -1066,7 +998,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     </div>
                   </div>
                   {startPreset === 'preset' && (
-                    <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                       <Check className="w-4 h-4 stroke-[2.5]" />
                     </div>
                   )}
@@ -1112,7 +1044,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                           return (
                             <div key={zikr.id} className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2 font-bold min-w-0">
-                                <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
+                                <span className="w-4 h-4 rounded-full bg-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                                   <Check className="w-2.5 h-2.5 stroke-[3]" />
                                 </span>
                                 <span className="truncate">{isBn ? shortBn : shortEn}</span>
@@ -1160,7 +1092,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       ].map((item) => (
                         <div key={item.name} className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 font-bold min-w-0">
-                            <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
+                            <span className="w-4 h-4 rounded-full bg-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                               <Check className="w-2.5 h-2.5 stroke-[3]" />
                             </span>
                             <span className="leading-snug">{item.name}</span>
@@ -1197,7 +1129,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       ].map((m) => (
                         <div key={m.name} className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 font-bold min-w-0">
-                            <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
+                            <span className="w-4 h-4 rounded-full bg-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                               <Check className="w-2.5 h-2.5 stroke-[3]" />
                             </span>
                             <span className="leading-snug">{m.name}</span>
@@ -1248,7 +1180,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     </div>
                   </div>
                   {startPreset === 'custom' && (
-                    <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0">
                       <Check className="w-4 h-4 stroke-[2.5]" />
                     </div>
                   )}
@@ -1263,11 +1195,8 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
           <button
             type="button"
             onClick={handleNext}
-            className={`w-full h-12 rounded-full font-extrabold text-sm text-white flex items-center justify-center gap-2 shadow-md transition active:scale-[0.98] cursor-pointer ${
-              isFinishStep
-                ? 'bg-[#00a86b] hover:bg-[#00945d] shadow-emerald-600/25'
-                : 'bg-[#d9a20b] hover:bg-[#c59208] shadow-amber-600/20'
-            }`}
+            className="w-full h-12 rounded-full font-extrabold text-sm text-white flex items-center justify-center gap-2 shadow-md transition active:scale-[0.98] cursor-pointer hover:opacity-95"
+            style={{ backgroundColor: activeThemeObj.primary }}
           >
             {step === 0 ? (
               <>
@@ -1298,7 +1227,8 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                   if (soundEnabled) soundHaptics.playTap();
                   onSignIn();
                 }}
-                className="text-[#d9a20b] hover:underline font-extrabold cursor-pointer"
+                className="hover:underline font-extrabold cursor-pointer"
+                style={{ color: activeThemeObj.primary }}
               >
                 {isBn ? 'সাইন ইন' : 'Sign In'}
               </button>
@@ -1307,7 +1237,8 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
             <button
               type="button"
               onClick={handleBack}
-              className="w-full py-1.5 text-center text-xs font-extrabold text-[#d9a20b] hover:opacity-80 transition cursor-pointer"
+              className="w-full py-1.5 text-center text-xs font-extrabold hover:opacity-80 transition cursor-pointer"
+              style={{ color: activeThemeObj.primary }}
             >
               {isBn ? 'পেছনে যান' : 'Back'}
             </button>
@@ -1566,9 +1497,9 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
         </div>
 
         {/* BOTTOM TOOLTIP DIALOG (Mirrors Screenshots 10 & 11) */}
-        <div className="rounded-3xl bg-white p-5 shadow-2xl text-slate-900 space-y-3.5 border border-slate-100">
+        <div className="rounded-3xl bg-white p-5 shadow-2xl text-slate-900 space-y-3.5 border border-[var(--app-border,#e2e8f0)]">
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-sm sm:text-base font-extrabold text-[#d99b00]">
+            <h3 className="text-sm sm:text-base font-extrabold text-[var(--app-primary,#006A4E)]">
               {current.title}
             </h3>
             <button
@@ -1591,9 +1522,9 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                 ? `${toBnDigits(tourIndex + 1)} / ${toBnDigits(totalSteps)}`
                 : `${tourIndex + 1} of ${totalSteps}`}
             </div>
-            <div className="h-1 w-full rounded-full bg-amber-100 overflow-hidden">
+            <div className="h-1 w-full rounded-full bg-[var(--app-surface-soft,#e9f6ef)] overflow-hidden">
               <div
-                className="h-full rounded-full bg-[#d9a20b] transition-all duration-300"
+                className="h-full rounded-full bg-[var(--app-primary,#006A4E)] transition-all duration-300"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -1603,7 +1534,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-2 py-1.5 text-xs font-extrabold text-[#d99b00] hover:opacity-80 transition cursor-pointer"
+              className="px-2 py-1.5 text-xs font-extrabold text-[var(--app-primary,#006A4E)] hover:opacity-80 transition cursor-pointer"
             >
               {isBn ? 'এড়িয়ে যান' : 'Skip'}
             </button>
@@ -1613,7 +1544,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="px-3 py-2 text-xs font-extrabold text-[#d99b00] hover:bg-amber-50 rounded-full transition cursor-pointer"
+                  className="px-3 py-2 text-xs font-extrabold text-[var(--app-primary,#006A4E)] hover:bg-[var(--app-surface-soft,#e9f6ef)] rounded-full transition cursor-pointer"
                 >
                   {isBn ? 'আগেরটি' : 'Previous'}
                 </button>
@@ -1621,11 +1552,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
               <button
                 type="button"
                 onClick={handleNext}
-                className={`px-5 py-2 rounded-full text-xs font-extrabold text-white transition active:scale-95 cursor-pointer shadow-sm ${
-                  tourIndex === totalSteps - 1
-                    ? 'bg-[#00a86b] hover:bg-[#00945d]'
-                    : 'bg-[#d9a20b] hover:bg-[#c59208]'
-                }`}
+                className="px-5 py-2 rounded-full text-xs font-extrabold text-white transition active:scale-95 cursor-pointer shadow-sm bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#00523c)]"
               >
                 {tourIndex === totalSteps - 1
                   ? isBn ? 'শুরু করুন' : 'Done'

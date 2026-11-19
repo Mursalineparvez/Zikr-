@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings, AppTheme } from '../types';
+import { APP_LIGHT_THEMES } from '../utils/appThemes';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { findSavedAccount, saveAccountToRegistry, updateAccountPassword, normalizeIdentifier } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
@@ -274,32 +275,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     reader.readAsText(file);
   };
 
-  const appearanceThemes: Array<{ id: AppTheme; name: string; desc: string; previewClass: string }> = [
-    {
-      id: 'emerald',
-      name: SETTINGS_UI.themeEmeraldName[selectedLanguage] || 'Serene Emerald',
-      desc: SETTINGS_UI.themeEmeraldDesc[selectedLanguage] || 'Classic Islamic Emerald Green with Gold accents',
-      previewClass: 'from-emerald-900 to-emerald-950 border-emerald-500',
-    },
-    {
-      id: 'midnight',
-      name: SETTINGS_UI.themeMidnightName[selectedLanguage] || 'Midnight Slate',
-      desc: SETTINGS_UI.themeMidnightDesc[selectedLanguage] || 'Deep obsidian night with cool slate accents',
-      previewClass: 'from-slate-900 to-black border-slate-600',
-    },
-    {
-      id: 'teal',
-      name: SETTINGS_UI.themeTealName[selectedLanguage] || 'Ocean Teal',
-      desc: SETTINGS_UI.themeTealDesc[selectedLanguage] || 'Calming Mediterranean deep teal and turquoise',
-      previewClass: 'from-teal-900 to-cyan-950 border-teal-500',
-    },
-    {
-      id: 'gold',
-      name: SETTINGS_UI.themeGoldName[selectedLanguage] || 'Medina Gold',
-      desc: SETTINGS_UI.themeGoldDesc[selectedLanguage] || 'Warm sacred desert gold and amber tones',
-      previewClass: 'from-amber-950 to-yellow-950 border-amber-500',
-    },
-  ];
+  const appearanceThemes = APP_LIGHT_THEMES;
 
   // PWA Install capabilities inside Settings
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -1828,21 +1804,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           key={th.id}
                           type="button"
                           onClick={() => {
-                            onUpdateSettings({ theme: th.id });
+                            onUpdateSettings({ theme: th.id, themeMode: 'day' });
                             if (soundEnabled) soundHaptics.playTap();
                           }}
-                          className={`p-3 rounded-2xl border text-left transition flex items-center gap-3 bg-gradient-to-br cursor-pointer ${th.previewClass} ${
-                            isSelected
-                              ? 'ring-2 ring-emerald-400 shadow-md'
-                              : 'opacity-80 hover:opacity-100 border-slate-700'
-                          }`}
+                          className="p-3 rounded-2xl border text-left transition flex items-center gap-3 cursor-pointer active:scale-[0.98]"
+                          style={{
+                            backgroundColor: isSelected ? th.softBg : th.canvasBg,
+                            borderColor: isSelected ? th.primary : th.border,
+                            boxShadow: isSelected ? `0 0 0 2px ${th.primary}35` : undefined,
+                          }}
                         >
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-emerald-300 bg-emerald-500' : 'border-slate-400'}`}>
-                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          <div
+                            className="w-8 h-8 rounded-xl shrink-0 border flex items-center justify-center"
+                            style={{ backgroundColor: th.primary, borderColor: th.primaryDark }}
+                          >
+                            {isSelected && <Check className="w-4 h-4 text-white stroke-[2.8]" />}
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs font-bold text-white truncate">{th.name}</div>
-                            <div className="text-[10px] text-slate-300 leading-tight line-clamp-1">{th.desc}</div>
+                            <div className="text-xs font-extrabold truncate" style={{ color: th.ink }}>
+                              {selectedLanguage === 'bn' ? th.nameBn : th.nameEn}
+                            </div>
+                            <div className="text-[10px] text-slate-600 leading-tight line-clamp-1">
+                              {selectedLanguage === 'bn' ? th.descBn : th.descEn}
+                            </div>
                           </div>
                         </button>
                       );

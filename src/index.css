@@ -34,10 +34,238 @@
   font-family: 'Amiri', 'Amiri Quran', 'Noto Naskh Arabic', 'Scheherazade New', 'Traditional Arabic', 'Plus Jakarta Sans', serif;
 }
 
-/* Day Mode (Clean White Canvas & Deep Teal Accents matching reference image) */
+/* ========================================================================== */
+/* DYNAMIC APP-WIDE LIGHT COLOR THEMES (Emerald, Gold, Sky, Violet, Rose, Teal) */
+/* ========================================================================== */
+:root,
+:root[data-app-theme="emerald"] {
+  --app-canvas: #f3faf6;
+  --app-surface: #ffffff;
+  --app-surface-soft: #e9f6ef;
+  --app-surface-tray: #e1f1e8;
+  --app-border: #cbe6d8;
+  --app-primary: #006A4E;
+  --app-primary-dark: #00523c;
+  --app-primary-mid: #059669;
+  --app-primary-light: #6ee7b7;
+  --app-ink: #0d2e24;
+}
+
+:root[data-app-theme="gold"] {
+  --app-canvas: #fdf9ee;
+  --app-surface: #ffffff;
+  --app-surface-soft: #faf1d6;
+  --app-surface-tray: #f3e6be;
+  --app-border: #ebd8a4;
+  --app-primary: #b47409;
+  --app-primary-dark: #8f5a04;
+  --app-primary-mid: #d99b0b;
+  --app-primary-light: #fde68a;
+  --app-ink: #362407;
+  /* Remap Tailwind v4 emerald & teal utilities seamlessly to Warm Gold */
+  --color-emerald-50: #fffbeb;
+  --color-emerald-100: #fef3c7;
+  --color-emerald-200: #fde68a;
+  --color-emerald-300: #fcd34d;
+  --color-emerald-400: #f59e0b;
+  --color-emerald-500: #d97706;
+  --color-emerald-600: #b45309;
+  --color-emerald-700: #92400e;
+  --color-emerald-800: #78350f;
+  --color-emerald-900: #5c2a0c;
+  --color-emerald-950: #3b1906;
+  --color-teal-50: #fefce8;
+  --color-teal-100: #fef9c3;
+  --color-teal-200: #fef08a;
+  --color-teal-300: #fde047;
+  --color-teal-400: #eab308;
+  --color-teal-500: #ca8a04;
+  --color-teal-600: #a16207;
+  --color-teal-700: #854d0e;
+  --color-teal-800: #713f12;
+  --color-teal-900: #58310e;
+  --color-teal-950: #3a1f07;
+}
+
+:root[data-app-theme="sky"] {
+  --app-canvas: #f2f8fe;
+  --app-surface: #ffffff;
+  --app-surface-soft: #e3f1fe;
+  --app-surface-tray: #d4e8fc;
+  --app-border: #bddcfb;
+  --app-primary: #0369a1;
+  --app-primary-dark: #075985;
+  --app-primary-mid: #0284c7;
+  --app-primary-light: #7dd3fc;
+  --app-ink: #0c2a42;
+  /* Remap Tailwind v4 emerald & teal utilities seamlessly to Sky Ocean */
+  --color-emerald-50: #f0f9ff;
+  --color-emerald-100: #e0f2fe;
+  --color-emerald-200: #bae6fd;
+  --color-emerald-300: #7dd3fc;
+  --color-emerald-400: #38bdf8;
+  --color-emerald-500: #0ea5e9;
+  --color-emerald-600: #0284c7;
+  --color-emerald-700: #0369a1;
+  --color-emerald-800: #075985;
+  --color-emerald-900: #0c4a6e;
+  --color-emerald-950: #082f49;
+  --color-teal-50: #eff6ff;
+  --color-teal-100: #dbeafe;
+  --color-teal-200: #bfdbfe;
+  --color-teal-300: #93c5fd;
+  --color-teal-400: #60a5fa;
+  --color-teal-500: #3b82f6;
+  --color-teal-600: #2563eb;
+  --color-teal-700: #1d4ed8;
+  --color-teal-800: #1e40af;
+  --color-teal-900: #1e3a8a;
+  --color-teal-950: #172554;
+}
+
+:root[data-app-theme="violet"] {
+  --app-canvas: #f7f4fe;
+  --app-surface: #ffffff;
+  --app-surface-soft: #eee7fe;
+  --app-surface-tray: #e2d8fc;
+  --app-border: #d6c6fb;
+  --app-primary: #6d28d9;
+  --app-primary-dark: #5b21b6;
+  --app-primary-mid: #7c3aed;
+  --app-primary-light: #c4b5fd;
+  --app-ink: #28144d;
+  /* Remap Tailwind v4 emerald & teal utilities seamlessly to Lavender Violet */
+  --color-emerald-50: #f5f3ff;
+  --color-emerald-100: #ede9fe;
+  --color-emerald-200: #ddd6fe;
+  --color-emerald-300: #c4b5fd;
+  --color-emerald-400: #a78bfa;
+  --color-emerald-500: #8b5cf6;
+  --color-emerald-600: #7c3aed;
+  --color-emerald-700: #6d28d9;
+  --color-emerald-800: #5b21b6;
+  --color-emerald-900: #4c1d95;
+  --color-emerald-950: #2e1065;
+  --color-teal-50: #faf5ff;
+  --color-teal-100: #f3e8ff;
+  --color-teal-200: #e9d5ff;
+  --color-teal-300: #d8b4fe;
+  --color-teal-400: #c084fc;
+  --color-teal-500: #a855f7;
+  --color-teal-600: #9333ea;
+  --color-teal-700: #7e22ce;
+  --color-teal-800: #6b21a8;
+  --color-teal-900: #581c87;
+  --color-teal-950: #3b0764;
+}
+
+:root[data-app-theme="rose"] {
+  --app-canvas: #fef4f6;
+  --app-surface: #ffffff;
+  --app-surface-soft: #fce6ec;
+  --app-surface-tray: #f9d5df;
+  --app-border: #f6c3d0;
+  --app-primary: #be123c;
+  --app-primary-dark: #9f1239;
+  --app-primary-mid: #e11d48;
+  --app-primary-light: #fda4af;
+  --app-ink: #3f1021;
+  /* Remap Tailwind v4 emerald & teal utilities seamlessly to Soft Rose */
+  --color-emerald-50: #fff1f2;
+  --color-emerald-100: #ffe4e6;
+  --color-emerald-200: #fecdd3;
+  --color-emerald-300: #fda4af;
+  --color-emerald-400: #fb7185;
+  --color-emerald-500: #f43f5e;
+  --color-emerald-600: #e11d48;
+  --color-emerald-700: #be123c;
+  --color-emerald-800: #9f1239;
+  --color-emerald-900: #881337;
+  --color-emerald-950: #4c0519;
+  --color-teal-50: #fdf2f8;
+  --color-teal-100: #fce7f3;
+  --color-teal-200: #fbcfe8;
+  --color-teal-300: #f9a8d4;
+  --color-teal-400: #f472b6;
+  --color-teal-500: #ec4899;
+  --color-teal-600: #db2777;
+  --color-teal-700: #be185d;
+  --color-teal-800: #9d174d;
+  --color-teal-900: #831843;
+  --color-teal-950: #500724;
+}
+
+:root[data-app-theme="teal"] {
+  --app-canvas: #f1fbfa;
+  --app-surface: #ffffff;
+  --app-surface-soft: #dff6f4;
+  --app-surface-tray: #cdece9;
+  --app-border: #b8e6e2;
+  --app-primary: #0f766e;
+  --app-primary-dark: #115e59;
+  --app-primary-mid: #0d9488;
+  --app-primary-light: #5eead4;
+  --app-ink: #0c3330;
+  /* Remap Tailwind v4 emerald utilities seamlessly to Mint Teal */
+  --color-emerald-50: #f0fdfa;
+  --color-emerald-100: #ccfbf1;
+  --color-emerald-200: #99f6e4;
+  --color-emerald-300: #5eead4;
+  --color-emerald-400: #2dd4bf;
+  --color-emerald-500: #14b8a6;
+  --color-emerald-600: #0d9488;
+  --color-emerald-700: #0f766e;
+  --color-emerald-800: #115e59;
+  --color-emerald-900: #134e4a;
+  --color-emerald-950: #042f2e;
+}
+
+/* Harmonize legacy hardcoded emerald hex utilities when another light color theme is active */
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#006A4E\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#006747\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#008763\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#236841\] {
+  background-color: var(--app-primary);
+}
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#004d35\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#005740\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#005439\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#005f46\] {
+  background-color: var(--app-primary-dark);
+}
+html[data-app-theme]:not([data-app-theme="emerald"]) .text-\[\#006A4E\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .text-\[\#006747\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .text-\[\#004d35\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .text-\[\#005a3e\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .text-\[\#054A37\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .text-\[\#103e42\] {
+  color: var(--app-primary);
+}
+html[data-app-theme]:not([data-app-theme="emerald"]) .text-\[\#10b981\] {
+  color: var(--app-primary-mid);
+}
+html[data-app-theme]:not([data-app-theme="emerald"]) .fill-\[\#006A4E\] {
+  fill: var(--app-primary);
+}
+html[data-app-theme]:not([data-app-theme="emerald"]) .border-\[\#006747\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .border-\[\#006A4E\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .border-\[\#10b981\] {
+  border-color: var(--app-primary);
+}
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#edf5f4\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#f4faf7\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .bg-\[\#f4f7f5\] {
+  background-color: var(--app-surface-soft);
+}
+html[data-app-theme]:not([data-app-theme="emerald"]) .border-\[\#dcebe8\],
+html[data-app-theme]:not([data-app-theme="emerald"]) .border-\[\#d2ece9\] {
+  border-color: var(--app-border);
+}
+
+/* Day Mode (Dynamic Light Color Canvas) */
 body.theme-day,
 body {
-  background-color: #f8fafc;
+  background-color: var(--app-canvas, #f3faf6);
   color: #0f172a;
 }
 
@@ -68,9 +296,9 @@ body.theme-night {
 
 /* Subtle Geometric Pattern */
 .islamic-pattern-day {
-  background-color: #f4faf7;
-  background-image: radial-gradient(rgba(0, 103, 71, 0.05) 1.5px, transparent 1.5px),
-                    radial-gradient(rgba(245, 158, 11, 0.03) 1.5px, #f4faf7 1.5px);
+  background-color: var(--app-canvas, #f3faf6);
+  background-image: radial-gradient(color-mix(in srgb, var(--app-primary, #006A4E) 7%, transparent) 1.5px, transparent 1.5px),
+                    radial-gradient(color-mix(in srgb, var(--app-primary-mid, #059669) 4%, transparent) 1.5px, var(--app-canvas, #f3faf6) 1.5px);
   background-size: 36px 36px;
   background-position: 0 0, 18px 18px;
 }
@@ -97,14 +325,14 @@ body.theme-night {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0, 103, 71, 0.06);
+  background: color-mix(in srgb, var(--app-primary, #006A4E) 7%, transparent);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 103, 71, 0.35);
+  background: color-mix(in srgb, var(--app-primary, #006A4E) 38%, transparent);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 103, 71, 0.65);
+  background: color-mix(in srgb, var(--app-primary, #006A4E) 68%, transparent);
 }
 
 /* Smooth Touch Active Press */
