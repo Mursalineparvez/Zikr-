@@ -18,6 +18,12 @@ import type { OtherSubSection } from './components/OtherIslamicHubView';
 import { prefetchView, warmupViewsIdle } from './utils/viewPreloader';
 import { getSavedHighlights, mergeSavedHighlights } from './utils/savedItems';
 import { pushAppHistoryState, useBackLayer } from './utils/backNavigation';
+import {
+  FirstTimeOnboarding,
+  GuidedAppTour,
+  ONBOARDING_STORAGE_KEY,
+  TOUR_STORAGE_KEY,
+} from './components/FirstTimeOnboarding';
 
 // Code-split heavy non-initial views and modals to make initial app launch instantaneous
 const QuranView = React.lazy(() => import('./components/QuranView').then((m) => ({ default: m.QuranView })));
@@ -31,7 +37,6 @@ const HistoryReportModal = React.lazy(() => import('./components/HistoryReportMo
 const ProfileModal = React.lazy(() => import('./components/ProfileModal').then((m) => ({ default: m.ProfileModal })));
 const AdminPanelModal = React.lazy(() => import('./components/AdminPanelModal').then((m) => ({ default: m.AdminPanelModal })));
 const ConfirmModal = React.lazy(() => import('./components/ConfirmModal').then((m) => ({ default: m.ConfirmModal })));
-const FirstDownloadWelcomeView = React.lazy(() => import('./components/FirstDownloadWelcomeView').then((m) => ({ default: m.FirstDownloadWelcomeView })));
 
 const AppViewLoadingFallback: React.FC<{ isDay: boolean; isBn?: boolean }> = ({ isDay, isBn = false }) => (
   <div className="flex flex-col items-center justify-center min-h-[350px] py-20 space-y-3">
@@ -516,15 +521,15 @@ export default function App() {
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [showFirstDownloadWelcome, setShowFirstDownloadWelcome] = useState<boolean>(() => {
     try {
-      const onboardingDone = localStorage.getItem('zikrmate_onboarding_completed');
-      const p = localStorage.getItem('zikrmate_user_profile');
-      const isUserSignedIn = p ? Boolean(JSON.parse(p)?.isSignedIn) : false;
-      if (!onboardingDone && !isUserSignedIn) {
+      const v1Done = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      if (!v1Done) {
         return true;
       }
     } catch {}
     return false;
   });
+
+  const [showGuidedTour, setShowGuidedTour] = useState<boolean>(false);
 
   const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
 
@@ -2438,24 +2443,63 @@ export default function App() {
           />
         )}
 
-        {/* First Download / Launch Cinematic Welcome & Onboarding Screen */}
+        {/* First-Time 7-Step Guided Onboarding Wizard */}
         {showFirstDownloadWelcome && (
-          <FirstDownloadWelcomeView
-            isOpen={showFirstDownloadWelcome}
-            onClose={() => setShowFirstDownloadWelcome(false)}
+          <FirstTimeOnboarding
             selectedLanguage={selectedLanguage}
             onSelectLanguage={(lang) => {
               setSelectedLanguage(lang);
-              const langObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
-              showToast(lang === 'bn' ? `ভাষা পরিবর্তন: ${langObj?.label || lang}` : `Language changed: ${langObj?.label || lang}`);
             }}
-            userProfile={userProfile}
-            onUpdateProfile={handleUpdateProfile}
-            onCloudDataLoaded={handleCloudDataLoaded}
-            zikrs={zikrs}
-            historySessions={historySessions}
-            lifetimeTotalCount={lifetimeTotalCount}
+            currentThemeMode={settings.themeMode}
+            currentAppTheme={settings.theme}
+            onApplyTheme={(themeMode, appTheme) => {
+              setSettings((prev) => ({
+                ...prev,
+                themeMode,
+                theme: appTheme,
+              }));
+            }}
             soundEnabled={settings.soundEnabled}
+            onComplete={({ selectedCity }) => {
+              try {
+                localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+                localStorage.setItem('zikrmate_onboarding_completed', 'true');
+                if (selectedCity) {
+                  localStorage.setItem('zikrmate_salat_city', JSON.stringify(selectedCity));
+                }
+              } catch {}
+              setShowFirstDownloadWelcome(false);
+              try {
+                if (!localStorage.getItem(TOUR_STORAGE_KEY)) {
+                  setShowGuidedTour(true);
+                }
+              } catch {
+                setShowGuidedTour(true);
+              }
+            }}
+            onSignIn={() => {
+              try {
+                localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+                localStorage.setItem('zikrmate_onboarding_completed', 'true');
+                localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+              } catch {}
+              setShowFirstDownloadWelcome(false);
+              handleOpenProfileModal('profile');
+            }}
+          />
+        )}
+
+        {/* Post-Onboarding Interactive Spotlight Feature Tour */}
+        {showGuidedTour && !showFirstDownloadWelcome && (
+          <GuidedAppTour
+            selectedLanguage={selectedLanguage}
+            soundEnabled={settings.soundEnabled}
+            onClose={() => {
+              try {
+                localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+              } catch {}
+              setShowGuidedTour(false);
+            }}
           />
         )}
 

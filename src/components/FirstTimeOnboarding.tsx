@@ -1,0 +1,1569 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useMemo, useState } from 'react';
+import {
+  Sparkles,
+  Languages,
+  Globe,
+  User,
+  Palette,
+  MapPin,
+  Bell,
+  BellOff,
+  CheckCircle2,
+  Check,
+  ArrowRight,
+  Compass,
+  Map,
+  MapPinOff,
+  Info,
+  X,
+  RotateCcw,
+  BookOpen,
+  Clock,
+  ShieldCheck,
+  ListChecks,
+  Infinity as InfinityIcon,
+  PenLine,
+  Search,
+} from 'lucide-react';
+import { AppTheme, ThemeMode, ZikrLanguage } from '../types';
+import { CityOption, POPULAR_CITIES } from '../utils/prayerTimes';
+import { soundHaptics } from '../utils/audioHaptics';
+import { stepBackOr, useBackLayer } from '../utils/backNavigation';
+
+export const ONBOARDING_STORAGE_KEY = 'zikr_onboarding_v1_completed';
+export const TOUR_STORAGE_KEY = 'zikr_tour_v1_completed';
+
+export interface OnboardingThemeOption {
+  id: string;
+  nameEn: string;
+  nameBn: string;
+  themeMode: ThemeMode;
+  appTheme: AppTheme;
+  previewBg: string;
+  previewBorder: string;
+  accentBar: string;
+}
+
+const ONBOARDING_THEMES: OnboardingThemeOption[] = [
+  {
+    id: 'minimal_white',
+    nameEn: 'Minimal White',
+    nameBn: 'মিনিমাল সাদা',
+    themeMode: 'day',
+    appTheme: 'emerald',
+    previewBg: '#ffffff',
+    previewBorder: '#e2e8f0',
+    accentBar: '#006747',
+  },
+  {
+    id: 'soft_green',
+    nameEn: 'Soft Green',
+    nameBn: 'সফট গ্রিন',
+    themeMode: 'day',
+    appTheme: 'emerald',
+    previewBg: '#f0fdf4',
+    previewBorder: '#bbf7d0',
+    accentBar: '#059669',
+  },
+  {
+    id: 'ivory_gold',
+    nameEn: 'Ivory Gold',
+    nameBn: 'আইভরি গোল্ড',
+    themeMode: 'day',
+    appTheme: 'gold',
+    previewBg: '#fffbeb',
+    previewBorder: '#fde68a',
+    accentBar: '#b45309',
+  },
+  {
+    id: 'emerald_night',
+    nameEn: 'Emerald Night',
+    nameBn: 'এমেরাল্ড নাইট',
+    themeMode: 'night',
+    appTheme: 'emerald',
+    previewBg: '#062026',
+    previewBorder: '#134e4a',
+    accentBar: '#10b981',
+  },
+  {
+    id: 'black_gold',
+    nameEn: 'Black Gold',
+    nameBn: 'ব্ল্যাক গোল্ড',
+    themeMode: 'night',
+    appTheme: 'gold',
+    previewBg: '#111111',
+    previewBorder: '#451a03',
+    accentBar: '#d97706',
+  },
+  {
+    id: 'midnight_blue',
+    nameEn: 'Midnight Blue',
+    nameBn: 'মিডনাইট ব্লু',
+    themeMode: 'night',
+    appTheme: 'midnight',
+    previewBg: '#0a1628',
+    previewBorder: '#1e3a8a',
+    accentBar: '#3b82f6',
+  },
+];
+
+const EXTRA_BD_CITIES: CityOption[] = [
+  { name: 'Rajshahi', country: 'Bangladesh', lat: 24.3745, lng: 88.6042 },
+  { name: 'Khulna', country: 'Bangladesh', lat: 22.8456, lng: 89.5403 },
+  { name: 'Barishal', country: 'Bangladesh', lat: 22.701, lng: 90.3535 },
+  { name: 'Rangpur', country: 'Bangladesh', lat: 25.7439, lng: 89.2752 },
+  { name: 'Mymensingh', country: 'Bangladesh', lat: 24.7471, lng: 90.4203 },
+  { name: 'Cumilla', country: 'Bangladesh', lat: 23.4607, lng: 91.1809 },
+  { name: "Cox's Bazar", country: 'Bangladesh', lat: 21.4272, lng: 92.0058 },
+  { name: 'Gazipur', country: 'Bangladesh', lat: 23.9999, lng: 90.4203 },
+  { name: 'Narayanganj', country: 'Bangladesh', lat: 23.6238, lng: 90.5 },
+  { name: 'Bogura', country: 'Bangladesh', lat: 24.8465, lng: 89.3773 },
+];
+
+const ALL_ONBOARDING_CITIES: CityOption[] = (() => {
+  const seen = new Set<string>();
+  const combined = [...POPULAR_CITIES, ...EXTRA_BD_CITIES];
+  return combined.filter((c) => {
+    const key = `${c.name}-${c.country}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+})();
+
+const findNearestCity = (lat: number, lng: number): CityOption => {
+  let best = ALL_ONBOARDING_CITIES[0];
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const city of ALL_ONBOARDING_CITIES) {
+    const dLat = city.lat - lat;
+    const dLng = city.lng - lng;
+    const dist = dLat * dLat + dLng * dLng;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = city;
+    }
+  }
+  return best;
+};
+
+const toBnDigits = (val: string | number) =>
+  String(val).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+
+interface FirstTimeOnboardingProps {
+  selectedLanguage: ZikrLanguage;
+  onSelectLanguage: (lang: ZikrLanguage) => void;
+  currentThemeMode: ThemeMode;
+  currentAppTheme: AppTheme;
+  onApplyTheme: (themeMode: ThemeMode, appTheme: AppTheme) => void;
+  soundEnabled?: boolean;
+  onComplete: (options: {
+    startPreset: 'preset' | 'custom';
+    gender: 'brother' | 'sister';
+    notificationsEnabled: boolean;
+    selectedCity: CityOption | null;
+  }) => void;
+  onSignIn: () => void;
+}
+
+export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
+  selectedLanguage,
+  onSelectLanguage,
+  currentThemeMode,
+  currentAppTheme,
+  onApplyTheme,
+  soundEnabled = true,
+  onComplete,
+  onSignIn,
+}) => {
+  const [step, setStep] = useState<number>(0); // 0..6 (7 steps)
+  const [gender, setGender] = useState<'brother' | 'sister'>('brother');
+  const [selectedThemeId, setSelectedThemeId] = useState<string>(() => {
+    if (currentThemeMode === 'day') {
+      return currentAppTheme === 'gold' ? 'ivory_gold' : 'minimal_white';
+    }
+    if (currentAppTheme === 'gold') return 'black_gold';
+    if (currentAppTheme === 'midnight') return 'midnight_blue';
+    return 'emerald_night';
+  });
+  const [locationMode, setLocationMode] = useState<'gps' | 'manual' | 'skip'>('skip');
+  const [selectedCity, setSelectedCity] = useState<CityOption | null>(null);
+  const [isDetectingGps, setIsDetectingGps] = useState(false);
+  const [gpsNotice, setGpsNotice] = useState<string | null>(null);
+  const [citySearch, setCitySearch] = useState('');
+  const [notificationsMode, setNotificationsMode] = useState<'enable' | 'later'>('later');
+  const [startPreset, setStartPreset] = useState<'preset' | 'custom'>('preset');
+
+  const isBn = selectedLanguage === 'bn';
+  const isDarkCanvas = currentThemeMode === 'night' && step >= 3;
+
+  // Step-by-step hardware/browser Back support across steps 1..6
+  useBackLayer(step >= 1, () => setStep(0), 'onboarding-s1');
+  useBackLayer(step >= 2, () => setStep(1), 'onboarding-s2');
+  useBackLayer(step >= 3, () => setStep(2), 'onboarding-s3');
+  useBackLayer(step >= 4, () => setStep(3), 'onboarding-s4');
+  useBackLayer(step >= 5, () => setStep(4), 'onboarding-s5');
+  useBackLayer(step >= 6, () => setStep(5), 'onboarding-s6');
+
+  const filteredCities = useMemo(() => {
+    const q = citySearch.trim().toLowerCase();
+    if (!q) return ALL_ONBOARDING_CITIES.slice(0, 14);
+    return ALL_ONBOARDING_CITIES.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.country.toLowerCase().includes(q)
+    );
+  }, [citySearch]);
+
+  const activeThemeObj = useMemo(
+    () => ONBOARDING_THEMES.find((t) => t.id === selectedThemeId) || ONBOARDING_THEMES[0],
+    [selectedThemeId]
+  );
+
+  const stepHeaders = [
+    { icon: Sparkles, label: isBn ? 'স্বাগতম' : 'Welcome' },
+    { icon: Languages, label: isBn ? 'ভাষা' : 'Language' },
+    { icon: User, label: isBn ? 'আপনার পরিচয়' : 'You' },
+    { icon: Palette, label: isBn ? 'থিম' : 'Theme' },
+    { icon: MapPin, label: isBn ? 'অবস্থান' : 'Location' },
+    { icon: Bell, label: isBn ? 'নোটিফিকেশন' : 'Notifications' },
+    { icon: CheckCircle2, label: isBn ? 'সম্পন্ন' : 'Finish' },
+  ];
+
+  const CurrentHeaderIcon = stepHeaders[step].icon;
+  const isFinishStep = step === 6;
+
+  const handleNext = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    if (step < 6) {
+      setStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      // Save preferences cleanly
+      try {
+        localStorage.setItem('zikr_user_gender', gender);
+        localStorage.setItem('zikr_reminders_enabled', notificationsMode === 'enable' ? 'true' : 'false');
+        if (selectedCity) {
+          localStorage.setItem('zikrmate_salat_city', JSON.stringify(selectedCity));
+        }
+      } catch {}
+      onComplete({
+        startPreset,
+        gender,
+        notificationsEnabled: notificationsMode === 'enable',
+        selectedCity,
+      });
+    }
+  };
+
+  const handleBack = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    if (step > 0) {
+      stepBackOr(() => setStep((prev) => Math.max(0, prev - 1)));
+    }
+  };
+
+  const handleDetectGps = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    setLocationMode('gps');
+    setGpsNotice(null);
+
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      const fallback = ALL_ONBOARDING_CITIES.find((c) => c.name === 'Dhaka') || ALL_ONBOARDING_CITIES[0];
+      setSelectedCity(fallback);
+      setGpsNotice(isBn ? 'ডিফল্ট হিসেবে ঢাকা নির্বাচিত হয়েছে।' : 'Defaulted to Dhaka.');
+      return;
+    }
+
+    setIsDetectingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const nearest = findNearestCity(pos.coords.latitude, pos.coords.longitude);
+        setSelectedCity(nearest);
+        setIsDetectingGps(false);
+        setGpsNotice(
+          isBn
+            ? `শনাক্ত করা হয়েছে: ${nearest.name}, ${nearest.country}`
+            : `Detected: ${nearest.name}, ${nearest.country}`
+        );
+      },
+      () => {
+        const fallback = ALL_ONBOARDING_CITIES.find((c) => c.name === 'Dhaka') || ALL_ONBOARDING_CITIES[0];
+        setSelectedCity(fallback);
+        setIsDetectingGps(false);
+        setGpsNotice(
+          isBn
+            ? 'লোকেশন অনুমতি মেলেনি — ঢাকা সেট করা হয়েছে (চাইলে ম্যানুয়ালি বদলান)।'
+            : 'Location permission declined — set to Dhaka (or choose manually).'
+        );
+      },
+      { timeout: 6000, enableHighAccuracy: false }
+    );
+  };
+
+  const handleEnableNotifications = async () => {
+    if (soundEnabled) soundHaptics.playTap();
+    setNotificationsMode('enable');
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    } catch {}
+  };
+
+  const canvasClass = isDarkCanvas
+    ? 'bg-[#041418] text-slate-100'
+    : 'bg-[#f6f6ef] text-slate-900';
+
+  const cardBaseClass = isDarkCanvas
+    ? 'bg-[#0a2329] border-[#16414b] text-slate-100'
+    : 'bg-[#fafaf4] border-[#e7e4d5] text-slate-900';
+
+  const cardActiveClass = isDarkCanvas
+    ? 'bg-[#0f2f36] border-amber-400/80 ring-1 ring-amber-400/40 text-white'
+    : 'bg-[#fdfbf0] border-[#d9a20b] ring-1 ring-[#d9a20b]/30 text-slate-900';
+
+  const subtleTextClass = isDarkCanvas ? 'text-slate-300/85' : 'text-slate-600';
+
+  return (
+    <div className={`fixed inset-0 z-[120] overflow-y-auto transition-colors duration-300 ${canvasClass}`}>
+      <div className="min-h-[100dvh] max-w-lg mx-auto px-5 pt-5 pb-7 flex flex-col justify-between">
+        {/* TOP HEADER & 7-SEGMENT PROGRESS BAR */}
+        <div className="space-y-3 shrink-0">
+          <div className="flex items-center gap-2">
+            <CurrentHeaderIcon
+              className={`w-4 h-4 ${
+                isFinishStep ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#d9a20b]'
+              }`}
+            />
+            <span className="text-xs font-extrabold tracking-tight">{stepHeaders[step].label}</span>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5">
+            {Array.from({ length: 7 }).map((_, idx) => {
+              const filled = idx <= step;
+              return (
+                <div
+                  key={idx}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    filled
+                      ? isFinishStep
+                        ? 'bg-[#00a86b]'
+                        : 'bg-[#d9a20b]'
+                      : isDarkCanvas
+                      ? 'bg-white/15'
+                      : 'bg-[#e5e3d8]'
+                  }`}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* MAIN STEP CONTENT */}
+        <div className="flex-1 flex flex-col justify-center py-6">
+          {/* STEP 0: WELCOME */}
+          {step === 0 && (
+            <div className="my-auto">
+              <div
+                className={`rounded-3xl border px-6 py-10 text-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] space-y-4 ${cardBaseClass}`}
+              >
+                <div className="w-16 h-16 mx-auto rounded-full bg-[#f8f0d2] border border-[#ebd999] flex items-center justify-center shadow-xs">
+                  {/* Minimal Mosque Dome Icon */}
+                  <svg viewBox="0 0 36 36" className="w-8 h-8 text-[#d99b00]" fill="currentColor" aria-hidden="true">
+                    <path d="M18 6c-1.1 1.7-3.4 3.6-5.8 5.2-1.2.8-1.9 2.1-1.9 3.5V16h15.4v-1.3c0-1.4-.7-2.7-1.9-3.5C21.4 9.6 19.1 7.7 18 6z" />
+                    <rect x="6" y="12" width="2.8" height="16" rx="1.2" />
+                    <rect x="27.2" y="12" width="2.8" height="16" rx="1.2" />
+                    <path d="M10.3 17.5h15.4V28h-4.6v-4.2a3.1 3.1 0 1 0-6.2 0V28h-4.6V17.5z" />
+                  </svg>
+                </div>
+
+                <div className="space-y-2">
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+                    Zikr+
+                  </h1>
+                  <p className={`text-sm leading-relaxed max-w-xs mx-auto font-medium ${subtleTextClass}`}>
+                    {isBn
+                      ? 'প্রতিদিনের সালাত, জিকির, কুরআন তিলাওয়াত ও আমলের রুটিন সাজান প্রশান্ত ও পরিচ্ছন্নভাবে।'
+                      : 'Build your daily prayer, dhikr, Quran reading and amal routine with clarity.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 1: LANGUAGE */}
+          {step === 1 && (
+            <div className="space-y-5 mb-auto pt-2">
+              <div className="space-y-1">
+                <h2 className="text-xl font-black tracking-tight">
+                  {isBn ? 'আপনার ভাষা বেছে নিন' : 'Choose your language'}
+                </h2>
+                <p className={`text-xs sm:text-sm font-medium ${subtleTextClass}`}>
+                  {isBn
+                    ? 'আপনি পরে সেটিংস থেকে এটি পরিবর্তন করতে পারবেন।'
+                    : 'You can change this later from Settings.'}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  {
+                    code: 'bn' as ZikrLanguage,
+                    title: 'বাংলা',
+                    subtitle: 'অ্যাপের ইন্টারফেস বাংলায় ব্যবহার করুন।',
+                    icon: Globe,
+                  },
+                  {
+                    code: 'en' as ZikrLanguage,
+                    title: 'English',
+                    subtitle: 'Use English for the app interface.',
+                    icon: Languages,
+                  },
+                  {
+                    code: 'ar' as ZikrLanguage,
+                    title: 'العربية',
+                    subtitle: 'استخدم العربية لواجهة التطبيق.',
+                    icon: Globe,
+                  },
+                ].map((opt) => {
+                  const active = selectedLanguage === opt.code;
+                  const IconComp = opt.icon;
+                  return (
+                    <button
+                      key={opt.code}
+                      type="button"
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        onSelectLanguage(opt.code);
+                      }}
+                      className={`w-full text-left rounded-2xl border p-4 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] ${
+                        active ? cardActiveClass : cardBaseClass
+                      }`}
+                    >
+                      <div
+                        className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${
+                          active
+                            ? 'bg-[#f8efc8] border-[#e7cf72] text-[#c78d00]'
+                            : isDarkCanvas
+                            ? 'bg-white/10 border-white/15 text-amber-300'
+                            : 'bg-[#f6f1db] border-[#eae2bf] text-[#c78d00]'
+                        }`}
+                      >
+                        <IconComp className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm sm:text-base font-extrabold">{opt.title}</div>
+                        <div className={`text-xs mt-0.5 ${subtleTextClass}`}>{opt.subtitle}</div>
+                      </div>
+                      {active && (
+                        <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 stroke-[2.5]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: BROTHER OR SISTER */}
+          {step === 2 && (
+            <div className="space-y-5 mb-auto pt-2">
+              <div className="space-y-1">
+                <h2 className="text-xl font-black tracking-tight">
+                  {isBn ? 'ভাই নাকি বোন?' : 'Brother or sister?'}
+                </h2>
+                <p className={`text-xs sm:text-sm font-medium leading-relaxed ${subtleTextClass}`}>
+                  {isBn
+                    ? 'সালাত পেজ ও আমল ট্র্যাকার আপনার উত্তর অনুযায়ী সাজানো হবে। পরে প্রোফাইল থেকে পরিবর্তন করতে পারবেন।'
+                    : 'The prayer page and the widgets fit your answer. You can change it later in Profile.'}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  {
+                    id: 'brother' as const,
+                    title: isBn ? 'ভাই (Brother)' : 'Brother',
+                    desc: isBn
+                      ? 'জামাতে নামাজের জন্য পূর্ণ পয়েন্ট, একা পড়লে অর্ধেক। ওজর (Excused) অপশন থাকবে না।'
+                      : 'Full points in congregation, half alone. No "excused".',
+                    icon: (
+                      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true">
+                        <circle cx="12" cy="5.5" r="2.3" />
+                        <path d="M9.2 9.5h5.6a1.5 1.5 0 0 1 1.5 1.5v4.3a1 1 0 0 1-1.9.3V12h-.6v8.2a1.1 1.1 0 0 1-2.2 0V15h-.4v5.2a1.1 1.1 0 0 1-2.2 0V12h-.6v3.6a1 1 0 0 1-1.9-.3V11a1.5 1.5 0 0 1 1.5-1.5z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    id: 'sister' as const,
+                    title: isBn ? 'বোন (Sister)' : 'Sister',
+                    desc: isBn
+                      ? 'আওয়াল ওয়াক্তে নামাজের জন্য পূর্ণ পয়েন্ট। জামাত বা জুমআর বাধ্যবাধকতা ছাড়াই "ওজর" (Excused) অপশন থাকবে।'
+                      : 'Full points for praying at the start of the time. No congregation or Jumu\'ah; "excused" is there.',
+                    icon: (
+                      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true">
+                        <circle cx="12" cy="5.5" r="2.3" />
+                        <path d="M10 9.5h4c.8 0 1.5.5 1.7 1.3l1.3 4.8a1 1 0 0 1-1.9.5l-.8-2.6 1.1 3.7H13.5v3a1.1 1.1 0 0 1-2.2 0v-3h-.6v3a1.1 1.1 0 0 1-2.2 0v-3H7.6l1.1-3.7-.8 2.6a1 1 0 0 1-1.9-.5l1.3-4.8c.2-.8.9-1.3 1.7-1.3z" />
+                      </svg>
+                    ),
+                  },
+                ].map((opt) => {
+                  const active = gender === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setGender(opt.id);
+                      }}
+                      className={`w-full text-left rounded-2xl border p-4 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] ${
+                        active ? cardActiveClass : cardBaseClass
+                      }`}
+                    >
+                      <div
+                        className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${
+                          active
+                            ? 'bg-[#f8efc8] border-[#e7cf72] text-[#c78d00]'
+                            : isDarkCanvas
+                            ? 'bg-white/10 border-white/15 text-amber-300'
+                            : 'bg-[#f6f1db] border-[#eae2bf] text-[#c78d00]'
+                        }`}
+                      >
+                        {opt.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm sm:text-base font-extrabold">{opt.title}</div>
+                        <div className={`text-xs mt-0.5 leading-relaxed ${subtleTextClass}`}>
+                          {opt.desc}
+                        </div>
+                      </div>
+                      {active && (
+                        <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 stroke-[2.5]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: THEME */}
+          {step === 3 && (
+            <div className="space-y-4 mb-auto pt-2">
+              <div className="space-y-1">
+                <h2 className="text-xl font-black tracking-tight">
+                  {isBn ? 'আপনার পছন্দের থিম বেছে নিন' : 'Choose your theme'}
+                </h2>
+                <p className={`text-xs sm:text-sm font-medium ${subtleTextClass}`}>
+                  {isBn
+                    ? 'প্রতিদিনের ব্যবহারের জন্য শান্ত ও আরামদায়ক থিম নির্বাচন করুন।'
+                    : 'Pick the look that feels calm and comfortable for daily use.'}
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                {ONBOARDING_THEMES.map((t) => {
+                  const active = selectedThemeId === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setSelectedThemeId(t.id);
+                        onApplyTheme(t.themeMode, t.appTheme);
+                      }}
+                      className={`w-full text-left rounded-2xl border px-4 py-3.5 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] ${
+                        active ? cardActiveClass : cardBaseClass
+                      }`}
+                    >
+                      {/* Mini Surface Preview Box */}
+                      <div
+                        className="w-16 h-10 rounded-xl border shrink-0 shadow-2xs"
+                        style={{
+                          backgroundColor: t.previewBg,
+                          borderColor: t.previewBorder,
+                        }}
+                      />
+                      {/* Vertical Accent Bar (matches Screenshot 4) */}
+                      <div
+                        className="w-1 h-10 rounded-full shrink-0"
+                        style={{ backgroundColor: t.accentBar }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-extrabold truncate">
+                          {isBn ? t.nameBn : t.nameEn}
+                        </div>
+                        <div className={`text-[11px] ${subtleTextClass}`}>
+                          {t.themeMode === 'day'
+                            ? isBn ? 'দিনের আলো (Light)' : 'Light mode'
+                            : isBn ? 'রাতের প্রশান্তি (Dark)' : 'Dark mode'}
+                        </div>
+                      </div>
+                      {active && (
+                        <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 stroke-[2.5]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: LOCATION */}
+          {step === 4 && (
+            <div className="space-y-4 mb-auto pt-2">
+              <div className="space-y-1">
+                <h2 className="text-xl font-black tracking-tight">
+                  {isBn ? 'সালাতের সময়ের জন্য অবস্থান দিন' : 'Set your prayer time location'}
+                </h2>
+                <p className={`text-xs sm:text-sm font-medium ${subtleTextClass}`}>
+                  {isBn
+                    ? 'সঠিক স্থানীয় নামাজের সময় নির্ণয়ের জন্যই শুধু আপনার অবস্থান প্রয়োজন।'
+                    : 'Your location is needed only to calculate accurate local prayer times.'}
+                </p>
+              </div>
+
+              {/* Soft Privacy Info Cards */}
+              <div className="space-y-2.5">
+                <div
+                  className={`rounded-2xl border p-3.5 flex items-start gap-3 text-xs leading-relaxed ${
+                    isDarkCanvas
+                      ? 'bg-sky-950/40 border-sky-700/40 text-sky-100'
+                      : 'bg-[#eef4fa] border-[#d3e2f0] text-slate-800'
+                  }`}
+                >
+                  <Info className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+                  <p className="font-medium">
+                    {isBn
+                      ? 'প্রতিদিনের জিকির, কুরআন তিলাওয়াত, দোয়া বা আমল ট্র্যাকিংয়ের জন্য Zikr+-এ লোকেশনের প্রয়োজন নেই। এগুলো লোকেশন ছাড়াই সম্পূর্ণ কাজ করে।'
+                      : 'Zikr+ does not need your location for daily amal, dhikr, reading, dua or reflection tracking. These features work fully without location.'}
+                  </p>
+                </div>
+
+                <div
+                  className={`rounded-2xl border p-3.5 flex items-start gap-3 text-xs leading-relaxed ${
+                    isDarkCanvas
+                      ? 'bg-amber-950/35 border-amber-700/40 text-amber-100'
+                      : 'bg-[#fbf4df] border-[#eedba3] text-slate-800'
+                  }`}
+                >
+                  <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <p className="font-medium">
+                    {isBn
+                      ? 'লোকেশন সেট না করলে আপনি পরে সালাত টাইম পেজ থেকে যেকোনো সময় আপনার জেলা বা শহর বেছে নিতে পারবেন।'
+                      : 'If location is not turned on, prayer times can be configured anytime later from the Prayer Times page.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* 3 Interactive Location Cards */}
+              <div className="space-y-2.5">
+                {/* 1. GPS Auto */}
+                <button
+                  type="button"
+                  onClick={handleDetectGps}
+                  className={`w-full text-left rounded-2xl border p-4 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] ${
+                    locationMode === 'gps' ? cardActiveClass : cardBaseClass
+                  }`}
+                >
+                  <div className="w-11 h-11 rounded-full bg-[#f6f1db] border border-[#eae2bf] text-[#c78d00] flex items-center justify-center shrink-0">
+                    <Compass className={`w-5 h-5 ${isDetectingGps ? 'animate-spin' : ''}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-extrabold">
+                      {isBn ? 'জিপিএস দিয়ে স্বয়ংক্রিয়ভাবে শনাক্ত করুন' : 'Detect via GPS (Auto)'}
+                    </div>
+                    <div className={`text-xs mt-0.5 ${subtleTextClass}`}>
+                      {isDetectingGps
+                        ? isBn ? 'আপনার শহর খোঁজা হচ্ছে...' : 'Finding your current city...'
+                        : gpsNotice && locationMode === 'gps'
+                        ? gpsNotice
+                        : isBn ? 'স্বয়ংক্রিয়ভাবে আপনার বর্তমান শহর খুঁজুন' : 'Automatically find your current city'}
+                    </div>
+                  </div>
+                  {locationMode === 'gps' && !isDetectingGps && (
+                    <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                  )}
+                </button>
+
+                {/* 2. Manual District Picker */}
+                <div
+                  className={`rounded-2xl border transition-all ${
+                    locationMode === 'manual' ? cardActiveClass : cardBaseClass
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (soundEnabled) soundHaptics.playTap();
+                      setLocationMode('manual');
+                    }}
+                    className="w-full text-left p-4 flex items-center gap-3.5 cursor-pointer"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-[#f6f1db] border border-[#eae2bf] text-[#c78d00] flex items-center justify-center shrink-0">
+                      <Map className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-extrabold">
+                        {isBn ? 'ম্যানুয়ালি বেছে নিন' : 'Select Manually'}
+                      </div>
+                      <div className={`text-xs mt-0.5 ${subtleTextClass}`}>
+                        {locationMode === 'manual' && selectedCity
+                          ? `${selectedCity.name}, ${selectedCity.country}`
+                          : isBn
+                          ? 'তালিকা থেকে আপনার জেলা বা শহর নির্বাচন করুন'
+                          : 'Choose your district or city from a list'}
+                      </div>
+                    </div>
+                    {locationMode === 'manual' && selectedCity && (
+                      <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                        <Check className="w-4 h-4 stroke-[2.5]" />
+                      </div>
+                    )}
+                  </button>
+
+                  {locationMode === 'manual' && (
+                    <div className="px-4 pb-4 space-y-2.5 border-t border-black/5 dark:border-white/10 pt-3">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          value={citySearch}
+                          onChange={(e) => setCitySearch(e.target.value)}
+                          placeholder={isBn ? 'শহর বা জেলা খুঁজুন (যেমন: Dhaka, Sylhet)...' : 'Search city or district...'}
+                          className={`w-full pl-8 pr-3 py-2 rounded-xl border text-xs outline-none ${
+                            isDarkCanvas
+                              ? 'bg-black/25 border-white/15 text-white placeholder:text-slate-400'
+                              : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400'
+                          }`}
+                        />
+                      </div>
+                      <div className="max-h-36 overflow-y-auto grid grid-cols-2 gap-1.5 pr-0.5">
+                        {filteredCities.map((city) => {
+                          const isChosen =
+                            selectedCity?.name === city.name && selectedCity?.country === city.country;
+                          return (
+                            <button
+                              key={`${city.name}-${city.country}`}
+                              type="button"
+                              onClick={() => {
+                                if (soundEnabled) soundHaptics.playTap();
+                                setSelectedCity(city);
+                              }}
+                              className={`px-2.5 py-1.5 rounded-xl text-left text-xs font-bold border transition cursor-pointer truncate ${
+                                isChosen
+                                  ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                                  : isDarkCanvas
+                                  ? 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
+                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-amber-50'
+                              }`}
+                            >
+                              {city.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Skip Location */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setLocationMode('skip');
+                    setSelectedCity(null);
+                  }}
+                  className={`w-full text-left rounded-2xl border p-4 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] ${
+                    locationMode === 'skip'
+                      ? isDarkCanvas
+                        ? 'bg-[#0f2f36] border-slate-400 text-white'
+                        : 'bg-[#eef1f3] border-slate-600 text-slate-900'
+                      : cardBaseClass
+                  }`}
+                >
+                  <div
+                    className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${
+                      isDarkCanvas
+                        ? 'bg-white/10 border-white/15 text-slate-300'
+                        : 'bg-slate-200/80 border-slate-300 text-slate-600'
+                    }`}
+                  >
+                    <MapPinOff className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-extrabold">
+                      {isBn ? 'এখন এড়িয়ে যান' : 'Skip location'}
+                    </div>
+                    <div className={`text-xs mt-0.5 ${subtleTextClass}`}>
+                      {isBn
+                        ? 'কোনো অবস্থান সংরক্ষণ করা হবে না। পরে সালাতের সময় সেট করতে পারবেন।'
+                        : 'No location will be saved. Prayer times can be configured later.'}
+                    </div>
+                  </div>
+                  {locationMode === 'skip' && (
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${
+                        isDarkCanvas
+                          ? 'bg-white/15 border-white/25 text-white'
+                          : 'bg-slate-200 border-slate-400 text-slate-700'
+                      }`}
+                    >
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5: NOTIFICATIONS */}
+          {step === 5 && (
+            <div className="space-y-4 mb-auto pt-2">
+              <div className="space-y-1">
+                <h2 className="text-xl font-black tracking-tight">
+                  {isBn ? 'মৃদু রিমাইন্ডার চালু করবেন?' : 'Enable gentle reminders?'}
+                </h2>
+                <p className={`text-xs sm:text-sm font-medium ${subtleTextClass}`}>
+                  {isBn
+                    ? 'কোনো চাপ ছাড়াই নিয়মিত আমল ধরে রাখতে রিমাইন্ডার আপনাকে সাহায্য করবে।'
+                    : 'Reminders can help you stay consistent without pressure.'}
+                </p>
+              </div>
+
+              <div
+                className={`rounded-2xl border p-3.5 flex items-start gap-3 text-xs leading-relaxed ${
+                  isDarkCanvas
+                    ? 'bg-sky-950/40 border-sky-700/40 text-sky-100'
+                    : 'bg-[#eef4fa] border-[#d3e2f0] text-slate-800'
+                }`}
+              >
+                <Info className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+                <p className="font-medium">
+                  {isBn
+                    ? 'নোটিফিকেশন সম্পূর্ণ ঐচ্ছিক। এটি ছাড়াও আপনি Zikr+ পুরোপুরি ব্যবহার করতে পারবেন।'
+                    : 'Notifications are optional. You can use Zikr+ fully without them.'}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => void handleEnableNotifications()}
+                  className={`w-full text-left rounded-2xl border p-4 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] ${
+                    notificationsMode === 'enable' ? cardActiveClass : cardBaseClass
+                  }`}
+                >
+                  <div className="w-11 h-11 rounded-full bg-[#f6f1db] border border-[#eae2bf] text-[#c78d00] flex items-center justify-center shrink-0">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-extrabold">
+                      {isBn ? 'রিমাইন্ডার চালু করুন' : 'Enable reminders'}
+                    </div>
+                    <div className={`text-xs mt-0.5 ${subtleTextClass}`}>
+                      {isBn
+                        ? 'আপনার সেটআপ অনুযায়ী নামাজ ও আমলের রিমাইন্ডার প্রস্তুত করুন।'
+                        : 'Ask permission and prepare eligible reminders for your setup.'}
+                    </div>
+                  </div>
+                  {notificationsMode === 'enable' && (
+                    <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setNotificationsMode('later');
+                  }}
+                  className={`w-full text-left rounded-2xl border p-4 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] ${
+                    notificationsMode === 'later'
+                      ? isDarkCanvas
+                        ? 'bg-[#0f2f36] border-slate-400 text-white'
+                        : 'bg-[#eef1f3] border-slate-600 text-slate-900'
+                      : cardBaseClass
+                  }`}
+                >
+                  <div
+                    className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${
+                      isDarkCanvas
+                        ? 'bg-white/10 border-white/15 text-slate-300'
+                        : 'bg-slate-200/80 border-slate-300 text-slate-600'
+                    }`}
+                  >
+                    <BellOff className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-extrabold">
+                      {isBn ? 'এখন নয়' : 'Not now'}
+                    </div>
+                    <div className={`text-xs mt-0.5 ${subtleTextClass}`}>
+                      {isBn
+                        ? 'কোনো অনুমতি চাওয়া হবে না। পরে যেকোনো সময় চালু করতে পারবেন।'
+                        : 'No permission will be requested. You can enable reminders later.'}
+                    </div>
+                  </div>
+                  {notificationsMode === 'later' && (
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${
+                        isDarkCanvas
+                          ? 'bg-white/15 border-white/25 text-white'
+                          : 'bg-slate-200 border-slate-400 text-slate-700'
+                      }`}
+                    >
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 6: FINISH & PRESET SUMMARY */}
+          {step === 6 && (
+            <div className="space-y-4 mb-auto pt-1">
+              <div className="space-y-1">
+                <h2 className="text-xl font-black tracking-tight">
+                  {isBn ? 'আপনি শুরু করার জন্য প্রস্তুত' : 'You are ready to begin'}
+                </h2>
+                <p className={`text-xs sm:text-sm font-medium ${subtleTextClass}`}>
+                  {isBn
+                    ? 'ছোট থেকে শুরু করুন। পূর্ণতার চেয়ে ধারাবাহিকতাই বেশি গুরুত্বপূর্ণ।'
+                    : 'Start small. Consistency matters more than perfection.'}
+                </p>
+              </div>
+
+              {/* 5 Summary Rows matching Screenshot 8 */}
+              <div className="space-y-2">
+                {[
+                  {
+                    icon: Languages,
+                    label: isBn ? 'ভাষা' : 'Language',
+                    value:
+                      selectedLanguage === 'bn'
+                        ? 'বাংলা'
+                        : selectedLanguage === 'ar'
+                        ? 'العربية'
+                        : 'English',
+                    tint: isDarkCanvas
+                      ? 'bg-sky-950/35 border-sky-800/40 text-sky-300'
+                      : 'bg-[#eef4fa] border-[#d3e2f0] text-blue-600',
+                  },
+                  {
+                    icon: Palette,
+                    label: isBn ? 'থিম' : 'Theme',
+                    value: isBn ? activeThemeObj.nameBn : activeThemeObj.nameEn,
+                    tint: isDarkCanvas
+                      ? 'bg-white/[0.06] border-white/15 text-slate-300'
+                      : 'bg-[#f1f2ee] border-[#e2e3dc] text-slate-600',
+                  },
+                  {
+                    icon: MapPin,
+                    label: isBn ? 'অবস্থান' : 'Location',
+                    value: selectedCity
+                      ? `${selectedCity.name}, ${selectedCity.country}`
+                      : isBn
+                      ? 'এখনো সেট করা হয়নি'
+                      : 'Not set yet',
+                    tint: isDarkCanvas
+                      ? 'bg-amber-950/25 border-amber-800/35 text-amber-300'
+                      : 'bg-[#faf4e0] border-[#ece0b6] text-[#c78d00]',
+                  },
+                  {
+                    icon: ShieldCheck,
+                    label: isBn ? 'সালাতের নিয়ম' : 'Prayer rules',
+                    value: isBn
+                      ? 'হানাফি · ইউনিভার্সিটি অফ ইসলামিক সায়েন্সেস, করাচি'
+                      : 'Hanafi · University of Islamic Sciences, Karachi',
+                    tint: isDarkCanvas
+                      ? 'bg-amber-950/25 border-amber-800/35 text-amber-300'
+                      : 'bg-[#faf4e0] border-[#ece0b6] text-[#c78d00]',
+                  },
+                  {
+                    icon: Bell,
+                    label: isBn ? 'নোটিফিকেশন' : 'Notifications',
+                    value:
+                      notificationsMode === 'enable'
+                        ? isBn ? 'চালু আছে' : 'Enabled'
+                        : isBn ? 'এখন নয়' : 'Not now',
+                    tint: isDarkCanvas
+                      ? 'bg-amber-950/25 border-amber-800/35 text-amber-300'
+                      : 'bg-[#faf4e0] border-[#ece0b6] text-[#c78d00]',
+                  },
+                ].map((row, idx) => {
+                  const IconComp = row.icon;
+                  return (
+                    <div
+                      key={idx}
+                      className={`rounded-2xl border px-3.5 py-2.5 flex items-center gap-3 ${row.tint}`}
+                    >
+                      <IconComp className="w-4 h-4 shrink-0" />
+                      <div className="min-w-0">
+                        <div className={`text-[10.5px] font-semibold ${subtleTextClass}`}>
+                          {row.label}
+                        </div>
+                        <div
+                          className={`text-xs sm:text-sm font-extrabold truncate ${
+                            isDarkCanvas ? 'text-white' : 'text-slate-900'
+                          }`}
+                        >
+                          {row.value}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* How do you want to start? */}
+              <div className="space-y-2.5 pt-1">
+                <h3 className="text-sm font-extrabold">
+                  {isBn ? 'আপনি কীভাবে শুরু করতে চান?' : 'How do you want to start?'}
+                </h3>
+
+                {/* Option 1: Dhikr & Quran Preset */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setStartPreset('preset');
+                  }}
+                  className={`w-full text-left rounded-2xl border p-3.5 flex items-center gap-3 transition-all cursor-pointer ${
+                    startPreset === 'preset' ? cardActiveClass : cardBaseClass
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#f8efc8] border border-[#e7cf72] text-[#c78d00] flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-extrabold">
+                      {isBn ? 'জিকির ও কুরআন প্রিসেট' : 'Dhikr & Quran'}
+                    </div>
+                    <div className={`text-xs mt-0.5 leading-snug ${subtleTextClass}`}>
+                      {isBn
+                        ? 'তাসবিহ, ইস্তিগফার, দরুদ, কুরআন, হাদীস, তাফসীর এবং তিনটি ফজিলতপূর্ণ সূরা নিয়ে শুরু করুন।'
+                        : 'Start with tasbih, istighfar, durood, Quran, hadith, tafsir and three surahs.'}
+                    </div>
+                  </div>
+                  {startPreset === 'preset' && (
+                    <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Preset Details Card matching Screenshot 9 */}
+                {startPreset === 'preset' && (
+                  <div className={`rounded-2xl border p-4 space-y-3 text-xs ${cardBaseClass}`}>
+                    <div className="font-extrabold text-sm">
+                      {isBn ? 'এই প্রিসেটে যা যুক্ত থাকবে' : 'This preset adds'}
+                    </div>
+
+                    {/* Dhikr List */}
+                    <div className="space-y-1.5">
+                      <div className={`text-[11px] font-bold ${subtleTextClass}`}>
+                        {isBn ? 'জিকির' : 'Dhikr'}
+                      </div>
+                      {[
+                        { name: isBn ? 'সুবহানাল্লাহ' : 'SubhanAllah', val: isBn ? `${toBnDigits(33)} বার` : '33 times' },
+                        { name: isBn ? 'আলহামদুলিল্লাহ' : 'Alhamdulillah', val: isBn ? `${toBnDigits(33)} বার` : '33 times' },
+                        { name: isBn ? 'আল্লাহু আকবার' : 'Allahu Akbar', val: isBn ? `${toBnDigits(34)} বার` : '34 times' },
+                        { name: isBn ? 'আস্তাগফিরুল্লাহ' : 'Astaghfirullah', val: isBn ? `${toBnDigits(100)} বার` : '100 times' },
+                        { name: isBn ? 'দরুদ শরীফ' : 'Durood', val: isBn ? `${toBnDigits(100)} বার` : '100 times' },
+                      ].map((item) => (
+                        <div key={item.name} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 font-bold">
+                            <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </span>
+                            <span>{item.name}</span>
+                          </div>
+                          <span className={`font-semibold tabular-nums ${subtleTextClass}`}>{item.val}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Quran & Reading */}
+                    <div className="space-y-1.5 pt-1 border-t border-black/5 dark:border-white/10">
+                      <div className={`text-[11px] font-bold ${subtleTextClass}`}>
+                        {isBn ? 'কুরআন ও অধ্যয়ন' : 'Quran & reading'}
+                      </div>
+                      {[
+                        isBn ? 'কুরআন তিলাওয়াত ১০ মিনিট' : 'Quran 10 minutes',
+                        isBn ? 'হাদীস ১–২টি' : 'Hadith 1–2',
+                        isBn ? 'তাফসীর ১০ মিনিট' : 'Tafsir 10 minutes',
+                      ].map((label) => (
+                        <div key={label} className="flex items-center gap-2 font-bold">
+                          <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </span>
+                          <span>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Surahs */}
+                    <div className="space-y-1.5 pt-1 border-t border-black/5 dark:border-white/10">
+                      <div className={`text-[11px] font-bold ${subtleTextClass}`}>
+                        {isBn ? 'বিশেষ সূরাসমূহ' : 'Surahs'}
+                      </div>
+                      {[
+                        { name: isBn ? 'সূরা ইয়াসিন' : 'Surah Yasin', time: isBn ? 'ফজরের পর' : 'After Fajr' },
+                        { name: isBn ? 'সূরা ওয়াকিয়াহ' : 'Surah Waqiah', time: isBn ? 'মাগরিবের পর' : 'After Maghrib' },
+                        { name: isBn ? 'সূরা মুলক' : 'Surah Mulk', time: isBn ? 'ঘুমানোর আগে' : 'Before Sleep' },
+                      ].map((s) => (
+                        <div key={s.name} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 font-bold">
+                            <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </span>
+                            <span>{s.name}</span>
+                          </div>
+                          <span className={`font-semibold ${subtleTextClass}`}>{s.time}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className={`text-[11px] pt-1 ${subtleTextClass}`}>
+                      {isBn
+                        ? 'অতিরিক্ত কোনো রিমাইন্ডার যোগ করা হবে না। পরে যেকোনো আমলের জন্য চালু করতে পারবেন।'
+                        : 'No extra reminders are added. You can turn one on for any amal later.'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Option 2: Set up myself */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setStartPreset('custom');
+                  }}
+                  className={`w-full text-left rounded-2xl border p-3.5 flex items-center gap-3 transition-all cursor-pointer ${
+                    startPreset === 'custom' ? cardActiveClass : cardBaseClass
+                  }`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${
+                      isDarkCanvas
+                        ? 'bg-white/10 border-white/15 text-slate-300'
+                        : 'bg-slate-200/70 border-slate-300 text-slate-600'
+                    }`}
+                  >
+                    <PenLine className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-extrabold">
+                      {isBn ? 'আমি নিজে সাজিয়ে নেব' : "I'll set it up myself"}
+                    </div>
+                    <div className={`text-xs mt-0.5 ${subtleTextClass}`}>
+                      {isBn
+                        ? 'সরাসরি অ্যাপে প্রবেশ করুন এবং পছন্দমতো নিজের আমল ও জিকির যুক্ত করুন।'
+                        : 'Start clean and customize your own dhikr & amal items later.'}
+                    </div>
+                  </div>
+                  {startPreset === 'custom' && (
+                    <div className="w-7 h-7 rounded-full bg-[#f8efc8] border border-[#e0c45c] text-[#b47c00] flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* BOTTOM STICKY ACTION AREA */}
+        <div className="space-y-3 pt-3 shrink-0">
+          <button
+            type="button"
+            onClick={handleNext}
+            className={`w-full h-12 rounded-full font-extrabold text-sm text-white flex items-center justify-center gap-2 shadow-md transition active:scale-[0.98] cursor-pointer ${
+              isFinishStep
+                ? 'bg-[#00a86b] hover:bg-[#00945d] shadow-emerald-600/25'
+                : 'bg-[#d9a20b] hover:bg-[#c59208] shadow-amber-600/20'
+            }`}
+          >
+            {step === 0 ? (
+              <>
+                <span>{isBn ? 'শুরু করুন' : 'Get started'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            ) : isFinishStep ? (
+              <>
+                <span>{isBn ? 'Zikr+ ব্যবহার শুরু করুন' : 'Start using Zikr+'}</span>
+                <Check className="w-4 h-4 stroke-[2.5]" />
+              </>
+            ) : (
+              <>
+                <span>{isBn ? 'পরবর্তী' : 'Next'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+
+          {step === 0 ? (
+            <div className="text-center text-xs font-semibold flex items-center justify-center gap-1.5">
+              <span className={subtleTextClass}>
+                {isBn ? 'আগে থেকেই অ্যাকাউন্ট আছে?' : 'Already have an account?'}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  onSignIn();
+                }}
+                className="text-[#d9a20b] hover:underline font-extrabold cursor-pointer"
+              >
+                {isBn ? 'সাইন ইন' : 'Sign In'}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="w-full py-1.5 text-center text-xs font-extrabold text-[#d9a20b] hover:opacity-80 transition cursor-pointer"
+            >
+              {isBn ? 'পেছনে যান' : 'Back'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ============================================================================
+ * POST-ONBOARDING INTERACTIVE SPOTLIGHT GUIDED TOUR (Matches Screenshots 10-11)
+ * ========================================================================== */
+
+interface GuidedAppTourProps {
+  selectedLanguage: ZikrLanguage;
+  soundEnabled?: boolean;
+  onClose: () => void;
+}
+
+export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
+  selectedLanguage,
+  soundEnabled = true,
+  onClose,
+}) => {
+  const [tourIndex, setTourIndex] = useState(0);
+  const isBn = selectedLanguage === 'bn';
+
+  // Step-by-step hardware Back support inside tour
+  useBackLayer(true, onClose, 'guided-tour-root');
+  useBackLayer(tourIndex >= 1, () => setTourIndex((i) => Math.max(0, i - 1)), 'guided-tour-step');
+
+  const steps = useMemo(
+    () => [
+      {
+        id: 'amal',
+        title: isBn ? 'আমল ও সালাত অগ্রগতি' : 'Amal Progress',
+        desc: isBn
+          ? 'প্রতিদিনের পাঁচ ওয়াক্ত সালাত ও ইসলামিক আমল সহজে ট্র্যাক করুন এবং অগ্রগতি দেখুন।'
+          : 'Track your daily Islamic habits, prayer times, and see your completion rate.',
+      },
+      {
+        id: 'tasbih',
+        title: isBn ? 'ডিজিটাল তাসবিহ কাউন্টার' : 'Tasbih Counter',
+        desc: isBn
+          ? 'স্মার্ট তাসবিহ কাউন্টার, লক্ষ্যমাত্রা ও ভাইব্রেশন ফিডব্যাক দিয়ে সহজে জিকির গণনা করুন।'
+          : 'Use the built-in counter to easily track your daily recitations and targets.',
+      },
+      {
+        id: 'quran',
+        title: isBn ? 'আল-কুরআন ও তাফসীর' : 'Holy Quran & Tafsir',
+        desc: isBn
+          ? '১১৪টি সূরা, তাজবীদ কালার, শব্দার্থ, অনুবাদ, তাফসীর ও ক্বারী তিলাওয়াত একসাথে।'
+          : 'Read all 114 Surahs with Tajweed highlights, translations, Tafsir, and audio recitation.',
+      },
+      {
+        id: 'seerat',
+        title: isBn ? 'সীরাতুন নবী ও নবীজির ২৪ ঘণ্টা' : "Seerat & Prophet's 24 Hours",
+        desc: isBn
+          ? '৬৩ বছরের সীরাত, বংশতালিকা (ফ্যামিলি ট্রি), হায়াতুস সাহাবা এবং নবীজির ২৪ ঘণ্টার রুটিন।'
+          : 'Explore 63-year Seerat-un-Nabi, interactive Family Tree, Hayatus Sahaba & daily Sunnah.',
+      },
+      {
+        id: 'ready',
+        title: isBn ? 'অফলাইন ও ক্লাউড সিঙ্ক' : 'Offline Ready & Sync',
+        desc: isBn
+          ? 'আপনার সব আমল ও বুকমার্ক ডিভাইসে সেভ থাকবে। চাইলে প্রোফাইল থেকে সাইন ইন করে ব্যাকআপ রাখুন।'
+          : 'Your progress saves automatically on your device, with optional Profile cloud backup.',
+      },
+    ],
+    [isBn]
+  );
+
+  const totalSteps = steps.length;
+  const current = steps[tourIndex];
+  const progressPct = Math.round(((tourIndex + 1) / totalSteps) * 100);
+
+  const handleNext = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    if (tourIndex < totalSteps - 1) {
+      setTourIndex((i) => i + 1);
+    } else {
+      onClose();
+    }
+  };
+
+  const handlePrev = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    if (tourIndex > 0) {
+      setTourIndex((i) => i - 1);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[115] bg-black/70 backdrop-blur-[2px] flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-sm space-y-3.5">
+        {/* SPOTLIGHT PREVIEW CARD (Mirrors Screenshots 10 & 11) */}
+        <div className="rounded-3xl bg-[#fafaf4] border border-[#e7e2cc] p-4 shadow-2xl text-slate-900 overflow-hidden">
+          {current.id === 'amal' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span>{isBn ? '০/৩ আমল সম্পন্ন' : '0/3 amal done'}</span>
+                <span className="text-slate-500 font-semibold">{isBn ? 'এখন · ১০:৪২ AM' : 'Now · 10:42 AM'}</span>
+              </div>
+              {/* Curved 5-Prayer Solar Arc Visual */}
+              <div className="relative pt-2 pb-1">
+                <svg viewBox="0 0 320 110" className="w-full h-24 overflow-visible">
+                  <path
+                    d="M 28 84 Q 150 -8 292 84"
+                    fill="none"
+                    stroke="#e2dfd0"
+                    strokeWidth="2.5"
+                    strokeDasharray="5 5"
+                  />
+                  <path
+                    d="M 28 84 Q 90 36 135 28"
+                    fill="none"
+                    stroke="#d9a20b"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="135" cy="28" r="10" fill="#fef3c7" />
+                  <circle cx="135" cy="28" r="5.5" fill="#d9a20b" />
+                  {[
+                    { x: 28, y: 84, label: isBn ? 'ফজর' : 'Fajr', val: '0/1' },
+                    { x: 158, y: 24, label: isBn ? 'যোহর' : 'Dhuhr', val: '0/0' },
+                    { x: 214, y: 38, label: isBn ? 'আসর' : 'Asr', val: '0/0' },
+                    { x: 256, y: 60, label: isBn ? 'মাগরিব' : 'Maghrib', val: '0/1' },
+                    { x: 292, y: 84, label: isBn ? 'ইশা' : 'Isha', val: '0/1' },
+                  ].map((p) => (
+                    <g key={p.label}>
+                      <circle cx={p.x} cy={p.y} r="17" fill="#ffffff" stroke="#e5e1d2" strokeWidth="2.5" />
+                      <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="9.5" fontWeight="700" fill="#1e293b">
+                        {p.val}
+                      </text>
+                      <text x={p.x} y={p.y + 28} textAnchor="middle" fontSize="9" fontWeight="600" fill="#475569">
+                        {p.label}
+                      </text>
+                    </g>
+                  ))}
+                </svg>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#d9a20b] text-white text-[11px] font-bold">
+                  <ListChecks className="w-3.5 h-3.5" />
+                  <span>{isBn ? 'সব আমল' : 'All amal'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 text-[11px] font-bold">
+                  <InfinityIcon className="w-3.5 h-3.5" />
+                  <span>{isBn ? 'যেকোনো সময় · ০/০' : 'Any time · 0/0'}</span>
+                </span>
+              </div>
+            </div>
+          )}
+
+          {current.id === 'tasbih' && (
+            <div className="space-y-4 py-1 text-center">
+              <div className="inline-block px-5 py-2 rounded-2xl bg-white border border-[#ece6d2] shadow-2xs">
+                <div className="text-xs font-extrabold">{isBn ? 'সুবহানাল্লাহ' : 'SubhanAllah'}</div>
+                <div className="text-[10px] text-slate-500 font-semibold">{isBn ? 'তাসবিহ' : 'Tasbih'}</div>
+              </div>
+              <div className="relative w-40 h-40 mx-auto flex items-center justify-center">
+                <svg viewBox="0 0 180 180" className="w-full h-full">
+                  <circle cx="90" cy="90" r="82" fill="none" stroke="#f0ebd8" strokeWidth="2" />
+                  <circle
+                    cx="90"
+                    cy="90"
+                    r="72"
+                    fill="none"
+                    stroke="#e3c05e"
+                    strokeWidth="2.5"
+                    strokeDasharray="2 9.5"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="90" cy="90" r="56" fill="#ffffff" stroke="#ede7d3" strokeWidth="1.5" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl font-black tabular-nums text-[#d9a20b]">
+                    {isBn ? '০' : '0'}
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-500">
+                    {isBn ? '৩৩ এর মধ্যে' : 'of 33'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 px-3 py-2 rounded-full bg-white border border-[#e7e2cc] text-[11px] text-slate-400 text-left font-semibold">
+                  {isBn ? 'লক্ষ্য দিন (যেমন: ৩৩)' : 'Input (ex: 50)'}
+                </div>
+                <div className="px-3 py-2 rounded-full bg-white border border-slate-200 text-[11px] font-bold text-slate-700 inline-flex items-center gap-1">
+                  <RotateCcw className="w-3 h-3" />
+                  <span>{isBn ? 'রিসেট' : 'Reset'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {current.id === 'quran' && (
+            <div className="space-y-3 py-2 text-center">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 text-[#006A4E] flex items-center justify-center">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="font-arabic text-xl font-bold text-[#006A4E]">
+                بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+              </div>
+              <p className="text-xs text-slate-600 font-semibold">
+                {isBn
+                  ? 'পরম করুণাময় অসীম দয়ালু আল্লাহর নামে শুরু করছি'
+                  : 'In the name of Allah, the Entirely Merciful, the Especially Merciful'}
+              </p>
+              <div className="flex items-center justify-center gap-2 text-[11px] font-bold text-emerald-700">
+                <span>{isBn ? '১১৪ সূরা' : '114 Surahs'}</span>
+                <span>·</span>
+                <span>{isBn ? 'তাজবীদ' : 'Tajweed'}</span>
+                <span>·</span>
+                <span>{isBn ? 'তাফসীর ও অডিও' : 'Tafsir & Audio'}</span>
+              </div>
+            </div>
+          )}
+
+          {current.id === 'seerat' && (
+            <div className="space-y-3 py-2 text-center">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div className="text-sm font-black text-slate-900">
+                {isBn ? 'সীরাতুন নবী ﷺ · ফ্যামিলি ট্রি · ২৪ ঘণ্টা' : "Seerat-un-Nabi ﷺ · Family Tree · 24 Hours"}
+              </div>
+              <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                {isBn
+                  ? 'নবীজির ৬৩ বছরের জীবনী, ৪৭ জন নিকটজনের বংশতালিকা, সাহাবায়ে কেরাম ও সুন্নাহ রুটিন।'
+                  : 'Authentic 63-year Seerah, 47-member interactive Family Tree, Sahaba & daily Sunnah.'}
+              </p>
+            </div>
+          )}
+
+          {current.id === 'ready' && (
+            <div className="space-y-3 py-2 text-center">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="text-sm font-black text-slate-900">
+                {isBn ? 'সবকিছু প্রস্তুত!' : 'Everything is ready!'}
+              </div>
+              <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                {isBn
+                  ? 'অফলাইনেও নিরবচ্ছিন্ন ব্যবহার করুন এবং প্রতিটি পেজ থেকে ধাপে ধাপে ব্যাক করুন।'
+                  : 'Works seamlessly offline with automatic saving and step-by-step back navigation.'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* BOTTOM TOOLTIP DIALOG (Mirrors Screenshots 10 & 11) */}
+        <div className="rounded-3xl bg-white p-5 shadow-2xl text-slate-900 space-y-3.5 border border-slate-100">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-sm sm:text-base font-extrabold text-[#d99b00]">
+              {current.title}
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 -mr-1 -mt-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <p className="text-xs sm:text-sm font-semibold text-slate-700 leading-relaxed">
+            {current.desc}
+          </p>
+
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-bold text-slate-500 tabular-nums">
+              {isBn
+                ? `${toBnDigits(tourIndex + 1)} / ${toBnDigits(totalSteps)}`
+                : `${tourIndex + 1} of ${totalSteps}`}
+            </div>
+            <div className="h-1 w-full rounded-full bg-amber-100 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-[#d9a20b] transition-all duration-300"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-2 py-1.5 text-xs font-extrabold text-[#d99b00] hover:opacity-80 transition cursor-pointer"
+            >
+              {isBn ? 'এড়িয়ে যান' : 'Skip'}
+            </button>
+
+            <div className="flex items-center gap-2">
+              {tourIndex > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="px-3 py-2 text-xs font-extrabold text-[#d99b00] hover:bg-amber-50 rounded-full transition cursor-pointer"
+                >
+                  {isBn ? 'আগেরটি' : 'Previous'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleNext}
+                className={`px-5 py-2 rounded-full text-xs font-extrabold text-white transition active:scale-95 cursor-pointer shadow-sm ${
+                  tourIndex === totalSteps - 1
+                    ? 'bg-[#00a86b] hover:bg-[#00945d]'
+                    : 'bg-[#d9a20b] hover:bg-[#c59208]'
+                }`}
+              >
+                {tourIndex === totalSteps - 1
+                  ? isBn ? 'শুরু করুন' : 'Done'
+                  : isBn ? 'পরবর্তী' : 'Next'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
