@@ -48,6 +48,10 @@ import {
   ISLAMIC_WARS_DATA,
   WARS_EN_MAP,
 } from '../data/islamicWarsData';
+import {
+  getWarChronicle,
+  WarChronicleEvent,
+} from '../data/warChroniclesIndex';
 
 // Re-export for BattleLiveMap and other consumers
 export type { WarItem, BattleMartyr, KeyBattleEvent, HadithRef, QuranRef, EraSectionMeta };
@@ -182,12 +186,42 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   };
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [chroniclePhaseFilter, setChroniclePhaseFilter] = useState<number | 'all'>('all');
+  const [chronicleViewMode, setChronicleViewMode] = useState<'grid' | 'slide'>('grid');
+  const [chronicleSlideIdx, setChronicleSlideIdx] = useState<number>(0);
+  const [chronicleEventSearch, setChronicleEventSearch] = useState<string>('');
   const [active3DMapWarId, setActive3DMapWarId] = useState<string | null>(null);
   const [copiedQuote, setCopiedQuote] = useState(false);
   const [shareState, setShareState] = useState<{
     content: ShareableContent;
     focus: 'share' | 'download';
   } | null>(null);
+
+  const handleCopyChronicleEvent = (ev: WarChronicleEvent, totalEvents: number) => {
+    const title = isBn ? ev.titleBn : ev.titleEn;
+    const sub = isBn ? ev.subtitleBn : ev.subtitleEn;
+    const phase = isBn ? ev.phaseTagBn : ev.phaseTagEn;
+    const points = isBn ? ev.pointsBn : ev.pointsEn;
+    const source = isBn ? ev.sourceBn : ev.sourceEn;
+    const text = [
+      `${phase} (${isBn ? ev.codeBn : `${String(ev.eventNo).padStart(2, '0')} / ${totalEvents}`})`,
+      sub ? `${title} — ${sub}` : title,
+      '',
+      ...points.map((pt) => `✓ ${pt}`),
+      '',
+      `${isBn ? 'সূত্র' : 'Source'}: ${source}`,
+    ].join('\n');
+    void copyToClipboard(text);
+    showToast(isBn ? 'যুদ্ধের ঘটনা ও সূত্র কপি করা হয়েছে' : 'Battle event & citation copied');
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  useEffect(() => {
+    setChroniclePhaseFilter('all');
+    setChronicleViewMode('grid');
+    setChronicleSlideIdx(0);
+    setChronicleEventSearch('');
+  }, [selectedWarId]);
 
   // Register war reader & overlays for step-by-step reverse back navigation
   useBackLayer(selectedWarId !== null, () => setSelectedWarId(null), 'war-detail');
@@ -652,6 +686,386 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               <p className="text-xs sm:text-sm leading-relaxed opacity-95 whitespace-pre-line">{warDetailedHistory}</p>
             </div>
           )}
+
+          {/* ========================================================================= */}
+          {/* COMPLETE MULTI-PHASE DOCUMENTED CHRONICLE FOR EVERY ISLAMIC BATTLE        */}
+          {/* ========================================================================= */}
+          {(() => {
+            const activeChronicle = getWarChronicle(activeWar.id);
+            if (!activeChronicle) return null;
+
+            const totalEvents = activeChronicle.events.length;
+            const totalPhases = activeChronicle.phases.length;
+            const q = chronicleEventSearch.trim().toLowerCase();
+            const filteredEvents = activeChronicle.events.filter((ev) => {
+              if (chroniclePhaseFilter !== 'all' && ev.phaseNo !== chroniclePhaseFilter) return false;
+              if (!q) return true;
+              return (
+                ev.titleBn.toLowerCase().includes(q) ||
+                ev.titleEn.toLowerCase().includes(q) ||
+                (ev.subtitleBn && ev.subtitleBn.toLowerCase().includes(q)) ||
+                (ev.subtitleEn && ev.subtitleEn.toLowerCase().includes(q)) ||
+                ev.phaseTagBn.toLowerCase().includes(q) ||
+                ev.phaseTagEn.toLowerCase().includes(q) ||
+                ev.sourceBn.toLowerCase().includes(q) ||
+                ev.sourceEn.toLowerCase().includes(q) ||
+                ev.pointsBn.some((p) => p.toLowerCase().includes(q)) ||
+                ev.pointsEn.some((p) => p.toLowerCase().includes(q))
+              );
+            });
+
+            const safeSlideIdx = filteredEvents.length > 0
+              ? Math.min(chronicleSlideIdx, filteredEvents.length - 1)
+              : 0;
+            const currentSlideEvent = filteredEvents[safeSlideIdx] || null;
+
+            const renderChronicleCard = (ev: WarChronicleEvent, large = false) => {
+              const evPoints = isBn ? ev.pointsBn : ev.pointsEn;
+              const evSource = isBn ? ev.sourceBn : ev.sourceEn;
+              const evSub = isBn ? ev.subtitleBn : ev.subtitleEn;
+
+              return (
+                <article
+                  key={ev.eventNo}
+                  className={`rounded-2xl border flex flex-col justify-between overflow-hidden transition-colors ${
+                    isDay
+                      ? 'bg-white border-emerald-200/90 hover:border-emerald-400'
+                      : 'bg-[#081c1a] border-emerald-800/50 hover:border-emerald-600/70'
+                  }`}
+                >
+                  <div className={large ? 'p-5 sm:p-6 space-y-4' : 'p-4 space-y-3'}>
+                    {/* Quiet Unboxed Metadata Line + Copy Action */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className={`flex items-center gap-2 text-[11px] font-bold min-w-0 ${
+                        isDay ? 'text-emerald-800' : 'text-emerald-300'
+                      }`}>
+                        <span className="truncate">{isBn ? ev.phaseTagBn : ev.phaseTagEn}</span>
+                        <span aria-hidden="true" className="opacity-45">·</span>
+                        <span className={`font-mono tabular-nums shrink-0 ${
+                          isDay ? 'text-amber-700' : 'text-amber-300'
+                        }`}>
+                          {isBn ? ev.codeBn : `${String(ev.eventNo).padStart(2, '0')} / ${totalEvents}`}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyChronicleEvent(ev, totalEvents)}
+                        className={`p-1.5 rounded-lg border transition cursor-pointer active:scale-95 shrink-0 ${
+                          isDay
+                            ? 'bg-slate-50 hover:bg-emerald-50 border-slate-200 text-slate-600 hover:text-emerald-700'
+                            : 'bg-[#051312] hover:bg-emerald-950 border-emerald-800/60 text-emerald-300'
+                        }`}
+                        title={isBn ? 'ঘটনা ও সূত্র কপি করুন' : 'Copy event & citation'}
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Title & Optional Subtitle */}
+                    <div className="space-y-0.5">
+                      <h4 className={`font-black leading-snug ${large ? 'text-base sm:text-lg' : 'text-sm'} ${
+                        isDay ? 'text-[#044e39]' : 'text-amber-200'
+                      }`}>
+                        {isBn ? ev.titleBn : ev.titleEn}
+                      </h4>
+                      {evSub && (
+                        <p className={`text-xs font-semibold ${
+                          isDay ? 'text-emerald-700/85' : 'text-emerald-300/80'
+                        }`}>
+                          {evSub}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Documented Checkmark Points */}
+                    <ul className={large ? 'space-y-2.5' : 'space-y-2'}>
+                      {evPoints.map((pt, idx) => (
+                        <li key={idx} className={`flex items-start gap-2.5 leading-relaxed ${large ? 'text-xs sm:text-sm' : 'text-xs'}`}>
+                          <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-[10px] shrink-0 mt-0.5">
+                            ✓
+                          </span>
+                          <span className={isDay ? 'text-slate-700' : 'text-slate-200'}>
+                            {pt}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Clean Hairline Citation Footer */}
+                  <div className={`px-4 py-2.5 border-t text-[11px] font-semibold flex items-start gap-1.5 ${
+                    isDay
+                      ? 'bg-amber-50/55 border-amber-200/70 text-amber-900'
+                      : 'bg-[#051412] border-emerald-900/60 text-amber-300/90'
+                  }`}>
+                    <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="leading-snug">{isBn ? 'সূত্র:' : 'Source:'} {evSource}</span>
+                  </div>
+                </article>
+              );
+            };
+
+            return (
+              <section
+                className={`rounded-3xl border overflow-hidden shadow-sm ${
+                  isDay
+                    ? 'bg-[#f8fcfa] border-emerald-200'
+                    : 'bg-[#061614] border-emerald-800/50'
+                }`}
+              >
+                {/* Emerald-Gold Header */}
+                <div className={`p-4 sm:p-5 border-b flex flex-wrap items-start justify-between gap-3 ${
+                  isDay
+                    ? 'bg-gradient-to-r from-[#044e39] via-[#065f46] to-[#044e39] text-white border-emerald-700/30'
+                    : 'bg-gradient-to-r from-[#04241d] via-[#06362b] to-[#04241d] text-white border-emerald-800/50'
+                }`}>
+                  <div className="space-y-1 min-w-0">
+                    <div className="text-[11px] font-bold text-amber-300">
+                      {isBn ? activeChronicle.headerMetaBn : activeChronicle.headerMetaEn}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+                      {isBn ? activeChronicle.titleBn : activeChronicle.titleEn}
+                    </h3>
+                    <p className="text-xs text-emerald-100/85">
+                      {isBn ? activeChronicle.subtitleBn : activeChronicle.subtitleEn}
+                    </p>
+                  </div>
+
+                  {/* Interactive View Mode Switcher */}
+                  <div className="inline-flex p-1 rounded-xl bg-black/25 border border-white/15 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setChronicleViewMode('grid');
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        chronicleViewMode === 'grid'
+                          ? 'bg-amber-400 text-slate-950 shadow-xs'
+                          : 'text-emerald-100 hover:text-white'
+                      }`}
+                    >
+                      {isBn ? 'তালিকা ভিউ' : 'Grid View'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setChronicleViewMode('slide');
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        chronicleViewMode === 'slide'
+                          ? 'bg-amber-400 text-slate-950 shadow-xs'
+                          : 'text-emerald-100 hover:text-white'
+                      }`}
+                    >
+                      {isBn ? 'স্লাইড পাঠ' : 'Slide Reader'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Controls: Multi-Phase Interactive Filter Bar + In-Chronicle Search */}
+                <div className={`p-4 sm:p-5 border-b space-y-3 ${
+                  isDay ? 'bg-white/80 border-emerald-100' : 'bg-[#071a18] border-emerald-900/50'
+                }`}>
+                  {/* Phase Filter Buttons */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setChroniclePhaseFilter('all');
+                        setChronicleSlideIdx(0);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                        chroniclePhaseFilter === 'all'
+                          ? 'bg-[#006747] text-white border-emerald-600'
+                          : isDay
+                            ? 'bg-slate-50 hover:bg-emerald-50 text-slate-700 border-slate-200'
+                            : 'bg-[#061413] hover:bg-emerald-950 text-slate-300 border-emerald-900/60'
+                      }`}
+                    >
+                      {isBn
+                        ? `সব ${formatNum(totalPhases)} পর্ব (${formatNum(totalEvents)})`
+                        : `All ${totalPhases} Phases (${totalEvents})`}
+                    </button>
+
+                    {activeChronicle.phases.map((ph) => {
+                      const active = chroniclePhaseFilter === ph.phaseNo;
+                      return (
+                        <button
+                          key={ph.phaseNo}
+                          type="button"
+                          onClick={() => {
+                            if (soundEnabled) soundHaptics.playTap();
+                            setChroniclePhaseFilter(ph.phaseNo);
+                            setChronicleSlideIdx(0);
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                            active
+                              ? 'bg-amber-500 text-slate-950 border-amber-400'
+                              : isDay
+                                ? 'bg-white hover:bg-emerald-50 text-slate-800 border-slate-200'
+                                : 'bg-[#061413] hover:bg-emerald-950 text-slate-200 border-emerald-900/60'
+                          }`}
+                        >
+                          {isBn
+                            ? `${ph.labelBn} · ${ph.titleBn} (${formatNum(ph.eventCount)})`
+                            : `${ph.labelEn} · ${ph.titleEn} (${ph.eventCount})`}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Quick Search inside Chronicle Events + Result Counter */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="relative flex-1 max-w-md">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={chronicleEventSearch}
+                        onChange={(e) => {
+                          setChronicleEventSearch(e.target.value);
+                          setChronicleSlideIdx(0);
+                        }}
+                        placeholder={
+                          isBn
+                            ? `${formatNum(totalEvents)}টি ঘটনার ভেতরে খুঁজুন (নাম, কৌশল বা সূত্র)...`
+                            : `Search within all ${totalEvents} documented events...`
+                        }
+                        className={`w-full pl-9 pr-8 py-2 rounded-xl border text-xs font-semibold transition focus:outline-none ${
+                          isDay
+                            ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500'
+                            : 'bg-[#051211] border-emerald-900/60 text-white focus:border-emerald-500'
+                        }`}
+                      />
+                      {chronicleEventSearch && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChronicleEventSearch('');
+                            setChronicleSlideIdx(0);
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className={`text-xs font-bold tabular-nums ${
+                      isDay ? 'text-emerald-800' : 'text-emerald-300'
+                    }`}>
+                      {isBn
+                        ? `প্রদর্শিত হচ্ছে ${formatNum(filteredEvents.length)} / ${formatNum(totalEvents)}টি ঘটনা`
+                        : `Showing ${filteredEvents.length} of ${totalEvents} events`}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Body: Grid Mode or Focused Slide Reader Mode */}
+                <div className="p-4 sm:p-5">
+                  {filteredEvents.length === 0 ? (
+                    <div className="py-10 text-center space-y-2">
+                      <p className={`text-xs font-bold ${isDay ? 'text-slate-600' : 'text-slate-400'}`}>
+                        {isBn ? 'এই অনুসন্ধানের সাথে কোনো ঘটনা মেলেনি' : 'No events matched your search'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setChroniclePhaseFilter('all');
+                          setChronicleEventSearch('');
+                          setChronicleSlideIdx(0);
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-[#006747] text-white text-xs font-bold cursor-pointer"
+                      >
+                        {isBn ? `সব ${formatNum(totalEvents)}টি ঘটনা দেখুন` : 'Reset Filter'}
+                      </button>
+                    </div>
+                  ) : chronicleViewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      {filteredEvents.map((ev) => renderChronicleCard(ev, false))}
+                    </div>
+                  ) : (
+                    <div
+                      className="space-y-4 max-w-2xl mx-auto"
+                      onTouchStart={(e) => e.stopPropagation()}
+                      onTouchMove={(e) => e.stopPropagation()}
+                      onTouchEnd={(e) => e.stopPropagation()}
+                    >
+                      {/* Slide Progress Bar */}
+                      <div className="space-y-1.5">
+                        <div className={`flex items-center justify-between text-xs font-bold tabular-nums ${
+                          isDay ? 'text-emerald-900' : 'text-emerald-200'
+                        }`}>
+                          <span>
+                            {isBn
+                              ? `ঘটনা ${formatNum(safeSlideIdx + 1)} / ${formatNum(filteredEvents.length)}`
+                              : `Event ${safeSlideIdx + 1} of ${filteredEvents.length}`}
+                          </span>
+                          <span className={isDay ? 'text-amber-700' : 'text-amber-300'}>
+                            {currentSlideEvent
+                              ? (isBn ? currentSlideEvent.codeBn : `${String(currentSlideEvent.eventNo).padStart(2, '0')} / ${totalEvents}`)
+                              : ''}
+                          </span>
+                        </div>
+                        <div className={`w-full h-1.5 rounded-full overflow-hidden ${
+                          isDay ? 'bg-emerald-100' : 'bg-emerald-950'
+                        }`}>
+                          <div
+                            className="h-full bg-gradient-to-r from-[#006747] to-amber-500 transition-all duration-200"
+                            style={{ width: `${((safeSlideIdx + 1) / filteredEvents.length) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {currentSlideEvent && renderChronicleCard(currentSlideEvent, true)}
+
+                      {/* Slide Controls */}
+                      <div className="flex items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          disabled={safeSlideIdx === 0}
+                          onClick={() => {
+                            if (soundEnabled) soundHaptics.playTap();
+                            setChronicleSlideIdx((prev) => Math.max(0, prev - 1));
+                          }}
+                          className={`px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                            safeSlideIdx === 0
+                              ? 'opacity-40 cursor-not-allowed border-transparent'
+                              : isDay
+                                ? 'bg-white hover:bg-emerald-50 border-emerald-300 text-emerald-900'
+                                : 'bg-[#081f1c] hover:bg-emerald-950 border-emerald-700/60 text-emerald-200'
+                          }`}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          <span>{isBn ? 'পূর্ববর্তী ঘটনা' : 'Previous'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={safeSlideIdx >= filteredEvents.length - 1}
+                          onClick={() => {
+                            if (soundEnabled) soundHaptics.playTap();
+                            setChronicleSlideIdx((prev) => Math.min(filteredEvents.length - 1, prev + 1));
+                          }}
+                          className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                            safeSlideIdx >= filteredEvents.length - 1
+                              ? 'opacity-40 cursor-not-allowed bg-slate-300 dark:bg-slate-800 text-slate-500'
+                              : 'bg-[#006747] hover:bg-[#05573c] text-white shadow-sm active:scale-95'
+                          }`}
+                        >
+                          <span>{isBn ? 'পরবর্তী ঘটনা' : 'Next Event'}</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          })()}
 
           {/* Crucial Key Events & Turning Points */}
           {activeWar.keyEvents && activeWar.keyEvents.length > 0 && (
@@ -1148,6 +1562,17 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                             </span>
                             <span className="text-xs font-bold group-hover:text-amber-700 dark:group-hover:text-amber-300 transition truncate">
                               {warName}
+                              {(() => {
+                                const ch = getWarChronicle(war.id);
+                                if (!ch) return null;
+                                return (
+                                  <span className={`ml-1.5 text-[10px] font-semibold ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`}>
+                                    · {isBn
+                                      ? `${formatNum(ch.phases.length)} পর্ব · ${formatNum(ch.events.length)} ঘটনা`
+                                      : `${ch.phases.length} Phases · ${ch.events.length} Events`}
+                                  </span>
+                                );
+                              })()}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">

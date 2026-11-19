@@ -67,6 +67,13 @@ import {
   KHALIFA_FAMILY_CHRONICLES,
   FamilyMemberDetailCard,
 } from '../data/sahabaFamilyChronicles';
+import {
+  PROPHET_LAST_10_DAYS_PHASES,
+  PROPHET_LAST_10_DAYS_EVENTS,
+  getLast10DaysEventsForSahaba,
+  getSahabaLast10DaysGroups,
+  ProphetLast10DaysEvent,
+} from '../data/prophetLast10DaysEventsData';
 
 interface HayatusSahabaViewProps {
   themeMode?: ThemeMode;
@@ -303,11 +310,42 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   useBackLayer(showBibliographyModal, () => setShowBibliographyModal(false), 'sahaba-bibliography');
   useBackLayer(Boolean(shareState), () => setShareState(null), 'sahaba-share');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all' | 'prophetic_titles'>('all');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all' | 'prophetic_titles' | 'last_10_days'>('all');
+  const [last10DaysMode, setLast10DaysMode] = useState<'by_sahaba' | 'timeline'>('by_sahaba');
+  const [last10DaysPhaseFilter, setLast10DaysPhaseFilter] = useState<number | 'all'>('all');
+  const [selectedLast10SahabaId, setSelectedLast10SahabaId] = useState<string | 'all'>('all');
+  useBackLayer(
+    activeCategoryFilter === 'last_10_days' && !selectedSahabaId,
+    () => {
+      setActiveCategoryFilter('all');
+      setSelectedLast10SahabaId('all');
+    },
+    'sahaba-last-10-days',
+  );
   const [copiedQuote, setCopiedQuote] = useState(false);
   const [activeFamilyFilter, setActiveFamilyFilter] = useState<'all' | 'spouses' | 'children' | 'lineage'>('all');
   const [familyViewMode, setFamilyViewMode] = useState<'grid' | 'slide'>('grid');
   const [activeFamilyCardIndex, setActiveFamilyCardIndex] = useState(0);
+
+  const sahabaLast10Groups = useMemo(() => getSahabaLast10DaysGroups(), []);
+
+  const handleCopyLast10Event = (ev: ProphetLast10DaysEvent) => {
+    const title = isBn ? ev.titleBn : ev.titleEn;
+    const phase = isBn ? ev.phaseTagBn : ev.phaseTagEn;
+    const points = isBn ? ev.pointsBn : ev.pointsEn;
+    const source = isBn ? ev.sourceBn : ev.sourceEn;
+    const text = [
+      `${phase} (${ev.codeBn})`,
+      title,
+      '',
+      ...points.map((pt) => `✓ ${pt}`),
+      '',
+      `${isBn ? 'সূত্র' : 'Source'}: ${source}`,
+    ].join('\n');
+    void copyToClipboard(text);
+    showToast(isBn ? 'ঘটনা ও সহীহ হাদিসের সূত্র কপি হয়েছে' : 'Event & Hadith citation copied');
+    if (soundEnabled) soundHaptics.playTap();
+  };
 
   useEffect(() => {
     setActiveFamilyFilter('all');
@@ -471,7 +509,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         const noB = getPropheticTitleProfile(b.id)?.no || 999;
         return noA - noB;
       });
-    } else if (activeCategoryFilter !== 'all') {
+    } else if (activeCategoryFilter !== 'all' && activeCategoryFilter !== 'last_10_days') {
       list = list.filter((s) => s.categoryKey === activeCategoryFilter);
     }
 
@@ -683,6 +721,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
       if (soundEnabled) soundHaptics.playTap();
     };
 
+    const sahabaLast10Events = getLast10DaysEventsForSahaba(activeSahaba.id);
     const isCompleted = completedSahaba.includes(activeSahaba.id);
     const isBookmarked = bookmarkedSahaba.includes(activeSahaba.id);
 
@@ -1513,6 +1552,161 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           </div>
 
           {/* ========================================================================= */}
+          {/* SECTION 2B: PROPHET'S FINAL 10 DAYS EVENTS LINKED TO THIS SAHABI          */}
+          {/* ========================================================================= */}
+          {sahabaLast10Events.length > 0 && (
+            <div className={`rounded-3xl border overflow-hidden shadow-sm ${
+              isDay
+                ? 'bg-gradient-to-b from-[#f3fbf7] via-white to-white border-emerald-200/90'
+                : 'bg-gradient-to-b from-[#071f1d] via-[#07181c] to-[#061418] border-emerald-700/40'
+            }`}>
+              {/* Section Header */}
+              <div className={`px-4 sm:px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-2.5 ${
+                isDay
+                  ? 'bg-gradient-to-r from-[#044e39] via-[#065f46] to-[#044e39] text-white border-emerald-700/30'
+                  : 'bg-gradient-to-r from-[#042820] via-[#06382d] to-[#042820] text-white border-emerald-700/40'
+              }`}>
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <ScrollText className="w-4 h-4 text-amber-300 shrink-0" />
+                    <h3 className="font-black text-xs sm:text-sm tracking-tight text-white">
+                      {isBn
+                        ? 'নবীজী (সা.)-এর ইন্তেকালের শেষ ১০ দিনে সংশ্লিষ্ট ঘটনা'
+                        : 'Events in the Prophet’s (PBUH) Final 10 Days'}
+                    </h3>
+                  </div>
+                  <p className="text-[11px] text-emerald-100/85">
+                    {isBn
+                      ? `বিদায়ের ইঙ্গিত থেকে দাফন পর্যন্ত (${formatNum(sahabaLast10Events.length)}টি প্রামাণ্য ঘটনা · সহীহ হাদিসের সূত্রসহ)`
+                      : `${sahabaLast10Events.length} documented events from signs of farewell to burial with Sahih Hadith citations`}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    handleSelectSahaba(null);
+                    setActiveCategoryFilter('last_10_days');
+                    setLast10DaysMode('by_sahaba');
+                    setSelectedLast10SahabaId(activeSahaba.id);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-300/40 text-amber-200 font-bold text-[11px] flex items-center gap-1.5 transition cursor-pointer shrink-0 active:scale-95"
+                >
+                  <span>{isBn ? 'সব ৩৫টি ঘটনা দেখুন' : 'View All 35 Events'}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Event Cards Grid */}
+              <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {sahabaLast10Events.map((ev) => {
+                  const evPoints = isBn ? ev.pointsBn : ev.pointsEn;
+                  const evSource = isBn ? ev.sourceBn : ev.sourceEn;
+                  const coSahaba = ev.sahabaLabelsBn.filter((lbl) => lbl.id !== activeSahaba.id);
+
+                  return (
+                    <div
+                      key={ev.eventNo}
+                      className={`rounded-2xl border flex flex-col justify-between overflow-hidden transition ${
+                        isDay
+                          ? 'bg-white border-emerald-200/80 shadow-xs hover:border-emerald-300'
+                          : 'bg-[#092023] border-emerald-800/50 hover:border-emerald-600/60'
+                      }`}
+                    >
+                      <div className="p-4 space-y-3">
+                        {/* Phase + Code + Copy */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${
+                            isDay
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : 'bg-emerald-950/80 text-emerald-300 border-emerald-700/50'
+                          }`}>
+                            {isBn ? ev.phaseTagBn : ev.phaseTagEn}
+                          </span>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className={`font-mono text-[10px] font-black px-2 py-0.5 rounded-md ${
+                              isDay
+                                ? 'bg-amber-100/80 text-amber-900'
+                                : 'bg-amber-500/15 text-amber-300'
+                            }`}>
+                              {isBn ? ev.codeBn : `${String(ev.eventNo).padStart(2, '0')} / 35`}
+                            </span>
+                            <button
+                              onClick={() => handleCopyLast10Event(ev)}
+                              className={`p-1.5 rounded-lg border transition cursor-pointer active:scale-95 ${
+                                isDay
+                                  ? 'bg-slate-50 hover:bg-emerald-50 border-slate-200 text-slate-600 hover:text-emerald-700'
+                                  : 'bg-[#061618] hover:bg-emerald-950 border-emerald-800/50 text-emerald-300'
+                              }`}
+                              title={isBn ? 'ঘটনা ও সূত্র কপি করুন' : 'Copy event & citation'}
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Event Title */}
+                        <h4 className={`font-black text-sm leading-snug ${
+                          isDay ? 'text-[#044e39]' : 'text-emerald-200'
+                        }`}>
+                          {isBn ? ev.titleBn : ev.titleEn}
+                        </h4>
+
+                        {/* Bullet Points */}
+                        <ul className="space-y-2">
+                          {evPoints.map((pt, pIdx) => (
+                            <li key={pIdx} className="flex items-start gap-2 text-xs leading-relaxed">
+                              <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-[10px] shrink-0 mt-0.5">
+                                ✓
+                              </span>
+                              <span className={isDay ? 'text-slate-700' : 'text-slate-200'}>
+                                {pt}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Co-mentioned Sahaba Quick Links */}
+                        {coSahaba.length > 0 && (
+                          <div className="pt-1 flex flex-wrap items-center gap-1.5">
+                            <span className={`text-[10px] font-bold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                              {isBn ? 'সংশ্লিষ্ট সাহাবি:' : 'Also present:'}
+                            </span>
+                            {coSahaba.map((lbl) => (
+                              <button
+                                key={lbl.id}
+                                onClick={() => handleSelectSahaba(lbl.id)}
+                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition cursor-pointer ${
+                                  isDay
+                                    ? 'bg-emerald-50/70 hover:bg-emerald-100 border-emerald-200 text-emerald-800'
+                                    : 'bg-emerald-950/60 hover:bg-emerald-900/70 border-emerald-800/50 text-emerald-300'
+                                }`}
+                              >
+                                {isBn ? lbl.nameBn : lbl.nameEn}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Verbatim Hadith Source Footer */}
+                      <div className={`px-4 py-2 border-t text-[11px] font-semibold flex items-center gap-1.5 ${
+                        isDay
+                          ? 'bg-amber-50/70 border-amber-200/70 text-amber-900'
+                          : 'bg-[#051415] border-amber-500/20 text-amber-300/90'
+                      }`}>
+                        <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span>{isBn ? 'সূত্র:' : 'Source:'} {evSource}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
           {/* SECTION 3: KEY VIRTUES, MILESTONES & CONTRIBUTIONS                        */}
           {/* ========================================================================= */}
           {activeVirtues && activeVirtues.length > 0 && (
@@ -1853,7 +2047,13 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   // MAIN SAHABA LIST & BOOK TABLE OF CONTENTS (TOC) VIEW
   // =========================================================================
   return (
-    <div className="space-y-5 pb-24 animate-in fade-in duration-200">
+    <div className="space-y-5 pb-24 animate-in fade-in duration-200 relative">
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2.5 rounded-2xl bg-[#006747] text-white text-xs font-bold border border-emerald-400/50 shadow-2xl flex items-center gap-2 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
       {/* Top Action Pills Bar Matching Seerat Screenshot */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -1881,6 +2081,25 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           >
             <BookOpen className="w-3.5 h-3.5 text-amber-500" />
             <span>{isBn ? 'সাহাবা গ্রন্থমালা' : 'Bibliography'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (soundEnabled) soundHaptics.playTap();
+              setActiveCategoryFilter((prev) => (prev === 'last_10_days' ? 'all' : 'last_10_days'));
+              setSelectedLast10SahabaId('all');
+            }}
+            className={`px-3.5 py-2 rounded-2xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+              activeCategoryFilter === 'last_10_days'
+                ? 'bg-[#006747] text-white border-emerald-500 shadow-sm'
+                : isDay
+                  ? 'bg-emerald-50 text-emerald-950 border-emerald-300 hover:bg-emerald-100'
+                  : 'bg-[#072620] text-emerald-200 border-emerald-700/60 hover:bg-emerald-900/70'
+            }`}
+            title={isBn ? 'নবীজী (সা.)-এর ইন্তেকালের শেষ ১০ দিন — ৩৫টি ঘটনা (সাহাবিদের নাম অনুযায়ী)' : 'Prophet’s Final 10 Days — 35 Events by Sahabi Name'}
+          >
+            <ScrollText className={`w-3.5 h-3.5 ${activeCategoryFilter === 'last_10_days' ? 'text-amber-300' : 'text-emerald-600 dark:text-amber-400'}`} />
+            <span>{isBn ? 'শেষ ১০ দিন (৩৫ ঘটনা)' : 'Final 10 Days (35 Events)'}</span>
           </button>
 
           {onBackToHub && (
@@ -2055,9 +2274,386 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
       )}
 
       {/* ========================================================================= */}
+      {/* PROPHET'S FINAL 10 DAYS — 35 EVENTS BY SAHABI NAME & 7 PHASES             */}
+      {/* ========================================================================= */}
+      {activeCategoryFilter === 'last_10_days' && (() => {
+        const qLower = searchQuery.trim().toLowerCase();
+
+        const matchesEventQuery = (ev: ProphetLast10DaysEvent) => {
+          if (!qLower) return true;
+          return (
+            ev.titleBn.toLowerCase().includes(qLower) ||
+            ev.titleEn.toLowerCase().includes(qLower) ||
+            ev.phaseTagBn.toLowerCase().includes(qLower) ||
+            ev.sourceBn.toLowerCase().includes(qLower) ||
+            ev.pointsBn.some((p) => p.toLowerCase().includes(qLower)) ||
+            ev.pointsEn.some((p) => p.toLowerCase().includes(qLower)) ||
+            ev.sahabaLabelsBn.some(
+              (l) => l.nameBn.toLowerCase().includes(qLower) || l.nameEn.toLowerCase().includes(qLower)
+            )
+          );
+        };
+
+        const filteredGroups = sahabaLast10Groups
+          .filter((grp) => selectedLast10SahabaId === 'all' || grp.sahabaId === selectedLast10SahabaId)
+          .map((grp) => ({
+            ...grp,
+            events: grp.events.filter((ev) => {
+              if (!qLower) return true;
+              const nameMatch =
+                grp.nameBn.toLowerCase().includes(qLower) ||
+                grp.nameEn.toLowerCase().includes(qLower);
+              return nameMatch || matchesEventQuery(ev);
+            }),
+          }))
+          .filter((grp) => grp.events.length > 0);
+
+        const filteredTimelineEvents = PROPHET_LAST_10_DAYS_EVENTS.filter((ev) => {
+          if (last10DaysPhaseFilter !== 'all' && ev.phaseNo !== last10DaysPhaseFilter) return false;
+          return matchesEventQuery(ev);
+        });
+
+        const renderEventCard = (ev: ProphetLast10DaysEvent, highlightSahabaId?: string) => {
+          const evPoints = isBn ? ev.pointsBn : ev.pointsEn;
+          const evSource = isBn ? ev.sourceBn : ev.sourceEn;
+
+          return (
+            <div
+              key={`${highlightSahabaId || 'timeline'}-${ev.eventNo}`}
+              className={`rounded-2xl border flex flex-col justify-between overflow-hidden transition ${
+                isDay
+                  ? 'bg-white border-emerald-200/80 shadow-xs hover:border-emerald-400'
+                  : 'bg-[#081d21] border-emerald-800/50 hover:border-emerald-600/60'
+              }`}
+            >
+              <div className="p-4 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${
+                    isDay
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-emerald-950/80 text-emerald-300 border-emerald-700/50'
+                  }`}>
+                    {isBn ? ev.phaseTagBn : ev.phaseTagEn}
+                  </span>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`font-mono text-[10px] font-black px-2 py-0.5 rounded-md ${
+                      isDay ? 'bg-amber-100 text-amber-900' : 'bg-amber-500/15 text-amber-300'
+                    }`}>
+                      {isBn ? ev.codeBn : `${String(ev.eventNo).padStart(2, '0')} / 35`}
+                    </span>
+                    <button
+                      onClick={() => handleCopyLast10Event(ev)}
+                      className={`p-1.5 rounded-lg border transition cursor-pointer active:scale-95 ${
+                        isDay
+                          ? 'bg-slate-50 hover:bg-emerald-50 border-slate-200 text-slate-600 hover:text-emerald-700'
+                          : 'bg-[#051417] hover:bg-emerald-950 border-emerald-800/50 text-emerald-300'
+                      }`}
+                      title={isBn ? 'কপি করুন' : 'Copy'}
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <h4 className={`font-black text-sm leading-snug ${
+                  isDay ? 'text-[#044e39]' : 'text-emerald-200'
+                }`}>
+                  {isBn ? ev.titleBn : ev.titleEn}
+                </h4>
+
+                <ul className="space-y-1.5">
+                  {evPoints.map((pt, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-xs leading-relaxed">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-[10px] shrink-0 mt-0.5">
+                        ✓
+                      </span>
+                      <span className={isDay ? 'text-slate-700' : 'text-slate-200'}>
+                        {pt}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Clickable Sahaba Tags */}
+                <div className="pt-1.5 flex flex-wrap items-center gap-1.5">
+                  {ev.sahabaLabelsBn.map((lbl) => {
+                    const isCurrentGroup = lbl.id === highlightSahabaId;
+                    return (
+                      <button
+                        key={lbl.id}
+                        onClick={() => handleSelectSahaba(lbl.id)}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition cursor-pointer ${
+                          isCurrentGroup
+                            ? isDay
+                              ? 'bg-[#006747] text-white border-emerald-700'
+                              : 'bg-emerald-700 text-white border-emerald-500'
+                            : isDay
+                              ? 'bg-emerald-50/70 hover:bg-emerald-100 border-emerald-200 text-emerald-800'
+                              : 'bg-emerald-950/60 hover:bg-emerald-900 border-emerald-800/50 text-emerald-300'
+                        }`}
+                      >
+                        {isBn ? lbl.nameBn : lbl.nameEn}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className={`px-4 py-2 border-t text-[11px] font-semibold flex items-center gap-1.5 ${
+                isDay
+                  ? 'bg-amber-50/70 border-amber-200/70 text-amber-900'
+                  : 'bg-[#051415] border-amber-500/20 text-amber-300/90'
+              }`}>
+                <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>{isBn ? 'সূত্র:' : 'Source:'} {evSource}</span>
+              </div>
+            </div>
+          );
+        };
+
+        return (
+          <div className={`rounded-3xl border shadow-xl overflow-hidden ${
+            isDay ? 'bg-white border-emerald-200 text-slate-900' : 'bg-[#0b1f24] border-emerald-700/40 text-white'
+          }`}>
+            {/* Emerald & Gold Banner Header */}
+            <div className={`p-5 border-b flex flex-wrap items-start justify-between gap-3 ${
+              isDay
+                ? 'bg-gradient-to-r from-[#044e39] via-[#065f46] to-[#044e39] text-white border-emerald-700/30'
+                : 'bg-gradient-to-r from-[#05231e] via-[#08352c] to-[#05231e] text-white border-emerald-800/50'
+            }`}>
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-amber-400/20 border border-amber-300/30 text-amber-200 text-[10px] font-bold">
+                  <ScrollText className="w-3 h-3" />
+                  <span>{isBn ? 'বিদায়ের ইঙ্গিত থেকে দাফন পর্যন্ত · ৭ পর্ব · ৩৫টি ঘটনা' : 'Signs of Farewell to Burial · 7 Phases · 35 Events'}</span>
+                </span>
+                <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+                  {isBn
+                    ? 'রাসূলুল্লাহ (সা.)-এর ইন্তেকালের আগের শেষ ১০ দিন'
+                    : 'The Final 10 Days of Prophet Muhammad (PBUH)'}
+                </h3>
+                <p className="text-xs text-emerald-100/85">
+                  {isBn
+                    ? 'সাহাবিদের নাম অনুযায়ী ও ধারাবাহিক টাইমলাইনে প্রতিটি ঘটনা সহীহ হাদিসের সূত্রসহ — যেকোনো সাহাবির নামে ট্যাপ করে পূর্ণ জীবনী পড়ুন'
+                    : 'Organized by Companion name and chronological timeline with Sahih Hadith citations — tap any Companion to open their full biography'}
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setActiveCategoryFilter('all');
+                  setSelectedLast10SahabaId('all');
+                }}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 transition cursor-pointer shrink-0"
+              >
+                {isBn ? 'সূচিপত্রে ফিরুন ✕' : 'Back to TOC ✕'}
+              </button>
+            </div>
+
+            {/* Mode Switcher Bar */}
+            <div className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${
+              isDay ? 'bg-emerald-50/50 border-emerald-100' : 'bg-[#07191d] border-emerald-900/40'
+            }`}>
+              <div className={`inline-flex p-1 rounded-2xl border ${
+                isDay ? 'bg-white border-emerald-200' : 'bg-[#051215] border-emerald-800/50'
+              }`}>
+                <button
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setLast10DaysMode('by_sahaba');
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    last10DaysMode === 'by_sahaba'
+                      ? 'bg-[#006747] text-white shadow-xs'
+                      : isDay
+                        ? 'text-slate-700 hover:text-emerald-800'
+                        : 'text-slate-300 hover:text-emerald-300'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{isBn ? `সাহাবিদের নাম অনুযায়ী (${formatNum(sahabaLast10Groups.length)})` : `By Sahabi Name (${sahabaLast10Groups.length})`}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setLast10DaysMode('timeline');
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                    last10DaysMode === 'timeline'
+                      ? 'bg-[#006747] text-white shadow-xs'
+                      : isDay
+                        ? 'text-slate-700 hover:text-emerald-800'
+                        : 'text-slate-300 hover:text-emerald-300'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>{isBn ? '৭ পর্বে সম্পূর্ণ ৩৫ ঘটনা' : 'All 35 Events (7 Phases)'}</span>
+                </button>
+              </div>
+
+              <span className={`text-[11px] font-bold ${isDay ? 'text-emerald-800' : 'text-emerald-300'}`}>
+                {last10DaysMode === 'by_sahaba'
+                  ? (isBn ? `${formatNum(filteredGroups.length)} জন সাহাবির অধ্যায় প্রদর্শিত হচ্ছে` : `Showing ${filteredGroups.length} Companion sections`)
+                  : (isBn ? `${formatNum(filteredTimelineEvents.length)}টি ঘটনা প্রদর্শিত হচ্ছে` : `Showing ${filteredTimelineEvents.length} events`)}
+              </span>
+            </div>
+
+            <div className="p-4 sm:p-5 space-y-5">
+              {/* MODE A: GROUPED BY SAHABI NAME */}
+              {last10DaysMode === 'by_sahaba' && (
+                <>
+                  {/* Sahabi Name Filter Bar */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      onClick={() => setSelectedLast10SahabaId('all')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                        selectedLast10SahabaId === 'all'
+                          ? 'bg-[#006747] text-white border-emerald-600'
+                          : isDay
+                            ? 'bg-slate-50 hover:bg-emerald-50 text-slate-700 border-slate-200'
+                            : 'bg-[#07181c] hover:bg-emerald-950 text-slate-300 border-emerald-900/50'
+                      }`}
+                    >
+                      {isBn ? `সকল সাহাবি (${formatNum(sahabaLast10Groups.length)})` : `All Companions (${sahabaLast10Groups.length})`}
+                    </button>
+                    {sahabaLast10Groups.map((grp) => (
+                      <button
+                        key={grp.sahabaId}
+                        onClick={() => setSelectedLast10SahabaId(grp.sahabaId)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                          selectedLast10SahabaId === grp.sahabaId
+                            ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
+                            : isDay
+                              ? 'bg-white hover:bg-emerald-50 text-slate-800 border-slate-200'
+                              : 'bg-[#07181c] hover:bg-emerald-950 text-slate-200 border-emerald-900/50'
+                        }`}
+                      >
+                        <span>{isBn ? grp.nameBn : grp.nameEn}</span>
+                        <span className={`font-mono text-[10px] px-1.5 py-0.2 rounded-md ${
+                          selectedLast10SahabaId === grp.sahabaId
+                            ? 'bg-black/15 text-slate-950'
+                            : isDay
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-emerald-900/70 text-emerald-300'
+                        }`}>
+                          {formatNum(grp.events.length)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Sahabi Sections */}
+                  {filteredGroups.length === 0 ? (
+                    <div className="py-10 text-center text-xs font-bold text-slate-500 dark:text-slate-400">
+                      {isBn ? 'অনুসন্ধানের সাথে মিল থাকা কোনো ঘটনা পাওয়া যায়নি' : 'No matching events found'}
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
+                      {filteredGroups.map((grp) => (
+                        <div
+                          key={grp.sahabaId}
+                          className={`rounded-2xl border p-4 space-y-3.5 ${
+                            isDay
+                              ? 'bg-emerald-50/35 border-emerald-200/80'
+                              : 'bg-[#07181c] border-emerald-800/40'
+                          }`}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-emerald-500/20">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-8 h-8 rounded-xl bg-[#006747] text-amber-300 flex items-center justify-center font-black text-xs shrink-0">
+                                {formatNum(grp.events.length)}
+                              </span>
+                              <div className="min-w-0">
+                                <h4 className={`font-black text-sm sm:text-base truncate ${
+                                  isDay ? 'text-[#044e39]' : 'text-emerald-200'
+                                }`}>
+                                  {isBn ? grp.nameBn : grp.nameEn}
+                                </h4>
+                                <p className={`text-[11px] ${isDay ? 'text-slate-600' : 'text-slate-400'}`}>
+                                  {isBn
+                                    ? `শেষ ১০ দিনে সংশ্লিষ্ট ${formatNum(grp.events.length)}টি প্রামাণ্য ঘটনা`
+                                    : `${grp.events.length} documented events in the final 10 days`}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleSelectSahaba(grp.sahabaId)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1 transition cursor-pointer shrink-0 active:scale-95 ${
+                                isDay
+                                  ? 'bg-white hover:bg-emerald-600 text-emerald-800 hover:text-white border-emerald-300'
+                                  : 'bg-emerald-950/80 hover:bg-emerald-700 text-emerald-200 hover:text-white border-emerald-700/60'
+                              }`}
+                            >
+                              <span>{isBn ? 'পূর্ণ জীবনী পড়ুন' : 'Full Biography'}</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {grp.events.map((ev) => renderEventCard(ev, grp.sahabaId))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* MODE B: CHRONOLOGICAL 7 PHASES (ALL 35 EVENTS) */}
+              {last10DaysMode === 'timeline' && (
+                <>
+                  {/* Phase Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      onClick={() => setLast10DaysPhaseFilter('all')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                        last10DaysPhaseFilter === 'all'
+                          ? 'bg-[#006747] text-white border-emerald-600'
+                          : isDay
+                            ? 'bg-slate-50 hover:bg-emerald-50 text-slate-700 border-slate-200'
+                            : 'bg-[#07181c] hover:bg-emerald-950 text-slate-300 border-emerald-900/50'
+                      }`}
+                    >
+                      {isBn ? 'সব ৭ পর্ব (৩৫)' : 'All 7 Phases (35)'}
+                    </button>
+                    {PROPHET_LAST_10_DAYS_PHASES.map((ph) => (
+                      <button
+                        key={ph.phaseNo}
+                        onClick={() => setLast10DaysPhaseFilter(ph.phaseNo)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                          last10DaysPhaseFilter === ph.phaseNo
+                            ? 'bg-amber-500 text-slate-950 border-amber-400'
+                            : isDay
+                              ? 'bg-white hover:bg-emerald-50 text-slate-800 border-slate-200'
+                              : 'bg-[#07181c] hover:bg-emerald-950 text-slate-200 border-emerald-900/50'
+                        }`}
+                      >
+                        {isBn ? `${ph.labelBn} · ${ph.titleBn} (${formatNum(ph.eventCount)})` : `${ph.labelEn} · ${ph.titleEn} (${ph.eventCount})`}
+                      </button>
+                    ))}
+                  </div>
+
+                  {filteredTimelineEvents.length === 0 ? (
+                    <div className="py-10 text-center text-xs font-bold text-slate-500 dark:text-slate-400">
+                      {isBn ? 'অনুসন্ধানের সাথে মিল থাকা কোনো ঘটনা পাওয়া যায়নি' : 'No matching events found'}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      {filteredTimelineEvents.map((ev) => renderEventCard(ev))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ========================================================================= */}
       {/* FILTERED OR SEARCH RESULTS CARD GRID (WHEN SEARCHING OR FILTERING)         */}
       {/* ========================================================================= */}
-      {(searchQuery.trim() !== '' || (activeCategoryFilter !== 'all' && activeCategoryFilter !== 'prophetic_titles')) && (
+      {activeCategoryFilter !== 'last_10_days' && (searchQuery.trim() !== '' || (activeCategoryFilter !== 'all' && activeCategoryFilter !== 'prophetic_titles')) && (
         <div className={`p-5 rounded-3xl border shadow-xl space-y-4 ${
           isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0b1f24] border-teal-900/50 text-white'
         }`}>
