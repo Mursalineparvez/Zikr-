@@ -462,36 +462,65 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
   return (
     <>
       {/* ====================================================================
-          LEVEL 1: SCALABLE SPECIAL SEERAH COLLECTIONS INDEX (সূচিপত্র)
-          Cleanly displays Collection 01, 02 & 03 side-by-side
+          LEVEL 1: MAIN-UI-NATIVE SEERAH SPECIAL ARCHIVE DIRECTORY
+          Harmonizes with Seerat-un-Nabi's Emerald, Teal & Ivory design system
           ==================================================================== */}
       <section
         aria-labelledby="special-seerah-collections-heading"
-        className="mt-10 pt-8 border-t border-slate-200/80 dark:border-emerald-800/60 space-y-5"
+        className={`mt-8 rounded-2xl border p-4 sm:p-5 space-y-4 transition-colors ${
+          isDay
+            ? 'bg-gradient-to-br from-emerald-50/70 via-white to-amber-50/35 border-emerald-200/80 shadow-xs'
+            : 'bg-gradient-to-br from-[#061b17] via-[#071f1a] to-[#0a231d] border-emerald-800/50 shadow-sm'
+        }`}
       >
-        {/* Curatorial Shelf Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+        {/* Curatorial Archive Header — Matches SeeratUnNabiView Hero Aesthetics */}
+        <div
+          className={`flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-3.5 border-b ${
+            isDay ? 'border-emerald-200/70' : 'border-emerald-800/50'
+          }`}
+        >
           <div className="space-y-1">
-            <p
-              className={`text-xs font-bold tracking-wide ${
-                isDay ? 'text-emerald-800' : 'text-amber-300/90'
+            <div
+              className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-xs font-bold tabular-nums ${
+                isDay ? 'text-emerald-700' : 'text-emerald-300'
               }`}
             >
-              {isBn
-                ? `সীরাতুন নবী ﷺ · বিশেষ ঐতিহাসিক আর্কাইভ (${toBnNumber(SEERAT_SPECIAL_COLLECTIONS.length)}টি সংকলন)`
-                : `Seerat-un-Nabi ﷺ · Curated Historical Archive (${SEERAT_SPECIAL_COLLECTIONS.length} Volumes)`}
-            </p>
+              <span>{isBn ? 'সীরাতুন নবী ﷺ' : 'Seerat-un-Nabi ﷺ'}</span>
+              <span aria-hidden="true" className="opacity-40">
+                ·
+              </span>
+              <span>
+                {isBn
+                  ? `বিশেষ ঐতিহাসিক আর্কাইভ (${toBnNumber(SEERAT_SPECIAL_COLLECTIONS.length)}টি সংকলন)`
+                  : `Special Historical Archive (${SEERAT_SPECIAL_COLLECTIONS.length} Volumes)`}
+              </span>
+              <span aria-hidden="true" className="opacity-40">
+                ·
+              </span>
+              <span className={isDay ? 'text-amber-700' : 'text-amber-300'}>
+                {isBn
+                  ? `${toBnNumber(
+                      SEERAT_SPECIAL_COLLECTIONS.reduce((sum, c) => sum + c.eventsCount, 0)
+                    )}টি প্রামাণ্য ঘটনা`
+                  : `${SEERAT_SPECIAL_COLLECTIONS.reduce(
+                      (sum, c) => sum + c.eventsCount,
+                      0
+                    )} Verified Events`}
+              </span>
+            </div>
+
             <h2
               id="special-seerah-collections-heading"
-              className={`text-xl sm:text-2xl font-black tracking-tight text-balance ${
+              className={`text-lg sm:text-xl font-black tracking-tight text-balance ${
                 isDay ? 'text-slate-900' : 'text-white'
               }`}
             >
               {isBn ? 'বিশেষ ঐতিহাসিক সংকলন (সূচিপত্র)' : 'Special Historical Collections (Index)'}
             </h2>
+
             <p
-              className={`text-xs sm:text-sm max-w-2xl leading-relaxed ${
-                isDay ? 'text-slate-600' : 'text-emerald-200/80'
+              className={`text-xs max-w-2xl leading-relaxed ${
+                isDay ? 'text-slate-600' : 'text-emerald-200/75'
               }`}
             >
               {isBn
@@ -499,62 +528,69 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                 : 'Authentic Hadith- and Seerah-based historical volumes. Select any title below to open its full table of contents, detailed narrations, and verified references.'}
             </p>
           </div>
+
           <span
             dir="rtl"
             className={`font-arabic text-base sm:text-lg shrink-0 ${
-              isDay ? 'text-amber-800/85' : 'text-amber-300/85'
+              isDay ? 'text-amber-700/85' : 'text-amber-300/85'
             }`}
           >
             المختارات التاريخية من السيرة النبوية
           </span>
         </div>
 
-        {/* Slim 2x2 Illuminated Manuscript Folio Grid */}
+        {/* Slim 2x2 Architectural Editorial Folio Grid (Main UI Native Light/Dark) */}
         <div
-          className={`grid gap-3.5 items-start ${
-            SEERAT_SPECIAL_COLLECTIONS.length > 1 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
+          className={`grid gap-3 items-start ${
+            SEERAT_SPECIAL_COLLECTIONS.length > 1 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
           }`}
         >
           {SEERAT_SPECIAL_COLLECTIONS.map((col, idx) => {
             const { parts } = getCollectionData(col.id);
             const isIndexExpanded = expandedCardIndexId === col.id;
+            const visitedCount = Object.keys(visitedByCollection[col.id] || {}).length;
+            const readPercent = Math.min(
+              100,
+              Math.round((visitedCount / Math.max(1, col.eventsCount)) * 100)
+            );
+            const volumeNum = isBn ? toBnNumber(idx + 1, true) : `0${idx + 1}`;
 
-            // Bespoke manuscript folio themes per collection (01 Emerald, 02 Sapphire, 03 Bronze, 04 Imperial Plum)
-            const palette =
+            // Subtle harmonizing accents rooted strictly in the main UI's emerald-teal-amber palette
+            const accent =
               idx === 0
                 ? {
-                    bg: 'from-[#053529] via-[#04281f] to-[#021913]',
-                    glow: 'rgba(16, 185, 129, 0.22)',
-                    ribbon:
-                      'linear-gradient(90deg, #10b981 0%, #f59e0b 52%, #fde68a 82%, rgba(16,185,129,0.15) 100%)',
-                    numAccent: 'text-emerald-300',
-                    hoverBorder: 'hover:border-emerald-400/60',
+                    medallion: isDay
+                      ? 'bg-emerald-50 border-emerald-200/90 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600'
+                      : 'bg-emerald-950/80 border-emerald-700/60 text-emerald-300 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-500',
+                    kicker: isDay ? 'text-emerald-700' : 'text-emerald-400',
+                    bar: 'bg-emerald-500',
+                    filigree: isDay ? 'text-emerald-700/[0.06]' : 'text-emerald-400/[0.07]',
                   }
                 : idx === 1
                 ? {
-                    bg: 'from-[#08303b] via-[#06242d] to-[#03161d]',
-                    glow: 'rgba(20, 184, 166, 0.22)',
-                    ribbon:
-                      'linear-gradient(90deg, #14b8a6 0%, #fbbf24 52%, #fef08a 82%, rgba(20,184,166,0.15) 100%)',
-                    numAccent: 'text-teal-300',
-                    hoverBorder: 'hover:border-teal-400/60',
+                    medallion: isDay
+                      ? 'bg-teal-50 border-teal-200/90 text-teal-700 group-hover:bg-teal-600 group-hover:text-white group-hover:border-teal-600'
+                      : 'bg-teal-950/70 border-teal-700/60 text-teal-300 group-hover:bg-teal-600 group-hover:text-white group-hover:border-teal-500',
+                    kicker: isDay ? 'text-teal-700' : 'text-teal-300',
+                    bar: 'bg-teal-500',
+                    filigree: isDay ? 'text-teal-700/[0.06]' : 'text-teal-400/[0.07]',
                   }
                 : idx === 2
                 ? {
-                    bg: 'from-[#362107] via-[#271705] to-[#170d02]',
-                    glow: 'rgba(245, 158, 11, 0.24)',
-                    ribbon:
-                      'linear-gradient(90deg, #d97706 0%, #fbbf24 52%, #fef3c7 82%, rgba(217,119,6,0.15) 100%)',
-                    numAccent: 'text-amber-300',
-                    hoverBorder: 'hover:border-amber-400/60',
+                    medallion: isDay
+                      ? 'bg-amber-50 border-amber-200/90 text-amber-700 group-hover:bg-amber-600 group-hover:text-white group-hover:border-amber-600'
+                      : 'bg-amber-950/60 border-amber-700/60 text-amber-300 group-hover:bg-amber-600 group-hover:text-white group-hover:border-amber-500',
+                    kicker: isDay ? 'text-amber-700' : 'text-amber-300',
+                    bar: 'bg-amber-500',
+                    filigree: isDay ? 'text-amber-700/[0.07]' : 'text-amber-300/[0.07]',
                   }
                 : {
-                    bg: 'from-[#291734] via-[#1f1128] to-[#130a19]',
-                    glow: 'rgba(217, 119, 6, 0.22)',
-                    ribbon:
-                      'linear-gradient(90deg, #a855f7 0%, #f59e0b 55%, #fde68a 85%, rgba(168,85,247,0.15) 100%)',
-                    numAccent: 'text-amber-300',
-                    hoverBorder: 'hover:border-amber-300/60',
+                    medallion: isDay
+                      ? 'bg-emerald-50/90 border-amber-200/90 text-emerald-800 group-hover:bg-emerald-700 group-hover:text-white group-hover:border-emerald-700'
+                      : 'bg-emerald-950/80 border-amber-700/50 text-amber-200 group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-500',
+                    kicker: isDay ? 'text-emerald-800' : 'text-emerald-300',
+                    bar: 'bg-gradient-to-r from-emerald-500 to-amber-500',
+                    filigree: isDay ? 'text-emerald-800/[0.06]' : 'text-amber-300/[0.07]',
                   };
 
             return (
@@ -562,55 +598,80 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                 key={col.id}
                 className={`group relative overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${
                   isDay
-                    ? `bg-[#FCFBF8] border-stone-200/90 shadow-xs hover:shadow-lg ${palette.hoverBorder}`
-                    : `bg-[#051814] border-emerald-800/70 shadow-md hover:shadow-xl ${palette.hoverBorder}`
+                    ? 'bg-white border-slate-200/90 hover:border-emerald-400/80 hover:shadow-md'
+                    : 'bg-[#08221d] border-emerald-800/50 hover:border-emerald-500/60 hover:shadow-lg'
                 }`}
               >
-                {/* Luminous Metallic Top Foil */}
-                <div className="h-[2.5px] w-full" style={{ background: palette.ribbon }} />
+                {/* Delicate Geometric Eight-Pointed Filigree Ornament (Right Background) */}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 120 120"
+                  className={`pointer-events-none absolute -right-4 top-1/2 -translate-y-1/2 w-28 h-28 transition-transform duration-500 ease-out group-hover:rotate-12 ${accent.filigree}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                >
+                  <rect x="24" y="24" width="72" height="72" />
+                  <rect x="24" y="24" width="72" height="72" transform="rotate(45 60 60)" />
+                  <circle cx="60" cy="60" r="24" strokeDasharray="3 3" />
+                </svg>
 
-                {/* Slim Illuminated Cover Surface */}
+                {/* Slim Main Architectural Folio Body */}
                 <div
                   onClick={() => openCollection(col.id, 'all', 1, false)}
-                  className={`relative cursor-pointer px-4 py-3.5 sm:px-5 sm:py-4 bg-gradient-to-br ${palette.bg} text-white overflow-hidden`}
+                  className="relative z-10 cursor-pointer p-3.5 sm:p-4 flex items-start gap-3 sm:gap-3.5"
                 >
-                  {/* Soft Radial Lantern Glow */}
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute -right-10 -top-10 w-36 h-36 rounded-full blur-2xl opacity-60 transition-opacity duration-300 group-hover:opacity-90"
-                    style={{ background: palette.glow }}
-                  />
+                  {/* Left Editorial Spine: Geometric Volume Numeral Medallion */}
+                  <div className="shrink-0 flex flex-col items-center pt-0.5">
+                    <div
+                      className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center transition-colors duration-200 shadow-2xs ${accent.medallion}`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-1 rounded-[7px] border border-current opacity-20"
+                      />
+                      <span className="text-sm sm:text-base font-black tracking-tight tabular-nums leading-none">
+                        {volumeNum}
+                      </span>
+                    </div>
+                    <span
+                      aria-hidden="true"
+                      className={`mt-2 w-px h-7 ${
+                        isDay ? 'bg-slate-200' : 'bg-emerald-800/70'
+                      }`}
+                    />
+                  </div>
 
-                  {/* Delicate Islamic Eight-Pointed Rub el Hizb Star & Arch Motif */}
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 120 120"
-                    className="pointer-events-none absolute -right-3 top-1/2 -translate-y-1/2 w-28 h-28 text-amber-200/[0.08] transition-transform duration-500 ease-out group-hover:rotate-12 group-hover:scale-105"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                  >
-                    <rect x="24" y="24" width="72" height="72" />
-                    <rect x="24" y="24" width="72" height="72" transform="rotate(45 60 60)" />
-                    <circle cx="60" cy="60" r="26" strokeDasharray="3 3" />
-                    <circle cx="60" cy="60" r="14" />
-                  </svg>
+                  {/* Right Editorial Content Column */}
+                  <div className="min-w-0 flex-1 space-y-2">
+                    {/* Top Row: Unboxed Metadata + Arabic Calligraphic Subtitle + Icon Actions */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-bold tabular-nums">
+                          <span className={accent.kicker}>
+                            {isBn ? col.volumeNoBn : col.volumeNoEn}
+                          </span>
+                          <span
+                            aria-hidden="true"
+                            className={isDay ? 'text-slate-300' : 'text-emerald-700'}
+                          >
+                            ·
+                          </span>
+                          <span className={isDay ? 'text-slate-500' : 'text-emerald-300/75'}>
+                            {isBn
+                              ? `${toBnNumber(col.partsCount)} পর্ব / ${toBnNumber(col.eventsCount)} ঘটনা`
+                              : `${col.partsCount} Parts / ${col.eventsCount} Events`}
+                          </span>
+                        </div>
 
-                  <div className="relative z-10 space-y-2.5">
-                    {/* Row 1: Compact Volume Index Metadata + Sleek Icon Actions */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 text-[11px] font-semibold text-amber-200/90 tabular-nums">
-                        <span className={`font-black tracking-wide ${palette.numAccent}`}>
-                          {isBn ? col.volumeNoBn : col.volumeNoEn}
-                        </span>
-                        <span aria-hidden="true" className="text-white/25">
-                          ·
-                        </span>
-                        <span className="text-white/80 truncate">
-                          {isBn
-                            ? `${toBnNumber(col.partsCount)} পর্ব / ${toBnNumber(col.eventsCount)} ঘটনা`
-                            : `${col.partsCount} Parts / ${col.eventsCount} Events`}
-                        </span>
+                        <p
+                          dir="rtl"
+                          className={`font-arabic text-[13px] text-left leading-snug ${
+                            isDay ? 'text-amber-700/90' : 'text-amber-300/85'
+                          }`}
+                        >
+                          {col.arabicTitle}
+                        </p>
                       </div>
 
                       {onOpenShareModal && (
@@ -623,7 +684,11 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                             onClick={() => onOpenShareModal(buildFullChronicleShare(col), 'share')}
                             title={isBn ? 'শেয়ার করুন' : 'Share'}
                             aria-label={isBn ? 'শেয়ার করুন' : 'Share'}
-                            className="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/15 text-white/90 transition active:scale-95 cursor-pointer"
+                            className={`w-7 h-7 rounded-lg border flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                              isDay
+                                ? 'bg-slate-50 hover:bg-emerald-50 border-slate-200 text-slate-500 hover:text-emerald-700 hover:border-emerald-300'
+                                : 'bg-[#061b17] hover:bg-emerald-900/50 border-emerald-800/70 text-emerald-300/75 hover:text-emerald-200'
+                            }`}
                           >
                             <Share2 className="w-3.5 h-3.5" />
                           </button>
@@ -634,7 +699,11 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                             }
                             title={isBn ? 'ডাউনলোড করুন' : 'Download'}
                             aria-label={isBn ? 'ডাউনলোড করুন' : 'Download'}
-                            className="w-7 h-7 rounded-full flex items-center justify-center bg-amber-400/15 hover:bg-amber-400/30 border border-amber-300/25 text-amber-200 transition active:scale-95 cursor-pointer"
+                            className={`w-7 h-7 rounded-lg border flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                              isDay
+                                ? 'bg-slate-50 hover:bg-amber-50 border-slate-200 text-slate-500 hover:text-amber-700 hover:border-amber-300'
+                                : 'bg-[#061b17] hover:bg-amber-500/15 border-emerald-800/70 text-amber-300/80 hover:text-amber-200'
+                            }`}
                           >
                             <Download className="w-3.5 h-3.5" />
                           </button>
@@ -642,35 +711,45 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                       )}
                     </div>
 
-                    {/* Row 2: Arabic Calligraphic Kicker + Title + Concise 2-Line Summary */}
-                    <div className="space-y-1 pr-6">
-                      <p
-                        dir="rtl"
-                        className="font-arabic text-[13px] text-amber-200/85 text-left leading-snug"
+                    {/* Headline + Concise 2-Line Editorial Deck */}
+                    <div className="space-y-1">
+                      <h3
+                        className={`text-[15px] sm:text-base font-black tracking-tight leading-snug text-balance transition-colors ${
+                          isDay
+                            ? 'text-slate-900 group-hover:text-emerald-700'
+                            : 'text-white group-hover:text-emerald-300'
+                        }`}
                       >
-                        {col.arabicTitle}
-                      </p>
-                      <h3 className="text-base sm:text-[17px] font-black tracking-tight text-white leading-snug text-balance">
                         {isBn ? col.titleBn : col.titleEn}
                       </h3>
-                      <p className="text-[11.5px] text-white/75 leading-relaxed line-clamp-2">
+                      <p
+                        className={`text-xs leading-relaxed line-clamp-2 ${
+                          isDay ? 'text-slate-600' : 'text-emerald-100/75'
+                        }`}
+                      >
                         {isBn ? col.summaryBn : col.summaryEn}
                       </p>
                     </div>
 
-                    {/* Row 3: Slim Action Footer — Era Info + Part Index Toggle + Gold Read CTA */}
-                    <div className="pt-2.5 mt-1 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-[11px] text-white/75 tabular-nums truncate">
-                          <strong className="text-amber-200 font-bold">
-                            {isBn ? col.durationBn : col.durationEn}
-                          </strong>
-                          <span aria-hidden="true" className="mx-1.5 text-white/25">
-                            ·
-                          </span>
-                          <span>{isBn ? col.eraLabelBn : col.eraLabelEn}</span>
+                    {/* Slim Footer Strip: Era Metadata + Index Toggle + Main-UI Emerald Read CTA */}
+                    <div
+                      className={`pt-2.5 mt-1 border-t flex items-center justify-between gap-2 flex-wrap ${
+                        isDay ? 'border-slate-100' : 'border-emerald-800/45'
+                      }`}
+                    >
+                      <span
+                        className={`text-[11px] tabular-nums truncate max-w-[230px] sm:max-w-none ${
+                          isDay ? 'text-slate-500' : 'text-emerald-300/75'
+                        }`}
+                      >
+                        <strong className={isDay ? 'text-slate-700' : 'text-amber-200/95'}>
+                          {isBn ? col.durationBn : col.durationEn}
+                        </strong>
+                        <span aria-hidden="true" className="mx-1.5 opacity-40">
+                          ·
                         </span>
-                      </div>
+                        <span>{isBn ? col.eraLabelBn : col.eraLabelEn}</span>
+                      </span>
 
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
@@ -681,9 +760,17 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                             setExpandedCardIndexId((prev) => (prev === col.id ? null : col.id));
                           }}
                           aria-expanded={isIndexExpanded}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/18 border border-white/15 text-white/90 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                            isIndexExpanded
+                              ? isDay
+                                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                                : 'bg-emerald-900/50 border-emerald-600/70 text-emerald-200'
+                              : isDay
+                              ? 'bg-slate-50 hover:bg-emerald-50/70 border-slate-200 text-slate-700 hover:text-emerald-800 hover:border-emerald-300'
+                              : 'bg-[#061b17] hover:bg-emerald-900/40 border-emerald-800/70 text-emerald-200/90'
+                          }`}
                         >
-                          <List className="w-3 h-3 text-amber-300" />
+                          <List className="w-3 h-3" />
                           <span>
                             {isBn
                               ? `${toBnNumber(col.partsCount)} পর্ব`
@@ -702,7 +789,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                             e.stopPropagation();
                             openCollection(col.id, 'all', 1, false);
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-emerald-950 text-[11.5px] font-black transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11.5px] font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-2xs"
                         >
                           <BookOpen className="w-3.5 h-3.5" />
                           <span>{isBn ? 'পড়ুন' : 'Read'}</span>
@@ -713,19 +800,19 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   </div>
                 </div>
 
-                {/* Expandable Slim Part Index Drawer (on-demand — keeps default cards ultra-slim) */}
+                {/* Expandable On-Demand Table of Contents Drawer (Native Light/Dark) */}
                 {isIndexExpanded && (
                   <div
-                    className={`px-4 py-3 space-y-2.5 border-t animate-in fade-in duration-150 ${
+                    className={`relative z-10 px-3.5 sm:px-4 py-3 space-y-2.5 border-t animate-in fade-in duration-150 ${
                       isDay
-                        ? 'bg-[#FAF8F3] border-stone-200/80'
-                        : 'bg-[#041410] border-emerald-800/60'
+                        ? 'bg-slate-50/80 border-slate-200/80'
+                        : 'bg-[#051713] border-emerald-800/50'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span
                         className={`text-[11px] font-extrabold tracking-wide ${
-                          isDay ? 'text-stone-600' : 'text-emerald-300/85'
+                          isDay ? 'text-slate-600' : 'text-emerald-300/85'
                         }`}
                       >
                         {isBn
@@ -736,7 +823,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                         type="button"
                         onClick={() => openCollection(col.id, 'all', 1, false)}
                         className={`text-[11px] font-bold hover:underline cursor-pointer whitespace-nowrap shrink-0 ${
-                          isDay ? 'text-emerald-800' : 'text-amber-300'
+                          isDay ? 'text-emerald-700' : 'text-amber-300'
                         }`}
                       >
                         {isBn
@@ -753,8 +840,8 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                           onClick={() => openCollection(col.id, part.partNo, undefined, false)}
                           className={`text-left px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-between gap-2 ${
                             isDay
-                              ? 'bg-white hover:bg-emerald-50/70 border-stone-200/90 hover:border-emerald-300 text-stone-800'
-                              : 'bg-[#061d17] hover:bg-emerald-900/40 border-emerald-800/60 hover:border-amber-400/40 text-emerald-100'
+                              ? 'bg-white hover:bg-emerald-50/70 border-slate-200/90 hover:border-emerald-300 text-slate-800'
+                              : 'bg-[#08221d] hover:bg-emerald-900/40 border-emerald-800/50 hover:border-emerald-500/50 text-emerald-100'
                           }`}
                         >
                           <div className="min-w-0 flex items-center gap-2">
@@ -772,7 +859,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                           </div>
                           <span
                             className={`text-[10px] font-semibold tabular-nums shrink-0 ${
-                              isDay ? 'text-stone-400' : 'text-emerald-400/70'
+                              isDay ? 'text-slate-400' : 'text-emerald-400/70'
                             }`}
                           >
                             {isBn ? `${toBnNumber(part.eventCount)}টি` : part.eventCount}
@@ -784,17 +871,28 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                     <p
                       className={`pt-2 border-t text-[10.5px] leading-relaxed ${
                         isDay
-                          ? 'border-stone-200/70 text-stone-500'
-                          : 'border-emerald-900/70 text-emerald-300/70'
+                          ? 'border-slate-200/70 text-slate-500'
+                          : 'border-emerald-900/60 text-emerald-300/70'
                       }`}
                     >
-                      <strong className={isDay ? 'text-stone-700' : 'text-emerald-200'}>
+                      <strong className={isDay ? 'text-slate-700' : 'text-emerald-200'}>
                         {isBn ? 'মূল সূত্র: ' : 'Sources: '}
                       </strong>
                       {isBn ? col.primarySourcesBn : col.primarySourcesEn}
                     </p>
                   </div>
                 )}
+
+                {/* Whisper-Thin Reading Progress Hairline along Bottom Edge */}
+                <div
+                  aria-hidden="true"
+                  className={`h-[2px] w-full ${isDay ? 'bg-slate-100' : 'bg-emerald-950'}`}
+                >
+                  <div
+                    className={`h-full transition-all duration-300 ${accent.bar}`}
+                    style={{ width: `${Math.max(4, readPercent)}%`, opacity: 0.7 }}
+                  />
+                </div>
               </article>
             );
           })}
