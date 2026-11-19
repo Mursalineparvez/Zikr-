@@ -1513,7 +1513,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                                 {/* Crisp Compact Title + 2-Line Preview */}
                                 <div className="relative z-10 space-y-1">
                                   <h4
-                                    className={`text-[13.5px] font-black leading-snug tracking-tight line-clamp-2 transition-colors duration-200 ${
+                                    className={`text-[13.5px] font-black leading-snug tracking-tight line-clamp-1 transition-colors duration-200 ${
                                       isDay
                                         ? 'text-slate-900 group-hover:text-[#006A4E]'
                                         : 'text-white group-hover:text-emerald-300'
@@ -1521,7 +1521,7 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
                                   >
                                     {locSlot.title}
                                   </h4>
-                                  <p className={`text-[11px] leading-[1.45] line-clamp-2 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
+                                  <p className={`text-[11px] leading-[1.45] line-clamp-1 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
                                     {locSlot.summary}
                                   </p>
                                 </div>

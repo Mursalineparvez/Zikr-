@@ -981,18 +981,16 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                   return (
                     <div
                       key={idx}
-                      className={`rounded-2xl border px-3.5 py-2.5 flex items-center gap-3 ${row.tint}`}
+                      className="rounded-2xl border border-slate-200/85 bg-[#f6f7f9] dark:bg-slate-900/50 dark:border-slate-800 px-4 py-3 flex items-center gap-3.5 shadow-2xs transition-all"
                     >
-                      <IconComp className="w-4 h-4 shrink-0" />
-                      <div className="min-w-0">
-                        <div className={`text-[10.5px] font-semibold ${subtleTextClass}`}>
+                      <div className="w-9 h-9 rounded-xl bg-[#eef1f6] border border-[#dce2ec] text-[#006A4E] dark:bg-slate-800 dark:border-slate-700 dark:text-emerald-300 flex items-center justify-center shrink-0 shadow-2xs">
+                        <IconComp className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-tight">
                           {row.label}
                         </div>
-                        <div
-                          className={`text-xs sm:text-sm font-extrabold truncate ${
-                            isDarkCanvas ? 'text-white' : 'text-slate-900'
-                          }`}
-                        >
+                        <div className="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate mt-0.5">
                           {row.value}
                         </div>
                       </div>
