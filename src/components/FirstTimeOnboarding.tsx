@@ -32,6 +32,8 @@ import {
 } from 'lucide-react';
 import { AppTheme, ThemeMode, ZikrLanguage } from '../types';
 import { CityOption, POPULAR_CITIES } from '../utils/prayerTimes';
+import { DEFAULT_ZIKRS } from '../utils/constants';
+import { DEFAULT_AAMAL_ITEMS } from '../utils/aamalTrackerData';
 import { soundHaptics } from '../utils/audioHaptics';
 import { stepBackOr, useBackLayer } from '../utils/backNavigation';
 
@@ -1039,7 +1041,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                   {isBn ? 'আপনি কীভাবে শুরু করতে চান?' : 'How do you want to start?'}
                 </h3>
 
-                {/* Option 1: Dhikr & Quran Preset */}
+                {/* Option 1: Zikr+ Complete App System Preset */}
                 <button
                   type="button"
                   onClick={() => {
@@ -1055,12 +1057,12 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-extrabold">
-                      {isBn ? 'জিকির ও কুরআন প্রিসেট' : 'Dhikr & Quran'}
+                      {isBn ? 'Zikr+ সম্পূর্ণ আমল ও জিকির সিস্টেম' : 'Zikr+ Complete System'}
                     </div>
                     <div className={`text-xs mt-0.5 leading-snug ${subtleTextClass}`}>
                       {isBn
-                        ? 'তাসবিহ, ইস্তিগফার, দরুদ, কুরআন, হাদীস, তাফসীর এবং তিনটি ফজিলতপূর্ণ সূরা নিয়ে শুরু করুন।'
-                        : 'Start with tasbih, istighfar, durood, Quran, hadith, tafsir and three surahs.'}
+                        ? `${toBnDigits(DEFAULT_ZIKRS.length)}টি মাসনুন জিকির, ৫ ওয়াক্ত সালাত ও ${toBnDigits(DEFAULT_AAMAL_ITEMS.length)}+ দৈনিক আমল, আল-কুরআন, হাদীস, দোয়া ও সীরাত নিয়ে শুরু করুন।`
+                        : `Start with ${DEFAULT_ZIKRS.length} daily Zikrs, 5-Waqt Salah & ${DEFAULT_AAMAL_ITEMS.length}+ Amal Tracker items, Holy Quran, Hadith, Dua & Seerat.`}
                     </div>
                   </div>
                   {startPreset === 'preset' && (
@@ -1070,82 +1072,147 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                   )}
                 </button>
 
-                {/* Preset Details Card matching Screenshot 9 */}
+                {/* Real Zikr+ System Details Card */}
                 {startPreset === 'preset' && (
-                  <div className={`rounded-2xl border p-4 space-y-3 text-xs ${cardBaseClass}`}>
-                    <div className="font-extrabold text-sm">
-                      {isBn ? 'এই প্রিসেটে যা যুক্ত থাকবে' : 'This preset adds'}
+                  <div className={`rounded-2xl border p-4 space-y-3.5 text-xs ${cardBaseClass}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-extrabold text-sm">
+                        {isBn ? 'এই অ্যাপের সিস্টেমে যা যুক্ত থাকবে' : 'Included in Zikr+ system'}
+                      </div>
+                      <span className={`text-[11px] font-bold tabular-nums ${subtleTextClass}`}>
+                        {isBn ? `${toBnDigits(DEFAULT_ZIKRS.length)} জিকির · ${toBnDigits(DEFAULT_AAMAL_ITEMS.length)} আমল` : `${DEFAULT_ZIKRS.length} Zikrs · ${DEFAULT_AAMAL_ITEMS.length} Amals`}
+                      </span>
                     </div>
 
-                    {/* Dhikr List */}
+                    {/* 1. Real 12 Default Zikrs from DEFAULT_ZIKRS */}
                     <div className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-[11px] font-bold ${subtleTextClass}`}>
+                          {isBn ? `মাসনুন জিকির কাউন্টার (${toBnDigits(DEFAULT_ZIKRS.length)}টি)` : `Daily Zikr Counter (${DEFAULT_ZIKRS.length})`}
+                        </span>
+                        <span className={`text-[10.5px] font-semibold tabular-nums ${subtleTextClass}`}>
+                          {isBn ? 'ফরজ ওয়াক্ত লক্ষ্য' : 'Per-Waqt target'}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {DEFAULT_ZIKRS.map((zikr) => {
+                          const shortBn =
+                            zikr.id === 'dua_yunus'
+                              ? 'দোয়া ইউনুস (লা ইলাহা ইল্লা আনতা...)'
+                              : zikr.id === 'lailaha_illallahu_wahdahu'
+                              ? 'লা-ইলাহা ইল্লাল্লাহু ওয়াহদাহু...'
+                              : zikr.pronunciationBn || zikr.name;
+                          const shortEn =
+                            zikr.id === 'dua_yunus'
+                              ? 'Dua Yunus (La Ilaha Illa Anta...)'
+                              : zikr.id === 'lailaha_illallahu_wahdahu'
+                              ? 'La Ilaha Illallahu Wahdahu...'
+                              : zikr.name;
+                          const targetVal = zikr.fardTarget ?? zikr.target ?? 100;
+                          return (
+                            <div key={zikr.id} className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 font-bold min-w-0">
+                                <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
+                                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                </span>
+                                <span className="truncate">{isBn ? shortBn : shortEn}</span>
+                              </div>
+                              <span className={`font-semibold tabular-nums shrink-0 ${subtleTextClass}`}>
+                                {isBn ? `${toBnDigits(targetVal)} বার` : `${targetVal}x`}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className={`text-[10.5px] font-medium pt-0.5 tabular-nums ${subtleTextClass}`}>
+                        {isBn
+                          ? 'রিসেট মোড: প্রতি ফরজ ওয়াক্তে (১০০/২০) · মাগরিবে (৫০০/১০০) · ম্যানুয়াল (১০০০/২০০)'
+                          : 'Reset modes: Per Waqt (100/20) · Maghrib (500/100) · Manual (1000/200)'}
+                      </div>
+                    </div>
+
+                    {/* 2. Real 5-Waqt Salah & Daily Amal Tracker System */}
+                    <div className="space-y-1.5 pt-2 border-t border-black/5 dark:border-white/10">
                       <div className={`text-[11px] font-bold ${subtleTextClass}`}>
-                        {isBn ? 'জিকির' : 'Dhikr'}
+                        {isBn ? 'সালাত টাইম ও দৈনিক আমল ট্র্যাকার' : 'Salah Times & Daily Amal Tracker'}
                       </div>
                       {[
-                        { name: isBn ? 'সুবহানাল্লাহ' : 'SubhanAllah', val: isBn ? `${toBnDigits(33)} বার` : '33 times' },
-                        { name: isBn ? 'আলহামদুলিল্লাহ' : 'Alhamdulillah', val: isBn ? `${toBnDigits(33)} বার` : '33 times' },
-                        { name: isBn ? 'আল্লাহু আকবার' : 'Allahu Akbar', val: isBn ? `${toBnDigits(34)} বার` : '34 times' },
-                        { name: isBn ? 'আস্তাগফিরুল্লাহ' : 'Astaghfirullah', val: isBn ? `${toBnDigits(100)} বার` : '100 times' },
-                        { name: isBn ? 'দরুদ শরীফ' : 'Durood', val: isBn ? `${toBnDigits(100)} বার` : '100 times' },
+                        {
+                          name: isBn ? '৫ ওয়াক্ত সালাত ও জুমুআহ (ফরজ, সুন্নত, বিতর)' : '5-Waqt Salah & Jumu\'ah (Fardh, Sunnah, Witr)',
+                          meta: isBn ? 'ফজর – ইশা' : 'Fajr – Isha',
+                        },
+                        {
+                          name: isBn ? 'অতিরিক্ত নফল (তাহাজ্জুদ, ইশরাক, চাশত, আওয়াবিন)' : 'Extra Nafl (Tahajjud, Ishraq, Duha, Awwabin)',
+                          meta: isBn ? '৬টি নফল' : '6 Nafl',
+                        },
+                        {
+                          name: isBn ? 'সকাল-সন্ধ্যার মাসনুন আজকার ও ৩ কুল' : 'Morning & Evening Adhkar & 3 Quls',
+                          meta: isBn ? 'সকাল ও সন্ধ্যা' : 'AM & PM',
+                        },
+                        {
+                          name: isBn ? 'ঘুমানোর আমল (সূরা মুলক, আয়াতুল কুরসি, বাকারার শেষ ২ আয়াত)' : 'Bedtime Sunnah (Surah Mulk, Ayatul Kursi, Baqarah)',
+                          meta: isBn ? 'ঘুমানোর আগে' : 'Bedtime',
+                        },
+                        {
+                          name: isBn ? 'আখলাক, ইলম, দাওয়াহ ও পারিবারিক আমল' : 'Character, Knowledge, Dawah & Family Duties',
+                          meta: isBn ? 'দৈনিক স্কোর' : 'Daily Score',
+                        },
                       ].map((item) => (
                         <div key={item.name} className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 font-bold">
+                          <div className="flex items-center gap-2 font-bold min-w-0">
                             <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
                               <Check className="w-2.5 h-2.5 stroke-[3]" />
                             </span>
-                            <span>{item.name}</span>
+                            <span className="leading-snug">{item.name}</span>
                           </div>
-                          <span className={`font-semibold tabular-nums ${subtleTextClass}`}>{item.val}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Quran & Reading */}
-                    <div className="space-y-1.5 pt-1 border-t border-black/5 dark:border-white/10">
-                      <div className={`text-[11px] font-bold ${subtleTextClass}`}>
-                        {isBn ? 'কুরআন ও অধ্যয়ন' : 'Quran & reading'}
-                      </div>
-                      {[
-                        isBn ? 'কুরআন তিলাওয়াত ১০ মিনিট' : 'Quran 10 minutes',
-                        isBn ? 'হাদীস ১–২টি' : 'Hadith 1–2',
-                        isBn ? 'তাফসীর ১০ মিনিট' : 'Tafsir 10 minutes',
-                      ].map((label) => (
-                        <div key={label} className="flex items-center gap-2 font-bold">
-                          <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          <span className={`font-semibold shrink-0 tabular-nums ${subtleTextClass}`}>
+                            {item.meta}
                           </span>
-                          <span>{label}</span>
                         </div>
                       ))}
                     </div>
 
-                    {/* Surahs */}
-                    <div className="space-y-1.5 pt-1 border-t border-black/5 dark:border-white/10">
+                    {/* 3. Real Quran, Hadith, Dua & Islamic Knowledge Modules */}
+                    <div className="space-y-1.5 pt-2 border-t border-black/5 dark:border-white/10">
                       <div className={`text-[11px] font-bold ${subtleTextClass}`}>
-                        {isBn ? 'বিশেষ সূরাসমূহ' : 'Surahs'}
+                        {isBn ? 'আল-কুরআন ও ইসলামিক লাইব্রেরি' : 'Holy Quran & Islamic Library'}
                       </div>
                       {[
-                        { name: isBn ? 'সূরা ইয়াসিন' : 'Surah Yasin', time: isBn ? 'ফজরের পর' : 'After Fajr' },
-                        { name: isBn ? 'সূরা ওয়াকিয়াহ' : 'Surah Waqiah', time: isBn ? 'মাগরিবের পর' : 'After Maghrib' },
-                        { name: isBn ? 'সূরা মুলক' : 'Surah Mulk', time: isBn ? 'ঘুমানোর আগে' : 'Before Sleep' },
-                      ].map((s) => (
-                        <div key={s.name} className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 font-bold">
+                        {
+                          name: isBn ? 'আল-কুরআন (তাজবীদ, শব্দার্থ, তাফসীর ও অডিও)' : 'Holy Quran (Tajweed, Tafsir & Audio)',
+                          meta: isBn ? '১১৪ সূরা' : '114 Surahs',
+                        },
+                        {
+                          name: isBn ? 'হাদীস ভান্ডার, হিসনুল মুসলিম দোয়া ও ৯৯ নাম' : 'Hadith, Hisnul Muslim Duas & 99 Names',
+                          meta: isBn ? 'রেফারেন্সসহ' : 'Authentic',
+                        },
+                        {
+                          name: isBn ? 'সীরাতুন নবী ﷺ, ফ্যামিলি ট্রি ও নবীজির ২৪ ঘণ্টা' : "Seerat-un-Nabi ﷺ, Family Tree & Prophet's 24h",
+                          meta: isBn ? '৬৩ বছর' : '63 Years',
+                        },
+                        {
+                          name: isBn ? 'হায়াতুস সাহাবা, ইসলামের ইতিহাস ও কিতাব' : 'Hayatus Sahaba, Islamic History & Books',
+                          meta: isBn ? 'অফলাইন রেডি' : 'Offline Ready',
+                        },
+                      ].map((m) => (
+                        <div key={m.name} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 font-bold min-w-0">
                             <span className="w-4 h-4 rounded-full bg-[#d9a20b] text-white flex items-center justify-center shrink-0">
                               <Check className="w-2.5 h-2.5 stroke-[3]" />
                             </span>
-                            <span>{s.name}</span>
+                            <span className="leading-snug">{m.name}</span>
                           </div>
-                          <span className={`font-semibold ${subtleTextClass}`}>{s.time}</span>
+                          <span className={`font-semibold shrink-0 tabular-nums ${subtleTextClass}`}>
+                            {m.meta}
+                          </span>
                         </div>
                       ))}
                     </div>
 
-                    <p className={`text-[11px] pt-1 ${subtleTextClass}`}>
+                    <p className={`text-[11px] pt-1 leading-relaxed ${subtleTextClass}`}>
                       {isBn
-                        ? 'অতিরিক্ত কোনো রিমাইন্ডার যোগ করা হবে না। পরে যেকোনো আমলের জন্য চালু করতে পারবেন।'
-                        : 'No extra reminders are added. You can turn one on for any amal later.'}
+                        ? 'অতিরিক্ত কোনো রিমাইন্ডার যোগ করা হবে না। পরে জিকিরের লক্ষ্য, নামাজের হিসাব ও যেকোনো আমল নিজের মতো পরিবর্তন করতে পারবেন।'
+                        : 'No extra reminders are added. You can customize Zikr targets, prayer rules, and any amal anytime later.'}
                     </p>
                   </div>
                 )}
@@ -1176,8 +1243,8 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     </div>
                     <div className={`text-xs mt-0.5 ${subtleTextClass}`}>
                       {isBn
-                        ? 'সরাসরি অ্যাপে প্রবেশ করুন এবং পছন্দমতো নিজের আমল ও জিকির যুক্ত করুন।'
-                        : 'Start clean and customize your own dhikr & amal items later.'}
+                        ? 'সরাসরি অ্যাপে প্রবেশ করুন এবং পছন্দমতো নিজের জিকির, লক্ষ্য ও আমল সাজিয়ে নিন।'
+                        : 'Enter the app directly and customize your own Zikr targets & amal items.'}
                     </div>
                   </div>
                   {startPreset === 'custom' && (
@@ -1341,8 +1408,12 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
         <div className="rounded-3xl bg-[#fafaf4] border border-[#e7e2cc] p-4 shadow-2xl text-slate-900 overflow-hidden">
           {current.id === 'amal' && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span>{isBn ? '০/৩ আমল সম্পন্ন' : '0/3 amal done'}</span>
+              <div className="flex items-center justify-between text-xs font-bold tabular-nums">
+                <span>
+                  {isBn
+                    ? `০/${toBnDigits(DEFAULT_AAMAL_ITEMS.length)} আমল সম্পন্ন`
+                    : `0/${DEFAULT_AAMAL_ITEMS.length} amal done`}
+                </span>
                 <span className="text-slate-500 font-semibold">{isBn ? 'এখন · ১০:৪২ AM' : 'Now · 10:42 AM'}</span>
               </div>
               {/* Curved 5-Prayer Solar Arc Visual */}
@@ -1365,11 +1436,11 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                   <circle cx="135" cy="28" r="10" fill="#fef3c7" />
                   <circle cx="135" cy="28" r="5.5" fill="#d9a20b" />
                   {[
-                    { x: 28, y: 84, label: isBn ? 'ফজর' : 'Fajr', val: '0/1' },
-                    { x: 158, y: 24, label: isBn ? 'যোহর' : 'Dhuhr', val: '0/0' },
-                    { x: 214, y: 38, label: isBn ? 'আসর' : 'Asr', val: '0/0' },
-                    { x: 256, y: 60, label: isBn ? 'মাগরিব' : 'Maghrib', val: '0/1' },
-                    { x: 292, y: 84, label: isBn ? 'ইশা' : 'Isha', val: '0/1' },
+                    { x: 28, y: 84, label: isBn ? 'ফজর' : 'Fajr', val: isBn ? '০/৪' : '0/4' },
+                    { x: 158, y: 24, label: isBn ? 'যোহর' : 'Dhuhr', val: isBn ? '০/৬' : '0/6' },
+                    { x: 214, y: 38, label: isBn ? 'আসর' : 'Asr', val: isBn ? '০/৪' : '0/4' },
+                    { x: 256, y: 60, label: isBn ? 'মাগরিব' : 'Maghrib', val: isBn ? '০/৫' : '0/5' },
+                    { x: 292, y: 84, label: isBn ? 'ইশা' : 'Isha', val: isBn ? '০/৮' : '0/8' },
                   ].map((p) => (
                     <g key={p.label}>
                       <circle cx={p.x} cy={p.y} r="17" fill="#ffffff" stroke="#e5e1d2" strokeWidth="2.5" />
@@ -1390,7 +1461,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 text-[11px] font-bold">
                   <InfinityIcon className="w-3.5 h-3.5" />
-                  <span>{isBn ? 'যেকোনো সময় · ০/০' : 'Any time · 0/0'}</span>
+                  <span>{isBn ? 'যেকোনো সময় · ০/৩২' : 'Any time · 0/32'}</span>
                 </span>
               </div>
             </div>
@@ -1400,7 +1471,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
             <div className="space-y-4 py-1 text-center">
               <div className="inline-block px-5 py-2 rounded-2xl bg-white border border-[#ece6d2] shadow-2xs">
                 <div className="text-xs font-extrabold">{isBn ? 'সুবহানাল্লাহ' : 'SubhanAllah'}</div>
-                <div className="text-[10px] text-slate-500 font-semibold">{isBn ? 'তাসবিহ' : 'Tasbih'}</div>
+                <div className="text-[10px] text-slate-500 font-semibold">{isBn ? '১২টি মাসনুন জিকির' : '12 Daily Zikrs'}</div>
               </div>
               <div className="relative w-40 h-40 mx-auto flex items-center justify-center">
                 <svg viewBox="0 0 180 180" className="w-full h-full">
@@ -1422,13 +1493,13 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                     {isBn ? '০' : '0'}
                   </span>
                   <span className="text-[11px] font-bold text-slate-500">
-                    {isBn ? '৩৩ এর মধ্যে' : 'of 33'}
+                    {isBn ? '১০০ এর মধ্যে' : 'of 100'}
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <div className="flex-1 px-3 py-2 rounded-full bg-white border border-[#e7e2cc] text-[11px] text-slate-400 text-left font-semibold">
-                  {isBn ? 'লক্ষ্য দিন (যেমন: ৩৩)' : 'Input (ex: 50)'}
+                <div className="flex-1 px-3 py-2 rounded-full bg-white border border-[#e7e2cc] text-[11px] text-slate-500 text-left font-semibold">
+                  {isBn ? 'লক্ষ্য: ১০০ · ৫০০ · ১০০০' : 'Targets: 100 · 500 · 1000'}
                 </div>
                 <div className="px-3 py-2 rounded-full bg-white border border-slate-200 text-[11px] font-bold text-slate-700 inline-flex items-center gap-1">
                   <RotateCcw className="w-3 h-3" />

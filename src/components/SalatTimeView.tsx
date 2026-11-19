@@ -806,11 +806,11 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: PRAYERS (Hero Active Waqt Card + 5 Prayer Cards + Prohibited Times) */}
+      {/* TAB 1: PRAYERS (Unified Arc & Active Waqt Card + 5 Prayer Cards + Prohibited Times) */}
       {/* ========================================================================= */}
       {salatSubTab === 'prayers' && (
         <div className="relative z-10 space-y-3.5 animate-in fade-in duration-200">
-          {/* Interactive Curved Salat Time & Daily Amal Horizon Arc Card */}
+          {/* Unified Curved Salat Time, Active Waqt & Daily Amal Horizon Arc Card */}
           <SalatAmalArcCard
             prayerData={prayerData}
             themeMode={themeMode}
@@ -823,79 +823,17 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               const found = fiveDailyPrayers.find((p) => p.id === waqtKey);
               if (found) setSelectedQuickPrayer(found);
             }}
+            activePrayerName={activePrayerNameLocalized}
+            liveCountdownStr={liveCountdownStr}
+            activeWaqtProgress={activeWaqtProgress}
+            activeTimeRange={activeFard.timeRange}
+            nextPrayerLabel={`${(SALAT_TEXTS.hero.nextPrayerPrefix as any)[lang] || 'Next'}: ${nextPrayerNameLocalized} ${formatLocalizedNumber(prayerData.nextPrayerFormattedTime, lang)}`}
+            remainingLabel={(SALAT_TEXTS.hero.remaining as any)[lang] || 'remaining'}
+            isPlayingAdhan={isPlayingAdhan}
+            playAdhanLabel={(SALAT_TEXTS.hero.playAdhan as any)[lang] || 'Play Adhan'}
+            playingAdhanLabel={(SALAT_TEXTS.hero.playingAdhan as any)[lang] || 'Playing Adhan'}
+            onTogglePlayAdhan={() => togglePlayAdhan(`${activePrayerNameLocalized} Adhan`)}
           />
-
-          {/* Hero Active Waqt Card */}
-          <div className="bg-gradient-to-br from-[#05382e] via-[#042e26] to-[#021f19] text-white rounded-[26px] p-5 shadow-xl border border-emerald-400/30 relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute right-2 -bottom-6 text-emerald-400/10 pointer-events-none select-none text-9xl">
-              🕌
-            </div>
-            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
-
-            {/* Top row: Waqt status badge & Play Adhan button */}
-            <div className="flex items-center justify-between z-10">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-xs shadow-emerald-400" />
-                <span className="text-xs font-bold text-emerald-200/90 tracking-wide">
-                  {(SALAT_TEXTS.hero.currentWaqt as any)[lang] || 'Current Active Waqt'}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => togglePlayAdhan(`${activePrayerNameLocalized} Adhan`)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer ${
-                  isPlayingAdhan
-                    ? 'bg-amber-400 text-slate-900 border-amber-300 shadow-md animate-pulse'
-                    : 'bg-white/10 hover:bg-white/20 text-emerald-100 border-white/15'
-                }`}
-              >
-                {isPlayingAdhan ? (
-                  <>
-                    <Volume2 className="w-3.5 h-3.5 animate-bounce" />
-                    <span>{(SALAT_TEXTS.hero.playingAdhan as any)[lang] || 'Playing Adhan'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>{(SALAT_TEXTS.hero.playAdhan as any)[lang] || 'Play Adhan'}</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Middle row: Prayer Name & Live Digital Countdown */}
-            <div className="my-3 z-10">
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight bg-gradient-to-r from-amber-200 via-white to-emerald-200 bg-clip-text text-transparent">
-                {activePrayerNameLocalized}
-              </h2>
-              <div className="text-3xl sm:text-4xl font-mono font-black tracking-wider text-white mt-1 drop-shadow-md flex items-center gap-2">
-                <span>{formatLocalizedNumber(liveCountdownStr, lang)}</span>
-                <span className="text-xs font-medium text-emerald-300/80 font-sans tracking-normal bg-black/30 px-2 py-0.5 rounded-md">
-                  {(SALAT_TEXTS.hero.remaining as any)[lang] || 'remaining'}
-                </span>
-              </div>
-
-              {/* Progress bar */}
-              <div className="relative w-full h-2 rounded-full bg-black/40 mt-3 overflow-hidden border border-white/10">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 rounded-full transition-all duration-1000"
-                  style={{ width: `${activeWaqtProgress}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Bottom row: Time range & Next prayer indicator */}
-            <div className="flex items-center justify-between text-xs font-semibold text-emerald-100/90 pt-2 border-t border-white/10 z-10 gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 font-mono bg-black/25 px-2.5 py-1 rounded-xl border border-white/5">
-                <Clock className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                <span>{formatLocalizedNumber(activeFard.timeRange, lang)}</span>
-              </div>
-              <div className="text-amber-300 font-bold flex items-center gap-1">
-                <span>{(SALAT_TEXTS.hero.nextPrayerPrefix as any)[lang] || 'Next'}: {nextPrayerNameLocalized} {formatLocalizedNumber(prayerData.nextPrayerFormattedTime, lang)}</span>
-              </div>
-            </div>
-          </div>
 
           {/* 5 Daily Prayers Cards Row */}
           <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5">

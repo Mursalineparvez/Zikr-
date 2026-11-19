@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Check, ChevronDown, ChevronUp, Clock, Infinity as InfinityIcon, List, Sparkles } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Clock, Infinity as InfinityIcon, List, Sparkles, Volume2 } from 'lucide-react';
 import { FormattedPrayerTimes, formatTime12h } from '../utils/prayerTimes';
 import { AamalDayLog, ThemeMode, ZikrLanguage } from '../types';
 import {
@@ -22,6 +22,16 @@ interface SalatAmalArcCardProps {
   completedPrayers: Record<string, boolean>;
   onSyncPrayerCompleted: (prayerKey: WaqtNodeKey, completed: boolean) => void;
   onOpenPrayerDetails?: (prayerKey: WaqtNodeKey) => void;
+  activePrayerName?: string;
+  liveCountdownStr?: string;
+  activeWaqtProgress?: number;
+  activeTimeRange?: string;
+  nextPrayerLabel?: string;
+  remainingLabel?: string;
+  isPlayingAdhan?: boolean;
+  playAdhanLabel?: string;
+  playingAdhanLabel?: string;
+  onTogglePlayAdhan?: () => void;
 }
 
 type ActiveFilterMode = 'all' | 'anytime' | WaqtNodeKey;
@@ -101,6 +111,16 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
   completedPrayers,
   onSyncPrayerCompleted,
   onOpenPrayerDetails,
+  activePrayerName,
+  liveCountdownStr,
+  activeWaqtProgress = 0,
+  activeTimeRange,
+  nextPrayerLabel,
+  remainingLabel,
+  isPlayingAdhan = false,
+  playAdhanLabel,
+  playingAdhanLabel,
+  onTogglePlayAdhan,
 }) => {
   const isDay = themeMode === 'day';
   const lang = selectedLanguage || 'bn';
@@ -421,22 +441,128 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
       aria-label={isBn ? 'সালাত ও আমল সূর্য-কক্ষপথ' : 'Salat Time and Amal Arc'}
       className={`rounded-[26px] border shadow-xs transition-colors overflow-hidden ${cardBg}`}
     >
-      {/* Top Header Row: "0/3 amal done" | "Now - 10:42 AM" */}
-      <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-1 gap-2">
-        <div className="text-[15px] sm:text-base font-extrabold tracking-tight tabular-nums">
+      {/* Top Header Row: "0/16 amal done" | "Now - 10:42 AM" */}
+      <div className="flex items-center justify-between px-4 sm:px-5 pt-3.5 pb-1 gap-2">
+        <div
+          className={`text-[12px] sm:text-[13px] font-bold tracking-tight tabular-nums ${
+            isDay ? 'text-[#4B534E]' : 'text-emerald-200/80'
+          }`}
+        >
           {amalDoneText}
         </div>
         <div
-          className={`text-[13px] sm:text-sm font-semibold tabular-nums ${
-            isDay ? 'text-[#3C423E]' : 'text-emerald-200/85'
+          className={`text-[12px] sm:text-[13px] font-semibold tabular-nums ${
+            isDay ? 'text-[#545C57]' : 'text-emerald-200/75'
           }`}
         >
           {nowText}
         </div>
       </div>
 
+      {/* Slim Integrated Active Waqt Strip (Prayer Name, Live Countdown, Adhan Toggle, Progress & Next Waqt) */}
+      {activePrayerName && liveCountdownStr && (
+        <div
+          className={`px-4 sm:px-5 pt-1.5 pb-2.5 border-b ${
+            isDay ? 'border-[#E9E7DC]' : 'border-emerald-800/45'
+          }`}
+        >
+          {/* Active Waqt + Countdown + Play Adhan button */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-baseline gap-2 min-w-0 flex-wrap">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span
+                  className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                    isDay ? 'text-[#054A37]' : 'text-amber-200'
+                  }`}
+                >
+                  {activePrayerName}
+                </span>
+              </div>
+
+              <span
+                className={`text-lg sm:text-xl font-mono font-black tracking-tight tabular-nums leading-none ${
+                  isDay ? 'text-[#18201C]' : 'text-white'
+                }`}
+              >
+                {formatLocalizedNumber(liveCountdownStr, lang)}
+              </span>
+
+              {remainingLabel && (
+                <span
+                  className={`text-[11px] font-semibold leading-none ${
+                    isDay ? 'text-[#626A65]' : 'text-emerald-300/75'
+                  }`}
+                >
+                  {remainingLabel}
+                </span>
+              )}
+            </div>
+
+            {onTogglePlayAdhan && (
+              <button
+                type="button"
+                onClick={onTogglePlayAdhan}
+                className={`shrink-0 min-h-[34px] px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold border flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                  isPlayingAdhan
+                    ? 'bg-[#E5A900] text-white border-[#D49A00] shadow-sm shadow-amber-500/25 animate-pulse'
+                    : isDay
+                    ? 'bg-[#054A37]/8 hover:bg-[#054A37]/14 text-[#054A37] border-[#054A37]/15'
+                    : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-100 border-emerald-400/25'
+                }`}
+              >
+                <Volume2 className={`w-3.5 h-3.5 shrink-0 ${isPlayingAdhan ? 'animate-bounce' : ''}`} />
+                <span className="whitespace-nowrap">
+                  {isPlayingAdhan ? playingAdhanLabel || 'Playing Adhan' : playAdhanLabel || 'Play Adhan'}
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Slim Waqt Elapsed Progress Hairline */}
+          <div
+            className={`relative w-full h-1.5 rounded-full mt-2 overflow-hidden ${
+              isDay ? 'bg-[#E6E4D8]' : 'bg-emerald-950/90'
+            }`}
+          >
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-[#E5A900] rounded-full transition-all duration-1000"
+              style={{ width: `${Math.max(0, Math.min(100, activeWaqtProgress))}%` }}
+            />
+          </div>
+
+          {/* Quiet Inline Metadata Row: Time Range & Next Waqt */}
+          {(activeTimeRange || nextPrayerLabel) && (
+            <div className="flex items-center justify-between gap-2 mt-2 text-[11px] sm:text-xs font-semibold tabular-nums">
+              {activeTimeRange ? (
+                <span
+                  className={`flex items-center gap-1 font-mono ${
+                    isDay ? 'text-[#555D58]' : 'text-emerald-200/80'
+                  }`}
+                >
+                  <Clock className="w-3 h-3 shrink-0 opacity-75" />
+                  <span>{formatLocalizedNumber(activeTimeRange, lang)}</span>
+                </span>
+              ) : (
+                <span />
+              )}
+
+              {nextPrayerLabel && (
+                <span
+                  className={`font-bold truncate ${
+                    isDay ? 'text-[#A67400]' : 'text-amber-300'
+                  }`}
+                >
+                  {nextPrayerLabel}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Curved Prayer & Solar Arc Visualization */}
-      <div className="relative px-2 sm:px-3 pt-1 pb-2">
+      <div className="relative px-2 sm:px-3 pt-1.5 pb-1.5">
         <svg
           viewBox="0 0 420 206"
           className="w-full h-auto block select-none overflow-visible"
