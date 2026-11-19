@@ -180,20 +180,30 @@ function splitLongParagraph(text: string, maxChars = 480): string[] {
   return finalChunks;
 }
 
+export interface PdfPreviewBundle {
+  blob: Blob;
+  blobUrl: string;
+  fileName: string;
+  fileSizeKb: number;
+  pageCount: number;
+  pageImages: string[];
+}
+
 export interface PdfDownloadResult {
   fileName: string;
   pageCount: number;
 }
 
 /**
- * Generates a real, print-ready, multi-page A4 PDF file directly in the browser
+ * Generates a real, print-ready, multi-page A4 PDF Blob + per-page A4 preview images
  * using semantic block pagination + html2canvas (for crisp Bengali ligatures & Arabic RTL)
- * + jsPDF, and triggers an immediate file download that works inside iframes & mobile browsers.
+ * + jsPDF, with live page-by-page progress reporting.
  */
-export async function downloadPdfDocument(
+export async function generatePdfPreviewBundle(
   item: ShareableContent,
-  lang: ZikrLanguage
-): Promise<PdfDownloadResult> {
+  lang: ZikrLanguage,
+  onProgress?: (currentPage: number, totalPages: number) => void
+): Promise<PdfPreviewBundle> {
   if (typeof document === 'undefined') {
     throw new Error('Document is unavailable');
   }
@@ -326,7 +336,6 @@ export async function downloadPdfDocument(
       const line = rawLine.trim();
       if (!line) continue;
 
-      // Skip decorative divider-only lines like ===== or -----
       if (/^[=\-_─━═]{4,}$/.test(line)) {
         blocks.push(
           createEl(
@@ -337,7 +346,6 @@ export async function downloadPdfDocument(
         continue;
       }
 
-      // Section headings (e.g. "--- Title ---", "=== Title ===", "【Title】", or short bold section labels)
       const isDecoratedHeading =
         (/^[-=─━═]{2,}.+[-=─━═]{2,}$/.test(line)) ||
         (/^【.+】$/.test(line)) ||
@@ -355,7 +363,6 @@ export async function downloadPdfDocument(
         continue;
       }
 
-      // Bullet / numbered lines
       if (/^([•●▪▸✓✔]|\d+\.|[০-৯]+\.)\s+/.test(line)) {
         const chunks = splitLongParagraph(line, 440);
         chunks.forEach((ch, idx) => {
@@ -372,7 +379,6 @@ export async function downloadPdfDocument(
         continue;
       }
 
-      // Regular paragraph (split long ones cleanly at sentence boundaries)
       const chunks = splitLongParagraph(line, 480);
       for (const ch of chunks) {
         blocks.push(
@@ -386,7 +392,7 @@ export async function downloadPdfDocument(
     }
   }
 
-  // 6. Highlights Block (when no fullDocumentText overrides it)
+  // 6. Highlights Block
   if (item.highlights && item.highlights.length > 0 && !item.fullDocumentText) {
     const itemsHtml = item.highlights
       .map(
@@ -458,7 +464,6 @@ export async function downloadPdfDocument(
     pages.push([]);
   }
 
-  // Render each composed A4 page to canvas & embed in jsPDF
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -467,8 +472,11 @@ export async function downloadPdfDocument(
   });
 
   const totalPages = pages.length;
+  const pageImages: string[] = [];
 
   for (let pIdx = 0; pIdx < totalPages; pIdx++) {
+    onProgress?.(pIdx + 1, totalPages);
+
     const pageEl = document.createElement('div');
     pageEl.style.cssText = `
       position:fixed;
@@ -489,14 +497,12 @@ export async function downloadPdfDocument(
     `;
     if (isAr) pageEl.dir = 'rtl';
 
-    // Top emerald & gold ornamental bar
     const topBar = createEl(
       'div',
       'height:6px;width:100%;background:linear-gradient(90deg,#047857 0%,#10b981 65%,#d97706 100%);flex-shrink:0;'
     );
     pageEl.appendChild(topBar);
 
-    // Content area
     const bodyWrap = createEl(
       'div',
       `flex:1;padding:${PAD_TOP - 6}px ${PAD_X}px 12px ${PAD_X}px;box-sizing:border-box;overflow:hidden;`
@@ -506,7 +512,6 @@ export async function downloadPdfDocument(
     }
     pageEl.appendChild(bodyWrap);
 
-    // Footer bar with page number
     const pageNumLabel = isBn
       ? `পৃষ্ঠা ${toLocalizedDigits(pIdx + 1, lang)} / ${toLocalizedDigits(totalPages, lang)}`
       : isAr
@@ -547,7 +552,8 @@ export async function downloadPdfDocument(
         },
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.94);
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      pageImages.push(imgData);
       if (pIdx > 0) {
         pdf.addPage('a4', 'portrait');
       }
@@ -559,19 +565,34 @@ export async function downloadPdfDocument(
     }
   }
 
-  // Trigger direct browser PDF download via Blob URL (100% iframe-safe!)
-  const pdfBlob = pdf.output('blob');
-  const blobUrl = URL.createObjectURL(pdfBlob);
+  const blob = pdf.output('blob');
+  const blobUrl = URL.createObjectURL(blob);
+  const fileSizeKb = Math.max(1, Math.round(blob.size / 1024));
+
+  return {
+    blob,
+    blobUrl,
+    fileName,
+    fileSizeKb,
+    pageCount: totalPages,
+    pageImages,
+  };
+}
+
+export async function downloadPdfDocument(
+  item: ShareableContent,
+  lang: ZikrLanguage
+): Promise<PdfDownloadResult> {
+  const bundle = await generatePdfPreviewBundle(item, lang);
   const link = document.createElement('a');
-  link.href = blobUrl;
-  link.download = fileName;
+  link.href = bundle.blobUrl;
+  link.download = bundle.fileName;
   link.style.display = 'none';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 6000);
-
-  return { fileName, pageCount: totalPages };
+  setTimeout(() => URL.revokeObjectURL(bundle.blobUrl), 6000);
+  return { fileName: bundle.fileName, pageCount: bundle.pageCount };
 }
 
 export function printDocumentViaHiddenIframe(

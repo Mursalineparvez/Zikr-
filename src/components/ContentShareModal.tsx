@@ -10,6 +10,8 @@ import {
   Palette,
   FileText,
   FileDown,
+  Printer,
+  ArrowLeft,
   Loader2,
   ShieldCheck,
   Image as ImageIcon,
@@ -20,9 +22,11 @@ import { ZikrLanguage, ThemeMode } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
 import {
   ShareableContent,
+  PdfPreviewBundle,
   formatShareablePlainText,
   downloadTextDocument,
-  downloadPdfDocument,
+  generatePdfPreviewBundle,
+  printDocumentViaHiddenIframe,
   sanitizeFileName,
 } from '../utils/shareDownload';
 import { copyToClipboard } from '../utils/clipboard';
@@ -57,11 +61,16 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [pdfPanelOpen, setPdfPanelOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState<{ current: number; total: number } | null>(null);
+  const [pdfBundle, setPdfBundle] = useState<PdfPreviewBundle | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const statusTimerRef = useRef<number | null>(null);
+  const pdfBlobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     try {
@@ -72,8 +81,26 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
   useEffect(() => {
     return () => {
       if (statusTimerRef.current) window.clearTimeout(statusTimerRef.current);
+      if (pdfBlobUrlRef.current) {
+        URL.revokeObjectURL(pdfBlobUrlRef.current);
+        pdfBlobUrlRef.current = null;
+      }
     };
   }, []);
+
+  // Reset PDF preview state whenever modal closes or content changes
+  useEffect(() => {
+    if (!isOpen) {
+      setPdfPanelOpen(false);
+      setPdfError(null);
+      setPdfProgress(null);
+      setPdfBundle(null);
+      if (pdfBlobUrlRef.current) {
+        URL.revokeObjectURL(pdfBlobUrlRef.current);
+        pdfBlobUrlRef.current = null;
+      }
+    }
+  }, [isOpen, content?.title]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -178,35 +205,34 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
     );
   };
 
-  const handleDownloadPdf = async () => {
-    if (isGeneratingPdf) return;
-    setIsGeneratingPdf(true);
+  const toBnDigits = (n: number) =>
+    String(n).replace(/\d/g, (d) => ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'][Number(d)]);
+
+  const handleOpenPdfPanel = async () => {
     if (soundEnabled) soundHaptics.playTap();
-    notifyStatus(
-      isBn
-        ? 'সম্পূর্ণ PDF ফাইল তৈরি হচ্ছে, অনুগ্রহ করে একটু অপেক্ষা করুন...'
-        : isAr
-          ? 'جارٍ إنشاء ملف PDF، يرجى الانتظار...'
-          : 'Generating your multi-page PDF document...',
-      0
-    );
+    setPdfPanelOpen(true);
+    setPdfError(null);
+
+    // If already generated for this content, show immediately
+    if (pdfBundle) return;
+
+    setIsGeneratingPdf(true);
+    setPdfProgress({ current: 1, total: 1 });
     try {
-      const result = await downloadPdfDocument(content, selectedLanguage);
+      const bundle = await generatePdfPreviewBundle(
+        content,
+        selectedLanguage,
+        (current, total) => setPdfProgress({ current, total })
+      );
+      if (pdfBlobUrlRef.current) {
+        URL.revokeObjectURL(pdfBlobUrlRef.current);
+      }
+      pdfBlobUrlRef.current = bundle.blobUrl;
+      setPdfBundle(bundle);
       if (soundEnabled) soundHaptics.playMilestone();
-      const pagesBn = String(result.pageCount).replace(
-        /\d/g,
-        (d) => ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'][Number(d)]
-      );
-      notifyStatus(
-        isBn
-          ? `সম্পূর্ণ PDF ডাউনলোড হয়েছে! (${pagesBn} পৃষ্ঠা)`
-          : isAr
-            ? `تم تحميل ملف PDF بنجاح! (${result.pageCount} صفحات)`
-            : `Full PDF downloaded! (${result.pageCount} ${result.pageCount === 1 ? 'page' : 'pages'})`
-      );
     } catch (err) {
       console.error('PDF generation failed:', err);
-      notifyStatus(
+      setPdfError(
         isBn
           ? 'PDF তৈরি করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
           : isAr
@@ -216,6 +242,18 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
     } finally {
       setIsGeneratingPdf(false);
     }
+  };
+
+  const handlePrintFallback = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    printDocumentViaHiddenIframe(content, selectedLanguage);
+    notifyStatus(
+      isBn
+        ? 'প্রিন্ট উইন্ডো অনুরোধ করা হয়েছে (প্রিন্ট না খুললে উপরের PDF ডাউনলোড বাটন ব্যবহার করুন)'
+        : isAr
+          ? 'تم طلب نافذة الطباعة'
+          : 'Print dialog requested (or use Download PDF above)'
+    );
   };
 
   const handleNativeShare = async () => {
@@ -416,6 +454,161 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
           </button>
         </div>
 
+        {/* Dedicated PDF Preview & Download Panel (opens immediately when PDF / প্রিন্ট is clicked) */}
+        {pdfPanelOpen ? (
+          <div className="space-y-3.5 animate-in fade-in duration-200">
+            {/* Back + PDF Header Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950/80 border border-amber-500/30 rounded-2xl p-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setPdfPanelOpen(false);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>{isBn ? 'ফিরে যান' : isAr ? 'رجوع' : 'Back'}</span>
+              </button>
+
+              <div className="flex items-center gap-2 text-xs">
+                <FileDown className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="font-black text-amber-300">
+                  {isBn ? 'PDF প্রিভিউ ও ডাউনলোড' : isAr ? 'معاينة وتحميل PDF' : 'PDF Preview & Download'}
+                </span>
+                {pdfBundle && (
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 text-[10px] font-bold">
+                    {isBn
+                      ? `${toBnDigits(pdfBundle.pageCount)} পৃষ্ঠা · ${toBnDigits(pdfBundle.fileSizeKb)} KB`
+                      : `${pdfBundle.pageCount} pg · ${pdfBundle.fileSizeKb} KB`}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Loading State */}
+            {isGeneratingPdf && (
+              <div className="rounded-2xl border border-emerald-500/30 bg-slate-950/70 p-8 flex flex-col items-center justify-center text-center gap-3">
+                <Loader2 className="w-9 h-9 text-amber-400 animate-spin" />
+                <div className="space-y-1">
+                  <p className="text-sm font-black text-white">
+                    {isBn ? 'সম্পূর্ণ A4 PDF প্রস্তুত হচ্ছে...' : isAr ? 'جارٍ تجهيز ملف PDF...' : 'Preparing A4 PDF Document...'}
+                  </p>
+                  {pdfProgress && (
+                    <p className="text-xs text-emerald-300 font-bold">
+                      {isBn
+                        ? `পৃষ্ঠা ${toBnDigits(pdfProgress.current)} / ${toBnDigits(pdfProgress.total)} রেন্ডার হচ্ছে`
+                        : `Rendering page ${pdfProgress.current} of ${pdfProgress.total}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Error State */}
+            {pdfError && !isGeneratingPdf && (
+              <div className="rounded-2xl border border-rose-500/40 bg-rose-950/40 p-5 text-center space-y-3">
+                <p className="text-xs font-bold text-rose-200">{pdfError}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPdfBundle(null);
+                    void handleOpenPdfPanel();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition cursor-pointer"
+                >
+                  {isBn ? 'আবার চেষ্টা করুন' : 'Retry PDF Generation'}
+                </button>
+              </div>
+            )}
+
+            {/* Ready PDF Preview + Direct Synchronous Download Controls */}
+            {pdfBundle && !isGeneratingPdf && (
+              <div className="space-y-3.5">
+                {/* Direct Native Download Bar (Synchronous User-Gesture Anchor = 100% Reliable) */}
+                <div className="rounded-2xl border border-emerald-500/40 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-amber-950/40 p-3.5 space-y-3">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div className="min-w-0">
+                      <p className="font-black text-emerald-300 truncate">{pdfBundle.fileName}</p>
+                      <p className="text-[11px] text-slate-300">
+                        {isBn
+                          ? `A4 প্রিন্ট-রেডি ডকুমেন্ট · মোট ${toBnDigits(pdfBundle.pageCount)} পৃষ্ঠা · সাইজ ${toBnDigits(pdfBundle.fileSizeKb)} KB`
+                          : `A4 Print-Ready PDF · ${pdfBundle.pageCount} page(s) · ${pdfBundle.fileSizeKb} KB`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <a
+                      href={pdfBundle.blobUrl}
+                      download={pdfBundle.fileName}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playMilestone();
+                        notifyStatus(
+                          isBn
+                            ? `PDF ডাউনলোড শুরু হয়েছে! (${toBnDigits(pdfBundle.pageCount)} পৃষ্ঠা)`
+                            : `PDF download started! (${pdfBundle.pageCount} page${pdfBundle.pageCount > 1 ? 's' : ''})`
+                        );
+                      }}
+                      className="sm:col-span-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer no-underline"
+                    >
+                      <Download className="w-4 h-4 shrink-0" />
+                      <span>
+                        {isBn ? 'PDF ফাইল ডাউনলোড করুন (.PDF)' : isAr ? 'تحميل ملف PDF الآن' : 'Download PDF File (.PDF)'}
+                      </span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={handlePrintFallback}
+                      className="py-3 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-amber-500/35 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                    >
+                      <Printer className="w-4 h-4 shrink-0" />
+                      <span>{isBn ? 'প্রিন্ট করুন' : isAr ? 'طباعة' : 'Print'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Status Toast inside PDF panel */}
+                {statusMessage && (
+                  <div className="p-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/60 text-emerald-300 flex items-center gap-2 text-xs font-bold animate-in fade-in">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{statusMessage}</span>
+                  </div>
+                )}
+
+                {/* Visual A4 Page Previews */}
+                <div className="space-y-3 max-h-[52vh] overflow-y-auto pr-1 rounded-2xl bg-slate-950/80 border border-slate-800 p-3">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[11px] font-bold text-slate-400">
+                      {isBn ? 'PDF পৃষ্ঠাসমূহের প্রিভিউ' : isAr ? 'معاينة صفحات PDF' : 'PDF Pages Preview'}
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-400">
+                      {isBn ? `মোট ${toBnDigits(pdfBundle.pageCount)} পৃষ্ঠা` : `${pdfBundle.pageCount} page(s)`}
+                    </span>
+                  </div>
+                  {pdfBundle.pageImages.map((imgSrc, idx) => (
+                    <div key={idx} className="space-y-1.5">
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[10px] font-bold text-amber-300">
+                          {isBn
+                            ? `পৃষ্ঠা ${toBnDigits(idx + 1)} / ${toBnDigits(pdfBundle.pageCount)}`
+                            : `Page ${idx + 1} / ${pdfBundle.pageCount}`}
+                        </span>
+                      </div>
+                      <img
+                        src={imgSrc}
+                        alt={`PDF Page ${idx + 1}`}
+                        className="w-full rounded-xl border border-slate-700 shadow-lg bg-white"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
         {/* Card Theme Toolbar */}
         <div className="bg-slate-950/80 rounded-2xl p-2.5 sm:p-3 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -692,30 +885,15 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
             </span>
           </button>
 
-          {/* 4. Direct Download Multi-Page PDF */}
+          {/* 4. Open PDF Preview & Download Panel */}
           <button
             type="button"
-            onClick={handleDownloadPdf}
-            disabled={isGeneratingPdf}
-            className="py-2.5 px-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+            onClick={handleOpenPdfPanel}
+            className="py-2.5 px-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
           >
-            {isGeneratingPdf ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <FileDown className="w-4 h-4" />
-            )}
+            <Printer className="w-4 h-4" />
             <span>
-              {isGeneratingPdf
-                ? isBn
-                  ? 'PDF তৈরি হচ্ছে...'
-                  : isAr
-                    ? 'جارٍ التحضير...'
-                    : 'Creating PDF...'
-                : isBn
-                  ? 'PDF ডাউনলোড'
-                  : isAr
-                    ? 'تحميل PDF'
-                    : 'Download PDF'}
+              {isBn ? 'PDF / প্রিন্ট' : isAr ? 'طباعة / PDF' : 'Save PDF'}
             </span>
           </button>
 
@@ -745,6 +923,8 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
             </span>
           </button>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
