@@ -477,165 +477,147 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
 
   // Theme colors crafted to harmonize with the selected light color palette in Day mode and deep emerald in Night mode
   const cardBg = isDay
-    ? 'bg-white border-[var(--app-border,#E7E5DA)] text-[#1F2421]'
-    : 'bg-[#09211c] border-emerald-800/60 text-emerald-50';
-  const trayFill = isDay ? 'var(--app-surface-soft, #EFEEE7)' : '#051612';
-  const horizonStroke = isDay ? 'var(--app-border, #D4D2C7)' : '#1e4b40';
-  const dottedArcStroke = isDay ? 'var(--app-border, #CFCDBE)' : '#255c4e';
-  const nodeFill = isDay ? '#FFFFFF' : '#0c2c25';
-  const nodeRingDefault = isDay ? 'var(--app-border, #E3E2D8)' : '#1d4a3f';
-  const nodeTextColor = isDay ? '#1F2421' : '#F1F5F9';
-  const nodeLabelColor = isDay ? '#2B302C' : '#CBD5E1';
-  const labelPillFill = isDay ? '#FFFFFF' : '#09211c';
-  const labelPillTrayFill = isDay ? 'var(--app-surface-soft, #F6F5EE)' : '#0a251f';
+    ? 'bg-white border-emerald-900/12 text-[#1F2421] shadow-[0_14px_34px_-18px_rgba(4,59,44,0.28)]'
+    : 'bg-[#08201b] border-emerald-700/45 text-emerald-50 shadow-[0_16px_38px_-16px_rgba(0,0,0,0.65)]';
+  const trayFill = isDay ? 'url(#salatNightBandDay)' : 'url(#salatNightBandNight)';
+  const horizonStroke = isDay ? '#b8d8cb' : '#1e5446';
+  const dottedArcStroke = isDay ? '#c2ddd2' : '#245e4f';
+  const nodeFill = isDay ? '#FFFFFF' : '#0b2b24';
+  const nodeRingDefault = isDay ? '#c6dfd4' : '#205749';
+  const nodeTextColor = isDay ? '#132a22' : '#F1F5F9';
+  const nodeLabelColor = isDay ? '#1d3b31' : '#D1FAE5';
+  const labelPillFill = isDay ? '#f4fbf8' : '#08211b';
+  const labelPillTrayFill = isDay ? '#e4f3ec' : '#071b16';
 
   return (
     <section
       aria-label={isBn ? 'সালাত ও আমল সূর্য-কক্ষপথ' : 'Salat Time and Amal Arc'}
-      className={`rounded-[26px] border shadow-xs transition-colors overflow-hidden ${cardBg}`}
+      className={`rounded-[26px] border transition-colors overflow-hidden ${cardBg}`}
     >
-      {/* Top Header Row: "0/16 amal done" | "Now - 10:42 AM" */}
-      <div className="flex items-center justify-between px-4 sm:px-5 pt-3.5 pb-1 gap-2">
-        <div
-          className={`text-[12px] sm:text-[13px] font-bold tracking-tight tabular-nums ${
-            isDay ? 'text-[#4B534E]' : 'text-emerald-200/80'
-          }`}
+      {/* 1. Rich Emerald-Gold Hero Header: Amal Progress, Active Waqt, Live Countdown & Adhan */}
+      <div
+        className={`relative overflow-hidden px-4 sm:px-5 pt-3.5 pb-3.5 text-white ${
+          isDay
+            ? 'bg-gradient-to-br from-[#043b2c] via-[#06523d] to-[#08674c]'
+            : 'bg-gradient-to-br from-[#03261c] via-[#06382a] to-[#084c39]'
+        }`}
+      >
+        {/* Subtle Top Golden Specular Hairline */}
+        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
+        {/* Warm Ambient Corner Glow */}
+        <div className="pointer-events-none absolute -right-10 -top-12 w-40 h-40 rounded-full bg-amber-400/15 blur-2xl" />
+        {/* Delicate Geometric Lattice Accent on Right */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 140 140"
+          className="pointer-events-none absolute -right-4 -bottom-6 w-32 h-32 text-amber-200 opacity-[0.07]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.2"
         >
-          {amalDoneText}
-        </div>
-        <div
-          className={`text-[12px] sm:text-[13px] font-semibold tabular-nums ${
-            isDay ? 'text-[#545C57]' : 'text-emerald-200/75'
-          }`}
-        >
-          {nowText}
-        </div>
-      </div>
+          <circle cx="70" cy="70" r="56" strokeDasharray="3 4" />
+          <polygon points="70,12 86,54 128,70 86,86 70,128 54,86 12,70 54,54" />
+          <circle cx="70" cy="70" r="22" />
+        </svg>
 
-      {/* Slim Integrated Active Waqt Strip (Prayer Name, Live Countdown, Adhan Toggle, Progress & Next Waqt) */}
-      {activePrayerName && liveCountdownStr && (
-        <div
-          className={`px-4 sm:px-5 pt-1.5 pb-2.5 border-b ${
-            isDay ? 'border-[var(--app-border,#E9E7DC)]' : 'border-emerald-800/45'
-          }`}
-        >
-          {/* Active Waqt + Countdown + Play Adhan button */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-baseline gap-2 min-w-0 flex-wrap">
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-[var(--app-primary-mid,#10b981)] animate-pulse shrink-0" />
-                <span
-                  className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
-                    isDay ? 'text-[var(--app-primary,#054A37)]' : 'text-amber-200'
-                  }`}
-                >
+        {/* Top Quiet Metadata Strip: "0/63 amal done" | "Now - 9:40 PM" */}
+        <div className="relative z-10 flex items-center justify-between gap-2 text-[11.5px] sm:text-xs font-semibold text-emerald-100/85 tabular-nums">
+          <span>{amalDoneText}</span>
+          <span className="font-mono text-emerald-100/90">{nowText}</span>
+        </div>
+
+        {/* Active Waqt + Live Countdown + Play Adhan Control */}
+        {activePrayerName && liveCountdownStr && (
+          <div className="relative z-10 mt-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-baseline gap-2.5 min-w-0 flex-wrap">
+                <span className="text-xl sm:text-2xl font-black tracking-tight leading-none text-amber-300">
                   {activePrayerName}
                 </span>
-              </div>
 
-              <span
-                className={`text-lg sm:text-xl font-mono font-black tracking-tight tabular-nums leading-none ${
-                  isDay ? 'text-[#18201C]' : 'text-white'
-                }`}
-              >
-                {formatLocalizedNumber(liveCountdownStr, lang)}
-              </span>
-
-              {remainingLabel && (
-                <span
-                  className={`text-[11px] font-semibold leading-none ${
-                    isDay ? 'text-[#626A65]' : 'text-emerald-300/75'
-                  }`}
-                >
-                  {remainingLabel}
+                <span className="text-xl sm:text-[26px] font-mono font-black tracking-tight tabular-nums leading-none text-white">
+                  {formatLocalizedNumber(liveCountdownStr, lang)}
                 </span>
-              )}
-            </div>
 
-            {onTogglePlayAdhan && (
-              <button
-                type="button"
-                onClick={onTogglePlayAdhan}
-                className={`shrink-0 min-h-[34px] px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold border flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
-                  isPlayingAdhan
-                    ? 'bg-[#E5A900] text-white border-[#D49A00] shadow-sm shadow-amber-500/25 animate-pulse'
-                    : isDay
-                    ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:opacity-90 text-[var(--app-primary,#054A37)] border-[var(--app-border,#cbe6d8)]'
-                    : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-100 border-emerald-400/25'
-                }`}
-              >
-                <Volume2 className={`w-3.5 h-3.5 shrink-0 ${isPlayingAdhan ? 'animate-bounce' : ''}`} />
-                <span className="whitespace-nowrap">
-                  {isPlayingAdhan ? playingAdhanLabel || 'Playing Adhan' : playAdhanLabel || 'Play Adhan'}
-                </span>
-              </button>
-            )}
-          </div>
-
-          {/* Slim Waqt Elapsed Progress Hairline */}
-          <div
-            className={`relative w-full h-1.5 rounded-full mt-2 overflow-hidden ${
-              isDay ? 'bg-[var(--app-surface-soft,#E6E4D8)]' : 'bg-emerald-950/90'
-            }`}
-          >
-            <div
-              className="h-full bg-gradient-to-r from-[var(--app-primary,#006A4E)] via-[var(--app-primary-mid,#059669)] to-[#E5A900] rounded-full transition-all duration-1000"
-              style={{ width: `${Math.max(0, Math.min(100, activeWaqtProgress))}%` }}
-            />
-          </div>
-
-          {/* Quiet Inline Metadata Row: Time Range, Valid/Makruh Status & Next Waqt */}
-          {(activeTimeRange || nextPrayerLabel) && (
-            <div className="flex items-center justify-between gap-2 mt-2 text-[11px] sm:text-xs font-semibold tabular-nums flex-wrap">
-              <div className="flex items-center gap-2 min-w-0">
-                {activeTimeRange && (
-                  <span
-                    className={`flex items-center gap-1 font-mono ${
-                      isDay ? 'text-[#555D58]' : 'text-emerald-200/80'
-                    }`}
-                  >
-                    <Clock className="w-3 h-3 shrink-0 opacity-75" />
-                    <span>{formatLocalizedNumber(activeTimeRange, lang)}</span>
+                {remainingLabel && (
+                  <span className="text-[11px] font-semibold leading-none text-emerald-200/80">
+                    {remainingLabel}
                   </span>
                 )}
-                <span
-                  className={`inline-flex items-center gap-1 text-[10.5px] font-bold ${
-                    waqtValidity.isProhibited
-                      ? isDay
-                        ? 'text-rose-600'
-                        : 'text-rose-400'
-                      : isDay
-                      ? 'text-[var(--app-primary,#057A55)]'
-                      : 'text-emerald-400'
-                  }`}
-                >
-                  {waqtValidity.isProhibited ? (
-                    <AlertTriangle className="w-3 h-3 shrink-0" />
-                  ) : (
-                    <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  )}
-                  <span className="truncate">{waqtValidity.label}</span>
-                </span>
               </div>
 
-              {nextPrayerLabel && (
-                <span
-                  className={`font-bold truncate ${
-                    isDay ? 'text-[#A67400]' : 'text-amber-300'
+              {onTogglePlayAdhan && (
+                <button
+                  type="button"
+                  onClick={onTogglePlayAdhan}
+                  className={`shrink-0 min-h-[36px] px-3.5 py-1.5 rounded-full text-[11.5px] sm:text-xs font-bold border flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                    isPlayingAdhan
+                      ? 'bg-amber-400 text-emerald-950 border-amber-200 shadow-sm shadow-amber-400/30'
+                      : 'bg-white/12 hover:bg-white/20 text-amber-100 border-amber-300/35 backdrop-blur-xs'
                   }`}
                 >
-                  {nextPrayerLabel}
-                </span>
+                  <Volume2 className={`w-3.5 h-3.5 shrink-0 ${isPlayingAdhan ? 'animate-bounce' : 'text-amber-300'}`} />
+                  <span className="whitespace-nowrap">
+                    {isPlayingAdhan ? playingAdhanLabel || 'Playing Adhan' : playAdhanLabel || 'Play Adhan'}
+                  </span>
+                </button>
               )}
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Curved Prayer & Solar Arc Visualization */}
-      <div className="relative px-2 sm:px-3 pt-1.5 pb-1.5">
+            {/* Luminous Waqt Progress Bar */}
+            <div className="relative w-full h-1.5 rounded-full mt-3 overflow-hidden bg-black/25">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-300 via-amber-300 to-amber-400 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(251,191,36,0.55)]"
+                style={{ width: `${Math.max(0, Math.min(100, activeWaqtProgress))}%` }}
+              />
+            </div>
+
+            {/* Quiet Inline Metadata Row: Time Range · Valid/Makruh Status | Next Waqt */}
+            {(activeTimeRange || nextPrayerLabel) && (
+              <div className="flex items-center justify-between gap-2 mt-2.5 text-[11px] sm:text-xs font-semibold tabular-nums flex-wrap">
+                <div className="flex items-center gap-2 min-w-0">
+                  {activeTimeRange && (
+                    <span className="flex items-center gap-1 font-mono text-emerald-100/85">
+                      <Clock className="w-3 h-3 shrink-0 opacity-80" />
+                      <span>{formatLocalizedNumber(activeTimeRange, lang)}</span>
+                    </span>
+                  )}
+                  <span aria-hidden="true" className="text-emerald-200/35">·</span>
+                  <span
+                    className={`inline-flex items-center gap-1 text-[11px] font-bold ${
+                      waqtValidity.isProhibited ? 'text-rose-300' : 'text-emerald-200'
+                    }`}
+                  >
+                    {waqtValidity.isProhibited ? (
+                      <AlertTriangle className="w-3 h-3 shrink-0" />
+                    ) : (
+                      <CheckCircle2 className="w-3 h-3 shrink-0 text-emerald-300" />
+                    )}
+                    <span className="truncate">{waqtValidity.label}</span>
+                  </span>
+                </div>
+
+                {nextPrayerLabel && (
+                  <span className="font-bold text-amber-200 truncate">
+                    {nextPrayerLabel}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 2. Curved Prayer & Solar Arc Visualization with Integrated Mosque Skyline Backdrop */}
+      <div
+        className={`relative px-2 sm:px-3 pt-2 pb-1.5 ${
+          isDay
+            ? 'bg-gradient-to-b from-[#f0faf5] via-[#f7fcfa] to-white'
+            : 'bg-gradient-to-b from-[#071f1a] via-[#08221c] to-[#08201b]'
+        }`}
+      >
         <svg
-          viewBox="0 0 420 206"
+          viewBox="0 0 420 208"
           className="w-full h-auto block select-none overflow-visible"
           role="img"
           aria-label={
@@ -646,32 +628,145 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
         >
           <defs>
             <filter id="salatSunGlow" x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
+              <feGaussianBlur stdDeviation="3" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
+
+            <filter id="nodeSoftShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow
+                dx="0"
+                dy="3"
+                stdDeviation="3"
+                floodColor={isDay ? '#054a37' : '#000000'}
+                floodOpacity={isDay ? '0.12' : '0.42'}
+              />
+            </filter>
+
+            {/* UI-Harmonized Sky Glow under the Solar Arc */}
+            <radialGradient id="arcAmbientGlow" cx="50%" cy="62%" r="52%">
+              <stop offset="0%" stopColor={isDay ? '#f59e0b' : '#34d399'} stopOpacity={isDay ? '0.13' : '0.14'} />
+              <stop offset="60%" stopColor={isDay ? '#10b981' : '#059669'} stopOpacity={isDay ? '0.06' : '0.07'} />
+              <stop offset="100%" stopColor={isDay ? '#ffffff' : '#08201b'} stopOpacity="0" />
+            </radialGradient>
+
+            {/* Harmonious Emerald Mosque Skyline Fill (Clearly Visible in Day & Night!) */}
+            <linearGradient id="mosqueSkylineFill" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={isDay ? '#06664b' : '#34d399'} stopOpacity={isDay ? '0.26' : '0.28'} />
+              <stop offset="100%" stopColor={isDay ? '#0a7d5d' : '#10b981'} stopOpacity={isDay ? '0.10' : '0.10'} />
+            </linearGradient>
+
+            {/* Subtle Secondary Distant Mosque Layer */}
+            <linearGradient id="mosqueDistantFill" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={isDay ? '#0d8a68' : '#6ee7b7'} stopOpacity={isDay ? '0.13' : '0.13'} />
+              <stop offset="100%" stopColor={isDay ? '#0d8a68' : '#10b981'} stopOpacity="0.03" />
+            </linearGradient>
+
+            {/* Below-Horizon Soft Tinted Night Band */}
+            <linearGradient id="salatNightBandDay" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#dff3ea" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#eef8f3" stopOpacity="0.7" />
+            </linearGradient>
+            <linearGradient id="salatNightBandNight" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#041511" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#061c17" stopOpacity="0.85" />
+            </linearGradient>
+
+            {/* Golden Progress Arc Gradient */}
+            <linearGradient id="goldenArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#f59e0b" />
+              <stop offset="55%" stopColor="#eab308" />
+              <stop offset="100%" stopColor="#d97706" />
+            </linearGradient>
           </defs>
+
+          {/* Soft Atmospheric Glow behind the Mosque & Arc */}
+          <ellipse cx="210" cy="112" rx="190" ry="88" fill="url(#arcAmbientGlow)" />
+
+          {/* Night Mode Delicate Twinkling Sky Stars */}
+          {!isDay && (
+            <g fill="#fde68a" opacity="0.45">
+              <circle cx="64" cy="34" r="1.1" />
+              <circle cx="118" cy="22" r="1.4" />
+              <circle cx="152" cy="48" r="0.9" />
+              <circle cx="272" cy="24" r="1.2" />
+              <circle cx="326" cy="38" r="1.0" />
+              <circle cx="364" cy="28" r="1.3" />
+              <circle cx="388" cy="64" r="0.9" />
+            </g>
+          )}
+
+          {/* Distant Soft Mosque Arches Layer (Depth) */}
+          <path
+            d="M 16,118 L 16,104 Q 34,90 52,104 L 78,104 Q 98,84 118,104 L 154,104 Q 178,76 202,104 L 246,104 Q 268,80 290,104 L 330,104 Q 350,88 370,104 L 404,104 L 404,118 Z"
+            fill="url(#mosqueDistantFill)"
+          />
+
+          {/* Primary Serene Mosque Skyline Silhouette — Clearly Visible Rising from the Horizon */}
+          <g>
+            <path
+              d="M 12,118 L 12,108 L 28,108 Q 42,95 56,108 L 70,108 L 70,74 L 72.5,64 L 75,74 L 75,108 L 94,108 Q 112,86 130,108 L 146,108 L 146,60 L 149.5,46 L 153,60 L 153,108 L 168,108 Q 210,48 252,108 L 267,108 L 267,60 L 270.5,46 L 274,60 L 274,108 L 290,108 Q 308,86 326,108 L 345,108 L 345,74 L 347.5,64 L 350,74 L 350,108 L 364,108 Q 378,95 392,108 L 408,108 L 408,118 Z"
+              fill="url(#mosqueSkylineFill)"
+              stroke={isDay ? '#06664b' : '#34d399'}
+              strokeOpacity={isDay ? '0.24' : '0.28'}
+              strokeWidth="0.8"
+            />
+            {/* Central Dome Finial & Crescent */}
+            <line
+              x1="210"
+              y1="62"
+              x2="210"
+              y2="77"
+              stroke={isDay ? '#d97706' : '#fcd34d'}
+              strokeOpacity={isDay ? '0.5' : '0.65'}
+              strokeWidth="1.2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 212.5,58.5 A 3.4,3.4 0 1,1 207.8,61.8 A 2.6,2.6 0 1,0 212.5,58.5 Z"
+              fill={isDay ? '#d97706' : '#fcd34d'}
+              fillOpacity={isDay ? '0.65' : '0.78'}
+            />
+            {/* Twin Main Minaret Finials */}
+            <circle cx="149.5" cy="43.5" r="1.5" fill={isDay ? '#d97706' : '#fcd34d'} fillOpacity="0.6" />
+            <circle cx="270.5" cy="43.5" r="1.5" fill={isDay ? '#d97706' : '#fcd34d'} fillOpacity="0.6" />
+            {/* Subtle Architectural Arch Windows on Central Mosque Facade */}
+            <g fill={isDay ? '#ffffff' : '#051612'} fillOpacity={isDay ? '0.55' : '0.45'}>
+              <path d="M 196,118 L 196,107 Q 200,101 204,107 L 204,118 Z" />
+              <path d="M 206,118 L 206,104 Q 210,97 214,104 L 214,118 Z" />
+              <path d="M 216,118 L 216,107 Q 220,101 224,107 L 224,118 Z" />
+            </g>
+          </g>
 
           {/* Shaded Below-Horizon Band (Night / Pre-Sunrise & Post-Sunset zone) */}
           <rect
             x="10"
             y={HORIZON_Y + 2}
             width="400"
-            height="76"
-            rx="16"
+            height="78"
+            rx="18"
             fill={trayFill}
+            stroke={isDay ? '#cde6da' : '#133a30'}
+            strokeWidth="0.9"
+          />
+
+          {/* Subtle Inverted Mosque Water Reflection inside Below-Horizon Band */}
+          <path
+            d="M 168,120 Q 210,148 252,120 Z"
+            fill={isDay ? '#06664b' : '#34d399'}
+            fillOpacity={isDay ? '0.07' : '0.08'}
           />
 
           {/* Horizontal Dashed Horizon Divider */}
           <line
-            x1="10"
+            x1="12"
             y1={HORIZON_Y}
-            x2="410"
+            x2="408"
             y2={HORIZON_Y}
             stroke={horizonStroke}
-            strokeWidth="1.4"
+            strokeWidth="1.3"
             strokeDasharray="4 4"
           />
 
@@ -687,13 +782,23 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
 
           {/* Live Golden Progress Arc from Fajr up to the exact current time */}
           {currentT > 0.005 && (
-            <path
-              d={goldenProgressPath}
-              fill="none"
-              stroke="#E5A900"
-              strokeWidth="3.6"
-              strokeLinecap="round"
-            />
+            <>
+              <path
+                d={goldenProgressPath}
+                fill="none"
+                stroke="#f59e0b"
+                strokeOpacity="0.22"
+                strokeWidth="8"
+                strokeLinecap="round"
+              />
+              <path
+                d={goldenProgressPath}
+                fill="none"
+                stroke="url(#goldenArcGrad)"
+                strokeWidth="3.6"
+                strokeLinecap="round"
+              />
+            </>
           )}
 
           {/* Glowing Golden Live Sun Dot at exact interpolated real-time position */}
@@ -701,7 +806,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
             <circle
               r="14"
               fill="#F5B800"
-              fillOpacity={isDay ? 0.24 : 0.28}
+              fillOpacity={isDay ? 0.24 : 0.30}
             />
             <circle
               r="7.5"
@@ -744,25 +849,26 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
                 {/* Invisible generous touch target (48x54) */}
                 <circle r="27" fill="transparent" />
 
-                {/* Selection halo */}
-                {isSelected && (
+                {/* Active or Selection Halo */}
+                {(isSelected || node.isCurrent) && (
                   <circle
                     r="26"
                     fill="#E5A900"
-                    fillOpacity="0.16"
+                    fillOpacity={isSelected ? '0.20' : '0.13'}
                   />
                 )}
 
-                {/* Crisp circular node with thick soft ring matching reference */}
+                {/* Crisp circular node with soft drop shadow */}
                 <circle
                   r="21.5"
                   fill={nodeFill}
                   stroke={ringColor}
-                  strokeWidth={isSelected ? '3.8' : '4'}
+                  strokeWidth={isSelected || node.isCurrent ? '3.8' : '3.4'}
+                  filter="url(#nodeSoftShadow)"
                   className="transition-all duration-200"
                 />
 
-                {/* Completed checkmark subtle indicator if all amals in this waqt done */}
+                {/* Completed checkmark indicator if all amals in this waqt done */}
                 {node.isAllDone && (
                   <circle
                     cx="15"
@@ -781,21 +887,21 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
                   textAnchor="middle"
                   fill={node.isAllDone ? '#059669' : nodeTextColor}
                   fontSize="12.5"
-                  fontWeight="700"
+                  fontWeight="800"
                   style={{ fontVariantNumeric: 'tabular-nums' }}
                 >
                   {fractionText}
                 </text>
 
-                {/* Label pill backing for legibility over horizon line & tray */}
+                {/* Subtle Label Backing for Crisp Readability over Horizon & Skyline */}
                 <rect
                   x={node.key === 'Maghrib' ? -27 : -22}
                   y={labelY - node.y - 10}
                   width={node.key === 'Maghrib' ? 54 : 44}
-                  height="15"
+                  height="15.5"
                   rx="7.5"
                   fill={isBelowHorizon ? labelPillTrayFill : labelPillFill}
-                  fillOpacity="0.92"
+                  fillOpacity="0.94"
                 />
 
                 {/* Prayer Name directly beneath circle */}
@@ -803,9 +909,9 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
                   x="0"
                   y={labelY - node.y + 1}
                   textAnchor="middle"
-                  fill={isSelected ? '#B47E00' : nodeLabelColor}
+                  fill={isSelected || node.isCurrent ? (isDay ? '#B47600' : '#FCD34D') : nodeLabelColor}
                   fontSize="11"
-                  fontWeight={isSelected || node.isCurrent ? '700' : '600'}
+                  fontWeight={isSelected || node.isCurrent ? '800' : '700'}
                 >
                   {node.name}
                 </text>
@@ -815,17 +921,17 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
         </svg>
       </div>
 
-      {/* Slim Integrated Solar Milestones Row (Sunrise · Zawal · Sunset · Daylight) */}
-      <div className="px-4 sm:px-5 pb-2.5">
+      {/* 3. Integrated Solar Milestones Strip (Sunrise · Zawal · Sunset · Daylight) */}
+      <div className="px-3.5 sm:px-4 pb-3 pt-0.5">
         <div
-          className={`grid grid-cols-4 divide-x rounded-2xl border py-2 px-1 text-center tabular-nums ${
+          className={`grid grid-cols-4 divide-x rounded-2xl border py-2.5 px-1 text-center tabular-nums ${
             isDay
-              ? 'bg-[var(--app-surface-soft,#F6F5EE)]/75 border-[var(--app-border,#E5E3D8)] divide-[var(--app-border,#E5E3D8)]'
-              : 'bg-[#061814]/80 border-emerald-900/60 divide-emerald-900/60'
+              ? 'bg-[#f1faf6] border-emerald-900/10 divide-emerald-900/10'
+              : 'bg-[#051713]/85 border-emerald-800/50 divide-emerald-800/45'
           }`}
         >
           <div className="px-1 flex flex-col items-center justify-center">
-            <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-300">
               <SunriseIcon className="w-3 h-3 shrink-0" />
               <span className="truncate">{isBn ? 'সূর্যোদয়' : isAr ? 'الشروق' : 'Sunrise'}</span>
             </span>
@@ -835,7 +941,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
           </div>
 
           <div className="px-1 flex flex-col items-center justify-center">
-            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
               <Sun className="w-3 h-3 shrink-0" />
               <span className="truncate">{isBn ? 'মধ্যাহ্ন' : isAr ? 'الزوال' : 'Zawal'}</span>
             </span>
@@ -845,7 +951,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
           </div>
 
           <div className="px-1 flex flex-col items-center justify-center">
-            <span className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-300">
               <SunsetIcon className="w-3 h-3 shrink-0" />
               <span className="truncate">{isBn ? 'সূর্যাস্ত' : isAr ? 'الغروب' : 'Sunset'}</span>
             </span>
@@ -855,7 +961,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
           </div>
 
           <div className="px-1 flex flex-col items-center justify-center">
-            <span className="flex items-center gap-1 text-[10px] font-bold text-sky-700 dark:text-sky-400">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-sky-700 dark:text-sky-300">
               <Clock className="w-3 h-3 shrink-0" />
               <span className="truncate">{isBn ? 'দিনের আলো' : isAr ? 'النهار' : 'Daylight'}</span>
             </span>
@@ -866,17 +972,17 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
         </div>
       </div>
 
-      {/* Bottom Action Row: [All amal] [∞ Any time - X/Y] */}
-      <div className="flex items-center justify-between gap-2 px-4 sm:px-5 pb-4 pt-1 flex-wrap">
-        <div className="flex items-center gap-2.5 flex-wrap">
+      {/* 4. Bottom Action Row: [All amal] [∞ Any time - X/Y] [Expand Chevron] */}
+      <div className="flex items-center justify-between gap-2 px-3.5 sm:px-4 pb-3.5 pt-0.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => handleSelectFilter('all')}
-            className={`min-h-[42px] px-4 py-2 rounded-full text-[13px] sm:text-sm font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer ${
+            className={`min-h-[42px] px-4 py-2 rounded-full text-[13px] font-bold flex items-center gap-2 transition-all active:scale-95 cursor-pointer ${
               activeFilter === 'all'
-                ? 'bg-[#E5A900] text-white shadow-sm shadow-amber-500/25'
+                ? 'bg-gradient-to-r from-[#d99700] to-[#eab308] text-white shadow-sm shadow-amber-600/25'
                 : isDay
-                ? 'bg-[#F3F2EB] text-[#2A302C] border border-[#E2E0D5] hover:border-[#E5A900]/60'
+                ? 'bg-[#f1f8f4] text-[#054a37] border border-emerald-900/12 hover:border-amber-500/60'
                 : 'bg-[#0e2d26] text-emerald-100 border border-emerald-800/70 hover:border-amber-400/50'
             }`}
           >
@@ -887,15 +993,15 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
           <button
             type="button"
             onClick={() => handleSelectFilter('anytime')}
-            className={`min-h-[42px] px-4 py-2 rounded-full text-[13px] sm:text-sm font-bold flex items-center gap-2 tabular-nums transition-all active:scale-95 cursor-pointer ${
+            className={`min-h-[42px] px-4 py-2 rounded-full text-[13px] font-bold flex items-center gap-2 tabular-nums transition-all active:scale-95 cursor-pointer ${
               activeFilter === 'anytime'
-                ? 'bg-[#E5A900] text-white shadow-sm shadow-amber-500/25'
+                ? 'bg-gradient-to-r from-[#d99700] to-[#eab308] text-white shadow-sm shadow-amber-600/25'
                 : isDay
-                ? 'bg-[#F5F4EE] text-[#262B28] border border-[#E3E1D7] hover:border-[#E5A900]/60'
+                ? 'bg-[#f1f8f4] text-[#143d30] border border-emerald-900/12 hover:border-amber-500/60'
                 : 'bg-[#0e2d26] text-emerald-100 border border-emerald-800/70 hover:border-amber-400/50'
             }`}
           >
-            <InfinityIcon className="w-4 h-4 shrink-0" />
+            <InfinityIcon className="w-4 h-4 shrink-0 text-emerald-700 dark:text-amber-300" />
             <span>{anyTimeLabel}</span>
           </button>
         </div>
@@ -909,9 +1015,9 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
           }}
           aria-expanded={drawerOpen}
           aria-label={drawerOpen ? 'Collapse amals' : 'Expand amals'}
-          className={`min-h-[38px] min-w-[38px] rounded-full flex items-center justify-center border transition cursor-pointer ${
+          className={`min-h-[40px] min-w-[40px] rounded-full flex items-center justify-center border transition cursor-pointer ${
             isDay
-              ? 'bg-white/80 border-[#E3E1D7] text-[#4A504C] hover:border-[#E5A900]'
+              ? 'bg-[#f1f8f4] border-emerald-900/12 text-[#054a37] hover:border-amber-500/70'
               : 'bg-[#0d2a23] border-emerald-800/60 text-emerald-200 hover:border-amber-400/60'
           }`}
         >

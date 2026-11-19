@@ -61,6 +61,12 @@ import {
   getPropheticTitleProfile,
   PropheticSahabaTitle,
 } from '../data/propheticSahabaTitlesData';
+import {
+  resolveSahabaFamilyChronicle,
+  SAHABA_FAMILY_CHRONICLES,
+  KHALIFA_FAMILY_CHRONICLES,
+  FamilyMemberDetailCard,
+} from '../data/sahabaFamilyChronicles';
 
 interface HayatusSahabaViewProps {
   themeMode?: ThemeMode;
@@ -299,6 +305,14 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all' | 'prophetic_titles'>('all');
   const [copiedQuote, setCopiedQuote] = useState(false);
+  const [activeFamilyFilter, setActiveFamilyFilter] = useState<'all' | 'spouses' | 'children' | 'lineage'>('all');
+  const [familyViewMode, setFamilyViewMode] = useState<'grid' | 'slide'>('grid');
+  const [activeFamilyCardIndex, setActiveFamilyCardIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveFamilyFilter('all');
+    setActiveFamilyCardIndex(0);
+  }, [selectedSahabaId]);
 
   const buildSahabaShareContent = (sahaba: SahabaItem): ShareableContent => {
     const enProfile = SAHABA_EN_DATABASE[sahaba.id];
@@ -506,51 +520,44 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     setTimeout(() => setCopiedQuote(false), 2000);
   };
 
-  // Resolve Family details strictly in the chosen language
+  // Resolve Family details strictly in the chosen language (backed by verified PDF & classical chronicles)
   const getSahabaFamilyData = (sahaba: SahabaItem): SahabaFamily => {
     const enProfile = SAHABA_EN_DATABASE[sahaba.id];
     const baseFamily = sahaba.familyBn;
     const enFamily = enProfile?.family || sahaba.familyEn;
+    const chronicle = resolveSahabaFamilyChronicle(sahaba);
 
-    if (baseFamily || enFamily) {
-      return {
-        fatherBn: baseFamily?.fatherBn,
-        fatherEn: enFamily?.fatherEn || '',
-        motherBn: baseFamily?.motherBn,
-        motherEn: enFamily?.motherEn || '',
-        tribeOrClanBn: baseFamily?.tribeOrClanBn,
-        tribeOrClanEn: enFamily?.tribeOrClanEn || '',
-        wivesBn: baseFamily?.wivesBn || [],
-        wivesEn: enFamily?.wivesEn || [],
-        sonsBn: baseFamily?.sonsBn || [],
-        sonsEn: enFamily?.sonsEn || [],
-        daughtersBn: baseFamily?.daughtersBn || [],
-        daughtersEn: enFamily?.daughtersEn || [],
-        keyRelativesBn: baseFamily?.keyRelativesBn || [],
-        keyRelativesEn: enFamily?.keyRelativesEn || [],
-        overviewBn: baseFamily?.overviewBn,
-        overviewEn: enFamily?.overviewEn || '',
-      };
-    }
+    const combinedSpousesBn =
+      (chronicle.husbandsBn && chronicle.husbandsBn.length > 0)
+        ? chronicle.husbandsBn
+        : (chronicle.wivesBn && chronicle.wivesBn.length > 0)
+          ? chronicle.wivesBn
+          : (baseFamily?.wivesBn || []);
 
-    // Default fallback if not defined
+    const combinedSpousesEn =
+      (chronicle.husbandsEn && chronicle.husbandsEn.length > 0)
+        ? chronicle.husbandsEn
+        : (chronicle.wivesEn && chronicle.wivesEn.length > 0)
+          ? chronicle.wivesEn
+          : (enFamily?.wivesEn || []);
+
     return {
-      fatherBn: 'ইসলামি সীরাত ও ইতিহাসে নিবন্ধিত সম্মানিত পিতা',
-      fatherEn: 'Father registered in classical Islamic Seerah',
-      motherBn: 'ইসলামি সীরাত সংকলনে নিবন্ধিত মহীয়সী মাতা',
-      motherEn: 'Mother registered in classical Islamic Seerah',
-      tribeOrClanBn: 'সম্মানিত আরব্য বংশ ও কুরাইশ শাখা',
-      tribeOrClanEn: 'Noble Arabian Tribe & Lineage',
-      wivesBn: [],
-      wivesEn: [],
-      sonsBn: [],
-      sonsEn: [],
-      daughtersBn: [],
-      daughtersEn: [],
-      keyRelativesBn: ['রাসূলুল্লাহ (সা.)-এর সুমহান সাহাবি'],
-      keyRelativesEn: ['Honored companion of Prophet Muhammad (PBUH)'],
-      overviewBn: `${sahaba.nameBn} হযরত মুহাম্মদ (সা.)-এর অনুগত ও অত্যন্ত মর্যাদাবান সাহাবি ছিলেন। তাঁর পরিবার ইসলামের সুমহান সেবায় নিবেদিত ছিল।`,
-      overviewEn: `${getSahabaName(sahaba, selectedLanguage)} was an illustrious companion of Prophet Muhammad (PBUH) whose family was dedicated to the service of Islam.`,
+      fatherBn: chronicle.fatherBn || baseFamily?.fatherBn || 'ক্লাসিক্যাল সীরাত ও রিজাল গ্রন্থে নিবন্ধিত',
+      fatherEn: chronicle.fatherEn || enFamily?.fatherEn || 'Recorded in classical Islamic Seerah',
+      motherBn: chronicle.motherBn || baseFamily?.motherBn || 'সম্মানিত সাহাবি পরিবার',
+      motherEn: chronicle.motherEn || enFamily?.motherEn || 'Honored Companion household',
+      tribeOrClanBn: chronicle.tribeOrClanBn || baseFamily?.tribeOrClanBn || sahaba.categoryBn,
+      tribeOrClanEn: chronicle.tribeOrClanEn || enFamily?.tribeOrClanEn || (sahaba.categoryEn || 'Noble Companion Lineage'),
+      wivesBn: combinedSpousesBn,
+      wivesEn: combinedSpousesEn,
+      sonsBn: (chronicle.sonsBn && chronicle.sonsBn.length > 0) ? chronicle.sonsBn : (baseFamily?.sonsBn || []),
+      sonsEn: (chronicle.sonsEn && chronicle.sonsEn.length > 0) ? chronicle.sonsEn : (enFamily?.sonsEn || []),
+      daughtersBn: (chronicle.daughtersBn && chronicle.daughtersBn.length > 0) ? chronicle.daughtersBn : (baseFamily?.daughtersBn || []),
+      daughtersEn: (chronicle.daughtersEn && chronicle.daughtersEn.length > 0) ? chronicle.daughtersEn : (enFamily?.daughtersEn || []),
+      keyRelativesBn: (chronicle.keyRelativesBn && chronicle.keyRelativesBn.length > 0) ? chronicle.keyRelativesBn : (baseFamily?.keyRelativesBn || []),
+      keyRelativesEn: (chronicle.keyRelativesEn && chronicle.keyRelativesEn.length > 0) ? chronicle.keyRelativesEn : (enFamily?.keyRelativesEn || []),
+      overviewBn: baseFamily?.overviewBn || chronicle.overviewPointsBn[0] || sahaba.summaryBn,
+      overviewEn: enFamily?.overviewEn || chronicle.overviewPointsEn?.[0] || `${getSahabaName(sahaba, selectedLanguage)} was an honored companion of Prophet Muhammad (PBUH).`,
     };
   };
 
@@ -619,14 +626,62 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
       : (activeSahaba.hadithPraiseBn || []).filter((hp) => Boolean(hp.textEn));
 
     // Family localized values with strictly non-mixed fallbacks
+    const familyChronicle = resolveSahabaFamilyChronicle(activeSahaba);
+    const isFemaleCompanion = Boolean(
+      (familyChronicle.husbandsBn && familyChronicle.husbandsBn.length > 0) ||
+      activeSahaba.categoryKey === 'sahabiyyat'
+    );
+    const isKhalifaPdfEntry = Boolean(KHALIFA_FAMILY_CHRONICLES[activeSahaba.id]);
+
     const father = isBn ? familyData.fatherBn : (familyData.fatherEn || 'Recorded in classical Seerah chronicles');
     const mother = isBn ? familyData.motherBn : (familyData.motherEn || 'Recorded in classical Seerah chronicles');
     const tribe = isBn ? familyData.tribeOrClanBn : (familyData.tribeOrClanEn || 'Noble Arab lineage');
-    const wives = isBn ? familyData.wivesBn : (familyData.wivesEn || []);
-    const sons = isBn ? familyData.sonsBn : (familyData.sonsEn || []);
-    const daughters = isBn ? familyData.daughtersBn : (familyData.daughtersEn || []);
-    const relatives = isBn ? familyData.keyRelativesBn : (familyData.keyRelativesEn || []);
-    const familyOverview = isBn ? familyData.overviewBn : (familyData.overviewEn || 'A venerable household honored through lifelong dedication to Prophet Muhammad (PBUH) and early Islam.');
+    const spouses = isBn
+      ? (familyData.wivesBn || [])
+      : (familyData.wivesEn && familyData.wivesEn.length > 0 ? familyData.wivesEn : (familyData.wivesBn || []));
+    const sons = isBn
+      ? (familyData.sonsBn || [])
+      : (familyData.sonsEn && familyData.sonsEn.length > 0 ? familyData.sonsEn : (familyData.sonsBn || []));
+    const daughters = isBn
+      ? (familyData.daughtersBn || [])
+      : (familyData.daughtersEn && familyData.daughtersEn.length > 0 ? familyData.daughtersEn : (familyData.daughtersBn || []));
+    const relatives = isBn
+      ? (familyData.keyRelativesBn || [])
+      : (familyData.keyRelativesEn && familyData.keyRelativesEn.length > 0 ? familyData.keyRelativesEn : (familyData.keyRelativesBn || []));
+
+    const familyMemberCards = familyChronicle.members || [];
+    const spouseCardsCount = familyMemberCards.filter((m) => m.group === 'wife' || m.group === 'umm_walad' || m.group === 'husband').length;
+    const childCardsCount = familyMemberCards.filter((m) => m.group === 'child' || m.group === 'children_summary').length;
+    const lineageCardsCount = familyMemberCards.filter((m) => m.group === 'lineage').length;
+    const distinctFamilyGroups = [spouseCardsCount > 0, childCardsCount > 0, lineageCardsCount > 0].filter(Boolean).length;
+
+    const filteredFamilyCards: FamilyMemberDetailCard[] = familyMemberCards.filter((m) => {
+      if (activeFamilyFilter === 'all') return true;
+      if (activeFamilyFilter === 'spouses') return m.group === 'wife' || m.group === 'umm_walad' || m.group === 'husband';
+      if (activeFamilyFilter === 'children') return m.group === 'child' || m.group === 'children_summary';
+      return m.group === 'lineage';
+    });
+
+    const safeSlideIndex = filteredFamilyCards.length > 0
+      ? Math.min(activeFamilyCardIndex, filteredFamilyCards.length - 1)
+      : 0;
+
+    const handleCopyFamilyCard = (card: FamilyMemberDetailCard) => {
+      const cardTitle = isBn ? card.nameBn : (card.nameEn || card.nameBn);
+      const cardRole = isBn ? card.roleBadgeBn : (card.roleBadgeEn || card.roleBadgeBn);
+      const cardPoints = isBn ? card.pointsBn : (card.pointsEn && card.pointsEn.length > 0 ? card.pointsEn : card.pointsBn);
+      const cardSource = isBn ? card.sourceBn : (card.sourceEn || localizeRefToEn(card.sourceBn));
+      const text = [
+        `${activeName} — ${cardTitle} (${cardRole})`,
+        '',
+        ...cardPoints.map((pt) => `✓ ${pt}`),
+        '',
+        `${isBn ? 'সূত্র' : 'Source'}: ${cardSource}`,
+      ].join('\n');
+      void copyToClipboard(text);
+      showToast(isBn ? 'পারিবারিক তথ্য ও রেফারেন্স কপি হয়েছে' : 'Family record & citation copied');
+      if (soundEnabled) soundHaptics.playTap();
+    };
 
     const isCompleted = completedSahaba.includes(activeSahaba.id);
     const isBookmarked = bookmarkedSahaba.includes(activeSahaba.id);
@@ -922,145 +977,539 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           )}
 
           {/* ========================================================================= */}
-          {/* SECTION 2: DEDICATED FAMILY & LINEAGE SECTION (PARENTS, SPOUSES, CHILDREN) */}
+          {/* SECTION 2: FAMILY, SPOUSES & CHILDREN CHRONICLE (WITH CLASSICAL CITATIONS)*/}
           {/* ========================================================================= */}
-          <div className={`p-5 rounded-2xl border space-y-4 shadow-md ${
-            isDay ? 'bg-gradient-to-b from-blue-50/70 via-white to-blue-50/30 border-blue-200 text-slate-900' : 'bg-[#081a24] border-blue-500/30 text-blue-100'
+          <div className={`rounded-2xl border overflow-hidden shadow-md ${
+            isDay
+              ? 'bg-gradient-to-b from-emerald-50/70 via-white to-amber-50/25 border-emerald-200/90 text-slate-900'
+              : 'bg-gradient-to-b from-[#08201b] via-[#061816] to-[#051214] border-emerald-800/50 text-slate-100'
           }`}>
-            <div className="flex items-center justify-between border-b pb-2.5 border-blue-200/60 dark:border-blue-900/40">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-500" />
-                <h3 className="font-black text-xs sm:text-sm text-blue-700 dark:text-blue-300">
-                  {isBn ? 'পরিবার, বংশমর্যাদা, সহধর্মিণী ও সন্তানসন্ততি' : 'Family, Lineage, Spouses & Children'}
-                </h3>
+            {/* Deep Emerald & Gold Section Header */}
+            <div className={`px-4 sm:px-5 py-3.5 flex flex-wrap items-center justify-between gap-2 border-b ${
+              isDay
+                ? 'bg-gradient-to-r from-[#064e3b] via-[#065f46] to-[#047857] text-white border-amber-400/50'
+                : 'bg-gradient-to-r from-[#052920] via-[#08382c] to-[#0a4435] text-white border-amber-500/35'
+            }`}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4 text-amber-300" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-black text-xs sm:text-sm text-white leading-snug">
+                    {isBn
+                      ? (isFemaleCompanion ? 'পরিবার, বংশমর্যাদা, স্বামী ও সন্তানসন্ততি' : 'পরিবার, বংশমর্যাদা, স্ত্রী ও সন্তানসন্ততি')
+                      : 'Family, Lineage, Spouses & Children'}
+                  </h3>
+                  <p className="text-[11px] text-emerald-100/85 truncate">
+                    {isBn ? familyChronicle.summaryHeadlineBn : (familyChronicle.summaryHeadlineEn || familyChronicle.summaryHeadlineBn)}
+                  </p>
+                </div>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-300">
-                {isBn ? 'পবিত্র বংশলতিকা' : 'Sacred Lineage'}
-              </span>
+              {isKhalifaPdfEntry && (
+                <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-amber-400/20 text-amber-200 border border-amber-300/35 shrink-0">
+                  {isBn ? 'সম্পূর্ণ রেফারেন্সসহ সংকলন' : 'Complete Referenced Chronicle'}
+                </span>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
-              {/* Father & Mother */}
-              <div className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white border-blue-100' : 'bg-[#06141c] border-blue-900/40'}`}>
-                <div className="flex items-center gap-1.5 font-bold text-blue-600 dark:text-blue-400">
-                  <UserCheck className="w-4 h-4" />
-                  <span>{isBn ? 'পিতা ও মাতা:' : 'Parents:'}</span>
+            <div className="p-4 sm:p-5 space-y-5">
+              {/* At-a-Glance Overview Box (PDF Cover/Summary Style) */}
+              <div className={`rounded-xl border p-4 space-y-3 ${
+                isDay
+                  ? 'bg-white border-emerald-200/80 shadow-xs'
+                  : 'bg-[#071d1b] border-emerald-700/40'
+              }`}>
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-emerald-500/15">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <h4 className={`font-black text-xs sm:text-sm ${isDay ? 'text-emerald-900' : 'text-emerald-300'}`}>
+                      {isBn
+                        ? (familyChronicle.overviewTitleBn || `${activeName}-এর পরিবার · এক নজরে`)
+                        : (familyChronicle.overviewTitleEn || `Family of ${activeName} · At a Glance`)}
+                    </h4>
+                  </div>
                 </div>
-                <div className="space-y-1 pl-2 border-l-2 border-blue-400/40 opacity-90 leading-relaxed">
-                  <p><strong>{isBn ? 'পিতা:' : 'Father:'}</strong> {father || (isBn ? 'ঐতিহাসিক সীরাতে নিবন্ধিত' : 'Recorded in Seerah')}</p>
-                  <p><strong>{isBn ? 'মাতা:' : 'Mother:'}</strong> {mother || (isBn ? 'ঐতিহাসিক সীরাতে নিবন্ধিত' : 'Recorded in Seerah')}</p>
-                  {tribe && <p><strong>{isBn ? 'গোত্র ও বংশ:' : 'Tribe & Clan:'}</strong> {tribe}</p>}
+
+                <ul className="space-y-2 text-xs sm:text-[13px] leading-relaxed">
+                  {(isBn
+                    ? familyChronicle.overviewPointsBn
+                    : (familyChronicle.overviewPointsEn && familyChronicle.overviewPointsEn.length > 0
+                        ? familyChronicle.overviewPointsEn
+                        : familyChronicle.overviewPointsBn)
+                  ).map((point, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5">
+                      <span className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                        isDay ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/20 text-emerald-300'
+                      }`}>
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </span>
+                      <span className={isDay ? 'text-slate-700' : 'text-slate-200'}>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className={`pt-2.5 border-t flex items-center gap-1.5 text-[11px] font-semibold ${
+                  isDay ? 'border-amber-200/70 text-amber-800' : 'border-amber-500/20 text-amber-300/90'
+                }`}>
+                  <ScrollText className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                  <span>
+                    {isBn ? 'সূত্র:' : 'Sources:'}{' '}
+                    {isBn
+                      ? familyChronicle.overviewSourceBn
+                      : (familyChronicle.overviewSourceEn || localizeRefToEn(familyChronicle.overviewSourceBn))}
+                  </span>
                 </div>
               </div>
 
-              {/* Wives & Spouses */}
-              <div className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white border-blue-100' : 'bg-[#06141c] border-blue-900/40'}`}>
-                <div className="flex items-center gap-1.5 font-bold text-rose-600 dark:text-rose-400">
-                  <Heart className="w-4 h-4" />
-                  <span>{isBn ? 'সহধর্মিণীগণ (স্ত্রী):' : 'Spouses & Wives:'}</span>
+              {/* Compact Structured Family Matrix (Parents, Spouses, Sons, Daughters) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                {/* Father & Mother */}
+                <div className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white border-emerald-100' : 'bg-[#061718] border-emerald-900/50'}`}>
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400">
+                    <UserCheck className="w-4 h-4 shrink-0" />
+                    <span>{isBn ? 'পিতা, মাতা ও বংশ:' : 'Parents & Lineage:'}</span>
+                  </div>
+                  <div className="space-y-1 opacity-95 leading-relaxed">
+                    <p><strong className={isDay ? 'text-slate-900' : 'text-emerald-200'}>{isBn ? 'পিতা:' : 'Father:'}</strong> {father}</p>
+                    <p><strong className={isDay ? 'text-slate-900' : 'text-emerald-200'}>{isBn ? 'মাতা:' : 'Mother:'}</strong> {mother}</p>
+                    {tribe && <p><strong className={isDay ? 'text-slate-900' : 'text-emerald-200'}>{isBn ? 'গোত্র ও বংশ:' : 'Tribe & Clan:'}</strong> {tribe}</p>}
+                  </div>
                 </div>
-                {wives && wives.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {wives.map((wife, wIdx) => {
-                      const hasBio = isBn && (FAMILY_MEMBER_BIOGRAPHIES[wife] || Object.values(FAMILY_MEMBER_BIOGRAPHIES).find(b => b.nameBn.includes(wife)));
-                      return (
+
+                {/* Spouses (Wives or Husbands) */}
+                <div className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white border-emerald-100' : 'bg-[#061718] border-emerald-900/50'}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 font-bold text-rose-600 dark:text-rose-400">
+                      <Heart className="w-4 h-4 shrink-0" />
+                      <span>
+                        {isBn
+                          ? (isFemaleCompanion ? 'স্বামী (দাম্পত্য):' : 'সহধর্মিণীগণ (স্ত্রী):')
+                          : (isFemaleCompanion ? 'Husband(s):' : 'Wives & Spouses:')}
+                      </span>
+                    </div>
+                    {spouses.length > 0 && (
+                      <span className="text-[10px] font-bold text-rose-600/80 dark:text-rose-300/80">
+                        {formatNum(spouses.length)} {isBn ? 'জন' : ''}
+                      </span>
+                    )}
+                  </div>
+                  {spouses.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {spouses.map((spouse, wIdx) => {
+                        const hasBio = isBn && (FAMILY_MEMBER_BIOGRAPHIES[spouse] || Object.values(FAMILY_MEMBER_BIOGRAPHIES).find((b) => b.nameBn.includes(spouse) || spouse.includes(b.nameBn.replace(/\s*\(রা\.\)\s*/g, '').trim())));
+                        return (
+                          <span
+                            key={wIdx}
+                            onClick={() => {
+                              if (hasBio) {
+                                setSelectedFamilyBioModal(hasBio);
+                                if (soundEnabled) soundHaptics.playTap();
+                              }
+                            }}
+                            className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition ${
+                              hasBio
+                                ? 'bg-rose-500/12 border-rose-300 dark:border-rose-500/40 text-rose-700 dark:text-rose-300 cursor-pointer hover:bg-rose-500/20'
+                                : isDay
+                                  ? 'bg-emerald-50/70 border-emerald-200/80 text-slate-800'
+                                  : 'bg-[#0b2324] border-emerald-800/50 text-slate-200'
+                            }`}
+                          >
+                            {spouse} {hasBio && '🔍'}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] opacity-75">
+                      {isBn ? 'বিস্তারিত স্ত্রীর নাম প্রামাণ্য তাবাকাতে পৃথকভাবে উদ্ধৃত হয়নি।' : 'Not individually itemized in classical Tabaqat records.'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Sons */}
+                {sons.length > 0 && (
+                  <div className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white border-emerald-100' : 'bg-[#061718] border-emerald-900/50'}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 font-bold text-teal-700 dark:text-teal-400">
+                        <Baby className="w-4 h-4 shrink-0" />
+                        <span>{isBn ? 'পুত্রসন্তানগণ:' : 'Sons:'}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-teal-600/80 dark:text-teal-300/80">
+                        {formatNum(sons.length)} {isBn ? 'জন' : ''}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {sons.map((son, sIdx) => (
                         <span
-                          key={wIdx}
-                          onClick={() => {
-                            if (hasBio) {
-                              setSelectedFamilyBioModal(hasBio);
-                              if (soundEnabled) soundHaptics.playTap();
-                            }
-                          }}
-                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition ${
-                            hasBio
-                              ? 'bg-rose-500/15 border-rose-300 dark:border-rose-500/40 text-rose-700 dark:text-rose-300 cursor-pointer hover:bg-rose-500/25'
-                              : 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 opacity-90'
+                          key={sIdx}
+                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold ${
+                            isDay
+                              ? 'bg-teal-50 border-teal-200 text-teal-900'
+                              : 'bg-teal-500/12 border-teal-500/35 text-teal-200'
                           }`}
                         >
-                          {wife} {hasBio && '🔍'}
+                          {son}
                         </span>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-[11px] opacity-80 italic">
-                    {isBn ? 'ঐতিহাসিক গ্রন্থসমূহে সম্মানিত সহধর্মিণীর পুণ্য বিবরণ সংরক্ষিত।' : 'Recorded in classical Islamic chronicles.'}
-                  </p>
+                )}
+
+                {/* Daughters */}
+                {daughters.length > 0 && (
+                  <div className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white border-emerald-100' : 'bg-[#061718] border-emerald-900/50'}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
+                        <Crown className="w-4 h-4 shrink-0" />
+                        <span>{isBn ? 'কন্যাসন্তানগণ:' : 'Daughters:'}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-600/80 dark:text-amber-300/80">
+                        {formatNum(daughters.length)} {isBn ? 'জন' : ''}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {daughters.map((daughter, dIdx) => (
+                        <span
+                          key={dIdx}
+                          className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold ${
+                            isDay
+                              ? 'bg-amber-50 border-amber-200 text-amber-900'
+                              : 'bg-amber-500/12 border-amber-500/35 text-amber-200'
+                          }`}
+                        >
+                          {daughter}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Sons */}
-              <div className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white border-blue-100' : 'bg-[#06141c] border-blue-900/40'}`}>
-                <div className="flex items-center gap-1.5 font-bold text-teal-600 dark:text-teal-400">
-                  <Baby className="w-4 h-4" />
-                  <span>{isBn ? 'পুত্রসন্তানগণ:' : 'Sons:'}</span>
-                </div>
-                {sons && sons.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {sons.map((son, sIdx) => (
+              {/* Notable Relatives */}
+              {relatives.length > 0 && (
+                <div className={`p-3.5 rounded-xl border text-xs space-y-1.5 ${isDay ? 'bg-white border-emerald-100' : 'bg-[#061718] border-emerald-900/50'}`}>
+                  <strong className="text-emerald-700 dark:text-emerald-300 block">
+                    {isBn ? 'বিশিষ্ট আত্মীয়স্বজন ও পারিবারিক সংযোগ:' : 'Notable Relatives & Kinship:'}
+                  </strong>
+                  <div className="flex flex-wrap gap-1.5">
+                    {relatives.map((rel, rIdx) => (
                       <span
-                        key={sIdx}
-                        className="px-2.5 py-1 rounded-lg bg-teal-500/15 border border-teal-300 dark:border-teal-500/40 text-teal-700 dark:text-teal-300 text-[11px] font-semibold"
+                        key={rIdx}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium ${
+                          isDay ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/70' : 'bg-emerald-950/70 text-emerald-200 border border-emerald-800/50'
+                        }`}
                       >
-                        {son}
+                        • {rel}
                       </span>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-[11px] opacity-80 italic">
-                    {isBn ? 'সীরাত সংকলনে পুণ্যবান সন্তান ও বংশধরের ইতিহাস সংরক্ষিত।' : 'Noble progeny documented in classical registers.'}
-                  </p>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Daughters */}
-              <div className={`p-3.5 rounded-xl border space-y-2 ${isDay ? 'bg-white border-blue-100' : 'bg-[#06141c] border-blue-900/40'}`}>
-                <div className="flex items-center gap-1.5 font-bold text-purple-600 dark:text-purple-400">
-                  <Crown className="w-4 h-4" />
-                  <span>{isBn ? 'কন্যাসন্তানগণ:' : 'Daughters:'}</span>
-                </div>
-                {daughters && daughters.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {daughters.map((daughter, dIdx) => (
-                      <span
-                        key={dIdx}
-                        className="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-300 dark:border-purple-500/40 text-purple-700 dark:text-purple-300 text-[11px] font-semibold"
-                      >
-                        {daughter}
-                      </span>
-                    ))}
+              {/* ================================================================= */}
+              {/* PDF-STYLE DETAILED FAMILY MEMBER CARDS (WIVES, CHILDREN, LINEAGE) */}
+              {/* ================================================================= */}
+              {familyMemberCards.length > 0 && (
+                <div className="space-y-3.5 pt-1">
+                  {/* Controls Bar: Title + Filter Tabs + Grid/Slide Toggle */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-amber-500 shrink-0" />
+                      <h4 className={`font-black text-xs sm:text-sm ${isDay ? 'text-emerald-900' : 'text-amber-300'}`}>
+                        {isBn
+                          ? `বিস্তারিত পারিবারিক কার্ড ও রেফারেন্স (${formatNum(filteredFamilyCards.length)}টি)`
+                          : `Detailed Family Cards & Citations (${filteredFamilyCards.length})`}
+                      </h4>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {distinctFamilyGroups > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveFamilyFilter('all');
+                              setActiveFamilyCardIndex(0);
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                              activeFamilyFilter === 'all'
+                                ? 'bg-emerald-700 text-white border-emerald-600 shadow-xs'
+                                : isDay
+                                  ? 'bg-white text-slate-700 border-slate-200 hover:bg-emerald-50'
+                                  : 'bg-[#092020] text-slate-300 border-emerald-900/60 hover:bg-emerald-950'
+                            }`}
+                          >
+                            {isBn ? `সব (${formatNum(familyMemberCards.length)})` : `All (${familyMemberCards.length})`}
+                          </button>
+                          {spouseCardsCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveFamilyFilter('spouses');
+                                setActiveFamilyCardIndex(0);
+                                if (soundEnabled) soundHaptics.playTap();
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                activeFamilyFilter === 'spouses'
+                                  ? 'bg-emerald-700 text-white border-emerald-600 shadow-xs'
+                                  : isDay
+                                    ? 'bg-white text-slate-700 border-slate-200 hover:bg-emerald-50'
+                                    : 'bg-[#092020] text-slate-300 border-emerald-900/60 hover:bg-emerald-950'
+                              }`}
+                            >
+                              {isBn
+                                ? `${isFemaleCompanion ? 'স্বামী' : 'স্ত্রীগণ'} (${formatNum(spouseCardsCount)})`
+                                : `${isFemaleCompanion ? 'Husband' : 'Wives'} (${spouseCardsCount})`}
+                            </button>
+                          )}
+                          {childCardsCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveFamilyFilter('children');
+                                setActiveFamilyCardIndex(0);
+                                if (soundEnabled) soundHaptics.playTap();
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                activeFamilyFilter === 'children'
+                                  ? 'bg-emerald-700 text-white border-emerald-600 shadow-xs'
+                                  : isDay
+                                    ? 'bg-white text-slate-700 border-slate-200 hover:bg-emerald-50'
+                                    : 'bg-[#092020] text-slate-300 border-emerald-900/60 hover:bg-emerald-950'
+                              }`}
+                            >
+                              {isBn ? `সন্তানগণ (${formatNum(childCardsCount)})` : `Children (${childCardsCount})`}
+                            </button>
+                          )}
+                          {lineageCardsCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveFamilyFilter('lineage');
+                                setActiveFamilyCardIndex(0);
+                                if (soundEnabled) soundHaptics.playTap();
+                              }}
+                              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                activeFamilyFilter === 'lineage'
+                                  ? 'bg-emerald-700 text-white border-emerald-600 shadow-xs'
+                                  : isDay
+                                    ? 'bg-white text-slate-700 border-slate-200 hover:bg-emerald-50'
+                                    : 'bg-[#092020] text-slate-300 border-emerald-900/60 hover:bg-emerald-950'
+                              }`}
+                            >
+                              {isBn ? `বংশধারা (${formatNum(lineageCardsCount)})` : `Lineage (${lineageCardsCount})`}
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      {filteredFamilyCards.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFamilyViewMode((m) => (m === 'grid' ? 'slide' : 'grid'));
+                            if (soundEnabled) soundHaptics.playTap();
+                          }}
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                            isDay
+                              ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                              : 'bg-amber-500/15 text-amber-300 border-amber-500/35 hover:bg-amber-500/25'
+                          }`}
+                        >
+                          {familyViewMode === 'grid'
+                            ? (isBn ? 'কার্ড স্লাইড ভিউ' : 'Slide View')
+                            : (isBn ? 'সব একসাথে দেখুন' : 'Show All Grid')}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-[11px] opacity-80 italic">
-                    {isBn ? 'সীরাত গ্রন্থে কন্যা ও পুণ্যবতী বংশধরদের বিবরণ বিদ্যমান।' : 'Documented in classical biographies.'}
-                  </p>
-                )}
-              </div>
+
+                  {/* Render Either Slide-Deck View (PDF Page-by-Page) or Full Grid View */}
+                  {familyViewMode === 'slide' && filteredFamilyCards.length > 1 ? (() => {
+                    const card = filteredFamilyCards[safeSlideIndex];
+                    const cardPoints = isBn
+                      ? card.pointsBn
+                      : (card.pointsEn && card.pointsEn.length > 0 ? card.pointsEn : card.pointsBn);
+                    const cardSource = isBn ? card.sourceBn : (card.sourceEn || localizeRefToEn(card.sourceBn));
+
+                    return (
+                      <div className="space-y-3">
+                        <div className={`rounded-2xl border overflow-hidden shadow-md ${
+                          isDay ? 'bg-white border-amber-300/80' : 'bg-[#071c1b] border-amber-500/35'
+                        }`}>
+                          <div className="bg-gradient-to-r from-[#064e3b] via-[#065f46] to-[#047857] px-4 py-3 text-white flex items-start justify-between gap-3 border-b-2 border-amber-400/70">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2 py-0.5 rounded-md bg-amber-400/20 border border-amber-300/40 text-amber-200 text-[10px] font-black">
+                                  {isBn ? card.roleBadgeBn : (card.roleBadgeEn || card.roleBadgeBn)}
+                                </span>
+                                {card.pageBadgeBn && isBn && (
+                                  <span className="text-[10px] font-bold text-emerald-100/85">
+                                    পাতা {card.pageBadgeBn}
+                                  </span>
+                                )}
+                              </div>
+                              <h5 className="text-sm sm:text-base font-black text-white leading-snug">
+                                {isBn ? card.nameBn : (card.nameEn || card.nameBn)}
+                              </h5>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyFamilyCard(card)}
+                              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition cursor-pointer shrink-0"
+                              title={isBn ? 'কার্ড কপি করুন' : 'Copy card'}
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="p-4 space-y-3">
+                            <ul className="space-y-2.5 text-xs sm:text-sm leading-relaxed">
+                              {cardPoints.map((pt, pIdx) => (
+                                <li key={pIdx} className="flex items-start gap-2.5">
+                                  <span className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                                    isDay ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/20 text-emerald-300'
+                                  }`}>
+                                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                  </span>
+                                  <span className={isDay ? 'text-slate-700' : 'text-slate-200'}>{pt}</span>
+                                </li>
+                              ))}
+                            </ul>
+
+                            <div className={`pt-2.5 border-t text-[11px] font-semibold flex items-center gap-1.5 ${
+                              isDay ? 'border-amber-200/70 text-amber-800' : 'border-amber-500/20 text-amber-300/90'
+                            }`}>
+                              <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span>{isBn ? 'সূত্র:' : 'Source:'} {cardSource}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Slide Navigation Controls */}
+                        <div className="flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            disabled={safeSlideIndex === 0}
+                            onClick={() => {
+                              setActiveFamilyCardIndex((i) => Math.max(0, i - 1));
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className={`min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                              isDay
+                                ? 'bg-white border-emerald-200 text-emerald-900 hover:bg-emerald-50'
+                                : 'bg-[#082220] border-emerald-800/60 text-emerald-200 hover:bg-emerald-950'
+                            }`}
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            <span>{isBn ? 'পূর্ববর্তী' : 'Prev'}</span>
+                          </button>
+
+                          <span className={`text-xs font-black font-mono ${isDay ? 'text-emerald-800' : 'text-amber-300'}`}>
+                            {formatNum(safeSlideIndex + 1)} / {formatNum(filteredFamilyCards.length)}
+                          </span>
+
+                          <button
+                            type="button"
+                            disabled={safeSlideIndex >= filteredFamilyCards.length - 1}
+                            onClick={() => {
+                              setActiveFamilyCardIndex((i) => Math.min(filteredFamilyCards.length - 1, i + 1));
+                              if (soundEnabled) soundHaptics.playTap();
+                            }}
+                            className={`min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                              isDay
+                                ? 'bg-emerald-700 border-emerald-600 text-white hover:bg-emerald-800'
+                                : 'bg-emerald-700 border-emerald-500 text-white hover:bg-emerald-600'
+                            }`}
+                          >
+                            <span>{isBn ? 'পরবর্তী' : 'Next'}</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })() : (
+                    <div className={`grid grid-cols-1 ${filteredFamilyCards.length > 1 ? 'md:grid-cols-2' : ''} gap-3.5`}>
+                      {filteredFamilyCards.map((card) => {
+                        const cardPoints = isBn
+                          ? card.pointsBn
+                          : (card.pointsEn && card.pointsEn.length > 0 ? card.pointsEn : card.pointsBn);
+                        const cardSource = isBn ? card.sourceBn : (card.sourceEn || localizeRefToEn(card.sourceBn));
+
+                        return (
+                          <div
+                            key={card.id}
+                            className={`rounded-xl border overflow-hidden flex flex-col justify-between transition shadow-xs ${
+                              isDay
+                                ? 'bg-white border-emerald-200/90 hover:border-amber-400/80'
+                                : 'bg-[#071c1b] border-emerald-800/50 hover:border-amber-500/45'
+                            }`}
+                          >
+                            <div>
+                              {/* Card Emerald-Gold Title Header */}
+                              <div className={`px-3.5 py-2.5 flex items-start justify-between gap-2 border-b ${
+                                isDay
+                                  ? 'bg-gradient-to-r from-[#064e3b] to-[#065f46] text-white border-amber-400/60'
+                                  : 'bg-gradient-to-r from-[#072b24] to-[#0b392e] text-white border-amber-500/40'
+                              }`}>
+                                <div className="min-w-0 space-y-0.5">
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-300/35 text-amber-200 text-[10px] font-black">
+                                      {isBn ? card.roleBadgeBn : (card.roleBadgeEn || card.roleBadgeBn)}
+                                    </span>
+                                    {card.pageBadgeBn && isBn && (
+                                      <span className="text-[10px] font-semibold text-emerald-100/80">
+                                        · {card.pageBadgeBn}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h5 className="text-xs sm:text-sm font-black text-white leading-snug">
+                                    {isBn ? card.nameBn : (card.nameEn || card.nameBn)}
+                                  </h5>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyFamilyCard(card)}
+                                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition cursor-pointer shrink-0"
+                                  title={isBn ? 'কপি করুন' : 'Copy'}
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
+                              {/* Bullet Facts */}
+                              <ul className="p-3.5 space-y-2 text-xs leading-relaxed">
+                                {cardPoints.map((pt, pIdx) => (
+                                  <li key={pIdx} className="flex items-start gap-2">
+                                    <span className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                                      isDay ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/20 text-emerald-300'
+                                    }`}>
+                                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                    </span>
+                                    <span className={isDay ? 'text-slate-700' : 'text-slate-200'}>{pt}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* Source Citation Footer */}
+                            <div className={`px-3.5 py-2 border-t text-[11px] font-semibold flex items-center gap-1.5 ${
+                              isDay
+                                ? 'bg-amber-50/60 border-amber-200/70 text-amber-900'
+                                : 'bg-[#051414] border-amber-500/20 text-amber-300/90'
+                            }`}>
+                              <BookOpen className="w-3 h-3 text-amber-500 shrink-0" />
+                              <span className="truncate">{isBn ? 'সূত্র:' : 'Source:'} {cardSource}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-
-            {/* Notable Relatives */}
-            {relatives && relatives.length > 0 && (
-              <div className={`p-3 rounded-xl border text-xs space-y-1.5 ${isDay ? 'bg-white border-blue-100' : 'bg-[#06141c] border-blue-900/40'}`}>
-                <strong className="text-blue-700 dark:text-blue-300 block">
-                  {isBn ? 'বিশিষ্ট আত্মীয়স্বজন ও সংযোগ:' : 'Notable Relatives & Kinship:'}
-                </strong>
-                <div className="flex flex-wrap gap-1.5">
-                  {relatives.map((rel, rIdx) => (
-                    <span key={rIdx} className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-200 text-[11px]">
-                      • {rel}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Family Legacy Overview */}
-            {familyOverview && (
-              <p className="text-xs leading-relaxed opacity-90 italic pt-1 border-t border-blue-200/50 dark:border-blue-900/30">
-                "{familyOverview}"
-              </p>
-            )}
           </div>
 
           {/* ========================================================================= */}
@@ -1651,6 +2100,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 const title = getSahabaTitle(sahaba, selectedLanguage);
                 const hasProphetic = isPropheticTitleHolder(sahaba.id);
                 const proProfile = getPropheticTitleProfile(sahaba.id);
+                const curatedFamily = SAHABA_FAMILY_CHRONICLES[sahaba.id];
 
                 return (
                   <div
@@ -1663,10 +2113,15 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                     }`}
                   >
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center justify-between text-[11px] gap-2">
                         <span className="font-mono font-bold text-amber-500">
                           #{formatNum(sahaba.rank)}
                         </span>
+                        {curatedFamily && (
+                          <span className={`text-[10px] font-bold truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                            {isBn ? curatedFamily.summaryHeadlineBn : (curatedFamily.summaryHeadlineEn || curatedFamily.summaryHeadlineBn)}
+                          </span>
+                        )}
                       </div>
 
                       <h4 className="font-black text-sm text-emerald-800 dark:text-emerald-300">
@@ -1767,6 +2222,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1 scrollbar-thin">
                   {list.map((sahaba, sIdx) => {
                     const name = getSahabaName(sahaba, selectedLanguage);
+                    const khalifaFamily = KHALIFA_FAMILY_CHRONICLES[sahaba.id];
                     return (
                       <div
                         key={sahaba.id}
@@ -1781,7 +2237,14 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                           <span className="font-mono text-[11px] text-amber-500 font-bold shrink-0">
                             {formatNum(sIdx + 1)}.
                           </span>
-                          <span className="truncate">{name}</span>
+                          <div className="min-w-0">
+                            <span className="truncate block">{name}</span>
+                            {khalifaFamily && (
+                              <span className={`text-[10px] font-bold block truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300/90'}`}>
+                                {isBn ? khalifaFamily.summaryHeadlineBn : (khalifaFamily.summaryHeadlineEn || khalifaFamily.summaryHeadlineBn)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <ShareDownloadButtons

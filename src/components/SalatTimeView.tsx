@@ -53,20 +53,10 @@ import {
   SALAT_TEXTS,
 } from '../utils/salatTranslations';
 
-// Atmospheric Mosque Skyline Backdrop Silhouette
+// Atmospheric Serene Top Backdrop Wash (the detailed Mosque Skyline now lives inside the Hero Arc Card)
 export const MosqueSkylineBackdrop: React.FC = () => (
-  <div className="absolute top-0 left-0 right-0 h-44 overflow-hidden pointer-events-none select-none z-0">
-    <svg
-      viewBox="0 0 800 220"
-      preserveAspectRatio="none"
-      className="w-full h-full opacity-20 dark:opacity-10 text-emerald-700 dark:text-emerald-400"
-      fill="currentColor"
-    >
-      <path d="M 0,220 L 0,175 Q 25,150 50,175 L 65,175 L 65,115 Q 70,100 75,115 L 75,175 L 120,175 Q 150,130 180,175 L 230,175 L 230,75 Q 235,55 240,75 L 240,175 L 330,175 Q 400,45 470,175 L 560,175 L 560,75 Q 565,55 570,75 L 570,175 L 620,175 Q 650,130 680,175 L 725,175 L 725,115 Q 730,100 735,115 L 735,175 L 800,175 L 800,220 Z" />
-      <circle cx="400" cy="38" r="3.5" fill="currentColor" />
-      <path d="M 397,30 Q 400,26 403,30 Q 401,33 397,30 Z" fill="currentColor" />
-    </svg>
-    <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/40 via-transparent to-transparent dark:from-emerald-950/30" />
+  <div className="absolute top-0 left-0 right-0 h-36 overflow-hidden pointer-events-none select-none z-0">
+    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-[115%] h-40 rounded-full bg-gradient-to-b from-emerald-400/15 via-emerald-200/8 to-transparent dark:from-emerald-500/12 dark:via-emerald-900/10 blur-2xl" />
   </div>
 );
 
@@ -606,6 +596,70 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
   const activePrayerNameLocalized = (SALAT_TEXTS.prayerNames as any)[activeFard.id]?.[lang] || activeFard.name;
   const nextPrayerNameLocalized = (SALAT_TEXTS.prayerNames as any)[prayerData.nextPrayerName]?.[lang] || prayerData.nextPrayerName;
 
+  const getProhibitedMeta = (iconType: string, fallbackName: string) => {
+    if (iconType === 'sunrise') {
+      return {
+        title: lang === 'bn' ? 'সূর্যোদয়' : lang === 'ar' ? 'الشروق' : 'Sunrise',
+        subtitle: lang === 'bn' ? 'ইশরাকের পূর্বে' : lang === 'ar' ? 'قبل الإشراق' : 'Before Ishraq',
+      };
+    }
+    if (iconType === 'noon') {
+      return {
+        title: lang === 'bn' ? 'দ্বিপ্রহর' : lang === 'ar' ? 'الزوال' : 'Solar Noon',
+        subtitle: lang === 'bn' ? 'ঠিক যাওয়াল' : lang === 'ar' ? 'وقت الاستواء' : 'Exact Zawal',
+      };
+    }
+    if (iconType === 'sunset') {
+      return {
+        title: lang === 'bn' ? 'সূর্যাস্ত' : lang === 'ar' ? 'الغروب' : 'Sunset',
+        subtitle: lang === 'bn' ? 'মাগরিবের পূর্বে' : lang === 'ar' ? 'قبل المغرب' : 'Before Maghrib',
+      };
+    }
+    return {
+      title: (SALAT_TEXTS.prayerNames as any)[fallbackName]?.[lang] || fallbackName,
+      subtitle: '',
+    };
+  };
+
+  const localizedQiblaCardinal = useMemo(() => {
+    const code = (prayerData.qiblaCardinal || '').toUpperCase().trim();
+    if (lang === 'bn') {
+      const bnMap: Record<string, string> = {
+        N: 'উত্তর',
+        NNE: 'উত্তর-উত্তর-পূর্ব',
+        NE: 'উত্তর-পূর্ব',
+        ENE: 'পূর্ব-উত্তর-পূর্ব',
+        E: 'পূর্ব',
+        ESE: 'পূর্ব-দক্ষিণ-পূর্ব',
+        SE: 'দক্ষিণ-পূর্ব',
+        SSE: 'দক্ষিণ-দক্ষিণ-পূর্ব',
+        S: 'দক্ষিণ',
+        SSW: 'দক্ষিণ-দক্ষিণ-পশ্চিম',
+        SW: 'দক্ষিণ-পশ্চিম',
+        WSW: 'পশ্চিম-দক্ষিণ-পশ্চিম',
+        W: 'পশ্চিম',
+        WNW: 'পশ্চিম-উত্তর-পশ্চিম',
+        NW: 'উত্তর-পশ্চিম',
+        NNW: 'উত্তর-উত্তর-পশ্চিম',
+      };
+      return bnMap[code] || code;
+    }
+    if (lang === 'ar') {
+      const arMap: Record<string, string> = {
+        N: 'شمال',
+        NE: 'شمال شرق',
+        E: 'شرق',
+        SE: 'جنوب شرق',
+        S: 'جنوب',
+        SW: 'جنوب غرب',
+        W: 'غرب',
+        NW: 'شمال غرب',
+      };
+      return arMap[code] || code;
+    }
+    return code;
+  }, [prayerData.qiblaCardinal, lang]);
+
   return (
     <div className="relative space-y-4 animate-in fade-in duration-300 max-w-xl mx-auto pb-24 px-2 select-none sm:select-auto">
       {/* 0. Serene Mosque Skyline Backdrop Silhouette */}
@@ -672,54 +726,8 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
         </button>
       </div>
 
-      {/* 2. Location Bar with City, GPS Auto Detect & Sleek Qibla Quick Action */}
-      <div className="relative z-10 flex items-center justify-between gap-2 p-2 px-3 rounded-2xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-xs">
-        <button
-          type="button"
-          onClick={() => {
-            setShowSettingsDrawer(true);
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className="flex items-center gap-1.5 min-w-0 cursor-pointer text-left hover:text-emerald-600 transition"
-        >
-          <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-emerald-100 truncate">
-            {selectedCity.name}, {selectedCity.country}
-          </span>
-        </button>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            type="button"
-            onClick={handleDetectLocation}
-            disabled={isLocating}
-            className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition cursor-pointer active:scale-95"
-            title="Auto detect location via GPS"
-          >
-            <Radio className={`w-3 h-3 ${isLocating ? 'animate-spin' : 'animate-pulse'}`} />
-            <span>{isLocating ? '...' : (SALAT_TEXTS.qibla.autoGps as any)[lang] || 'GPS'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setShowQiblaModal(true);
-              if (soundEnabled) soundHaptics.playTap();
-            }}
-            className="flex items-center gap-1.5 text-[11px] font-extrabold px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#005a40] to-[#007a56] hover:opacity-95 text-white shadow-xs shadow-emerald-950/20 transition cursor-pointer active:scale-95 tabular-nums"
-            title={(SALAT_TEXTS.qibla.title as any)[lang] || 'Qibla Compass'}
-          >
-            <Compass className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-            <span>{lang === 'bn' ? 'কিবলা' : lang === 'ar' ? 'القبلة' : 'Qibla'}</span>
-            <span className="font-mono text-[10.5px] text-amber-200 font-black">
-              {formatLocalizedNumber(qiblaDeg, lang)}°
-            </span>
-          </button>
-        </div>
-      </div>
-
       {/* ========================================================================= */}
-      {/* MAIN PRAYERS CONTENT (Arc Card + 5 Prayer Cards + Qibla Banner + Prohibited) */}
+      {/* MAIN PRAYERS CONTENT (Arc Card + Location/Qibla Dock + 5 Prayer Cards)    */}
       {/* ========================================================================= */}
       <div className="relative z-10 space-y-3.5 animate-in fade-in duration-200">
           {/* Unified Curved Salat Time, Active Waqt & Daily Amal Horizon Arc Card */}
@@ -747,143 +755,333 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
             onTogglePlayAdhan={() => togglePlayAdhan(`${activePrayerNameLocalized} Adhan`)}
           />
 
-          {/* 5 Daily Prayers Cards Row */}
+          {/* Location, Auto GPS & Qibla Compass Control Dock (directly below Hero Arc Card) */}
+          <div className="relative overflow-hidden rounded-[22px] bg-white/95 dark:bg-[#08221c] border border-emerald-900/10 dark:border-emerald-700/40 shadow-[0_6px_22px_-10px_rgba(4,59,44,0.16)] dark:shadow-[0_10px_28px_-12px_rgba(0,0,0,0.45)] p-2.5 sm:p-3">
+            <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 dark:via-amber-300/35 to-transparent" />
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+              {/* Left: Tappable Current Location Selector */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSettingsDrawer(true);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className="min-h-[44px] flex items-center gap-2.5 min-w-0 flex-1 text-left rounded-xl px-1.5 py-1 hover:bg-emerald-50/75 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer group"
+                title={lang === 'bn' ? 'শহর পরিবর্তন করুন' : 'Change city'}
+              >
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/90 dark:from-emerald-900/60 dark:to-emerald-950/90 border border-emerald-200/75 dark:border-emerald-700/45 flex items-center justify-center shrink-0 shadow-2xs">
+                  <MapPin className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 dark:text-emerald-300/70 leading-none">
+                    <span>
+                      {lang === 'bn' ? 'বর্তমান অবস্থান' : lang === 'ar' ? 'الموقع الحالي' : 'Current Location'}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span className="text-emerald-700 dark:text-amber-300/90">
+                      {lang === 'bn' ? 'পরিবর্তন' : lang === 'ar' ? 'تغيير' : 'Change'}
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-[13.5px] font-black text-slate-900 dark:text-emerald-50 truncate mt-1 leading-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-200 transition-colors">
+                    {selectedCity.name}, {selectedCity.country}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-emerald-400/70 shrink-0 sm:hidden" />
+              </button>
+
+              {/* Right: Auto GPS & Qibla Compass Action Buttons */}
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleDetectLocation}
+                  disabled={isLocating}
+                  className="min-h-[44px] sm:min-h-[40px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50/90 hover:bg-emerald-100/90 dark:bg-emerald-900/40 dark:hover:bg-emerald-800/55 border border-emerald-200/80 dark:border-emerald-700/45 text-emerald-800 dark:text-emerald-200 text-xs font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer disabled:opacity-60"
+                  title="Auto detect location via GPS"
+                >
+                  <Radio className={`w-3.5 h-3.5 shrink-0 ${isLocating ? 'animate-spin' : ''}`} />
+                  <span>
+                    {isLocating
+                      ? lang === 'bn'
+                        ? 'খুঁজছে...'
+                        : '...'
+                      : (SALAT_TEXTS.qibla.autoGps as any)[lang] || 'GPS'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowQiblaModal(true);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className="min-h-[44px] sm:min-h-[40px] flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-br from-[#064e3b] via-[#055f47] to-[#047857] hover:brightness-105 text-white border border-amber-400/35 shadow-sm shadow-emerald-950/20 text-xs font-extrabold whitespace-nowrap transition-all active:scale-95 cursor-pointer tabular-nums"
+                  title={(SALAT_TEXTS.qibla.title as any)[lang] || 'Qibla Compass'}
+                >
+                  <Compass className="w-4 h-4 text-amber-300 shrink-0" />
+                  <span>{lang === 'bn' ? 'কিবলা' : lang === 'ar' ? 'القبلة' : 'Qibla'}</span>
+                  <span className="font-mono text-[11px] font-black text-amber-200 border-l border-white/20 pl-1.5 leading-none">
+                    {formatLocalizedNumber(qiblaDeg, lang)}°
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 5 Daily Prayers Cards Row — Elevated Atmospheric Waqt Strip */}
           <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5">
             {fiveDailyPrayers.map((prayer) => {
               const IconComp = prayer.icon;
+              const isPrayed = !!completedPrayers[prayer.id];
+
+              const iconHaloClass = prayer.isActive
+                ? 'bg-white/12 border border-amber-300/35 text-amber-300 shadow-inner'
+                : prayer.id === 'Fajr'
+                ? 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-400/20'
+                : prayer.id === 'Dhuhr'
+                ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/70 dark:border-emerald-400/20'
+                : prayer.id === 'Asr'
+                ? 'bg-orange-50 dark:bg-orange-500/10 border border-orange-200/70 dark:border-orange-400/20'
+                : prayer.id === 'Maghrib'
+                ? 'bg-rose-50 dark:bg-rose-500/10 border border-rose-200/70 dark:border-rose-400/20'
+                : 'bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200/70 dark:border-indigo-400/20';
 
               return (
-                <div
+                <button
+                  type="button"
                   key={prayer.id}
                   onClick={() => {
                     setSelectedQuickPrayer(prayer);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`p-2 sm:p-3 rounded-2xl border transition-all text-center flex flex-col items-center justify-between cursor-pointer active:scale-95 ${
+                  className={`group relative overflow-hidden p-2 sm:p-3 rounded-[20px] transition-all duration-200 text-center flex flex-col items-center justify-between cursor-pointer active:scale-[0.97] ${
                     prayer.isActive
-                      ? 'bg-[#004d35] text-white border-2 border-emerald-400 ring-4 ring-emerald-400/20 shadow-xl scale-[1.03] z-10'
+                      ? 'bg-gradient-to-b from-[#044b36] via-[#065f45] to-[#043b2a] text-white border border-amber-300/45 shadow-[0_12px_26px_-10px_rgba(4,75,54,0.65)] z-10'
                       : prayer.isPast
-                      ? 'bg-[#f4f7f5] dark:bg-[#071f19] border-slate-200/90 dark:border-emerald-900/40 text-slate-700 dark:text-emerald-200 hover:border-emerald-400'
-                      : 'bg-white dark:bg-[#0a2922] border-slate-200/90 dark:border-emerald-900/40 text-slate-800 dark:text-white hover:border-emerald-400 shadow-xs'
+                      ? 'bg-white/85 dark:bg-[#08211b]/90 border border-emerald-900/10 dark:border-emerald-800/40 text-slate-800 dark:text-emerald-100 hover:border-emerald-400/70 hover:bg-white dark:hover:bg-[#0b2b23] shadow-[0_2px_10px_-6px_rgba(4,59,44,0.12)]'
+                      : 'bg-white dark:bg-[#0a2922] border border-emerald-900/10 dark:border-emerald-800/50 text-slate-900 dark:text-white hover:border-emerald-400 shadow-[0_3px_12px_-6px_rgba(4,59,44,0.14)]'
                   }`}
                   title={`${prayer.name} details & rakats`}
                 >
-                  <div className="mb-1">
-                    <IconComp className={`w-5 h-5 ${prayer.isActive ? 'text-amber-300 animate-bounce-subtle' : prayer.iconColor}`} />
+                  {/* Active Waqt Golden Crown Highlight & Subtle Top Glow */}
+                  {prayer.isActive && (
+                    <>
+                      <span className="pointer-events-none absolute top-0 inset-x-3 h-[2px] rounded-b-full bg-gradient-to-r from-transparent via-amber-300 to-transparent" />
+                      <span className="pointer-events-none absolute -top-5 inset-x-0 h-12 bg-amber-300/20 blur-xl" />
+                    </>
+                  )}
+
+                  {/* Icon in Soft Atmospheric Halo */}
+                  <div
+                    className={`relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center mb-1.5 transition-transform duration-200 group-hover:scale-105 ${iconHaloClass}`}
+                  >
+                    <IconComp
+                      className={`w-4 h-4 sm:w-[18px] sm:h-[18px] ${
+                        prayer.isActive ? 'text-amber-300' : prayer.iconColor
+                      }`}
+                    />
                   </div>
 
-                  <div className="text-xs sm:text-sm font-black mb-0.5 truncate w-full">
+                  {/* Prayer Name */}
+                  <div
+                    className={`relative z-10 text-xs sm:text-[13.5px] font-black tracking-tight leading-tight truncate w-full ${
+                      prayer.isActive ? 'text-white' : 'text-slate-800 dark:text-emerald-50'
+                    }`}
+                  >
                     {prayer.name}
                   </div>
 
-                  <div className={`text-[11px] sm:text-xs font-mono font-bold mb-1.5 ${prayer.isActive ? 'text-white' : 'text-slate-600 dark:text-emerald-300'}`}>
+                  {/* Tabular Start Time */}
+                  <div
+                    className={`relative z-10 text-[10.5px] sm:text-[11.5px] font-mono tabular-nums font-bold mt-0.5 mb-2 ${
+                      prayer.isActive
+                        ? 'text-amber-200'
+                        : prayer.isPast
+                        ? 'text-slate-500 dark:text-emerald-300/75'
+                        : 'text-emerald-800 dark:text-emerald-300'
+                    }`}
+                  >
                     {formatLocalizedNumber(prayer.time, lang)}
                   </div>
 
-                  <div className="w-full">
+                  {/* Refined Status Footer (Clean, Uncluttered) */}
+                  <div className="relative z-10 w-full flex items-center justify-center pt-1.5 border-t border-black/5 dark:border-white/10">
                     {prayer.isActive ? (
-                      <span className="inline-block w-full text-[9px] sm:text-[10px] font-black py-0.5 rounded-md bg-emerald-500 text-white animate-pulse">
+                      <span className="text-[9.5px] sm:text-[10px] font-black tracking-wide text-amber-300 leading-none">
                         {(SALAT_TEXTS.status.active as any)[lang] || 'Active'}
                       </span>
+                    ) : isPrayed ? (
+                      <span className="inline-flex items-center gap-0.5 text-[9.5px] sm:text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 leading-none">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        <span>{lang === 'bn' ? 'আদায়' : lang === 'ar' ? 'تم' : 'Prayed'}</span>
+                      </span>
                     ) : prayer.isPast ? (
-                      <span className="inline-block w-full text-[9px] sm:text-[10px] font-extrabold py-0.5 rounded-md bg-black/5 dark:bg-white/10 text-slate-500 dark:text-emerald-400">
+                      <span className="text-[9.5px] sm:text-[10px] font-bold text-slate-400 dark:text-emerald-400/65 leading-none">
                         {(SALAT_TEXTS.status.completed as any)[lang] || '✓ Done'}
                       </span>
                     ) : (
-                      <span className="inline-block w-full text-[9px] sm:text-[10px] font-medium py-0.5 rounded-md bg-slate-100 dark:bg-black/30 text-slate-400">
+                      <span className="text-[9.5px] sm:text-[10px] font-semibold text-emerald-700/75 dark:text-emerald-300/70 leading-none">
                         {(SALAT_TEXTS.status.upcoming as any)[lang] || 'Upcoming'}
                       </span>
                     )}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
 
-          {/* Prohibited / Makruh Prayer Times Section */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-xs space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-5 rounded-full bg-rose-500" />
-              <h3 className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">
-                {(SALAT_TEXTS.prohibited.sectionTitle as any)[lang] || 'Prohibited Prayer Times'}
-              </h3>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              {(SALAT_TEXTS.prohibited.explanation as any)[lang] || 'No prayer is permitted during sunrise, exact solar noon, or sunset.'}
-            </p>
+          {/* Prohibited / Makruh Prayer Times Section — Clean Architectural Strip */}
+          <div className="relative overflow-hidden rounded-[24px] bg-white/95 dark:bg-[#08221c] border border-rose-200/75 dark:border-rose-900/45 shadow-[0_6px_22px_-12px_rgba(190,18,60,0.14)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.5)]">
+            {/* Delicate Solar-Warning Top Hairline Gradient */}
+            <div className="h-[2.5px] w-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 opacity-85" />
 
-            <div className="grid grid-cols-3 gap-2 pt-1">
-              {prayerData.prohibitedPrayers.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-3 rounded-2xl bg-rose-500/5 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/30 text-center flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-center text-rose-500 mb-1">
-                    {item.iconType === 'sunrise' && <SunriseIcon className="w-4 h-4 text-amber-500" />}
-                    {item.iconType === 'noon' && <Sun className="w-4 h-4 text-orange-500" />}
-                    {item.iconType === 'sunset' && <SunsetIcon className="w-4 h-4 text-rose-500" />}
+            {/* Header */}
+            <div className="px-4 pt-3.5 pb-3 sm:px-5 sm:pt-4 flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/60 dark:to-amber-950/40 border border-rose-200/75 dark:border-rose-800/45 flex items-center justify-center shrink-0 mt-0.5">
+                <Sun className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-[15px] font-black text-rose-700 dark:text-rose-300 leading-snug">
+                  {(SALAT_TEXTS.prohibited.sectionTitle as any)[lang] || 'Prohibited Prayer Times'}
+                </h3>
+                <p className="text-[11px] font-medium text-slate-500 dark:text-emerald-200/65 leading-relaxed mt-0.5">
+                  {(SALAT_TEXTS.prohibited.explanation as any)[lang] || 'No prayer is permitted during sunrise, exact solar noon, or sunset.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Unified 3-Column Tonal Strip (Zero nested-box clutter) */}
+            <div className="grid grid-cols-3 divide-x divide-rose-200/60 dark:divide-rose-900/40 border-t border-rose-100/90 dark:border-rose-900/35 bg-gradient-to-b from-rose-50/45 via-amber-50/20 to-transparent dark:from-rose-950/25 dark:via-transparent dark:to-transparent">
+              {prayerData.prohibitedPrayers.map((item) => {
+                const meta = getProhibitedMeta(item.iconType, item.name);
+                const haloTone =
+                  item.iconType === 'sunrise'
+                    ? 'bg-amber-100/80 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-200/80 dark:border-amber-400/25'
+                    : item.iconType === 'noon'
+                    ? 'bg-orange-100/80 dark:bg-orange-500/15 text-orange-600 dark:text-orange-300 border-orange-200/80 dark:border-orange-400/25'
+                    : 'bg-rose-100/80 dark:bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-200/80 dark:border-rose-400/25';
+
+                return (
+                  <div
+                    key={item.id}
+                    className="py-3.5 px-2 sm:px-3 text-center flex flex-col items-center justify-center"
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-full border flex items-center justify-center mb-1.5 ${haloTone}`}
+                    >
+                      {item.iconType === 'sunrise' && <SunriseIcon className="w-4 h-4" />}
+                      {item.iconType === 'noon' && <Sun className="w-4 h-4" />}
+                      {item.iconType === 'sunset' && <SunsetIcon className="w-4 h-4" />}
+                    </div>
+
+                    <div className="font-black text-xs sm:text-[13px] text-slate-800 dark:text-rose-100 leading-tight truncate w-full">
+                      {meta.title}
+                    </div>
+
+                    {meta.subtitle && (
+                      <div className="text-[10px] font-medium text-slate-500 dark:text-rose-300/65 leading-tight mt-0.5 truncate w-full">
+                        {meta.subtitle}
+                      </div>
+                    )}
+
+                    <div className="text-[11px] sm:text-xs font-mono tabular-nums font-extrabold text-rose-600 dark:text-rose-300 mt-1.5 tracking-tight">
+                      {formatLocalizedNumber(item.timeRange, lang)}
+                    </div>
                   </div>
-                  <div className="font-bold text-xs text-slate-800 dark:text-rose-200 my-1 truncate">
-                    {(SALAT_TEXTS.prayerNames as any)[item.name]?.[lang] || item.name}
-                  </div>
-                  <div className="text-[11px] font-mono font-bold text-rose-600 dark:text-rose-300">
-                    {formatLocalizedNumber(item.timeRange, lang)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
-          {/* Sleek Interactive Qibla Compass Card */}
+
+          {/* Signature Interactive Qibla Compass Card */}
           <button
             type="button"
             onClick={() => {
               setShowQiblaModal(true);
               if (soundEnabled) soundHaptics.playTap();
             }}
-            className="w-full text-left group relative overflow-hidden p-3.5 sm:p-4 rounded-3xl bg-gradient-to-br from-[#06382b] via-[#074736] to-[#0a5a44] border border-emerald-500/30 text-white shadow-md hover:shadow-lg transition-all active:scale-[0.99] cursor-pointer flex items-center justify-between gap-3.5"
+            className="w-full text-left group relative overflow-hidden p-4 sm:p-4.5 rounded-[24px] bg-gradient-to-br from-[#042d22] via-[#064635] to-[#085c45] border border-amber-400/30 text-white shadow-[0_14px_30px_-14px_rgba(4,45,34,0.65)] hover:shadow-[0_18px_36px_-14px_rgba(4,45,34,0.75)] transition-all duration-200 active:scale-[0.99] cursor-pointer flex items-center justify-between gap-3.5 sm:gap-4"
           >
-            {/* Subtle decorative glow */}
-            <div className="pointer-events-none absolute -right-10 -top-10 w-32 h-32 rounded-full bg-amber-400/15 blur-2xl" />
+            {/* Top Golden Hairline Highlight */}
+            <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/60 to-transparent" />
 
-            {/* Left: Mini Watch-Dial Qibla Preview */}
-            <div className="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 flex items-center justify-center">
-              <svg viewBox="0 0 80 80" className="w-full h-full drop-shadow-sm">
-                <circle cx="40" cy="40" r="36" fill="rgba(4,24,19,0.75)" stroke="rgba(251,191,36,0.45)" strokeWidth="2" />
-                <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" strokeDasharray="2 3" />
-                <text x="40" y="15" textAnchor="middle" className="text-[7px] font-black fill-amber-300 font-mono">N</text>
-                <g transform={`rotate(${qiblaDeg} 40 40)`}>
-                  <polygon points="40,14 44,40 40,36 36,40" fill="#fbbf24" />
-                  <polygon points="40,66 44,40 40,44 36,40" fill="rgba(255,255,255,0.35)" />
+            {/* Subtle Islamic Geometric Star Ornament (Right Background) */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 160 160"
+              className="pointer-events-none absolute -right-6 -top-8 w-40 h-40 text-amber-300 opacity-[0.08]"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.2"
+            >
+              <circle cx="80" cy="80" r="64" strokeDasharray="3 4" />
+              <polygon points="80,14 98,62 146,80 98,98 80,146 62,98 14,80 62,62" />
+              <polygon points="80,26 118,42 134,80 118,118 80,134 42,118 26,80 42,42" />
+              <circle cx="80" cy="80" r="26" />
+            </svg>
+
+            {/* Warm Radial Ambient Glow */}
+            <div className="pointer-events-none absolute -left-8 -bottom-10 w-36 h-36 rounded-full bg-emerald-400/15 blur-2xl" />
+
+            {/* Left: Precision Brass-Gold Mini Compass Dial */}
+            <div className="relative w-16 h-16 sm:w-[70px] sm:h-[70px] shrink-0 flex items-center justify-center">
+              <svg viewBox="0 0 88 88" className="w-full h-full drop-shadow-md">
+                <defs>
+                  <linearGradient id="qiblaGoldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fde68a" stopOpacity="0.85" />
+                    <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.55" />
+                    <stop offset="100%" stopColor="#fef3c7" stopOpacity="0.8" />
+                  </linearGradient>
+                </defs>
+                {/* Outer Brushed Gold Bezel */}
+                <circle cx="44" cy="44" r="40" fill="rgba(3,23,18,0.88)" stroke="url(#qiblaGoldRing)" strokeWidth="2" />
+                {/* Inner Precision Track */}
+                <circle cx="44" cy="44" r="33" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="1" strokeDasharray="1.5 3.5" />
+                {/* Cardinal Micro-Markers */}
+                <text x="44" y="16" textAnchor="middle" className="text-[7px] font-black fill-amber-300 font-mono">N</text>
+                <text x="73" y="46.5" textAnchor="middle" className="text-[6px] font-bold fill-emerald-200/55 font-mono">E</text>
+                <text x="44" y="76" textAnchor="middle" className="text-[6px] font-bold fill-emerald-200/55 font-mono">S</text>
+                <text x="15" y="46.5" textAnchor="middle" className="text-[6px] font-bold fill-emerald-200/55 font-mono">W</text>
+                {/* Live Qibla Needle */}
+                <g transform={`rotate(${qiblaDeg} 44 44)`}>
+                  <polygon points="44,16 48.5,44 44,39 39.5,44" fill="#fbbf24" />
+                  <polygon points="44,70 47.5,44 44,48 40.5,44" fill="rgba(255,255,255,0.28)" />
                 </g>
-                <circle cx="40" cy="40" r="4" fill="#06382b" stroke="#fbbf24" strokeWidth="1.5" />
+                {/* Center Brass Pivot */}
+                <circle cx="44" cy="44" r="4.5" fill="#042d22" stroke="#fde68a" strokeWidth="1.75" />
+                <circle cx="44" cy="44" r="1.5" fill="#fbbf24" />
               </svg>
             </div>
 
-            {/* Center: Bearing & Distance to Holy Makkah */}
+            {/* Center: Localized Bearing, Cardinal & Makkah Distance */}
             <div className="flex-1 min-w-0 relative z-10">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
-                  {(SALAT_TEXTS.tabs.qibla as any)[lang] || 'Qibla Compass'}
+              <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-amber-300/95 leading-none">
+                <span>{(SALAT_TEXTS.tabs.qibla as any)[lang] || 'Qibla Compass'}</span>
+                <span aria-hidden="true" className="opacity-45">·</span>
+                <span className="text-emerald-200/80 font-semibold">
+                  {lang === 'bn' ? '৩৬০° লাইভ' : lang === 'ar' ? '٣٦٠° مباشر' : '360° Live'}
                 </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               </div>
-              <div className="text-sm sm:text-base font-black text-white leading-tight mt-0.5 truncate">
+
+              <div className="text-[15px] sm:text-base font-black text-white leading-snug mt-1 truncate">
                 {(SALAT_TEXTS.qibla.title as any)[lang] || 'Holy Kaaba Direction'}
               </div>
-              <div className="flex items-center gap-2.5 mt-1 text-[11px] font-mono font-bold text-emerald-100/90 tabular-nums">
-                <span className="text-amber-300">
-                  {formatLocalizedNumber(qiblaDeg, lang)}° {prayerData.qiblaCardinal}
+
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-[11.5px] font-bold text-emerald-100/90 tabular-nums">
+                <span className="font-mono text-amber-300 font-black">
+                  {formatLocalizedNumber(qiblaDeg, lang)}° {localizedQiblaCardinal}
                 </span>
-                <span className="opacity-40">•</span>
-                <span>
-                  {formatLocalizedNumber(prayerData.kaabaDistanceKm, lang)} {lang === 'bn' ? 'কিমি (মক্কা)' : 'km to Makkah'}
+                <span aria-hidden="true" className="opacity-35">·</span>
+                <span className="font-mono text-emerald-100/90">
+                  {formatLocalizedNumber(prayerData.kaabaDistanceKm, lang)}{' '}
+                  {lang === 'bn' ? 'কিমি (মক্কা)' : lang === 'ar' ? 'كم إلى مكة' : 'km to Makkah'}
                 </span>
               </div>
             </div>
 
-            {/* Right: Crisp Action Cue */}
-            <div className="relative z-10 shrink-0 w-9 h-9 rounded-2xl bg-white/15 group-hover:bg-amber-400 group-hover:text-emerald-950 text-amber-300 flex items-center justify-center transition-colors">
-              <ChevronRight className="w-5 h-5" />
+            {/* Right: Tactile Gold Disclosure Cue */}
+            <div className="relative z-10 shrink-0 w-10 h-10 rounded-full bg-amber-400/15 border border-amber-300/35 group-hover:bg-amber-400 group-hover:text-emerald-950 text-amber-300 flex items-center justify-center transition-all duration-200">
+              <ChevronRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
             </div>
           </button>
         </div>
