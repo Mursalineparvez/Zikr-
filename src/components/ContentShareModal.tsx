@@ -9,7 +9,8 @@ import {
   Sparkles,
   Palette,
   FileText,
-  Printer,
+  FileDown,
+  Loader2,
   ShieldCheck,
   Image as ImageIcon,
 } from 'lucide-react';
@@ -21,7 +22,7 @@ import {
   ShareableContent,
   formatShareablePlainText,
   downloadTextDocument,
-  printDocumentViaHiddenIframe,
+  downloadPdfDocument,
   sanitizeFileName,
 } from '../utils/shareDownload';
 import { copyToClipboard } from '../utils/clipboard';
@@ -56,15 +57,23 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [copied, setCopied] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const statusTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     try {
       localStorage.setItem('noor_content_share_theme', cardTheme);
     } catch {}
   }, [cardTheme]);
+
+  useEffect(() => {
+    return () => {
+      if (statusTimerRef.current) window.clearTimeout(statusTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -85,9 +94,17 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
   const isBn = selectedLanguage === 'bn';
   const isAr = selectedLanguage === 'ar';
 
-  const notifyStatus = (msg: string) => {
+  const notifyStatus = (msg: string, durationMs = 3600) => {
+    if (statusTimerRef.current) {
+      window.clearTimeout(statusTimerRef.current);
+    }
     setStatusMessage(msg);
-    setTimeout(() => setStatusMessage(null), 3200);
+    if (durationMs > 0) {
+      statusTimerRef.current = window.setTimeout(() => {
+        setStatusMessage(null);
+        statusTimerRef.current = null;
+      }, durationMs);
+    }
   };
 
   const getFileBase = () => {
@@ -161,16 +178,44 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
     );
   };
 
-  const handlePrintPdf = () => {
+  const handleDownloadPdf = async () => {
+    if (isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
     if (soundEnabled) soundHaptics.playTap();
-    printDocumentViaHiddenIframe(content, selectedLanguage);
     notifyStatus(
       isBn
-        ? 'প্রিন্ট / Save as PDF উইন্ডো চালু হয়েছে'
+        ? 'সম্পূর্ণ PDF ফাইল তৈরি হচ্ছে, অনুগ্রহ করে একটু অপেক্ষা করুন...'
         : isAr
-          ? 'تم فتح نافذة الطباعة / PDF'
-          : 'Print / Save as PDF dialog opened'
+          ? 'جارٍ إنشاء ملف PDF، يرجى الانتظار...'
+          : 'Generating your multi-page PDF document...',
+      0
     );
+    try {
+      const result = await downloadPdfDocument(content, selectedLanguage);
+      if (soundEnabled) soundHaptics.playMilestone();
+      const pagesBn = String(result.pageCount).replace(
+        /\d/g,
+        (d) => ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'][Number(d)]
+      );
+      notifyStatus(
+        isBn
+          ? `সম্পূর্ণ PDF ডাউনলোড হয়েছে! (${pagesBn} পৃষ্ঠা)`
+          : isAr
+            ? `تم تحميل ملف PDF بنجاح! (${result.pageCount} صفحات)`
+            : `Full PDF downloaded! (${result.pageCount} ${result.pageCount === 1 ? 'page' : 'pages'})`
+      );
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      notifyStatus(
+        isBn
+          ? 'PDF তৈরি করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
+          : isAr
+            ? 'تعذر إنشاء ملف PDF، يرجى المحاولة مرة أخرى.'
+            : 'Could not generate PDF. Please try again.'
+      );
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   const handleNativeShare = async () => {
@@ -647,15 +692,30 @@ export const ContentShareModal: React.FC<ContentShareModalProps> = ({
             </span>
           </button>
 
-          {/* 4. Print / Save as PDF */}
+          {/* 4. Direct Download Multi-Page PDF */}
           <button
             type="button"
-            onClick={handlePrintPdf}
-            className="py-2.5 px-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-amber-500/30 text-amber-300 font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+            onClick={handleDownloadPdf}
+            disabled={isGeneratingPdf}
+            className="py-2.5 px-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
           >
-            <Printer className="w-4 h-4" />
+            {isGeneratingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileDown className="w-4 h-4" />
+            )}
             <span>
-              {isBn ? 'PDF / প্রিন্ট' : isAr ? 'طباعة / PDF' : 'Save PDF'}
+              {isGeneratingPdf
+                ? isBn
+                  ? 'PDF তৈরি হচ্ছে...'
+                  : isAr
+                    ? 'جارٍ التحضير...'
+                    : 'Creating PDF...'
+                : isBn
+                  ? 'PDF ডাউনলোড'
+                  : isAr
+                    ? 'تحميل PDF'
+                    : 'Download PDF'}
             </span>
           </button>
 
