@@ -5,6 +5,7 @@ import {
   POPULAR_CITIES,
   CityOption,
 } from '../utils/prayerTimes';
+import { useBackLayer } from '../utils/backNavigation';
 import {
   Clock,
   Compass,
@@ -201,6 +202,10 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
   const [showSettingsDrawer, setShowSettingsDrawer] = useState<boolean>(false);
   const [selectedQuickPrayer, setSelectedQuickPrayer] = useState<any | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
+
+  // Register Salat overlays for step-by-step reverse back navigation
+  useBackLayer(showSettingsDrawer, () => setShowSettingsDrawer(false), 'salat-settings');
+  useBackLayer(Boolean(selectedQuickPrayer), () => setSelectedQuickPrayer(null), 'salat-quick-prayer');
 
   // 1-Second live ticker for live clock & countdowns
   useEffect(() => {

@@ -101,6 +101,7 @@ import {
   getLocalizedHadithGrade,
   getLocalizedHadithChapter,
 } from '../utils/quranTopicTranslations';
+import { pushAppHistoryState, stepBackOr, useBackLayer } from '../utils/backNavigation';
 
 export type WordAnimationType = 'glow' | 'minimal';
 
@@ -399,20 +400,29 @@ export const QuranView: React.FC<QuranViewProps> = ({
   const [activeAyahActionMenu, setActiveAyahActionMenu] = useState<number | null>(null);
   const [cardModalAyah, setCardModalAyah] = useState<QuranAyah | null>(null);
 
-  // Lock body scroll and handle Escape key for Tafsir Reader
+  // Register Quran sub-views, Tafsir, pickers & modals for step-by-step reverse back navigation
+  useBackLayer(selectedTopicId !== null, () => {
+    if (topicAudioRef.current) topicAudioRef.current.pause();
+    setIsTopicAudioPlaying(false);
+    setActiveTopicAudioId(null);
+    setSelectedTopicId(null);
+  }, 'quran-topic-detail');
+  useBackLayer(showTafsirModal, () => setShowTafsirModal(false), 'quran-tafsir');
+  useBackLayer(showDetailsModal, () => setShowDetailsModal(false), 'quran-surah-details');
+  useBackLayer(showSettingsDrawer, () => setShowSettingsDrawer(false), 'quran-settings');
+  useBackLayer(showLanguagePicker, () => setShowLanguagePicker(false), 'quran-language');
+  useBackLayer(showReciterPicker, () => setShowReciterPicker(false), 'quran-reciter');
+  useBackLayer(showAnimationModal, () => setShowAnimationModal(false), 'quran-animation');
+  useBackLayer(showOthersModal, () => setShowOthersModal(false), 'quran-others');
+  useBackLayer(Boolean(cardModalAyah), () => setCardModalAyah(null), 'quran-ayah-card');
+
+  // Lock body scroll for Tafsir Reader (Escape handled LIFO by useBackLayer)
   useEffect(() => {
     if (showTafsirModal) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          setShowTafsirModal(false);
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
       return () => {
         document.body.style.overflow = originalOverflow;
-        window.removeEventListener('keydown', handleKeyDown);
       };
     }
   }, [showTafsirModal]);
@@ -731,9 +741,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
       localStorage.setItem('noor_quran_active_surah_num', String(surahNumber));
     } catch {}
     if (!skipPushState) {
-      try {
-        window.history.pushState({ appModule: 'quran', quranSurah: surahNumber }, '');
-      } catch {}
+      pushAppHistoryState({ appModule: 'quran', quranSurah: surahNumber });
     }
     setIsInsightExpanded(false);
     setAutoScroll(false);
@@ -828,19 +836,22 @@ export const QuranView: React.FC<QuranViewProps> = ({
     }
   }, []);
 
-  // Back button handling inside QuranView
+  const selectedSurahRef = useRef<number | null>(selectedSurahNumber);
+  selectedSurahRef.current = selectedSurahNumber;
+
+  // Back button handling inside QuranView (guards against reloading active Surah when closing a child modal)
   useEffect(() => {
     const handleQuranPopState = (event: PopStateEvent) => {
       const state = event.state;
       if (state && typeof state.quranSurah === 'number') {
-        loadSurah(state.quranSurah, undefined, false, true);
-      } else if (state && state.appModule === 'quran') {
+        if (selectedSurahRef.current !== state.quranSurah) {
+          loadSurah(state.quranSurah, undefined, false, true);
+        }
+      } else if (selectedSurahRef.current !== null) {
+        stopAudio();
+        setAutoScroll(false);
         setSelectedSurahNumber(null);
-        try {
-          localStorage.removeItem('noor_quran_active_surah_num');
-        } catch {}
-      } else {
-        setSelectedSurahNumber(null);
+        setSurahDetail(null);
         try {
           localStorage.removeItem('noor_quran_active_surah_num');
         } catch {}
@@ -857,7 +868,7 @@ export const QuranView: React.FC<QuranViewProps> = ({
   useEffect(() => {
     setSelectedTafsirId(DEFAULT_TAFSIR_BY_LANG[selectedLanguage] || 164);
     if (selectedSurahNumber !== null) {
-      loadSurah(selectedSurahNumber);
+      loadSurah(selectedSurahNumber, undefined, false, true);
     }
   }, [selectedLanguage, selectedReciterId]);
 
@@ -1588,13 +1599,15 @@ export const QuranView: React.FC<QuranViewProps> = ({
             {/* Left: Back Arrow */}
             <button
               onClick={() => {
-                stopAudio();
-                setAutoScroll(false);
-                setSelectedSurahNumber(null);
-                setSurahDetail(null);
-                try {
-                  localStorage.removeItem('noor_quran_active_surah_num');
-                } catch {}
+                stepBackOr(() => {
+                  stopAudio();
+                  setAutoScroll(false);
+                  setSelectedSurahNumber(null);
+                  setSurahDetail(null);
+                  try {
+                    localStorage.removeItem('noor_quran_active_surah_num');
+                  } catch {}
+                });
               }}
               className="p-2 -ml-0.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer flex items-center justify-center shrink-0 border border-white/15 shadow-xs"
               title={selectedLanguage === 'bn' ? 'সূরা তালিকায় ফিরে যান' : 'Back to Surah List'}
@@ -3327,11 +3340,13 @@ export const QuranView: React.FC<QuranViewProps> = ({
                       <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-200/60 dark:border-teal-900/40">
                         <button
                           onClick={() => {
-                            if (topicAudioRef.current) topicAudioRef.current.pause();
-                            setIsTopicAudioPlaying(false);
-                            setActiveTopicAudioId(null);
-                            setSelectedTopicId(null);
                             if (soundEnabled) soundHaptics.playTap();
+                            stepBackOr(() => {
+                              if (topicAudioRef.current) topicAudioRef.current.pause();
+                              setIsTopicAudioPlaying(false);
+                              setActiveTopicAudioId(null);
+                              setSelectedTopicId(null);
+                            });
                           }}
                           className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 hover:underline cursor-pointer py-1"
                         >

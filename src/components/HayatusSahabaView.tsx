@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { copyToClipboard } from '../utils/clipboard';
 import {
@@ -37,6 +37,7 @@ import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigati
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
+import { pushAppHistoryState, stepBackOr, useBackLayer } from '../utils/backNavigation';
 import {
   SAHABA_CATEGORIES,
   SAHABA_DATABASE,
@@ -195,17 +196,26 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     }, 2500);
   };
 
+  const selectedSahabaIdRef = useRef<string | null>(selectedSahabaId);
+  selectedSahabaIdRef.current = selectedSahabaId;
+
   const handleSelectSahaba = (id: string | null, skipPushState = false) => {
     if (soundEnabled) soundHaptics.playTap();
+    if (id === null && !skipPushState) {
+      stepBackOr(() => {
+        startTransition(() => {
+          setSelectedSahabaId(null);
+        });
+      });
+      return;
+    }
     if (id) {
       try {
         localStorage.setItem(SAHABA_STORAGE_KEYS.LAST_READ, id);
         setLastReadSahabaId(id);
       } catch {}
       if (!skipPushState) {
-        try {
-          window.history.pushState({ appModule: 'other', appSub: 'hayatus_sahaba', sahabaId: id }, '');
-        } catch {}
+        pushAppHistoryState({ appModule: 'other', appSub: 'hayatus_sahaba', sahabaId: id });
       }
     }
     startTransition(() => {
@@ -217,8 +227,10 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     const handleSahabaPopState = (event: PopStateEvent) => {
       const state = event.state;
       if (state && state.sahabaId) {
-        handleSelectSahaba(state.sahabaId, true);
-      } else {
+        if (selectedSahabaIdRef.current !== state.sahabaId) {
+          handleSelectSahaba(state.sahabaId, true);
+        }
+      } else if (selectedSahabaIdRef.current !== null) {
         setSelectedSahabaId(null);
       }
     };
@@ -279,6 +291,11 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
     content: ShareableContent;
     focus: 'share' | 'download';
   } | null>(null);
+
+  // Register Hayatus Sahaba modals for step-by-step reverse back navigation
+  useBackLayer(Boolean(selectedFamilyBioModal), () => setSelectedFamilyBioModal(null), 'sahaba-family-bio');
+  useBackLayer(showBibliographyModal, () => setShowBibliographyModal(false), 'sahaba-bibliography');
+  useBackLayer(Boolean(shareState), () => setShareState(null), 'sahaba-share');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all' | 'prophetic_titles'>('all');
   const [copiedQuote, setCopiedQuote] = useState(false);
@@ -724,10 +741,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             </button>
 
             <button
-              onClick={() => {
-                setSelectedSahabaId(null);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
+              onClick={() => handleSelectSahaba(null)}
               className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 active:scale-95 transition cursor-pointer"
             >
               ✕

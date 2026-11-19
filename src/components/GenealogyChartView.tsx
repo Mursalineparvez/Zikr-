@@ -27,6 +27,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
+import { useBackLayer } from '../utils/backNavigation';
 
 interface GenealogyChartViewProps {
   themeMode?: ThemeMode;
@@ -47,6 +48,7 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
   const [activeViewMode, setActiveViewMode] = useState<'chart' | 'tree' | 'marriages'>('chart');
   const [chartScale, setChartScale] = useState<number>(1);
   const [selectedPersonModal, setSelectedPersonModal] = useState<GenealogyPerson | null>(null);
+  useBackLayer(Boolean(selectedPersonModal), () => setSelectedPersonModal(null), 'genealogy-person');
   const [copiedNote, setCopiedNote] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedNodeIds, setExpandedNodeIds] = useState<Record<string, boolean>>({

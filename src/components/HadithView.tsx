@@ -24,6 +24,7 @@ import { soundHaptics } from '../utils/audioHaptics';
 import { HIGHLIGHT_COLOR_STYLES } from '../utils/savedItems';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
 import { HighlightableText, useSavedHighlightsStore } from './HighlightableText';
+import { stepBackOr, useBackLayer } from '../utils/backNavigation';
 
 interface HadithViewProps {
   soundEnabled: boolean;
@@ -43,6 +44,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
   const [activeTab, setActiveTab] = useState<HadithTab>('topics');
   const [selectedTopic, setSelectedTopic] = useState<string>('all');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+
+  // Register selected Hadith book & topic filter for step-by-step reverse back navigation
+  useBackLayer(selectedBookId !== null, () => setSelectedBookId(null), 'hadith-book');
+  useBackLayer(selectedTopic !== 'all', () => setSelectedTopic('all'), 'hadith-topic');
 
   // Auto-scroll to top when tab, topic, or book selection changes
   useEffect(() => {
@@ -501,7 +506,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
           }`}
         >
           <button
-            onClick={() => setSelectedBookId(null)}
+            onClick={() => stepBackOr(() => setSelectedBookId(null))}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/40 text-teal-800 dark:text-emerald-300 text-xs font-bold transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />

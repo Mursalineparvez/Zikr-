@@ -6,6 +6,7 @@ import { ThemeMode, ZikrLanguage } from '../types';
 import { KITAB_UI } from '../utils/appTranslations';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
 import { HighlightableText } from './HighlightableText';
+import { stepBackOr, useBackLayer } from '../utils/backNavigation';
 
 interface KitabViewProps {
   themeMode?: ThemeMode;
@@ -19,6 +20,17 @@ export const KitabView: React.FC<KitabViewProps> = ({
   const isDay = themeMode === 'day';
   const [selectedKitab, setSelectedKitab] = useState<KitabItem | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<KitabChapter | null>(null);
+
+  // Register Kitab & Chapter levels for step-by-step reverse back navigation
+  useBackLayer(
+    selectedKitab !== null,
+    () => {
+      setSelectedChapter(null);
+      setSelectedKitab(null);
+    },
+    'kitab-book'
+  );
+  useBackLayer(selectedChapter !== null, () => setSelectedChapter(null), 'kitab-chapter');
 
   // Auto-scroll to top when selecting a kitab, chapter, or navigating back
   useEffect(() => {
@@ -73,7 +85,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
             }`}
           >
             <button
-              onClick={() => setSelectedChapter(null)}
+              onClick={() => stepBackOr(() => setSelectedChapter(null))}
               className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#006747] hover:bg-[#154f53] text-white transition active:scale-95 cursor-pointer shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -202,7 +214,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
             }`}
           >
             <button
-              onClick={() => setSelectedKitab(null)}
+              onClick={() => stepBackOr(() => setSelectedKitab(null))}
               className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#006747] hover:bg-[#154f53] text-white transition active:scale-95 cursor-pointer shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />

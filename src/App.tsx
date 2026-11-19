@@ -17,6 +17,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import type { OtherSubSection } from './components/OtherIslamicHubView';
 import { prefetchView, warmupViewsIdle } from './utils/viewPreloader';
 import { getSavedHighlights, mergeSavedHighlights } from './utils/savedItems';
+import { pushAppHistoryState, useBackLayer } from './utils/backNavigation';
 
 // Code-split heavy non-initial views and modals to make initial app launch instantaneous
 const QuranView = React.lazy(() => import('./components/QuranView').then((m) => ({ default: m.QuranView })));
@@ -320,6 +321,11 @@ export default function App() {
   const [otherAccountTab, setOtherAccountTab] = useState<'profile' | 'settings'>('profile');
   const [otherNavTick, setOtherNavTick] = useState(0);
 
+  const activeModuleRef = useRef<NavModule>(activeModule);
+  useEffect(() => {
+    activeModuleRef.current = activeModule;
+  }, [activeModule]);
+
   const navigateToMyAccount = (tab: 'profile' | 'settings' = 'profile') => {
     setIsProfileModalOpen(false);
     setShowFirstDownloadWelcome(false);
@@ -327,12 +333,12 @@ export default function App() {
     setOtherInitialSub('my_account');
     setOtherNavTick((t) => t + 1);
     if (activeModule !== 'other') {
-      try {
-        window.history.pushState({ appModule: 'other', appSub: 'my_account' }, '');
-      } catch {}
+      pushAppHistoryState({ appModule: 'other', appSub: 'my_account' });
       startNavTransition(() => {
         setActiveModule('other');
       });
+    } else {
+      pushAppHistoryState({ appModule: 'other', appSub: 'my_account' });
     }
   };
 
@@ -342,15 +348,20 @@ export default function App() {
       setOtherNavTick((t) => t + 1);
       if (activeModule === 'other') {
         if (settings.soundEnabled) soundHaptics.playTap();
+        if (!skipPushState && window.history.state?.appSub && window.history.state.appSub !== 'hub') {
+          pushAppHistoryState({ appModule: 'other', appSub: 'hub' });
+        }
         return;
       }
     }
     if (targetModule === activeModule) return;
     if (settings.soundEnabled) soundHaptics.playTap();
     if (!skipPushState) {
-      try {
-        window.history.pushState({ appModule: targetModule }, '');
-      } catch {}
+      pushAppHistoryState(
+        targetModule === 'other'
+          ? { appModule: 'other', appSub: 'hub' }
+          : { appModule: targetModule }
+      );
     }
     startNavTransition(() => {
       setActiveModule(targetModule);
@@ -361,13 +372,18 @@ export default function App() {
   useEffect(() => {
     try {
       if (!window.history.state || !window.history.state.appModule) {
-        window.history.replaceState({ appModule: 'zikir_counter' }, '');
+        window.history.replaceState({ appModule: 'zikir_counter', __zikrAppStep: 0 }, '');
       }
     } catch {}
 
     const handlePopState = (event: PopStateEvent) => {
       const state = event.state;
       if (state && state.appModule) {
+        if (state.appModule === 'other' && activeModuleRef.current !== 'other') {
+          // Restore exact sub-page inside OtherIslamicHubView when returning from another tab
+          setOtherInitialSub((state.appSub as OtherSubSection) || 'hub');
+          setOtherNavTick((t) => t + 1);
+        }
         startNavTransition(() => {
           setActiveModule(state.appModule);
         });
@@ -1784,6 +1800,18 @@ export default function App() {
     isDanger: false,
     onConfirm: () => {},
   });
+
+  // Register top-level modals for step-by-step hardware & Escape Back handling
+  useBackLayer(isProfileModalOpen, () => setIsProfileModalOpen(false), 'profile-modal');
+  useBackLayer(isAdminPanelOpen, () => setIsAdminPanelOpen(false), 'admin-panel-modal');
+  useBackLayer(isZikrModalOpen, () => setIsZikrModalOpen(false), 'zikr-modal');
+  useBackLayer(isHistoryReportModalOpen, () => setIsHistoryReportModalOpen(false), 'history-report-modal');
+  useBackLayer(isStandaloneModalOpen, () => setIsStandaloneModalOpen(false), 'standalone-export-modal');
+  useBackLayer(
+    confirmDialog.isOpen,
+    () => setConfirmDialog((prev) => ({ ...prev, isOpen: false })),
+    'confirm-dialog'
+  );
 
   // Reset single Zikr
   const handleConfirmResetIndividual = (zikr: ZikrItem) => {

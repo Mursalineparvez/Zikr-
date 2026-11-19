@@ -60,6 +60,7 @@ import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
 import { ProphetPassing40HoursSection } from './ProphetPassing40HoursSection';
+import { pushAppHistoryState, stepBackOr, useBackLayer } from '../utils/backNavigation';
 
 interface SeeratUnNabiViewProps {
   themeMode?: ThemeMode;
@@ -483,6 +484,11 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     setShareModalFocus(focus);
   };
 
+  // Register Seerat overlays & modals for step-by-step reverse back navigation
+  useBackLayer(showFullMapModal, () => setShowFullMapModal(false), 'seerat-full-map');
+  useBackLayer(showBibliographyModal, () => setShowBibliographyModal(false), 'seerat-bibliography');
+  useBackLayer(Boolean(shareModalContent), () => setShareModalContent(null), 'seerat-share');
+
   // Reader Settings
   const [fontSizeLevel, setFontSizeLevel] = useState<'normal' | 'large' | 'xl'>('normal');
 
@@ -568,12 +574,21 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     };
   }, []);
 
+  const selectedAgeRef = useRef<number | null>(selectedAge);
+  selectedAgeRef.current = selectedAge;
+
   const handleSelectAge = (age: number | null, skipPushState = false) => {
     if (soundEnabled) soundHaptics.playTap();
+    if (age === null && !skipPushState) {
+      stepBackOr(() => {
+        startTransition(() => {
+          setSelectedAge(null);
+        });
+      });
+      return;
+    }
     if (age !== null && !skipPushState) {
-      try {
-        window.history.pushState({ appModule: 'other', appSub: 'seerat_un_nabi', seeratAge: age }, '');
-      } catch {}
+      pushAppHistoryState({ appModule: 'other', appSub: 'seerat_un_nabi', seeratAge: age });
     }
     startTransition(() => {
       setSelectedAge(age);
@@ -584,8 +599,10 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
     const handleSeeratPopState = (event: PopStateEvent) => {
       const state = event.state;
       if (state && typeof state.seeratAge === 'number') {
-        handleSelectAge(state.seeratAge, true);
-      } else {
+        if (selectedAgeRef.current !== state.seeratAge) {
+          handleSelectAge(state.seeratAge, true);
+        }
+      } else if (selectedAgeRef.current !== null) {
         setSelectedAge(null);
       }
     };

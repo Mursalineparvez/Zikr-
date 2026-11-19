@@ -36,6 +36,7 @@ import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigati
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
+import { stepBackOr, useBackLayer } from '../utils/backNavigation';
 import {
   WarItem,
   BattleMartyr,
@@ -119,12 +120,18 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
 
   const handleSelectWar = (id: string | null) => {
     if (soundEnabled) soundHaptics.playTap();
-    if (id) {
-      try {
-        localStorage.setItem(WARS_STORAGE_KEYS.LAST_READ, id);
-        setLastReadWarId(id);
-      } catch {}
+    if (id === null) {
+      stepBackOr(() => {
+        startTransition(() => {
+          setSelectedWarId(null);
+        });
+      });
+      return;
     }
+    try {
+      localStorage.setItem(WARS_STORAGE_KEYS.LAST_READ, id);
+      setLastReadWarId(id);
+    } catch {}
     startTransition(() => {
       setSelectedWarId(id);
     });
@@ -181,6 +188,12 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
     content: ShareableContent;
     focus: 'share' | 'download';
   } | null>(null);
+
+  // Register war reader & overlays for step-by-step reverse back navigation
+  useBackLayer(selectedWarId !== null, () => setSelectedWarId(null), 'war-detail');
+  useBackLayer(active3DMapWarId !== null, () => setActive3DMapWarId(null), 'war-3d-map');
+  useBackLayer(showWarBibliographyModal, () => setShowWarBibliographyModal(false), 'war-bibliography');
+  useBackLayer(Boolean(shareState), () => setShareState(null), 'war-share');
 
   const buildWarShareContent = (w: WarItem): ShareableContent => {
     const name = isBn ? w.nameBn : (w.nameEn || w.nameBn);
@@ -514,10 +527,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               <span className="hidden sm:inline text-[11px]">{copiedQuote ? (isBn ? 'কপি হয়েছে' : 'Copied') : (isBn ? 'কপি' : 'Copy')}</span>
             </button>
             <button
-              onClick={() => {
-                setSelectedWarId(null);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
+              onClick={() => handleSelectWar(null)}
               className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 active:scale-95 transition cursor-pointer"
             >
               ✕

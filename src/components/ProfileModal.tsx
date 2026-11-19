@@ -57,6 +57,7 @@ import { getDetectedDeviceInfo } from '../utils/deviceInfo';
 
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { InstallAppModal } from './InstallAppModal';
+import { useBackLayer } from '../utils/backNavigation';
 import {
   checkUserExistsInCloud,
   generateAndSendVerificationOtp,
@@ -344,6 +345,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [activeSubModal, setActiveSubModal] = useState<
     'none' | 'verified_auth' | 'edit_profile' | 'feedback' | 'bookmarks' | 'downloads' | 'logout_confirm'
   >('none');
+
+  // Register Profile sub-modals & install guide for step-by-step reverse back navigation
+  const isProfileActive = Boolean(isOpen || embedded);
+  useBackLayer(
+    isProfileActive && activeSubModal !== 'none',
+    () => setActiveSubModal('none'),
+    'profile-submodal'
+  );
+  useBackLayer(
+    isProfileActive && showInstallGuideModal,
+    () => setShowInstallGuideModal(false),
+    'profile-install-guide'
+  );
 
   // Unified Ultra-Simple Auth Form State
   const [inputEmail, setInputEmail] = useState('');

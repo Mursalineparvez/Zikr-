@@ -38,6 +38,7 @@ import { ShareableContent } from '../utils/shareDownload';
 import { HIGHLIGHT_COLOR_STYLES } from '../utils/savedItems';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
 import { HighlightableText, useSavedHighlightsStore } from './HighlightableText';
+import { stepBackOr, useBackLayer } from '../utils/backNavigation';
 
 interface DuaViewProps {
   onAddDuaToCounters: (dua: DuaItem) => void;
@@ -109,6 +110,18 @@ export const DuaView: React.FC<DuaViewProps> = ({
     content: ShareableContent;
     focus: 'share' | 'download';
   } | null>(null);
+
+  // Register Dua sub-views & modals for step-by-step reverse back navigation
+  useBackLayer(
+    activeTopicId !== null,
+    () => {
+      setActiveTopicId(null);
+      setSelectedCategory('all');
+    },
+    'dua-topic'
+  );
+  useBackLayer(selectedChapter !== null, () => setSelectedChapter(null), 'dua-chapter');
+  useBackLayer(Boolean(shareState), () => setShareState(null), 'dua-share');
 
   // Reset pagination & scroll smoothly when filters change
   useEffect(() => {
@@ -785,8 +798,10 @@ export const DuaView: React.FC<DuaViewProps> = ({
             type="button"
             onClick={() => {
               if (soundEnabled) soundHaptics.playTap();
-              setActiveTopicId(null);
-              setSelectedCategory('all');
+              stepBackOr(() => {
+                setActiveTopicId(null);
+                setSelectedCategory('all');
+              });
             }}
             className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-[#006747] text-white hover:bg-[#00553a] cursor-pointer transition active:scale-95"
           >
@@ -903,7 +918,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
           }`}
         >
           <button
-            onClick={() => setSelectedChapter(null)}
+            onClick={() => stepBackOr(() => setSelectedChapter(null))}
             className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer transition"
           >
             <ArrowLeft className="w-3.5 h-3.5" />

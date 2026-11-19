@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { copyToClipboard } from '../utils/clipboard';
+import { useBackLayer } from '../utils/backNavigation';
 import {
   BOOK_METADATA,
   ARABER_GOTRO_CHAPTERS,
@@ -353,6 +354,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
     setShareModalContent(content);
     setShareModalFocus(focus);
   };
+
+  // Register modals, TOC drawer & sub-category overlays for step-by-step reverse back navigation
+  useBackLayer(selectedSpecialCategory !== 'all', () => setSelectedSpecialCategory('all'), 'gotro-special-cat');
+  useBackLayer(isTocDrawerOpen, () => setIsTocDrawerOpen(false), 'gotro-toc-drawer');
+  useBackLayer(Boolean(selectedResponsibility), () => setSelectedResponsibility(null), 'gotro-responsibility');
+  useBackLayer(Boolean(activePersonalityModal), () => setActivePersonalityModal(null), 'gotro-personality');
+  useBackLayer(Boolean(shareModalContent), () => setShareModalContent(null), 'gotro-share');
 
   const handlePlayVoice = (text: string, voiceKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();

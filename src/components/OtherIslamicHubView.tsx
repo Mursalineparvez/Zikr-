@@ -16,6 +16,7 @@ import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
 import { prefetchView } from '../utils/viewPreloader';
 import { getAllUnifiedBookmarks, getSavedHighlights, getSavedNotes } from '../utils/savedItems';
 import type { CloudZikrState } from '../services/firebase';
+import { pushAppHistoryState, stepBackOr, useBackLayer } from '../utils/backNavigation';
 
 // Code-split sub-views to keep initial app bundle small and startup instantaneous
 const SavedView = React.lazy(() => import('./SavedView').then((m) => ({ default: m.SavedView })));
@@ -449,16 +450,25 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const [, startSubTransition] = React.useTransition();
 
+  useBackLayer(isRightSidebarOpen, () => setIsRightSidebarOpen(false), 'other-right-sidebar');
+
   const handleSelectSub = (sub: OtherSubSection, skipPushState = false) => {
     if (sub === activeSub) return;
     if (soundEnabled) soundHaptics.playTap();
     if (!skipPushState) {
-      try {
-        window.history.pushState({ appModule: 'other', appSub: sub }, '');
-      } catch {}
+      pushAppHistoryState({ appModule: 'other', appSub: sub });
     }
     startSubTransition(() => {
       setActiveSub(sub);
+    });
+  };
+
+  const handleBackStep = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    stepBackOr(() => {
+      startSubTransition(() => {
+        setActiveSub('hub');
+      });
     });
   };
 
@@ -784,7 +794,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             themeMode={themeMode}
             selectedLanguage={selectedLanguage}
             soundEnabled={soundEnabled}
-            onBackToHub={() => setActiveSub('hub')}
+            onBackToHub={handleBackStep}
           />
         )}
 
@@ -794,7 +804,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             themeMode={themeMode}
             selectedLanguage={selectedLanguage}
             soundEnabled={soundEnabled}
-            onBackToHub={() => setActiveSub('hub')}
+            onBackToHub={handleBackStep}
           />
         )}
 
@@ -804,7 +814,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             themeMode={themeMode}
             selectedLanguage={selectedLanguage}
             soundEnabled={soundEnabled}
-            onBackToHub={() => setActiveSub('hub')}
+            onBackToHub={handleBackStep}
           />
         )}
 
@@ -813,7 +823,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           <IslamicHistoryWarsView
             themeMode={themeMode}
             selectedLanguage={selectedLanguage}
-            onBackToHub={() => setActiveSub('hub')}
+            onBackToHub={handleBackStep}
           />
         )}
 
@@ -832,7 +842,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             themeMode={themeMode}
             selectedLanguage={selectedLanguage}
             soundEnabled={soundEnabled}
-            onBack={() => setActiveSub('hub')}
+            onBack={handleBackStep}
           />
         )}
 
@@ -900,7 +910,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             selectedLanguage={selectedLanguage}
             soundEnabled={soundEnabled}
             onNavigateToQuran={onNavigateToQuran}
-            onBackToHub={() => setActiveSub('hub')}
+            onBackToHub={handleBackStep}
           />
         )}
 
@@ -909,8 +919,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           <ProfileModal
             embedded={true}
             isOpen={true}
-            onClose={() => setActiveSub('hub')}
-            onBackToHub={() => setActiveSub('hub')}
+            onClose={handleBackStep}
+            onBackToHub={handleBackStep}
             onOpenSaved={() => handleSelectSub('saved')}
             userProfile={userProfile}
             onUpdateProfile={onUpdateProfile || (() => {})}

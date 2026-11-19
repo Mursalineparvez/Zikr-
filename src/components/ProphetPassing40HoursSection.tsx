@@ -38,6 +38,7 @@ import { soundHaptics } from '../utils/audioHaptics';
 import { ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
 import { ProphetFamilyTreeView } from './ProphetFamilyTreeView';
+import { stepBackOr, useBackLayer } from '../utils/backNavigation';
 
 interface ProphetPassing40HoursSectionProps {
   themeMode?: ThemeMode;
@@ -164,6 +165,11 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
   const [activeEventNo, setActiveEventNo] = useState<number>(1);
   const [mobilePane, setMobilePane] = useState<'index' | 'reader'>('index');
   const [familyViewMode, setFamilyViewMode] = useState<'tree' | 'reader'>('tree');
+  const [openedReaderFromTree, setOpenedReaderFromTree] = useState<boolean>(false);
+  const [enteredMobileReaderFromIndex, setEnteredMobileReaderFromIndex] = useState<boolean>(false);
+  const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 1024 : false
+  );
   const [visitedByCollection, setVisitedByCollection] = useState<
     Record<SpecialCollectionId, Record<number, boolean>>
   >({
@@ -179,20 +185,51 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
   const isReaderOpen = activeCollectionId !== null;
 
   useEffect(() => {
+    const onResize = () => setIsMobileViewport(window.innerWidth < 1024);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Lock background scroll while collection reader portal is open
+  useEffect(() => {
     if (!isReaderOpen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActiveCollectionId(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = prevOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isReaderOpen]);
+
+  // Step-by-step Back Layers:
+  // Layer 1: Collection Portal itself -> returns to Seerat-un-Nabi
+  useBackLayer(isReaderOpen, () => setActiveCollectionId(null), 'seerat-collection-portal');
+
+  // Layer 2a: Collection 04 Full Biography Reader (when navigated from Family Tree) -> returns to Family Tree
+  useBackLayer(
+    isReaderOpen &&
+      activeCollectionId === 'prophet-family-47' &&
+      familyViewMode === 'reader' &&
+      openedReaderFromTree,
+    () => {
+      setFamilyViewMode('tree');
+      setOpenedReaderFromTree(false);
+    },
+    'family-full-reader'
+  );
+
+  // Layer 2b: Mobile Event Reader pane (when navigated from Collection Index) -> returns to Index
+  useBackLayer(
+    isReaderOpen &&
+      isMobileViewport &&
+      !(activeCollectionId === 'prophet-family-47' && familyViewMode === 'tree') &&
+      mobilePane === 'reader' &&
+      enteredMobileReaderFromIndex,
+    () => {
+      setMobilePane('index');
+      setEnteredMobileReaderFromIndex(false);
+    },
+    'collection-mobile-reader'
+  );
 
   const activeCollectionMeta: SeeratSpecialCollectionMeta | null = useMemo(() => {
     if (!activeCollectionId) return null;
@@ -225,6 +262,8 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
       ...prev,
       [collectionId]: { ...(prev[collectionId] || {}), [targetEvent]: true },
     }));
+    setOpenedReaderFromTree(false);
+    setEnteredMobileReaderFromIndex(false);
     if (collectionId === 'prophet-family-47') {
       setFamilyViewMode(initialFamilyMode ?? (initialPart === 'all' ? 'tree' : 'reader'));
     }
@@ -232,8 +271,28 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
     setActiveCollectionId(collectionId);
   };
 
+  // Step back one exact level (Full Reader -> Tree, Mobile Reader -> Index, Portal -> Seerat)
+  const handleStepBack = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    stepBackOr(() => {
+      if (activeCollectionId === 'prophet-family-47' && familyViewMode === 'reader' && openedReaderFromTree) {
+        setFamilyViewMode('tree');
+        setOpenedReaderFromTree(false);
+        return;
+      }
+      if (isMobileViewport && mobilePane === 'reader' && enteredMobileReaderFromIndex) {
+        setMobilePane('index');
+        setEnteredMobileReaderFromIndex(false);
+        return;
+      }
+      setActiveCollectionId(null);
+    });
+  };
+
   const closeCollection = () => {
     if (soundEnabled) soundHaptics.playTap();
+    setOpenedReaderFromTree(false);
+    setEnteredMobileReaderFromIndex(false);
     setActiveCollectionId(null);
   };
 
@@ -245,6 +304,9 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
       ...prev,
       [activeCollectionId]: { ...(prev[activeCollectionId] || {}), [no]: true },
     }));
+    if (isMobileViewport && mobilePane === 'index') {
+      setEnteredMobileReaderFromIndex(true);
+    }
     setMobilePane('reader');
     if (readerScrollRef.current) {
       readerScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1057,16 +1119,31 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
               }`}
             >
               <div className="max-w-7xl mx-auto px-2.5 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-3">
-                {/* Back + Active Collection Title */}
+                {/* Step-by-Step Back + Active Collection Title */}
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   <button
                     type="button"
-                    onClick={closeCollection}
+                    onClick={handleStepBack}
                     className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-bold text-amber-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span className={activeCollectionId === 'prophet-family-47' ? 'hidden sm:inline' : ''}>
-                      {isBn ? 'সীরাতে ফিরুন' : 'Back'}
+                      {activeCollectionId === 'prophet-family-47' &&
+                      familyViewMode === 'reader' &&
+                      openedReaderFromTree
+                        ? isBn
+                          ? 'বংশতালিকায় ফিরুন'
+                          : 'Back to Tree'
+                        : isMobileViewport &&
+                          mobilePane === 'reader' &&
+                          enteredMobileReaderFromIndex &&
+                          !(activeCollectionId === 'prophet-family-47' && familyViewMode === 'tree')
+                        ? isBn
+                          ? 'সূচিতে ফিরুন'
+                          : 'Back to Index'
+                        : isBn
+                        ? 'সীরাতে ফিরুন'
+                        : 'Back'}
                     </span>
                   </button>
                   <div className="min-w-0">
@@ -1088,6 +1165,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                         type="button"
                         onClick={() => {
                           if (soundEnabled) soundHaptics.playTap();
+                          setOpenedReaderFromTree(false);
                           setFamilyViewMode('tree');
                         }}
                         className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
@@ -1103,6 +1181,9 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                         type="button"
                         onClick={() => {
                           if (soundEnabled) soundHaptics.playTap();
+                          if (familyViewMode === 'tree') {
+                            setOpenedReaderFromTree(true);
+                          }
                           setFamilyViewMode('reader');
                         }}
                         className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
@@ -1121,7 +1202,10 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                     <div className="flex lg:hidden items-center p-0.5 rounded-lg bg-black/25 border border-white/10">
                       <button
                         type="button"
-                        onClick={() => setMobilePane('index')}
+                        onClick={() => {
+                          setEnteredMobileReaderFromIndex(false);
+                          setMobilePane('index');
+                        }}
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
                           mobilePane === 'index'
                             ? 'bg-amber-400 text-emerald-950'
@@ -1133,7 +1217,10 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                       </button>
                       <button
                         type="button"
-                        onClick={() => setMobilePane('reader')}
+                        onClick={() => {
+                          if (mobilePane === 'index') setEnteredMobileReaderFromIndex(true);
+                          setMobilePane('reader');
+                        }}
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap cursor-pointer ${
                           mobilePane === 'reader'
                             ? 'bg-amber-400 text-emerald-950'
@@ -1185,9 +1272,15 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
               </div>
             </header>
 
-            {/* Main Body: Interactive Family Tree (Collection 04) OR Archival Two-Pane Reader */}
-            {activeCollectionId === 'prophet-family-47' && familyViewMode === 'tree' ? (
-              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            {/* Keep Family Tree mounted when Collection 04 is open so stepping back from Full Reader preserves scroll & open Member Sheet */}
+            {activeCollectionId === 'prophet-family-47' && (
+              <div
+                className={
+                  familyViewMode === 'tree'
+                    ? 'flex-1 min-h-0 flex flex-col overflow-hidden'
+                    : 'hidden'
+                }
+              >
                 <ProphetFamilyTreeView
                   themeMode={themeMode}
                   selectedLanguage={selectedLanguage}
@@ -1217,6 +1310,8 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                         [memberNo]: true,
                       },
                     }));
+                    setOpenedReaderFromTree(true);
+                    setEnteredMobileReaderFromIndex(false);
                     setMobilePane('reader');
                     setFamilyViewMode('reader');
                     if (readerScrollRef.current) {
@@ -1225,7 +1320,10 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   }}
                 />
               </div>
-            ) : (
+            )}
+
+            {/* Archival Two-Pane Reader (hidden while Collection 04 is showing Family Tree) */}
+            {!(activeCollectionId === 'prophet-family-47' && familyViewMode === 'tree') && (
             <div className="flex-1 min-h-0 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-[360px_1fr]">
               {/* LEFT RAIL: CHRONOLOGICAL সূচিপত্র (TABLE OF CONTENTS) */}
               <aside

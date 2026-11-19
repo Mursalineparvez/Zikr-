@@ -26,6 +26,7 @@ import {
 import { ThemeMode, ZikrLanguage } from '../types';
 import { FAMILY_EVENTS, FAMILY_PARTS, FamilyEvent } from '../data/prophetFamily47Data';
 import { copyToClipboard } from '../utils/clipboard';
+import { useBackLayer } from '../utils/backNavigation';
 
 interface ProphetFamilyTreeViewProps {
   themeMode: ThemeMode;
@@ -274,6 +275,13 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
   const [showAllAunts, setShowAllAunts] = useState<boolean>(true);
   const [showAllWives, setShowAllWives] = useState<boolean>(true);
   const [copiedMemberNo, setCopiedMemberNo] = useState<number | null>(null);
+
+  // Register Member Biography Sheet as a dedicated step-by-step Back layer
+  useBackLayer(
+    selectedMemberNo !== null,
+    () => setSelectedMemberNo(null),
+    'family-tree-member-sheet'
+  );
 
   const drawerScrollRef = useRef<HTMLDivElement | null>(null);
   const gen1Ref = useRef<HTMLDivElement | null>(null);
