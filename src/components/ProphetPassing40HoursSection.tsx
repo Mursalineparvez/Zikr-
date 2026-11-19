@@ -11,8 +11,10 @@ import {
   BookOpen,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Copy,
+  Download,
   List,
   Search,
   Share2,
@@ -455,6 +457,8 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
     };
   };
 
+  const [expandedCardIndexId, setExpandedCardIndexId] = useState<SpecialCollectionId | null>(null);
+
   return (
     <>
       {/* ====================================================================
@@ -505,118 +509,192 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
           </span>
         </div>
 
-        {/* Scalable 3-Column Illuminated Collection Folio Grid */}
+        {/* Slim 2x2 Illuminated Manuscript Folio Grid */}
         <div
-          className={`grid gap-5 items-stretch ${
-            SEERAT_SPECIAL_COLLECTIONS.length > 1 ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'
+          className={`grid gap-3.5 items-start ${
+            SEERAT_SPECIAL_COLLECTIONS.length > 1 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
           }`}
         >
           {SEERAT_SPECIAL_COLLECTIONS.map((col, idx) => {
             const { parts } = getCollectionData(col.id);
-            const coverGradient =
+            const isIndexExpanded = expandedCardIndexId === col.id;
+
+            // Bespoke manuscript folio themes per collection (01 Emerald, 02 Sapphire, 03 Bronze, 04 Imperial Plum)
+            const palette =
               idx === 0
-                ? 'from-[#053328] via-[#062b22] to-[#041d17]'
+                ? {
+                    bg: 'from-[#053529] via-[#04281f] to-[#021913]',
+                    glow: 'rgba(16, 185, 129, 0.22)',
+                    ribbon:
+                      'linear-gradient(90deg, #10b981 0%, #f59e0b 52%, #fde68a 82%, rgba(16,185,129,0.15) 100%)',
+                    numAccent: 'text-emerald-300',
+                    hoverBorder: 'hover:border-emerald-400/60',
+                  }
                 : idx === 1
-                ? 'from-[#092d34] via-[#062724] to-[#041b17]'
-                : 'from-[#331f05] via-[#2d1b06] to-[#1c1003]';
-            const topRibbon =
-              idx === 0
-                ? 'linear-gradient(90deg, #059669 0%, #d97706 48%, #fbbf24 75%, rgba(16,185,129,0.2) 100%)'
-                : idx === 1
-                ? 'linear-gradient(90deg, #0d9488 0%, #f59e0b 50%, #fde68a 78%, rgba(13,148,136,0.2) 100%)'
-                : 'linear-gradient(90deg, #d97706 0%, #f59e0b 50%, #fef3c7 78%, rgba(217,119,6,0.2) 100%)';
+                ? {
+                    bg: 'from-[#08303b] via-[#06242d] to-[#03161d]',
+                    glow: 'rgba(20, 184, 166, 0.22)',
+                    ribbon:
+                      'linear-gradient(90deg, #14b8a6 0%, #fbbf24 52%, #fef08a 82%, rgba(20,184,166,0.15) 100%)',
+                    numAccent: 'text-teal-300',
+                    hoverBorder: 'hover:border-teal-400/60',
+                  }
+                : idx === 2
+                ? {
+                    bg: 'from-[#362107] via-[#271705] to-[#170d02]',
+                    glow: 'rgba(245, 158, 11, 0.24)',
+                    ribbon:
+                      'linear-gradient(90deg, #d97706 0%, #fbbf24 52%, #fef3c7 82%, rgba(217,119,6,0.15) 100%)',
+                    numAccent: 'text-amber-300',
+                    hoverBorder: 'hover:border-amber-400/60',
+                  }
+                : {
+                    bg: 'from-[#291734] via-[#1f1128] to-[#130a19]',
+                    glow: 'rgba(217, 119, 6, 0.22)',
+                    ribbon:
+                      'linear-gradient(90deg, #a855f7 0%, #f59e0b 55%, #fde68a 85%, rgba(168,85,247,0.15) 100%)',
+                    numAccent: 'text-amber-300',
+                    hoverBorder: 'hover:border-amber-300/60',
+                  };
 
             return (
               <article
                 key={col.id}
-                className={`group overflow-hidden rounded-2xl border transition-all duration-200 flex flex-col justify-between ${
+                className={`group relative overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${
                   isDay
-                    ? 'bg-[#FCFBF8] border-stone-200/90 shadow-sm hover:border-emerald-400/80 hover:shadow-md'
-                    : 'bg-[#061c17] border-emerald-800/70 shadow-lg hover:border-amber-400/50'
+                    ? `bg-[#FCFBF8] border-stone-200/90 shadow-xs hover:shadow-lg ${palette.hoverBorder}`
+                    : `bg-[#051814] border-emerald-800/70 shadow-md hover:shadow-xl ${palette.hoverBorder}`
                 }`}
               >
-                <div>
-                  {/* Luminous Top Hairline */}
-                  <div className="h-[3px] w-full" style={{ background: topRibbon }} />
+                {/* Luminous Metallic Top Foil */}
+                <div className="h-[2.5px] w-full" style={{ background: palette.ribbon }} />
 
-                  {/* Illuminated Archival Cover Panel */}
+                {/* Slim Illuminated Cover Surface */}
+                <div
+                  onClick={() => openCollection(col.id, 'all', 1, false)}
+                  className={`relative cursor-pointer px-4 py-3.5 sm:px-5 sm:py-4 bg-gradient-to-br ${palette.bg} text-white overflow-hidden`}
+                >
+                  {/* Soft Radial Lantern Glow */}
                   <div
-                    onClick={() => openCollection(col.id, 'all', 1, false)}
-                    className={`relative cursor-pointer p-5 sm:p-6 bg-gradient-to-br ${coverGradient} text-white`}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-10 -top-10 w-36 h-36 rounded-full blur-2xl opacity-60 transition-opacity duration-300 group-hover:opacity-90"
+                    style={{ background: palette.glow }}
+                  />
+
+                  {/* Delicate Islamic Eight-Pointed Rub el Hizb Star & Arch Motif */}
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 120 120"
+                    className="pointer-events-none absolute -right-3 top-1/2 -translate-y-1/2 w-28 h-28 text-amber-200/[0.08] transition-transform duration-500 ease-out group-hover:rotate-12 group-hover:scale-105"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1"
                   >
-                    {/* Delicate Geometric Filigree */}
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 120 120"
-                      className="pointer-events-none absolute right-3 top-3 w-24 h-24 text-amber-300/[0.08]"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.1"
-                    >
-                      <rect x="24" y="24" width="72" height="72" />
-                      <rect x="24" y="24" width="72" height="72" transform="rotate(45 60 60)" />
-                      <circle cx="60" cy="60" r="24" />
-                    </svg>
+                    <rect x="24" y="24" width="72" height="72" />
+                    <rect x="24" y="24" width="72" height="72" transform="rotate(45 60 60)" />
+                    <circle cx="60" cy="60" r="26" strokeDasharray="3 3" />
+                    <circle cx="60" cy="60" r="14" />
+                  </svg>
 
-                    <div className="relative z-10 space-y-3">
-                      {/* Clean Unboxed Metadata Line + Share Controls */}
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-amber-200/90 tabular-nums">
-                          <span className="font-bold text-amber-300">
-                            {isBn ? col.volumeNoBn : col.volumeNoEn}
-                          </span>
-                          <span aria-hidden="true" className="text-emerald-400/50">
-                            ·
-                          </span>
-                          <span>
-                            {isBn
-                              ? `${toBnNumber(col.partsCount)} পর্ব / ${toBnNumber(col.eventsCount)} ঘটনা`
-                              : `${col.partsCount} Parts / ${col.eventsCount} Events`}
-                          </span>
-                        </div>
-
-                        {onOpenShareModal && (
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <ShareDownloadButtons
-                              selectedLanguage={selectedLanguage}
-                              themeMode="night"
-                              variant="hero"
-                              onShare={() => onOpenShareModal(buildFullChronicleShare(col), 'share')}
-                              onDownload={() =>
-                                onOpenShareModal(buildFullChronicleShare(col), 'download')
-                              }
-                            />
-                          </div>
-                        )}
+                  <div className="relative z-10 space-y-2.5">
+                    {/* Row 1: Compact Volume Index Metadata + Sleek Icon Actions */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 text-[11px] font-semibold text-amber-200/90 tabular-nums">
+                        <span className={`font-black tracking-wide ${palette.numAccent}`}>
+                          {isBn ? col.volumeNoBn : col.volumeNoEn}
+                        </span>
+                        <span aria-hidden="true" className="text-white/25">
+                          ·
+                        </span>
+                        <span className="text-white/80 truncate">
+                          {isBn
+                            ? `${toBnNumber(col.partsCount)} পর্ব / ${toBnNumber(col.eventsCount)} ঘটনা`
+                            : `${col.partsCount} Parts / ${col.eventsCount} Events`}
+                        </span>
                       </div>
 
-                      {/* Title + Arabic Calligraphy */}
-                      <div className="space-y-1.5">
-                        <p
-                          dir="rtl"
-                          className="font-arabic text-base text-amber-200/90 text-left"
+                      {onOpenShareModal && (
+                        <div
+                          className="flex items-center gap-1 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          {col.arabicTitle}
-                        </p>
-                        <h3 className="text-lg sm:text-xl font-black tracking-tight text-white leading-snug text-balance">
-                          {isBn ? col.titleBn : col.titleEn}
-                        </h3>
-                        <p className="text-xs text-emerald-100/85 leading-relaxed line-clamp-3">
-                          {isBn ? col.summaryBn : col.summaryEn}
-                        </p>
-                      </div>
+                          <button
+                            type="button"
+                            onClick={() => onOpenShareModal(buildFullChronicleShare(col), 'share')}
+                            title={isBn ? 'শেয়ার করুন' : 'Share'}
+                            aria-label={isBn ? 'শেয়ার করুন' : 'Share'}
+                            className="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/15 text-white/90 transition active:scale-95 cursor-pointer"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onOpenShareModal(buildFullChronicleShare(col), 'download')
+                            }
+                            title={isBn ? 'ডাউনলোড করুন' : 'Download'}
+                            aria-label={isBn ? 'ডাউনলোড করুন' : 'Download'}
+                            className="w-7 h-7 rounded-full flex items-center justify-center bg-amber-400/15 hover:bg-amber-400/30 border border-amber-300/25 text-amber-200 transition active:scale-95 cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-                      {/* Primary Action Row */}
-                      <div className="pt-2.5 flex flex-wrap items-center justify-between gap-2.5 border-t border-white/10">
-                        <span className="text-xs text-emerald-200/90 tabular-nums">
-                          <strong className="text-amber-200">
+                    {/* Row 2: Arabic Calligraphic Kicker + Title + Concise 2-Line Summary */}
+                    <div className="space-y-1 pr-6">
+                      <p
+                        dir="rtl"
+                        className="font-arabic text-[13px] text-amber-200/85 text-left leading-snug"
+                      >
+                        {col.arabicTitle}
+                      </p>
+                      <h3 className="text-base sm:text-[17px] font-black tracking-tight text-white leading-snug text-balance">
+                        {isBn ? col.titleBn : col.titleEn}
+                      </h3>
+                      <p className="text-[11.5px] text-white/75 leading-relaxed line-clamp-2">
+                        {isBn ? col.summaryBn : col.summaryEn}
+                      </p>
+                    </div>
+
+                    {/* Row 3: Slim Action Footer — Era Info + Part Index Toggle + Gold Read CTA */}
+                    <div className="pt-2.5 mt-1 border-t border-white/10 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-[11px] text-white/75 tabular-nums truncate">
+                          <strong className="text-amber-200 font-bold">
                             {isBn ? col.durationBn : col.durationEn}
                           </strong>
-                          <span aria-hidden="true" className="mx-1.5 text-white/30">
+                          <span aria-hidden="true" className="mx-1.5 text-white/25">
                             ·
                           </span>
                           <span>{isBn ? col.eraLabelBn : col.eraLabelEn}</span>
                         </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (soundEnabled) soundHaptics.playTap();
+                            setExpandedCardIndexId((prev) => (prev === col.id ? null : col.id));
+                          }}
+                          aria-expanded={isIndexExpanded}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/18 border border-white/15 text-white/90 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                        >
+                          <List className="w-3 h-3 text-amber-300" />
+                          <span>
+                            {isBn
+                              ? `${toBnNumber(col.partsCount)} পর্ব`
+                              : `${col.partsCount} Parts`}
+                          </span>
+                          <ChevronDown
+                            className={`w-3 h-3 transition-transform duration-200 ${
+                              isIndexExpanded ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
 
                         <button
                           type="button"
@@ -624,10 +702,10 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                             e.stopPropagation();
                             openCollection(col.id, 'all', 1, false);
                           }}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-emerald-950 text-xs font-black transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-emerald-950 text-[11.5px] font-black transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-xs"
                         >
                           <BookOpen className="w-3.5 h-3.5" />
-                          <span>{isBn ? 'সূচিপত্র ও বিস্তারিত পড়ুন' : 'Open Index & Read'}</span>
+                          <span>{isBn ? 'পড়ুন' : 'Read'}</span>
                           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                         </button>
                       </div>
@@ -635,27 +713,29 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   </div>
                 </div>
 
-                {/* Quick Part Table of Contents Strip */}
-                <div
-                  className={`p-4 space-y-3 border-t flex-1 flex flex-col justify-between ${
-                    isDay ? 'border-stone-200/80' : 'border-emerald-800/60'
-                  }`}
-                >
-                  <div className="space-y-2.5">
+                {/* Expandable Slim Part Index Drawer (on-demand — keeps default cards ultra-slim) */}
+                {isIndexExpanded && (
+                  <div
+                    className={`px-4 py-3 space-y-2.5 border-t animate-in fade-in duration-150 ${
+                      isDay
+                        ? 'bg-[#FAF8F3] border-stone-200/80'
+                        : 'bg-[#041410] border-emerald-800/60'
+                    }`}
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <span
-                        className={`text-xs font-extrabold tracking-wide ${
+                        className={`text-[11px] font-extrabold tracking-wide ${
                           isDay ? 'text-stone-600' : 'text-emerald-300/85'
                         }`}
                       >
                         {isBn
-                          ? `ভেতরের ${toBnNumber(col.partsCount)}টি পর্বের সূচি`
-                          : `Inside This Volume (${col.partsCount} Parts)`}
+                          ? `ভেতরের ${toBnNumber(col.partsCount)}টি পর্বের সূচিপত্র`
+                          : `Table of Contents (${col.partsCount} Parts)`}
                       </span>
                       <button
                         type="button"
                         onClick={() => openCollection(col.id, 'all', 1, false)}
-                        className={`text-xs font-bold hover:underline cursor-pointer whitespace-nowrap shrink-0 ${
+                        className={`text-[11px] font-bold hover:underline cursor-pointer whitespace-nowrap shrink-0 ${
                           isDay ? 'text-emerald-800' : 'text-amber-300'
                         }`}
                       >
@@ -671,61 +751,50 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                           key={part.partNo}
                           type="button"
                           onClick={() => openCollection(col.id, part.partNo, undefined, false)}
-                          className={`text-left px-3 py-2 rounded-xl border transition-colors cursor-pointer flex items-center justify-between gap-2 ${
+                          className={`text-left px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer flex items-center justify-between gap-2 ${
                             isDay
                               ? 'bg-white hover:bg-emerald-50/70 border-stone-200/90 hover:border-emerald-300 text-stone-800'
-                              : 'bg-[#041511] hover:bg-emerald-900/40 border-emerald-800/60 hover:border-amber-400/40 text-emerald-100'
+                              : 'bg-[#061d17] hover:bg-emerald-900/40 border-emerald-800/60 hover:border-amber-400/40 text-emerald-100'
                           }`}
                         >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5 text-[11px] font-bold tabular-nums">
-                              <span style={{ color: isDay ? part.accentHex : '#fbbf24' }}>
-                                {isBn
-                                  ? `পর্ব ${toBnNumber(part.partNo, true)}`
-                                  : `Part 0${part.partNo}`}
-                              </span>
-                              <span
-                                aria-hidden="true"
-                                className={isDay ? 'text-stone-300' : 'text-emerald-700'}
-                              >
-                                ·
-                              </span>
-                              <span className={isDay ? 'text-stone-500' : 'text-emerald-300/75'}>
-                                {isBn
-                                  ? `${toBnNumber(part.eventCount)}টি`
-                                  : `${part.eventCount}`}
-                              </span>
-                            </div>
-                            <p className="text-xs font-bold truncate mt-0.5">
+                          <div className="min-w-0 flex items-center gap-2">
+                            <span
+                              className="text-[11px] font-black tabular-nums shrink-0"
+                              style={{ color: isDay ? part.accentHex : '#fbbf24' }}
+                            >
+                              {isBn ? toBnNumber(part.partNo, true) : `0${part.partNo}`}
+                            </span>
+                            <p className="text-[11.5px] font-bold truncate">
                               {isBn
                                 ? part.titleBn.split('·').slice(1).join('·').trim() || part.titleBn
                                 : part.titleEn.split('·').slice(1).join('·').trim() || part.titleEn}
                             </p>
                           </div>
-                          <ChevronRight
-                            className={`w-3.5 h-3.5 shrink-0 ${
-                              isDay ? 'text-stone-400' : 'text-emerald-500'
+                          <span
+                            className={`text-[10px] font-semibold tabular-nums shrink-0 ${
+                              isDay ? 'text-stone-400' : 'text-emerald-400/70'
                             }`}
-                          />
+                          >
+                            {isBn ? `${toBnNumber(part.eventCount)}টি` : part.eventCount}
+                          </span>
                         </button>
                       ))}
                     </div>
-                  </div>
 
-                  {/* Quiet Unboxed Archival Sources Footnote */}
-                  <p
-                    className={`pt-2.5 border-t text-[11px] leading-relaxed ${
-                      isDay
-                        ? 'border-stone-200/70 text-stone-500'
-                        : 'border-emerald-900/70 text-emerald-300/70'
-                    }`}
-                  >
-                    <strong className={isDay ? 'text-stone-700' : 'text-emerald-200'}>
-                      {isBn ? 'মূল সূত্র: ' : 'Primary Sources: '}
-                    </strong>
-                    {isBn ? col.primarySourcesBn : col.primarySourcesEn}
-                  </p>
-                </div>
+                    <p
+                      className={`pt-2 border-t text-[10.5px] leading-relaxed ${
+                        isDay
+                          ? 'border-stone-200/70 text-stone-500'
+                          : 'border-emerald-900/70 text-emerald-300/70'
+                      }`}
+                    >
+                      <strong className={isDay ? 'text-stone-700' : 'text-emerald-200'}>
+                        {isBn ? 'মূল সূত্র: ' : 'Sources: '}
+                      </strong>
+                      {isBn ? col.primarySourcesBn : col.primarySourcesEn}
+                    </p>
+                  </div>
+                )}
               </article>
             );
           })}
