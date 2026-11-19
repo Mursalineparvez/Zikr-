@@ -1,5 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Check, ChevronDown, ChevronUp, Clock, Infinity as InfinityIcon, List, Sparkles, Volume2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Infinity as InfinityIcon,
+  List,
+  Sparkles,
+  Sun,
+  Sunrise as SunriseIcon,
+  Sunset as SunsetIcon,
+  Volume2,
+} from 'lucide-react';
 import { FormattedPrayerTimes, formatTime12h } from '../utils/prayerTimes';
 import { AamalDayLog, ThemeMode, ZikrLanguage } from '../types';
 import {
@@ -285,6 +299,45 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
     [currentT]
   );
 
+  // Live permissible vs prohibited (Makruh) solar window check (Sunrise, Zawal, Sunset)
+  const waqtValidity = useMemo(() => {
+    const nowMs = Date.now();
+    const { sunriseDate, solarNoonDate, sunsetDate } = prayerData.solar;
+
+    if (sunriseDate) {
+      const ms = sunriseDate.getTime();
+      if (nowMs >= ms - 2 * 60000 && nowMs <= ms + 16 * 60000) {
+        return {
+          isProhibited: true,
+          label: isBn ? 'মাকরূহ ওয়াক্ত: সূর্যোদয়' : isAr ? 'وقت كراهة: الشروق' : 'Makruh: Sunrise',
+        };
+      }
+    }
+    if (solarNoonDate) {
+      const ms = solarNoonDate.getTime();
+      if (nowMs >= ms - 10 * 60000 && nowMs <= ms + 2 * 60000) {
+        return {
+          isProhibited: true,
+          label: isBn ? 'মাকরূহ ওয়াক্ত: যাওয়াল' : isAr ? 'وقت كراهة: الزوال' : 'Makruh: Zawal',
+        };
+      }
+    }
+    if (sunsetDate) {
+      const ms = sunsetDate.getTime();
+      if (nowMs >= ms - 16 * 60000 && nowMs <= ms + 2 * 60000) {
+        return {
+          isProhibited: true,
+          label: isBn ? 'মাকরূহ ওয়াক্ত: সূর্যাস্ত' : isAr ? 'وقت كراهة: الغروب' : 'Makruh: Sunset',
+        };
+      }
+    }
+    return {
+      isProhibited: false,
+      label: isBn ? 'সালাতের বৈধ ওয়াক্ত' : isAr ? 'وقت صلاة جائز' : 'Valid prayer time',
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prayerData.solar, liveTick, isBn, isAr]);
+
   // Precompute the 5 prayer node coordinates and start times
   const nodes = useMemo(() => {
     const startTimes: Record<WaqtNodeKey, string> = {
@@ -531,21 +584,39 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
             />
           </div>
 
-          {/* Quiet Inline Metadata Row: Time Range & Next Waqt */}
+          {/* Quiet Inline Metadata Row: Time Range, Valid/Makruh Status & Next Waqt */}
           {(activeTimeRange || nextPrayerLabel) && (
-            <div className="flex items-center justify-between gap-2 mt-2 text-[11px] sm:text-xs font-semibold tabular-nums">
-              {activeTimeRange ? (
+            <div className="flex items-center justify-between gap-2 mt-2 text-[11px] sm:text-xs font-semibold tabular-nums flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                {activeTimeRange && (
+                  <span
+                    className={`flex items-center gap-1 font-mono ${
+                      isDay ? 'text-[#555D58]' : 'text-emerald-200/80'
+                    }`}
+                  >
+                    <Clock className="w-3 h-3 shrink-0 opacity-75" />
+                    <span>{formatLocalizedNumber(activeTimeRange, lang)}</span>
+                  </span>
+                )}
                 <span
-                  className={`flex items-center gap-1 font-mono ${
-                    isDay ? 'text-[#555D58]' : 'text-emerald-200/80'
+                  className={`inline-flex items-center gap-1 text-[10.5px] font-bold ${
+                    waqtValidity.isProhibited
+                      ? isDay
+                        ? 'text-rose-600'
+                        : 'text-rose-400'
+                      : isDay
+                      ? 'text-[var(--app-primary,#057A55)]'
+                      : 'text-emerald-400'
                   }`}
                 >
-                  <Clock className="w-3 h-3 shrink-0 opacity-75" />
-                  <span>{formatLocalizedNumber(activeTimeRange, lang)}</span>
+                  {waqtValidity.isProhibited ? (
+                    <AlertTriangle className="w-3 h-3 shrink-0" />
+                  ) : (
+                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  )}
+                  <span className="truncate">{waqtValidity.label}</span>
                 </span>
-              ) : (
-                <span />
-              )}
+              </div>
 
               {nextPrayerLabel && (
                 <span
@@ -742,6 +813,57 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
             );
           })}
         </svg>
+      </div>
+
+      {/* Slim Integrated Solar Milestones Row (Sunrise · Zawal · Sunset · Daylight) */}
+      <div className="px-4 sm:px-5 pb-2.5">
+        <div
+          className={`grid grid-cols-4 divide-x rounded-2xl border py-2 px-1 text-center tabular-nums ${
+            isDay
+              ? 'bg-[var(--app-surface-soft,#F6F5EE)]/75 border-[var(--app-border,#E5E3D8)] divide-[var(--app-border,#E5E3D8)]'
+              : 'bg-[#061814]/80 border-emerald-900/60 divide-emerald-900/60'
+          }`}
+        >
+          <div className="px-1 flex flex-col items-center justify-center">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+              <SunriseIcon className="w-3 h-3 shrink-0" />
+              <span className="truncate">{isBn ? 'সূর্যোদয়' : isAr ? 'الشروق' : 'Sunrise'}</span>
+            </span>
+            <span className={`text-[11px] font-mono font-extrabold mt-0.5 ${isDay ? 'text-slate-800' : 'text-white'}`}>
+              {formatLocalizedNumber(prayerData.solar.sunriseTime, lang)}
+            </span>
+          </div>
+
+          <div className="px-1 flex flex-col items-center justify-center">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+              <Sun className="w-3 h-3 shrink-0" />
+              <span className="truncate">{isBn ? 'মধ্যাহ্ন' : isAr ? 'الزوال' : 'Zawal'}</span>
+            </span>
+            <span className={`text-[11px] font-mono font-extrabold mt-0.5 ${isDay ? 'text-slate-800' : 'text-white'}`}>
+              {formatLocalizedNumber(prayerData.solar.solarNoonTime, lang)}
+            </span>
+          </div>
+
+          <div className="px-1 flex flex-col items-center justify-center">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400">
+              <SunsetIcon className="w-3 h-3 shrink-0" />
+              <span className="truncate">{isBn ? 'সূর্যাস্ত' : isAr ? 'الغروب' : 'Sunset'}</span>
+            </span>
+            <span className={`text-[11px] font-mono font-extrabold mt-0.5 ${isDay ? 'text-slate-800' : 'text-white'}`}>
+              {formatLocalizedNumber(prayerData.solar.sunsetTime, lang)}
+            </span>
+          </div>
+
+          <div className="px-1 flex flex-col items-center justify-center">
+            <span className="flex items-center gap-1 text-[10px] font-bold text-sky-700 dark:text-sky-400">
+              <Clock className="w-3 h-3 shrink-0" />
+              <span className="truncate">{isBn ? 'দিনের আলো' : isAr ? 'النهار' : 'Daylight'}</span>
+            </span>
+            <span className={`text-[11px] font-mono font-extrabold mt-0.5 ${isDay ? 'text-slate-800' : 'text-white'}`}>
+              {formatLocalizedNumber(prayerData.solar.daylightTotalFormatted, lang)}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Bottom Action Row: [All amal] [∞ Any time - X/Y] */}

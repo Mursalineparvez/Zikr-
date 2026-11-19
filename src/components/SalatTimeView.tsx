@@ -41,12 +41,10 @@ import {
   BookOpen,
   Scroll,
   Layers,
-  SlidersHorizontal,
   Check,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { ThemeMode, ZikrLanguage } from '../types';
-import { SolarTrajectoryCard } from './SolarTrajectoryCard';
 import { SalatAmalArcCard, WaqtNodeKey } from './SalatAmalArcCard';
 import { ALL_PRAYER_DETAILS } from '../data/prayerDetailsData';
 import {
@@ -195,10 +193,9 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
   const isDay = themeMode === 'day';
   const lang = selectedLanguage || 'bn';
 
-  // Navigation Subtabs: prayers | qibla | roza | tracker
-  const [salatSubTab, setSalatSubTab] = useState<'prayers' | 'qibla' | 'roza' | 'tracker'>('prayers');
+  // Navigation Subtabs: prayers | qibla
+  const [salatSubTab, setSalatSubTab] = useState<'prayers' | 'qibla'>('prayers');
   const [liveTick, setLiveTick] = useState<number>(0);
-  const [showDetailedTrajectory, setShowDetailedTrajectory] = useState<boolean>(false);
   const [showSettingsDrawer, setShowSettingsDrawer] = useState<boolean>(false);
   const [selectedQuickPrayer, setSelectedQuickPrayer] = useState<any | null>(null);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
@@ -265,18 +262,6 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
     } catch {}
     return { Fajr: false, Dhuhr: false, Asr: false, Maghrib: false, Isha: false };
   });
-
-  const togglePrayerCompleted = (prayerId: string) => {
-    setCompletedPrayers((prev) => {
-      const updated = { ...prev, [prayerId]: !prev[prayerId] };
-      try {
-        const todayKey = `zikrmate_prayers_${new Date().toISOString().slice(0, 10)}`;
-        localStorage.setItem(todayKey, JSON.stringify(updated));
-      } catch {}
-      if (soundEnabled) soundHaptics.playMilestone();
-      return updated;
-    });
-  };
 
   const syncPrayerCompletedFromArc = (prayerKey: WaqtNodeKey, completed: boolean) => {
     setCompletedPrayers((prev) => {
@@ -596,29 +581,6 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
     });
   }, [prayerData, lang, liveTick]);
 
-  // Fasting Sehri & Iftar live calculations
-  const rozaTimes = useMemo(() => {
-    const now = new Date();
-    const sehriEnd = prayerData.fajrDate;
-    const iftarStart = prayerData.maghribDate;
-
-    const iftarDiff = Math.max(0, iftarStart.getTime() - now.getTime());
-    const iftarSecs = Math.floor(iftarDiff / 1000);
-    const iftarH = Math.floor(iftarSecs / 3600);
-    const iftarM = Math.floor((iftarSecs % 3600) / 60);
-    const iftarS = iftarSecs % 60;
-    const iftarCountdown = `${String(iftarH).padStart(2, '0')}:${String(iftarM).padStart(2, '0')}:${String(iftarS).padStart(2, '0')}`;
-
-    const isFastingNow = now >= sehriEnd && now < iftarStart;
-
-    return {
-      sehriTime: prayerData.fajr,
-      iftarTime: prayerData.maghrib,
-      iftarCountdown,
-      isFastingNow,
-    };
-  }, [prayerData, liveTick]);
-
   // Weather icon renderer
   const renderWeatherIcon = () => {
     const iconClass = 'w-4 h-4 text-amber-500';
@@ -742,8 +704,8 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
         </div>
       </div>
 
-      {/* 3. 4 Modern Segmented Tabs: Prayers | Qibla | Roza & Nafl | Tracker & Fiqh */}
-      <div className="relative z-10 p-1.5 rounded-2xl bg-[#e3eae6] dark:bg-[#08201b] border border-slate-200/90 dark:border-emerald-900/50 grid grid-cols-4 gap-1 shadow-inner">
+      {/* 3. 2 Modern Segmented Tabs: Prayers | Qibla */}
+      <div className="relative z-10 p-1.5 rounded-2xl bg-[#e3eae6] dark:bg-[#08201b] border border-slate-200/90 dark:border-emerald-900/50 grid grid-cols-2 gap-1 shadow-inner">
         <button
           onClick={() => {
             setSalatSubTab('prayers');
@@ -772,36 +734,6 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
         >
           <span>🧭</span>
           <span className="truncate">{(SALAT_TEXTS.tabs.qibla as any)[lang] || 'Qibla'}</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setSalatSubTab('roza');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold flex flex-col sm:flex-row items-center justify-center gap-1 transition-all cursor-pointer ${
-            salatSubTab === 'roza'
-              ? 'bg-[#004d35] text-white shadow-md shadow-emerald-950/20 scale-[1.01]'
-              : 'text-slate-700 dark:text-emerald-200/70 hover:text-emerald-900 dark:hover:text-white'
-          }`}
-        >
-          <span>🌙</span>
-          <span className="truncate">{(SALAT_TEXTS.tabs.roza as any)[lang] || 'Fasting'}</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setSalatSubTab('tracker');
-            if (soundEnabled) soundHaptics.playTap();
-          }}
-          className={`py-2 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold flex flex-col sm:flex-row items-center justify-center gap-1 transition-all cursor-pointer ${
-            salatSubTab === 'tracker'
-              ? 'bg-[#004d35] text-white shadow-md shadow-emerald-950/20 scale-[1.01]'
-              : 'text-slate-700 dark:text-emerald-200/70 hover:text-emerald-900 dark:hover:text-white'
-          }`}
-        >
-          <span>📋</span>
-          <span className="truncate">{(SALAT_TEXTS.tabs.tracker as any)[lang] || 'Tracker'}</span>
         </button>
       </div>
 
@@ -921,30 +853,6 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               ))}
             </div>
           </div>
-
-          {/* Solar Trajectory Toggle */}
-          <div className="pt-1">
-            <button
-              onClick={() => {
-                setShowDetailedTrajectory(!showDetailedTrajectory);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer mx-auto"
-            >
-              <span>{showDetailedTrajectory ? '▲ ' + (lang === 'bn' ? 'সূর্যের কক্ষপথ লুকান' : 'Hide Solar Arc') : '▼ ' + (lang === 'bn' ? 'সূর্যের সার্বিক গতিপথ (Solar Arc)' : 'Show Solar Arc & Trajectory')}</span>
-            </button>
-          </div>
-
-          {showDetailedTrajectory && (
-            <div className="animate-in fade-in duration-200">
-              <SolarTrajectoryCard
-                prayerData={prayerData}
-                isDay={isDay}
-                selectedLanguage={lang}
-                soundEnabled={soundEnabled}
-              />
-            </div>
-          )}
         </div>
       )}
 
@@ -1064,234 +972,6 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
             <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1.5 pt-1">
               <Radio className="w-3.5 h-3.5 text-emerald-500" />
               <span>{hasCompassSensor ? (SALAT_TEXTS.qibla.sensorCalibrated as any)[lang] || 'Gyro sensor calibrated' : 'Sensor simulation active'}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 3: ROZA & NAFL (Sehri, Iftar, Fasting Niyyah, Iftar Dua, Sunnah Days)  */}
-      {/* ========================================================================= */}
-      {salatSubTab === 'roza' && (
-        <div className="relative z-10 space-y-3.5 animate-in fade-in duration-200">
-          {/* Dual Sehri & Iftar Banner */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-900/40 to-indigo-950/60 border border-indigo-500/30 text-white shadow-md">
-              <div className="flex items-center gap-1.5 text-indigo-300 text-xs font-bold mb-1">
-                <SunriseIcon className="w-3.5 h-3.5" />
-                <span>{(SALAT_TEXTS.roza.sehriEnds as any)[lang] || 'Sehri Ends'}</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-mono font-black text-white">
-                {formatLocalizedNumber(rozaTimes.sehriTime, lang)}
-              </div>
-              <div className="text-[10px] text-indigo-200/70 mt-1">
-                {lang === 'bn' ? 'ফজরের ওয়াক্ত শুরুর সাথে সাথে সেহরি শেষ হয়' : 'Ends with the beginning of Fajr'}
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-900/40 to-amber-950/60 border border-amber-500/30 text-white shadow-md">
-              <div className="flex items-center gap-1.5 text-amber-300 text-xs font-bold mb-1">
-                <SunsetIcon className="w-3.5 h-3.5" />
-                <span>{(SALAT_TEXTS.roza.iftarTime as any)[lang] || 'Iftar Time'}</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-mono font-black text-amber-300">
-                {formatLocalizedNumber(rozaTimes.iftarTime, lang)}
-              </div>
-              <div className="text-[10px] text-amber-200/70 mt-1 font-mono">
-                {(SALAT_TEXTS.roza.timeUntilIftar as any)[lang] || 'Remaining'}: {formatLocalizedNumber(rozaTimes.iftarCountdown, lang)}
-              </div>
-            </div>
-          </div>
-
-          {/* Fasting Niyyah (রোজার নিয়ত) */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-sm space-y-2.5">
-            <h3 className="text-sm font-extrabold text-[#004d35] dark:text-emerald-300 flex items-center gap-1.5">
-              <span>📜</span>
-              <span>{(SALAT_TEXTS.roza.niyyahTitle as any)[lang] || 'Fasting Intention (Niyyah)'}</span>
-            </h3>
-            <div dir="rtl" className="font-quran text-lg sm:text-xl font-bold text-right text-emerald-950 dark:text-emerald-100 leading-relaxed bg-emerald-50/50 dark:bg-black/20 p-3.5 rounded-2xl border border-emerald-500/20">
-              نَوَيْتُ اَنْ اُصُوْمَ غَدًا مِّنْ شَهْرِ رَمَضَانَ الْمُبَارَكِ فَرْضًا لَكَ يَا اللهُ فَتَقَبَّلْ مِنِّى اِنَّكَ اَنْتَ السَّمِيْعُ الْعَلِيْمُ
-            </div>
-            <p className="text-xs text-slate-700 dark:text-emerald-200/90 leading-relaxed">
-              <strong>{(SALAT_TEXTS.roza.pronunciationLabel as any)[lang] || 'Pronunciation'}:</strong> Nawaytu an asuma ghadan min shahri ramadanal mubaraki fardal laka ya Allahu fataqabbal minni innaka antas-sami’ul ‘alim.
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              <strong>{(SALAT_TEXTS.roza.meaningLabel as any)[lang] || 'Meaning'}:</strong> {lang === 'bn'
-                ? 'হে আল্লাহ! আপনার সন্তুষ্টির উদ্দেশ্যে আমি আগামীকালকের রোজা রাখার নিয়ত করছি। অতএব আপনি আমার রোজা কবুল করুন, নিশ্চয়ই আপনি সর্বশ্রোতা ও সর্বজ্ঞাত।'
-                : 'O Allah! I intend to fast tomorrow for Your pleasure. So accept it from me, for You are indeed the All-Hearing, All-Knowing.'}
-            </p>
-          </div>
-
-          {/* Iftar Dua (ইফতারের দোয়া) */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-sm space-y-2.5">
-            <h3 className="text-sm font-extrabold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-              <span>🤲</span>
-              <span>{(SALAT_TEXTS.roza.iftarDuaTitle as any)[lang] || 'Dua for Breaking Fast (Iftar)'}</span>
-            </h3>
-            <div dir="rtl" className="font-quran text-lg sm:text-xl font-bold text-right text-amber-950 dark:text-amber-200 leading-relaxed bg-amber-50/50 dark:bg-black/20 p-3.5 rounded-2xl border border-amber-500/20">
-              اَللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ اَفْطَرْتُ
-            </div>
-            <p className="text-xs text-slate-700 dark:text-emerald-200/90 leading-relaxed">
-              <strong>{(SALAT_TEXTS.roza.pronunciationLabel as any)[lang] || 'Pronunciation'}:</strong> Allahumma laka sumtu wa ‘ala rizqika aftartu.
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              <strong>{(SALAT_TEXTS.roza.meaningLabel as any)[lang] || 'Meaning'}:</strong> {lang === 'bn'
-                ? 'হে আল্লাহ! আমি আপনারই জন্য রোজা রেখেছি এবং আপনারই দেওয়া রিজিক দ্বারা ইফতার করছি। (আবু দাউদ ২৩৫৮)'
-                : 'O Allah! For You I have fasted, and with Your provision I break my fast. (Abu Dawud 2358)'}
-            </p>
-          </div>
-
-          {/* Sunnah Fasting Days Information */}
-          <div className="p-4 rounded-3xl bg-[#f7faf8] dark:bg-[#081e1a] border border-slate-200 dark:border-emerald-800/40 text-xs space-y-2">
-            <h4 className="font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-              <span>🌟</span>
-              <span>{(SALAT_TEXTS.roza.sunnahDaysTitle as any)[lang] || 'Beloved Sunnah Fasting Days of Prophet (ﷺ)'}</span>
-            </h4>
-            <ul className="space-y-1.5 text-slate-600 dark:text-slate-300">
-              <li>• <strong>{lang === 'bn' ? 'প্রতি সোমবার ও বৃহস্পতিবার:' : 'Mondays & Thursdays:'}</strong> {lang === 'bn' ? 'বান্দার আমল আল্লাহর দরবারে পেশ করা হয়। (তিরমিযী ৭৪৭)' : 'Deeds are presented to Allah on these two days. (Tirmidhi 747)'}</li>
-              <li>• <strong>{lang === 'bn' ? 'আইয়ামে বীজ (১৩, ১৪, ১৫ হিজরি):' : 'Ayyam al-Beed (13th, 14th, 15th):'}</strong> {lang === 'bn' ? 'প্রতি হিজরি মাসের ৩টি রোজা সারাবছর রোজা রাখার সমতুল্য সওয়াব।' : 'Fasting 3 days every lunar month is equivalent to fasting the entire year.'}</li>
-              <li>• <strong>{lang === 'bn' ? 'আশুরা ও আরাফাত:' : 'Ashura & Day of Arafah:'}</strong> {lang === 'bn' ? 'বিগত ও পরবর্তী বছরের পাপমোচনের বিশেষ ফজিলতপূর্ণ রোজা।' : 'Expiates the sins of the past and coming year.'}</li>
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 4: TRACKER & FIQH SETTINGS (5 Prayer Checklist + Calculation Settings) */}
-      {/* ========================================================================= */}
-      {salatSubTab === 'tracker' && (
-        <div className="relative z-10 space-y-4 animate-in fade-in duration-200">
-          {/* Daily 5-Prayer Checklist Tracker */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-5 rounded-full bg-emerald-500" />
-                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-white">
-                  {(SALAT_TEXTS.tracker.title as any)[lang] || 'Daily 5-Prayer Tracker'}
-                </h3>
-              </div>
-              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-500/30">
-                {formatLocalizedNumber(Object.values(completedPrayers).filter(Boolean).length, lang)}
-                {(SALAT_TEXTS.tracker.completedOf5 as any)[lang] || '/5 Completed'}
-              </span>
-            </div>
-
-            {/* Checklist items */}
-            <div className="grid grid-cols-5 gap-1.5 sm:gap-2 pt-1">
-              {fiveDailyPrayers.map((prayer) => {
-                const isDone = !!completedPrayers[prayer.id];
-                return (
-                  <button
-                    key={prayer.id}
-                    type="button"
-                    onClick={() => togglePrayerCompleted(prayer.id)}
-                    className={`py-3 px-1 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 ${
-                      isDone
-                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                        : 'bg-slate-50 dark:bg-[#071f1a] text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-emerald-900/40 hover:border-emerald-400'
-                    }`}
-                  >
-                    <span className="text-xs font-black truncate w-full">{prayer.name}</span>
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      isDone ? 'bg-white text-emerald-700 shadow-xs' : 'border border-slate-300 dark:border-slate-600 text-transparent'
-                    }`}>
-                      ✓
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Fiqh Calculation Settings Card */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/50 shadow-sm space-y-4">
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-white">
-                {(SALAT_TEXTS.tracker.settingsHeader as any)[lang] || 'Calculation & Juristic Settings'}
-              </h3>
-            </div>
-
-            {/* Juristic Asr Selection (Hanafi vs Shafi'i) */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                {(SALAT_TEXTS.tracker.juristicAsr as any)[lang] || 'Asr Juristic Method'}
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsHanafi(true);
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                    isHanafi
-                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
-                      : 'bg-slate-50 dark:bg-[#071f1a] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-emerald-900/40'
-                  }`}
-                >
-                  {(SALAT_TEXTS.tracker.hanafi as any)[lang] || 'Hanafi (Shadow 2x)'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsHanafi(false);
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                    !isHanafi
-                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
-                      : 'bg-slate-50 dark:bg-[#071f1a] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-emerald-900/40'
-                  }`}
-                >
-                  {(SALAT_TEXTS.tracker.standard as any)[lang] || 'Shafi\'i / Standard'}
-                </button>
-              </div>
-            </div>
-
-            {/* Safety Caution Margin Toggle */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-[#071f1a] border border-slate-200/80 dark:border-emerald-900/40">
-              <div>
-                <div className="text-xs font-bold text-slate-800 dark:text-white">
-                  {(SALAT_TEXTS.tracker.cautionMargin as any)[lang] || 'Caution Safety Margin (±2 min)'}
-                </div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {lang === 'bn' ? 'উপমহাদেশের মসজিদ সমূহের সতর্কতা যোগ করুন' : 'Standard preventative margin applied in mosques'}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setWithCaution(!withCaution);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                  withCaution ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-700'
-                }`}
-              >
-                <div className={`w-4 h-4 rounded-full bg-white transition-transform absolute top-1 ${
-                  withCaution ? 'left-7' : 'left-1'
-                }`} />
-              </button>
-            </div>
-
-            {/* Calculation Method Selection */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                {(SALAT_TEXTS.tracker.calculationMethod as any)[lang] || 'Calculation Authority'}
-              </label>
-              <select
-                value={method}
-                onChange={(e) => setMethod(e.target.value as any)}
-                className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-emerald-900/60 bg-slate-50 dark:bg-[#071f1a] text-xs font-bold text-slate-800 dark:text-white cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="Karachi">University of Islamic Sciences, Karachi (Subcontinent)</option>
-                <option value="MuslimWorldLeague">Muslim World League (Europe, Far East)</option>
-                <option value="ISNA">ISNA (North America)</option>
-                <option value="UmmAlQura">Umm Al-Qura University, Makkah</option>
-                <option value="Egyptian">Egyptian General Authority of Survey</option>
-              </select>
             </div>
           </div>
         </div>
