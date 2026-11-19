@@ -46,6 +46,7 @@ import {
 import { soundHaptics } from '../utils/audioHaptics';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { SolarTrajectoryCard } from './SolarTrajectoryCard';
+import { SalatAmalArcCard, WaqtNodeKey } from './SalatAmalArcCard';
 import { ALL_PRAYER_DETAILS } from '../data/prayerDetailsData';
 import {
   formatLocalizedNumber,
@@ -268,6 +269,18 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
         localStorage.setItem(todayKey, JSON.stringify(updated));
       } catch {}
       if (soundEnabled) soundHaptics.playMilestone();
+      return updated;
+    });
+  };
+
+  const syncPrayerCompletedFromArc = (prayerKey: WaqtNodeKey, completed: boolean) => {
+    setCompletedPrayers((prev) => {
+      if (Boolean(prev[prayerKey]) === completed) return prev;
+      const updated = { ...prev, [prayerKey]: completed };
+      try {
+        const todayKey = `zikrmate_prayers_${new Date().toISOString().slice(0, 10)}`;
+        localStorage.setItem(todayKey, JSON.stringify(updated));
+      } catch {}
       return updated;
     });
   };
@@ -792,6 +805,21 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
       {/* ========================================================================= */}
       {salatSubTab === 'prayers' && (
         <div className="relative z-10 space-y-3.5 animate-in fade-in duration-200">
+          {/* Interactive Curved Salat Time & Daily Amal Horizon Arc Card */}
+          <SalatAmalArcCard
+            prayerData={prayerData}
+            themeMode={themeMode}
+            selectedLanguage={lang}
+            soundEnabled={soundEnabled}
+            liveTick={liveTick}
+            completedPrayers={completedPrayers}
+            onSyncPrayerCompleted={syncPrayerCompletedFromArc}
+            onOpenPrayerDetails={(waqtKey) => {
+              const found = fiveDailyPrayers.find((p) => p.id === waqtKey);
+              if (found) setSelectedQuickPrayer(found);
+            }}
+          />
+
           {/* Hero Active Waqt Card */}
           <div className="bg-gradient-to-br from-[#05382e] via-[#042e26] to-[#021f19] text-white rounded-[26px] p-5 shadow-xl border border-emerald-400/30 relative overflow-hidden flex flex-col justify-between">
             <div className="absolute right-2 -bottom-6 text-emerald-400/10 pointer-events-none select-none text-9xl">
