@@ -24,6 +24,7 @@ const DuaView = React.lazy(() => import('./DuaView').then((m) => ({ default: m.D
 const HadithView = React.lazy(() => import('./HadithView').then((m) => ({ default: m.HadithView })));
 const KitabView = React.lazy(() => import('./KitabView').then((m) => ({ default: m.KitabView })));
 const DailyTabligView = React.lazy(() => import('./DailyTabligView').then((m) => ({ default: m.DailyTabligView })));
+const Prophets25View = React.lazy(() => import('./Prophets25View').then((m) => ({ default: m.Prophets25View })));
 const AllahNamesView = React.lazy(() => import('./AllahNamesView').then((m) => ({ default: m.AllahNamesView })));
 const HajjUmrahView = React.lazy(() => import('./HajjUmrahView').then((m) => ({ default: m.HajjUmrahView })));
 const HistoryTimelineView = React.lazy(() => import('./HistoryTimelineView').then((m) => ({ default: m.HistoryTimelineView })));
@@ -70,6 +71,7 @@ export type OtherSubSection =
   | 'hajj_route_map'
   | 'hajj_essentials'
   | 'tablig'
+  | 'prophets_25'
   | 'allah_names';
 
 interface OtherIslamicHubViewProps {
@@ -364,6 +366,23 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       icon: <span className="text-2xl">🛡️</span>,
       color: 'from-amber-600/25 via-emerald-600/20 to-teal-500/10 border-amber-500/40',
       badge: selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক সূচিপত্র' : 'Topic-Wise Index',
+    },
+    {
+      id: 'prophets_25' as OtherSubSection,
+      title:
+        selectedLanguage === 'bn'
+          ? 'কুরআনে বর্ণিত ২৫ জন নবী-রাসূলের নাম'
+          : selectedLanguage === 'ar'
+          ? 'الأنبياء والرسل الـ ٢٥ في القرآن'
+          : '25 Prophets in the Quran',
+      arabic: 'الأنبياء والرسل في القرآن الكريم',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'হযরত আদম (আ.) থেকে শেষ নবী মুহাম্মদ (সা.) পর্যন্ত কুরআনে বর্ণিত ২৫ জন নবী-রাসূলের বিস্তারিত জীবনী, মুজিযা, দোয়া ও শিক্ষণীয় অধ্যায়'
+          : 'Detailed biographies, miracles, Quranic citations, duas, and lessons of all 25 Prophets named in the Holy Quran.',
+      icon: <span className="text-2xl">📜</span>,
+      color: 'from-emerald-600/25 via-amber-500/15 to-teal-500/10 border-emerald-500/40',
+      badge: selectedLanguage === 'bn' ? '২৫ নবী-রাসূল' : '25 Prophets',
     },
     {
       id: 'allah_names' as OtherSubSection,
@@ -670,7 +689,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     : selectedLanguage === 'tr'
                     ? 'Çizelgeyi Gör >'
                     : 'View Routine >'
-                  : item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'tablig'
+                  : item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'tablig' || item.id === 'prophets_25'
                   ? selectedLanguage === 'bn' ? 'পড়ুন >' : 'Read >'
                   : item.id === 'saved' || item.id === 'my_account'
                   ? selectedLanguage === 'bn' ? 'খুলুন >' : 'Open >'
@@ -725,6 +744,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   ? selectedLanguage === 'bn' ? 'নামাজের সময়' : 'Prayer Rules'
                   : item.id === 'hajj_checklist'
                   ? selectedLanguage === 'bn' ? 'হজ ও ওমরাহ' : 'Hajj & Umrah'
+                  : item.id === 'prophets_25'
+                  ? selectedLanguage === 'bn' ? '২৫ নবীর জীবনী' : '25 Prophets'
                   : item.id === 'tablig'
                   ? selectedLanguage === 'bn' ? 'দাওয়াত ও আমল' : 'Dawah & Amal'
                   : selectedLanguage === 'bn' ? '৯৯টি নাম ও জিকির' : '99 Names';
@@ -759,7 +780,9 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   {/* Title & Subtitle */}
                   <div className="space-y-0.5 my-auto w-full">
                     <h3
-                      className={`text-sm sm:text-base font-black transition-colors line-clamp-1 ${
+                      className={`text-sm sm:text-base font-black transition-colors ${
+                        item.id === 'prophets_25' ? 'line-clamp-2 leading-snug' : 'line-clamp-1'
+                      } ${
                         isDay ? 'text-slate-900 group-hover:text-[#005a3e]' : 'text-white group-hover:text-emerald-400'
                       }`}
                     >
@@ -890,6 +913,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             soundEnabled={soundEnabled}
             themeMode={themeMode}
             selectedLanguage={selectedLanguage}
+          />
+        )}
+
+        {/* Sub-view: 25 Prophets in the Quran */}
+        {activeSub === 'prophets_25' && (
+          <Prophets25View
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+            onBackToHub={handleBackStep}
           />
         )}
 

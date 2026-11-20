@@ -2060,6 +2060,7 @@ export default function App() {
     'hajj_route_map',
     'hajj_essentials',
     'tablig',
+    'prophets_25',
     'allah_names',
     'history_timeline',
     'araber_gotro',
@@ -2310,6 +2311,8 @@ export default function App() {
                     ? 'hajj_essentials'
                     : activeModule === 'tablig'
                     ? 'tablig'
+                    : activeModule === 'prophets_25'
+                    ? 'prophets_25'
                     : activeModule === 'allah_names'
                     ? 'allah_names'
                     : activeModule === 'history_timeline'

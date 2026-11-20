@@ -77,6 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
     'hajj_route_map',
     'hajj_essentials',
     'tablig',
+    'prophets_25',
     'allah_names',
     'history_timeline',
   ];

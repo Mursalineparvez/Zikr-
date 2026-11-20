@@ -68,6 +68,7 @@ export type NavModule =
   | 'hadith'
   | 'dua'
   | 'tablig'
+  | 'prophets_25'
   | 'allah_names'
   | 'hajj_checklist'
   | 'umrah_guide'

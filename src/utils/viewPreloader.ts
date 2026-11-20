@@ -23,6 +23,7 @@ type PreloadableView =
   | 'kitab'
   | 'hajj_checklist'
   | 'tablig'
+  | 'prophets_25'
   | 'allah_names'
   | 'saved'
   | 'settings'
@@ -47,6 +48,7 @@ const viewLoaders: Record<PreloadableView, () => Promise<any>> = {
   kitab: () => import('../components/KitabView'),
   hajj_checklist: () => import('../components/HajjUmrahView'),
   tablig: () => import('../components/DailyTabligView'),
+  prophets_25: () => import('../components/Prophets25View'),
   allah_names: () => import('../components/AllahNamesView'),
   saved: () => import('../components/SavedView'),
   settings: () => import('../components/SettingsView'),
@@ -109,6 +111,7 @@ export function warmupViewsIdle(): void {
   scheduleIdle(() => {
     prefetchView('kitab');
     prefetchView('tablig');
+    prefetchView('prophets_25');
     prefetchView('allah_names');
     prefetchView('hajj_checklist');
     prefetchView('history_timeline');

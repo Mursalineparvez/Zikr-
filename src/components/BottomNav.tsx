@@ -42,6 +42,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     'hajj_route_map',
     'hajj_essentials',
     'tablig',
+    'prophets_25',
     'allah_names',
     'history_timeline',
     'hayatus_sahaba',
