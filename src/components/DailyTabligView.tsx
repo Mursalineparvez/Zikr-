@@ -150,6 +150,127 @@ function translateBengaliBodyToEnglish(raw: string): string {
   return text;
 }
 
+const ARABIC_CHAR_REGEX = /[\u0600-\u06FF]/;
+
+function isMostlyArabicLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed || !ARABIC_CHAR_REGEX.test(trimmed)) return false;
+  const bengaliOrLatin = trimmed.replace(/[\u0600-\u06FF\s\d۝۞﴿﴾.,;:!?()—–-]/g, '');
+  return bengaliOrLatin.length <= Math.max(4, trimmed.length * 0.25);
+}
+
+function renderFormattedTabligContent(raw: string, isDay: boolean) {
+  const blocks = raw
+    .split(/\n{2,}/)
+    .map((b) => b.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="space-y-2.5 text-xs sm:text-[13.5px] leading-relaxed">
+      {blocks.map((block, bIdx) => {
+        const lines = block.split('\n').map((l) => l.trimEnd()).filter(Boolean);
+
+        return (
+          <div key={bIdx} className="space-y-1.5">
+            {lines.map((line, lIdx) => {
+              const trimmed = line.trim();
+
+              // 1. Arabic Ayah / Hadith Quote Frame
+              if (isMostlyArabicLine(trimmed)) {
+                return (
+                  <p
+                    key={lIdx}
+                    dir="rtl"
+                    className={`font-arabic text-base sm:text-lg leading-[2] text-right px-3.5 py-2 rounded-xl border ${
+                      isDay
+                        ? 'bg-emerald-50/75 border-emerald-200/80 text-emerald-950'
+                        : 'bg-[#051a20] border-emerald-700/45 text-amber-200'
+                    }`}
+                  >
+                    {trimmed}
+                  </p>
+                );
+              }
+
+              // 2. Semantic Sub-Section Callout Lines ("লাভ ও ফায়দা:", "কষ্ট ও ত্যাগ:", etc.)
+              if (
+                /^(কষ্ট-ত্যাগের পর অর্জিত লাভ ও ফায়দা|অর্জিত লাভ ও ফায়দা|লাভ ও ফায়দা|ফায়দা):?/.test(trimmed)
+              ) {
+                return (
+                  <div
+                    key={lIdx}
+                    className={`mt-1 px-3 py-1 rounded-lg font-extrabold text-xs sm:text-[13px] ${
+                      isDay
+                        ? 'bg-emerald-100/75 text-emerald-900 border border-emerald-200/80'
+                        : 'bg-emerald-900/45 text-emerald-300 border border-emerald-700/40'
+                    }`}
+                  >
+                    {trimmed}
+                  </div>
+                );
+              }
+
+              if (/^(কষ্ট ও ত্যাগ|পরীক্ষা ও কষ্ট):?/.test(trimmed)) {
+                return (
+                  <div
+                    key={lIdx}
+                    className={`mt-1 px-3 py-1 rounded-lg font-extrabold text-xs sm:text-[13px] ${
+                      isDay
+                        ? 'bg-amber-100/75 text-amber-950 border border-amber-200/80'
+                        : 'bg-amber-900/35 text-amber-300 border border-amber-700/40'
+                    }`}
+                  >
+                    {trimmed}
+                  </div>
+                );
+              }
+
+              // 3. Numbered Section Heading inside prose ("১) ...", "ক) ...")
+              if (/^([০-৯0-9]+\)|[কখগঘঙ]\))\s+/.test(trimmed) && trimmed.length < 130 && trimmed.endsWith(':')) {
+                return (
+                  <h5
+                    key={lIdx}
+                    className={`pt-1 font-extrabold text-xs sm:text-sm ${
+                      isDay ? 'text-emerald-800' : 'text-amber-300'
+                    }`}
+                  >
+                    {trimmed}
+                  </h5>
+                );
+              }
+
+              // 4. Bullet Point Line
+              if (trimmed.startsWith('•')) {
+                return (
+                  <div key={lIdx} className="flex items-start gap-2 pl-0.5">
+                    <span className="text-emerald-600 dark:text-amber-400 font-black mt-0.5 shrink-0">•</span>
+                    <span className="flex-1">{trimmed.slice(1).trim()}</span>
+                  </div>
+                );
+              }
+
+              // 5. Reference / Translation Lead-in Line
+              const refMatch = trimmed.match(/^(অর্থ|অর্থাৎ|ফাযিলত ও দলীল|কুরআনের দলীল|হাদীস শরীফ|সূত্র|দলীল|রেফারেন্স)\s*:\s*(.*)$/);
+              if (refMatch) {
+                return (
+                  <p key={lIdx}>
+                    <strong className={isDay ? 'text-emerald-800' : 'text-amber-300'}>
+                      {refMatch[1]}:
+                    </strong>{' '}
+                    <span>{refMatch[2]}</span>
+                  </p>
+                );
+              }
+
+              return <p key={lIdx}>{trimmed}</p>;
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   soundEnabled,
   themeMode = 'night',
@@ -432,8 +553,33 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
         />
       </div>
 
+      {/* Quick Spotlight Jump Strip to Sacrifices & Rewards Chapter */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+        <button
+          type="button"
+          onClick={() => {
+            setExpandedChapter('prophets_sahaba_sacrifice_rewards');
+            if (soundEnabled) soundHaptics.playTap();
+          }}
+          className={`px-3.5 py-2 rounded-2xl border text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+            expandedChapter === 'prophets_sahaba_sacrifice_rewards'
+              ? 'bg-emerald-700 text-white border-emerald-600 shadow-sm'
+              : isDay
+              ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-950'
+              : 'bg-[#092427] hover:bg-[#0d3337] border-amber-500/40 text-amber-300'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <span>
+            {isBn
+              ? '১৮. নবী-সাহাবিদের কষ্ট-ত্যাগ ও অর্জিত লাভ-ফায়দা (কুরআন-হাদীসের দলীলসহ)'
+              : '18. Sacrifices & Rewards of Prophets & Sahabah (Quran & Hadith Refs)'}
+          </span>
+        </button>
+      </div>
+
       {/* Chapters Accordion List */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between px-2">
           <h3 className={`text-xs font-bold uppercase tracking-wider ${isDay ? 'text-slate-500' : 'text-emerald-300'}`}>
             {TABLIG_UI.allChapters[selectedLanguage]} ({filteredChapters.length})
@@ -684,9 +830,9 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                               }
                             />
                           </div>
-                          <p className="leading-relaxed whitespace-pre-line text-xs sm:text-sm">
-                            {localizedContent}
-                          </p>
+                          <div className="pt-0.5">
+                            {renderFormattedTabligContent(localizedContent, isDay)}
+                          </div>
                         </div>
                       );
                     })}

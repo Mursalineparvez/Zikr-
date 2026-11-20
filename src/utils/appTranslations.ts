@@ -3195,6 +3195,26 @@ export const TABLIG_CHAPTER_TRANSLATIONS: Record<
       tr: 'Mevlana Abdülmelik, Ebul Hasan en-Nedvi (rh.a.) ve Hazretci Mevlana Yusuf Kandehlevi\'nin (rh.a.) öğütleri',
     },
   },
+  prophets_sahaba_sacrifice_rewards: {
+    title: {
+      bn: 'নবী-রাসূল ও সাহাবায়ে কেরামের কষ্ট-ত্যাগ ও অর্জিত লাভ-ফায়দা (কুরআন-হাদীসের দলীলসহ)',
+      en: 'Sacrifices of the Prophets & Sahabah and the Immense Rewards & Fruits Earned (Quran & Hadith Refs)',
+      ur: 'انبیاء کرام اور صحابہ کرامؓ کی قربانیاں، مشقتیں اور ان کے بعد حاصل ہونے والے عظیم ثمرات و فوائد',
+      ar: 'تضحيات الأنبياء والصحابة والثمار والفتوحات العظيمة بعدها (بالأدلة من القرآن والسنة)',
+      hi: 'नबियों व सहाबा की क़ुर्बानियाँ, तकलीफ़ें और उनके बाद हासिल हुए अज़ीम फ़ायदे व कामयाबी',
+      id: 'Pengorbanan Para Nabi & Sahabat Serta Buah Kemenangan & Keutamaan (Dalil Al-Qur\'an & Hadits)',
+      tr: 'Peygamberlerin ve Sahabenin Çileleri, Fedakârlıkları ve Ardından Gelen Büyük Kazanımlar',
+    },
+    subtitle: {
+      bn: 'পূর্ববর্তী আম্বিয়া (আ.), হযরত মুহাম্মদ ﷺ ও সাহাবায়ে কেরামের (রা.) কুরবানির পর অর্জিত মহাবিজয়, মর্যাদা ও ফায়দার প্রামাণ্য সংকলন',
+      en: 'Documented trials of earlier Prophets (AS), Prophet Muhammad ﷺ & the Sahabah (RA) and the victories, honors & rewards granted afterward',
+      ur: 'سابقہ انبیاء، نبی اکرم ﷺ اور صحابہ کرامؓ کی مشقتوں کے بعد حاصل ہونے والی فتوحات اور عظیم فوائد کا مستند بیان',
+      ar: 'موسوعة موثقة لابتلاءات الأنبياء والنبي ﷺ والصحابة وما أعقبها من نصر وتمكين وفضل في الدنيا والآخرة',
+      hi: 'पिछले अंबिया, नबी ﷺ और सहाबा (रज़ि.) की तकलीफ़ों के बाद हासिल फ़तह, दर्जा और फ़ायदों का प्रामाणिक संग्रह',
+      id: 'Rangkuman dalil Al-Qur\'an & Hadits shahih tentang ujian para Nabi & Sahabat serta kemenangan besar setelahnya',
+      tr: 'Önceki peygamberler, Hz. Muhammed ﷺ ve sahabelerin fedakârlıkları sonrası elde edilen zafer ve hikmetler',
+    },
+  },
 };
 
 export const TABLIG_UI: Record<string, Record<string, string>> = createTranslationProxy({
@@ -3208,13 +3228,13 @@ export const TABLIG_UI: Record<string, Record<string, string>> = createTranslati
     tr: 'Davet ve Tebliğ (Kapsamlı Müfredat ve Sohbetler)',
   },
   bannerSub: {
-    bn: '৬ সিফত, কালেমা, নামাজ, ইলম ও জিকির, ইকরাম, নিয়ত ও গাশতের আদবসহ সম্পূর্ণ প্রামাণিক সংকলন।',
-    en: 'Complete authentic compilation of the 6 Qualities, Kalimah, Salah, Ilm & Dhikr, Ikram, Niyyah, and etiquette of Gasht.',
-    ur: 'چھ صفات، کلمہ، نماز، علم و ذکر، اکرام مسلم، اخلاص نیت اور گشت کے آداب پر مشتمل مستند ذخیرہ۔',
-    ar: 'الصفات الست، الكلمة الطيبة، الصلاة ذات الخشوع، العلم والذكر، إكرام المسلم، وإخلاص النية.',
-    hi: 'छह सिफ़ात, कलिमा, नमाज़, इल्म व ज़िक्र, इक्राम, नीयत और गश्त के आदाब।',
-    id: '6 Sifat Sahabat, Kalimah, Sholat, Ilmu & Dzikir, Ikramul Muslimin, Ikhlasun Niat, dan adab Gasht.',
-    tr: '6 Sıfat, Kelime-i Tevhid, Namaz, İlim ve Zikir, İkram-ı Müslim, İhlas ve Geşt edepleri.',
+    bn: '৬ সিফত, কালেমা, নামাজ, ইলম-জিকির, গাশত, মাসায়েল ও নবী-সাহাবিদের ত্যাগ-কুরবানির পর অর্জিত ফায়দাসহ পূর্ণাঙ্গ প্রামাণিক সংকলন।',
+    en: 'Complete authentic compilation of the 6 Qualities, Salah, Gasht, Masail, and Quran-Hadith proofs of sacrifices & rewards of Prophets and Sahabah.',
+    ur: 'چھ صفات، نماز، علم و ذکر، گشت، مسائل اور انبیاء و صحابہؓ کی قربانیوں کے ثمرات کا مکمل مستند ذخیرہ۔',
+    ar: 'الصفات الست، الصلاة، العلم والذكر، الجولة، المسائل وتضحيات الأنبياء والصحابة وثمارها بالقرآن والسنة.',
+    hi: 'छह सिफ़ात, नमाज़, इल्म व ज़िक्र, गश्त, मसाइल और नबियों व सहाबा की क़ुर्बानी के फ़ायदों का संपूर्ण संग्रह।',
+    id: 'Kurikulum lengkap 6 Sifat, sholat, adab Gasht, masail, dan dalil pengorbanan para Nabi & Sahabat serta kemenangannya.',
+    tr: '6 Sıfat, namaz, zikir, geşt edepleri, ilmihal ve peygamberler ile sahabelerin fedakârlıklarının kazanımları.',
   },
   searchPlaceholder: {
     bn: 'তাবলিগের যেকোনো বিষয় বা শব্দ দিয়ে খুঁজুন (যেমন: নামাজ, ইলম, গাস্ত, ইতিহাস)...',

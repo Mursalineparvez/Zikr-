@@ -468,7 +468,7 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
         type="button"
         onClick={() => openMemberSheet(no)}
         className={`group/node w-full text-left rounded-xl border transition-all duration-150 cursor-pointer relative overflow-hidden active:scale-[0.98] ${
-          compact ? 'px-2.5 py-2 min-h-[52px]' : 'px-3 py-2.5 min-h-[60px]'
+          compact ? 'px-2.5 py-1.5' : 'px-3 py-2'
         } ${
           isDay
             ? options?.highlightDirect
@@ -543,7 +543,7 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
   };
 
   // Vertical golden-emerald lineage spine connector
-  const renderVerticalTrunk = (labelBn?: string, labelEn?: string, heightClass = 'h-5 sm:h-6') => (
+  const renderVerticalTrunk = (labelBn?: string, labelEn?: string, heightClass = 'h-3.5 sm:h-4') => (
     <div className="flex flex-col items-center select-none" aria-hidden="true">
       <div
         className={`w-[2px] ${heightClass} ${
@@ -564,7 +564,7 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
             {isBn ? labelBn : labelEn}
           </span>
           <div
-            className={`w-[2px] h-3.5 sm:h-4 ${
+            className={`w-[2px] h-2.5 sm:h-3 ${
               isDay ? 'bg-emerald-400' : 'bg-emerald-500/80'
             }`}
           />
@@ -656,13 +656,13 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
           MAIN SCROLLABLE FAMILY TREE CANVAS
           ==================================================================== */}
       <div
-        className={`flex-1 min-h-0 overflow-y-auto px-2.5 sm:px-6 py-3 sm:py-6 pb-20 lg:pb-8 ${
+        className={`flex-1 min-h-0 overflow-y-auto px-2 sm:px-5 py-2.5 sm:py-4 pb-6 lg:pb-6 ${
           isDay
             ? 'bg-gradient-to-b from-[#F4FBF8] via-[#FAFBF9] to-[#F6F9F7]'
             : 'bg-gradient-to-b from-[#031410] via-[#041914] to-[#03130f]'
         }`}
       >
-        <div className="max-w-5xl mx-auto space-y-4">
+        <div className="max-w-5xl mx-auto space-y-2.5">
           {/* Compact Tree Control Bar: Branch Filter + Search + Mobile Quick Generation Jump */}
           <div
             className={`rounded-2xl border p-2.5 sm:p-3.5 space-y-2.5 ${
@@ -1157,10 +1157,10 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
                   'Gen IV & V · Children, Sons-in-Law & Grandchildren'
                 )}
 
-                <div ref={gen4Ref} className="w-full space-y-3.5 scroll-mt-4">
+                <div ref={gen4Ref} className="w-full space-y-2.5 scroll-mt-4">
                   {/* 3 SONS (পুত্র সন্তানগণ) */}
                   <div
-                    className={`rounded-2xl border p-3 sm:p-3.5 space-y-2.5 ${
+                    className={`rounded-2xl border p-2.5 sm:p-3 space-y-2 ${
                       isDay
                         ? 'bg-white/95 border-sky-200/85 shadow-2xs'
                         : 'bg-[#061c17]/95 border-sky-800/50'
@@ -1196,12 +1196,10 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
                   </div>
 
                   {/* 4 DAUGHTERS -> MARRIED TO 3 SONS-IN-LAW -> 7 GRANDCHILDREN */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 items-stretch">
-                    {/* BRANCH C FIRST ON MOBILE? Keep chronological order (Zaynab -> Ruqayyah/Umm Kulthum -> Fatimah) with true side-by-side Couple + Fork Brackets! */}
-
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 items-start">
                     {/* BRANCH A: ZAYNAB (17) ♥ ABUL AS (32) -> UMAMAH (27) & ALI (28) */}
                     <div
-                      className={`rounded-2xl border p-3 sm:p-3.5 flex flex-col justify-between gap-1.5 ${
+                      className={`rounded-2xl border p-2.5 sm:p-3 space-y-1.5 ${
                         isDay
                           ? 'bg-white border-emerald-200/85 shadow-xs'
                           : 'bg-[#061d18] border-emerald-800/60'
@@ -1253,7 +1251,7 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
 
                     {/* BRANCH B: RUQAYYAH (18) & UMM KULTHUM (19) ♥ UTHMAN (31) -> ABDULLAH (29) */}
                     <div
-                      className={`rounded-2xl border p-3 sm:p-3.5 flex flex-col justify-between gap-1.5 ${
+                      className={`rounded-2xl border p-2.5 sm:p-3 space-y-1.5 ${
                         isDay
                           ? 'bg-white border-emerald-200/85 shadow-xs'
                           : 'bg-[#061d18] border-emerald-800/60'
@@ -1332,7 +1330,7 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
 
                     {/* BRANCH C: FATIMAH (20) ♥ ALI (30) -> HASAN (23), HUSAIN (24), ZAYNAB (25), UMM KULTHUM (26) */}
                     <div
-                      className={`rounded-2xl border p-3 sm:p-3.5 flex flex-col justify-between gap-1.5 ${
+                      className={`rounded-2xl border p-2.5 sm:p-3 space-y-1.5 ${
                         isDay
                           ? 'bg-gradient-to-b from-emerald-50/55 via-white to-teal-50/40 border-emerald-300/90 shadow-xs'
                           : 'bg-gradient-to-b from-[#082922] to-[#061d18] border-emerald-600/60'

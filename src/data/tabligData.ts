@@ -8,6 +8,7 @@ import {
   ESO_TABLIG_ENRICHMENTS_PART6,
   ESO_TABLIG_CHAPTER_PART6,
 } from './esoTabligDataPart4';
+import { ESO_TABLIG_CHAPTER_SACRIFICE } from './esoTabligDataPart5';
 
 export interface TabligChapterDetail {
   id: string;
@@ -1266,5 +1267,6 @@ export const TABLIG_COMPLETE_CHAPTERS: TabligChapterDetail[] = [
   ...ESO_TABLIG_NEW_CHAPTERS_PART2,
   ESO_TABLIG_CHAPTER_PART5,
   ESO_TABLIG_CHAPTER_PART6,
+  ESO_TABLIG_CHAPTER_SACRIFICE,
 ];
 
