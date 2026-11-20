@@ -1007,20 +1007,31 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
               <button
                 type="button"
                 onClick={() => openMemberSheet(0)}
-                className={`group/crest relative overflow-hidden rounded-2xl border-2 px-5 py-4 text-center max-w-md w-full shadow-md transition-all cursor-pointer active:scale-[0.99] ${
-                  selectedMemberNo === 0
-                    ? 'ring-2 ring-amber-400 border-amber-300'
-                    : 'border-amber-400/80 hover:border-amber-300'
-                } ${
+                className={`group/crest relative overflow-hidden rounded-2xl border-[1.5px] px-5 py-3.5 text-center max-w-md w-full transition-all duration-200 cursor-pointer active:scale-[0.99] ${
                   isDay
-                    ? 'bg-gradient-to-br from-[#053529] via-[#062d23] to-[#041f18] text-white'
-                    : 'bg-gradient-to-br from-[#073a2d] via-[#052920] to-[#031c16] text-white'
+                    ? selectedMemberNo === 0
+                      ? 'ring-2 ring-emerald-400/60 border-emerald-400 bg-gradient-to-br from-[#ecf9f2] via-white to-[#fefaf0] shadow-[0_8px_24px_-8px_rgba(5,150,105,0.22)]'
+                      : 'border-emerald-300/85 hover:border-amber-400/90 bg-gradient-to-br from-[#edf9f3] via-white to-[#fefaf0] shadow-[0_6px_20px_-8px_rgba(5,150,105,0.16)] hover:shadow-[0_10px_24px_-8px_rgba(5,150,105,0.24)]'
+                    : selectedMemberNo === 0
+                    ? 'ring-2 ring-amber-400/70 border-amber-400 bg-gradient-to-br from-[#0d3a2f] via-[#092b23] to-[#12332a] shadow-[0_8px_24px_-6px_rgba(0,0,0,0.45)]'
+                    : 'border-emerald-600/65 hover:border-amber-400/75 bg-gradient-to-br from-[#0b3329] via-[#08261f] to-[#0f2d25] shadow-[0_6px_20px_-6px_rgba(0,0,0,0.38)]'
                 }`}
               >
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-0 inset-x-10 h-[2.5px] rounded-b-full ${
+                    isDay
+                      ? 'bg-gradient-to-r from-emerald-400/75 via-amber-400/85 to-emerald-400/75'
+                      : 'bg-gradient-to-r from-emerald-400/60 via-amber-300/75 to-emerald-400/60'
+                  }`}
+                />
+
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 120 120"
-                  className="pointer-events-none absolute -right-4 top-1/2 -translate-y-1/2 w-24 h-24 text-amber-300/10 transition-transform duration-500 group-hover/crest:rotate-12"
+                  className={`pointer-events-none absolute -right-4 top-1/2 -translate-y-1/2 w-24 h-24 transition-transform duration-500 group-hover/crest:rotate-12 ${
+                    isDay ? 'text-emerald-600/[0.07]' : 'text-amber-300/[0.09]'
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="1.2"
@@ -1031,18 +1042,37 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
                 </svg>
 
                 <div className="relative z-10 space-y-1">
-                  <p dir="rtl" className="font-arabic text-lg sm:text-xl text-amber-300 leading-none">
+                  <p
+                    dir="rtl"
+                    className={`font-arabic text-lg sm:text-xl leading-none ${
+                      isDay ? 'text-amber-700/90' : 'text-amber-200/95'
+                    }`}
+                  >
                     سيّدنا محمّد رسول الله ﷺ
                   </p>
-                  <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+                  <h3
+                    className={`text-base sm:text-lg font-black tracking-tight ${
+                      isDay ? 'text-[#064e3b]' : 'text-white'
+                    }`}
+                  >
                     {isBn ? 'হযরত মুহাম্মদ মুস্তফা ﷺ' : 'Prophet Muhammad ﷺ'}
                   </h3>
-                  <p className="text-[11px] font-semibold text-emerald-200/85">
+                  <p
+                    className={`text-[11px] font-semibold ${
+                      isDay ? 'text-emerald-800/80' : 'text-emerald-200/85'
+                    }`}
+                  >
                     {isBn
                       ? 'খাতামুন নাবিয়্যীন · রহমাতুল্লিল আলামীন (৫৭০–৬৩২ খ্রি.)'
                       : 'Seal of the Prophets · Mercy to the Worlds (570–632 CE)'}
                   </p>
-                  <span className="inline-flex items-center gap-1 pt-0.5 text-[10px] font-bold text-amber-300/95">
+                  <span
+                    className={`inline-flex items-center gap-1 pt-0.5 text-[10.5px] font-bold transition-colors ${
+                      isDay
+                        ? 'text-emerald-700 group-hover/crest:text-amber-700'
+                        : 'text-amber-300/95 group-hover/crest:text-amber-200'
+                    }`}
+                  >
                     <span>{isBn ? 'পবিত্র নসবনামা ও রেফারেন্স দেখুন' : 'View Blessed Lineage & References'}</span>
                     <ChevronRight className="w-3 h-3 transition-transform group-hover/crest:translate-x-0.5" />
                   </span>

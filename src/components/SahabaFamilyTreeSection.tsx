@@ -895,28 +895,77 @@ export const SahabaFamilyTreeSection: React.FC<SahabaFamilyTreeSectionProps> = (
             <button
               type="button"
               onClick={() => handleOpenNode(treeModel.overviewNode)}
-              className={`group/crest relative overflow-hidden rounded-2xl border-2 px-4 py-2.5 text-center max-w-md w-full shadow-sm transition-all cursor-pointer active:scale-[0.99] ${
-                selectedNode?.id === treeModel.overviewNode.id
-                  ? 'ring-2 ring-amber-400 border-amber-300'
-                  : 'border-amber-400/80 hover:border-amber-300'
-              } bg-gradient-to-br from-[#053529] via-[#062d23] to-[#041f18] text-white`}
+              className={`group/crest relative overflow-hidden rounded-2xl border-[1.5px] px-4 py-3 text-center max-w-md w-full transition-all duration-200 cursor-pointer active:scale-[0.99] ${
+                isDay
+                  ? selectedNode?.id === treeModel.overviewNode.id
+                    ? 'ring-2 ring-emerald-400/60 border-emerald-400 bg-gradient-to-br from-[#ecf9f2] via-white to-[#fefaf0] shadow-[0_8px_24px_-8px_rgba(5,150,105,0.22)]'
+                    : 'border-emerald-300/85 hover:border-amber-400/90 bg-gradient-to-br from-[#edf9f3] via-white to-[#fefaf0] shadow-[0_6px_20px_-8px_rgba(5,150,105,0.16)] hover:shadow-[0_10px_24px_-8px_rgba(5,150,105,0.24)]'
+                  : selectedNode?.id === treeModel.overviewNode.id
+                  ? 'ring-2 ring-amber-400/70 border-amber-400 bg-gradient-to-br from-[#0d3a2f] via-[#092b23] to-[#12332a] shadow-[0_8px_24px_-6px_rgba(0,0,0,0.45)]'
+                  : 'border-emerald-600/65 hover:border-amber-400/75 bg-gradient-to-br from-[#0b3329] via-[#08261f] to-[#0f2d25] shadow-[0_6px_20px_-6px_rgba(0,0,0,0.38)]'
+              }`}
             >
-              <div className="space-y-0.5">
+              {/* Soft Top Accent Hairline */}
+              <span
+                aria-hidden="true"
+                className={`absolute top-0 inset-x-10 h-[2.5px] rounded-b-full ${
+                  isDay
+                    ? 'bg-gradient-to-r from-emerald-400/75 via-amber-400/85 to-emerald-400/75'
+                    : 'bg-gradient-to-r from-emerald-400/60 via-amber-300/75 to-emerald-400/60'
+                }`}
+              />
+
+              {/* Subtle Islamic Star Rosette Watermark */}
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 120 120"
+                className={`pointer-events-none absolute -right-4 top-1/2 -translate-y-1/2 w-24 h-24 transition-transform duration-500 group-hover/crest:rotate-12 ${
+                  isDay ? 'text-emerald-600/[0.07]' : 'text-amber-300/[0.08]'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.2"
+              >
+                <rect x="24" y="24" width="72" height="72" />
+                <rect x="24" y="24" width="72" height="72" transform="rotate(45 60 60)" />
+                <circle cx="60" cy="60" r="22" />
+              </svg>
+
+              <div className="relative z-10 space-y-0.5">
                 {sahaba.nameAr && (
-                  <p dir="rtl" className="font-arabic text-base text-amber-300 leading-none">
+                  <p
+                    dir="rtl"
+                    className={`font-arabic text-base sm:text-lg leading-none ${
+                      isDay ? 'text-amber-700/90' : 'text-amber-200/95'
+                    }`}
+                  >
                     {sahaba.nameAr}
                   </p>
                 )}
-                <h4 className="text-sm sm:text-base font-black tracking-tight text-white">
+                <h4
+                  className={`text-sm sm:text-base font-black tracking-tight ${
+                    isDay ? 'text-[#064e3b]' : 'text-white'
+                  }`}
+                >
                   {activeName}
                 </h4>
-                <p className="text-[10.5px] font-semibold text-emerald-200/85">
+                <p
+                  className={`text-[10.5px] font-semibold ${
+                    isDay ? 'text-emerald-800/80' : 'text-emerald-200/85'
+                  }`}
+                >
                   {tribeName || (isBn ? sahaba.categoryBn : sahaba.categoryEn)} ·{' '}
                   {isBn
                     ? chronicle.summaryHeadlineBn
                     : chronicle.summaryHeadlineEn || chronicle.summaryHeadlineBn}
                 </p>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
+                <span
+                  className={`inline-flex items-center gap-1 pt-0.5 text-[10.5px] font-bold transition-colors ${
+                    isDay
+                      ? 'text-emerald-700 group-hover/crest:text-amber-700'
+                      : 'text-amber-300/95 group-hover/crest:text-amber-200'
+                  }`}
+                >
                   <span>{isBn ? 'এক নজরে পরিবার ও সূত্র দেখুন' : 'Family Overview & Citations'}</span>
                   <ChevronRight className="w-3 h-3 transition-transform group-hover/crest:translate-x-0.5" />
                 </span>
