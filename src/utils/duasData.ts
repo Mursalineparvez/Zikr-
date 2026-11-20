@@ -8,6 +8,9 @@ import { HISNUL_PART5 } from './hisnulData/part5_ch61_to_ch94';
 import { HISNUL_PART6 } from './hisnulData/part6_ch95_to_ch132';
 import { DUA_BENEFITS_PART1, DuaBenefitAndRef } from './hisnulData/duaBenefitsPart1';
 import { DUA_BENEFITS_PART2 } from './hisnulData/duaBenefitsPart2';
+import { GTAF_QURANIC_DUAS } from './hisnulData/gtafQuranicDuas';
+import { GTAF_MASNOON_EXTRA_DUAS } from './hisnulData/gtafMasnoonExtraDuas';
+import { GTAF_CROSS_REF_ENRICHMENT } from './hisnulData/gtafCrossRefEnrichment';
 
 export interface DuaTranslation {
   title: string;
@@ -23,6 +26,7 @@ export interface DuaItem {
   id: string;
   title: string;
   category: DuaCategory;
+  secondaryCategories?: DuaCategory[];
   timing: string;
   arabic: string;
   transliteration: string;
@@ -56,42 +60,95 @@ const RAW_DUAS: DuaItem[] = [
   ...HISNUL_PART4,
   ...HISNUL_PART5,
   ...HISNUL_PART6,
+  ...GTAF_QURANIC_DUAS,
+  ...GTAF_MASNOON_EXTRA_DUAS,
 ];
+
+function mergeBenefitsList(base: string[] = [], extra: string[] = []): string[] {
+  const seen = new Set(base.map((b) => b.trim()));
+  const merged = [...base];
+  for (const item of extra) {
+    const clean = item.trim();
+    if (clean && !seen.has(clean)) {
+      seen.add(clean);
+      merged.push(clean);
+    }
+  }
+  return merged;
+}
 
 export const AUTHENTIC_DUAS: DuaItem[] = RAW_DUAS.map((dua) => {
   const enriched = ALL_DUA_BENEFITS_AND_REFS[dua.id];
-  if (!enriched) return dua;
+  const gtaf = GTAF_CROSS_REF_ENRICHMENT[dua.id];
+
+  if (!enriched && !gtaf) return dua;
 
   const existingBn = dua.translations?.bn;
   const existingEn = dua.translations?.en;
 
+  const baseVirtueBn = existingBn?.virtue || '';
+  const mergedVirtueBn = gtaf?.extraVirtueBn
+    ? enriched?.virtueBn && !enriched.virtueBn.includes(gtaf.extraVirtueBn.slice(0, 24))
+      ? `${enriched.virtueBn}\n${gtaf.extraVirtueBn}`
+      : gtaf.extraVirtueBn
+    : enriched?.virtueBn || baseVirtueBn;
+
+  const baseVirtueEn = existingEn?.virtue || dua.virtue || '';
+  const mergedVirtueEn = gtaf?.extraVirtueEn
+    ? enriched?.virtueEn && !enriched.virtueEn.includes(gtaf.extraVirtueEn.slice(0, 24))
+      ? `${enriched.virtueEn}\n${gtaf.extraVirtueEn}`
+      : gtaf.extraVirtueEn
+    : enriched?.virtueEn || baseVirtueEn;
+
+  const benefitsBn = mergeBenefitsList(
+    enriched?.benefitsBn || existingBn?.benefits,
+    gtaf?.extraBenefitsBn
+  );
+  const benefitsEn = mergeBenefitsList(
+    enriched?.benefitsEn || existingEn?.benefits || dua.benefits,
+    gtaf?.extraBenefitsEn
+  );
+
+  const referenceBn = gtaf?.enrichedRefBn || enriched?.referenceBn || dua.referenceBn || existingBn?.reference;
+  const referenceEn = gtaf?.enrichedRefEn || enriched?.referenceEn || existingEn?.reference || dua.reference;
+  const gradeEn = enriched?.gradeEn || dua.grade || existingEn?.grade;
+  const gradeBn = enriched?.gradeBn || dua.gradeBn || existingBn?.grade;
+
+  const secondarySet = new Set<DuaCategory>([
+    ...(dua.secondaryCategories || []),
+    ...(gtaf?.secondaryCategories || []),
+  ]);
+  secondarySet.delete(dua.category);
+  const secondaryCategories = secondarySet.size > 0 ? Array.from(secondarySet) : undefined;
+
   return {
     ...dua,
-    virtue: enriched.virtueEn || dua.virtue,
-    benefits: enriched.benefitsEn,
-    reference: enriched.referenceEn || dua.reference,
-    referenceBn: enriched.referenceBn,
-    grade: enriched.gradeEn,
-    gradeBn: enriched.gradeBn,
+    ...(secondaryCategories ? { secondaryCategories } : {}),
+    virtue: mergedVirtueEn || undefined,
+    benefits: benefitsEn,
+    reference: referenceEn,
+    referenceBn,
+    grade: gradeEn,
+    gradeBn,
     translations: {
       ...dua.translations,
       bn: {
         title: existingBn?.title || dua.title,
         timing: existingBn?.timing || dua.timing,
         translation: existingBn?.translation || dua.translation,
-        virtue: enriched.virtueBn,
-        benefits: enriched.benefitsBn,
-        reference: enriched.referenceBn,
-        grade: enriched.gradeBn,
+        virtue: mergedVirtueBn,
+        benefits: benefitsBn,
+        reference: referenceBn,
+        grade: gradeBn,
       },
       en: {
         title: existingEn?.title || dua.title,
         timing: existingEn?.timing || dua.timing,
         translation: existingEn?.translation || dua.translation,
-        virtue: enriched.virtueEn,
-        benefits: enriched.benefitsEn,
-        reference: enriched.referenceEn || dua.reference,
-        grade: enriched.gradeEn,
+        virtue: mergedVirtueEn,
+        benefits: benefitsEn,
+        reference: referenceEn,
+        grade: gradeEn,
       },
     },
   };

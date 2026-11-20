@@ -1338,6 +1338,7 @@ export const DUA_CATEGORIES: Record<string, Record<string, string>> = createTran
   family: { bn: 'পরিবার ও বিবাহ', en: 'Family & Marriage', ur: 'خاندان اور نکاح', ar: 'الأسرة والزواج', hi: 'परिवार और विवाह', id: 'Keluarga & Pernikahan', tr: 'Aile ve Evlilik' },
   travel: { bn: 'সফর ও বাহন', en: 'Travel & Journey', ur: 'سفر اور سواری', ar: 'السفر والركوب', hi: 'यात्रा और सवारी', id: 'Perjalanan & Berkendara', tr: 'Yolculuk ve Araç' },
   quranic: { bn: 'কোরআনি দোয়া', en: 'Quranic Supplications', ur: 'قرآنی دعائیں', ar: 'الدعاء القرآني', hi: 'कुरआनी दुआएं', id: 'Doa Al-Qur\'an', tr: 'Kur\'an Duaları' },
+  rizq: { bn: 'রিজিক ও বরকত', en: 'Rizq & Sustenance', ur: 'رزق اور برکت', ar: 'الرزق والبركة', hi: 'रिज़्क़ और बरकत', id: 'Rezeki & Keberkahan', tr: 'Rızık ve Bereket' },
 });
 
 export const DUA_UI: Record<string, Record<string, string>> = createTranslationProxy({
@@ -1431,8 +1432,8 @@ export const DUA_UI: Record<string, Record<string, string>> = createTranslationP
     sw: 'Imesomwa',
   },
   searchPlaceholder: {
-    bn: 'দোয়া, নম্বর (#১-#২৬৭), অধ্যায়, অর্থ বা রেফারেন্স দিয়ে খুঁজুন...',
-    en: 'Search by dua, number (#1-#267), chapter, Arabic, meaning, or reference...',
+    bn: 'দোয়া, কোরআনি আয়াত, নম্বর, অধ্যায় বা রেফারেন্স দিয়ে খুঁজুন...',
+    en: 'Search by dua, Quranic verse, number, chapter, Arabic, meaning, or reference...',
     ur: 'دعا، نمبر، باب، ترجمہ یا حوالہ سے تلاش کریں...',
     ar: 'ابحث عن دعاء بالرقم أو الباب أو المعنى أو المرجع...',
     hi: 'दुआ, नंबर, अध्याय, अर्थ या हवाले से खोजें...',
@@ -1449,13 +1450,13 @@ export const DUA_UI: Record<string, Record<string, string>> = createTranslationP
     tr: 'Konulara Göre',
   },
   chaptersTab: {
-    bn: '১৩২ অধ্যায় (ক্রমানুসারে)',
-    en: '132 Chapters (Step-by-Step)',
-    ur: '۱۳۲ ابواب (ترتیب وار)',
-    ar: '١٣٢ باباً (بالتسلسل)',
-    hi: '132 अध्याय (क्रमवार)',
-    id: '132 Bab (Berurutan)',
-    tr: '132 Bölüm (Sıralı)',
+    bn: 'সব অধ্যায় (ক্রমানুসারে)',
+    en: 'All Chapters (Step-by-Step)',
+    ur: 'تمام ابواب (ترتیب وار)',
+    ar: 'جميع الأبواب (بالتسلسل)',
+    hi: 'सभी अध्याय (क्रमवार)',
+    id: 'Semua Bab (Berurutan)',
+    tr: 'Tüm Bölümler (Sıralı)',
   },
   allChapters: {
     bn: 'সব অধ্যায়',

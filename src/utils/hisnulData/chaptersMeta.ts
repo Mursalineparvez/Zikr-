@@ -1,4 +1,5 @@
 import { DuaCategory } from '../../types';
+import { GTAF_EXTENDED_CHAPTERS } from './gtafExtendedChapters';
 
 export interface HisnulChapterMeta {
   chapterNumber: number;
@@ -8,7 +9,7 @@ export interface HisnulChapterMeta {
   duaRange: string;
 }
 
-export const HISNUL_CHAPTERS: HisnulChapterMeta[] = [
+const BASE_HISNUL_CHAPTERS: HisnulChapterMeta[] = [
   { chapterNumber: 0, category: 'morning_evening', titleBn: 'যিকিরের ফযীলত (ভূমিকা)', titleEn: 'Virtues of Remembrance (Intro)', duaRange: 'Intro' },
   { chapterNumber: 1, category: 'sleep_wake', titleBn: '১. ঘুম থেকে জেগে ওঠার দোয়া', titleEn: '1. Upon Waking Up', duaRange: '1-4' },
   { chapterNumber: 2, category: 'daily_living', titleBn: '২. কাপড় পরিধানের দোয়া', titleEn: '2. Wearing a Garment', duaRange: '5' },
@@ -143,3 +144,9 @@ export const HISNUL_CHAPTERS: HisnulChapterMeta[] = [
   { chapterNumber: 131, category: 'morning_evening', titleBn: '১৩১. রাসূলুল্লাহ ﷺ যেভাবে তাসবীহ গণনা করতেন', titleEn: '131. How the Prophet ﷺ Counted Tasbih', duaRange: '266' },
   { chapterNumber: 132, category: 'daily_living', titleBn: '১৩২. সন্ধ্যা ও রাতের কিছু কল্যাণকর আদব', titleEn: '132. General Rules of Good Conduct at Night', duaRange: '267' },
 ];
+
+export const HISNUL_CHAPTERS: HisnulChapterMeta[] = [
+  ...BASE_HISNUL_CHAPTERS,
+  ...GTAF_EXTENDED_CHAPTERS,
+];
+

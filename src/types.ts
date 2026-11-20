@@ -103,17 +103,23 @@ export type DuaCategory =
   | 'food_drink'
   | 'sickness_funeral'
   | 'weather_nature'
-  | 'social_etiquette';
+  | 'social_etiquette'
+  | 'rizq';
 
 export interface DuaItem {
   id: string;
   title: string;
   category: DuaCategory;
+  secondaryCategories?: DuaCategory[];
   arabic: string;
   transliteration: string;
   translation: string;
   reference: string;
+  referenceBn?: string;
+  grade?: string;
+  gradeBn?: string;
   virtue?: string;
+  benefits?: string[];
   suggestedCount?: number;
   timing?: string;
   chapterNumber?: number;
@@ -123,6 +129,9 @@ export interface DuaItem {
     translation?: string;
     virtue?: string;
     timing?: string;
+    benefits?: string[];
+    reference?: string;
+    grade?: string;
   }>>;
 }
 

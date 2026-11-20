@@ -31,6 +31,8 @@ import {
   ListOrdered,
   LayoutGrid,
   ChevronRight,
+  BookMarked,
+  Coins,
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
@@ -140,6 +142,24 @@ export const DuaView: React.FC<DuaViewProps> = ({
         nightIcon: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
         dayHover: 'hover:border-emerald-300 hover:bg-emerald-50/40',
         nightHover: 'hover:border-emerald-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'quranic',
+        icon: BookMarked,
+        arSub: 'الأدعية القرآنية',
+        dayIcon: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+        nightIcon: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25',
+        dayHover: 'hover:border-emerald-300 hover:bg-emerald-50/40',
+        nightHover: 'hover:border-emerald-500/50 hover:bg-[#123840]',
+      },
+      {
+        id: 'rizq',
+        icon: Coins,
+        arSub: 'الرزق والبركة',
+        dayIcon: 'bg-amber-50 text-amber-700 border-amber-200/80',
+        nightIcon: 'bg-amber-500/15 text-amber-300 border-amber-500/25',
+        dayHover: 'hover:border-amber-300 hover:bg-amber-50/40',
+        nightHover: 'hover:border-amber-500/50 hover:bg-[#123840]',
       },
       {
         id: 'morning_evening',
@@ -298,11 +318,18 @@ export const DuaView: React.FC<DuaViewProps> = ({
     []
   );
 
-  // Category counts memoized
+  // Category counts memoized (including secondaryCategories)
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: AUTHENTIC_DUAS.length };
     for (const dua of AUTHENTIC_DUAS) {
       counts[dua.category] = (counts[dua.category] || 0) + 1;
+      if (dua.secondaryCategories) {
+        for (const sec of dua.secondaryCategories) {
+          if (sec !== dua.category) {
+            counts[sec] = (counts[sec] || 0) + 1;
+          }
+        }
+      }
     }
     return counts;
   }, []);
@@ -327,6 +354,11 @@ export const DuaView: React.FC<DuaViewProps> = ({
     return map;
   }, []);
 
+  const maxChapterNumber = useMemo(
+    () => Math.max(...HISNUL_CHAPTERS.map((c) => c.chapterNumber)),
+    []
+  );
+
   // Filter chapters for the 132-chapter index view
   const filteredChapters = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -349,7 +381,12 @@ export const DuaView: React.FC<DuaViewProps> = ({
       if (browseMode === 'chapters' && selectedChapter !== null) {
         if (dua.chapterNumber !== selectedChapter) return false;
       } else if (browseMode === 'topics' && selectedCategory !== 'all') {
-        if (dua.category !== selectedCategory) return false;
+        if (
+          dua.category !== selectedCategory &&
+          !dua.secondaryCategories?.includes(selectedCategory as any)
+        ) {
+          return false;
+        }
       }
 
       if (!q) return true;
@@ -588,8 +625,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
               <span>
                 حِصْنُ الْمُسْلِمِ •{' '}
                 {selectedLanguage === 'bn'
-                  ? `হিসনুল মুসলিম (সম্পূর্ণ ১৩২ অধ্যায় • ${formatNum(AUTHENTIC_DUAS.length, 'bn')}টি দোয়া ও যিকির)`
-                  : `Hisnul Muslim (All 132 Chapters • ${AUTHENTIC_DUAS.length} Duas & Adhkar)`}
+                  ? `হিসনুল মুসলিম, কোরআনি ও মাসনূন দোয়া (${formatNum(maxChapterNumber, 'bn')} অধ্যায় • ${formatNum(AUTHENTIC_DUAS.length, 'bn')}টি দোয়া ও যিকির)`
+                  : `Hisnul Muslim, Quranic & Masnoon Duas (All ${maxChapterNumber} Chapters • ${AUTHENTIC_DUAS.length} Duas & Adhkar)`}
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
@@ -937,8 +974,10 @@ export const DuaView: React.FC<DuaViewProps> = ({
               <span>{DUA_UI.prevChapter[selectedLanguage]}</span>
             </button>
             <button
-              disabled={selectedChapter >= 132}
-              onClick={() => setSelectedChapter((c) => (c !== null && c < 132 ? c + 1 : 132))}
+              disabled={selectedChapter >= maxChapterNumber}
+              onClick={() =>
+                setSelectedChapter((c) => (c !== null && c < maxChapterNumber ? c + 1 : maxChapterNumber))
+              }
               className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                 isDay ? 'bg-white border border-teal-200 text-teal-800' : 'bg-[#0b272e] border border-[#194b57] text-teal-200'
               }`}
@@ -981,8 +1020,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
               <p className="text-sm font-bold">{selectedLanguage === 'bn' ? 'কোনো দোয়া পাওয়া যায়নি' : 'No supplications found'}</p>
               <p className="text-xs mt-1 text-slate-400">
                 {selectedLanguage === 'bn'
-                  ? 'অন্য কীওয়ার্ড, অধ্যায় বা নম্বর (#১-#২৬৭) দিয়ে আবার চেষ্টা করুন'
-                  : 'Try searching with another keyword, chapter, or Hisnul number (#1-#267)'}
+                  ? 'অন্য কীওয়ার্ড, অধ্যায় বা নম্বর (#১-#২৬৭, Q-১ বা M-১) দিয়ে আবার চেষ্টা করুন'
+                  : 'Try searching with another keyword, chapter, or Dua number (#1-#267, Q-1, M-1)'}
               </p>
             </div>
           ) : (
