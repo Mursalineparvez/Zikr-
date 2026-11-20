@@ -5,10 +5,21 @@
 
 import { PROPHETS_25_PART_1 } from './prophets25DataPart1';
 import { PROPHETS_25_PART_2 } from './prophets25DataPart2';
-import { Prophet25Item, Prophet25FilterKey, PROPHETS_25_FILTERS } from './prophets25Types';
+import { Prophet25Item, PROPHETS_25_FILTERS } from './prophets25Types';
+import { PROPHETS_25_INTRO_OVERVIEW, PROPHETS_25_INTRO_FACTS } from './prophets25IntroData';
 
-export type { Prophet25Item, Prophet25FilterKey, Prophet25Dua, Prophet25Event, Prophet25FilterMeta } from './prophets25Types';
-export { PROPHETS_25_FILTERS };
+export type {
+  Prophet25Item,
+  Prophet25FilterKey,
+  Prophet25Dua,
+  Prophet25Event,
+  Prophet25Clarification,
+  Prophet25QuranStats,
+  Prophet25IntroFact,
+  Prophet25FilterMeta,
+} from './prophets25Types';
+
+export { PROPHETS_25_FILTERS, PROPHETS_25_INTRO_OVERVIEW, PROPHETS_25_INTRO_FACTS };
 
 export const PROPHETS_25_DATABASE: Prophet25Item[] = [
   ...PROPHETS_25_PART_1,

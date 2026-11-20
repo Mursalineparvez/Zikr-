@@ -28,6 +28,23 @@ export interface Prophet25Event {
   detailEn: string;
 }
 
+export interface Prophet25Clarification {
+  titleBn: string;
+  titleEn: string;
+  detailBn: string;
+  detailEn: string;
+  refBn?: string;
+  refEn?: string;
+}
+
+export interface Prophet25QuranStats {
+  totalMentions: number;
+  surahCount?: number;
+  ayahCount?: number;
+  summaryBn: string;
+  summaryEn: string;
+}
+
 export interface Prophet25Item {
   id: string;
   rank: number;
@@ -48,28 +65,46 @@ export interface Prophet25Item {
   quranMentions: number;
   quranMentionsNoteBn?: string;
   quranMentionsNoteEn?: string;
+  quranStats?: Prophet25QuranStats;
   keySurahsBn: string[];
   keySurahsEn: string[];
   nationRegionBn: string;
   nationRegionEn: string;
   lineageBn: string;
   lineageEn: string;
+  eraAndTimelineBn?: string;
+  eraAndTimelineEn?: string;
   lifespanNoteBn: string;
   lifespanNoteEn: string;
   summaryBn: string;
   summaryEn: string;
   biographyBn: string;
   biographyEn: string;
+  dawahThemesBn?: string[];
+  dawahThemesEn?: string[];
   miraclesBn: string[];
   miraclesEn: string[];
   timelineEvents: Prophet25Event[];
   trialsAndPatienceBn: string;
   trialsAndPatienceEn: string;
   dua?: Prophet25Dua;
+  extraDuas?: Prophet25Dua[];
+  clarifications?: Prophet25Clarification[];
   lessonsBn: string[];
   lessonsEn: string[];
   referencesBn: string[];
   referencesEn: string[];
+}
+
+export interface Prophet25IntroFact {
+  titleBn: string;
+  titleEn: string;
+  valueBn: string;
+  valueEn: string;
+  detailBn: string;
+  detailEn: string;
+  refBn: string;
+  refEn: string;
 }
 
 export interface Prophet25FilterMeta {

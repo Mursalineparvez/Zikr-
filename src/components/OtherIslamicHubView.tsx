@@ -371,18 +371,18 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       id: 'prophets_25' as OtherSubSection,
       title:
         selectedLanguage === 'bn'
-          ? 'কুরআনে বর্ণিত ২৫ জন নবী-রাসূলের নাম'
+          ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল'
           : selectedLanguage === 'ar'
-          ? 'الأنبياء والرسل الـ ٢٥ في القرآن'
-          : '25 Prophets in the Quran',
-      arabic: 'الأنبياء والرسل في القرآن الكريم',
+          ? 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم'
+          : '25 Prophets & Messengers in the Quran',
+      arabic: 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم',
       desc:
         selectedLanguage === 'bn'
-          ? 'হযরত আদম (আ.) থেকে শেষ নবী মুহাম্মদ (সা.) পর্যন্ত কুরআনে বর্ণিত ২৫ জন নবী-রাসূলের বিস্তারিত জীবনী, মুজিযা, দোয়া ও শিক্ষণীয় অধ্যায়'
-          : 'Detailed biographies, miracles, Quranic citations, duas, and lessons of all 25 Prophets named in the Holy Quran.',
+          ? 'হযরত আদম (আ.) থেকে শেষনবী মুহাম্মাদ (সা.) পর্যন্ত কুরআনে বর্ণিত ২৫ জন নবী ও রাসূলের পূর্ণাঙ্গ জীবনী, মুজিযা, কুরআনী পরিসংখ্যান, সংশয় নিরসন ও রেফারেন্স'
+          : 'Comprehensive biographies, miracles, Quranic stats, scholarly clarifications, supplications, and verified references for all 25 Prophets & Messengers in the Quran.',
       icon: <span className="text-2xl">📜</span>,
       color: 'from-emerald-600/25 via-amber-500/15 to-teal-500/10 border-emerald-500/40',
-      badge: selectedLanguage === 'bn' ? '২৫ নবী-রাসূল' : '25 Prophets',
+      badge: selectedLanguage === 'bn' ? '২৫ নবী ও রাসূল' : '25 Prophets & Messengers',
     },
     {
       id: 'allah_names' as OtherSubSection,
@@ -745,7 +745,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   : item.id === 'hajj_checklist'
                   ? selectedLanguage === 'bn' ? 'হজ ও ওমরাহ' : 'Hajj & Umrah'
                   : item.id === 'prophets_25'
-                  ? selectedLanguage === 'bn' ? '২৫ নবীর জীবনী' : '25 Prophets'
+                  ? selectedLanguage === 'bn' ? '২৫ নবী ও রাসূল' : '25 Prophets'
                   : item.id === 'tablig'
                   ? selectedLanguage === 'bn' ? 'দাওয়াত ও আমল' : 'Dawah & Amal'
                   : selectedLanguage === 'bn' ? '৯৯টি নাম ও জিকির' : '99 Names';

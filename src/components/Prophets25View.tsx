@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Copy,
   Check,
   Sparkles,
@@ -22,10 +24,12 @@ import {
   Clock,
   Star,
   Shield,
+  ShieldAlert,
   Heart,
   X,
   Share2,
   Download,
+  Compass,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { copyToClipboard } from '../utils/clipboard';
@@ -38,8 +42,11 @@ import { pushAppHistoryState, stepBackOr, useBackLayer } from '../utils/backNavi
 import {
   PROPHETS_25_DATABASE,
   PROPHETS_25_FILTERS,
+  PROPHETS_25_INTRO_OVERVIEW,
+  PROPHETS_25_INTRO_FACTS,
   Prophet25FilterKey,
   Prophet25Item,
+  Prophet25Dua,
   ULUL_AZM_COUNT,
   SCRIPTURE_BEARERS_COUNT,
   ARAB_PROPHETS_COUNT,
@@ -90,11 +97,12 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
   const [selectedProphetId, setSelectedProphetId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<Prophet25FilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showIntroDrawer, setShowIntroDrawer] = useState(false);
   const [readIds, setReadIds] = useState<string[]>(() => readStoredStringArray(READ_STORAGE_KEY));
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() =>
     readStoredStringArray(BOOKMARK_STORAGE_KEY)
   );
-  const [copiedDuaId, setCopiedDuaId] = useState<string | null>(null);
+  const [copiedDuaKey, setCopiedDuaKey] = useState<string | null>(null);
   const [shareModalContent, setShareModalContent] = useState<ShareableContent | null>(null);
   const [shareModalInitialAction, setShareModalInitialAction] = useState<'share' | 'download'>('share');
 
@@ -157,6 +165,17 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     [soundEnabled]
   );
 
+  const scrollToSection = useCallback(
+    (sectionId: string) => {
+      if (soundEnabled) soundHaptics.playTap();
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    },
+    [soundEnabled]
+  );
+
   const filteredProphets = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return PROPHETS_25_DATABASE.filter((p) => {
@@ -179,6 +198,10 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
         p.titleEn,
         p.nationRegionBn,
         p.nationRegionEn,
+        p.lineageBn,
+        p.lineageEn,
+        p.eraAndTimelineBn || '',
+        p.eraAndTimelineEn || '',
         p.scriptureBn || '',
         p.scriptureEn || '',
         p.summaryBn,
@@ -237,12 +260,18 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
       const title = isBn ? p.titleBn : p.titleEn;
       const nation = isBn ? p.nationRegionBn : p.nationRegionEn;
       const lineage = isBn ? p.lineageBn : p.lineageEn;
+      const era = isBn ? p.eraAndTimelineBn : p.eraAndTimelineEn;
       const lifespan = isBn ? p.lifespanNoteBn : p.lifespanNoteEn;
       const scripture = isBn ? p.scriptureBn : p.scriptureEn;
+      const dawahThemes = isBn ? p.dawahThemesBn : p.dawahThemesEn;
       const miracles = isBn ? p.miraclesBn : p.miraclesEn;
       const lessons = isBn ? p.lessonsBn : p.lessonsEn;
       const refs = isBn ? p.referencesBn : p.referencesEn;
       const surahs = isBn ? p.keySurahsBn : p.keySurahsEn;
+      const allDuas: Prophet25Dua[] = [
+        ...(p.dua ? [p.dua] : []),
+        ...(p.extraDuas || []),
+      ];
 
       const meta = [
         {
@@ -267,6 +296,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
           label: isBn ? 'বংশপরিচয়' : 'Lineage',
           value: lineage,
         },
+        ...(era ? [{ label: isBn ? 'ঐতিহাসিক সময়কাল' : 'Historical Era', value: era }] : []),
         ...(scripture
           ? [{ label: isBn ? 'আসমানি কিতাব/সহীফা' : 'Revealed Scripture', value: scripture }]
           : []),
@@ -280,6 +310,20 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
         `📖 ${isBn ? 'বিস্তারিত জীবনী' : 'Detailed Biography'}`,
         isBn ? p.biographyBn : p.biographyEn,
         '',
+        ...(p.quranStats
+          ? [
+              `📊 ${isBn ? 'কুরআনী পরিসংখ্যান' : 'Quranic Coverage'}`,
+              isBn ? p.quranStats.summaryBn : p.quranStats.summaryEn,
+              '',
+            ]
+          : []),
+        ...(dawahThemes && dawahThemes.length > 0
+          ? [
+              `📣 ${isBn ? 'দাওয়াতের মূল বিষয়বস্তু' : 'Core Pillars of His Mission'}`,
+              ...dawahThemes.map((t) => `• ${t}`),
+              '',
+            ]
+          : []),
         `🗓️ ${isBn ? 'জীবনের প্রধান অধ্যায়সমূহ' : 'Key Timeline Events'}`,
         ...p.timelineEvents.map(
           (ev, i) =>
@@ -288,21 +332,40 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             }`
         ),
         '',
-        `✨ ${isBn ? 'প্রধান মুজিযা ও নিদর্শন' : 'Major Miracles & Signs'}`,
+        `✨ ${isBn ? 'প্রধান মু‘জিযা ও নিদর্শন' : 'Major Miracles & Signs'}`,
         ...miracles.map((m) => `• ${m}`),
         '',
         `🛡️ ${isBn ? 'পরীক্ষা ও ধৈর্য' : 'Trials & Patience'}`,
         isBn ? p.trialsAndPatienceBn : p.trialsAndPatienceEn,
         '',
-        ...(p.dua
+        ...(allDuas.length > 0
           ? [
-              `🤲 ${isBn ? 'প্রসিদ্ধ দোয়া' : 'Famous Supplication'} (${p.dua.reference})`,
-              p.dua.arabic,
-              isBn ? `${p.dua.transliterationBn}\nঅর্থ: ${p.dua.translationBn}` : p.dua.translationEn,
+              `🤲 ${isBn ? 'কুরআনী দোয়া ও মুনাজাত' : 'Quranic Supplications'}`,
+              ...allDuas.flatMap((d) => [
+                `(${d.reference})`,
+                d.arabic,
+                isBn ? `${d.transliterationBn}\nঅর্থ: ${d.translationBn}` : d.translationEn,
+                '',
+              ]),
+            ]
+          : []),
+        ...(p.clarifications && p.clarifications.length > 0
+          ? [
+              `🔎 ${isBn ? 'সংশয় নিরসন ও তাহক্বীক্ব' : 'Scholarly Clarifications'}`,
+              ...p.clarifications.map(
+                (c) =>
+                  `• ${isBn ? c.titleBn : c.titleEn}\n  ${
+                    isBn ? c.detailBn : c.detailEn
+                  }${
+                    (isBn ? c.refBn : c.refEn)
+                      ? `\n  [${isBn ? c.refBn : c.refEn}]`
+                      : ''
+                  }`
+              ),
               '',
             ]
           : []),
-        `💡 ${isBn ? 'শিক্ষণীয় বিষয়' : 'Key Lessons'}`,
+        `💡 ${isBn ? 'শিক্ষণীয় বিষয়সমূহ' : 'Key Lessons'}`,
         ...lessons.map((l) => `• ${l}`),
         '',
         `📚 ${isBn ? 'প্রধান সূরা ও রেফারেন্স' : 'Key Surahs & References'}`,
@@ -313,8 +376,8 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
       return {
         id: `prophet25-${p.id}`,
         badge: isBn
-          ? `কুরআনে বর্ণিত ২৫ নবী · ক্রমিক ${toBnDigits(p.rank)}${p.isUlulAzm ? ' · উলুল আযম' : ''}`
-          : `25 Quranic Prophets · #${p.rank}${p.isUlulAzm ? ' · Ulul Azm' : ''}`,
+          ? `কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল · ক্রমিক ${toBnDigits(p.rank)}${p.isUlulAzm ? ' · উলুল আযম' : ''}`
+          : `25 Prophets & Messengers in the Quran · #${p.rank}${p.isUlulAzm ? ' · Ulul Azm' : ''}`,
         title: name,
         subtitle: `${title} (${p.nameAr})`,
         arabic: p.dua?.arabic || p.nameAr,
@@ -345,28 +408,42 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
 
     return {
       id: 'prophets25-complete-list',
-      badge: isBn ? 'আল-কুরআনে বর্ণিত ২৫ নবী-রাসূল' : '25 Prophets in the Holy Quran',
+      badge: isBn ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল' : '25 Prophets & Messengers in the Quran',
       title: isBn
-        ? 'কুরআনে বর্ণিত ২৫ জন নবী-রাসূলের পূর্ণাঙ্গ তালিকা ও সংক্ষিপ্ত পরিচিতি'
-        : 'Complete List & Profiles of the 25 Prophets Mentioned in the Quran',
-      subtitle: 'الأنبياء والرسل المذكورون في القرآن الكريم',
+        ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূলের পূর্ণাঙ্গ পরিচিতি ও তালিকা'
+        : 'Complete Profiles & List of the 25 Prophets & Messengers in the Quran',
+      subtitle: 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم',
       arabic: 'لَا نُفَرِّقُ بَيْنَ أَحَدٍ مِّن رُّسُلِهِ',
       body: isBn
-        ? 'পবিত্র কুরআনে সর্বমোট ২৫ জন নবী ও রাসূলের নাম সরাসরি উল্লেখ রয়েছে। তাঁদের মধ্যে ৫ জন উলুল আযম (নূহ, ইবরাহীম, মূসা, ঈসা ও মুহাম্মদ সা.), ৪ জন আরব নবী এবং ৪টি প্রধান আসমানি কিতাব ও সহীফা অবতীর্ণ হয়েছে।'
-        : 'The Holy Quran explicitly mentions 25 Prophets and Messengers by name, including the 5 Ulul Azm messengers (Nuh, Ibrahim, Musa, Isa, and Muhammad SAW) and the bearers of revealed scriptures.',
+        ? 'পবিত্র কুরআনে সর্বমোট ২৫ জন নবী ও রাসূলের নাম সরাসরি উল্লেখ রয়েছে (১,২৪,০০০ নবী ও ৩১৫ রাসূলের মধ্য থেকে)। তাঁদের মধ্যে ৫ জন উলুল আযম, ৪টি প্রধান আসমানি কিতাব ও সহীফাপ্রাপ্ত এবং ৪ জন আরব নবী রয়েছেন।'
+        : 'The Holy Quran explicitly names 25 Prophets and Messengers (out of 124,000 prophets and 315 messengers), including the 5 Ulul Azm messengers and the bearers of revealed scriptures.',
       meta: [
-        { label: isBn ? 'মোট নবী-রাসূল' : 'Total Named in Quran', value: formatNum(25, isBn) },
+        { label: isBn ? 'মোট নবী ও রাসূল' : 'Named in Quran', value: formatNum(25, isBn) },
         { label: isBn ? 'উলুল আযম রাসূল' : 'Ulul Azm Messengers', value: formatNum(ULUL_AZM_COUNT, isBn) },
         { label: isBn ? 'কিতাব ও সহীফাপ্রাপ্ত' : 'Scripture Bearers', value: formatNum(SCRIPTURE_BEARERS_COUNT, isBn) },
         { label: isBn ? 'আরব নবী' : 'Arab Prophets', value: formatNum(ARAB_PROPHETS_COUNT, isBn) },
       ],
       fullDocumentText: listLines.join('\n\n'),
       reference: isBn
-        ? 'আল-কুরআনুল কারীম · সহীহ বুখারী ও মুসলিম · কাসাসুল আম্বিয়া (ইমাম ইবনে কাসীর রহ.)'
-        : 'The Holy Quran · Sahih al-Bukhari & Muslim · Qasas al-Anbiya (Ibn Kathir)',
-      fileNamePrefix: 'ZikrPlus-25-Prophets-Quran-List',
+        ? 'আল-কুরআনুল কারীম · ছহীহ বুখারী ও মুসলিম · নবীদের কাহিনী ১ম ও ২য় খণ্ড (ড. মুহাম্মাদ আসাদুল্লাহ আল-গালিব)'
+        : 'The Holy Quran · Sahih al-Bukhari & Muslim · Nobider Kahini Vols. 1–2',
+      fileNamePrefix: 'ZikrPlus-25-Prophets-Messengers-Quran',
     };
   }, [isBn]);
+
+  const handleCopyDua = async (dua: Prophet25Dua, key: string) => {
+    const text = `${dua.arabic}\n\n${
+      isBn
+        ? `উচ্চারণ: ${dua.transliterationBn}\nঅর্থ: ${dua.translationBn}`
+        : dua.translationEn
+    }\n— ${dua.reference}`;
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      if (soundEnabled) soundHaptics.playTap();
+      setCopiedDuaKey(key);
+      setTimeout(() => setCopiedDuaKey((prev) => (prev === key ? null : prev)), 2200);
+    }
+  };
 
   const openShareModal = useCallback(
     (content: ShareableContent, action: 'share' | 'download') => {
@@ -376,21 +453,6 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     },
     [soundEnabled]
   );
-
-  const handleCopyDua = async (p: Prophet25Item) => {
-    if (!p.dua) return;
-    const text = `${p.dua.arabic}\n\n${
-      isBn
-        ? `উচ্চারণ: ${p.dua.transliterationBn}\nঅর্থ: ${p.dua.translationBn}`
-        : p.dua.translationEn
-    }\n— ${p.dua.reference}`;
-    const ok = await copyToClipboard(text);
-    if (ok) {
-      if (soundEnabled) soundHaptics.playTap();
-      setCopiedDuaId(p.id);
-      setTimeout(() => setCopiedDuaId((prev) => (prev === p.id ? null : prev)), 2200);
-    }
-  };
 
   const progressPercent = Math.round((readIds.length / PROPHETS_25_DATABASE.length) * 100);
 
@@ -403,32 +465,50 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     const prophetName = isBn ? selectedProphet.nameBn : selectedProphet.nameEn;
     const prophetTitle = isBn ? selectedProphet.titleBn : selectedProphet.titleEn;
     const sharePayload = buildProphetShareContent(selectedProphet);
+    const biographyParagraphs = (
+      isBn ? selectedProphet.biographyBn : selectedProphet.biographyEn
+    )
+      .split(/\n\s*\n/)
+      .filter(Boolean);
+    const dawahThemes = isBn ? selectedProphet.dawahThemesBn : selectedProphet.dawahThemesEn;
+    const allDuas: Prophet25Dua[] = [
+      ...(selectedProphet.dua ? [selectedProphet.dua] : []),
+      ...(selectedProphet.extraDuas || []),
+    ];
 
     const identityRows = [
       {
         icon: MapPin,
-        label: isBn ? 'জাতি ও অঞ্চল' : 'Nation & Region',
+        label: isBn ? 'জাতি ও ভৌগোলিক অঞ্চল' : 'Nation & Region',
         value: isBn ? selectedProphet.nationRegionBn : selectedProphet.nationRegionEn,
       },
       {
         icon: Users,
-        label: isBn ? 'বংশপরিচয়' : 'Lineage',
-        value: isBn ? selectedProphet.lineageBn : selectedProphet.lineageEn,
+        label: isBn ? 'বংশপরিচয় ও পরিবার' : 'Lineage & Family',
+        value: `${isBn ? selectedProphet.lineageBn : selectedProphet.lineageEn}${
+          (isBn ? selectedProphet.eraAndTimelineBn : selectedProphet.eraAndTimelineEn)
+            ? `\n${isBn ? 'সময়কাল: ' : 'Era: '}${
+                isBn ? selectedProphet.eraAndTimelineBn : selectedProphet.eraAndTimelineEn
+              }`
+            : ''
+        }`,
       },
       {
         icon: BookOpen,
-        label: isBn ? 'কুরআনে উল্লেখ ও প্রধান সূরা' : 'Quran Mentions & Key Surahs',
+        label: isBn ? 'কুরআনে উল্লেখ ও প্রধান সূরাসমূহ' : 'Quran Mentions & Key Surahs',
         value: `${
           isBn
             ? `${toBnDigits(selectedProphet.quranMentions)} বার`
             : `${selectedProphet.quranMentions} times`
         }${
-          isBn && selectedProphet.quranMentionsNoteBn
-            ? ` — ${selectedProphet.quranMentionsNoteBn}`
-            : !isBn && selectedProphet.quranMentionsNoteEn
-            ? ` — ${selectedProphet.quranMentionsNoteEn}`
+          selectedProphet.quranStats?.surahCount && selectedProphet.quranStats?.ayahCount
+            ? isBn
+              ? ` (${toBnDigits(selectedProphet.quranStats.surahCount)} সূরা · ${toBnDigits(
+                  selectedProphet.quranStats.ayahCount
+                )} আয়াত)`
+              : ` (${selectedProphet.quranStats.surahCount} Surahs · ${selectedProphet.quranStats.ayahCount} verses)`
             : ''
-        } · ${(isBn ? selectedProphet.keySurahsBn : selectedProphet.keySurahsEn).join(' · ')}`,
+        }\n${(isBn ? selectedProphet.keySurahsBn : selectedProphet.keySurahsEn).join('  ·  ')}`,
       },
       {
         icon: Clock,
@@ -437,12 +517,23 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
       },
     ];
 
+    const quickNavItems = [
+      { id: 'sec-bio', label: isBn ? 'জীবনী ও দাওয়াত' : 'Biography' },
+      { id: 'sec-timeline', label: isBn ? 'ঘটনাপ্রবাহ' : 'Timeline' },
+      { id: 'sec-miracles', label: isBn ? 'মু‘জিযা' : 'Miracles' },
+      ...(allDuas.length > 0 ? [{ id: 'sec-dua', label: isBn ? 'দোয়া' : 'Duas' }] : []),
+      ...(selectedProphet.clarifications && selectedProphet.clarifications.length > 0
+        ? [{ id: 'sec-tahqiq', label: isBn ? 'সংশয় নিরসন' : 'Clarifications' }]
+        : []),
+      { id: 'sec-lessons', label: isBn ? 'শিক্ষা ও তথ্যসূত্র' : 'Lessons & Refs' },
+    ];
+
     return (
       <div
         {...touchHandlers}
         data-highlight-section="prophets_25"
         data-highlight-source={prophetName}
-        className="space-y-5 pb-10 animate-in fade-in duration-200"
+        className="space-y-4 sm:space-y-5 pb-10 animate-in fade-in duration-200"
       >
         <SwipeFloatingFeedback
           swipeDirection={swipeDirection}
@@ -472,8 +563,8 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             }`}
           >
             <ArrowLeft className="w-4 h-4 shrink-0" />
-            <span className="truncate">
-              {isBn ? '২৫ নবীর তালিকা' : isAr ? 'قائمة الأنبياء' : 'All 25 Prophets'}
+            <span className="truncate whitespace-nowrap">
+              {isBn ? '২৫ নবী ও রাসূল' : isAr ? 'قائمة الأنبياء' : 'All 25 Prophets'}
             </span>
           </button>
 
@@ -482,7 +573,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
               type="button"
               onClick={() => toggleRead(selectedProphet.id)}
               title={isBn ? 'পঠিত চিহ্নিত করুন' : 'Mark as read'}
-              className={`min-h-[44px] px-2.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+              className={`min-h-[44px] px-2.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
                 isRead
                   ? 'bg-[#006A4E] text-white border-[#006A4E]'
                   : isDay
@@ -573,6 +664,11 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                     ? '  ·  আরব নবী'
                     : '  ·  Arab Prophet'
                   : ''}
+                {selectedProphet.isBaniIsrail
+                  ? isBn
+                    ? '  ·  বনী ইসরাঈল ধারা'
+                    : '  ·  Bani Israil Lineage'
+                  : ''}
               </span>
               <span className="text-amber-300 font-bold">
                 {isBn
@@ -582,8 +678,8 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             </div>
 
             <div className="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-              <div className="space-y-1">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              <div className="space-y-1.5">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white text-balance">
                   {prophetName}
                 </h1>
                 <p className="text-sm sm:text-base font-medium text-amber-200/95">
@@ -599,14 +695,41 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             </div>
 
             {selectedProphet.scriptureBn && (
-              <div className="mt-4 pt-3.5 border-t border-white/15 flex items-center gap-2 text-xs sm:text-sm text-emerald-50/95">
-                <ScrollText className="w-4 h-4 text-amber-300 shrink-0" />
-                <span className="font-bold">
-                  {isBn ? 'অবতীর্ণ আসমানি কিতাব / সহীফা:' : 'Revealed Scripture:'}
-                </span>
-                <span>{isBn ? selectedProphet.scriptureBn : selectedProphet.scriptureEn}</span>
+              <div className="mt-4 pt-3.5 border-t border-white/15 flex items-start sm:items-center gap-2 text-xs sm:text-sm text-emerald-50/95">
+                <ScrollText className="w-4 h-4 text-amber-300 shrink-0 mt-0.5 sm:mt-0" />
+                <div>
+                  <span className="font-bold mr-1.5">
+                    {isBn ? 'অবতীর্ণ আসমানি কিতাব / সহীফা:' : 'Revealed Scripture:'}
+                  </span>
+                  <span>{isBn ? selectedProphet.scriptureBn : selectedProphet.scriptureEn}</span>
+                </div>
               </div>
             )}
+          </div>
+
+          {/* Quick Section Jump Navigation Strip */}
+          <div
+            data-no-swipe="true"
+            className={`px-4 sm:px-6 py-2.5 border-b flex items-center gap-1.5 overflow-x-auto no-scrollbar ${
+              isDay
+                ? 'bg-[#f4faf7] border-emerald-200/70'
+                : 'bg-[#071a20] border-teal-900/50'
+            }`}
+          >
+            {quickNavItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => scrollToSection(item.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer ${
+                  isDay
+                    ? 'bg-white border border-slate-200/80 text-slate-700 hover:border-[#006A4E] hover:text-[#006A4E]'
+                    : 'bg-[#0c262d] border border-teal-800/60 text-slate-200 hover:border-emerald-400 hover:text-emerald-300'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
 
           {/* Identity & Historical Facts Matrix (2x2 Clean Hairline Grid) */}
@@ -643,14 +766,14 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   />
                   <div className="min-w-0 space-y-1">
                     <div
-                      className={`text-[11px] font-bold uppercase tracking-wider ${
-                        isDay ? 'text-slate-500' : 'text-emerald-300/70'
+                      className={`text-[11px] font-bold tracking-wider ${
+                        isDay ? 'text-slate-500' : 'text-emerald-300/75'
                       }`}
                     >
                       {row.label}
                     </div>
                     <p
-                      className={`text-xs sm:text-sm leading-relaxed font-medium ${
+                      className={`text-xs sm:text-sm leading-relaxed font-medium whitespace-pre-line ${
                         isDay ? 'text-slate-800' : 'text-slate-100'
                       }`}
                     >
@@ -664,8 +787,43 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
 
           {/* Reading Body */}
           <div className="p-5 sm:p-8 space-y-8">
-            {/* 1. Detailed Biography */}
-            <section className="space-y-3">
+            {/* Quranic Coverage Note */}
+            {selectedProphet.quranStats && (
+              <div
+                className={`rounded-2xl border p-4 sm:p-5 flex items-start gap-3 ${
+                  isDay
+                    ? 'bg-emerald-50/50 border-emerald-200/80'
+                    : 'bg-[#0b252b] border-emerald-500/25'
+                }`}
+              >
+                <Compass
+                  className={`w-5 h-5 mt-0.5 shrink-0 ${
+                    isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                  }`}
+                />
+                <div className="space-y-1">
+                  <div
+                    className={`text-xs sm:text-sm font-black ${
+                      isDay ? 'text-[#005a42]' : 'text-emerald-300'
+                    }`}
+                  >
+                    {isBn ? 'কুরআনে উল্লেখ ও বিস্তৃতি' : 'Quranic Coverage Overview'}
+                  </div>
+                  <p
+                    className={`text-xs sm:text-sm leading-relaxed ${
+                      isDay ? 'text-slate-700' : 'text-slate-200'
+                    }`}
+                  >
+                    {isBn
+                      ? selectedProphet.quranStats.summaryBn
+                      : selectedProphet.quranStats.summaryEn}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 1. Detailed Biography (Multi-paragraph) */}
+            <section id="sec-bio" className="scroll-mt-32 space-y-3.5">
               <div className="flex items-center gap-2">
                 <BookOpen
                   className={`w-5 h-5 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}
@@ -675,21 +833,65 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                     isDay ? 'text-slate-900' : 'text-white'
                   }`}
                 >
-                  {isBn ? 'বিস্তারিত জীবনী ও দাওয়াত' : 'Detailed Biography & Prophetic Mission'}
+                  {isBn ? 'বিস্তারিত জীবনী ও দাওয়াতী সংগ্রাম' : 'Detailed Biography & Prophetic Mission'}
                 </h2>
               </div>
-              <p
-                className={`text-[15px] sm:text-base leading-[1.9] ${
-                  isDay ? 'text-slate-700' : 'text-slate-200'
-                }`}
-              >
-                {isBn ? selectedProphet.biographyBn : selectedProphet.biographyEn}
-              </p>
+
+              <div className="space-y-4">
+                {biographyParagraphs.map((para, pIdx) => (
+                  <p
+                    key={pIdx}
+                    className={`text-[15px] sm:text-base leading-[1.85] ${
+                      isDay ? 'text-slate-700' : 'text-slate-200'
+                    }`}
+                  >
+                    {para}
+                  </p>
+                ))}
+              </div>
+
+              {dawahThemes && dawahThemes.length > 0 && (
+                <div
+                  className={`mt-4 rounded-2xl border p-4 sm:p-5 space-y-2.5 ${
+                    isDay
+                      ? 'bg-[#f8fcfa] border-emerald-200/70'
+                      : 'bg-[#0a2329] border-teal-900/60'
+                  }`}
+                >
+                  <h3
+                    className={`text-xs sm:text-sm font-black ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                    }`}
+                  >
+                    {isBn ? 'দাওয়াতের মূল স্তম্ভ ও বৈশিষ্ট্য' : 'Core Pillars of His Da‘wah'}
+                  </h3>
+                  <ul className="space-y-2">
+                    {dawahThemes.map((theme, idx) => (
+                      <li
+                        key={idx}
+                        className={`text-xs sm:text-sm leading-relaxed flex items-start gap-2 ${
+                          isDay ? 'text-slate-700' : 'text-slate-200'
+                        }`}
+                      >
+                        <span
+                          className={`font-black tabular-nums ${
+                            isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                          }`}
+                        >
+                          {formatNum(idx + 1, isBn)}.
+                        </span>
+                        <span>{theme}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
 
             {/* 2. Key Chronological Events */}
             <section
-              className={`pt-6 border-t space-y-4 ${
+              id="sec-timeline"
+              className={`scroll-mt-32 pt-6 border-t space-y-4 ${
                 isDay ? 'border-slate-200/80' : 'border-teal-900/50'
               }`}
             >
@@ -702,11 +904,11 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                     isDay ? 'text-slate-900' : 'text-white'
                   }`}
                 >
-                  {isBn ? 'জীবনের গুরুত্বপূর্ণ অধ্যায়সমূহ' : 'Key Milestones in His Life'}
+                  {isBn ? 'জীবনের গুরুত্বপূর্ণ অধ্যায় ও ঘটনাপ্রবাহ' : 'Key Chronological Milestones'}
                 </h2>
               </div>
 
-              <div className="space-y-3.5">
+              <div className="space-y-3">
                 {selectedProphet.timelineEvents.map((ev, idx) => (
                   <div
                     key={idx}
@@ -748,7 +950,8 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
 
             {/* 3. Major Miracles */}
             <section
-              className={`pt-6 border-t space-y-3.5 ${
+              id="sec-miracles"
+              className={`scroll-mt-32 pt-6 border-t space-y-3.5 ${
                 isDay ? 'border-slate-200/80' : 'border-teal-900/50'
               }`}
             >
@@ -761,7 +964,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                     isDay ? 'text-slate-900' : 'text-white'
                   }`}
                 >
-                  {isBn ? 'প্রধান মুজিযা ও নিদর্শনসমূহ' : 'Major Miracles & Divine Signs'}
+                  {isBn ? 'প্রধান মু‘জিযা ও বিশেষ নিদর্শনসমূহ' : 'Major Miracles & Divine Signs'}
                 </h2>
               </div>
 
@@ -786,95 +989,185 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
               </ul>
             </section>
 
-            {/* 4. Famous Quranic / Prophetic Dua */}
-            {selectedProphet.dua && (
-              <section
-                className={`rounded-2xl border p-5 sm:p-6 space-y-4 ${
-                  isDay
-                    ? 'bg-[#f4faf7] border-emerald-300/70'
-                    : 'bg-[#0b272e] border-emerald-500/30'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="space-y-0.5">
-                    <h2
-                      className={`text-sm sm:text-base font-black ${
-                        isDay ? 'text-[#005a42]' : 'text-emerald-300'
+            {/* 4. Famous Quranic / Prophetic Duas */}
+            {allDuas.length > 0 && (
+              <section id="sec-dua" className="scroll-mt-32 space-y-4">
+                {allDuas.map((duaItem, dIdx) => {
+                  const duaKey = `${selectedProphet.id}-dua-${dIdx}`;
+                  const copied = copiedDuaKey === duaKey;
+                  return (
+                    <div
+                      key={duaKey}
+                      className={`rounded-2xl border p-5 sm:p-6 space-y-4 ${
+                        isDay
+                          ? 'bg-[#f4faf7] border-emerald-300/70'
+                          : 'bg-[#0b272e] border-emerald-500/30'
                       }`}
                     >
-                      {isBn ? 'প্রসিদ্ধ দোয়া ও মুনাজাত' : 'Famous Quranic Supplication'}
-                    </h2>
-                    <p
-                      className={`text-xs font-semibold ${
-                        isDay ? 'text-slate-500' : 'text-slate-400'
-                      }`}
-                    >
-                      {selectedProphet.dua.reference}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyDua(selectedProphet)}
-                    className={`min-h-[44px] px-3.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
-                      copiedDuaId === selectedProphet.id
-                        ? 'bg-[#006A4E] text-white border-[#006A4E]'
-                        : isDay
-                        ? 'bg-white border-emerald-200 text-[#006A4E] hover:bg-emerald-50'
-                        : 'bg-[#071b20] border-teal-800 text-emerald-300 hover:bg-teal-900/50'
-                    }`}
-                  >
-                    {copiedDuaId === selectedProphet.id ? (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span>{isBn ? 'কপি হয়েছে' : 'Copied'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>{isBn ? 'দোয়া কপি' : 'Copy Dua'}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <h2
+                            className={`text-sm sm:text-base font-black ${
+                              isDay ? 'text-[#005a42]' : 'text-emerald-300'
+                            }`}
+                          >
+                            {dIdx === 0
+                              ? isBn
+                                ? 'প্রসিদ্ধ কুরআনী দোয়া ও মুনাজাত'
+                                : 'Famous Quranic Supplication'
+                              : isBn
+                              ? `অতিরিক্ত কুরআনী দোয়া (${formatNum(dIdx + 1, true)})`
+                              : `Additional Supplication (${dIdx + 1})`}
+                          </h2>
+                          <p
+                            className={`text-xs font-semibold ${
+                              isDay ? 'text-slate-500' : 'text-slate-400'
+                            }`}
+                          >
+                            {duaItem.reference}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyDua(duaItem, duaKey)}
+                          className={`min-h-[44px] px-3.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
+                            copied
+                              ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                              : isDay
+                              ? 'bg-white border-emerald-200 text-[#006A4E] hover:bg-emerald-50'
+                              : 'bg-[#071b20] border-teal-800 text-emerald-300 hover:bg-teal-900/50'
+                          }`}
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>{isBn ? 'কপি হয়েছে' : 'Copied'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>{isBn ? 'দোয়া কপি' : 'Copy Dua'}</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
 
-                <p
-                  dir="rtl"
-                  className={`font-arabic text-xl sm:text-2xl leading-[2.1] text-right font-bold ${
-                    isDay ? 'text-slate-900' : 'text-amber-100'
-                  }`}
-                >
-                  {selectedProphet.dua.arabic}
-                </p>
+                      <p
+                        dir="rtl"
+                        className={`font-arabic text-xl sm:text-2xl leading-[2.1] text-right font-bold ${
+                          isDay ? 'text-slate-900' : 'text-amber-100'
+                        }`}
+                      >
+                        {duaItem.arabic}
+                      </p>
 
-                {isBn && (
-                  <p
-                    className={`text-xs sm:text-sm font-semibold leading-relaxed ${
-                      isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'
-                    }`}
-                  >
-                    উচ্চারণ: {selectedProphet.dua.transliterationBn}
-                  </p>
-                )}
+                      {isBn && (
+                        <p
+                          className={`text-xs sm:text-sm font-semibold leading-relaxed ${
+                            isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'
+                          }`}
+                        >
+                          উচ্চারণ: {duaItem.transliterationBn}
+                        </p>
+                      )}
 
-                <p
-                  className={`text-sm sm:text-[15px] leading-relaxed ${
-                    isDay ? 'text-slate-700' : 'text-slate-200'
-                  }`}
-                >
-                  {isBn
-                    ? `অর্থ: ${selectedProphet.dua.translationBn}`
-                    : selectedProphet.dua.translationEn}
-                </p>
+                      <p
+                        className={`text-sm sm:text-[15px] leading-relaxed ${
+                          isDay ? 'text-slate-700' : 'text-slate-200'
+                        }`}
+                      >
+                        {isBn ? `অর্থ: ${duaItem.translationBn}` : duaItem.translationEn}
+                      </p>
+                    </div>
+                  );
+                })}
               </section>
             )}
 
-            {/* 5. Trials & Patience + Lessons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+            {/* 5. Scholarly Clarifications & Isra'iliyyat Refutations (সংশয় নিরসন ও তাহক্বীক্ব) */}
+            {selectedProphet.clarifications && selectedProphet.clarifications.length > 0 && (
+              <section
+                id="sec-tahqiq"
+                className={`scroll-mt-32 rounded-2xl border p-5 sm:p-6 space-y-4 ${
+                  isDay
+                    ? 'bg-amber-50/55 border-amber-300/70'
+                    : 'bg-[#12262b] border-amber-400/25'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldAlert
+                    className={`w-5 h-5 shrink-0 ${
+                      isDay ? 'text-amber-700' : 'text-amber-400'
+                    }`}
+                  />
+                  <div>
+                    <h2
+                      className={`text-sm sm:text-base font-black ${
+                        isDay ? 'text-slate-900' : 'text-white'
+                      }`}
+                    >
+                      {isBn
+                        ? 'সংশয় নিরসন ও ইসরাঈলীয়াত যাচাই (তাহক্বীক্ব)'
+                        : 'Scholarly Clarifications & Fact-Checking'}
+                    </h2>
+                    <p
+                      className={`text-[11px] font-medium ${
+                        isDay ? 'text-slate-500' : 'text-slate-400'
+                      }`}
+                    >
+                      {isBn
+                        ? 'কুরআন ও ছহীহ হাদীসের আলোকে প্রচলিত ভ্রান্ত ধারণা ও বানোয়াট বর্ণনার খণ্ডন'
+                        : 'Distinguishing verified Quran & Sahih Hadith accounts from unauthenticated legends'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3.5">
+                  {selectedProphet.clarifications.map((item, cIdx) => (
+                    <div
+                      key={cIdx}
+                      className={`p-4 rounded-xl border space-y-1.5 ${
+                        isDay
+                          ? 'bg-white/90 border-amber-200/80'
+                          : 'bg-[#091c22] border-amber-500/20'
+                      }`}
+                    >
+                      <h3
+                        className={`text-xs sm:text-sm font-extrabold ${
+                          isDay ? 'text-amber-900' : 'text-amber-300'
+                        }`}
+                      >
+                        {isBn ? item.titleBn : item.titleEn}
+                      </h3>
+                      <p
+                        className={`text-xs sm:text-sm leading-relaxed ${
+                          isDay ? 'text-slate-700' : 'text-slate-200'
+                        }`}
+                      >
+                        {isBn ? item.detailBn : item.detailEn}
+                      </p>
+                      {(isBn ? item.refBn : item.refEn) && (
+                        <div
+                          className={`text-[11px] font-semibold pt-1 ${
+                            isDay ? 'text-slate-500' : 'text-emerald-300/75'
+                          }`}
+                        >
+                          {isBn ? `তথ্যসূত্র: ${item.refBn}` : `Source: ${item.refEn}`}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* 6. Trials & Patience + Lessons */}
+            <div id="sec-lessons" className="scroll-mt-32 grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
               <section
                 className={`p-5 rounded-2xl border space-y-2.5 ${
                   isDay
-                    ? 'bg-amber-50/50 border-amber-200/80'
-                    : 'bg-[#12262c] border-amber-500/20'
+                    ? 'bg-slate-50/80 border-slate-200/90'
+                    : 'bg-[#0c2329] border-teal-800/50'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -918,7 +1211,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                       isDay ? 'text-slate-900' : 'text-white'
                     }`}
                   >
-                    {isBn ? 'আমাদের জন্য শিক্ষণীয়' : 'Enduring Lessons'}
+                    {isBn ? 'আমাদের জন্য শিক্ষণীয় বিষয়সমূহ' : 'Enduring Lessons'}
                   </h2>
                 </div>
                 <ul className="space-y-2">
@@ -945,26 +1238,34 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
               </section>
             </div>
 
-            {/* 6. Verified Sources */}
+            {/* 7. Verified Sources */}
             <footer
-              className={`pt-5 border-t space-y-2 ${
+              className={`pt-5 border-t space-y-2.5 ${
                 isDay ? 'border-slate-200/80' : 'border-teal-900/50'
               }`}
             >
               <div
-                className={`text-xs font-bold uppercase tracking-wider ${
-                  isDay ? 'text-slate-500' : 'text-slate-400'
+                className={`text-xs font-bold tracking-wider ${
+                  isDay ? 'text-slate-500' : 'text-emerald-300/75'
                 }`}
               >
-                {isBn ? 'নির্ভরযোগ্য উৎস ও রেফারেন্স' : 'Authentic References'}
+                {isBn ? 'প্রামাণিক উৎস ও তথ্যসূত্র (রেফারেন্স)' : 'Authentic Sources & References'}
               </div>
-              <p
-                className={`text-xs sm:text-sm leading-relaxed ${
-                  isDay ? 'text-slate-600' : 'text-slate-300'
-                }`}
-              >
-                {(isBn ? selectedProphet.referencesBn : selectedProphet.referencesEn).join('  ·  ')}
-              </p>
+              <ul className="space-y-1.5">
+                {(isBn ? selectedProphet.referencesBn : selectedProphet.referencesEn).map(
+                  (ref, rIdx) => (
+                    <li
+                      key={rIdx}
+                      className={`text-xs sm:text-sm leading-relaxed flex items-start gap-2 ${
+                        isDay ? 'text-slate-600' : 'text-slate-300'
+                      }`}
+                    >
+                      <span className={isDay ? 'text-[#006A4E]' : 'text-emerald-400'}>•</span>
+                      <span>{ref}</span>
+                    </li>
+                  )
+                )}
+              </ul>
             </footer>
           </div>
         </article>
@@ -1037,7 +1338,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     <div
       data-highlight-section="prophets_25"
       data-highlight-source={
-        isBn ? 'কুরআনে বর্ণিত ২৫ জন নবী-রাসূলের নাম' : '25 Prophets Mentioned in the Quran'
+        isBn ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল' : '25 Prophets & Messengers in the Quran'
       }
       className="space-y-5 pb-10 animate-in fade-in duration-200"
     >
@@ -1055,9 +1356,9 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="min-h-[44px] px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                className="min-h-[44px] px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4 shrink-0" />
                 <span>{isBn ? 'আরো মেনু' : isAr ? 'المزيد' : 'Back'}</span>
               </button>
             ) : (
@@ -1068,17 +1369,17 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
               <button
                 type="button"
                 onClick={() => openShareModal(buildAll25IndexShareContent(), 'share')}
-                className="min-h-[44px] px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                className="min-h-[44px] px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap"
               >
-                <Share2 className="w-3.5 h-3.5" />
+                <Share2 className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline">{isBn ? 'তালিকা শেয়ার' : 'Share List'}</span>
               </button>
               <button
                 type="button"
                 onClick={() => openShareModal(buildAll25IndexShareContent(), 'download')}
-                className="min-h-[44px] px-3 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-300/30 text-amber-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                className="min-h-[44px] px-3 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-300/30 text-amber-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-3.5 h-3.5 shrink-0" />
                 <span>{isBn ? '২৫ নবী PDF' : 'PDF'}</span>
               </button>
             </div>
@@ -1089,19 +1390,19 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
               dir="rtl"
               className="font-arabic text-lg sm:text-xl text-amber-300 font-bold leading-snug"
             >
-              الأنبياء والرسل المذكورون في القرآن الكريم
+              الأنبياء والرسل الـ ٢٥ في القرآن الكريم
             </div>
-            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white text-balance">
               {isBn
-                ? 'কুরআনে বর্ণিত ২৫ জন নবী-রাসূলের নাম'
+                ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল'
                 : isAr
                 ? 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم'
                 : '25 Prophets & Messengers in the Quran'}
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed max-w-2xl">
+            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed max-w-3xl">
               {isBn
-                ? 'হযরত আদম (আ.) থেকে শেষ নবী মুহাম্মদ (সা.) পর্যন্ত পবিত্র কুরআনে নাম উল্লেখিত সকল ২৫ জন নবী-রাসূলের কালানুক্রমিক জীবনী, মুজিযা, কুরআনের উল্লেখ, প্রসিদ্ধ দোয়া ও শিক্ষণীয় অধ্যায়।'
-                : 'Chronological profiles, miracles, Quranic citations, supplications, and enduring lessons of all 25 Prophets named in the Holy Quran — from Adam (AS) to Muhammad (SAW).'}
+                ? 'হযরত আদম (আ.) থেকে শেষনবী মুহাম্মাদ (সা.) পর্যন্ত পবিত্র কুরআনে নাম উল্লিখিত সকল ২৫ জন নবী ও রাসূলের বিস্তারিত জীবনী, কুরআনী পরিসংখ্যান, মু‘জিযা, প্রসিদ্ধ দোয়া, ইসরাঈলীয়াত যাচাই (সংশয় নিরসন), শিক্ষণীয় বিষয় ও প্রামাণিক তথ্যসূত্র।'
+                : 'Comprehensive profiles, Quranic mention stats, miracles, supplications, scholarly fact-checking, and verified references of all 25 Prophets & Messengers named in the Quran — from Adam (AS) to Muhammad (SAW).'}
             </p>
           </div>
 
@@ -1109,8 +1410,8 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
           <div className="pt-3 border-t border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="text-xs text-emerald-100/90 font-semibold tabular-nums">
               {isBn
-                ? `${toBnDigits(25)} জন নবী-রাসূল  ·  ${toBnDigits(ULUL_AZM_COUNT)} জন উলুল আযম  ·  ${toBnDigits(SCRIPTURE_BEARERS_COUNT)} জন কিতাব/সহীফাপ্রাপ্ত  ·  ${toBnDigits(ARAB_PROPHETS_COUNT)} জন আরব নবী`
-                : `25 Prophets  ·  ${ULUL_AZM_COUNT} Ulul Azm  ·  ${SCRIPTURE_BEARERS_COUNT} Scripture Bearers  ·  ${ARAB_PROPHETS_COUNT} Arab Prophets`}
+                ? `${toBnDigits(25)} জন নবী ও রাসূল  ·  ${toBnDigits(ULUL_AZM_COUNT)} জন উলুল আযম  ·  ${toBnDigits(SCRIPTURE_BEARERS_COUNT)} জন কিতাব/সহীফাপ্রাপ্ত  ·  ${toBnDigits(ARAB_PROPHETS_COUNT)} জন আরব নবী`
+                : `25 Prophets & Messengers  ·  ${ULUL_AZM_COUNT} Ulul Azm  ·  ${SCRIPTURE_BEARERS_COUNT} Scripture Bearers  ·  ${ARAB_PROPHETS_COUNT} Arab Prophets`}
             </div>
 
             <div className="flex items-center gap-2.5 shrink-0">
@@ -1130,6 +1431,127 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
         </div>
       </div>
 
+      {/* Collapsible Scholarly Introduction (নবীদের কাহিনী ভূমিকা) */}
+      <div
+        className={`rounded-2xl border overflow-hidden transition-colors ${
+          isDay
+            ? 'bg-white border-emerald-200/80'
+            : 'bg-[#082026] border-teal-900/60'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            if (soundEnabled) soundHaptics.playTap();
+            setShowIntroDrawer((prev) => !prev);
+          }}
+          className={`w-full px-4 sm:px-5 py-3.5 flex items-center justify-between gap-3 text-left transition cursor-pointer ${
+            isDay ? 'hover:bg-emerald-50/50' : 'hover:bg-teal-950/40'
+          }`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <BookOpen
+              className={`w-5 h-5 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}
+            />
+            <div className="min-w-0">
+              <div
+                className={`text-sm font-black truncate ${
+                  isDay ? 'text-slate-900' : 'text-white'
+                }`}
+              >
+                {isBn ? PROPHETS_25_INTRO_OVERVIEW.titleBn : PROPHETS_25_INTRO_OVERVIEW.titleEn}
+              </div>
+              <div
+                className={`text-[11px] font-medium truncate ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {isBn ? PROPHETS_25_INTRO_OVERVIEW.subtitleBn : PROPHETS_25_INTRO_OVERVIEW.subtitleEn}
+              </div>
+            </div>
+          </div>
+          {showIntroDrawer ? (
+            <ChevronUp className="w-5 h-5 shrink-0 text-emerald-500" />
+          ) : (
+            <ChevronDown className="w-5 h-5 shrink-0 text-emerald-500" />
+          )}
+        </button>
+
+        {showIntroDrawer && (
+          <div
+            className={`px-4 sm:px-5 pb-5 pt-2 border-t space-y-4 ${
+              isDay ? 'border-slate-200/80' : 'border-teal-900/50'
+            }`}
+          >
+            <div
+              className={`rounded-xl p-3.5 sm:p-4 space-y-1.5 ${
+                isDay ? 'bg-[#f4faf7]' : 'bg-[#06181d]'
+              }`}
+            >
+              <p
+                dir="rtl"
+                className={`font-arabic text-base sm:text-lg font-bold text-right ${
+                  isDay ? 'text-[#005a42]' : 'text-amber-200'
+                }`}
+              >
+                {PROPHETS_25_INTRO_OVERVIEW.verseAr}
+              </p>
+              <p
+                className={`text-xs sm:text-sm leading-relaxed ${
+                  isDay ? 'text-slate-700' : 'text-slate-200'
+                }`}
+              >
+                {isBn
+                  ? PROPHETS_25_INTRO_OVERVIEW.verseTransBn
+                  : PROPHETS_25_INTRO_OVERVIEW.verseTransEn}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {PROPHETS_25_INTRO_FACTS.map((fact, idx) => (
+                <div
+                  key={idx}
+                  className={`p-4 rounded-xl border space-y-1.5 ${
+                    isDay
+                      ? 'bg-[#f8fcfa] border-slate-200/80'
+                      : 'bg-[#0a2329] border-teal-900/60'
+                  }`}
+                >
+                  <div
+                    className={`text-xs font-black ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                    }`}
+                  >
+                    {isBn ? fact.titleBn : fact.titleEn}
+                  </div>
+                  <div
+                    className={`text-xs sm:text-sm font-extrabold ${
+                      isDay ? 'text-amber-700' : 'text-amber-300'
+                    }`}
+                  >
+                    {isBn ? fact.valueBn : fact.valueEn}
+                  </div>
+                  <p
+                    className={`text-xs leading-relaxed ${
+                      isDay ? 'text-slate-600' : 'text-slate-300'
+                    }`}
+                  >
+                    {isBn ? fact.detailBn : fact.detailEn}
+                  </p>
+                  <div
+                    className={`text-[11px] font-semibold pt-0.5 ${
+                      isDay ? 'text-slate-500' : 'text-slate-400'
+                    }`}
+                  >
+                    {isBn ? `সূত্র: ${fact.refBn}` : `Ref: ${fact.refEn}`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Search + Interactive Filter Strip */}
       <div className="space-y-3">
         <div className="relative">
@@ -1144,8 +1566,8 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               isBn
-                ? 'নবীর নাম, লকব, জাতি বা কিতাব খুঁজুন (যেমন: ইবরাহীম, মূসা, ইউনুস, তাওরাত)...'
-                : 'Search prophet by name, title, nation, or scripture...'
+                ? 'নবীর নাম, লকব, জাতি, অঞ্চল বা কিতাব খুঁজুন (যেমন: ইবরাহীম, মূসা, ইউনুস, তাওরাত)...'
+                : 'Search prophet by name, title, nation, era, or scripture...'
             }
             className={`w-full min-h-[46px] pl-10 pr-10 rounded-2xl border text-sm font-medium outline-none transition ${
               isDay
@@ -1183,7 +1605,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   if (soundEnabled) soundHaptics.playTap();
                   setActiveFilter(f.key);
                 }}
-                className={`min-h-[40px] px-3.5 rounded-xl border text-xs font-bold whitespace-nowrap transition cursor-pointer active:scale-95 ${
+                className={`min-h-[40px] px-3.5 rounded-xl border text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer active:scale-95 ${
                   active
                     ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-xs'
                     : isDay
@@ -1212,8 +1634,8 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
           }`}
         >
           {isBn
-            ? `মোট ${toBnDigits(filteredProphets.length)} জন নবী-রাসূল প্রদর্শিত হচ্ছে`
-            : `Showing ${filteredProphets.length} of 25 Prophets`}
+            ? `মোট ${toBnDigits(filteredProphets.length)} জন নবী ও রাসূল প্রদর্শিত হচ্ছে`
+            : `Showing ${filteredProphets.length} of 25 Prophets & Messengers`}
         </span>
         {(activeFilter !== 'all' || searchQuery) && (
           <button
@@ -1241,7 +1663,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
           }`}
         >
           <p className="text-sm font-bold">
-            {isBn ? 'এই ফিল্টারে কোনো নবী-রাসূল পাওয়া যায়নি।' : 'No prophets match this filter.'}
+            {isBn ? 'এই ফিল্টারে কোনো নবী ও রাসূল পাওয়া যায়নি।' : 'No prophets match this filter.'}
           </p>
           <button
             type="button"
@@ -1264,6 +1686,15 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                 ? `কুরআনে ${toBnDigits(p.quranMentions)} বার`
                 : `${p.quranMentions}x in Quran`,
             ];
+            if (p.quranStats?.surahCount && p.quranStats?.ayahCount) {
+              metaLineParts.push(
+                isBn
+                  ? `${toBnDigits(p.quranStats.surahCount)} সূরা · ${toBnDigits(
+                      p.quranStats.ayahCount
+                    )} আয়াত`
+                  : `${p.quranStats.surahCount} Surahs · ${p.quranStats.ayahCount} ayahs`
+              );
+            }
             if (p.isUlulAzm) metaLineParts.push(isBn ? 'উলুল আযম' : 'Ulul Azm');
             if (p.scriptureBn) {
               metaLineParts.push(
@@ -1345,7 +1776,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
 
                   {/* Unboxed Typographic Metadata Strip */}
                   <div
-                    className={`text-[11px] font-bold tabular-nums ${
+                    className={`text-[11px] font-bold tabular-nums leading-relaxed ${
                       isDay ? 'text-slate-500' : 'text-emerald-300/75'
                     }`}
                   >
@@ -1409,7 +1840,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   </div>
 
                   <span
-                    className={`text-xs font-extrabold flex items-center gap-0.5 ${
+                    className={`text-xs font-extrabold flex items-center gap-0.5 whitespace-nowrap ${
                       isDay ? 'text-[#006A4E]' : 'text-emerald-400'
                     }`}
                   >
@@ -1434,12 +1865,12 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
         <div
           className={`font-black ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}
         >
-          {isBn ? 'কুরআনের মৌলিক আকীদা' : 'Core Quranic Principle'}
+          {isBn ? 'কুরআনের মৌলিক আকীদা ও প্রামাণিক সূত্র' : 'Core Quranic Principle & Attribution'}
         </div>
         <p>
           {isBn
-            ? 'আল্লাহ তাআলা মানবজাতির হেদায়াতের জন্য লক্ষাধিক নবী ও তিন শতাধিক রাসূল প্রেরণ করেছেন, যাঁদের মধ্যে পবিত্র কুরআনে এই ২৫ জনের নাম সরাসরি উল্লেখ রয়েছে (সূরা নিসা ৪:১৬৪, সূরা গাফির ৪০:৭৮)। একজন মুমিনের জন্য সকল নবী-রাসূলের প্রতি বিনা পার্থক্যে ঈমান আনা ফরজ (সূরা বাকারা ২:২৮৫)।'
-            : 'Allah sent prophets to every nation; 25 are explicitly named in the Holy Quran (4:164, 40:78). Believing in all of Allah’s prophets without distinction is an article of faith (2:285).'}
+            ? 'আল্লাহ তাআলা মানবজাতির হেদায়াতের জন্য ১,২৪,০০০ নবী ও ৩১৫ জন রাসূল প্রেরণ করেছেন, যাঁদের মধ্যে পবিত্র কুরআনে এই ২৫ জনের নাম সরাসরি উল্লেখ রয়েছে (সূরা নিসা ৪:১৬৪, সূরা গাফির ৪০:৭৮; সিলসিলা ছহীহাহ হা/২৬৬৮)। একজন মুমিনের জন্য সকল নবী-রাসূলের প্রতি বিনা পার্থক্যে ঈমান আনা ফরয (সূরা বাকারা ২:২৮৫)। সকল তথ্য প্রফেসর ড. মুহাম্মাদ আসাদুল্লাহ আল-গালিব রচিত “নবীদের কাহিনী” (১ম ও ২য় খণ্ড), তাফসীরে ইবনে কাছীর এবং ছহীহ হাদীস গ্রন্থের আলোকে সংকলিত।'
+            : 'Allah sent 124,000 prophets and 315 messengers across human history, 25 of whom are explicitly named in the Holy Quran (4:164, 40:78; Silsilah Sahihah 2668). Believing in all prophets without distinction is an article of faith (2:285). Compiled from Quran, Sahih Hadith, Tafsir Ibn Kathir, and Nobider Kahini Vols. 1–2.'}
         </p>
       </div>
 
