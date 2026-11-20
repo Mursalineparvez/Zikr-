@@ -536,7 +536,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
           ==================================================================== */}
       <section
         aria-labelledby="special-seerah-collections-heading"
-        className={`relative overflow-hidden mt-8 rounded-[26px] border p-4 sm:p-6 space-y-5 transition-colors ${
+        className={`relative overflow-hidden mt-5 rounded-[24px] border p-3.5 sm:p-5 space-y-3.5 transition-colors ${
           isDay
             ? 'bg-gradient-to-br from-[#F2FBF7] via-[#FFFFFF] to-[#FFFDF6] border-emerald-200/85 shadow-[0_12px_36px_-18px_rgba(6,78,59,0.16)]'
             : 'bg-gradient-to-br from-[#051814] via-[#07201b] to-[#0a251f] border-emerald-700/45 shadow-[0_18px_44px_-18px_rgba(0,0,0,0.65)]'
@@ -678,7 +678,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
 
         {/* Slim 2x2 Luxury Illuminated Editorial Folio Grid */}
         <div
-          className={`relative z-10 grid gap-3.5 items-start ${
+          className={`relative z-10 grid gap-2.5 sm:gap-3 items-start ${
             SEERAT_SPECIAL_COLLECTIONS.length > 1 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
           }`}
         >
@@ -1566,30 +1566,12 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                 ref={readerScrollRef}
                 className={`${
                   mobilePane === 'reader' ? 'block' : 'hidden lg:block'
-                } overflow-y-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-9`}
+                } overflow-y-auto px-3 sm:px-8 lg:px-10 py-3 sm:py-5`}
               >
-                <article className="max-w-3xl mx-auto space-y-7">
-                  {/* Mobile Return-to-Index Link */}
-                  <div className="lg:hidden">
-                    <button
-                      type="button"
-                      onClick={() => setMobilePane('index')}
-                      className={`inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer ${
-                        isDay ? 'text-emerald-800' : 'text-amber-300'
-                      }`}
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>
-                        {isBn
-                          ? `${toBnNumber(totalEventsCount)}টি ঘটনার সূচিপত্রে ফিরুন`
-                          : `Back to ${totalEventsCount}-Event Index`}
-                      </span>
-                    </button>
-                  </div>
-
+                <article className="max-w-3xl mx-auto space-y-3.5 sm:space-y-5">
                   {/* Editorial Folio Header */}
                   <header
-                    className={`pb-6 border-b space-y-3 ${
+                    className={`pb-3 sm:pb-4 border-b space-y-2 ${
                       isDay ? 'border-stone-200' : 'border-emerald-800/70'
                     }`}
                   >
@@ -1670,7 +1652,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                     </div>
 
                     <h1
-                      className={`text-2xl sm:text-3xl font-black tracking-tight leading-snug text-balance ${
+                      className={`text-xl sm:text-3xl font-black tracking-tight leading-snug text-balance ${
                         isDay ? 'text-stone-900' : 'text-white'
                       }`}
                     >
@@ -1689,7 +1671,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
 
                   {/* 1. Key Verified Summary Points */}
                   <section
-                    className={`rounded-2xl border p-4 sm:p-5 space-y-2.5 ${
+                    className={`rounded-2xl border p-3 sm:p-4 space-y-1.5 ${
                       isDay
                         ? 'bg-white border-stone-200/90'
                         : 'bg-[#07201a] border-emerald-800/70'
@@ -1702,16 +1684,16 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                     >
                       {isBn ? 'মূল প্রামাণ্য সারসংক্ষেপ' : 'Core Verified Summary'}
                     </h3>
-                    <ul className="space-y-2">
+                    <ul className="space-y-1.5">
                       {(isBn ? currentEvent.pointsBn : currentEvent.pointsEn).map((pt, idx) => (
                         <li
                           key={idx}
-                          className={`flex items-start gap-2.5 text-sm sm:text-[15px] font-medium leading-relaxed ${
+                          className={`flex items-start gap-2 text-[13px] sm:text-[15px] font-medium leading-relaxed ${
                             isDay ? 'text-stone-800' : 'text-emerald-50'
                           }`}
                         >
                           <CheckCircle2
-                            className="w-4 h-4 mt-1 shrink-0"
+                            className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-1 shrink-0"
                             style={{ color: isDay ? currentPartMeta.accentHex : '#34d399' }}
                           />
                           <span>{pt}</span>
@@ -1724,7 +1706,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   {currentEvent.arabicQuote && (
                     <blockquote
                       dir="rtl"
-                      className={`py-5 border-y text-center font-arabic text-xl sm:text-2xl leading-[2.1] ${
+                      className={`py-3 sm:py-4 border-y text-center font-arabic text-lg sm:text-2xl leading-[1.9] ${
                         isDay
                           ? 'border-amber-300/70 text-emerald-950'
                           : 'border-amber-400/30 text-amber-200'
@@ -1735,7 +1717,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                   )}
 
                   {/* 3. Two-Layer Detailed Historical Narration */}
-                  <section className="space-y-4">
+                  <section className="space-y-2 sm:space-y-3">
                     <h3
                       className={`text-xs font-extrabold tracking-wide ${
                         isDay ? 'text-stone-500' : 'text-emerald-300/80'
@@ -1744,7 +1726,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                       {isBn ? 'বিস্তারিত ঐতিহাসিক বিবরণ' : 'Detailed Historical Account'}
                     </h3>
                     <div
-                      className={`space-y-4 text-[15px] sm:text-base leading-[1.9] max-w-prose ${
+                      className={`space-y-2.5 text-[14px] sm:text-base leading-[1.75] sm:leading-[1.85] max-w-prose ${
                         isDay ? 'text-stone-800' : 'text-emerald-50/90'
                       }`}
                     >
@@ -1759,49 +1741,37 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                     </div>
                   </section>
 
-                  {/* 4. Archival Metadata Grid */}
+                  {/* 4. Compact Archival Metadata Strip (2-col on mobile to prevent vertical bloat) */}
                   <section
-                    className={`rounded-2xl border divide-y ${
+                    className={`rounded-xl border overflow-hidden ${
                       isDay
-                        ? 'bg-white border-stone-200/90 divide-stone-100'
-                        : 'bg-[#07201a] border-emerald-800/70 divide-emerald-900/70'
+                        ? 'bg-white border-stone-200/90'
+                        : 'bg-[#07201a] border-emerald-800/70'
                     }`}
                   >
-                    <dl className="divide-y divide-inherit text-xs sm:text-sm">
-                      <div className="px-4 sm:px-5 py-3 grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-1">
-                        <dt
-                          className={`font-bold ${
-                            isDay ? 'text-stone-500' : 'text-emerald-300/75'
-                          }`}
-                        >
+                    <dl className="grid grid-cols-2 divide-x divide-y divide-stone-100 dark:divide-emerald-900/60 text-[11px] sm:text-xs">
+                      <div className="px-3 py-2 space-y-0.5">
+                        <dt className={`font-bold text-[10px] sm:text-[11px] ${isDay ? 'text-stone-500' : 'text-emerald-300/75'}`}>
                           {isBn ? 'সময়কাল' : 'Timeframe'}
                         </dt>
-                        <dd className={isDay ? 'text-stone-900 font-medium' : 'text-emerald-50'}>
+                        <dd className={`font-semibold leading-snug ${isDay ? 'text-stone-900' : 'text-emerald-50'}`}>
                           {isBn ? currentEvent.timeContextBn : currentEvent.timeContextEn}
                         </dd>
                       </div>
-                      <div className="px-4 sm:px-5 py-3 grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-1">
-                        <dt
-                          className={`font-bold ${
-                            isDay ? 'text-stone-500' : 'text-emerald-300/75'
-                          }`}
-                        >
+                      <div className="px-3 py-2 space-y-0.5">
+                        <dt className={`font-bold text-[10px] sm:text-[11px] ${isDay ? 'text-stone-500' : 'text-emerald-300/75'}`}>
                           {isBn ? 'ঐতিহাসিক স্থান' : 'Location'}
                         </dt>
-                        <dd className={isDay ? 'text-stone-900 font-medium' : 'text-emerald-50'}>
+                        <dd className={`font-semibold leading-snug ${isDay ? 'text-stone-900' : 'text-emerald-50'}`}>
                           {isBn ? currentEvent.locationBn : currentEvent.locationEn}
                         </dd>
                       </div>
                       {currentEvent.keyFiguresBn && (
-                        <div className="px-4 sm:px-5 py-3 grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-1">
-                          <dt
-                            className={`font-bold ${
-                              isDay ? 'text-stone-500' : 'text-emerald-300/75'
-                            }`}
-                          >
-                            {isBn ? 'সংশ্লিষ্ট ব্যক্তিবর্গ' : 'Key Figures'}
+                        <div className="col-span-2 px-3 py-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-t border-stone-100 dark:border-emerald-900/60">
+                          <dt className={`font-bold text-[10px] sm:text-[11px] shrink-0 ${isDay ? 'text-stone-500' : 'text-emerald-300/75'}`}>
+                            {isBn ? 'সংশ্লিষ্ট ব্যক্তিবর্গ:' : 'Key Figures:'}
                           </dt>
-                          <dd className={isDay ? 'text-stone-900 font-medium' : 'text-emerald-50'}>
+                          <dd className={`font-semibold leading-snug ${isDay ? 'text-stone-900' : 'text-emerald-50'}`}>
                             {isBn ? currentEvent.keyFiguresBn : currentEvent.keyFiguresEn}
                           </dd>
                         </div>
@@ -1811,45 +1781,45 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
 
                   {/* 5. Spiritual & Historical Reflection */}
                   <section
-                    className={`rounded-2xl border p-4 sm:p-5 space-y-1.5 ${
+                    className={`rounded-xl border p-3 sm:p-4 space-y-1 ${
                       isDay
                         ? 'bg-emerald-50/60 border-emerald-200/80 text-emerald-950'
                         : 'bg-[#06221b] border-emerald-700/60 text-emerald-100'
                     }`}
                   >
                     <h3
-                      className={`text-xs font-extrabold tracking-wide ${
+                      className={`text-[11px] sm:text-xs font-extrabold tracking-wide ${
                         isDay ? 'text-emerald-800' : 'text-amber-300'
                       }`}
                     >
                       {isBn ? 'ঐতিহাসিক শিক্ষা ও আত্মিক অনুভূতি' : 'Historical Lesson & Reflection'}
                     </h3>
-                    <p className="text-sm sm:text-[15px] leading-relaxed">
+                    <p className="text-[12.5px] sm:text-[14px] leading-snug sm:leading-relaxed">
                       {isBn ? currentEvent.reflectionBn : currentEvent.reflectionEn}
                     </p>
                   </section>
 
                   {/* 6. Detailed Multi-Book Hadith & Seerah References Block */}
                   <section
-                    className={`rounded-2xl border overflow-hidden ${
+                    className={`rounded-xl border overflow-hidden ${
                       isDay
                         ? 'bg-white border-stone-200/90'
                         : 'bg-[#07201a] border-emerald-800/70'
                     }`}
                   >
                     <div
-                      className={`px-4 sm:px-5 py-3 border-b flex items-center justify-between gap-2 ${
+                      className={`px-3 sm:px-4 py-2 border-b flex items-center justify-between gap-2 ${
                         isDay
                           ? 'bg-stone-50 border-stone-200/80'
                           : 'bg-[#041713] border-emerald-800/70'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <BookOpen
-                          className={`w-4 h-4 ${isDay ? 'text-emerald-800' : 'text-amber-300'}`}
+                          className={`w-3.5 h-3.5 shrink-0 ${isDay ? 'text-emerald-800' : 'text-amber-300'}`}
                         />
                         <h3
-                          className={`text-xs font-extrabold tracking-wide ${
+                          className={`text-[11px] sm:text-xs font-extrabold tracking-wide truncate ${
                             isDay ? 'text-stone-800' : 'text-emerald-100'
                           }`}
                         >
@@ -1859,7 +1829,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                         </h3>
                       </div>
                       <span
-                        className={`text-[11px] font-semibold tabular-nums ${
+                        className={`text-[10.5px] font-semibold tabular-nums shrink-0 ${
                           isDay ? 'text-stone-500' : 'text-emerald-300/70'
                         }`}
                       >
@@ -1871,17 +1841,17 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
 
                     <div className="divide-y divide-stone-100 dark:divide-emerald-900/60">
                       {currentEvent.references.map((ref, idx) => (
-                        <div key={idx} className="px-4 sm:px-5 py-3.5 space-y-1">
-                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <div key={idx} className="px-3 sm:px-4 py-2 sm:py-2.5 space-y-0.5">
+                          <div className="flex flex-wrap items-baseline justify-between gap-1.5">
                             <p
-                              className={`text-sm font-extrabold ${
+                              className={`text-xs sm:text-sm font-extrabold ${
                                 isDay ? 'text-stone-900' : 'text-white'
                               }`}
                             >
                               {isBn ? ref.bookBn : ref.bookEn}
                             </p>
                             <span
-                              className={`text-xs font-bold ${
+                              className={`text-[11px] font-bold ${
                                 ref.isWeakNote
                                   ? isDay
                                     ? 'text-amber-700'
@@ -1895,12 +1865,12 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                             </span>
                           </div>
                           <p
-                            className={`text-xs ${
+                            className={`text-[11px] sm:text-xs leading-snug ${
                               isDay ? 'text-stone-600' : 'text-emerald-200/80'
                             }`}
                           >
                             {isBn ? ref.chapterBn : ref.chapterEn}
-                            <span aria-hidden="true" className="mx-1.5 opacity-50">
+                            <span aria-hidden="true" className="mx-1 opacity-50">
                               ·
                             </span>
                             <strong className={isDay ? 'text-stone-800' : 'text-amber-200'}>
@@ -1912,10 +1882,10 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                     </div>
                   </section>
 
-                  {/* 7. Previous / Next Chronological Navigation Bar */}
+                  {/* 7. Previous / Next Chronological Navigation Bar — ALWAYS Side-by-Side in One Row */}
                   <nav
                     aria-label={isBn ? 'ঘটনা নেভিগেশন' : 'Event navigation'}
-                    className={`pt-5 border-t grid grid-cols-1 sm:grid-cols-2 gap-3 ${
+                    className={`pt-3 border-t grid grid-cols-2 gap-2 sm:gap-3 ${
                       isDay ? 'border-stone-200' : 'border-emerald-800/70'
                     }`}
                   >
@@ -1923,24 +1893,24 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                       <button
                         type="button"
                         onClick={() => handleSelectEvent(prevEvent.no)}
-                        className={`text-left p-3.5 rounded-xl border transition-colors cursor-pointer flex items-center gap-3 ${
+                        className={`text-left px-2.5 py-2 sm:p-3.5 rounded-xl border transition-colors cursor-pointer flex items-center gap-1.5 sm:gap-3 min-w-0 ${
                           isDay
                             ? 'bg-white hover:bg-emerald-50/70 border-stone-200 hover:border-emerald-300'
                             : 'bg-[#07201a] hover:bg-emerald-900/50 border-emerald-800/70 hover:border-amber-400/40'
                         }`}
                       >
-                        <ArrowLeft className="w-4 h-4 shrink-0 text-emerald-700 dark:text-amber-300" />
-                        <div className="min-w-0">
+                        <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-emerald-700 dark:text-amber-300" />
+                        <div className="min-w-0 flex-1">
                           <span
-                            className={`block text-[11px] font-bold tabular-nums ${
+                            className={`block text-[9.5px] sm:text-[11px] font-bold tabular-nums truncate ${
                               isDay ? 'text-stone-500' : 'text-emerald-300/75'
                             }`}
                           >
                             {isBn
-                              ? `পূর্ববর্তী · ঘটনা ${toBnNumber(prevEvent.no, true)}`
-                              : `Previous · Event ${String(prevEvent.no).padStart(2, '0')}`}
+                              ? `পূর্ববর্তী · ${toBnNumber(prevEvent.no, true)}`
+                              : `Prev · ${String(prevEvent.no).padStart(2, '0')}`}
                           </span>
-                          <span className="block text-xs sm:text-sm font-extrabold truncate">
+                          <span className="block text-[11px] sm:text-sm font-extrabold truncate">
                             {isBn ? prevEvent.titleBn : prevEvent.titleEn}
                           </span>
                         </div>
@@ -1953,45 +1923,45 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                       <button
                         type="button"
                         onClick={() => handleSelectEvent(nextEvent.no)}
-                        className={`text-right p-3.5 rounded-xl border transition-colors cursor-pointer flex items-center justify-end gap-3 ${
+                        className={`text-right px-2.5 py-2 sm:p-3.5 rounded-xl border transition-colors cursor-pointer flex items-center justify-end gap-1.5 sm:gap-3 min-w-0 ${
                           isDay
                             ? 'bg-white hover:bg-emerald-50/70 border-stone-200 hover:border-emerald-300'
                             : 'bg-[#07201a] hover:bg-emerald-900/50 border-emerald-800/70 hover:border-amber-400/40'
                         }`}
                       >
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <span
-                            className={`block text-[11px] font-bold tabular-nums ${
+                            className={`block text-[9.5px] sm:text-[11px] font-bold tabular-nums truncate ${
                               isDay ? 'text-stone-500' : 'text-emerald-300/75'
                             }`}
                           >
                             {isBn
-                              ? `পরবর্তী · ঘটনা ${toBnNumber(nextEvent.no, true)}`
-                              : `Next · Event ${String(nextEvent.no).padStart(2, '0')}`}
+                              ? `পরবর্তী · ${toBnNumber(nextEvent.no, true)}`
+                              : `Next · ${String(nextEvent.no).padStart(2, '0')}`}
                           </span>
-                          <span className="block text-xs sm:text-sm font-extrabold truncate">
+                          <span className="block text-[11px] sm:text-sm font-extrabold truncate">
                             {isBn ? nextEvent.titleBn : nextEvent.titleEn}
                           </span>
                         </div>
-                        <ArrowRight className="w-4 h-4 shrink-0 text-emerald-700 dark:text-amber-300" />
+                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-emerald-700 dark:text-amber-300" />
                       </button>
                     ) : (
                       <button
                         type="button"
                         onClick={closeCollection}
-                        className="text-right p-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white transition-colors cursor-pointer flex items-center justify-end gap-3"
+                        className="text-right px-2.5 py-2 sm:p-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white transition-colors cursor-pointer flex items-center justify-end gap-1.5 sm:gap-3 min-w-0"
                       >
-                        <div className="min-w-0">
-                          <span className="block text-[11px] font-bold text-amber-200 tabular-nums">
+                        <div className="min-w-0 flex-1">
+                          <span className="block text-[9.5px] sm:text-[11px] font-bold text-amber-200 tabular-nums truncate">
                             {isBn
-                              ? `সংকলন সমাপ্ত (${toBnNumber(totalEventsCount)}/${toBnNumber(totalEventsCount)})`
-                              : `End of Collection (${totalEventsCount}/${totalEventsCount})`}
+                              ? `সমাপ্ত (${toBnNumber(totalEventsCount)}/${toBnNumber(totalEventsCount)})`
+                              : `End (${totalEventsCount}/${totalEventsCount})`}
                           </span>
-                          <span className="block text-xs sm:text-sm font-extrabold">
-                            {isBn ? 'সীরাত সূচিপত্রে ফিরে যান' : 'Return to Seerah Index'}
+                          <span className="block text-[11px] sm:text-sm font-extrabold truncate">
+                            {isBn ? 'সূচিপত্রে ফিরে যান' : 'Back to Index'}
                           </span>
                         </div>
-                        <Check className="w-4 h-4 shrink-0 text-amber-300" />
+                        <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-amber-300" />
                       </button>
                     )}
                   </nav>
