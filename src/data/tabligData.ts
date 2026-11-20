@@ -1,3 +1,14 @@
+import {
+  ESO_TABLIG_ENRICHMENTS_PART1,
+  ESO_TABLIG_NEW_CHAPTERS_PART1,
+} from './esoTabligDataPart1';
+import { ESO_TABLIG_NEW_CHAPTERS_PART2 } from './esoTabligDataPart2';
+import { ESO_TABLIG_CHAPTER_PART5 } from './esoTabligDataPart3';
+import {
+  ESO_TABLIG_ENRICHMENTS_PART6,
+  ESO_TABLIG_CHAPTER_PART6,
+} from './esoTabligDataPart4';
+
 export interface TabligChapterDetail {
   id: string;
   numberBn: string;
@@ -10,7 +21,7 @@ export interface TabligChapterDetail {
   }[];
 }
 
-export const TABLIG_COMPLETE_CHAPTERS: TabligChapterDetail[] = [
+const BASE_TABLIG_CHAPTERS: TabligChapterDetail[] = [
   {
     "id": "sifats_intro",
     "numberBn": "০১",
@@ -1226,3 +1237,34 @@ export const TABLIG_COMPLETE_CHAPTERS: TabligChapterDetail[] = [
     ]
   }
 ];
+
+const ALL_ESO_ENRICHMENTS: Record<string, { heading: string; content: string }[]> = {
+  ...ESO_TABLIG_ENRICHMENTS_PART1,
+  ...ESO_TABLIG_ENRICHMENTS_PART6,
+};
+
+const ENRICHED_SUBTITLES: Record<string, string> = {
+  sifats_intro: 'ভূমিকা, ৬ সিফতের পূর্ণাঙ্গ বয়ান এবং ৬ নাম্বারের সারসংক্ষেপ ও হাদীসসমূহ',
+  maulana_iliyas_bayan: 'ইসলাম এক ঐশী ধর্ম, মালফুযাতে ইলিয়াস (রহ.) (২৪–২১০) এবং থানভী (রহ.)-এর সাথে অভিন্ন তা‘লীম',
+  gasht_adab: 'পর্ব ১, ২ ও ৩: গাস্তের ৫ প্রকার, খুসুসী গাস্ত, বলার নিয়ম, রাহবার-মুতাকাল্লিম ও পূর্ণ তরতীব',
+  iman_yaqeen_chapter: 'আল্লাহর কুদরত, রিজিক, ফেরেশতাদের বিশালতা, মহাবিশ্ব ও আখিরাতের প্রস্তুতি',
+  bad_maghrib_bayan: 'পর্ব ১, ২, ৩ ও ৪: আল্লাহর মহব্বত, জিকির, ইয়াকিন, দুনিয়া আখিরাতের ক্ষেত ও চিল্লার তাশকীল',
+  dawat_chapter: 'দাওয়াতের হাকিকত, তাবলীগের অর্থ, কুরআন-হাদীসের দলীল, ফযিলত ও আখিরাতের প্রস্তুতি',
+};
+
+export const TABLIG_COMPLETE_CHAPTERS: TabligChapterDetail[] = [
+  ...BASE_TABLIG_CHAPTERS.map((chap) => {
+    const extraSections = ALL_ESO_ENRICHMENTS[chap.id];
+    if (!extraSections || extraSections.length === 0) return chap;
+    return {
+      ...chap,
+      subtitle: ENRICHED_SUBTITLES[chap.id] || chap.subtitle,
+      sections: [...chap.sections, ...extraSections],
+    };
+  }),
+  ...ESO_TABLIG_NEW_CHAPTERS_PART1,
+  ...ESO_TABLIG_NEW_CHAPTERS_PART2,
+  ESO_TABLIG_CHAPTER_PART5,
+  ESO_TABLIG_CHAPTER_PART6,
+];
+

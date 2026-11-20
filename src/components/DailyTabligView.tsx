@@ -263,7 +263,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
 
     const prefixMap = new Map<string, number>();
     chap.sections.forEach((s) => {
-      const matchGroup = s.heading.match(/^(বাদ মাগরিব বয়ান [১-৩]|পর্ব [১-৩])/);
+      const matchGroup = s.heading.match(/^(বাদ মাগরিব বয়ান [১-৪]|পর্ব [১-৪])/);
       if (matchGroup) {
         const p = matchGroup[1];
         prefixMap.set(p, (prefixMap.get(p) || 0) + 1);
@@ -278,9 +278,11 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
             .replace('বাদ মাগরিব বয়ান ১', 'Maghrib Bayan 1')
             .replace('বাদ মাগরিব বয়ান ২', 'Maghrib Bayan 2')
             .replace('বাদ মাগরিব বয়ান ৩', 'Maghrib Bayan 3')
+            .replace('বাদ মাগরিব বয়ান ৪', 'Maghrib Bayan 4')
             .replace('পর্ব ১', 'Part 1')
             .replace('পর্ব ২', 'Part 2')
-            .replace('পর্ব ৩', 'Part 3');
+            .replace('পর্ব ৩', 'Part 3')
+            .replace('পর্ব ৪', 'Part 4');
         }
         return {
           id: prefix,
@@ -607,17 +609,18 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                   })()}
 
                   {chap.sections
-                    .filter((sec, sIdx) => {
+                    .map((sec, origIdx) => ({ sec, origIdx }))
+                    .filter(({ sec, origIdx }) => {
                       const currentFilter = chapterPartFilter[chap.id];
                       if (!currentFilter || currentFilter === 'all') return true;
                       const menuItems = getChapterMenuItems(chap);
                       const activeItem = menuItems.find((m) => m.id === currentFilter);
                       if (!activeItem) return true;
-                      return activeItem.match(sec.heading, sIdx);
+                      return activeItem.match(sec.heading, origIdx);
                     })
-                    .map((sec, sIdx) => {
-                      const localizedHeading = getLocalizedSectionHeading(chap.id, sec.heading, sIdx);
-                      const localizedContent = getLocalizedSectionContent(chap.id, sec.content, sIdx);
+                    .map(({ sec, origIdx }) => {
+                      const localizedHeading = getLocalizedSectionHeading(chap.id, sec.heading, origIdx);
+                      const localizedContent = getLocalizedSectionContent(chap.id, sec.content, origIdx);
                       const isMunajat =
                         sec.heading.includes('মোনাজাত') ||
                         sec.heading.includes('দোয়া') ||
@@ -627,7 +630,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
 
                       return (
                         <div
-                          key={sIdx}
+                          key={origIdx}
                           className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                             isMunajat
                               ? isDay
@@ -663,7 +666,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                                     title: localizedHeading || chapterTitle,
                                     subtitle: chapterSubtitle,
                                     body: localizedContent,
-                                    fileNamePrefix: `Tabligh-Bayan-${sIdx + 1}`,
+                                    fileNamePrefix: `Tabligh-Bayan-${origIdx + 1}`,
                                   },
                                 })
                               }
@@ -675,7 +678,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
                                     title: localizedHeading || chapterTitle,
                                     subtitle: chapterSubtitle,
                                     body: localizedContent,
-                                    fileNamePrefix: `Tabligh-Bayan-${sIdx + 1}`,
+                                    fileNamePrefix: `Tabligh-Bayan-${origIdx + 1}`,
                                   },
                                 })
                               }
