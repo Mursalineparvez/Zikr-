@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem, AppSettings, UserProfile, NavModule, HistorySession } from '../types';
 import {
@@ -183,59 +183,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [activeSub]);
 
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
-  const [buttonTopPx, setButtonTopPx] = useState<number>(84);
-  const [sidebarClickY, setSidebarClickY] = useState<number | null>(null);
-  const [menuTopPx, setMenuTopPx] = useState<number>(12);
-  const tabButtonRef = useRef<HTMLButtonElement | null>(null);
-  const menuPanelRef = useRef<HTMLDivElement | null>(null);
   const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Move the compact Zikr+ edge handle dynamically with scroll all the way down to the very bottom of the page
-  useEffect(() => {
-    const updateScrollPosition = () => {
-      const currentScroll = window.scrollY || document.documentElement.scrollTop || 0;
-      const windowHeight = window.innerHeight || 800;
-      const fullHeight = Math.max(
-        document.documentElement.scrollHeight || 0,
-        document.body.scrollHeight || 0,
-        windowHeight
-      );
-      const maxScroll = Math.max(1, fullHeight - windowHeight);
-      const ratio = Math.min(1, Math.max(0, currentScroll / maxScroll));
-      const tabH = tabButtonRef.current?.offsetHeight || 92;
-      const minTop = 72;
-      // Extend all the way to the very bottom edge of the page (4px breathing room)
-      const maxTop = Math.max(minTop, windowHeight - tabH - 4);
-      setButtonTopPx(Math.round(minTop + ratio * (maxTop - minTop)));
-    };
-
-    window.addEventListener('scroll', updateScrollPosition, { passive: true });
-    window.addEventListener('resize', updateScrollPosition, { passive: true });
-
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(updateScrollPosition);
-      resizeObserver.observe(document.documentElement);
-    }
-
-    const rafId = window.requestAnimationFrame(updateScrollPosition);
-
-    return () => {
-      window.removeEventListener('scroll', updateScrollPosition);
-      window.removeEventListener('resize', updateScrollPosition);
-      if (resizeObserver) resizeObserver.disconnect();
-      window.cancelAnimationFrame(rafId);
-    };
-  }, [activeSub]);
-
-  useLayoutEffect(() => {
-    if (!isRightSidebarOpen || !menuPanelRef.current) return;
-    const vh = window.innerHeight || 800;
-    const panelH = menuPanelRef.current.offsetHeight;
-    const targetCenter = sidebarClickY ?? vh / 2;
-    const clampedTop = Math.round(Math.max(8, Math.min(targetCenter - panelH / 2, vh - panelH - 8)));
-    setMenuTopPx(clampedTop);
-  }, [isRightSidebarOpen, sidebarClickY, selectedLanguage]);
 
   useEffect(() => {
     return () => {
@@ -243,10 +191,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     };
   }, []);
 
-  const handleOpenRightSidebar = (clientY?: number) => {
+  const handleOpenRightSidebar = () => {
     if (soundEnabled) soundHaptics.playTap();
-    const fallbackCenter = buttonTopPx + (tabButtonRef.current?.offsetHeight || 92) / 2;
-    setSidebarClickY(typeof clientY === 'number' && clientY > 0 ? clientY : fallbackCenter);
     setIsRightSidebarOpen(true);
     if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
     autoHideTimerRef.current = setTimeout(() => {
@@ -516,46 +462,46 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Compact Scroll-Following Zikr+ Edge Handle & Menu (Portaled so fixed positioning reaches the very bottom of the page) */}
+      {/* Compact Vertically-Centered Zikr+ Edge Handle & Sidebar Menu (Always centered on the middle right edge) */}
       {typeof document !== 'undefined' &&
         createPortal(
           <>
             {activeSub !== 'hub' && !isRightSidebarOpen && (
-              <button
-                ref={tabButtonRef}
-                type="button"
-                style={{ top: `${buttonTopPx}px` }}
-                onClick={(e) => handleOpenRightSidebar(e.clientY)}
-                aria-label="Open Zikr+ Menu"
-                className={`group fixed right-0 z-[55] flex flex-col items-center justify-center py-2.5 px-1 rounded-l-xl border-y border-l backdrop-blur-md transition-[top,background-color] duration-75 ease-out cursor-pointer active:scale-95 ${
-                  isDay
-                    ? 'bg-[#e3ece8]/95 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[0_6px_16px_rgba(15,61,46,0.14)]'
-                    : 'bg-[#020f12]/95 hover:bg-[#051b20] text-emerald-200/95 border-[#0c353d] shadow-[0_6px_20px_rgba(0,0,0,0.75)]'
-                }`}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <div
-                    className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center shadow-xs border ${
-                      isDay ? 'border-emerald-700/20 bg-white/60' : 'border-teal-500/30 bg-[#041d22]'
-                    }`}
-                  >
-                    <img
-                      src="/pwa-192x192.png"
-                      alt="Zikr+ Logo"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '/icon.svg';
-                      }}
-                    />
+              <div className="fixed inset-y-0 right-0 z-[55] flex items-center pointer-events-none">
+                <button
+                  type="button"
+                  onClick={handleOpenRightSidebar}
+                  aria-label="Open Zikr+ Menu"
+                  className={`pointer-events-auto group flex flex-col items-center justify-center py-2.5 px-1 rounded-l-xl border-y border-l backdrop-blur-md transition-colors duration-150 cursor-pointer active:scale-95 ${
+                    isDay
+                      ? 'bg-[#e3ece8]/95 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[0_6px_16px_rgba(15,61,46,0.14)]'
+                      : 'bg-[#020f12]/95 hover:bg-[#051b20] text-emerald-200/95 border-[#0c353d] shadow-[0_6px_20px_rgba(0,0,0,0.75)]'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <div
+                      className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center shadow-xs border ${
+                        isDay ? 'border-emerald-700/20 bg-white/60' : 'border-teal-500/30 bg-[#041d22]'
+                      }`}
+                    >
+                      <img
+                        src="/pwa-192x192.png"
+                        alt="Zikr+ Logo"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/icon.svg';
+                        }}
+                      />
+                    </div>
+                    <span
+                      className="text-[10px] font-black tracking-widest py-0.5"
+                      style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+                    >
+                      Zikr+
+                    </span>
                   </div>
-                  <span
-                    className="text-[10px] font-black tracking-widest py-0.5"
-                    style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-                  >
-                    Zikr+
-                  </span>
-                </div>
-              </button>
+                </button>
+              </div>
             )}
 
             {/* Subtle Backdrop to Close Slim Sidebar */}
@@ -566,26 +512,25 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
               />
             )}
 
-            {/* Tight Menu-Only Sidebar Panel anchored cleanly at the opened vertical position */}
+            {/* Tight Menu-Only Sidebar Panel anchored vertically centered on the middle right */}
             {isRightSidebarOpen && (
-              <div
-                ref={menuPanelRef}
-                style={{ top: `${menuTopPx}px` }}
-                onMouseEnter={() => {
-                  if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
-                }}
-                onMouseLeave={() => {
-                  if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
-                  autoHideTimerRef.current = setTimeout(() => {
-                    setIsRightSidebarOpen(false);
-                  }, 3000);
-                }}
-                className={`fixed right-1.5 sm:right-2 z-[60] w-52 sm:w-56 max-h-[calc(100vh-16px)] flex flex-col rounded-2xl border shadow-2xl p-1.5 overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
-                  isDay
-                    ? 'bg-white/95 border-emerald-200/80 text-slate-800'
-                    : 'bg-[#061b20]/95 border-teal-500/25 text-white'
-                }`}
-              >
+              <div className="fixed inset-y-0 right-1.5 sm:right-2 z-[60] flex items-center pointer-events-none">
+                <div
+                  onMouseEnter={() => {
+                    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+                  }}
+                  onMouseLeave={() => {
+                    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
+                    autoHideTimerRef.current = setTimeout(() => {
+                      setIsRightSidebarOpen(false);
+                    }, 3000);
+                  }}
+                  className={`pointer-events-auto w-52 sm:w-56 max-h-[calc(100vh-32px)] flex flex-col rounded-2xl border shadow-2xl p-1.5 overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
+                    isDay
+                      ? 'bg-white/95 border-emerald-200/80 text-slate-800'
+                      : 'bg-[#061b20]/95 border-teal-500/25 text-white'
+                  }`}
+                >
                 {/* Compact Navigation Items Only — Zero Header, Zero Empty Top/Bottom Space */}
                 <div className="space-y-0.5">
                   <button
@@ -635,6 +580,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                       </button>
                     );
                   })}
+                </div>
                 </div>
               </div>
             )}
