@@ -21,6 +21,7 @@ import {
   Activity,
   User,
   ExternalLink,
+  MessageSquarePlus,
 } from 'lucide-react';
 import {
   fetchAllUsersForAdmin,
@@ -28,6 +29,10 @@ import {
   fetchUserDetailForAdmin,
   deleteUserByAdmin,
   AdminUserRecord,
+  fetchInfoRequestsForAdmin,
+  updateInfoRequestStatusForAdmin,
+  deleteInfoRequestForAdmin,
+  InfoRequestRecord,
 } from '../services/firebase';
 import { HistorySession, UserProfile, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -93,6 +98,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   // Confirm delete modal
   const [userToDelete, setUserToDelete] = useState<AdminUserRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  // Admin Dashboard Tabs & Missing Info Requests State
+  const [adminTab, setAdminTab] = useState<'users' | 'requests'>('users');
+  const [infoRequests, setInfoRequests] = useState<InfoRequestRecord[]>([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState<boolean>(false);
+  const [requestStatusFilter, setRequestStatusFilter] = useState<'all' | 'pending' | 'reviewed' | 'resolved'>('all');
+  const [updatingReqId, setUpdatingReqId] = useState<string | null>(null);
 
   // Helper to merge cloud records with local device registry
   const mergeCloudAndVaultUsers = (cloudData: AdminUserRecord[]): AdminUserRecord[] => {
@@ -226,11 +238,25 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
+  const loadInfoRequests = async () => {
+    if (!isOwner) return;
+    setIsLoadingRequests(true);
+    try {
+      const list = await fetchInfoRequestsForAdmin(currentEmail);
+      setInfoRequests(list);
+    } catch (e) {
+      console.warn('loadInfoRequests notice:', e);
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  };
+
   useEffect(() => {
     if (!isOpen || !isOwner) return;
 
     if (isAdminAuthenticated) {
       loadUsersData();
+      loadInfoRequests();
       const unsubscribe = subscribeToAllUsersForAdmin((data) => {
         const merged = mergeCloudAndVaultUsers(data);
         setUsers(merged);
@@ -314,6 +340,31 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
+  const handleUpdateRequestStatus = async (
+    id: string,
+    newStatus: 'pending' | 'reviewed' | 'resolved'
+  ) => {
+    setUpdatingReqId(id);
+    const ok = await updateInfoRequestStatusForAdmin(id, newStatus, currentEmail);
+    setUpdatingReqId(null);
+    if (ok) {
+      setInfoRequests((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: newStatus, updatedAtMs: Date.now() } : r))
+      );
+      if (soundEnabled) soundHaptics.playTap();
+    }
+  };
+
+  const handleDeleteInfoRequest = async (id: string) => {
+    setUpdatingReqId(id);
+    const ok = await deleteInfoRequestForAdmin(id, currentEmail);
+    setUpdatingReqId(null);
+    if (ok) {
+      setInfoRequests((prev) => prev.filter((r) => r.id !== id));
+      if (soundEnabled) soundHaptics.playTap();
+    }
+  };
+
   // Filtered Users List
   const nowMs = Date.now();
   const filteredUsers = users.filter((u) => {
@@ -373,7 +424,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   ).length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[75] bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
       <div
         className={`w-full max-w-4xl h-full sm:h-[92vh] sm:rounded-3xl border shadow-2xl flex flex-col overflow-hidden transition-all ${
           isDayTheme
@@ -404,12 +455,15 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             {isAdminAuthenticated && (
               <button
                 type="button"
-                onClick={loadUsersData}
-                disabled={isLoading}
+                onClick={() => {
+                  loadUsersData();
+                  loadInfoRequests();
+                }}
+                disabled={isLoading || isLoadingRequests}
                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition active:scale-95 cursor-pointer text-xs flex items-center gap-1.5 font-bold"
-                title={isBn ? 'রিফ্রেশ করুন' : 'Refresh users'}
+                title={isBn ? 'রিফ্রেশ করুন' : 'Refresh data'}
               >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isLoading || isLoadingRequests ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">{isBn ? 'রিফ্রেশ' : 'Refresh'}</span>
               </button>
             )}
@@ -487,6 +541,46 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         ) : (
           /* 3. MAIN ADMIN DASHBOARD CONTENT */
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-3 sm:p-5 space-y-4">
+            {/* ADMIN SECTION TAB SWITCHER */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setAdminTab('users')}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 border transition cursor-pointer ${
+                  adminTab === 'users'
+                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                    : isDayTheme
+                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    : 'bg-[#092329] border-[#184e5a] text-emerald-200 hover:bg-[#0d3038]'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>{isBn ? `ব্যবহারকারী (${totalUsers})` : `Users (${totalUsers})`}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAdminTab('requests')}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 border transition cursor-pointer ${
+                  adminTab === 'requests'
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
+                    : isDayTheme
+                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    : 'bg-[#092329] border-[#184e5a] text-amber-200 hover:bg-[#0d3038]'
+                }`}
+              >
+                <MessageSquarePlus className="w-4 h-4" />
+                <span>{isBn ? 'তথ্য অনুরোধ / মেসেজ' : 'Info Requests'}</span>
+                {infoRequests.filter((r) => r.status === 'pending').length > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white">
+                    {infoRequests.filter((r) => r.status === 'pending').length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {adminTab === 'users' ? (
+              <>
             {/* STATS METRICS CARDS */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
               {/* Metric 1: Total Users */}
@@ -797,6 +891,160 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 })
               )}
             </div>
+              </>
+            ) : (
+              /* INFO REQUESTS INBOX VIEW */
+              <div className="flex-1 flex flex-col min-h-0 space-y-3">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 shrink-0 text-xs font-bold">
+                  {(['all', 'pending', 'reviewed', 'resolved'] as const).map((st) => {
+                    const count =
+                      st === 'all'
+                        ? infoRequests.length
+                        : infoRequests.filter((r) => r.status === st).length;
+                    const labelMap = {
+                      all: isBn ? `সব (${count})` : `All (${count})`,
+                      pending: isBn ? `অপেক্ষমাণ (${count})` : `Pending (${count})`,
+                      reviewed: isBn ? `পর্যালোচিত (${count})` : `Reviewed (${count})`,
+                      resolved: isBn ? `সমাধান হয়েছে (${count})` : `Resolved (${count})`,
+                    };
+                    return (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setRequestStatusFilter(st)}
+                        className={`px-3 py-2 rounded-xl transition cursor-pointer shrink-0 ${
+                          requestStatusFilter === st
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-[#092329] text-slate-600 dark:text-emerald-300'
+                        }`}
+                      >
+                        {labelMap[st]}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin">
+                  {isLoadingRequests ? (
+                    <div className="p-10 text-center space-y-2">
+                      <RefreshCw className="w-7 h-7 text-emerald-500 animate-spin mx-auto" />
+                      <p className="text-xs font-bold text-slate-500 dark:text-emerald-300">
+                        {isBn ? 'তথ্যের অনুরোধসমূহ লোড হচ্ছে...' : 'Loading missing info requests...'}
+                      </p>
+                    </div>
+                  ) : infoRequests.filter(
+                      (r) => requestStatusFilter === 'all' || r.status === requestStatusFilter
+                    ).length === 0 ? (
+                    <div
+                      className={`p-10 rounded-2xl border text-center space-y-2 ${
+                        isDayTheme ? 'bg-white border-slate-200' : 'bg-[#0a252b] border-[#184e5a]'
+                      }`}
+                    >
+                      <MessageSquarePlus className="w-8 h-8 text-slate-400 mx-auto" />
+                      <p className="text-xs font-bold text-slate-600 dark:text-emerald-300">
+                        {isBn ? 'এখনো কোনো তথ্যের অনুরোধ আসেনি!' : 'No information requests found yet!'}
+                      </p>
+                    </div>
+                  ) : (
+                    infoRequests
+                      .filter((r) => requestStatusFilter === 'all' || r.status === requestStatusFilter)
+                      .map((req) => (
+                        <div
+                          key={req.id}
+                          className={`p-3.5 sm:p-4 rounded-2xl border shadow-sm space-y-2.5 ${
+                            isDayTheme
+                              ? 'bg-white border-slate-200'
+                              : 'bg-[#0a252b] border-[#174853]'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span
+                                  className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase ${
+                                    req.status === 'resolved'
+                                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300'
+                                      : req.status === 'reviewed'
+                                      ? 'bg-sky-500/20 text-sky-600 dark:text-sky-300'
+                                      : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                  }`}
+                                >
+                                  {req.status === 'resolved'
+                                    ? isBn ? 'সমাধান হয়েছে' : 'Resolved'
+                                    : req.status === 'reviewed'
+                                    ? isBn ? 'পর্যালোচিত' : 'Reviewed'
+                                    : isBn ? 'অপেক্ষমাণ' : 'Pending'}
+                                </span>
+                                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">
+                                  {req.pageTitle || req.pageModule}
+                                </span>
+                              </div>
+                              <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-snug">
+                                {req.question}
+                              </h4>
+                              {req.userNote && (
+                                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                  {req.userNote}
+                                </p>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={updatingReqId === req.id}
+                              onClick={() => handleDeleteInfoRequest(req.id)}
+                              className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 transition cursor-pointer shrink-0 disabled:opacity-50"
+                              title={isBn ? 'অনুরোধ মুছে ফেলুন' : 'Delete request'}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-black/5 dark:border-white/10 text-[11px]">
+                            <div className="text-slate-500 dark:text-emerald-300/75 font-medium">
+                              <span>{req.senderName}</span>
+                              {req.senderContact && <span> · {req.senderContact}</span>}
+                              <span>
+                                {' · '}
+                                {new Date(req.createdAtMs).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              {req.status !== 'reviewed' && (
+                                <button
+                                  type="button"
+                                  disabled={updatingReqId === req.id}
+                                  onClick={() => handleUpdateRequestStatus(req.id, 'reviewed')}
+                                  className="px-2.5 py-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-700 dark:text-sky-300 font-bold cursor-pointer disabled:opacity-50"
+                                >
+                                  {isBn ? 'দেখা হয়েছে' : 'Mark Reviewed'}
+                                </button>
+                              )}
+                              {req.status !== 'resolved' && (
+                                <button
+                                  type="button"
+                                  disabled={updatingReqId === req.id}
+                                  onClick={() => handleUpdateRequestStatus(req.id, 'resolved')}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                                >
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>{isBn ? 'সমাধান সম্পন্ন' : 'Mark Resolved'}</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

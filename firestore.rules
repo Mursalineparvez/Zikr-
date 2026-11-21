@@ -1,12 +1,48 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwnerAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'mdmursalineparvez@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function isValidInfoRequestCreate(data, reqId) {
+      return data.keys().hasAll(['id', 'question', 'status', 'createdAtMs'])
+        && data.keys().hasOnly([
+          'id', 'question', 'pageModule', 'pageTitle', 'userNote',
+          'senderName', 'senderContact', 'senderKey', 'language',
+          'status', 'createdAtMs', 'updatedAtMs'
+        ])
+        && data.id == reqId
+        && data.question is string && data.question.size() > 0 && data.question.size() <= 2000
+        && data.status == 'pending'
+        && data.createdAtMs is number
+        && (!('pageModule' in data) || (data.pageModule is string && data.pageModule.size() <= 100))
+        && (!('pageTitle' in data) || (data.pageTitle is string && data.pageTitle.size() <= 300))
+        && (!('userNote' in data) || (data.userNote is string && data.userNote.size() <= 2000))
+        && (!('senderName' in data) || (data.senderName is string && data.senderName.size() <= 120))
+        && (!('senderContact' in data) || (data.senderContact is string && data.senderContact.size() <= 200))
+        && (!('senderKey' in data) || (data.senderKey is string && data.senderKey.size() <= 128))
+        && (!('language' in data) || (data.language is string && data.language.size() <= 16))
+        && (!('updatedAtMs' in data) || data.updatedAtMs is number);
+    }
+
     match /users/{userId} {
       allow read, write: if true;
 
       match /{allChildren=**} {
         allow read, write: if true;
       }
+    }
+
+    match /info_requests/{requestId} {
+      allow create: if isValidId(requestId) && isValidInfoRequestCreate(request.resource.data, requestId);
+      allow read, update, delete: if isOwnerAdmin();
     }
 
     match /test/{testId} {

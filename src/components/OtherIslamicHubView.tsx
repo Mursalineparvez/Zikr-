@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect } from 'react';
 import { ThemeMode, ZikrLanguage, ZikrItem, DuaItem, AppSettings, UserProfile, NavModule, HistorySession } from '../types';
 import {
   Heart,
@@ -112,6 +111,8 @@ interface OtherIslamicHubViewProps {
   dailyTotal?: number;
   completedGoals?: number;
   onOpenWelcomeScreen?: () => void;
+  onOpenAssistant?: () => void;
+  onActiveSubChange?: (sub: OtherSubSection) => void;
 }
 
 const FALLBACK_GUEST_PROFILE: UserProfile = {
@@ -159,6 +160,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   dailyTotal = 0,
   completedGoals = 0,
   onOpenWelcomeScreen,
+  onOpenAssistant,
+  onActiveSubChange,
 }) => {
   const isDay = themeMode === 'day';
   const [activeSub, setActiveSub] = useState<OtherSubSection>(initialSubSection);
@@ -172,6 +175,10 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, [initialSubSection, subSectionSyncKey]);
 
   useEffect(() => {
+    onActiveSubChange?.(activeSub);
+  }, [activeSub, onActiveSubChange]);
+
+  useEffect(() => {
     if (initialAccountTab) {
       setAccountTab(initialAccountTab);
     }
@@ -181,24 +188,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [activeSub]);
-
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
-  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
-    };
-  }, []);
-
-  const handleOpenRightSidebar = () => {
-    if (soundEnabled) soundHaptics.playTap();
-    setIsRightSidebarOpen(true);
-    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
-    autoHideTimerRef.current = setTimeout(() => {
-      setIsRightSidebarOpen(false);
-    }, 3000);
-  };
 
   const [savedStats, setSavedStats] = useState({ bookmarks: 0, highlights: 0, notes: 0 });
 
@@ -415,8 +404,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const [, startSubTransition] = React.useTransition();
 
-  useBackLayer(isRightSidebarOpen, () => setIsRightSidebarOpen(false), 'other-right-sidebar');
-
   const handleSelectSub = (sub: OtherSubSection, skipPushState = false) => {
     if (sub === activeSub) return;
     if (soundEnabled) soundHaptics.playTap();
@@ -461,132 +448,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   }, []);
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Compact Vertically-Centered Zikr+ Edge Handle & Sidebar Menu (Always centered on the middle right edge) */}
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <>
-            {activeSub !== 'hub' && !isRightSidebarOpen && (
-              <div className="fixed inset-y-0 right-0 z-[55] flex items-center pointer-events-none">
-                <button
-                  type="button"
-                  onClick={handleOpenRightSidebar}
-                  aria-label="Open Zikr+ Menu"
-                  className={`pointer-events-auto group flex flex-col items-center justify-center py-2.5 px-1 rounded-l-xl border-y border-l backdrop-blur-md transition-colors duration-150 cursor-pointer active:scale-95 ${
-                    isDay
-                      ? 'bg-[#e3ece8]/95 hover:bg-[#d6e4de] text-[#113d30] border-[#c6d9d1] shadow-[0_6px_16px_rgba(15,61,46,0.14)]'
-                      : 'bg-[#020f12]/95 hover:bg-[#051b20] text-emerald-200/95 border-[#0c353d] shadow-[0_6px_20px_rgba(0,0,0,0.75)]'
-                  }`}
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <div
-                      className={`w-6 h-6 rounded-lg overflow-hidden flex items-center justify-center shadow-xs border ${
-                        isDay ? 'border-emerald-700/20 bg-white/60' : 'border-teal-500/30 bg-[#041d22]'
-                      }`}
-                    >
-                      <img
-                        src="/pwa-192x192.png"
-                        alt="Zikr+ Logo"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src = '/icon.svg';
-                        }}
-                      />
-                    </div>
-                    <span
-                      className="text-[10px] font-black tracking-widest py-0.5"
-                      style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-                    >
-                      Zikr+
-                    </span>
-                  </div>
-                </button>
-              </div>
-            )}
-
-            {/* Subtle Backdrop to Close Slim Sidebar */}
-            {isRightSidebarOpen && (
-              <div
-                onClick={() => setIsRightSidebarOpen(false)}
-                className="fixed inset-0 z-[55] bg-black/15 backdrop-blur-[1px] animate-in fade-in duration-200"
-              />
-            )}
-
-            {/* Tight Menu-Only Sidebar Panel anchored vertically centered on the middle right */}
-            {isRightSidebarOpen && (
-              <div className="fixed inset-y-0 right-1.5 sm:right-2 z-[60] flex items-center pointer-events-none">
-                <div
-                  onMouseEnter={() => {
-                    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
-                  }}
-                  onMouseLeave={() => {
-                    if (autoHideTimerRef.current) clearTimeout(autoHideTimerRef.current);
-                    autoHideTimerRef.current = setTimeout(() => {
-                      setIsRightSidebarOpen(false);
-                    }, 3000);
-                  }}
-                  className={`pointer-events-auto w-52 sm:w-56 max-h-[calc(100vh-32px)] flex flex-col rounded-2xl border shadow-2xl p-1.5 overflow-y-auto backdrop-blur-xl animate-in slide-in-from-right duration-200 ${
-                    isDay
-                      ? 'bg-white/95 border-emerald-200/80 text-slate-800'
-                      : 'bg-[#061b20]/95 border-teal-500/25 text-white'
-                  }`}
-                >
-                {/* Compact Navigation Items Only — Zero Header, Zero Empty Top/Bottom Space */}
-                <div className="space-y-0.5">
-                  <button
-                    onClick={() => {
-                      handleSelectSub('hub');
-                      setIsRightSidebarOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
-                      activeSub === 'hub'
-                        ? 'bg-gradient-to-r from-[#006A4E] to-emerald-600 text-white shadow-sm'
-                        : isDay
-                        ? 'hover:bg-emerald-50 text-slate-700'
-                        : 'hover:bg-[#103038] text-emerald-200/90'
-                    }`}
-                  >
-                    <Layers className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{OTHER_HUB_UI.allFeatures[selectedLanguage]}</span>
-                  </button>
-
-                  <div className={`my-0.5 border-t ${isDay ? 'border-slate-100' : 'border-teal-900/35'}`} />
-
-                  {hubItems.map((item) => {
-                    const isActive = activeSub === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          if ((item as any).action) {
-                            (item as any).action();
-                          } else {
-                            handleSelectSub(item.id);
-                          }
-                          setIsRightSidebarOpen(false);
-                        }}
-                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer group ${
-                          isActive
-                            ? 'bg-gradient-to-r from-[#006A4E] to-emerald-600 text-white shadow-sm'
-                            : isDay
-                            ? 'hover:bg-emerald-50/90 text-slate-700'
-                            : 'hover:bg-[#103038] text-slate-200'
-                        }`}
-                      >
-                        <div className="w-4 h-4 flex items-center justify-center shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5 [&>span]:text-sm [&>img]:rounded-full">
-                          {item.icon}
-                        </div>
-                        <span className="truncate flex-1 text-left">{item.title}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                </div>
-              </div>
-            )}
-          </>,
-          document.body
-        )}
+    <div className="space-y-5 animate-in fade-in duration-200 pb-6">
       {activeSub === 'hub' && (
         <div className="space-y-5">
           {/* Header Banner */}

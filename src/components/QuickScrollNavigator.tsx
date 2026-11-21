@@ -105,8 +105,8 @@ export const QuickScrollNavigator: React.FC<QuickScrollNavigatorProps> = ({
   // Position QuickScrollNavigator slightly above it on zikir_counter so there is zero overlap
   const positionClasses =
     activeModule === 'zikir_counter'
-      ? 'bottom-36 sm:bottom-28 right-3 sm:right-6'
-      : 'bottom-20 sm:bottom-20 right-10 sm:right-11';
+      ? 'bottom-36 right-3 sm:right-6'
+      : 'bottom-20 right-3 sm:right-6';
 
   const circumference = 2 * Math.PI * 18; // r=18
   const strokeDashoffset = circumference - (scrollPercent / 100) * circumference;
@@ -121,7 +121,7 @@ export const QuickScrollNavigator: React.FC<QuickScrollNavigatorProps> = ({
         setIsIdle(false);
       }}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed ${positionClasses} z-40 flex flex-col items-center gap-1.5 transition-all duration-300 select-none ${
+      className={`fixed ${positionClasses} z-[64] flex flex-col items-center gap-1.5 transition-all duration-300 select-none ${
         isIdle && !isHovered ? 'opacity-40 hover:opacity-100 scale-95' : 'opacity-100 scale-100'
       }`}
     >

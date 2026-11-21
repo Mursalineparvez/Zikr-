@@ -200,6 +200,17 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
     };
   }, [isReaderOpen]);
 
+  // Close reader portal cleanly when navigating globally from BottomNav / Quick Switcher / AI Assistant
+  useEffect(() => {
+    const handleGlobalClose = () => {
+      setOpenedReaderFromTree(false);
+      setEnteredMobileReaderFromIndex(false);
+      setActiveCollectionId(null);
+    };
+    window.addEventListener('zikrplus-close-submodals', handleGlobalClose);
+    return () => window.removeEventListener('zikrplus-close-submodals', handleGlobalClose);
+  }, []);
+
   // Step-by-step Back Layers:
   // Layer 1: Collection Portal itself -> returns to Seerat-un-Nabi
   useBackLayer(isReaderOpen, () => setActiveCollectionId(null), 'seerat-collection-portal');
@@ -1277,7 +1288,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
               <div
                 className={
                   familyViewMode === 'tree'
-                    ? 'flex-1 min-h-0 flex flex-col overflow-hidden'
+                    ? 'flex-1 min-h-0 flex flex-col overflow-hidden pb-16'
                     : 'hidden'
                 }
               >
@@ -1441,7 +1452,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                 </div>
 
                 {/* Scrollable Grouped Index List */}
-                <div className="flex-1 overflow-y-auto divide-y divide-stone-100 dark:divide-emerald-900/60">
+                <div className="flex-1 overflow-y-auto pb-24 divide-y divide-stone-100 dark:divide-emerald-900/60">
                   {groupedByPart.length === 0 ? (
                     <div className="p-8 text-center space-y-2">
                       <p className="text-xs font-bold text-stone-500 dark:text-emerald-300/75">
@@ -1566,7 +1577,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
                 ref={readerScrollRef}
                 className={`${
                   mobilePane === 'reader' ? 'block' : 'hidden lg:block'
-                } overflow-y-auto px-3 sm:px-8 lg:px-10 py-3 sm:py-5`}
+                } overflow-y-auto px-3 sm:px-8 lg:px-10 py-3 sm:py-5 pb-24`}
               >
                 <article className="max-w-3xl mx-auto space-y-3.5 sm:space-y-5">
                   {/* Editorial Folio Header */}

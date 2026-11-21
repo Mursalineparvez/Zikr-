@@ -121,3 +121,18 @@ export async function loadLibraryHighlightsFromCloud(
     return null;
   }
 }
+
+export async function submitMissingInfoRequest(input: {
+  question: string;
+  pageModule: string;
+  pageTitle: string;
+  userNote?: string;
+  senderName?: string;
+  senderContact?: string;
+  senderKey?: string;
+  language?: string;
+}) {
+  const fb = await loadFirebase();
+  return await fb.submitMissingInfoRequest(input);
+}
+

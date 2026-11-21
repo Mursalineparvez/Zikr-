@@ -24,6 +24,7 @@ interface HeaderProps {
   onOpenStandaloneModal: () => void;
   userProfile?: UserProfile;
   onOpenProfile?: (tab?: 'profile' | 'settings') => void;
+  onOpenAssistant?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStandaloneModal,
   userProfile,
   onOpenProfile,
+  onOpenAssistant,
 }) => {
   const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -114,16 +116,28 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Right Status (Settings & Account live inside My Account in Other) */}
-          <div className="flex items-center gap-2">
+          {/* Right Status & AI Assistant Trigger */}
+          <div className="flex items-center gap-2 shrink-0">
             {!isOnline && (
               <div
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-300/40 text-amber-200 text-[10px] font-bold"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-300/40 text-amber-200 text-[10px] font-bold whitespace-nowrap shrink-0"
                 title={selectedLanguage === 'bn' ? 'অফলাইন মোড সক্রিয়' : 'Offline mode active'}
               >
                 <WifiOff className="w-3 h-3 text-amber-300" />
                 <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'অফলাইন' : selectedLanguage === 'ar' ? 'غير متصل' : 'Offline'}</span>
               </div>
+            )}
+
+            {onOpenAssistant && (
+              <button
+                type="button"
+                onClick={onOpenAssistant}
+                className="flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-xl bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-extrabold whitespace-nowrap shrink-0 shadow-xs transition active:scale-95 cursor-pointer"
+                title={selectedLanguage === 'bn' ? 'Zikr+ AI তথ্য সহায়ক খুলুন' : 'Open Zikr+ AI Assistant'}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                <span>{selectedLanguage === 'bn' ? 'AI সহায়ক' : 'AI Helper'}</span>
+              </button>
             )}
           </div>
         </div>

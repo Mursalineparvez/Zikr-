@@ -38,6 +38,7 @@ const HistoryReportModal = React.lazy(() => import('./components/HistoryReportMo
 const ProfileModal = React.lazy(() => import('./components/ProfileModal').then((m) => ({ default: m.ProfileModal })));
 const AdminPanelModal = React.lazy(() => import('./components/AdminPanelModal').then((m) => ({ default: m.AdminPanelModal })));
 const ConfirmModal = React.lazy(() => import('./components/ConfirmModal').then((m) => ({ default: m.ConfirmModal })));
+const AppAssistantModal = React.lazy(() => import('./components/AppAssistantModal').then((m) => ({ default: m.AppAssistantModal })));
 
 const AppViewLoadingFallback: React.FC<{ isDay: boolean; isBn?: boolean }> = ({ isDay, isBn = false }) => (
   <div className="flex flex-col items-center justify-center min-h-[350px] py-20 space-y-3">
@@ -334,6 +335,7 @@ export default function App() {
   const [, startNavTransition] = React.useTransition();
 
   const [otherInitialSub, setOtherInitialSub] = useState<OtherSubSection>('hub');
+  const [currentOtherSub, setCurrentOtherSub] = useState<OtherSubSection>('hub');
   const [otherAccountTab, setOtherAccountTab] = useState<'profile' | 'settings'>('profile');
   const [otherNavTick, setOtherNavTick] = useState(0);
 
@@ -530,6 +532,7 @@ export default function App() {
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [showFirstDownloadWelcome, setShowFirstDownloadWelcome] = useState<boolean>(() => {
     try {
       const v1Done = localStorage.getItem(ONBOARDING_STORAGE_KEY);
@@ -1821,6 +1824,7 @@ export default function App() {
   // Register top-level modals for step-by-step hardware & Escape Back handling
   useBackLayer(isProfileModalOpen, () => setIsProfileModalOpen(false), 'profile-modal');
   useBackLayer(isAdminPanelOpen, () => setIsAdminPanelOpen(false), 'admin-panel-modal');
+  useBackLayer(isAssistantOpen, () => setIsAssistantOpen(false), 'ai-assistant');
   useBackLayer(isZikrModalOpen, () => setIsZikrModalOpen(false), 'zikr-modal');
   useBackLayer(isHistoryReportModalOpen, () => setIsHistoryReportModalOpen(false), 'history-report-modal');
   useBackLayer(isStandaloneModalOpen, () => setIsStandaloneModalOpen(false), 'standalone-export-modal');
@@ -1829,6 +1833,41 @@ export default function App() {
     () => setConfirmDialog((prev) => ({ ...prev, isOpen: false })),
     'confirm-dialog'
   );
+
+  const handleNavigateFromAssistant = (rawModuleId: string) => {
+    try {
+      window.dispatchEvent(new CustomEvent('zikrplus-close-submodals'));
+    } catch {}
+    const normalized = rawModuleId === 'arober_gotro' ? 'araber_gotro' : rawModuleId;
+    if (normalized === 'saved' || normalized === 'my_account' || normalized === 'arabian_map') {
+      setOtherInitialSub(normalized);
+      setOtherNavTick((t) => t + 1);
+      if (activeModule !== 'other') {
+        handleNavigate('other');
+      } else {
+        if (settings.soundEnabled) soundHaptics.playTap();
+        pushAppHistoryState({ appModule: 'other', appSub: normalized });
+      }
+      return;
+    }
+    const validModules: NavModule[] = [
+      'zikir_counter', 'quran', 'salat_time', 'namaj', 'aamal_tracker', 'other',
+      'kitab', 'hadith', 'dua', 'tablig', 'prophets_25', 'allah_names',
+      'hajj_checklist', 'umrah_guide', 'hajj_route_map', 'hajj_essentials',
+      'history_timeline', 'hayatus_sahaba', 'islamic_history_wars',
+      'seerat_un_nabi', 'araber_gotro', 'nobi_24_hours',
+    ];
+    if (validModules.includes(normalized as NavModule)) {
+      if (normalized === activeModule && normalized !== 'other') {
+        setOtherNavTick((t) => t + 1);
+        if (settings.soundEnabled) soundHaptics.playTap();
+      } else {
+        handleNavigate(normalized as NavModule);
+      }
+    } else {
+      handleNavigate('other');
+    }
+  };
 
   // Reset single Zikr
   const handleConfirmResetIndividual = (zikr: ZikrItem) => {
@@ -2094,6 +2133,7 @@ export default function App() {
         onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
         userProfile={userProfile}
         onOpenProfile={(tab = 'profile') => handleOpenProfileModal(tab)}
+        onOpenAssistant={() => setIsAssistantOpen(true)}
       />
 
       {/* Toast Notification Popup */}
@@ -2284,6 +2324,8 @@ export default function App() {
                 dailyTotal={dailyTotal}
                 completedGoals={completedGoals}
                 onOpenWelcomeScreen={() => setShowFirstDownloadWelcome(true)}
+                onOpenAssistant={() => setIsAssistantOpen(true)}
+                onActiveSubChange={setCurrentOtherSub}
                 subSectionSyncKey={otherNavTick}
                 initialAccountTab={otherAccountTab}
                 initialSubSection={
@@ -2347,18 +2389,24 @@ export default function App() {
         activeModule={activeModule}
       />
 
-      {/* Bottom Menu Bar matching reference screenshot */}
-      <BottomNav
-        activeModule={activeModule}
-        onModuleChange={handleNavigate}
-        onOpenAddModal={() => {
-          setZikrToEdit(null);
-          setIsZikrModalOpen(true);
-        }}
-        themeMode={settings.themeMode}
-        selectedLanguage={selectedLanguage}
-        counterBadge={dailyTotal || masterGrandTotal || 0}
-      />
+      {/* Universal Bottom Dock across all pages & sub-pages */}
+      {!(isAdminPanelOpen || isProfileModalOpen || isStandaloneModalOpen || showFirstDownloadWelcome) && (
+        <BottomNav
+          activeModule={activeModule}
+          activeSubSection={activeModule === 'other' ? currentOtherSub : 'hub'}
+          onModuleChange={handleNavigate}
+          onNavigateAnyPage={handleNavigateFromAssistant}
+          onOpenAddModal={() => {
+            setZikrToEdit(null);
+            setIsZikrModalOpen(true);
+          }}
+          onOpenAssistant={() => setIsAssistantOpen(true)}
+          themeMode={settings.themeMode}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={settings.soundEnabled}
+          counterBadge={dailyTotal || masterGrandTotal || 0}
+        />
+      )}
 
       <React.Suspense fallback={null}>
         {/* Add / Edit Zikr Modal */}
@@ -2541,6 +2589,21 @@ export default function App() {
             currentZikrs={zikrs}
             currentDailyTotal={dailyTotal}
             currentHistorySessions={historySessions}
+          />
+        )}
+
+        {/* Zikr+ AI Knowledge Assistant Modal */}
+        {isAssistantOpen && (
+          <AppAssistantModal
+            isOpen={isAssistantOpen}
+            onClose={() => setIsAssistantOpen(false)}
+            activeModule={activeModule}
+            selectedLanguage={selectedLanguage}
+            themeMode={settings.themeMode}
+            soundEnabled={settings.soundEnabled}
+            userProfile={userProfile}
+            onNavigateModule={handleNavigateFromAssistant}
+            onToast={showToast}
           />
         )}
       </React.Suspense>

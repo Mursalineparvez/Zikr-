@@ -21,6 +21,7 @@ import {
   getDocFromServer,
   getDocsFromServer,
   setDoc,
+  updateDoc,
   deleteDoc,
   collection,
   getDocs,
@@ -1770,4 +1771,248 @@ export async function getZikrLeaderboard(): Promise<LeaderboardUserEntry[]> {
   }
 }
 
+// ============================================================================
+// MISSING INFO REQUESTS (AI CHATBOT -> FIRESTORE + SERVER ADMIN INBOX)
+// ============================================================================
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null
+): never {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth?.currentUser?.uid ?? null,
+      email: auth?.currentUser?.email ?? null,
+      emailVerified: auth?.currentUser?.emailVerified ?? null,
+      isAnonymous: auth?.currentUser?.isAnonymous ?? null,
+      tenantId: auth?.currentUser?.tenantId ?? null,
+      providerInfo:
+        auth?.currentUser?.providerData?.map((provider) => ({
+          providerId: provider.providerId,
+          email: provider.email,
+        })) || [],
+    },
+    operationType,
+    path,
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+export interface InfoRequestRecord {
+  id: string;
+  question: string;
+  pageModule: string;
+  pageTitle: string;
+  userNote: string;
+  senderName: string;
+  senderContact: string;
+  senderKey: string;
+  language: string;
+  status: 'pending' | 'reviewed' | 'resolved';
+  createdAtMs: number;
+  updatedAtMs: number;
+}
+
+export async function submitMissingInfoRequest(input: {
+  question: string;
+  pageModule: string;
+  pageTitle: string;
+  userNote?: string;
+  senderName?: string;
+  senderContact?: string;
+  senderKey?: string;
+  language?: string;
+}): Promise<{ success: boolean; record: InfoRequestRecord; cloudSaved: boolean }> {
+  const now = Date.now();
+  const id = `req_${now}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const record: InfoRequestRecord = {
+    id,
+    question: input.question.trim().slice(0, 2000),
+    pageModule: (input.pageModule || 'other').trim().slice(0, 100),
+    pageTitle: (input.pageTitle || 'Zikr+ App').trim().slice(0, 300),
+    userNote: (input.userNote || '').trim().slice(0, 2000),
+    senderName: (input.senderName || 'Zikr+ User').trim().slice(0, 120),
+    senderContact: (input.senderContact || '').trim().slice(0, 200),
+    senderKey: (input.senderKey || 'guest').trim().slice(0, 128),
+    language: (input.language || 'bn').trim().slice(0, 16),
+    status: 'pending',
+    createdAtMs: now,
+    updatedAtMs: now,
+  };
+
+  let cloudSaved = false;
+  let serverSaved = false;
+
+  // 1. Save to server store (reliable across guest & custom sessions)
+  try {
+    const res = await fetch('/api/info-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record),
+    });
+    if (res.ok) serverSaved = true;
+  } catch (err) {
+    console.warn('Server info-request save notice:', err);
+  }
+
+  // 2. Save to Firestore /info_requests/{id}
+  if (typeof navigator === 'undefined' || navigator.onLine) {
+    const targetPath = `info_requests/${id}`;
+    try {
+      await setDoc(doc(db, 'info_requests', id), record);
+      cloudSaved = true;
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.CREATE, targetPath);
+      } catch (loggedErr) {
+        if (!serverSaved) {
+          throw loggedErr;
+        }
+      }
+    }
+  }
+
+  return {
+    success: serverSaved || cloudSaved,
+    record,
+    cloudSaved,
+  };
+}
+
+export async function fetchInfoRequestsForAdmin(adminEmail: string): Promise<InfoRequestRecord[]> {
+  const map = new Map<string, InfoRequestRecord>();
+
+  // 1. Fetch from server API
+  try {
+    const res = await fetch('/api/admin/info-requests', {
+      headers: { 'X-Admin-Email': adminEmail },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.requests)) {
+        data.requests.forEach((r: InfoRequestRecord) => {
+          if (r && r.id) map.set(r.id, r);
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Server admin info-requests fetch notice:', err);
+  }
+
+  // 2. Merge with Firestore if signed in with Firebase Admin email
+  if (auth?.currentUser?.email?.toLowerCase() === 'mdmursalineparvez@gmail.com') {
+    const colPath = 'info_requests';
+    try {
+      const snap = await getDocsFromServer(collection(db, colPath));
+      snap.forEach((d) => {
+        const item = d.data() as InfoRequestRecord;
+        if (item && item.id) {
+          const existing = map.get(item.id);
+          if (!existing || (item.updatedAtMs || 0) >= (existing.updatedAtMs || 0)) {
+            map.set(item.id, item);
+          }
+        }
+      });
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.LIST, colPath);
+      } catch {}
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+}
+
+export async function updateInfoRequestStatusForAdmin(
+  id: string,
+  status: 'pending' | 'reviewed' | 'resolved',
+  adminEmail: string
+): Promise<boolean> {
+  let ok = false;
+  try {
+    const res = await fetch(`/api/admin/info-requests/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Email': adminEmail,
+      },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) ok = true;
+  } catch {}
+
+  if (auth?.currentUser?.email?.toLowerCase() === 'mdmursalineparvez@gmail.com') {
+    const targetPath = `info_requests/${id}`;
+    try {
+      await updateDoc(doc(db, 'info_requests', id), {
+        status,
+        updatedAtMs: Date.now(),
+      });
+      ok = true;
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, targetPath);
+      } catch {}
+    }
+  }
+
+  return ok;
+}
+
+export async function deleteInfoRequestForAdmin(
+  id: string,
+  adminEmail: string
+): Promise<boolean> {
+  let ok = false;
+  try {
+    const res = await fetch(`/api/admin/info-requests/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { 'X-Admin-Email': adminEmail },
+    });
+    if (res.ok) ok = true;
+  } catch {}
+
+  if (auth?.currentUser?.email?.toLowerCase() === 'mdmursalineparvez@gmail.com') {
+    const targetPath = `info_requests/${id}`;
+    try {
+      await deleteDoc(doc(db, 'info_requests', id));
+      ok = true;
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.DELETE, targetPath);
+      } catch {}
+    }
+  }
+
+  return ok;
+}
 

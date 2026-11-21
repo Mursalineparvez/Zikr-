@@ -43,6 +43,26 @@
         "status": { "type": "string" },
         "timestamp": { "type": "string" }
       }
+    },
+    "InfoRequest": {
+      "title": "InfoRequest",
+      "description": "User submitted message requesting missing Islamic info or content updates from the AI assistant",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "question": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "pageModule": { "type": "string", "maxLength": 100 },
+        "pageTitle": { "type": "string", "maxLength": 300 },
+        "userNote": { "type": "string", "maxLength": 2000 },
+        "senderName": { "type": "string", "maxLength": 120 },
+        "senderContact": { "type": "string", "maxLength": 200 },
+        "senderKey": { "type": "string", "maxLength": 128 },
+        "language": { "type": "string", "maxLength": 16 },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "resolved"] },
+        "createdAtMs": { "type": "number" },
+        "updatedAtMs": { "type": "number" }
+      },
+      "required": ["id", "question", "status", "createdAtMs"]
     }
   },
   "firestore": {
@@ -53,6 +73,10 @@
     "/users/{userId}/data/{docId}": {
       "schema": "UserZikrData",
       "description": "Stores user zikr history, streak, and synced counts across all devices"
+    },
+    "/info_requests/{requestId}": {
+      "schema": "InfoRequest",
+      "description": "Stores user messages requesting missing information found via the AI assistant"
     },
     "/test/{testId}": {
       "schema": "ConnectionHealth",
