@@ -210,8 +210,24 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const hubItems = [
     {
+      id: 'dua' as OtherSubSection,
+      title: NAV_TRANSLATIONS.dua[selectedLanguage],
+      arabic: 'الأدعية المأثورة',
+      desc: OTHER_HUB_UI.duaDesc[selectedLanguage],
+      icon: <Heart className="w-6 h-6 text-rose-500" />,
+      color: 'from-rose-500/15 to-pink-500/10 border-rose-500/30',
+      badge: OTHER_HUB_UI.badgeDua[selectedLanguage],
+    },
+    {
       id: 'hadith' as OtherSubSection,
-      title: selectedLanguage === 'bn' ? 'হাদিস (Hadis গ্রন্থাগার)' : 'Hadis (Hadith Library)',
+      title:
+        selectedLanguage === 'bn'
+          ? 'হাদিস গ্রন্থাগার'
+          : selectedLanguage === 'ar'
+          ? 'مكتبة الحديث الشريف'
+          : selectedLanguage === 'ur'
+          ? 'مفصل احادیث لائبریری'
+          : 'Hadith Library',
       arabic: 'كتب الحديث الشريف',
       desc:
         selectedLanguage === 'bn'
@@ -220,15 +236,6 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       icon: <BookMarked className="w-6 h-6 text-emerald-500" />,
       color: 'from-emerald-600/25 via-teal-500/15 to-amber-500/10 border-emerald-500/45',
       badge: selectedLanguage === 'bn' ? '১৭ কিতাব · ৫৩,০০০+ হাদিস' : '17 Books · 53,000+ Hadiths',
-    },
-    {
-      id: 'dua' as OtherSubSection,
-      title: NAV_TRANSLATIONS.dua[selectedLanguage],
-      arabic: 'الأدعية المأثورة',
-      desc: OTHER_HUB_UI.duaDesc[selectedLanguage],
-      icon: <Heart className="w-6 h-6 text-rose-500" />,
-      color: 'from-rose-500/15 to-pink-500/10 border-rose-500/30',
-      badge: OTHER_HUB_UI.badgeDua[selectedLanguage],
     },
     {
       id: 'nobi_24_hours' as OtherSubSection,

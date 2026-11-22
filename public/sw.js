@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v20-hadis-library
+// Version: zikrmate-v22-hub-order
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v20-hadis-library';
+const CACHE_NAME = 'zikrmate-v22-hub-order';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
