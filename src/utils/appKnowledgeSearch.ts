@@ -231,14 +231,10 @@ export function extractActivePageContext(
     };
   }
 
-  const cleanElementText = (root: Element): string => {
+  const fastExtractText = (root: Element): string => {
     try {
-      const clone = root.cloneNode(true) as HTMLElement;
-      clone
-        .querySelectorAll('script, style, svg, [data-assistant-modal="true"], header, nav')
-        .forEach((el) => el.remove());
-      const raw = (clone.innerText || clone.textContent || '').replace(/\s+\n/g, '\n').replace(/[ \t]+/g, ' ');
-      return raw.replace(/\n{3,}/g, '\n\n').trim();
+      const raw = (root.textContent || '').replace(/\s+/g, ' ').trim();
+      return raw.slice(0, 3000);
     } catch {
       return '';
     }
@@ -247,33 +243,28 @@ export function extractActivePageContext(
   const chunks: string[] = [];
   let detectedHeading = '';
 
-  // Check if any foreground non-assistant fullscreen/card modal is currently mounted in document.body
-  const possibleModals = Array.from(document.querySelectorAll('div.fixed.inset-0')).filter(
-    (el) => !el.closest('[data-assistant-modal="true"]') && !el.hasAttribute('data-assistant-modal')
-  );
-
+  // Check foreground modal quickly without layout-forcing getBoundingClientRect loops unless needed
+  const possibleModals = document.querySelectorAll('div.fixed.inset-0');
   for (let i = possibleModals.length - 1; i >= 0; i--) {
     const modal = possibleModals[i];
-    const rect = modal.getBoundingClientRect();
-    if (rect.width > 100 && rect.height > 100) {
-      const text = cleanElementText(modal);
-      if (text.length > 40) {
-        chunks.push(text.slice(0, 4200));
-        if (!detectedHeading) {
-          const h = modal.querySelector('h1, h2, h3');
-          if (h?.textContent) detectedHeading = h.textContent.trim().slice(0, 120);
-        }
-        break;
-      }
+    if (modal.closest('[data-assistant-modal="true"]') || modal.hasAttribute('data-assistant-modal')) {
+      continue;
+    }
+    const text = fastExtractText(modal);
+    if (text.length > 40) {
+      chunks.push(text.slice(0, 2200));
+      const h = modal.querySelector('h1, h2, h3');
+      if (h?.textContent) detectedHeading = h.textContent.trim().slice(0, 120);
+      break;
     }
   }
 
   // Extract main workspace content
   const mainEl = document.querySelector('main');
   if (mainEl) {
-    const mainText = cleanElementText(mainEl);
+    const mainText = fastExtractText(mainEl);
     if (mainText) {
-      chunks.push(mainText.slice(0, chunks.length > 0 ? 3000 : 6500));
+      chunks.push(mainText.slice(0, chunks.length > 0 ? 1200 : 2400));
       if (!detectedHeading) {
         const h = mainEl.querySelector('h1, h2');
         if (h?.textContent) detectedHeading = h.textContent.trim().slice(0, 120);
@@ -290,7 +281,7 @@ export function extractActivePageContext(
   return {
     moduleId: activeModule,
     pageTitle: pageTitle.slice(0, 200),
-    visibleText: chunks.join('\n\n---\n\n').slice(0, 6800),
+    visibleText: chunks.join('\n\n---\n\n').slice(0, 2600),
   };
 }
 
@@ -621,6 +612,49 @@ async function buildKnowledgeIndex(): Promise<IndexedEntry[]> {
           joinNonEmpty([d.timingBn, d.arabic, d.pronunciationBn, d.meaningBn, d.benefitBn]),
           d.reference,
           d.titleEn
+        );
+      });
+    }),
+
+    // 8.1 Nobi 12-Month Prophetic Calendar & Weekly/Monthly Sunnahs
+    import('../data/nobi12MonthsData').then((m) => {
+      (m.PROPHETIC_12_MONTHS || []).forEach((mo) => {
+        pushEntry(
+          `nobi12_month_${mo.id}`,
+          'nobi_24_hours',
+          `নবীজির ১২ মাসের আমল (${mo.order}/১২): ${mo.nameBn} (${mo.approxStartBn})`,
+          joinNonEmpty([
+            mo.coreAmalBn,
+            mo.headlineBn,
+            mo.ayyamulBeedhBn ? `আইয়ামে বীয: ${mo.ayyamulBeedhBn}` : '',
+            mo.topics.map((t) => `${t.titleBn}: ${t.pointsBn.join(' ')} (${t.reference})`).join(' | '),
+            mo.authenticityCautionBn ? `${mo.authenticityCautionBn.title}: ${mo.authenticityCautionBn.points.join(' ')}` : '',
+          ]),
+          mo.topics[0]?.reference || 'সহিহ বুখারি ও মুসলিম',
+          `${mo.nameEn} ${mo.coreAmalEn}`
+        );
+      });
+      (m.WEEKLY_PROPHETIC_AMAL || []).forEach((w) => {
+        pushEntry(
+          `nobi12_week_${w.id}`,
+          'nobi_24_hours',
+          `সাপ্তাহিক সুন্নাহ (${w.dayBn}): ${w.shortTagBn}`,
+          joinNonEmpty([
+            w.summaryBn,
+            w.sections.map((s) => `${s.titleBn}: ${s.pointsBn.join(' ')} (${s.reference})`).join(' | '),
+          ]),
+          w.sections[0]?.reference || 'সহিহ বুখারি ও মুসলিম',
+          `${w.dayEn} ${w.shortTagEn}`
+        );
+      });
+      (m.MONTHLY_GENERAL_RULES || []).forEach((r) => {
+        pushEntry(
+          `nobi12_rule_${r.id}`,
+          'nobi_24_hours',
+          `মাসিক সুন্নাহ: ${r.titleBn}`,
+          joinNonEmpty([r.timingBn, r.pointsBn.join(' '), r.dua?.arabic, r.dua?.pronunciationBn, r.dua?.meaningBn]),
+          r.reference,
+          r.titleEn
         );
       });
     }),

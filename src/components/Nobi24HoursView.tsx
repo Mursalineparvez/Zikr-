@@ -46,6 +46,7 @@ import {
 } from '../utils/nobi24Translations';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
+import { PropheticYearCalendarSection } from './PropheticYearCalendarSection';
 
 interface Nobi24HoursViewProps {
   themeMode?: ThemeMode;
@@ -98,8 +99,8 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
   const isBn = lang === 'bn';
   const strings = NOBI_24_UI_I18N[lang] || NOBI_24_UI_I18N.en;
 
-  // Sub-tabs: 'wheel' | 'timeline' | 'articles' | 'duas' | 'tracker'
-  const [activeTab, setActiveTab] = useState<'wheel' | 'timeline' | 'articles' | 'duas' | 'tracker'>('wheel');
+  // Sub-tabs: 'wheel' | 'timeline' | 'calendar' | 'articles' | 'duas' | 'tracker'
+  const [activeTab, setActiveTab] = useState<'wheel' | 'timeline' | 'calendar' | 'articles' | 'duas' | 'tracker'>('wheel');
 
   // Currently selected slot in Hero Watch Dial
   const [selectedSlotId, setSelectedSlotId] = useState<string>('subh_sadiq_fajr');
@@ -1203,6 +1204,17 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
             <span aria-hidden="true" className="text-white/25">·</span>
             <button
               type="button"
+              onClick={() => setActiveTab('calendar')}
+              className="inline-flex items-baseline gap-1 hover:text-amber-300 transition cursor-pointer whitespace-nowrap"
+            >
+              <strong className="font-mono font-black tabular-nums text-white">
+                {isBn ? toBnDigits(12) : '12'}
+              </strong>
+              <span>{isBn ? 'মাস' : 'Months'}</span>
+            </button>
+            <span aria-hidden="true" className="text-white/25">·</span>
+            <button
+              type="button"
               onClick={() => setActiveTab('tracker')}
               className="inline-flex items-baseline gap-1 hover:text-amber-200 transition cursor-pointer whitespace-nowrap"
             >
@@ -1235,6 +1247,12 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
             label: strings.tabs.timeline,
             count: null,
             icon: Calendar,
+          },
+          {
+            id: 'calendar' as const,
+            label: strings.tabs.calendar,
+            count: isBn ? toBnDigits(12) : '12',
+            icon: Moon,
           },
           {
             id: 'articles' as const,
@@ -2831,6 +2849,20 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
             })}
           </div>
         </div>
+      )}
+
+      {/* 8. TAB 6: PROPHET'S 12-MONTH SUNNAH CALENDAR, WEEKLY & MONTHLY GUIDE */}
+      {activeTab === 'calendar' && (
+        <PropheticYearCalendarSection
+          themeMode={themeMode}
+          selectedLanguage={lang}
+          soundEnabled={soundEnabled}
+          onPlaySpeech={handlePlaySpeech}
+          isPlayingAudio={isPlayingAudio}
+          onCopyText={handleCopyText}
+          copiedItemId={copiedItemId}
+          onOpenShareModal={openShareModal}
+        />
       )}
 
       <ContentShareModal

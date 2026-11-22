@@ -10,7 +10,14 @@ import { HADIS_LIBRARY_BOOKS, translateChapterNameBn } from './src/data/hadisCat
 const app = express();
 const PORT = 3000;
 
-app.use(compression());
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.path === '/api/ai-assistant-stream') return false;
+      return compression.filter(req, res);
+    },
+  })
+);
 app.use(express.json({ limit: '10mb' }));
 
 function getGeminiClient(): GoogleGenAI | null {
@@ -334,8 +341,395 @@ function parseGeminiJsonPayload(rawText: string): any {
   return JSON.parse(cleaned);
 }
 
+function isQuickGreetingOrHelp(q: string): boolean {
+  const cleaned = q.toLowerCase().replace(/[?!.,।~]/g, '').trim();
+  if (!cleaned || cleaned.length > 48) return false;
+  return /^(assalamu\s*alaikum|as\s*salamu\s*alaikum|salam|salaam|hi|hello|hey|help|আসসালামু\s*আলাইকুম|সালাম|হ্যালো|হাই|কেমন\s*আছো?|কেমন\s*আছেন|তুমি\s*কি\s*করতে\s*পারো|তুমি\s*কে)$/i.test(
+    cleaned
+  );
+}
+
+function buildQuickGreetingReply(lang: string, userName: string): string {
+  const greetName = userName ? ` ${userName}` : '';
+  if (lang === 'bn') {
+    return `ওয়ালাইকুমুস সালাম${greetName}! আমি **Zikr+** সহকারী। কুরআন, হাদিস, ২৫ নবী, সীরাতুন নবী, ২৬৬+ সাহাবি, দোয়া, তাবলিগ, নামাজ বা যেকোনো নৈতিক বিষয়ে প্রশ্ন করুন—অ্যাপে না থাকলে আমি বিশ্বস্ত ওয়েবসাইট থেকেও দ্রুত যাচাইকৃত উত্তর এনে দেবো।`;
+  }
+  if (lang === 'ar') {
+    return `وعليكم السلام${greetName}! أنا مساعد **Zikr+**. اسألني عن القرآن والحديث والسيرة والأدعية أو أي سؤال أخلاقي، وسأجيبك بسرعة من مكتبة التطبيق أو من مصادر موثوقة.`;
+  }
+  return `Wa Alaikum Assalam${greetName}! I'm your **Zikr+** assistant. Ask me anything from the Zikr+ library (Quran, Hadith, Seerat, Sahaba, Duas, Namaz) or any ethical question—if it's not in the app, I'll fetch verified answers directly from trusted web sources.`;
+}
+
+function hasStrongLocalMatch(question: string, rawEntries: any[], visibleText: string): boolean {
+  const asksAboutCurrentPage = /(এই পেজ|পেজে|পেজের|বর্তমান পেজ|this page|current page|summarize)/i.test(question);
+  if (asksAboutCurrentPage && visibleText.trim().length > 80) {
+    return true;
+  }
+  if (!Array.isArray(rawEntries) || rawEntries.length === 0) return false;
+  const topScore = Number(rawEntries[0]?.score ?? 0);
+  if (topScore >= 12) return true;
+  // Also check direct keyword overlap in top entry if score wasn't supplied
+  const tokens = question
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((t) => t.length >= 3);
+  if (tokens.length > 0 && rawEntries[0]) {
+    const combined = `${rawEntries[0]?.title || ''} ${rawEntries[0]?.snippet || ''}`.toLowerCase();
+    const hits = tokens.filter((t) => combined.includes(t)).length;
+    if (hits >= Math.min(2, tokens.length)) return true;
+  }
+  return false;
+}
+
+function extractGroundingWebSources(responseOrChunk: any, targetList: Array<{ title: string; uri: string }>, seenUris: Set<string>) {
+  const chunks = responseOrChunk?.candidates?.[0]?.groundingMetadata?.groundingChunks;
+  if (!Array.isArray(chunks)) return;
+  for (const chunk of chunks) {
+    const uri = chunk?.web?.uri;
+    const title = chunk?.web?.title;
+    if (typeof uri === 'string' && /^https?:\/\//i.test(uri) && !seenUris.has(uri)) {
+      seenUris.add(uri);
+      let fallbackTitle = uri;
+      try {
+        fallbackTitle = new URL(uri).hostname.replace(/^www\./, '');
+      } catch {}
+      targetList.push({
+        title: typeof title === 'string' && title.trim() ? title.trim().slice(0, 140) : fallbackTitle,
+        uri,
+      });
+    }
+    if (targetList.length >= 6) break;
+  }
+}
+
+interface CachedAssistantReply {
+  answer: string;
+  foundInApp: boolean;
+  foundOnWeb: boolean;
+  matchedSources: Array<{ title: string; moduleId: string; snippet: string }>;
+  webSources: Array<{ title: string; uri: string }>;
+  missingInfoTopic: string;
+  cachedAt: number;
+}
+
+const assistantReplyCache = new Map<string, CachedAssistantReply>();
+const ASSISTANT_CACHE_TTL_MS = 20 * 60 * 1000;
+
+function getCachedAssistantReply(key: string): CachedAssistantReply | null {
+  const hit = assistantReplyCache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.cachedAt > ASSISTANT_CACHE_TTL_MS) {
+    assistantReplyCache.delete(key);
+    return null;
+  }
+  return hit;
+}
+
+function setCachedAssistantReply(key: string, val: Omit<CachedAssistantReply, 'cachedAt'>) {
+  if (!val.answer || val.answer.length < 4) return;
+  if (assistantReplyCache.size >= 250) {
+    const firstKey = assistantReplyCache.keys().next().value;
+    if (firstKey) assistantReplyCache.delete(firstKey);
+  }
+  assistantReplyCache.set(key, { ...val, cachedAt: Date.now() });
+}
+
+function needsLiveWebSearch(question: string, forceWebSearch: boolean): boolean {
+  if (forceWebSearch) return true;
+  return /(আজকের|আজ|এখনকার|বর্তমান|সর্বশেষ|নতুন খবর|খবর|দাম|মূল্য|আবহাওয়া|তাপমাত্রা|স্কোর|ম্যাচ|খেলা|ওয়েবসাইট|লিংক|সাইট|ওয়েব|সার্চ|যাচাই|২০২[4-9]|today|current|latest|recent|news|price|weather|score|live|update|website|link|url|verify|online|\bweb\b)/i.test(
+    question
+  );
+}
+
+function prepareAssistantContext(body: any) {
+  const question = typeof body?.question === 'string' ? body.question.trim().slice(0, 1500) : '';
+  const language = typeof body?.language === 'string' ? body.language.slice(0, 16) : 'bn';
+  const userName = typeof body?.userName === 'string' ? body.userName.trim().slice(0, 80) : '';
+  const forceWebSearch = Boolean(body?.forceWebSearch);
+  const activePage = body?.activePage && typeof body.activePage === 'object' ? body.activePage : {};
+  const activeModuleId = typeof activePage.moduleId === 'string' ? activePage.moduleId.slice(0, 80) : 'other';
+  const activePageTitle = typeof activePage.pageTitle === 'string' ? activePage.pageTitle.slice(0, 200) : 'Zikr+ App';
+  const visibleText = typeof activePage.visibleText === 'string' ? activePage.visibleText.slice(0, 1600) : '';
+
+  const rawEntries = Array.isArray(body?.matchedEntries) ? body.matchedEntries.slice(0, 4) : [];
+  const matchedContextText = rawEntries
+    .map((entry: any, idx: number) => {
+      const title = String(entry?.title || '').slice(0, 130);
+      const modLabel = String(entry?.moduleLabel || '').slice(0, 60);
+      const ref = String(entry?.reference || '').slice(0, 120);
+      const snippet = String(entry?.snippet || '').slice(0, 420);
+      return `[#${idx + 1}] ${modLabel} | ${title}${ref ? ` (${ref})` : ''}\n${snippet}`;
+    })
+    .join('\n\n');
+
+  const rawHistory = Array.isArray(body?.history) ? body.history.slice(-2) : [];
+  const historySummary = rawHistory
+    .map((h: any) => `${h?.role === 'model' ? 'A' : 'U'}: ${String(h?.text || '').slice(0, 180)}`)
+    .join('\n');
+
+  const langGuide =
+    language === 'bn'
+      ? 'Reply concisely in natural Bangla (বাংলা) unless the user wrote in English or Arabic.'
+      : language === 'ar'
+      ? 'Reply concisely in clear Arabic (or the user query language).'
+      : 'Reply concisely in the same language as the user query.';
+
+  const strongLocal = !forceWebSearch && hasStrongLocalMatch(question, rawEntries, visibleText);
+  const useLiveWeb = !strongLocal && needsLiveWebSearch(question, forceWebSearch);
+
+  const systemInstruction = strongLocal
+    ? `You are Zikr+, an ultra-fast ethical Islamic AI Assistant${userName ? ` assisting ${userName}` : ''}.
+Answer directly and very concisely (max 3-5 short bullets or 2-3 crisp sentences) using the supplied Zikr+ page/library entries, preserving Arabic text, Ayah numbers, and Hadith references. ${langGuide}`
+    : useLiveWeb
+    ? `You are Zikr+, an ultra-fast ethical AI Assistant${userName ? ` assisting ${userName}` : ''}.
+1. Ethical Rule: Only answer ethical, constructive, Islamic, or helpful questions. Politely decline harmful/unethical requests.
+2. Trusted Web Search: Use Google Search to answer crisply (max 3-5 bullets or 2-4 concise sentences) using TRUSTED websites (Quran.com, Sunnah.com, iHadis.com, IslamQA.info, SeekersGuidance, Britannica, academic/official institutions). Cite Ayah/Hadith or authentic source names. ${langGuide}`
+    : `You are Zikr+, an ultra-fast ethical AI Assistant${userName ? ` assisting ${userName}` : ''}.
+1. Ethical Rule: Only answer ethical, constructive, Islamic, or helpful questions. Politely decline harmful/unethical requests.
+2. Ultra-Fast Concise Answer: Answer directly and crisply (max 3-5 short bullets or 2-4 concise sentences; no filler intro) from the Zikr+ context or verified Islamic/general knowledge (citing Surah:Ayah, Hadith book, or reliable scholarly source when applicable).
+3. Live Web Escalation: ONLY if you genuinely lack verified knowledge of the topic or it requires live real-time lookup, output strictly "[NEED_WEB_SEARCH]" and nothing else. ${langGuide}`;
+
+  const prompt = `${historySummary ? `History:\n${historySummary}\n\n` : ''}Q: ${question}${
+    visibleText ? `\n\nPage (${activePageTitle}):\n${visibleText}` : ''
+  }${matchedContextText ? `\n\nZikr+ Matches:\n${matchedContextText}` : ''}`;
+
+  const matchedSources = strongLocal
+    ? rawEntries.slice(0, 3).map((e: any) => ({
+        title: String(e?.title || '').slice(0, 120),
+        moduleId: String(e?.moduleId || activeModuleId).slice(0, 60),
+        snippet: String(e?.snippet || '').slice(0, 140),
+      }))
+    : [];
+
+  const cacheKey =
+    rawHistory.length === 0 && !visibleText
+      ? `${language}::${forceWebSearch ? 'web' : strongLocal ? 'local' : 'fast'}::${question.toLowerCase().replace(/\s+/g, ' ')}`
+      : '';
+
+  return {
+    question,
+    language,
+    userName,
+    strongLocal,
+    useLiveWeb,
+    forceWebSearch,
+    systemInstruction,
+    prompt,
+    matchedSources,
+    cacheKey,
+  };
+}
+
+// Fast SSE Streaming AI Assistant Endpoint (Sub-second first token!)
+app.post('/api/ai-assistant-stream', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders?.();
+
+  const sendEvent = (event: string, data: any) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    (res as any).flush?.();
+  };
+
+  try {
+    const ctx = prepareAssistantContext(req.body);
+    if (!ctx.question) {
+      sendEvent('error', { error: 'Question is required.' });
+      return res.end();
+    }
+
+    // 0ms Instant Fast-Path for Greetings
+    if (isQuickGreetingOrHelp(ctx.question)) {
+      const quickReply = buildQuickGreetingReply(ctx.language, ctx.userName);
+      sendEvent('chunk', { text: quickReply });
+      sendEvent('done', {
+        foundInApp: true,
+        foundOnWeb: false,
+        matchedSources: [],
+        webSources: [],
+        missingInfoTopic: '',
+      });
+      return res.end();
+    }
+
+    // <1ms Instant Cache Hit
+    if (ctx.cacheKey) {
+      const cached = getCachedAssistantReply(ctx.cacheKey);
+      if (cached) {
+        sendEvent('chunk', { text: cached.answer });
+        sendEvent('done', {
+          foundInApp: cached.foundInApp,
+          foundOnWeb: cached.foundOnWeb,
+          matchedSources: cached.matchedSources,
+          webSources: cached.webSources,
+          missingInfoTopic: cached.missingInfoTopic,
+        });
+        return res.end();
+      }
+    }
+
+    const ai = getGeminiClient();
+    if (!ai) {
+      sendEvent('error', {
+        error: 'Gemini API key is not configured on the server yet. Please configure GEMINI_API_KEY in Settings > Secrets.',
+      });
+      return res.end();
+    }
+
+    const streamWithConfig = async (useWebTool: boolean) => {
+      const config: any = {
+        systemInstruction: useWebTool
+          ? `You are Zikr+, a fast ethical AI Assistant${ctx.userName ? ` assisting ${ctx.userName}` : ''}.
+Use Google Search to give a concise, verified answer (3-5 crisp bullets or 2-4 sentences) from TRUSTED sources (Quran.com, Sunnah.com, iHadis.com, IslamQA.info, SeekersGuidance, Britannica, official/academic portals). Decline unethical queries politely. ${
+              ctx.language === 'bn' ? 'Reply in Bangla (বাংলা) unless asked in another language.' : ''
+            }`
+          : ctx.systemInstruction,
+        thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+      };
+      if (useWebTool) {
+        config.tools = [{ googleSearch: {} }];
+      }
+      return ai.models.generateContentStream({
+        model: 'gemini-3.1-flash-lite',
+        contents: ctx.prompt,
+        config,
+      });
+    };
+
+    const webSources: Array<{ title: string; uri: string }> = [];
+    const seenUris = new Set<string>();
+    let fullText = '';
+    let needEscalationToWeb = false;
+
+    const firstStream = await streamWithConfig(ctx.useLiveWeb);
+    let bufferedPrefix = '';
+    let prefixEvaluated = ctx.useLiveWeb || ctx.strongLocal;
+
+    for await (const chunk of firstStream) {
+      const chunkText = chunk?.text;
+      if (typeof chunkText === 'string' && chunkText.length > 0) {
+        if (!prefixEvaluated) {
+          bufferedPrefix += chunkText;
+          if (bufferedPrefix.includes('[NEED_WEB_SEARCH]')) {
+            needEscalationToWeb = true;
+            break;
+          }
+          if (bufferedPrefix.length >= 18 || !'[NEED_WEB_SEARCH]'.startsWith(bufferedPrefix.trim())) {
+            prefixEvaluated = true;
+            fullText += bufferedPrefix;
+            sendEvent('chunk', { text: bufferedPrefix });
+            bufferedPrefix = '';
+          }
+        } else {
+          fullText += chunkText;
+          sendEvent('chunk', { text: chunkText });
+        }
+      }
+      extractGroundingWebSources(chunk, webSources, seenUris);
+    }
+
+    // Flush tiny buffered prefix if stream finished short without escalation
+    if (!needEscalationToWeb && bufferedPrefix) {
+      if (bufferedPrefix.includes('[NEED_WEB_SEARCH]')) {
+        needEscalationToWeb = true;
+      } else {
+        fullText += bufferedPrefix;
+        sendEvent('chunk', { text: bufferedPrefix });
+      }
+    }
+
+    if (needEscalationToWeb) {
+      const webStream = await streamWithConfig(true);
+      for await (const chunk of webStream) {
+        const chunkText = chunk?.text;
+        if (typeof chunkText === 'string' && chunkText.length > 0) {
+          fullText += chunkText;
+          sendEvent('chunk', { text: chunkText });
+        }
+        extractGroundingWebSources(chunk, webSources, seenUris);
+      }
+    }
+
+    if (!fullText.trim()) {
+      sendEvent('error', { error: 'Empty response received from Gemini model.' });
+      return res.end();
+    }
+
+    const foundOnWeb = webSources.length > 0;
+    const foundInApp = ctx.strongLocal || !foundOnWeb;
+    const missingInfoTopic = ctx.strongLocal ? '' : ctx.question.slice(0, 140);
+
+    if (ctx.cacheKey) {
+      setCachedAssistantReply(ctx.cacheKey, {
+        answer: fullText.trim(),
+        foundInApp,
+        foundOnWeb,
+        matchedSources: ctx.matchedSources,
+        webSources,
+        missingInfoTopic,
+      });
+    }
+
+    sendEvent('done', {
+      foundInApp,
+      foundOnWeb,
+      matchedSources: ctx.matchedSources,
+      webSources,
+      missingInfoTopic,
+    });
+    return res.end();
+  } catch (err: any) {
+    console.error('[API /api/ai-assistant-stream] Error:', err);
+    const status = extractErrorStatus(err);
+    const rawMsg = String(err?.message || '');
+    let friendlyMsg = rawMsg || 'Failed to query Zikr+ AI Assistant.';
+    if (status === 400 || status === 403 || /API_KEY_INVALID|PERMISSION_DENIED/i.test(rawMsg)) {
+      friendlyMsg = 'Gemini API key is invalid or unauthorized. Please verify GEMINI_API_KEY in Settings > Secrets.';
+    } else if (status === 429 || /RESOURCE_EXHAUSTED/i.test(rawMsg)) {
+      friendlyMsg = 'AI rate limit or quota reached. Please try again shortly.';
+    } else if (status === 503 || status === 504) {
+      friendlyMsg = 'AI service is temporarily busy. Please try again.';
+    }
+    sendEvent('error', { error: friendlyMsg });
+    return res.end();
+  }
+});
+
+// Single-Call Fast JSON Endpoint (Fallback compatibility)
 app.post('/api/ai-assistant', async (req, res) => {
   try {
+    const ctx = prepareAssistantContext(req.body);
+    if (!ctx.question) {
+      return res.status(400).json({ error: 'Question is required.' });
+    }
+
+    if (isQuickGreetingOrHelp(ctx.question)) {
+      return res.json({
+        foundInApp: true,
+        foundOnWeb: false,
+        answer: buildQuickGreetingReply(ctx.language, ctx.userName),
+        matchedSources: [],
+        webSources: [],
+        missingInfoTopic: '',
+      });
+    }
+
+    if (ctx.cacheKey) {
+      const cached = getCachedAssistantReply(ctx.cacheKey);
+      if (cached) {
+        return res.json({
+          foundInApp: cached.foundInApp,
+          foundOnWeb: cached.foundOnWeb,
+          answer: cached.answer,
+          matchedSources: cached.matchedSources,
+          webSources: cached.webSources,
+          missingInfoTopic: cached.missingInfoTopic,
+        });
+      }
+    }
+
     const ai = getGeminiClient();
     if (!ai) {
       return res.status(503).json({
@@ -343,224 +737,57 @@ app.post('/api/ai-assistant', async (req, res) => {
       });
     }
 
-    const body = req.body || {};
-    const question = typeof body.question === 'string' ? body.question.trim().slice(0, 1500) : '';
-    if (!question) {
-      return res.status(400).json({ error: 'Question is required.' });
+    const callFast = async (useWebTool: boolean) => {
+      const config: any = {
+        systemInstruction: ctx.systemInstruction,
+        thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+      };
+      if (useWebTool) config.tools = [{ googleSearch: {} }];
+      return callGeminiWithRetry(() =>
+        ai.models.generateContent({
+          model: 'gemini-3.1-flash-lite',
+          contents: ctx.prompt,
+          config,
+        })
+      );
+    };
+
+    let response = await callFast(ctx.useLiveWeb);
+    let answer = (response.text ?? '').trim();
+
+    if (!ctx.useLiveWeb && answer.includes('[NEED_WEB_SEARCH]')) {
+      response = await callFast(true);
+      answer = (response.text ?? '').trim();
     }
 
-    const language = typeof body.language === 'string' ? body.language.slice(0, 16) : 'bn';
-    const userName = typeof body.userName === 'string' ? body.userName.trim().slice(0, 80) : '';
-    const activePage = body.activePage && typeof body.activePage === 'object' ? body.activePage : {};
-    const activeModuleId = typeof activePage.moduleId === 'string' ? activePage.moduleId.slice(0, 80) : 'other';
-    const activePageTitle = typeof activePage.pageTitle === 'string' ? activePage.pageTitle.slice(0, 200) : 'Zikr+ App';
-    const visibleText = typeof activePage.visibleText === 'string' ? activePage.visibleText.slice(0, 3500) : '';
-
-    const rawEntries = Array.isArray(body.matchedEntries) ? body.matchedEntries.slice(0, 8) : [];
-    const matchedContextText = rawEntries
-      .map((entry: any, idx: number) => {
-        const title = String(entry?.title || '').slice(0, 180);
-        const modId = String(entry?.moduleId || '').slice(0, 60);
-        const modLabel = String(entry?.moduleLabel || '').slice(0, 100);
-        const ref = String(entry?.reference || '').slice(0, 220);
-        const snippet = String(entry?.snippet || '').slice(0, 850);
-        return `[#${idx + 1}] Module: ${modLabel} (id: ${modId}) | Title: ${title}${ref ? ` | Ref: ${ref}` : ''}\nContent: ${snippet}`;
-      })
-      .join('\n\n---\n\n');
-
-    const rawHistory = Array.isArray(body.history) ? body.history.slice(-4) : [];
-    const historySummary = rawHistory
-      .map((h: any) => `${h?.role === 'model' ? 'Assistant' : 'User'}: ${String(h?.text || '').slice(0, 400)}`)
-      .join('\n');
-
-    const langGuide =
-      language === 'bn'
-        ? 'Reply primarily in clear, natural, respectful Bangla (বাংলা). If the user asks in English or Arabic, reply in that language unless Bangla is requested.'
-        : language === 'ar'
-        ? 'Reply in clear Arabic (or the language of the user query).'
-        : 'Reply in the same language as the user query (Bengali if Bangla/Banglish, English if English).';
-
-    const userGreetingNote = userName ? `The user's name is "${userName}". Address them respectfully when natural.` : '';
-
-    // STAGE 1: Check Current Active Page + In-App Zikr+ Knowledge Database
-    const stage1Instruction = `You are the Zikr+ App AI Assistant (${userName ? `assisting ${userName}` : 'ethical Islamic & knowledge assistant'}).
-${userGreetingNote}
-
-YOUR TASK IN STAGE 1:
-Check if the user's question can be answered directly and completely from the supplied "CURRENT ACTIVE PAGE CONTENT" or "MATCHED IN-APP KNOWLEDGE ENTRIES".
-
-RULES:
-1. Ethical Guardrail: If the user asks for something unethical, harmful, abusive, illegal, dangerous, or inappropriate, set "foundInApp": false, "needsWebSearch": false, "isUnethical": true, politely refuse, set "matchedSources": [], and "missingInfoTopic": "".
-2. Greetings / Help queries ("Assalamu Alaikum", "Salam", "Hi", "Hello", "কেমন আছেন", "তুমি কী করতে পারো?", "help"): set "foundInApp": true, "needsWebSearch": false, "isUnethical": false, respond warmly, and mention that you can search the entire Zikr+ library (Quran, 25 Prophets, Seerat, Sahaba, Duas, Hadith, Tablig, Namaz, Nobi 24 Hours, Hajj, Islamic History) AND also fetch verified answers from trusted web sources when something isn't in the app. Set "matchedSources": [] and "missingInfoTopic": "".
-3. Informational Questions:
-   - If the requested information IS clearly and accurately answered in CURRENT ACTIVE PAGE CONTENT or MATCHED IN-APP KNOWLEDGE ENTRIES:
-     * Set "foundInApp": true, "needsWebSearch": false, "isUnethical": false.
-     * Synthesize the exact answer clearly with bullet points, preserving Arabic text, ayah numbers, and Hadith/book references exactly as supplied.
-     * Include up to 3 relevant items in "matchedSources" using exact moduleId, title, and a brief snippet.
-     * Set "missingInfoTopic": "".
-   - If the requested information is NOT in the supplied contexts (or the snippets do not actually answer the specific question):
-     * Set "foundInApp": false, "needsWebSearch": true, "isUnethical": false.
-     * Set "missingInfoTopic" to a concise summary of the topic (max 150 chars), "matchedSources": [], and a brief placeholder in "answer".
-4. ${langGuide}`;
-
-    const prompt = `${historySummary ? `RECENT CONVERSATION:\n${historySummary}\n\n` : ''}USER QUESTION:\n${question}
-
-CURRENT ACTIVE PAGE: ${activePageTitle} (moduleId: ${activeModuleId})
-CURRENT ACTIVE PAGE CONTENT:
-${visibleText || '(No visible text extracted from active page)'}
-
-MATCHED IN-APP KNOWLEDGE ENTRIES (${rawEntries.length}):
-${matchedContextText || '(No matching database entries retrieved)'}`;
-
-    const response = await callGeminiWithRetry(() =>
-      ai.models.generateContent({
-        model: 'gemini-4-hydrogen',
-        contents: prompt,
-        config: {
-          systemInstruction: stage1Instruction,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              foundInApp: {
-                type: Type.BOOLEAN,
-                description: 'True if answered directly from app/page content or if greeting/help; false otherwise.',
-              },
-              needsWebSearch: {
-                type: Type.BOOLEAN,
-                description: 'True if the question is ethical and should be answered using trusted web search because it was not found inside the app.',
-              },
-              isUnethical: {
-                type: Type.BOOLEAN,
-                description: 'True only if the request is unethical, harmful, or inappropriate.',
-              },
-              answer: {
-                type: Type.STRING,
-                description: 'Grounded response if found in app, polite refusal if unethical, or brief note.',
-              },
-              matchedSources: {
-                type: Type.ARRAY,
-                description: 'Up to 3 matching sections from Zikr+ where the info was extracted.',
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    moduleId: { type: Type.STRING },
-                    snippet: { type: Type.STRING },
-                  },
-                  required: ['title', 'moduleId', 'snippet'],
-                },
-              },
-              missingInfoTopic: {
-                type: Type.STRING,
-                description: 'Concise summary of the topic when not found in app; empty string otherwise.',
-              },
-            },
-            required: ['foundInApp', 'needsWebSearch', 'isUnethical', 'answer', 'matchedSources', 'missingInfoTopic'],
-          },
-        },
-      })
-    );
-
-    const rawText = (response.text ?? '').trim();
-    if (!rawText) {
+    if (!answer) {
       return res.status(502).json({ error: 'Empty response received from Gemini model.' });
     }
 
-    let parsed: any;
-    try {
-      parsed = parseGeminiJsonPayload(rawText);
-    } catch (parseErr) {
-      console.error('[API /api/ai-assistant] Invalid JSON from Gemini:', rawText.slice(0, 300));
-      return res.status(502).json({ error: 'AI model returned an invalid response format. Please try again.' });
-    }
+    const webSources: Array<{ title: string; uri: string }> = [];
+    extractGroundingWebSources(response, webSources, new Set<string>());
+    const foundOnWeb = webSources.length > 0;
+    const foundInApp = ctx.strongLocal || !foundOnWeb;
+    const missingInfoTopic = ctx.strongLocal ? '' : ctx.question.slice(0, 140);
 
-    if (parsed.foundInApp || parsed.isUnethical || !parsed.needsWebSearch) {
-      return res.json({
-        foundInApp: Boolean(parsed.foundInApp),
-        foundOnWeb: false,
-        answer: typeof parsed.answer === 'string' ? parsed.answer : '',
-        matchedSources: Array.isArray(parsed.matchedSources) ? parsed.matchedSources.slice(0, 3) : [],
-        webSources: [],
-        missingInfoTopic: typeof parsed.missingInfoTopic === 'string' ? parsed.missingInfoTopic : '',
+    if (ctx.cacheKey) {
+      setCachedAssistantReply(ctx.cacheKey, {
+        answer,
+        foundInApp,
+        foundOnWeb,
+        matchedSources: ctx.matchedSources,
+        webSources,
+        missingInfoTopic,
       });
     }
 
-    // STAGE 2: Information was NOT in the app -> Query Trusted Web Sources via Google Search Grounding
-    try {
-      const webSystemInstruction = `You are Zikr+, a helpful, respectful, and ethical AI Assistant${userName ? ` speaking with ${userName}` : ''}.
-The user asked a question that was not found inside the local Zikr+ app library, so you MUST use Google Search to find accurate, verified information from TRUSTED and AUTHORITATIVE websites.
-
-STRICT TRUSTWORTHINESS & ETHICAL RULES:
-1. Ethical Policy: Only answer ethical, constructive, educational, Islamic, or helpful real-world questions. Politely decline anything unethical, harmful, explicit, illegal, or disrespectful.
-2. Trusted Sources Priority:
-   - For Islamic, Quran, Hadith, Seerah, Fiqh, or Dua questions: rely strictly on recognized scholarly & authentic platforms (such as Quran.com, Sunnah.com, iHadis.com, IslamQA.info, IslamWeb.net, SeekersGuidance.org, DarulIftaa, Al-Azhar / Islamic Foundation scholarly texts, classical Tafsir & Sihah Sittah references). Always include authentic Surah:Ayah or Hadith book/number citations when applicable.
-   - For general knowledge, history, science, health, or world facts: rely strictly on reputable encyclopedic, educational, institutional, or official sources (e.g., Britannica, academic/university portals, WHO/UNESCO/official sites, established reference works). Avoid unverified rumors, gossip, or random forums.
-3. Clarity & Honesty: If multiple scholarly opinions exist on a Fiqh/Islamic point, mention the mainstream authentic views calmly. Do not fabricate citations.
-4. Formatting: Present a well-structured, easy-to-read answer (use short paragraphs or clear bullet points). Do not wrap your answer in JSON.
-5. ${langGuide}`;
-
-      const webPrompt = `${historySummary ? `RECENT CONVERSATION:\n${historySummary}\n\n` : ''}USER QUESTION:\n${question}`;
-
-      const webResponse = await callGeminiWithRetry(() =>
-        ai.models.generateContent({
-          model: 'gemini-4-hydrogen',
-          contents: webPrompt,
-          config: {
-            systemInstruction: webSystemInstruction,
-            tools: [{ googleSearch: {} }],
-            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          },
-        })
-      );
-
-      const webAnswer = (webResponse.text ?? '').trim();
-      const chunks = webResponse.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-      const seenUris = new Set<string>();
-      const webSources: Array<{ title: string; uri: string }> = [];
-
-      for (const chunk of chunks) {
-        const uri = chunk?.web?.uri;
-        const title = chunk?.web?.title;
-        if (typeof uri === 'string' && /^https?:\/\//i.test(uri) && !seenUris.has(uri)) {
-          seenUris.add(uri);
-          let fallbackTitle = uri;
-          try {
-            fallbackTitle = new URL(uri).hostname.replace(/^www\./, '');
-          } catch {}
-          webSources.push({
-            title: typeof title === 'string' && title.trim() ? title.trim().slice(0, 140) : fallbackTitle,
-            uri,
-          });
-        }
-        if (webSources.length >= 6) break;
-      }
-
-      if (webAnswer) {
-        return res.json({
-          foundInApp: false,
-          foundOnWeb: true,
-          answer: webAnswer,
-          matchedSources: [],
-          webSources,
-          missingInfoTopic:
-            typeof parsed.missingInfoTopic === 'string' && parsed.missingInfoTopic
-              ? parsed.missingInfoTopic
-              : question.slice(0, 140),
-        });
-      }
-    } catch (webErr: any) {
-      console.warn('[API /api/ai-assistant] Trusted web grounding fallback failed:', webErr?.message || webErr);
-    }
-
     return res.json({
-      foundInApp: false,
-      foundOnWeb: false,
-      answer: typeof parsed.answer === 'string' ? parsed.answer : '',
-      matchedSources: [],
-      webSources: [],
-      missingInfoTopic: typeof parsed.missingInfoTopic === 'string' ? parsed.missingInfoTopic : question.slice(0, 140),
+      foundInApp,
+      foundOnWeb,
+      answer,
+      matchedSources: ctx.matchedSources,
+      webSources,
+      missingInfoTopic,
     });
   } catch (err: any) {
     console.error('[API /api/ai-assistant] Error:', err);

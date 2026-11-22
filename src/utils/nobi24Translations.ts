@@ -9,6 +9,7 @@ export interface Nobi24UIStrings {
   tabs: {
     wheel: string;
     timeline: string;
+    calendar: string;
     articles: string;
     duas: string;
     tracker: string;
@@ -100,6 +101,7 @@ export const NOBI_24_UI_I18N: Record<ZikrLanguage, Nobi24UIStrings> = {
     tabs: {
       wheel: '২৪ ঘণ্টার ঘড়ি',
       timeline: 'ধারাবাহিক রুটিন',
+      calendar: '১২ মাসের আমল',
       articles: 'সুন্নাহ গাইডলাইন (বই)',
       duas: 'মাসনুন দোয়াসমূহ',
       tracker: 'দৈনিক সুন্নাহ চেকলিস্ট',
@@ -190,6 +192,7 @@ export const NOBI_24_UI_I18N: Record<ZikrLanguage, Nobi24UIStrings> = {
     tabs: {
       wheel: '24H Sunnah Wheel',
       timeline: 'Timeline Routine',
+      calendar: '12-Month Calendar',
       articles: 'Book Guidelines',
       duas: 'Masnun Duas',
       tracker: 'Daily Sunnah Tracker',
@@ -280,6 +283,7 @@ export const NOBI_24_UI_I18N: Record<ZikrLanguage, Nobi24UIStrings> = {
     tabs: {
       wheel: 'عجلة ٢٤ ساعة',
       timeline: 'الجدول الزمني',
+      calendar: 'تقويم ١٢ شهراً',
       articles: 'فصول الكتاب',
       duas: 'الأدعية المأثورة',
       tracker: 'متتبع السنن اليومي',
@@ -370,6 +374,7 @@ export const NOBI_24_UI_I18N: Record<ZikrLanguage, Nobi24UIStrings> = {
     tabs: {
       wheel: '۲۴ گھنٹے کا پہیہ',
       timeline: 'ترتیب وار معمول',
+      calendar: '۱۲ ماہ کا کیلنڈر',
       articles: 'سنت گائیڈ لائن (کتاب)',
       duas: 'مسنون دعائیں',
       tracker: 'روزانہ سنت ٹریکر',
@@ -460,6 +465,7 @@ export const NOBI_24_UI_I18N: Record<ZikrLanguage, Nobi24UIStrings> = {
     tabs: {
       wheel: '२४ घंटे का चक्र',
       timeline: 'दैनिक दिनचर्या',
+      calendar: '१२ माह कैलेंडर',
       articles: 'सुन्नत गाइडलाइन',
       duas: 'मसनून दुआएं',
       tracker: 'सुन्नत ट्रैकर',
@@ -550,6 +556,7 @@ export const NOBI_24_UI_I18N: Record<ZikrLanguage, Nobi24UIStrings> = {
     tabs: {
       wheel: 'Roda 24 Jam',
       timeline: 'Jadwal Rutinitas',
+      calendar: 'Kalender 12 Bulan',
       articles: 'Panduan Buku',
       duas: 'Doa-Doa Masnun',
       tracker: 'Pelacak Sunnah',
@@ -640,6 +647,7 @@ export const NOBI_24_UI_I18N: Record<ZikrLanguage, Nobi24UIStrings> = {
     tabs: {
       wheel: '24 Saat Çarkı',
       timeline: 'Zaman Çizelgesi',
+      calendar: '12 Aylık Takvim',
       articles: 'Sünnet Rehberi',
       duas: 'Mesnun Dualar',
       tracker: 'Sünnet Takipçisi',

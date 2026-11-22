@@ -2619,6 +2619,12 @@ export default function App() {
             >
               <button
                 type="button"
+                onMouseEnter={() => {
+                  import('./utils/appKnowledgeSearch').then((m) => m.warmupKnowledgeIndex()).catch(() => {});
+                }}
+                onTouchStart={() => {
+                  import('./utils/appKnowledgeSearch').then((m) => m.warmupKnowledgeIndex()).catch(() => {});
+                }}
                 onClick={() => {
                   if (settings.soundEnabled) soundHaptics.playTap();
                   setIsAssistantOpen(true);

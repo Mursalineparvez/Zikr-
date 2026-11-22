@@ -109,6 +109,7 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const clientResponseCacheRef = useRef<Map<string, Omit<ChatMessage, 'id'>>>(new Map());
 
   // Refresh active page context & pre-warm knowledge index when modal opens
   useEffect(() => {
@@ -221,7 +222,7 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
     setIsManualRequestOpen(true);
   };
 
-  const handleSendQuery = async (customQuery?: string) => {
+  const handleSendQuery = async (customQuery?: string, forceWebSearch = false) => {
     const query = (customQuery ?? inputText).trim();
     if (!query || isQuerying) return;
 
@@ -235,18 +236,63 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    setIsQuerying(true);
     setActiveRequestMsgId(null);
     setIsManualRequestOpen(false);
 
+    // 0ms Instant Client-Side Fast-Path for Greetings/Help
+    const cleanedGreeting = query.toLowerCase().replace(/[?!.,।~]/g, '').trim();
+    if (
+      !forceWebSearch &&
+      cleanedGreeting.length <= 48 &&
+      /^(assalamu\s*alaikum|as\s*salamu\s*alaikum|salam|salaam|hi|hello|hey|help|আসসালামু\s*আলাইকুম|সালাম|হ্যালো|হাই|কেমন\s*আছো?|কেমন\s*আছেন|তুমি\s*কি\s*করতে\s*পারো|তুমি\s*কে)$/i.test(
+        cleanedGreeting
+      )
+    ) {
+      const userFirst = userProfile?.isSignedIn && userProfile?.name ? ` ${userProfile.name.trim()}` : '';
+      const instantText = isBn
+        ? `ওয়ালাইকুমুস সালাম${userFirst}! আমি **Zikr+** সহকারী। কুরআন, হাদিস, ২৫ নবী, সীরাতুন নবী, ২৬৬+ সাহাবি, দোয়া, তাবলিগ, নামাজ বা যেকোনো নৈতিক প্রশ্ন করুন—মুহূর্তেই উত্তর পাবেন, আর অ্যাপে না থাকলে বিশ্বস্ত ওয়েবসাইট থেকেও তথ্য এনে দেবো।`
+        : `Wa Alaikum Assalam${userFirst}! I'm **Zikr+**. Ask any Islamic or ethical question from our library or trusted web sources—you'll get an instant answer.`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `m_${Date.now()}`,
+          role: 'model',
+          foundInApp: true,
+          foundOnWeb: false,
+          text: instantText,
+          askedQuestion: query,
+        },
+      ]);
+      return;
+    }
+
+    // 0ms Instant Client-Side Cache Hit
+    const clientCacheKey = `${selectedLanguage}::${activeModule}::${forceWebSearch ? 'web' : 'fast'}::${query.toLowerCase().replace(/\s+/g, ' ')}`;
+    const cachedHit = clientResponseCacheRef.current.get(clientCacheKey);
+    if (cachedHit) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          ...cachedHit,
+          id: `m_${Date.now()}`,
+          askedQuestion: query,
+        },
+      ]);
+      return;
+    }
+
+    setIsQuerying(true);
     let matchedEntries: KnowledgeMatch[] = [];
 
     try {
-      // 1. Freshly extract active page text & search across all Zikr+ datasets
+      // 1. Non-blocking fast context extraction (<1ms) + 80ms-capped local knowledge lookup
       const currentCtx = extractActivePageContext(activeModule, selectedLanguage);
       setPageContext(currentCtx);
 
-      matchedEntries = await searchAppKnowledge(query, activeModule, selectedLanguage, 8);
+      matchedEntries = await Promise.race<KnowledgeMatch[]>([
+        searchAppKnowledge(query, activeModule, selectedLanguage, 5),
+        new Promise<KnowledgeMatch[]>((resolve) => setTimeout(() => resolve([]), 80)),
+      ]);
 
       // Offline handling: show local matched entries cleanly without faking an AI response
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -275,54 +321,45 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
         return;
       }
 
-      // 2. Call grounded server-side Gemini Assistant API with timeout + 1 fast transient retry
-      const recentHistory = messages.slice(-4).map((m) => ({
+      // 2. Call ultra-fast SSE streaming Gemini Assistant API
+      const recentHistory = messages.slice(-2).map((m) => ({
         role: m.role,
-        text: m.text.slice(0, 400),
+        text: m.text.slice(0, 180),
       }));
 
       const payload = JSON.stringify({
         question: query,
         language: selectedLanguage,
+        forceWebSearch,
         userName: userProfile?.isSignedIn && userProfile?.name ? userProfile.name.trim() : '',
         activePage: {
           moduleId: currentCtx.moduleId,
           pageTitle: currentCtx.pageTitle,
-          visibleText: currentCtx.visibleText.slice(0, 3500),
+          visibleText: currentCtx.visibleText.slice(0, 1600),
         },
-        matchedEntries: matchedEntries.map((m) => ({
+        matchedEntries: matchedEntries.slice(0, 4).map((m) => ({
           moduleId: m.moduleId,
           moduleLabel: m.moduleLabel,
           title: m.title,
           reference: m.reference || '',
-          snippet: m.snippet.slice(0, 850),
+          snippet: m.snippet.slice(0, 420),
+          score: m.score,
         })),
         history: recentHistory,
       });
 
-      const callAssistantApi = async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 40000);
-        try {
-          return await fetch('/api/ai-assistant', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: payload,
-            signal: controller.signal,
-          });
-        } finally {
-          clearTimeout(timeoutId);
-        }
-      };
-
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       let res: Response;
       try {
-        res = await callAssistantApi();
-        if (res.status === 502 || res.status === 503 || res.status === 504) {
-          await new Promise((resolve) => setTimeout(resolve, 600));
-          res = await callAssistantApi();
-        }
+        res = await fetch('/api/ai-assistant-stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          signal: controller.signal,
+        });
       } catch (fetchErr: any) {
+        clearTimeout(timeoutId);
         if (fetchErr?.name === 'AbortError') {
           throw new Error(
             isBn
@@ -330,49 +367,166 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
               : 'Request to AI server timed out.'
           );
         }
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        res = await callAssistantApi();
-      }
-
-      const rawText = await res.text();
-      let data: any = {};
-      if (rawText) {
-        try {
-          data = JSON.parse(rawText);
-        } catch {
-          data = {};
-        }
+        throw fetchErr;
       }
 
       if (!res.ok) {
-        const fallbackStatusMsg = isBn
-          ? `AI সার্ভার থেকে উত্তর পাওয়া যায়নি (HTTP ${res.status})`
-          : `Failed to reach AI Assistant service (HTTP ${res.status})`;
-        throw new Error(data?.error || fallbackStatusMsg);
+        clearTimeout(timeoutId);
+        throw new Error(
+          isBn
+            ? `AI সার্ভার থেকে উত্তর পাওয়া যায়নি (HTTP ${res.status})`
+            : `Failed to reach AI Assistant service (HTTP ${res.status})`
+        );
       }
 
-      const foundInApp = Boolean(data.foundInApp);
-      const foundOnWeb = Boolean(data.foundOnWeb);
       const modelMsgId = `m_${Date.now()}`;
-      const modelMsg: ChatMessage = {
-        id: modelMsgId,
-        role: 'model',
-        foundInApp,
-        foundOnWeb,
-        text: data.answer || (isBn ? 'তথ্য পাওয়া যায়নি।' : 'No response generated.'),
-        matchedSources: Array.isArray(data.matchedSources) ? data.matchedSources : [],
-        webSources: Array.isArray(data.webSources) ? data.webSources : [],
-        missingInfoTopic: typeof data.missingInfoTopic === 'string' && data.missingInfoTopic ? data.missingInfoTopic : (!foundInApp ? query : ''),
-        askedQuestion: query,
-      };
+      let streamedText = '';
+      let streamCreated = false;
+      let streamDoneMeta: any = null;
+      let streamErrorMsg: string | null = null;
 
-      setMessages((prev) => [...prev, modelMsg]);
+      const reader = res.body?.getReader();
+      if (reader) {
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
 
-      if (!foundInApp && !foundOnWeb) {
-        setActiveRequestMsgId(modelMsgId);
-        setReqQuestion(modelMsg.missingInfoTopic || query);
-        setReqNote('');
-        setReqSubmitError(null);
+        const handleSseBlock = (block: string) => {
+          const lines = block.split('\n');
+          let eventName = 'message';
+          const dataLines: string[] = [];
+          for (const line of lines) {
+            if (line.startsWith('event:')) {
+              eventName = line.slice(6).trim();
+            } else if (line.startsWith('data:')) {
+              dataLines.push(line.slice(5).trim());
+            }
+          }
+          if (dataLines.length === 0) return;
+          const rawData = dataLines.join('\n');
+          let parsed: any = null;
+          try {
+            parsed = JSON.parse(rawData);
+          } catch {
+            return;
+          }
+
+          if (eventName === 'chunk' && typeof parsed?.text === 'string') {
+            streamedText += parsed.text;
+            if (!streamCreated) {
+              streamCreated = true;
+              setIsQuerying(false);
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: modelMsgId,
+                  role: 'model',
+                  foundInApp: true,
+                  foundOnWeb: false,
+                  text: streamedText,
+                  askedQuestion: query,
+                },
+              ]);
+            } else {
+              const snapshotText = streamedText;
+              setMessages((prev) =>
+                prev.map((m) => (m.id === modelMsgId ? { ...m, text: snapshotText } : m))
+              );
+            }
+          } else if (eventName === 'done') {
+            streamDoneMeta = parsed;
+          } else if (eventName === 'error') {
+            streamErrorMsg = parsed?.error || 'AI stream error.';
+          }
+        };
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const blocks = buffer.split('\n\n');
+            buffer = blocks.pop() || '';
+            for (const block of blocks) {
+              if (block.trim()) handleSseBlock(block);
+            }
+          }
+          if (buffer.trim()) handleSseBlock(buffer);
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      } else {
+        clearTimeout(timeoutId);
+      }
+
+      if (streamErrorMsg && !streamedText) {
+        throw new Error(streamErrorMsg);
+      }
+
+      if (streamDoneMeta) {
+        const foundInApp = Boolean(streamDoneMeta.foundInApp);
+        const foundOnWeb = Boolean(streamDoneMeta.foundOnWeb);
+        const matchedSources = Array.isArray(streamDoneMeta.matchedSources) ? streamDoneMeta.matchedSources : [];
+        const webSources = Array.isArray(streamDoneMeta.webSources) ? streamDoneMeta.webSources : [];
+        const missingInfoTopic =
+          typeof streamDoneMeta.missingInfoTopic === 'string' && streamDoneMeta.missingInfoTopic
+            ? streamDoneMeta.missingInfoTopic
+            : !foundInApp
+            ? query
+            : '';
+
+        if (!streamCreated) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: modelMsgId,
+              role: 'model',
+              foundInApp,
+              foundOnWeb,
+              text: streamedText || (isBn ? 'তথ্য পাওয়া যায়নি।' : 'No response generated.'),
+              matchedSources,
+              webSources,
+              missingInfoTopic,
+              askedQuestion: query,
+            },
+          ]);
+        } else {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === modelMsgId
+                ? {
+                    ...m,
+                    foundInApp,
+                    foundOnWeb,
+                    matchedSources,
+                    webSources,
+                    missingInfoTopic,
+                  }
+                : m
+            )
+          );
+        }
+
+        if (!foundInApp && !foundOnWeb) {
+          setActiveRequestMsgId(modelMsgId);
+          setReqQuestion(missingInfoTopic || query);
+          setReqNote('');
+          setReqSubmitError(null);
+        }
+
+        // Save in client session cache for 0ms instant repeat answers
+        if (streamedText.trim()) {
+          clientResponseCacheRef.current.set(clientCacheKey, {
+            role: 'model',
+            foundInApp,
+            foundOnWeb,
+            text: streamedText,
+            matchedSources,
+            webSources,
+            missingInfoTopic,
+          });
+        }
+      } else if (!streamCreated) {
+        throw new Error(isBn ? 'AI সার্ভার থেকে কোনো উত্তর পাওয়া যায়নি।' : 'Empty AI response.');
       }
 
       if (soundEnabled) soundHaptics.playMilestone();
@@ -906,30 +1060,48 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
                     </div>
                   )}
 
-                  {/* Model Footer Actions: Copy + Missing Info Request Trigger */}
+                  {/* Model Footer Actions: Copy + Verify on Web + Missing Info Request Trigger */}
                   {msg.role === 'model' && (
-                    <div className="mt-2 pt-1.5 border-t border-black/5 dark:border-white/10 flex flex-wrap items-center justify-between gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleCopyText(msg.id, msg.text)}
-                        className={`text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded-lg transition cursor-pointer ${
-                          isDay
-                            ? 'text-slate-500 hover:bg-slate-100'
-                            : 'text-slate-300 hover:bg-white/10'
-                        }`}
-                      >
-                        {copiedId === msg.id ? (
-                          <>
-                            <Check className="w-3 h-3 text-emerald-500" />
-                            <span>{isBn ? 'কপি হয়েছে' : 'Copied'}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" />
-                            <span>{isBn ? 'কপি করুন' : 'Copy'}</span>
-                          </>
+                    <div className="mt-2 pt-1.5 border-t border-black/5 dark:border-white/10 flex flex-wrap items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(msg.id, msg.text)}
+                          className={`text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded-lg transition cursor-pointer ${
+                            isDay
+                              ? 'text-slate-500 hover:bg-slate-100'
+                              : 'text-slate-300 hover:bg-white/10'
+                          }`}
+                        >
+                          {copiedId === msg.id ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-500" />
+                              <span>{isBn ? 'কপি হয়েছে' : 'Copied'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>{isBn ? 'কপি করুন' : 'Copy'}</span>
+                            </>
+                          )}
+                        </button>
+
+                        {!msg.foundOnWeb && !msg.isError && msg.askedQuestion && (
+                          <button
+                            type="button"
+                            disabled={isQuerying}
+                            onClick={() => void handleSendQuery(msg.askedQuestion, true)}
+                            className={`text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded-lg transition cursor-pointer disabled:opacity-40 ${
+                              isDay
+                                ? 'text-sky-700 hover:bg-sky-50'
+                                : 'text-sky-300 hover:bg-sky-500/15'
+                            }`}
+                          >
+                            <Globe className="w-3 h-3" />
+                            <span>{isBn ? 'ওয়েব সূত্র দেখুন' : 'Web Sources'}</span>
+                          </button>
                         )}
-                      </button>
+                      </div>
 
                       {msg.requestSent ? (
                         <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">

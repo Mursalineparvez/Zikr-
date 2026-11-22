@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v27-trusted-web-agent
+// Version: zikrmate-v30-nobi12-months
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v27-trusted-web-agent';
+const CACHE_NAME = 'zikrmate-v30-nobi12-months';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
