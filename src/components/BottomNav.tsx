@@ -138,15 +138,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     }, 75);
   };
 
-  const handleOpenAssistantFromSheet = () => {
-    if (soundEnabled) soundHaptics.playTap();
-    setIsQuickMenuOpen(false);
-    setPageSearch('');
-    window.setTimeout(() => {
-      onOpenAssistant?.();
-    }, 60);
-  };
-
   const allPages: QuickPageItem[] = useMemo(
     () => [
       {
@@ -620,8 +611,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 isDay ? 'border-slate-100' : 'border-emerald-900/60'
               }`}
             >
-              {/* Single-row Back / Hub / AI Helper Actions */}
-              <div className="grid grid-cols-3 gap-2">
+              {/* Single-row Back / Hub Actions */}
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={handleGoBackFromSheet}
@@ -648,19 +639,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 >
                   <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">{isBn ? 'সব ফিচার হোম' : 'Features Hub'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleOpenAssistantFromSheet}
-                  className={`min-h-[44px] px-2.5 py-2 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-1.5 whitespace-nowrap transition active:scale-95 cursor-pointer ${
-                    isDay
-                      ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-900'
-                      : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/35 text-amber-200'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{isBn ? 'AI সহায়ক' : 'AI Helper'}</span>
                 </button>
               </div>
 
