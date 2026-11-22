@@ -159,6 +159,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         icon: <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-300" />,
       },
       {
+        id: 'hadith',
+        labelBn: 'হাদিস (Hadis)',
+        labelEn: 'Hadis (Hadith Library)',
+        subBn: '১৭ পূর্ণাঙ্গ কিতাব · ৫৩,০০০+ হাদিস',
+        subEn: '17 Complete Books · 53,000+ Hadiths',
+        keywords: 'hadis hadith ihadis bukhari muslim nasai abudawud tirmidhi ibnmajah malik riyad bulugh mishkat darimi adab shamail qudsi nawawi বুখারী মুসলিম নাসাঈ আবু দাউদ তিরমিযী ইবনে মাজাহ মুয়াত্তা রিয়াদুস সালেহীন মিশকাত আদাবুল মুফরাদ হাদিস হাদীস',
+        icon: <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />,
+      },
+      {
         id: 'salat_time',
         labelBn: 'সালাত টাইম',
         labelEn: 'Salat Time',
@@ -247,15 +256,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         subEn: '6 Numbers & Dawah',
         keywords: 'tablig dawah 6 sifat তাবলীগ দাওয়াত সিফাত',
         icon: <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />,
-      },
-      {
-        id: 'hadith',
-        labelBn: 'হাদিস শরিফ',
-        labelEn: 'Hadith Sharif',
-        subBn: 'সিহাহ সিত্তাহ ও বাছাই হাদিস',
-        subEn: 'Authentic Hadith collections',
-        keywords: 'hadith bukhari muslim তিরমিজি বুখারী মুসলিম হাদিস',
-        icon: <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-300" />,
       },
       {
         id: 'kitab',

@@ -210,6 +210,18 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
 
   const hubItems = [
     {
+      id: 'hadith' as OtherSubSection,
+      title: selectedLanguage === 'bn' ? 'হাদিস (Hadis গ্রন্থাগার)' : 'Hadis (Hadith Library)',
+      arabic: 'كتب الحديث الشريف',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'সহীহ বুখারী (৭,৫৬৩), সহীহ মুসলিম (৭,৫৬৩), নাসাঈ, আবূ দাউদ, তিরমিযী, ইবনে মাজাহ, রিয়াদুস সালেহীনসহ ১৭টি পূর্ণাঙ্গ কিতাব ও ৫৩,০০০+ হাদিস'
+          : 'Complete 17 canonical Hadith books (Bukhari, Muslim, Nasai, Abu Dawud, Tirmidhi, Ibn Majah, Riyad as-Salihin, Mishkat & more) with zero missed hadiths.',
+      icon: <BookMarked className="w-6 h-6 text-emerald-500" />,
+      color: 'from-emerald-600/25 via-teal-500/15 to-amber-500/10 border-emerald-500/45',
+      badge: selectedLanguage === 'bn' ? '১৭ কিতাব · ৫৩,০০০+ হাদিস' : '17 Books · 53,000+ Hadiths',
+    },
+    {
       id: 'dua' as OtherSubSection,
       title: NAV_TRANSLATIONS.dua[selectedLanguage],
       arabic: 'الأدعية المأثورة',
@@ -497,7 +509,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     : selectedLanguage === 'tr'
                     ? 'Çizelgeyi Gör >'
                     : 'View Routine >'
-                  : item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'tablig' || item.id === 'prophets_25'
+                  : item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'hadith' || item.id === 'tablig' || item.id === 'prophets_25'
                   ? selectedLanguage === 'bn' ? 'পড়ুন >' : 'Read >'
                   : item.id === 'saved' || item.id === 'my_account'
                   ? selectedLanguage === 'bn' ? 'খুলুন >' : 'Open >'
@@ -548,6 +560,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   ? selectedLanguage === 'bn' ? 'সচিত্র মানচিত্র' : 'Pictorial Map'
                   : item.id === 'dua'
                   ? selectedLanguage === 'bn' ? 'সহিহ দোয়াসমূহ' : 'Authentic Duas'
+                  : item.id === 'hadith'
+                  ? selectedLanguage === 'bn' ? '১৭ পূর্ণাঙ্গ কিতাব' : '17 Complete Books'
                   : item.id === 'namaj'
                   ? selectedLanguage === 'bn' ? 'নামাজের সময়' : 'Prayer Rules'
                   : item.id === 'hajj_checklist'

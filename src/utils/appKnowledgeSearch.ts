@@ -434,7 +434,18 @@ async function buildKnowledgeIndex(): Promise<IndexedEntry[]> {
       });
     }),
 
-    // 4. Hadith Books & Collection
+    // 4. Hadith Books & Collection (All 17 Canonical Books + Curated Selections)
+    import('../data/hadisCatalog').then((cat) => {
+      (cat.HADIS_LIBRARY_BOOKS || []).forEach((b) => {
+        pushEntry(
+          `hadis_book_${b.id}`,
+          'hadith',
+          `${b.bnName} (${b.enName})`,
+          `${b.compilerBn} — ${b.shortDescBn}। মোট অধ্যায়: ${b.chaptersCount}, মোট হাদিস: ${b.hadithCount}`,
+          `${b.arabicName} · ${b.compilerEn}`
+        );
+      });
+    }),
     import('../utils/hadithData').then((m) => {
       (m.HADITH_BOOKS_DATA || []).forEach((b) => {
         pushEntry(

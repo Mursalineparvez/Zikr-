@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
+import { HADIS_LIBRARY_BOOKS, translateChapterNameBn } from './src/data/hadisCatalog';
 
 const app = express();
 const PORT = 3000;
@@ -620,6 +621,589 @@ app.delete('/api/admin/info-requests/:id', (req, res) => {
     return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || 'Server error' });
+  }
+});
+
+// ============================================================================
+// 6. AL-HADIS COMPLETE 17-BOOK LIBRARY ROUTES (/api/hadis/*)
+// ============================================================================
+const FAWAZ_CDN_BASE = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1';
+const FAWAZ_RAW_BASE = 'https://raw.githubusercontent.com/fawazahmed0/hadith-api/1';
+const AHMED_CDN_BASE = 'https://cdn.jsdelivr.net/gh/AhmedBaset/hadith-json@main/db/by_book';
+const AHMED_RAW_BASE = 'https://raw.githubusercontent.com/AhmedBaset/hadith-json/main/db/by_book';
+
+let fawazInfoCache: Record<string, any> | null = null;
+const hadisChapterCache = new Map<string, any>();
+const ahmedBookCache = new Map<string, any>();
+const fawazFullEditionCache = new Map<string, any>();
+const hadisBnTranslationCache = new Map<string, string>();
+
+function setBoundedMap<K, V>(map: Map<K, V>, key: K, val: V, maxSize: number) {
+  if (map.has(key)) map.delete(key);
+  map.set(key, val);
+  if (map.size > maxSize) {
+    const oldestKey = map.keys().next().value;
+    if (oldestKey !== undefined) map.delete(oldestKey);
+  }
+}
+
+async function fetchJsonWithMirror(primaryUrl: string, fallbackUrl: string, timeoutMs = 15000): Promise<any> {
+  const tryFetch = async (url: string) => {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const r = await fetch(url, { signal: controller.signal });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.json();
+    } finally {
+      clearTimeout(tid);
+    }
+  };
+  try {
+    return await tryFetch(primaryUrl);
+  } catch {
+    return await tryFetch(fallbackUrl);
+  }
+}
+
+async function getFawazInfo(): Promise<Record<string, any>> {
+  if (fawazInfoCache) return fawazInfoCache;
+  const info = await fetchJsonWithMirror(`${FAWAZ_CDN_BASE}/info.json`, `${FAWAZ_RAW_BASE}/info.json`, 15000);
+  fawazInfoCache = info;
+  return info;
+}
+
+async function getAhmedBook(ahmedPath: string): Promise<any> {
+  if (ahmedBookCache.has(ahmedPath)) return ahmedBookCache.get(ahmedPath);
+  const data = await fetchJsonWithMirror(`${AHMED_CDN_BASE}/${ahmedPath}`, `${AHMED_RAW_BASE}/${ahmedPath}`, 25000);
+  setBoundedMap(ahmedBookCache, ahmedPath, data, 5);
+  return data;
+}
+
+function resolveFawazEditionCode(bookDef: (typeof HADIS_LIBRARY_BOOKS)[number], uiLang: string): string {
+  const map: Record<string, string> = {
+    bn: 'ben',
+    en: 'eng',
+    ur: 'urd',
+    id: 'ind',
+    tr: 'tur',
+    fr: 'fra',
+    ru: 'rus',
+    ar: 'ara',
+    hi: 'eng',
+  };
+  const desired = map[uiLang] || 'eng';
+  const supported = bookDef.supportedFawazLangs || ['eng', 'ara'];
+  if (supported.includes(desired)) return desired;
+  if (supported.includes('ben') && uiLang === 'bn') return 'ben';
+  if (supported.includes('eng')) return 'eng';
+  return supported[0] || 'ara';
+}
+
+function normalizeGrades(grades: any[]): { label: string; isSahih: boolean; isHasan: boolean; isWeak: boolean; details: Array<{ name: string; grade: string }> } {
+  const details = Array.isArray(grades)
+    ? grades
+        .filter((g) => g && g.grade)
+        .map((g) => ({ name: String(g.name || 'Scholar'), grade: String(g.grade || '') }))
+    : [];
+  const joined = details.map((d) => d.grade.toLowerCase()).join(' ');
+  const isSahih = /sahih|muttafaq|authentic|সহীহ|সহিহ/.test(joined) || details.length === 0;
+  const isHasan = !isSahih && /hasan|হাসান/.test(joined);
+  const isWeak = /daif|da'if|weak|mawdu|যঈফ|দুর্বল/.test(joined);
+  const primary = details[0]?.grade || 'Sahih';
+  return { label: primary, isSahih: isSahih && !isWeak, isHasan, isWeak, details };
+}
+
+app.get('/api/hadis/books/:bookId/chapters', async (req, res) => {
+  try {
+    const bookId = String(req.params.bookId || '').trim();
+    const bookDef = HADIS_LIBRARY_BOOKS.find((b) => b.id === bookId);
+    if (!bookDef) {
+      return res.status(404).json({ error: 'Hadith book not found' });
+    }
+
+    if (bookDef.source === 'fawaz' && bookDef.fawazKey) {
+      const info = await getFawazInfo();
+      const meta = info?.[bookDef.fawazKey]?.metadata;
+      if (!meta) {
+        return res.status(404).json({ error: 'Book metadata unavailable' });
+      }
+      const sections: Record<string, string> = meta.sections || {};
+      const details: Record<string, any> = meta.section_details || {};
+
+      const chapters = Object.keys(details)
+        .map((secId) => {
+          const det = details[secId] || {};
+          const first = Number(det.hadithnumber_first || 0);
+          const last = Number(det.hadithnumber_last || 0);
+          if (last <= 0 && secId === '0') return null;
+          if (last <= 0 && first <= 0) return null;
+          const titleEn = String(sections[secId] || (secId === '0' ? 'Introduction' : `${bookDef.enName} Chapter ${secId}`)).trim();
+          return {
+            chapterId: String(secId),
+            titleEn: titleEn || `Chapter ${secId}`,
+            titleBn: translateChapterNameBn(titleEn, secId),
+            titleAr: '',
+            hadithFirst: first,
+            hadithLast: last,
+            arabicFirst: det.arabicnumber_first ?? first,
+            arabicLast: det.arabicnumber_last ?? last,
+            count: Math.max(1, Math.round(last - first + 1)),
+          };
+        })
+        .filter(Boolean);
+
+      return res.json({ book: bookDef, chapters });
+    }
+
+    if (bookDef.source === 'ahmedbaset' && bookDef.ahmedPath) {
+      const data = await getAhmedBook(bookDef.ahmedPath);
+      const rawChapters = Array.isArray(data?.chapters) ? data.chapters : [];
+      const rawHadiths = Array.isArray(data?.hadiths) ? data.hadiths : [];
+      const countsByChap = new Map<string, { count: number; first: number; last: number }>();
+
+      for (const h of rawHadiths) {
+        const cId = String(h?.chapterId ?? '0');
+        const num = Number(h?.idInBook ?? h?.id ?? 0);
+        const cur = countsByChap.get(cId) || { count: 0, first: num || 1, last: num || 1 };
+        cur.count += 1;
+        if (num > 0 && num < cur.first) cur.first = num;
+        if (num > cur.last) cur.last = num;
+        countsByChap.set(cId, cur);
+      }
+
+      const chapters = rawChapters.map((c: any) => {
+        const cId = String(c?.id ?? '0');
+        const stats = countsByChap.get(cId) || { count: 0, first: 0, last: 0 };
+        const titleEn = String(c?.english || `Chapter ${cId}`).trim();
+        return {
+          chapterId: cId,
+          titleEn,
+          titleBn: translateChapterNameBn(titleEn, cId),
+          titleAr: String(c?.arabic || '').trim(),
+          hadithFirst: stats.first,
+          hadithLast: stats.last,
+          arabicFirst: stats.first,
+          arabicLast: stats.last,
+          count: stats.count,
+        };
+      });
+
+      // Handle any chapter-0 or unlisted chapterId hadiths so zero hadiths are missed
+      const listedIds = new Set(chapters.map((c: any) => c.chapterId));
+      for (const [cId, stats] of countsByChap.entries()) {
+        if (!listedIds.has(cId) && stats.count > 0) {
+          chapters.unshift({
+            chapterId: cId,
+            titleEn: cId === '0' ? 'Introduction & Opening' : `Section ${cId}`,
+            titleBn: cId === '0' ? 'ভূমিকা ও সূচনা' : `অধ্যায় ${cId}`,
+            titleAr: '',
+            hadithFirst: stats.first,
+            hadithLast: stats.last,
+            arabicFirst: stats.first,
+            arabicLast: stats.last,
+            count: stats.count,
+          });
+        }
+      }
+
+      return res.json({ book: bookDef, chapters });
+    }
+
+    return res.status(400).json({ error: 'Unsupported book configuration' });
+  } catch (err: any) {
+    console.error('[API /api/hadis/chapters] Error:', err);
+    return res.status(502).json({ error: err?.message || 'Failed to load book chapters' });
+  }
+});
+
+app.get('/api/hadis/books/:bookId/chapters/:chapterId', async (req, res) => {
+  try {
+    const bookId = String(req.params.bookId || '').trim();
+    const chapterId = String(req.params.chapterId || '').trim();
+    const uiLang = String(req.query.lang || 'bn').trim().toLowerCase();
+
+    const bookDef = HADIS_LIBRARY_BOOKS.find((b) => b.id === bookId);
+    if (!bookDef) {
+      return res.status(404).json({ error: 'Hadith book not found' });
+    }
+
+    const cacheKey = `${bookId}:${chapterId}:${uiLang}`;
+    if (hadisChapterCache.has(cacheKey)) {
+      return res.json(hadisChapterCache.get(cacheKey));
+    }
+
+    if (bookDef.source === 'fawaz' && bookDef.fawazKey) {
+      const langCode = resolveFawazEditionCode(bookDef, uiLang);
+      const bookKey = bookDef.fawazKey;
+
+      const araPromise = fetchJsonWithMirror(
+        `${FAWAZ_CDN_BASE}/editions/ara-${bookKey}/sections/${chapterId}.min.json`,
+        `${FAWAZ_RAW_BASE}/editions/ara-${bookKey}/sections/${chapterId}.min.json`,
+        18000
+      ).catch(() => null);
+
+      const transPromise =
+        langCode === 'ara'
+          ? Promise.resolve(null)
+          : fetchJsonWithMirror(
+              `${FAWAZ_CDN_BASE}/editions/${langCode}-${bookKey}/sections/${chapterId}.min.json`,
+              `${FAWAZ_RAW_BASE}/editions/${langCode}-${bookKey}/sections/${chapterId}.min.json`,
+              18000
+            ).catch(() => null);
+
+      const engPromise =
+        langCode === 'eng'
+          ? Promise.resolve(null)
+          : fetchJsonWithMirror(
+              `${FAWAZ_CDN_BASE}/editions/eng-${bookKey}/sections/${chapterId}.min.json`,
+              `${FAWAZ_RAW_BASE}/editions/eng-${bookKey}/sections/${chapterId}.min.json`,
+              18000
+            ).catch(() => null);
+
+      const [araJson, transJson, engJson] = await Promise.all([araPromise, transPromise, engPromise]);
+
+      const primaryList: any[] = Array.isArray(transJson?.hadiths)
+        ? transJson.hadiths
+        : Array.isArray(engJson?.hadiths)
+        ? engJson.hadiths
+        : Array.isArray(araJson?.hadiths)
+        ? araJson.hadiths
+        : [];
+
+      const araMap = new Map<string, any>();
+      if (Array.isArray(araJson?.hadiths)) {
+        araJson.hadiths.forEach((h: any) => araMap.set(String(h.hadithnumber), h));
+      }
+      const engMap = new Map<string, any>();
+      if (Array.isArray(engJson?.hadiths)) {
+        engJson.hadiths.forEach((h: any) => engMap.set(String(h.hadithnumber), h));
+      }
+
+      const sectionMap = transJson?.metadata?.section || engJson?.metadata?.section || araJson?.metadata?.section || {};
+      const titleEn = String(sectionMap[chapterId] || (chapterId === '0' ? 'Introduction' : `Chapter ${chapterId}`));
+
+      const hadiths = primaryList.map((h: any, idx: number) => {
+        const key = String(h?.hadithnumber ?? idx + 1);
+        const araEntry = araMap.get(key) || (Array.isArray(araJson?.hadiths) ? araJson.hadiths[idx] : null);
+        const engEntry = engMap.get(key) || (Array.isArray(engJson?.hadiths) ? engJson.hadiths[idx] : null);
+        const gradesRaw = (h?.grades?.length ? h.grades : engEntry?.grades) || [];
+        const gradeMeta = normalizeGrades(gradesRaw);
+
+        const transText = String(h?.text || '').trim();
+        const engText = String(engEntry?.text || '').trim();
+
+        return {
+          uid: `${bookId}_${key}`,
+          bookId,
+          chapterId,
+          hadithNumber: h?.hadithnumber ?? idx + 1,
+          arabicNumber: h?.arabicnumber ?? araEntry?.arabicnumber ?? h?.hadithnumber ?? idx + 1,
+          arabicText: String(araEntry?.text || '').trim(),
+          translationText: transText || engText || String(araEntry?.text || ''),
+          englishText: engText || (langCode === 'eng' ? transText : ''),
+          hasNativeBangla: langCode === 'ben' && Boolean(transText),
+          narrator: '',
+          grades: gradeMeta.details,
+          gradeLabel: bookId === 'bukhari' || bookId === 'muslim' ? (langCode === 'ben' ? 'সহীহ' : 'Sahih') : gradeMeta.label,
+          gradeType: bookId === 'bukhari' || bookId === 'muslim' ? 'sahih' : gradeMeta.isWeak ? 'weak' : gradeMeta.isHasan ? 'hasan' : 'sahih',
+          reference: h?.reference || { book: Number(chapterId), hadith: h?.hadithnumber },
+        };
+      });
+
+      const payload = {
+        bookId,
+        chapterId,
+        titleEn,
+        titleBn: translateChapterNameBn(titleEn, chapterId),
+        langCode,
+        hadiths,
+      };
+      setBoundedMap(hadisChapterCache, cacheKey, payload, 150);
+      return res.json(payload);
+    }
+
+    if (bookDef.source === 'ahmedbaset' && bookDef.ahmedPath) {
+      const data = await getAhmedBook(bookDef.ahmedPath);
+      const rawChapters = Array.isArray(data?.chapters) ? data.chapters : [];
+      const rawHadiths = Array.isArray(data?.hadiths) ? data.hadiths : [];
+      const chObj = rawChapters.find((c: any) => String(c?.id) === chapterId);
+      const titleEn = String(chObj?.english || (chapterId === '0' ? 'Introduction & Opening' : `Chapter ${chapterId}`));
+      const titleAr = String(chObj?.arabic || '');
+
+      const filtered = rawHadiths.filter((h: any) => String(h?.chapterId ?? '0') === chapterId);
+      const hadiths = filtered.map((h: any, idx: number) => {
+        const num = h?.idInBook ?? h?.id ?? idx + 1;
+        const narrator = String(h?.english?.narrator || '').trim();
+        const body = String(h?.english?.text || '').trim();
+        const fullEn = narrator && !body.startsWith(narrator) ? `${narrator}\n${body}` : body;
+        return {
+          uid: `${bookId}_${num}`,
+          bookId,
+          chapterId,
+          hadithNumber: num,
+          arabicNumber: num,
+          arabicText: String(h?.arabic || '').trim(),
+          translationText: fullEn,
+          englishText: fullEn,
+          hasNativeBangla: false,
+          narrator,
+          grades: [],
+          gradeLabel: bookId === 'riyad_assalihin' || bookId === 'qudsi' ? 'Sahih / Authentic' : 'Canonical',
+          gradeType: 'sahih',
+          reference: { book: Number(chapterId), hadith: Number(num) || idx + 1 },
+        };
+      });
+
+      const payload = {
+        bookId,
+        chapterId,
+        titleEn,
+        titleBn: translateChapterNameBn(titleEn, chapterId),
+        titleAr,
+        langCode: 'eng',
+        hadiths,
+      };
+      setBoundedMap(hadisChapterCache, cacheKey, payload, 150);
+      return res.json(payload);
+    }
+
+    return res.status(400).json({ error: 'Unsupported book source' });
+  } catch (err: any) {
+    console.error('[API /api/hadis/chapter] Error:', err);
+    return res.status(502).json({ error: err?.message || 'Failed to load chapter hadiths' });
+  }
+});
+
+app.get('/api/hadis/books/:bookId/search', async (req, res) => {
+  try {
+    const bookId = String(req.params.bookId || '').trim();
+    const q = String(req.query.q || '').trim();
+    const uiLang = String(req.query.lang || 'bn').trim().toLowerCase();
+    const limit = Math.min(80, Math.max(5, Number(req.query.limit || 50)));
+
+    if (!q) {
+      return res.json({ results: [], totalMatches: 0 });
+    }
+
+    const bookDef = HADIS_LIBRARY_BOOKS.find((b) => b.id === bookId);
+    if (!bookDef) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    const isPureNumber = /^\d+(?:\.\d+)?$/.test(q);
+
+    if (bookDef.source === 'fawaz' && bookDef.fawazKey) {
+      const langCode = resolveFawazEditionCode(bookDef, uiLang);
+      const bookKey = bookDef.fawazKey;
+
+      // Fast path for exact Hadith number lookup via section_details -> single chapter fetch!
+      if (isPureNumber) {
+        const targetNum = Number(q);
+        const info = await getFawazInfo();
+        const details: Record<string, any> = info?.[bookKey]?.metadata?.section_details || {};
+        const matchingSections = Object.keys(details).filter((secId) => {
+          const det = details[secId];
+          if (!det || Number(det.hadithnumber_last || 0) <= 0) return false;
+          return targetNum >= Number(det.hadithnumber_first) && targetNum <= Number(det.hadithnumber_last);
+        });
+
+        // Also check section 0 for Muslim where stray numbers sit
+        if (bookKey === 'muslim' && !matchingSections.includes('0')) {
+          matchingSections.push('0');
+        }
+
+        const matchedResults: any[] = [];
+        for (const secId of matchingSections.slice(0, 2)) {
+          const [araJson, transJson] = await Promise.all([
+            fetchJsonWithMirror(
+              `${FAWAZ_CDN_BASE}/editions/ara-${bookKey}/sections/${secId}.min.json`,
+              `${FAWAZ_RAW_BASE}/editions/ara-${bookKey}/sections/${secId}.min.json`,
+              15000
+            ).catch(() => null),
+            fetchJsonWithMirror(
+              `${FAWAZ_CDN_BASE}/editions/${langCode}-${bookKey}/sections/${secId}.min.json`,
+              `${FAWAZ_RAW_BASE}/editions/${langCode}-${bookKey}/sections/${secId}.min.json`,
+              15000
+            ).catch(() => null),
+          ]);
+          const list = Array.isArray(transJson?.hadiths) ? transJson.hadiths : Array.isArray(araJson?.hadiths) ? araJson.hadiths : [];
+          const araMap = new Map<string, any>((araJson?.hadiths || []).map((x: any) => [String(x.hadithnumber), x]));
+          for (const h of list) {
+            if (Math.floor(Number(h.hadithnumber)) === Math.floor(targetNum) || String(h.arabicnumber) === q) {
+              const key = String(h.hadithnumber);
+              const araEntry = araMap.get(key);
+              const gradeMeta = normalizeGrades(h.grades || []);
+              matchedResults.push({
+                uid: `${bookId}_${key}`,
+                bookId,
+                chapterId: secId,
+                hadithNumber: h.hadithnumber,
+                arabicNumber: h.arabicnumber ?? h.hadithnumber,
+                arabicText: String(araEntry?.text || '').trim(),
+                translationText: String(h.text || '').trim(),
+                hasNativeBangla: langCode === 'ben',
+                grades: gradeMeta.details,
+                gradeLabel: bookId === 'bukhari' || bookId === 'muslim' ? (langCode === 'ben' ? 'সহীহ' : 'Sahih') : gradeMeta.label,
+                gradeType: bookId === 'bukhari' || bookId === 'muslim' ? 'sahih' : gradeMeta.isWeak ? 'weak' : gradeMeta.isHasan ? 'hasan' : 'sahih',
+              });
+            }
+          }
+        }
+        return res.json({ results: matchedResults, totalMatches: matchedResults.length });
+      }
+
+      // Full-book keyword search (cached full book edition in RAM)
+      const transKey = `${langCode}-${bookKey}`;
+      const araKey = `ara-${bookKey}`;
+      const getFullEdition = async (edName: string) => {
+        if (fawazFullEditionCache.has(edName)) return fawazFullEditionCache.get(edName);
+        const data = await fetchJsonWithMirror(
+          `${FAWAZ_CDN_BASE}/editions/${edName}.min.json`,
+          `${FAWAZ_RAW_BASE}/editions/${edName}.min.json`,
+          25000
+        );
+        setBoundedMap(fawazFullEditionCache, edName, data, 6);
+        return data;
+      };
+
+      const [transFull, araFull] = await Promise.all([
+        getFullEdition(transKey),
+        getFullEdition(araKey).catch(() => null),
+      ]);
+
+      const lowerQ = q.toLowerCase();
+      const hadithList: any[] = Array.isArray(transFull?.hadiths) ? transFull.hadiths : [];
+      const araMap = new Map<string, string>((araFull?.hadiths || []).map((x: any) => [String(x.hadithnumber), String(x.text || '')]));
+
+      const matches: any[] = [];
+      let totalMatches = 0;
+      for (const h of hadithList) {
+        const text = String(h?.text || '');
+        const key = String(h?.hadithnumber ?? '');
+        const ara = araMap.get(key) || '';
+        if (text.toLowerCase().includes(lowerQ) || ara.includes(q) || key === q) {
+          totalMatches++;
+          if (matches.length < limit) {
+            const gradeMeta = normalizeGrades(h.grades || []);
+            const secId = String(h?.reference?.book ?? '1');
+            matches.push({
+              uid: `${bookId}_${key}`,
+              bookId,
+              chapterId: secId,
+              hadithNumber: h.hadithnumber,
+              arabicNumber: h.arabicnumber ?? h.hadithnumber,
+              arabicText: ara.trim(),
+              translationText: text.trim(),
+              hasNativeBangla: langCode === 'ben',
+              grades: gradeMeta.details,
+              gradeLabel: bookId === 'bukhari' || bookId === 'muslim' ? (langCode === 'ben' ? 'সহীহ' : 'Sahih') : gradeMeta.label,
+              gradeType: bookId === 'bukhari' || bookId === 'muslim' ? 'sahih' : gradeMeta.isWeak ? 'weak' : gradeMeta.isHasan ? 'hasan' : 'sahih',
+            });
+          }
+        }
+      }
+      return res.json({ results: matches, totalMatches });
+    }
+
+    if (bookDef.source === 'ahmedbaset' && bookDef.ahmedPath) {
+      const data = await getAhmedBook(bookDef.ahmedPath);
+      const rawHadiths = Array.isArray(data?.hadiths) ? data.hadiths : [];
+      const lowerQ = q.toLowerCase();
+      const matches: any[] = [];
+      let totalMatches = 0;
+
+      for (const h of rawHadiths) {
+        const num = String(h?.idInBook ?? h?.id ?? '');
+        const narrator = String(h?.english?.narrator || '');
+        const body = String(h?.english?.text || '');
+        const ara = String(h?.arabic || '');
+        const hit = isPureNumber
+          ? num === q
+          : body.toLowerCase().includes(lowerQ) || narrator.toLowerCase().includes(lowerQ) || ara.includes(q);
+
+        if (hit) {
+          totalMatches++;
+          if (matches.length < limit) {
+            const fullEn = narrator && !body.startsWith(narrator) ? `${narrator}\n${body}` : body;
+            matches.push({
+              uid: `${bookId}_${num}`,
+              bookId,
+              chapterId: String(h?.chapterId ?? '1'),
+              hadithNumber: num,
+              arabicNumber: num,
+              arabicText: ara.trim(),
+              translationText: fullEn,
+              englishText: fullEn,
+              hasNativeBangla: false,
+              narrator,
+              grades: [],
+              gradeLabel: 'Canonical',
+              gradeType: 'sahih',
+            });
+          }
+        }
+      }
+      return res.json({ results: matches, totalMatches });
+    }
+
+    return res.json({ results: [], totalMatches: 0 });
+  } catch (err: any) {
+    console.error('[API /api/hadis/search] Error:', err);
+    return res.status(502).json({ error: err?.message || 'Hadith search failed' });
+  }
+});
+
+app.post('/api/hadis/translate-bn', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const uid = String(body.uid || '').slice(0, 100);
+    const arabicText = String(body.arabicText || '').trim().slice(0, 3000);
+    const englishText = String(body.englishText || '').trim().slice(0, 3000);
+    const bookTitle = String(body.bookTitle || 'Hadith').slice(0, 120);
+
+    if (!englishText && !arabicText) {
+      return res.status(400).json({ error: 'Hadith text is required' });
+    }
+    if (uid && hadisBnTranslationCache.has(uid)) {
+      return res.json({ translationBn: hadisBnTranslationCache.get(uid) });
+    }
+
+    const ai = getGeminiClient();
+    if (!ai) {
+      return res.status(503).json({ error: 'Translation service requires server Gemini API key configuration.' });
+    }
+
+    const prompt = `Translate this authentic Hadith from "${bookTitle}" into faithful, clear, respectful Bengali (বাংলা), preserving narrator chain and scholarly precision without adding external commentary:
+
+ARABIC:
+${arabicText || '(N/A)'}
+
+ENGLISH REFERENCE:
+${englishText || '(N/A)'}`;
+
+    const response = await callGeminiWithRetry(() =>
+      ai.models.generateContent({
+        model: 'gemini-4-hydrogen',
+        contents: prompt,
+        config: {
+          systemInstruction: 'You are an expert Islamic Hadith translator translating authentic Hadith accurately from Arabic and English into clear, natural Bengali (বাংলা). Output ONLY the Bengali translation text cleanly.',
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+        },
+      })
+    );
+
+    const translationBn = (response.text ?? '').trim();
+    if (!translationBn) {
+      return res.status(502).json({ error: 'Empty translation returned' });
+    }
+    if (uid) {
+      setBoundedMap(hadisBnTranslationCache, uid, translationBn, 1000);
+    }
+    return res.json({ translationBn });
+  } catch (err: any) {
+    const status = extractErrorStatus(err);
+    return res.status(status).json({ error: err?.message || 'Failed to translate Hadith' });
   }
 });
 
