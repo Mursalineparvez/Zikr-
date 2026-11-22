@@ -15,6 +15,8 @@ import {
   Mail,
   MessageCircle,
   Trash2,
+  Globe,
+  ExternalLink,
 } from 'lucide-react';
 import { NavModule, ThemeMode, UserProfile, ZikrLanguage } from '../types';
 import {
@@ -34,12 +36,19 @@ interface MatchedSourceItem {
   snippet: string;
 }
 
+interface WebSourceItem {
+  title: string;
+  uri: string;
+}
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'model';
   text: string;
   foundInApp?: boolean;
+  foundOnWeb?: boolean;
   matchedSources?: MatchedSourceItem[];
+  webSources?: WebSourceItem[];
   missingInfoTopic?: string;
   localFallbackMatches?: KnowledgeMatch[];
   isError?: boolean;
@@ -275,6 +284,7 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
       const payload = JSON.stringify({
         question: query,
         language: selectedLanguage,
+        userName: userProfile?.isSignedIn && userProfile?.name ? userProfile.name.trim() : '',
         activePage: {
           moduleId: currentCtx.moduleId,
           pageTitle: currentCtx.pageTitle,
@@ -342,20 +352,23 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
       }
 
       const foundInApp = Boolean(data.foundInApp);
+      const foundOnWeb = Boolean(data.foundOnWeb);
       const modelMsgId = `m_${Date.now()}`;
       const modelMsg: ChatMessage = {
         id: modelMsgId,
         role: 'model',
         foundInApp,
+        foundOnWeb,
         text: data.answer || (isBn ? 'তথ্য পাওয়া যায়নি।' : 'No response generated.'),
         matchedSources: Array.isArray(data.matchedSources) ? data.matchedSources : [],
+        webSources: Array.isArray(data.webSources) ? data.webSources : [],
         missingInfoTopic: typeof data.missingInfoTopic === 'string' && data.missingInfoTopic ? data.missingInfoTopic : (!foundInApp ? query : ''),
         askedQuestion: query,
       };
 
       setMessages((prev) => [...prev, modelMsg]);
 
-      if (!foundInApp) {
+      if (!foundInApp && !foundOnWeb) {
         setActiveRequestMsgId(modelMsgId);
         setReqQuestion(modelMsg.missingInfoTopic || query);
         setReqNote('');
@@ -640,16 +653,21 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
     );
   };
 
+  const assistantTitle =
+    userProfile?.isSignedIn && userProfile?.name?.trim()
+      ? `Zikr+ • ${userProfile.name.trim()}`
+      : 'Zikr+ Assistant';
+
   return createPortal(
     <div
       data-assistant-modal="true"
-      className="fixed inset-0 z-[80] bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-[2px] flex items-end justify-end p-2.5 sm:p-5 animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className={`w-full max-w-2xl h-[92dvh] sm:h-[85vh] rounded-t-3xl sm:rounded-3xl border shadow-2xl flex flex-col overflow-hidden transition-all ${
+        className={`w-full sm:w-[410px] max-w-[96vw] h-[84dvh] sm:h-[600px] max-h-[88dvh] rounded-3xl border shadow-2xl flex flex-col overflow-hidden transition-all animate-in slide-in-from-right-4 duration-200 ${
           isDay
             ? 'bg-[#f7fbf9] border-emerald-200 text-slate-900'
             : 'bg-[#04171c] border-[#15454f] text-white'
@@ -658,15 +676,27 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
         {/* HEADER */}
         <div className="bg-[var(--app-primary,#006A4E)] text-white px-4 py-3 flex items-center justify-between gap-2 shrink-0 shadow-md">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0 shadow-inner">
-              <Sparkles className="w-5 h-5 text-amber-300" />
+            <div className="w-10 h-10 rounded-full bg-white/15 border border-white/30 flex items-center justify-center shrink-0 shadow-inner overflow-hidden p-0.5">
+              <img
+                src="/pwa-192x192.png"
+                alt="Zikr+"
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/icon.svg';
+                }}
+              />
             </div>
             <div className="min-w-0">
               <h2 className="text-sm sm:text-base font-black leading-tight truncate">
-                {isBn ? 'Zikr+ AI তথ্য সহায়ক' : 'Zikr+ AI Knowledge Agent'}
+                {assistantTitle}
               </h2>
-              <p className="text-[11px] text-emerald-100/90 truncate">
-                {isBn ? `বর্তমান পেজ: ${pageContext.pageTitle}` : `Active Page: ${pageContext.pageTitle}`}
+              <p className="text-[11px] text-emerald-100/95 truncate flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-300 shrink-0" />
+                <span>
+                  {isBn
+                    ? `অনলাইন • পেজ: ${pageContext.pageTitle}`
+                    : `Online & Ready • ${pageContext.pageTitle}`}
+                </span>
               </p>
             </div>
           </div>
@@ -712,14 +742,14 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
                   <Search className="w-4 h-4 shrink-0" />
                   <span>
                     {isBn
-                      ? 'এই পেজ এবং পুরো অ্যাপের যেকোনো তথ্য খুঁজুন'
-                      : 'Search & Extract Info from This Page or Anywhere in Zikr+'}
+                      ? 'অ্যাপ এবং বিশ্বস্ত ওয়েব উৎস থেকে যেকোনো প্রশ্নের উত্তর পান'
+                      : 'Ask Anything — Grounded in Zikr+ & Trusted Web Sources'}
                   </span>
                 </div>
                 <p className={`text-xs leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
                   {isBn
-                    ? 'আপনি যে পেজে আছেন বা কুরআন, ২৫ নবী-রাসূল, সীরাতুন নবী, ২৬৬+ সাহাবি, দোয়া, হাদিস, তাবলিগ, নামাজ ও হজ—যেকোনো বিষয়ে প্রশ্ন করুন। তথ্যটি অ্যাপে না থাকলে এখান থেকেই অ্যাডমিনের কাছে মেসেজ পাঠিয়ে যোগ করার অনুরোধ করতে পারবেন।'
-                    : 'Ask anything about the current page or across Quran, 25 Prophets, Seerat, Sahaba, Duas, Hadith, Tablig, Namaz, and Hajj. If information is missing from the app, you can message the admin directly right here.'}
+                    ? 'কুরআন, হাদিস, ২৫ নবী-রাসূল, সীরাতুন নবী, সাহাবি, দোয়া, তাবলিগ, নামাজ বা যেকোনো নৈতিক প্রশ্ন করুন। তথ্যটি অ্যাপে না থাকলে স্বয়ংক্রিয়ভাবে বিভিন্ন বিশ্বস্ত ও নির্ভরযোগ্য ওয়েবসাইট থেকে যাচাইকৃত উত্তর খুঁজে দেওয়া হবে।'
+                    : 'Ask about Quran, Hadith, Prophets, Seerat, Sahaba, Duas, Namaz, or any ethical question. If not available inside the app, Zikr+ automatically gathers verified answers from trusted web sources.'}
                 </p>
               </div>
 
@@ -770,6 +800,17 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-300 mb-1.5 pb-1.5 border-b border-amber-500/20">
                       <WifiOff className="w-3.5 h-3.5 shrink-0" />
                       <span>{isBn ? 'অফলাইন সার্চ ফলাফল' : 'Offline Search Result'}</span>
+                    </div>
+                  )}
+
+                  {msg.role === 'model' && msg.foundOnWeb && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-sky-700 dark:text-sky-300 mb-1.5 pb-1.5 border-b border-sky-500/20">
+                      <Globe className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {isBn
+                          ? 'বিশ্বস্ত ওয়েব উৎস থেকে সংগৃহীত তথ্য'
+                          : 'Verified from Trusted Web Sources'}
+                      </span>
                     </div>
                   )}
 
@@ -837,6 +878,34 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
                     </div>
                   )}
 
+                  {/* Clickable Trusted Web Sources (when fetched from external trusted sites) */}
+                  {msg.role === 'model' && msg.webSources && msg.webSources.length > 0 && (
+                    <div className="mt-2.5 pt-2 border-t border-black/10 dark:border-white/10 space-y-1.5">
+                      <div className={`text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 ${isDay ? 'text-sky-700' : 'text-sky-300/90'}`}>
+                        <Globe className="w-3 h-3" />
+                        <span>{isBn ? 'বিশ্বস্ত ওয়েব সূত্রসমূহ:' : 'Trusted Web Sources:'}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {msg.webSources.map((src, idx) => (
+                          <a
+                            key={idx}
+                            href={src.uri}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`text-left px-2.5 py-1.5 rounded-xl border text-[11px] font-bold transition active:scale-95 flex items-center gap-1 ${
+                              isDay
+                                ? 'bg-sky-50 border-sky-200 text-sky-800 hover:bg-sky-100'
+                                : 'bg-[#082936] border-sky-500/30 text-sky-200 hover:bg-[#0d394a]'
+                            }`}
+                          >
+                            <span className="truncate max-w-[200px]">{src.title}</span>
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Model Footer Actions: Copy + Missing Info Request Trigger */}
                   {msg.role === 'model' && (
                     <div className="mt-2 pt-1.5 border-t border-black/5 dark:border-white/10 flex flex-wrap items-center justify-between gap-2">
@@ -872,7 +941,7 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
                           type="button"
                           onClick={() => openRequestComposerForMessage(msg)}
                           className={`text-[10px] font-extrabold flex items-center gap-1 px-2.5 py-1 rounded-lg border transition cursor-pointer ${
-                            msg.foundInApp === false
+                            msg.foundInApp === false && !msg.foundOnWeb
                               ? 'bg-amber-500 text-slate-950 border-amber-400 hover:bg-amber-400'
                               : isDay
                               ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
@@ -881,7 +950,11 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
                         >
                           <MessageSquarePlus className="w-3 h-3" />
                           <span>
-                            {msg.foundInApp === false
+                            {msg.foundOnWeb
+                              ? isBn
+                                ? 'অ্যাপে স্থায়ীভাবে যোগ করার অনুরোধ'
+                                : 'Request Adding to App'
+                              : msg.foundInApp === false
                               ? isBn
                                 ? 'তথ্য যোগ করার মেসেজ পাঠান'
                                 : 'Request Missing Info'
@@ -918,8 +991,8 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
                 <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin shrink-0" />
                 <span>
                   {isBn
-                    ? 'এই পেজ ও অ্যাপের কিতাব-তথ্যভাণ্ডার থেকে খোঁজা হচ্ছে...'
-                    : 'Searching this page and the Zikr+ knowledge base...'}
+                    ? 'অ্যাপের তথ্যভাণ্ডার ও বিশ্বস্ত ওয়েব উৎস থেকে খোঁজা হচ্ছে...'
+                    : 'Searching Zikr+ library & trusted web sources...'}
                 </span>
               </div>
             </div>

@@ -350,6 +350,7 @@ app.post('/api/ai-assistant', async (req, res) => {
     }
 
     const language = typeof body.language === 'string' ? body.language.slice(0, 16) : 'bn';
+    const userName = typeof body.userName === 'string' ? body.userName.trim().slice(0, 80) : '';
     const activePage = body.activePage && typeof body.activePage === 'object' ? body.activePage : {};
     const activeModuleId = typeof activePage.moduleId === 'string' ? activePage.moduleId.slice(0, 80) : 'other';
     const activePageTitle = typeof activePage.pageTitle === 'string' ? activePage.pageTitle.slice(0, 200) : 'Zikr+ App';
@@ -379,25 +380,27 @@ app.post('/api/ai-assistant', async (req, res) => {
         ? 'Reply in clear Arabic (or the language of the user query).'
         : 'Reply in the same language as the user query (Bengali if Bangla/Banglish, English if English).';
 
-    const systemInstruction = `You are the Zikr+ App AI Knowledge Search & Extraction Agent.
-Your purpose is to find, extract, and clearly explain ANY information from the current active page OR the Zikr+ app knowledge database provided in the context.
+    const userGreetingNote = userName ? `The user's name is "${userName}". Address them respectfully when natural.` : '';
 
-STRICT GROUNDING RULES:
-1. Only answer informational questions using the supplied "CURRENT ACTIVE PAGE CONTENT" and "MATCHED IN-APP KNOWLEDGE ENTRIES".
-2. If the user sends a simple greeting ("Assalamu Alaikum", "Salam", "Hi", "Hello", "কেমন আছেন") or asks what you can do ("তুমি কী করতে পারো?", "help"), set "foundInApp": true, respond warmly, and list the Zikr+ sections you can search (Al-Quran, 25 Prophets, Seerat un Nabi, 266+ Sahaba, Hisnul Muslim & Duas, Hadith, Dawat o Tablig, Namaz Guide, 99 Names of Allah, Nobi 24 Hours, Hajj & Umrah, Islamic Battles & History, Arab Tribes, Zikr Counters). Set "matchedSources": [] and "missingInfoTopic": "".
-3. For ALL informational questions:
-   - Carefully check both CURRENT ACTIVE PAGE CONTENT and MATCHED IN-APP KNOWLEDGE ENTRIES.
-   - If the requested information IS clearly present in those contexts:
-     * Set "foundInApp": true.
-     * Extract and synthesize the exact answer clearly with bullet points where helpful, preserving Arabic text / ayah numbers / authentic Hadith/book references exactly as stated in the context.
-     * Include up to 3 relevant items in "matchedSources" using the exact moduleId, title, and a short 1-sentence snippet.
+    // STAGE 1: Check Current Active Page + In-App Zikr+ Knowledge Database
+    const stage1Instruction = `You are the Zikr+ App AI Assistant (${userName ? `assisting ${userName}` : 'ethical Islamic & knowledge assistant'}).
+${userGreetingNote}
+
+YOUR TASK IN STAGE 1:
+Check if the user's question can be answered directly and completely from the supplied "CURRENT ACTIVE PAGE CONTENT" or "MATCHED IN-APP KNOWLEDGE ENTRIES".
+
+RULES:
+1. Ethical Guardrail: If the user asks for something unethical, harmful, abusive, illegal, dangerous, or inappropriate, set "foundInApp": false, "needsWebSearch": false, "isUnethical": true, politely refuse, set "matchedSources": [], and "missingInfoTopic": "".
+2. Greetings / Help queries ("Assalamu Alaikum", "Salam", "Hi", "Hello", "কেমন আছেন", "তুমি কী করতে পারো?", "help"): set "foundInApp": true, "needsWebSearch": false, "isUnethical": false, respond warmly, and mention that you can search the entire Zikr+ library (Quran, 25 Prophets, Seerat, Sahaba, Duas, Hadith, Tablig, Namaz, Nobi 24 Hours, Hajj, Islamic History) AND also fetch verified answers from trusted web sources when something isn't in the app. Set "matchedSources": [] and "missingInfoTopic": "".
+3. Informational Questions:
+   - If the requested information IS clearly and accurately answered in CURRENT ACTIVE PAGE CONTENT or MATCHED IN-APP KNOWLEDGE ENTRIES:
+     * Set "foundInApp": true, "needsWebSearch": false, "isUnethical": false.
+     * Synthesize the exact answer clearly with bullet points, preserving Arabic text, ayah numbers, and Hadith/book references exactly as supplied.
+     * Include up to 3 relevant items in "matchedSources" using exact moduleId, title, and a brief snippet.
      * Set "missingInfoTopic": "".
-   - If the requested information is NOT present in the supplied contexts (or the supplied snippets are unrelated and do NOT actually answer the user's question):
-     * DO NOT fabricate or pull unverified details from outside the app.
-     * Set "foundInApp": false.
-     * Politely inform the user that this specific information could not be found on the current page or in the Zikr+ app library yet, and encourage them to send a request/message using the message form below so the admin can add it.
-     * Set "missingInfoTopic" to a concise, clear summary of the requested topic (max 150 chars).
-     * Set "matchedSources": [].
+   - If the requested information is NOT in the supplied contexts (or the snippets do not actually answer the specific question):
+     * Set "foundInApp": false, "needsWebSearch": true, "isUnethical": false.
+     * Set "missingInfoTopic" to a concise summary of the topic (max 150 chars), "matchedSources": [], and a brief placeholder in "answer".
 4. ${langGuide}`;
 
     const prompt = `${historySummary ? `RECENT CONVERSATION:\n${historySummary}\n\n` : ''}USER QUESTION:\n${question}
@@ -414,7 +417,7 @@ ${matchedContextText || '(No matching database entries retrieved)'}`;
         model: 'gemini-4-hydrogen',
         contents: prompt,
         config: {
-          systemInstruction,
+          systemInstruction: stage1Instruction,
           thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           responseMimeType: 'application/json',
           responseSchema: {
@@ -422,11 +425,19 @@ ${matchedContextText || '(No matching database entries retrieved)'}`;
             properties: {
               foundInApp: {
                 type: Type.BOOLEAN,
-                description: 'True if answered from app/page content or if it is a greeting/help query; false if the requested info is missing from the app/page.',
+                description: 'True if answered directly from app/page content or if greeting/help; false otherwise.',
+              },
+              needsWebSearch: {
+                type: Type.BOOLEAN,
+                description: 'True if the question is ethical and should be answered using trusted web search because it was not found inside the app.',
+              },
+              isUnethical: {
+                type: Type.BOOLEAN,
+                description: 'True only if the request is unethical, harmful, or inappropriate.',
               },
               answer: {
                 type: Type.STRING,
-                description: 'Clear, helpful response grounded in the app content with exact citations if found, or polite notice if missing.',
+                description: 'Grounded response if found in app, polite refusal if unethical, or brief note.',
               },
               matchedSources: {
                 type: Type.ARRAY,
@@ -443,10 +454,10 @@ ${matchedContextText || '(No matching database entries retrieved)'}`;
               },
               missingInfoTopic: {
                 type: Type.STRING,
-                description: 'Concise summary of the missing information when foundInApp is false; empty string otherwise.',
+                description: 'Concise summary of the topic when not found in app; empty string otherwise.',
               },
             },
-            required: ['foundInApp', 'answer', 'matchedSources', 'missingInfoTopic'],
+            required: ['foundInApp', 'needsWebSearch', 'isUnethical', 'answer', 'matchedSources', 'missingInfoTopic'],
           },
         },
       })
@@ -465,11 +476,91 @@ ${matchedContextText || '(No matching database entries retrieved)'}`;
       return res.status(502).json({ error: 'AI model returned an invalid response format. Please try again.' });
     }
 
+    if (parsed.foundInApp || parsed.isUnethical || !parsed.needsWebSearch) {
+      return res.json({
+        foundInApp: Boolean(parsed.foundInApp),
+        foundOnWeb: false,
+        answer: typeof parsed.answer === 'string' ? parsed.answer : '',
+        matchedSources: Array.isArray(parsed.matchedSources) ? parsed.matchedSources.slice(0, 3) : [],
+        webSources: [],
+        missingInfoTopic: typeof parsed.missingInfoTopic === 'string' ? parsed.missingInfoTopic : '',
+      });
+    }
+
+    // STAGE 2: Information was NOT in the app -> Query Trusted Web Sources via Google Search Grounding
+    try {
+      const webSystemInstruction = `You are Zikr+, a helpful, respectful, and ethical AI Assistant${userName ? ` speaking with ${userName}` : ''}.
+The user asked a question that was not found inside the local Zikr+ app library, so you MUST use Google Search to find accurate, verified information from TRUSTED and AUTHORITATIVE websites.
+
+STRICT TRUSTWORTHINESS & ETHICAL RULES:
+1. Ethical Policy: Only answer ethical, constructive, educational, Islamic, or helpful real-world questions. Politely decline anything unethical, harmful, explicit, illegal, or disrespectful.
+2. Trusted Sources Priority:
+   - For Islamic, Quran, Hadith, Seerah, Fiqh, or Dua questions: rely strictly on recognized scholarly & authentic platforms (such as Quran.com, Sunnah.com, iHadis.com, IslamQA.info, IslamWeb.net, SeekersGuidance.org, DarulIftaa, Al-Azhar / Islamic Foundation scholarly texts, classical Tafsir & Sihah Sittah references). Always include authentic Surah:Ayah or Hadith book/number citations when applicable.
+   - For general knowledge, history, science, health, or world facts: rely strictly on reputable encyclopedic, educational, institutional, or official sources (e.g., Britannica, academic/university portals, WHO/UNESCO/official sites, established reference works). Avoid unverified rumors, gossip, or random forums.
+3. Clarity & Honesty: If multiple scholarly opinions exist on a Fiqh/Islamic point, mention the mainstream authentic views calmly. Do not fabricate citations.
+4. Formatting: Present a well-structured, easy-to-read answer (use short paragraphs or clear bullet points). Do not wrap your answer in JSON.
+5. ${langGuide}`;
+
+      const webPrompt = `${historySummary ? `RECENT CONVERSATION:\n${historySummary}\n\n` : ''}USER QUESTION:\n${question}`;
+
+      const webResponse = await callGeminiWithRetry(() =>
+        ai.models.generateContent({
+          model: 'gemini-4-hydrogen',
+          contents: webPrompt,
+          config: {
+            systemInstruction: webSystemInstruction,
+            tools: [{ googleSearch: {} }],
+            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          },
+        })
+      );
+
+      const webAnswer = (webResponse.text ?? '').trim();
+      const chunks = webResponse.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      const seenUris = new Set<string>();
+      const webSources: Array<{ title: string; uri: string }> = [];
+
+      for (const chunk of chunks) {
+        const uri = chunk?.web?.uri;
+        const title = chunk?.web?.title;
+        if (typeof uri === 'string' && /^https?:\/\//i.test(uri) && !seenUris.has(uri)) {
+          seenUris.add(uri);
+          let fallbackTitle = uri;
+          try {
+            fallbackTitle = new URL(uri).hostname.replace(/^www\./, '');
+          } catch {}
+          webSources.push({
+            title: typeof title === 'string' && title.trim() ? title.trim().slice(0, 140) : fallbackTitle,
+            uri,
+          });
+        }
+        if (webSources.length >= 6) break;
+      }
+
+      if (webAnswer) {
+        return res.json({
+          foundInApp: false,
+          foundOnWeb: true,
+          answer: webAnswer,
+          matchedSources: [],
+          webSources,
+          missingInfoTopic:
+            typeof parsed.missingInfoTopic === 'string' && parsed.missingInfoTopic
+              ? parsed.missingInfoTopic
+              : question.slice(0, 140),
+        });
+      }
+    } catch (webErr: any) {
+      console.warn('[API /api/ai-assistant] Trusted web grounding fallback failed:', webErr?.message || webErr);
+    }
+
     return res.json({
-      foundInApp: Boolean(parsed.foundInApp),
+      foundInApp: false,
+      foundOnWeb: false,
       answer: typeof parsed.answer === 'string' ? parsed.answer : '',
-      matchedSources: Array.isArray(parsed.matchedSources) ? parsed.matchedSources.slice(0, 3) : [],
-      missingInfoTopic: typeof parsed.missingInfoTopic === 'string' ? parsed.missingInfoTopic : '',
+      matchedSources: [],
+      webSources: [],
+      missingInfoTopic: typeof parsed.missingInfoTopic === 'string' ? parsed.missingInfoTopic : question.slice(0, 140),
     });
   } catch (err: any) {
     console.error('[API /api/ai-assistant] Error:', err);

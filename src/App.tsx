@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ZikrItem, HistorySession, AppSettings, DuaItem, NavModule, ThemeMode, ZikrLanguage, UserProfile, ZikrRefreshMode } from './types';
 import { DEFAULT_ZIKRS, SUPPORTED_LANGUAGES, getTargetForZikrMode } from './utils/constants';
 import { getLightThemePalette } from './utils/appThemes';
@@ -77,7 +78,7 @@ import {
   loadLibraryHighlightsFromCloud,
 } from './services/firebaseLazy';
 import type { CloudZikrState } from './services/firebase';
-import { BookmarkCheck, Sparkles, WifiOff, Plus, MessageSquare } from 'lucide-react';
+import { BookmarkCheck, Sparkles, WifiOff, Plus, Bot, MessageCircle } from 'lucide-react';
 import { getDetectedDeviceInfo, getDeviceId } from './utils/deviceInfo';
 import { getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
 import { useOnlineStatus } from './hooks/usePWAInstall';
@@ -2133,7 +2134,6 @@ export default function App() {
         onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
         userProfile={userProfile}
         onOpenProfile={(tab = 'profile') => handleOpenProfileModal(tab)}
-        onOpenAssistant={() => setIsAssistantOpen(true)}
       />
 
       {/* Toast Notification Popup */}
@@ -2607,30 +2607,40 @@ export default function App() {
           />
         )}
 
-        {/* Floating Bottom-Right Zikr+ Chat Widget Button (Matching user screenshot) */}
-        {!isAssistantOpen && (
-          <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (settings.soundEnabled) soundHaptics.playTap();
-                setIsAssistantOpen(true);
-              }}
-              className="group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[var(--app-primary,#006A4E)] text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 border-2 border-white/40 cursor-pointer overflow-hidden"
-              title={selectedLanguage === 'bn' ? `Zikr+ চ্যাটবট (${userProfile?.name || 'সহকারী'})` : `Zikr+ Chatbot (${userProfile?.name || 'Assistant'})`}
+        {/* Floating Right-Side Zikr+ Chatbot Button (Always visible on right side above BottomNav & Add button) */}
+        {!isAssistantOpen && typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              className={`fixed right-3.5 sm:right-6 z-[66] transition-all duration-300 ${
+                activeModule === 'zikir_counter'
+                  ? 'bottom-[140px] sm:bottom-[142px]'
+                  : 'bottom-[76px] sm:bottom-[76px]'
+              }`}
             >
-              <div className="absolute inset-0 bg-gradient-to-tr from-[var(--app-primary-dark,#005740)] to-[var(--app-primary-light,#6ee7b7)] opacity-90 group-hover:opacity-100 transition-opacity" />
-              <div className="relative flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
-              </div>
-              {/* Online pulsing dot */}
-              <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400 border-2 border-white"></span>
-              </span>
-            </button>
-          </div>
-        )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (settings.soundEnabled) soundHaptics.playTap();
+                  setIsAssistantOpen(true);
+                }}
+                className="group relative flex items-center justify-center gap-1 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#00965e] hover:bg-[#007f4f] text-white shadow-[0_8px_24px_rgba(0,150,94,0.45)] hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/40 cursor-pointer"
+                aria-label={selectedLanguage === 'bn' ? 'Zikr+ চ্যাটবট খুলুন' : 'Open Zikr+ Chatbot'}
+                title={
+                  selectedLanguage === 'bn'
+                    ? `Zikr+ চ্যাটবট${userProfile?.isSignedIn && userProfile?.name ? ` • ${userProfile.name}` : ''}`
+                    : `Zikr+ Chatbot${userProfile?.isSignedIn && userProfile?.name ? ` • ${userProfile.name}` : ''}`
+                }
+              >
+                <Bot className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
+                <MessageCircle className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
+                <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-300 border-2 border-white" />
+                </span>
+              </button>
+            </div>,
+            document.body
+          )}
       </React.Suspense>
     </div>
   );

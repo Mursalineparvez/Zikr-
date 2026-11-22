@@ -24,8 +24,20 @@ export const QuickScrollNavigator: React.FC<QuickScrollNavigatorProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isIdle, setIsIdle] = useState(false);
-  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastScrollYRef = useRef<number>(
+    typeof window !== 'undefined' ? window.scrollY || document.documentElement.scrollTop : 0
+  );
+  const isHoveredRef = useRef<boolean>(false);
+
+  const scheduleHide = () => {
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    hideTimeoutRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setIsVisible(false);
+      }
+    }, 1000);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,46 +49,53 @@ export const QuickScrollNavigator: React.FC<QuickScrollNavigatorProps> = ({
       const percent = Math.min(100, Math.max(0, Math.round((currentScroll / maxScroll) * 100)));
       setScrollTop(currentScroll);
       setScrollPercent(percent);
-
-      const isScrollable = fullHeight > windowHeight + 40;
-      const shouldShow = isScrollable || currentScroll > 30;
-      setIsVisible(shouldShow);
       setIsNearBottom(currentScroll + windowHeight >= fullHeight - 120);
 
-      setIsIdle(false);
-      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
-      fadeTimeoutRef.current = setTimeout(() => {
-        setIsIdle(true);
-      }, 4000);
+      const delta = Math.abs(currentScroll - lastScrollYRef.current);
+      lastScrollYRef.current = currentScroll;
+
+      const isScrollable = fullHeight > windowHeight + 40;
+      if ((isScrollable || currentScroll > 20) && delta > 0) {
+        setIsVisible(true);
+        scheduleHide();
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, []);
+
+  // Reset visibility when switching modules/pages
+  useEffect(() => {
+    setIsVisible(false);
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    lastScrollYRef.current = window.scrollY || document.documentElement.scrollTop;
+  }, [activeModule]);
 
   const handleScrollToTop = () => {
     if (soundEnabled) soundHaptics.playTap();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    scheduleHide();
   };
 
   const handleScrollToBottom = () => {
     if (soundEnabled) soundHaptics.playTap();
     const fullHeight = document.documentElement.scrollHeight;
     window.scrollTo({ top: fullHeight, behavior: 'smooth' });
+    scheduleHide();
   };
 
   if (!isVisible) return null;
 
-  // Position cleanly above bottom dock/floating button
+  // Position cleanly above bottom dock and floating right-side chatbot button
   const positionClasses =
     activeModule === 'zikir_counter'
-      ? 'bottom-32 right-2.5 sm:right-5'
-      : 'bottom-20 right-2.5 sm:right-5';
+      ? 'bottom-[206px] right-2.5 sm:right-5'
+      : 'bottom-[142px] right-2.5 sm:right-5';
 
   const circumference = 2 * Math.PI * 14; // r=14 for compact circle
   const strokeDashoffset = circumference - (scrollPercent / 100) * circumference;
@@ -87,17 +106,28 @@ export const QuickScrollNavigator: React.FC<QuickScrollNavigatorProps> = ({
   return (
     <div
       onMouseEnter={() => {
+        isHoveredRef.current = true;
         setIsHovered(true);
-        setIsIdle(false);
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
       }}
-      onMouseLeave={() => setIsHovered(false)}
-      className={`fixed ${positionClasses} z-[64] flex flex-col items-center transition-all duration-300 select-none ${
-        isIdle && !isHovered ? 'opacity-40 hover:opacity-100 scale-95' : 'opacity-100 scale-100'
+      onMouseLeave={() => {
+        isHoveredRef.current = false;
+        setIsHovered(false);
+        scheduleHide();
+      }}
+      onTouchStart={() => {
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      }}
+      onTouchEnd={() => {
+        scheduleHide();
+      }}
+      className={`fixed ${positionClasses} z-[64] flex flex-col items-center transition-all duration-200 select-none animate-in fade-in zoom-in-95 ${
+        isHovered ? 'scale-105' : 'scale-100'
       }`}
     >
       {/* Ultra-Slim, Compact Vertical Pod */}
       <div
-        className={`flex flex-col items-center p-1 rounded-2xl backdrop-blur-xl border shadow-xl transition-all duration-300 gap-1 ${
+        className={`flex flex-col items-center p-1 rounded-2xl backdrop-blur-xl border shadow-xl transition-all duration-200 gap-1 ${
           isDay
             ? 'bg-white/95 border-emerald-600/30 shadow-emerald-950/15 text-slate-900'
             : 'bg-[#082228]/95 border-emerald-500/40 shadow-black/70 text-emerald-50'
