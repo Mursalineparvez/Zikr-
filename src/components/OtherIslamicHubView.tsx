@@ -257,20 +257,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           : "Sunnah Guideline based on Prophet's 24 hours routine with 14 timeline slots, 12 book chapters and daily duas.",
       icon: <span className="text-2xl">⏰</span>,
       color: 'from-emerald-600/30 via-teal-600/20 to-amber-500/10 border-emerald-500/50',
-      badge:
-        selectedLanguage === 'bn'
-          ? '২৪ ঘণ্টা রুটিন'
-          : selectedLanguage === 'ar'
-          ? 'جدول ٢٤ ساعة'
-          : selectedLanguage === 'ur'
-          ? '۲۴ گھنٹے معمول'
-          : selectedLanguage === 'hi'
-          ? '२४ घंटे रूटीन'
-          : selectedLanguage === 'id'
-          ? 'Rutinitas 24 Jam'
-          : selectedLanguage === 'tr'
-          ? '24 Saat Rutini'
-          : '24H Sunnah',
+      badge: selectedLanguage === 'bn' ? '১২ মাসের আমল ও ক্যালেন্ডার' : '12 Months Calendar',
     },
     {
       id: 'seerat_un_nabi' as OtherSubSection,
