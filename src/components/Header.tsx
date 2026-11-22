@@ -41,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStandaloneModal,
   userProfile,
   onOpenProfile,
+  onOpenAssistant,
 }) => {
   const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -115,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Right Status */}
+          {/* Right Status & Zikr+ AI Assistant Chat Button */}
           <div className="flex items-center gap-2 shrink-0">
             {!isOnline && (
               <div
@@ -125,6 +126,24 @@ export const Header: React.FC<HeaderProps> = ({
                 <WifiOff className="w-3 h-3 text-amber-300" />
                 <span className="hidden sm:inline">{selectedLanguage === 'bn' ? 'অফলাইন' : selectedLanguage === 'ar' ? 'غير متصل' : 'Offline'}</span>
               </div>
+            )}
+            
+            {/* Zikr+ AI Assistant Chat Button */}
+            {onOpenAssistant && (
+              <button
+                type="button"
+                onClick={onOpenAssistant}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--app-primary-dark,#005740)] hover:bg-[var(--app-primary-light,#6ee7b7)]/20 border border-white/40 text-white shadow-md transition transform hover:scale-105 active:scale-95 group shrink-0 cursor-pointer"
+                title={selectedLanguage === 'bn' ? 'Zikr+ AI সহকারী ও চ্যাটবট' : 'Zikr+ AI Assistant & Chatbot'}
+              >
+                <Sparkles className="w-4 h-4 text-[var(--app-primary-light,#6ee7b7)] animate-pulse" />
+                <span className="text-xs font-extrabold tracking-wide">
+                  Zikr<span className="text-[var(--app-primary-light,#6ee7b7)]">+</span>
+                </span>
+                <span className="hidden sm:inline text-[10px] font-bold px-1.5 py-0.2 rounded bg-white/20 text-white/90">
+                  AI
+                </span>
+              </button>
             )}
           </div>
         </div>

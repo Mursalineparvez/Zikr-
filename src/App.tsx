@@ -77,7 +77,7 @@ import {
   loadLibraryHighlightsFromCloud,
 } from './services/firebaseLazy';
 import type { CloudZikrState } from './services/firebase';
-import { BookmarkCheck, Sparkles, WifiOff, Plus } from 'lucide-react';
+import { BookmarkCheck, Sparkles, WifiOff, Plus, MessageSquare } from 'lucide-react';
 import { getDetectedDeviceInfo, getDeviceId } from './utils/deviceInfo';
 import { getCurrentPrayerSegmentDetails, PrayerSegmentDetails } from './utils/prayerTimes';
 import { useOnlineStatus } from './hooks/usePWAInstall';
@@ -2133,6 +2133,7 @@ export default function App() {
         onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
         userProfile={userProfile}
         onOpenProfile={(tab = 'profile') => handleOpenProfileModal(tab)}
+        onOpenAssistant={() => setIsAssistantOpen(true)}
       />
 
       {/* Toast Notification Popup */}
@@ -2604,6 +2605,31 @@ export default function App() {
             onNavigateModule={handleNavigateFromAssistant}
             onToast={showToast}
           />
+        )}
+
+        {/* Floating Bottom-Right Zikr+ Chat Widget Button (Matching user screenshot) */}
+        {!isAssistantOpen && (
+          <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (settings.soundEnabled) soundHaptics.playTap();
+                setIsAssistantOpen(true);
+              }}
+              className="group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[var(--app-primary,#006A4E)] text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 border-2 border-white/40 cursor-pointer overflow-hidden"
+              title={selectedLanguage === 'bn' ? `Zikr+ চ্যাটবট (${userProfile?.name || 'সহকারী'})` : `Zikr+ Chatbot (${userProfile?.name || 'Assistant'})`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-tr from-[var(--app-primary-dark,#005740)] to-[var(--app-primary-light,#6ee7b7)] opacity-90 group-hover:opacity-100 transition-opacity" />
+              <div className="relative flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+              </div>
+              {/* Online pulsing dot */}
+              <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-400 border-2 border-white"></span>
+              </span>
+            </button>
+          </div>
         )}
       </React.Suspense>
     </div>
