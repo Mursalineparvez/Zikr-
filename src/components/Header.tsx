@@ -24,6 +24,7 @@ interface HeaderProps {
   onOpenStandaloneModal: () => void;
   userProfile?: UserProfile;
   onOpenProfile?: (tab?: 'profile' | 'settings') => void;
+  onOpenAssistant?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({

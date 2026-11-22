@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v23-nobi-pdf
+// Version: zikrmate-v24-scroll-nav
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v23-nobi-pdf';
+const CACHE_NAME = 'zikrmate-v24-scroll-nav';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)

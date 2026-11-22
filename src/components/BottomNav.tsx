@@ -10,7 +10,6 @@ import {
   ClipboardCheck,
   Plus,
   BookOpen,
-  Sparkles,
   LayoutGrid,
 } from 'lucide-react';
 
@@ -31,7 +30,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   activeModule,
   onModuleChange,
   onOpenAddModal,
-  onOpenAssistant,
   themeMode = 'day',
   selectedLanguage = 'bn',
   soundEnabled = true,
@@ -143,7 +141,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         </button>
       )}
 
-      {/* Universal Bottom Dock across ALL pages, sub-pages & reading views */}
+      {/* Universal Bottom Dock across ALL pages (5 equal grid items: 4 primary + More) */}
       <nav
         aria-label={isBn ? 'মূল নেভিগেশন' : 'Main Navigation'}
         className={`fixed bottom-0 left-0 right-0 z-[65] transition-colors duration-200 border-t ${
@@ -152,7 +150,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             : 'bg-[#0b1e22]/95 backdrop-blur-md border-[#14373e] shadow-[0_-6px_24px_rgba(0,0,0,0.45)]'
         }`}
       >
-        <div className="max-w-2xl mx-auto grid grid-cols-6 items-center px-1 pt-1 pb-1.5 pb-safe select-none">
+        <div className="max-w-2xl mx-auto grid grid-cols-5 items-center px-2 pt-1 pb-1.5 pb-safe select-none">
           {primaryItems.map((item) => {
             const isActive = item.isActive;
             return (
@@ -160,7 +158,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 key={item.id}
                 type="button"
                 onClick={() => navigateToModule(item.id)}
-                className={`min-h-[46px] flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer relative ${
+                className={`min-h-[48px] flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer relative ${
                   isActive
                     ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 font-bold'
                     : isDay
@@ -177,7 +175,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   )}
                 </div>
                 <span
-                  className={`text-[10.5px] sm:text-xs mt-1 leading-none tracking-tight text-center whitespace-nowrap truncate max-w-full px-0.5 ${
+                  className={`text-[11px] sm:text-xs mt-1 leading-none tracking-tight text-center whitespace-nowrap truncate max-w-full px-0.5 ${
                     isActive
                       ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 font-bold'
                       : isDay
@@ -191,39 +189,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             );
           })}
 
-          {/* 5. AI Knowledge Assistant Button (Always accessible at bottom on every page) */}
-          <button
-            type="button"
-            onClick={() => {
-              if (soundEnabled) soundHaptics.playTap();
-              onOpenAssistant?.();
-            }}
-            className={`min-h-[46px] flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer relative ${
-              isDay
-                ? 'text-emerald-700 hover:bg-emerald-50/90 font-bold'
-                : 'text-amber-300 hover:bg-emerald-950/60 font-bold'
-            }`}
-            title={isBn ? 'Zikr+ AI তথ্য সহায়ক খুলুন' : 'Open Zikr+ AI Assistant'}
-          >
-            <div
-              className={`w-6 h-5 rounded-lg flex items-center justify-center ${
-                isDay
-                  ? 'bg-emerald-100/90 text-emerald-700'
-                  : 'bg-amber-400/15 text-amber-300'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 stroke-[2.2]" />
-            </div>
-            <span className="text-[10.5px] sm:text-xs mt-1 leading-none tracking-tight text-center whitespace-nowrap truncate max-w-full px-0.5 font-bold">
-              {isBn ? 'AI তথ্য' : 'AI Info'}
-            </span>
-          </button>
-
-          {/* 6. More / Other Islamic Hub ("আরও") */}
+          {/* 5. More / Other Islamic Hub ("আরও") */}
           <button
             type="button"
             onClick={() => navigateToModule('other')}
-            className={`min-h-[46px] flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer relative ${
+            className={`min-h-[48px] flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer relative ${
               isOtherActive
                 ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 font-bold'
                 : isDay
@@ -242,7 +212,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               />
             </div>
             <span
-              className={`text-[10.5px] sm:text-xs mt-1 leading-none tracking-tight text-center whitespace-nowrap truncate max-w-full px-0.5 ${
+              className={`text-[11px] sm:text-xs mt-1 leading-none tracking-tight text-center whitespace-nowrap truncate max-w-full px-0.5 ${
                 isOtherActive
                   ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 font-bold'
                   : isDay
