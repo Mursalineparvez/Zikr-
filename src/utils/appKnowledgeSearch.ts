@@ -85,8 +85,10 @@ export function getModuleDisplayLabel(moduleId: string, lang: ZikrLanguage = 'bn
 }
 
 const PHONETIC_EXPANSIONS: Array<[RegExp, string[]]> = [
-  [/\b(namaz|namaj|salat|salah|prayer|pray)\b/gi, ['নামাজ', 'সালাত', 'ওয়াক্ত', 'রাকাত', 'ফজর', 'যোহর', 'আসর', 'মাগরিব', 'এশা', 'namaz', 'salat']],
-  [/\b(tahajjud|tahajjud)\b/gi, ['তাহাজ্জুদ', 'tahajjud', 'রাতের নামাজ']],
+  [/\b(namaz|namaj|salat|salah|prayer|pray)\b|নামাজ|সালাত/gi, ['নামাজ', 'সালাত', 'ওয়াক্ত', 'রাকাত', 'ফজর', 'যোহর', 'আসর', 'মাগরিব', 'এশা', 'namaz', 'salat']],
+  [/(নিষিদ্ধ|মাকরূহ|মাকরুহ|হারাম|যাওয়াল|সূর্যোদয়|সূর্যাস্ত|দ্বিপ্রহর)|\b(prohibited|forbidden|makruh|zawal)\b/gi, ['নিষিদ্ধ', 'মাকরূহ', 'মাকরূহে তাহরীমী', 'হারাম', 'সূর্যোদয়', 'সূর্যাস্ত', 'যাওয়াল', 'দ্বিপ্রহর', 'prohibited', 'makruh']],
+  [/\b(tahajjud|ishraq|duha|chast|witr|qaza)\b|তাহাজ্জুদ|ইশরাক|চাশত|দুহা|বিতর|কাজা/gi, ['তাহাজ্জুদ', 'ইশরাক', 'চাশত', 'দুহা', 'বিতর', 'কাজা', 'নফল', 'tahajjud']],
+  [/\b(wudu|wuzu|oju|ghusl|tayammum)\b|ওযু|অজু|গোসল|তায়াম্মুম/gi, ['ওযু', 'অজু', 'পবিত্রতা', 'গোসল', 'তায়াম্মুম', 'wudu']],
   [/\b(dua|doya|doaa|supplication)\b/gi, ['দোয়া', 'দোয়া', 'মুনাজাত', 'হিসনুল', 'dua']],
   [/\b(hadith|hadis|bukhari|muslim|tirmidhi)\b/gi, ['হাদিস', 'হাদীস', 'বুখারী', 'মুসলিম', 'তিরমিযী', 'hadith']],
   [/\b(quran|koran|surah|sura|ayat|ayah)\b/gi, ['কুরআন', 'সূরা', 'আয়াত', 'আয়াত', 'surah', 'quran']],
@@ -130,9 +132,23 @@ const PHONETIC_EXPANSIONS: Array<[RegExp, string[]]> = [
 
 const STOP_WORDS = new Set([
   'the', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'of', 'for', 'to', 'a', 'an', 'and', 'or', 'what', 'who', 'where', 'when', 'how', 'why', 'about', 'tell', 'me', 'find', 'search', 'please', 'this', 'page', 'app',
-  'কি', 'কী', 'কে', 'কোথায়', 'কবে', 'কেন', 'কিভাবে', 'কীভাবে', 'সম্পর্কে', 'বিষয়ে', 'নিয়ে', 'এই', 'পেজ', 'পেজে', 'অ্যাপ', 'অ্যাপে', 'থেকে', 'খুঁজে', 'দাও', 'দিন', 'বলো', 'বলুন', 'জানতে', 'চাই', 'কোন', 'কোনো', 'আছে', 'নাকি', 'আর', 'এবং', 'বা', 'ও', 'এর', 'তে',
-  'ki', 'ke', 'kothay', 'kobe', 'keno', 'kivabe', 'somporke', 'niye', 'ei', 'page', 'theke', 'khuje', 'dao', 'den', 'bolo', 'bolun', 'ase', 'ache', 'ar', 'er',
+  'কি', 'কী', 'কে', 'কোথায়', 'কোথায়', 'কবে', 'কেন', 'কিভাবে', 'কীভাবে', 'সম্পর্কে', 'বিষয়ে', 'বিষয়ে', 'নিয়ে', 'নিয়ে', 'এই', 'পেজ', 'পেজে', 'অ্যাপ', 'অ্যাপে', 'থেকে', 'খুঁজে', 'দাও', 'দিন', 'বলো', 'বলুন', 'জানতে', 'চাই', 'কোন', 'কোনো', 'কোনগুলো', 'কোনগুলা', 'কোনটি', 'কোনটা', 'কারা', 'কাদের', 'কাকে', 'কয়টি', 'কয়টি', 'কত', 'কতগুলো', 'দেখাও', 'বিস্তারিত', 'সংক্ষেপে', 'হলো', 'হয়', 'হয়', 'হবে', 'পারে', 'যায়', 'যায়', 'করা', 'করে', 'আছে', 'নাকি', 'আর', 'এবং', 'বা', 'ও', 'এর', 'তে',
+  'ki', 'ke', 'kothay', 'kobe', 'keno', 'kivabe', 'somporke', 'niye', 'ei', 'page', 'theke', 'khuje', 'dao', 'den', 'bolo', 'bolun', 'ase', 'ache', 'ar', 'er', 'konti', 'kongulo',
 ]);
+
+const BENGALI_SUFFIXES = [
+  'গুলোর', 'গুলাের', 'গুলো', 'গুলা', 'সমূহের', 'সমূহ', 'দেরকে', 'দের', 'গণের', 'গণ', 'ভাবে', 'ভাবেই', 'য়ের', 'ের', 'তেও', 'তে', 'কে', 'রা', 'য়', 'ে', 'র',
+];
+
+function stemBanglaToken(tok: string): string {
+  if (!/[\u0980-\u09FF]/.test(tok) || tok.length < 4) return tok;
+  for (const suffix of BENGALI_SUFFIXES) {
+    if (tok.endsWith(suffix) && tok.length - suffix.length >= 3) {
+      return tok.slice(0, tok.length - suffix.length);
+    }
+  }
+  return tok;
+}
 
 function normalizeText(value: string): string {
   return value
@@ -150,7 +166,16 @@ function buildSearchTokens(query: string): { rawNormalized: string; tokens: stri
     .map((t) => t.trim())
     .filter((t) => t.length >= 2 && !STOP_WORDS.has(t));
 
-  const expandedSet = new Set<string>(rawTokens);
+  const primaryTokenSet = new Set<string>();
+  for (const tok of rawTokens) {
+    primaryTokenSet.add(tok);
+    const stem = stemBanglaToken(tok);
+    if (stem && stem.length >= 2 && !STOP_WORDS.has(stem)) {
+      primaryTokenSet.add(stem);
+    }
+  }
+
+  const expandedSet = new Set<string>(primaryTokenSet);
 
   for (const [regex, synonyms] of PHONETIC_EXPANSIONS) {
     regex.lastIndex = 0;
@@ -169,9 +194,10 @@ function buildSearchTokens(query: string): { rawNormalized: string; tokens: stri
     });
   }
 
+  const primaryTokens = Array.from(primaryTokenSet);
   return {
     rawNormalized,
-    tokens: rawTokens.length > 0 ? rawTokens : [rawNormalized].filter(Boolean),
+    tokens: primaryTokens.length > 0 ? primaryTokens : [rawNormalized].filter(Boolean),
     expandedTokens: Array.from(expandedSet),
   };
 }
@@ -610,8 +636,24 @@ async function buildKnowledgeIndex(): Promise<IndexedEntry[]> {
       });
     }),
 
-    // 10. Prayer / Namaz Details
+    // 10. Prayer / Namaz Details + Prohibited / Makruh Times
     import('../data/prayerDetailsData').then((m) => {
+      // Dedicated consolidated entry for Prohibited & Makruh Prayer Times (shown in SalatTimeView & Namaz Details)
+      pushEntry(
+        'prayer_prohibited_times_summary',
+        'salat_time',
+        'নামাজের নিষিদ্ধ ও মাকরূহ সময়সমূহ (Prohibited Prayer Times)',
+        joinNonEmpty([
+          'ইসলামী শরীয়তে ৩টি সময়ে যেকোনো ফরজ, ওয়াজিব, সুন্নত, নফল নামাজ ও তিলাওয়াতের সিজদা করা সম্পূর্ণ নিষিদ্ধ (হারাম / মাকরূহে তাহরীমী):',
+          '১. সূর্যোদয়ের সময়: সূর্য উদিত হওয়া শুরু থেকে আকাশে সম্পূর্ণ উঠে উজ্জ্বল হওয়া পর্যন্ত (প্রায় ১৫–২০ মিনিট)।',
+          '২. ঠিক দ্বিপ্রহর বা যাওয়ালের সময়: সূর্য ঠিক মাথার ওপর খাড়া অবস্থান করার সময় (জোহরের ওয়াক্ত শুরুর পূর্বের প্রায় ১০–১৫ মিনিট)।',
+          '৩. সূর্যাস্তের সময়: সূর্য হলুদ বা ম্লান বর্ণ ধারণ করা থেকে সম্পূর্ণ অস্ত যাওয়া পর্যন্ত (সূর্যাস্তের পূর্বের প্রায় ১৫–২০ মিনিট; তবে ঐ দিনের আসরের ফরজ বাকি থাকলে তা পড়া যাবে)।',
+          'এছাড়া ২টি সময়ে কেবল নফল নামাজ পড়া মাকরূহ/নিষিদ্ধ: ফজরের ফরজ নামাজের পর থেকে সূর্যোদয় পর্যন্ত এবং আসরের ফরজ নামাজের পর থেকে সূর্যাস্ত পর্যন্ত।',
+        ]),
+        'সহীহ মুসলিম, হাদিস নং ৮২৫ ও ৮৩১; Zikr+ সালাত টাইম ও নামাজ গাইড',
+        'নামাজ পড়া নিষিদ্ধ সময় হারাম ওয়াক্ত মাকরুহ সূর্যোদয় যাওয়াল সূর্যাস্ত makruh prohibited time'
+      );
+
       Object.values(m.ALL_PRAYER_DETAILS || {}).forEach((pr) => {
         pushEntry(
           `prayer_${pr.id}`,
@@ -620,13 +662,55 @@ async function buildKnowledgeIndex(): Promise<IndexedEntry[]> {
           joinNonEmpty([
             pr.subTitleBn,
             `সময়: ${pr.celestialSignBn}`,
-            pr.timingConditions?.mustahabTimeBn,
-            pr.timingConditions?.makruhTimeBn,
+            pr.timingConditions?.mustahabTimeBn ? `মুস্তাহাব সময়: ${pr.timingConditions.mustahabTimeBn}` : '',
+            pr.timingConditions?.makruhTimeBn ? `মাকরূহ/নিষিদ্ধ সময়: ${pr.timingConditions.makruhTimeBn}` : '',
+            pr.timingConditions?.fiqhDetailsBn,
             pr.virtues?.descriptionBn,
             pr.rakatsBreakdown?.map((r) => `${r.typeBn}: ${r.rakats} রাকাত (${r.rulingBn})`).join('; '),
           ]),
           pr.hadiths?.[0] ? `${pr.hadiths[0].bookBn} #${pr.hadiths[0].hadithNumber}` : 'কুরআন ও সহিহ হাদিস',
-          pr.nameAr
+          `${pr.nameAr} নিষিদ্ধ সময়`
+        );
+      });
+    }),
+
+    // 10b. Namaj Guide Steps, Prayer Duas & Nafl Prayers
+    import('../utils/namajTranslations').then((m) => {
+      (m.getLocalizedPrayers('bn') || []).forEach((p) => {
+        pushEntry(
+          `namaj_item_${p.id}`,
+          'namaj',
+          `${p.name} — মোট ${p.totalRakats} রাকাত (${p.breakdown})`,
+          joinNonEmpty([p.timeRange, p.virtue, p.hadithText]),
+          p.hadithRef || 'নামাজ শিক্ষা গাইড',
+          'নামাজ রাকাত নিয়ম সময়'
+        );
+      });
+      (m.getLocalizedPrayerSteps('bn') || []).forEach((st) => {
+        pushEntry(
+          `namaj_step_${st.stepNumber}`,
+          'namaj',
+          `নামাজ পড়ার ধাপ ${st.stepNumber}: ${st.title}`,
+          joinNonEmpty([st.action, st.recitation, st.tip]),
+          'নামাজ শিক্ষা গাইড'
+        );
+      });
+      (m.getLocalizedEssentialDuas('bn') || []).forEach((d) => {
+        pushEntry(
+          `namaj_dua_${d.id}`,
+          'namaj',
+          `নামাজের দোয়া: ${d.title}`,
+          joinNonEmpty([d.context, d.arabic, d.transliteration, d.meaning]),
+          d.reference
+        );
+      });
+      (m.getLocalizedNaflPrayers('bn') || []).forEach((n, idx) => {
+        pushEntry(
+          `namaj_nafl_${idx}`,
+          'namaj',
+          `${n.title} (${n.rakats})`,
+          joinNonEmpty([`সময়: ${n.time}`, n.benefit, n.steps]),
+          'নফল নামাজ গাইড'
         );
       });
     }),
@@ -868,17 +952,22 @@ export async function searchAppKnowledge(
       }
     }
 
-    // 2. Original non-stopword token matches
+    // 2. Original non-stopword token matches (counted uniquely per base stem)
     let directHits = 0;
     for (const tok of tokens) {
       if (tok.length < 2) continue;
       if (entry.searchTitle.includes(tok)) {
-        score += 14;
+        score += 18;
         directHits += 1;
       } else if (entry.searchBody.includes(tok)) {
-        score += 6;
+        score += 8;
         directHits += 1;
       }
+    }
+
+    // Strong multi-token relevance bonus when multiple query terms appear together
+    if (directHits >= 2) {
+      score += (directHits - 1) * 16;
     }
 
     // 3. Expanded Banglish/Bangla/English phonetic alias matches
@@ -886,10 +975,10 @@ export async function searchAppKnowledge(
     for (const exp of expandedTokens) {
       if (exp.length < 2 || tokens.includes(exp)) continue;
       if (entry.searchTitle.includes(exp)) {
-        score += 9;
+        score += 10;
         aliasHits += 1;
       } else if (entry.searchBody.includes(exp)) {
-        score += 3;
+        score += 4;
         aliasHits += 1;
       }
     }

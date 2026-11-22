@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
@@ -278,6 +279,60 @@ app.delete('/api/admin/users/:userKey', (req, res) => {
 // ============================================================================
 // 4. ZIKR+ AI KNOWLEDGE ASSISTANT (/api/ai-assistant)
 // ============================================================================
+function extractErrorStatus(err: any): number {
+  const numeric = Number(err?.status ?? err?.statusCode ?? err?.code);
+  if (Number.isFinite(numeric) && numeric >= 400 && numeric < 600) {
+    return numeric;
+  }
+  const msg = String(err?.message || '');
+  if (/429|RESOURCE_EXHAUSTED/i.test(msg)) return 429;
+  if (/403|PERMISSION_DENIED/i.test(msg)) return 403;
+  if (/400|API_KEY_INVALID|INVALID_ARGUMENT/i.test(msg)) return 400;
+  if (/404|NOT_FOUND/i.test(msg)) return 404;
+  if (/503|UNAVAILABLE/i.test(msg)) return 503;
+  if (/504|DEADLINE_EXCEEDED|timeout/i.test(msg)) return 504;
+  return 500;
+}
+
+function isTransientGeminiError(err: any): boolean {
+  const status = extractErrorStatus(err);
+  if (status === 429 || status === 500 || status === 502 || status === 503 || status === 504) {
+    return true;
+  }
+  const msg = String(err?.message || '');
+  return /ECONNRESET|ETIMEDOUT|EAI_AGAIN|fetch failed|network|socket|unavailable|overloaded/i.test(msg);
+}
+
+async function callGeminiWithRetry<T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> {
+  let lastError: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      lastError = err;
+      if (attempt >= maxRetries || !isTransientGeminiError(err)) {
+        throw err;
+      }
+      const delayMs = 500 * Math.pow(2, attempt) + Math.floor(Math.random() * 200);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastError;
+}
+
+function parseGeminiJsonPayload(rawText: string): any {
+  let cleaned = rawText.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  }
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+  }
+  return JSON.parse(cleaned);
+}
+
 app.post('/api/ai-assistant', async (req, res) => {
   try {
     const ai = getGeminiClient();
@@ -297,23 +352,23 @@ app.post('/api/ai-assistant', async (req, res) => {
     const activePage = body.activePage && typeof body.activePage === 'object' ? body.activePage : {};
     const activeModuleId = typeof activePage.moduleId === 'string' ? activePage.moduleId.slice(0, 80) : 'other';
     const activePageTitle = typeof activePage.pageTitle === 'string' ? activePage.pageTitle.slice(0, 200) : 'Zikr+ App';
-    const visibleText = typeof activePage.visibleText === 'string' ? activePage.visibleText.slice(0, 7000) : '';
+    const visibleText = typeof activePage.visibleText === 'string' ? activePage.visibleText.slice(0, 3500) : '';
 
-    const rawEntries = Array.isArray(body.matchedEntries) ? body.matchedEntries.slice(0, 12) : [];
+    const rawEntries = Array.isArray(body.matchedEntries) ? body.matchedEntries.slice(0, 8) : [];
     const matchedContextText = rawEntries
       .map((entry: any, idx: number) => {
         const title = String(entry?.title || '').slice(0, 180);
         const modId = String(entry?.moduleId || '').slice(0, 60);
         const modLabel = String(entry?.moduleLabel || '').slice(0, 100);
-        const ref = String(entry?.reference || '').slice(0, 240);
-        const snippet = String(entry?.snippet || '').slice(0, 1400);
+        const ref = String(entry?.reference || '').slice(0, 220);
+        const snippet = String(entry?.snippet || '').slice(0, 850);
         return `[#${idx + 1}] Module: ${modLabel} (id: ${modId}) | Title: ${title}${ref ? ` | Ref: ${ref}` : ''}\nContent: ${snippet}`;
       })
       .join('\n\n---\n\n');
 
-    const rawHistory = Array.isArray(body.history) ? body.history.slice(-6) : [];
+    const rawHistory = Array.isArray(body.history) ? body.history.slice(-4) : [];
     const historySummary = rawHistory
-      .map((h: any) => `${h?.role === 'model' ? 'Assistant' : 'User'}: ${String(h?.text || '').slice(0, 500)}`)
+      .map((h: any) => `${h?.role === 'model' ? 'Assistant' : 'User'}: ${String(h?.text || '').slice(0, 400)}`)
       .join('\n');
 
     const langGuide =
@@ -353,53 +408,62 @@ ${visibleText || '(No visible text extracted from active page)'}
 MATCHED IN-APP KNOWLEDGE ENTRIES (${rawEntries.length}):
 ${matchedContextText || '(No matching database entries retrieved)'}`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-4-hydrogen',
-      contents: prompt,
-      config: {
-        systemInstruction,
-        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            foundInApp: {
-              type: Type.BOOLEAN,
-              description: 'True if answered from app/page content or if it is a greeting/help query; false if the requested info is missing from the app/page.',
-            },
-            answer: {
-              type: Type.STRING,
-              description: 'Clear, helpful response grounded in the app content with exact citations if found, or polite notice if missing.',
-            },
-            matchedSources: {
-              type: Type.ARRAY,
-              description: 'Up to 3 matching sections from Zikr+ where the info was extracted.',
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  moduleId: { type: Type.STRING },
-                  snippet: { type: Type.STRING },
+    const response = await callGeminiWithRetry(() =>
+      ai.models.generateContent({
+        model: 'gemini-4-hydrogen',
+        contents: prompt,
+        config: {
+          systemInstruction,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              foundInApp: {
+                type: Type.BOOLEAN,
+                description: 'True if answered from app/page content or if it is a greeting/help query; false if the requested info is missing from the app/page.',
+              },
+              answer: {
+                type: Type.STRING,
+                description: 'Clear, helpful response grounded in the app content with exact citations if found, or polite notice if missing.',
+              },
+              matchedSources: {
+                type: Type.ARRAY,
+                description: 'Up to 3 matching sections from Zikr+ where the info was extracted.',
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    title: { type: Type.STRING },
+                    moduleId: { type: Type.STRING },
+                    snippet: { type: Type.STRING },
+                  },
+                  required: ['title', 'moduleId', 'snippet'],
                 },
-                required: ['title', 'moduleId', 'snippet'],
+              },
+              missingInfoTopic: {
+                type: Type.STRING,
+                description: 'Concise summary of the missing information when foundInApp is false; empty string otherwise.',
               },
             },
-            missingInfoTopic: {
-              type: Type.STRING,
-              description: 'Concise summary of the missing information when foundInApp is false; empty string otherwise.',
-            },
+            required: ['foundInApp', 'answer', 'matchedSources', 'missingInfoTopic'],
           },
-          required: ['foundInApp', 'answer', 'matchedSources', 'missingInfoTopic'],
         },
-      },
-    });
+      })
+    );
 
     const rawText = (response.text ?? '').trim();
     if (!rawText) {
       return res.status(502).json({ error: 'Empty response received from Gemini model.' });
     }
 
-    const parsed = JSON.parse(rawText);
+    let parsed: any;
+    try {
+      parsed = parseGeminiJsonPayload(rawText);
+    } catch (parseErr) {
+      console.error('[API /api/ai-assistant] Invalid JSON from Gemini:', rawText.slice(0, 300));
+      return res.status(502).json({ error: 'AI model returned an invalid response format. Please try again.' });
+    }
+
     return res.json({
       foundInApp: Boolean(parsed.foundInApp),
       answer: typeof parsed.answer === 'string' ? parsed.answer : '',
@@ -408,10 +472,21 @@ ${matchedContextText || '(No matching database entries retrieved)'}`;
     });
   } catch (err: any) {
     console.error('[API /api/ai-assistant] Error:', err);
-    const status = typeof err?.status === 'number' ? err.status : 500;
-    return res.status(status).json({
-      error: err?.message || 'Failed to query Zikr+ AI Assistant.',
-    });
+    const status = extractErrorStatus(err);
+    const rawMsg = String(err?.message || '');
+    let friendlyMsg = rawMsg || 'Failed to query Zikr+ AI Assistant.';
+
+    if (status === 400 || status === 403 || /API_KEY_INVALID|PERMISSION_DENIED/i.test(rawMsg)) {
+      friendlyMsg = 'Gemini API key is invalid or unauthorized. Please verify GEMINI_API_KEY in Settings > Secrets.';
+    } else if (status === 429 || /RESOURCE_EXHAUSTED/i.test(rawMsg)) {
+      friendlyMsg = 'AI rate limit or quota reached. Please try again shortly or verify billing in Settings > Secrets.';
+    } else if (status === 404 || /NOT_FOUND/i.test(rawMsg)) {
+      friendlyMsg = 'Configured Gemini model is unavailable. Please verify model configuration.';
+    } else if (status === 503 || status === 504) {
+      friendlyMsg = 'AI service is temporarily busy or timed out. Please try again.';
+    }
+
+    return res.status(status).json({ error: friendlyMsg });
   }
 });
 

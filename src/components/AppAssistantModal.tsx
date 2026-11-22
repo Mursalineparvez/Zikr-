@@ -230,12 +230,14 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
     setActiveRequestMsgId(null);
     setIsManualRequestOpen(false);
 
+    let matchedEntries: KnowledgeMatch[] = [];
+
     try {
       // 1. Freshly extract active page text & search across all Zikr+ datasets
       const currentCtx = extractActivePageContext(activeModule, selectedLanguage);
       setPageContext(currentCtx);
 
-      const matchedEntries = await searchAppKnowledge(query, activeModule, selectedLanguage, 10);
+      matchedEntries = await searchAppKnowledge(query, activeModule, selectedLanguage, 8);
 
       // Offline handling: show local matched entries cleanly without faking an AI response
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -264,33 +266,79 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
         return;
       }
 
-      // 2. Call grounded server-side Gemini Assistant API
-      const recentHistory = messages.slice(-6).map((m) => ({
+      // 2. Call grounded server-side Gemini Assistant API with timeout + 1 fast transient retry
+      const recentHistory = messages.slice(-4).map((m) => ({
         role: m.role,
-        text: m.text.slice(0, 500),
+        text: m.text.slice(0, 400),
       }));
 
-      const res = await fetch('/api/ai-assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: query,
-          language: selectedLanguage,
-          activePage: currentCtx,
-          matchedEntries: matchedEntries.map((m) => ({
-            moduleId: m.moduleId,
-            moduleLabel: m.moduleLabel,
-            title: m.title,
-            reference: m.reference || '',
-            snippet: m.snippet,
-          })),
-          history: recentHistory,
-        }),
+      const payload = JSON.stringify({
+        question: query,
+        language: selectedLanguage,
+        activePage: {
+          moduleId: currentCtx.moduleId,
+          pageTitle: currentCtx.pageTitle,
+          visibleText: currentCtx.visibleText.slice(0, 3500),
+        },
+        matchedEntries: matchedEntries.map((m) => ({
+          moduleId: m.moduleId,
+          moduleLabel: m.moduleLabel,
+          title: m.title,
+          reference: m.reference || '',
+          snippet: m.snippet.slice(0, 850),
+        })),
+        history: recentHistory,
       });
 
-      const data = await res.json().catch(() => ({}));
+      const callAssistantApi = async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 40000);
+        try {
+          return await fetch('/api/ai-assistant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      };
+
+      let res: Response;
+      try {
+        res = await callAssistantApi();
+        if (res.status === 502 || res.status === 503 || res.status === 504) {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+          res = await callAssistantApi();
+        }
+      } catch (fetchErr: any) {
+        if (fetchErr?.name === 'AbortError') {
+          throw new Error(
+            isBn
+              ? 'AI সার্ভার থেকে উত্তর আসতে দেরি হচ্ছে (সময়সীমা অতিক্রম)।'
+              : 'Request to AI server timed out.'
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        res = await callAssistantApi();
+      }
+
+      const rawText = await res.text();
+      let data: any = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          data = {};
+        }
+      }
+
       if (!res.ok) {
-        throw new Error(data?.error || (isBn ? 'AI সার্ভার থেকে উত্তর পাওয়া যায়নি।' : 'Failed to reach AI Assistant service.'));
+        const fallbackStatusMsg = isBn
+          ? `AI সার্ভার থেকে উত্তর পাওয়া যায়নি (HTTP ${res.status})`
+          : `Failed to reach AI Assistant service (HTTP ${res.status})`;
+        throw new Error(data?.error || fallbackStatusMsg);
       }
 
       const foundInApp = Boolean(data.foundInApp);
@@ -316,14 +364,38 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
 
       if (soundEnabled) soundHaptics.playMilestone();
     } catch (err: any) {
+      const errorDetail =
+        err?.name === 'AbortError'
+          ? isBn
+            ? 'AI সার্ভার সময়সীমা অতিক্রম করেছে'
+            : 'AI server request timed out'
+          : err?.message || (isBn ? 'নেটওয়ার্ক ত্রুটি' : 'Network error');
+
+      const hasLocalMatches = matchedEntries.length > 0;
       const errMsg: ChatMessage = {
         id: `e_${Date.now()}`,
         role: 'model',
         isError: true,
         foundInApp: false,
         text: isBn
-          ? `দুঃখিত, AI সহায়কের সাথে সংযোগে সমস্যা হয়েছে (${err?.message || 'নেটওয়ার্ক ত্রুটি'})। আপনি চাইলে নিচের ফর্ম থেকে এই তথ্যটির জন্য অ্যাডমিনকে মেসেজ পাঠাতে পারেন।`
-          : `Unable to reach the AI assistant (${err?.message || 'Network error'}). You can still send a missing-info request to the admin below.`,
+          ? `দুঃখিত, AI সহায়কের সাথে সংযোগে সমস্যা হয়েছে (${errorDetail})।${
+              hasLocalMatches
+                ? ' তবে অ্যাপের লোকাল লাইব্রেরি থেকে নিচের প্রাসঙ্গিক তথ্যগুলো পাওয়া গেছে। চাইলে নিচে অ্যাডমিনকে মেসেজও পাঠাতে পারেন।'
+                : ' আপনি চাইলে নিচের ফর্ম থেকে এই তথ্যটির জন্য অ্যাডমিনকে মেসেজ পাঠাতে পারেন।'
+            }`
+          : `Unable to reach the AI assistant (${errorDetail}).${
+              hasLocalMatches
+                ? ' However, relevant entries were found in the local Zikr+ library below, or you can message the admin.'
+                : ' You can still send a missing-info request to the admin below.'
+            }`,
+        localFallbackMatches: hasLocalMatches ? matchedEntries.slice(0, 4) : undefined,
+        matchedSources: hasLocalMatches
+          ? matchedEntries.slice(0, 3).map((m) => ({
+              title: m.title,
+              moduleId: m.moduleId,
+              snippet: m.snippet.slice(0, 140),
+            }))
+          : undefined,
         missingInfoTopic: query,
         askedQuestion: query,
       };
@@ -703,14 +775,24 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
 
                   <div>{msg.text}</div>
 
-                  {/* Direct Offline Local Fallback Details */}
+                  {/* Direct Local Library Details (Shown on offline OR when AI server fails with local matches) */}
                   {msg.localFallbackMatches && msg.localFallbackMatches.length > 0 && (
                     <div className="mt-2.5 space-y-2">
+                      {msg.isError && (
+                        <div className={`text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 ${isDay ? 'text-emerald-800' : 'text-emerald-300'}`}>
+                          <Search className="w-3 h-3 shrink-0" />
+                          <span>
+                            {isBn
+                              ? 'লোকাল লাইব্রেরি থেকে সরাসরি প্রাপ্ত তথ্য:'
+                              : 'Direct Local Zikr+ Library Matches:'}
+                          </span>
+                        </div>
+                      )}
                       {msg.localFallbackMatches.map((m) => (
                         <div
                           key={m.id}
                           className={`p-2.5 rounded-xl border text-[11px] space-y-1 ${
-                            isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#04171b] border-[#194c57]'
+                            isDay ? 'bg-white border-emerald-200 text-slate-800' : 'bg-[#04171b] border-[#194c57] text-slate-100'
                           }`}
                         >
                           <div className="font-extrabold text-[var(--app-primary,#006A4E)] dark:text-emerald-300">

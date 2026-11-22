@@ -2133,7 +2133,6 @@ export default function App() {
         onOpenStandaloneModal={() => setIsStandaloneModalOpen(true)}
         userProfile={userProfile}
         onOpenProfile={(tab = 'profile') => handleOpenProfileModal(tab)}
-        onOpenAssistant={() => setIsAssistantOpen(true)}
       />
 
       {/* Toast Notification Popup */}

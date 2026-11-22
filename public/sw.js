@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v16-fast-open
+// Version: zikrmate-v18-ui-clean
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v16-fast-open';
+const CACHE_NAME = 'zikrmate-v18-ui-clean';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
