@@ -16,6 +16,9 @@ import {
   Compass,
   Clock,
   Search,
+  BookOpen,
+  UserCheck,
+  ArrowDownCircle,
 } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -24,12 +27,14 @@ import { ShareDownloadButtons } from './ContentShareModal';
 import {
   CORE_PRINCIPLE_PDF,
   SACRED_MONTHS_INTRO_PDF,
+  HADITH_BOOK_REFERENCE_LEDGER,
   REGULAR_SUNNAH_COMMITMENTS,
   WEEKLY_PROPHETIC_AMAL,
   MONTHLY_GENERAL_RULES,
   DAILY_PDF_SUMMARY_SNAPSHOT,
   PROPHETIC_12_MONTHS,
   PropheticMonthItem,
+  PropheticDatedPoint,
 } from '../data/nobi12MonthsData';
 
 interface PropheticYearCalendarSectionProps {
@@ -67,6 +72,43 @@ function detectCurrentCalendarMonthId(): string {
   return found ? found.id : 'jumadal_ukhra';
 }
 
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return {
+    x: cx + r * Math.cos(rad),
+    y: cy + r * Math.sin(rad),
+  };
+}
+
+function describeAnnularSector(
+  cx: number,
+  cy: number,
+  rInner: number,
+  rOuter: number,
+  startDeg: number,
+  endDeg: number
+): string {
+  const outerStart = polarToCartesian(cx, cy, rOuter, startDeg);
+  const outerEnd = polarToCartesian(cx, cy, rOuter, endDeg);
+  const innerEnd = polarToCartesian(cx, cy, rInner, endDeg);
+  const innerStart = polarToCartesian(cx, cy, rInner, startDeg);
+  const largeArc = endDeg - startDeg <= 180 ? '0' : '1';
+  return [
+    `M ${outerStart.x.toFixed(2)} ${outerStart.y.toFixed(2)}`,
+    `A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${outerEnd.x.toFixed(2)} ${outerEnd.y.toFixed(2)}`,
+    `L ${innerEnd.x.toFixed(2)} ${innerEnd.y.toFixed(2)}`,
+    `A ${rInner} ${rInner} 0 ${largeArc} 0 ${innerStart.x.toFixed(2)} ${innerStart.y.toFixed(2)}`,
+    'Z',
+  ].join(' ');
+}
+
+function describeArc(cx: number, cy: number, r: number, startDeg: number, endDeg: number): string {
+  const start = polarToCartesian(cx, cy, r, startDeg);
+  const end = polarToCartesian(cx, cy, r, endDeg);
+  const largeArc = endDeg - startDeg <= 180 ? '0' : '1';
+  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${r} ${r} 0 ${largeArc} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
+}
+
 export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSectionProps> = ({
   themeMode,
   selectedLanguage,
@@ -88,14 +130,13 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
   const [monthFilter, setMonthFilter] = useState<'all' | 'sacred' | 'fasting' | 'caution'>('all');
   const [monthSearch, setMonthSearch] = useState<string>('');
   const [selectedWeekDayId, setSelectedWeekDayId] = useState<string>(() => {
-    const dayIdx = new Date().getDay(); // 0=Sun..6=Sat
+    const dayIdx = new Date().getDay();
     const map = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
     return map[dayIdx] || 'fri';
   });
   const [expandedDailyId, setExpandedDailyId] = useState<string>('pdf_late_night');
   const [showPrinciplePanel, setShowPrinciplePanel] = useState<boolean>(false);
 
-  // Interactive "Pick 2-3 regular Sunnahs" saved in localStorage
   const [chosenCommitments, setChosenCommitments] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem('nobi_yearly_commitments');
@@ -105,6 +146,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
   });
 
   const detailCardRef = useRef<HTMLDivElement | null>(null);
+  const ledgerRef = useRef<HTMLDivElement | null>(null);
 
   const toggleCommitment = (id: string) => {
     setChosenCommitments((prev) => {
@@ -135,11 +177,21 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
         m.nameEn.toLowerCase().includes(q) ||
         m.coreAmalBn.toLowerCase().includes(q) ||
         m.coreAmalEn.toLowerCase().includes(q) ||
+        m.narratorsBn.toLowerCase().includes(q) ||
+        m.primarySourcesBn.toLowerCase().includes(q) ||
         m.topics.some(
           (t) =>
             t.titleBn.toLowerCase().includes(q) ||
             t.pointsBn.some((p) => p.toLowerCase().includes(q)) ||
-            t.reference.toLowerCase().includes(q)
+            t.reference.toLowerCase().includes(q) ||
+            Boolean(
+              t.referencedPoints?.some(
+                (rp) =>
+                  rp.textBn.toLowerCase().includes(q) ||
+                  rp.reference.toLowerCase().includes(q) ||
+                  (rp.narratorBn && rp.narratorBn.toLowerCase().includes(q))
+              )
+            )
         )
       );
     });
@@ -151,6 +203,10 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
   }, [selectedMonthId]);
 
   const activeMonth = PROPHETIC_12_MONTHS[activeMonthIndex];
+  const ongoingMonthObj = useMemo(
+    () => PROPHETIC_12_MONTHS.find((m) => m.id === currentOngoingMonthId) || PROPHETIC_12_MONTHS[0],
+    [currentOngoingMonthId]
+  );
 
   const selectAndScrollMonth = (monthId: string, scrollToCard = true) => {
     setSelectedMonthId(monthId);
@@ -174,11 +230,106 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
     [selectedWeekDayId]
   );
 
+  const renderReferencedPointsList = (
+    pointsBn: string[],
+    pointsEn: string[],
+    referencedPoints?: PropheticDatedPoint[],
+    accent: 'emerald' | 'amber' = 'emerald'
+  ) => {
+    if (referencedPoints && referencedPoints.length > 0) {
+      return (
+        <ol className="space-y-2.5">
+          {referencedPoints.map((rp, idx) => {
+            const num = isBn ? toBnDigits(String(idx + 1).padStart(2, '0')) : String(idx + 1).padStart(2, '0');
+            const narrator = isBn ? rp.narratorBn : rp.narratorEn || rp.narratorBn;
+            return (
+              <li
+                key={idx}
+                className={`p-3 sm:p-3.5 rounded-xl border transition-colors ${
+                  isDay
+                    ? 'bg-white/95 border-slate-200/80 text-slate-800'
+                    : 'bg-[#06181d] border-[#153e48] text-slate-100'
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <span
+                    className={`font-mono text-xs font-black tabular-nums mt-0.5 shrink-0 ${
+                      accent === 'amber'
+                        ? isDay
+                          ? 'text-amber-700'
+                          : 'text-amber-300'
+                        : isDay
+                        ? 'text-[#006A4E]'
+                        : 'text-emerald-400'
+                    }`}
+                  >
+                    {num}.
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <p className="text-xs sm:text-sm leading-relaxed font-medium">
+                      {isBn ? rp.textBn : rp.textEn}
+                    </p>
+                    <div
+                      className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold ${
+                        isDay ? 'text-slate-500' : 'text-teal-200/75'
+                      }`}
+                    >
+                      {narrator && (
+                        <>
+                          <span>
+                            {isBn ? 'বর্ণনায়: ' : 'Narrated by: '}
+                            <strong className={isDay ? 'text-slate-700' : 'text-slate-200'}>{narrator}</strong>
+                          </span>
+                          <span aria-hidden="true" className="opacity-40">
+                            ·
+                          </span>
+                        </>
+                      )}
+                      <span className={`font-mono ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
+                        {isBn ? 'সূত্র: ' : 'Ref: '}
+                        {rp.reference}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      );
+    }
+
+    return (
+      <ul className="space-y-2.5">
+        {(isBn ? pointsBn : pointsEn).map((pt, pIdx) => (
+          <li
+            key={pIdx}
+            className={`flex items-start gap-2.5 text-xs sm:text-sm leading-relaxed ${
+              isDay ? 'text-slate-700' : 'text-slate-200'
+            }`}
+          >
+            <CheckCircle2
+              className={`w-4 h-4 mt-0.5 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}
+            />
+            <span>{pt}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   const buildMonthShareContent = (m: PropheticMonthItem): ShareableContent => {
     const monthTitle = isBn ? m.nameBn : m.nameEn;
     const topicsText = m.topics
       .map((t) => {
-        const pts = (isBn ? t.pointsBn : t.pointsEn).map((p, i) => `${i + 1}. ${p}`).join('\n');
+        const pts = t.referencedPoints?.length
+          ? t.referencedPoints
+              .map(
+                (rp, i) =>
+                  `${i + 1}. ${isBn ? rp.textBn : rp.textEn} [${rp.narratorBn ? `${rp.narratorBn} · ` : ''}${rp.reference}]`
+              )
+              .join('\n')
+          : (isBn ? t.pointsBn : t.pointsEn).map((p, i) => `${i + 1}. ${p}`).join('\n');
         return `${isBn ? t.titleBn : t.titleEn}\n${pts}\n(${t.reference})`;
       })
       .join('\n\n');
@@ -193,25 +344,26 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
         : `Prophet's 12 Months · Month ${m.order}/12`,
       title: `${monthTitle} (${isBn ? m.hijriYearBn : m.hijriYearEn})`,
       subtitle: `${isBn ? m.approxStartBn : m.approxStartEn} · ${isBn ? m.coreAmalBn : m.coreAmalEn}`,
-      arabic: m.specialDua?.arabic || m.nameAr,
+      arabic: m.specialDua?.arabic || m.quranRef?.arabic || m.nameAr,
       transliteration: m.specialDua ? (isBn ? m.specialDua.pronunciationBn : m.specialDua.pronunciationEn) : undefined,
       body: isBn ? m.headlineBn : m.headlineEn,
       highlights: m.topics.flatMap((t) => (isBn ? t.pointsBn : t.pointsEn)).slice(0, 4),
       meta: [
         { label: isBn ? 'শুরু' : 'Starts', value: isBn ? m.approxStartBn : m.approxStartEn },
+        { label: isBn ? 'প্রধান সূত্র' : 'Sources', value: isBn ? m.primarySourcesBn : m.primarySourcesEn },
         ...(m.ayyamulBeedhBn
           ? [{ label: isBn ? 'আইয়ামে বীয' : 'Ayyamul Beedh', value: isBn ? m.ayyamulBeedhBn : m.ayyamulBeedhEn || '' }]
           : []),
       ],
-      reference: m.topics[0]?.reference,
-      fullDocumentText: `${monthTitle} (${isBn ? m.hijriYearBn : m.hijriYearEn})\n${isBn ? m.approxStartBn : m.approxStartEn}\n\n${topicsText}${cautionText}`,
+      reference: isBn ? m.primarySourcesBn : m.primarySourcesEn,
+      fullDocumentText: `${monthTitle} (${isBn ? m.hijriYearBn : m.hijriYearEn})\n${isBn ? m.approxStartBn : m.approxStartEn}\nবর্ণনাকারী: ${m.narratorsBn}\n\n${topicsText}${cautionText}`,
       fileNamePrefix: `Nobi-12-Months-${m.order}-${m.nameEn}`,
     };
   };
 
   const openFull12MonthShare = (focus: 'share' | 'download') => {
     const monthsText = PROPHETIC_12_MONTHS.map((m) => {
-      const head = `${m.order}. ${isBn ? m.nameBn : m.nameEn} (${isBn ? m.approxStartBn : m.approxStartEn}) — ${isBn ? m.coreAmalBn : m.coreAmalEn}`;
+      const head = `${m.order}. ${isBn ? m.nameBn : m.nameEn} (${isBn ? m.approxStartBn : m.approxStartEn}) — ${isBn ? m.coreAmalBn : m.coreAmalEn}\n  বর্ণনাকারী: ${m.narratorsBn} | সূত্র: ${m.primarySourcesBn}`;
       const body = m.topics
         .map((t) => `  • ${isBn ? t.titleBn : t.titleEn}: ${(isBn ? t.pointsBn : t.pointsEn).join(' ')} [${t.reference}]`)
         .join('\n');
@@ -225,16 +377,16 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
         title: isBn ? 'রাসূলুল্লাহ ﷺ-এর ১২ মাসের আমল (১৪৪৮–১৪৪৯ হি.)' : "12 Months of the Prophet's ﷺ Deeds (1448–1449 AH)",
         subtitle: isBn ? CORE_PRINCIPLE_PDF.titleBn : CORE_PRINCIPLE_PDF.titleEn,
         body: isBn
-          ? 'দিনের রুটিন, সপ্তাহের আমল, প্রতি মাসের নিয়ম এবং ১২ হিজরি মাসের পূর্ণাঙ্গ সুন্নাহ ক্যালেন্ডার সহিহ হাদিস নম্বরসহ।'
+          ? 'দিনের রুটিন, সপ্তাহের আমল, প্রতি মাসের নিয়ম এবং ১২ হিজরি মাসের পূর্ণাঙ্গ সুন্নাহ ক্যালেন্ডার বর্ণনাকারী সাহাবি ও সহিহ হাদিস নম্বরসহ।'
           : 'Complete Prophetic calendar covering daily routine, weekly Sunnah, monthly rules & all 12 Hijri months with Sahih Hadith citations.',
         highlights: PROPHETIC_12_MONTHS.slice(0, 5).map(
-          (m) => `${isBn ? m.nameBn : m.nameEn}: ${isBn ? m.coreAmalBn : m.coreAmalEn}`
+          (m) => `${isBn ? m.nameBn : m.nameEn}: ${isBn ? m.coreAmalBn : m.coreAmalEn} (${m.primarySourcesBn})`
         ),
         meta: [
           { label: isBn ? 'হিজরি বছর' : 'Hijri Year', value: isBn ? '১৪৪৮–১৪৪৯ হি.' : '1448–1449 AH' },
-          { label: isBn ? 'মাস' : 'Months', value: isBn ? '১২টি' : '12 Months' },
+          { label: isBn ? 'মাস ও সূত্র' : 'Scope', value: isBn ? '১২ মাস · সহিহ দলিল' : '12 Months · Sahih Citations' },
         ],
-        reference: isBn ? 'সহিহ বুখারি, সহিহ মুসলিম ও সুনান (সীরাহ পড়ি সিরিজ)' : 'Sahih Bukhari, Sahih Muslim & Sunan',
+        reference: isBn ? 'সহিহ বুখারি, সহিহ মুসলিম, জামে তিরমিযি ও সুনান (সীরাহ পড়ি সিরিজ)' : 'Sahih Bukhari, Sahih Muslim & Sunan',
         fullDocumentText: `${CORE_PRINCIPLE_PDF.titleBn}\n${CORE_PRINCIPLE_PDF.pointsBn.join('\n')}\n\n${monthsText}`,
         fileNamePrefix: 'Rasulullah-12-Months-Calendar',
       },
@@ -264,17 +416,17 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
               <span aria-hidden="true" className="opacity-35">·</span>
               <span>{isBn ? '১২ মাসের আমল' : '12-Month Sunnah'}</span>
               <span aria-hidden="true" className="opacity-35">·</span>
-              <span>{isBn ? 'সহিহ হাদিস নম্বরসহ' : 'With Sahih Hadith Citations'}</span>
+              <span>{isBn ? 'বর্ণনাকারী ও হাদিস নম্বরসহ' : 'Narrators & Sahih Citations'}</span>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-balance">
-              {isBn ? 'রাসূলুল্লাহ ﷺ-এর ১২ মাসের আমল ও সুন্নাহ ক্যালেন্ডার' : "Prophet Muhammad's ﷺ 12-Month Calendar & Sunnah Cycle"}
+              {isBn ? 'রাসূলুল্লাহ ﷺ-এর ১২ মাসের আমল ও দলিলভিত্তিক ক্যালেন্ডার' : "Prophet Muhammad's ﷺ 12-Month Referenced Calendar"}
             </h2>
 
             <p className={`text-xs sm:text-sm leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
               {isBn
-                ? 'দিনের কোন সময়, সপ্তাহের কোন দিন, মাসের কোন তারিখে ও বছরের কোন মাসে নবীজি ﷺ কী আমল করতেন — সহিহ হাদিসের আলোকে।'
-                : 'Authentic prophetic practices organized by hour of the day, day of the week, monthly lunar milestones, and all 12 Hijri months.'}
+                ? 'দিনের কোন সময়, সপ্তাহের কোন দিন, মাসের কোন তারিখে ও বছরের কোন মাসে নবীজি ﷺ কী আমল করতেন — প্রতিটি আমলের সাথে বর্ণনাকারী সাহাবি, হাদিস গ্রন্থ ও নম্বরসহ।'
+                : 'Authentic prophetic practices organized by day, week, lunar milestones, and all 12 Hijri months — with exact Hadith numbers & companions.'}
             </p>
           </div>
 
@@ -285,7 +437,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                 setShowPrinciplePanel((v) => !v);
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className={`min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 active:scale-95 ${
+              className={`min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 active:scale-95 whitespace-nowrap shrink-0 ${
                 showPrinciplePanel
                   ? 'bg-[#006A4E] text-white border-emerald-500'
                   : isDay
@@ -301,6 +453,22 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
               </span>
             </button>
 
+            <button
+              type="button"
+              onClick={() => {
+                ledgerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className={`min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer inline-flex items-center gap-1.5 active:scale-95 whitespace-nowrap shrink-0 ${
+                isDay
+                  ? 'bg-white border-amber-200 text-amber-900 hover:bg-amber-50'
+                  : 'bg-[#0d3038] border-[#1d5460] text-amber-300 hover:bg-[#133e48]'
+              }`}
+            >
+              <ArrowDownCircle className="w-3.5 h-3.5" />
+              <span>{isBn ? 'হাদিস রেফারেন্স সূচি' : 'Hadith Index'}</span>
+            </button>
+
             <ShareDownloadButtons
               variant="card"
               selectedLanguage={lang}
@@ -311,7 +479,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
           </div>
         </div>
 
-        {/* Core Principle Strip (Always concise & readable) */}
+        {/* Core Principle Strip */}
         <div
           className={`mt-4 pt-3.5 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs ${
             isDay ? 'border-emerald-200/70 text-emerald-950' : 'border-white/10 text-emerald-100'
@@ -325,7 +493,8 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
               ? '“আল্লাহর কাছে সবচেয়ে প্রিয় আমল সেটাই, যা নিয়মিত করা হয়, যদিও তা অল্প হয়।” একসাথে সব নয়, ২–৩টি আমল বেছে নিয়মিত শুরু করুন।'
               : '“The most beloved deeds to Allah are those done consistently, even if small.” Start with 2–3 deeds regularly.'}
           </p>
-          <span className={`font-mono text-[11px] font-bold shrink-0 ${isDay ? 'text-slate-500' : 'text-teal-200/75'}`}>
+          <span className={`font-mono text-[11px] font-bold shrink-0 ${isDay ? 'text-slate-600' : 'text-teal-200/85'}`}>
+            {isBn ? `${CORE_PRINCIPLE_PDF.narratorBn} · ` : `${CORE_PRINCIPLE_PDF.narratorEn} · `}
             {CORE_PRINCIPLE_PDF.reference.split('·')[0].trim()}
           </span>
         </div>
@@ -375,7 +544,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                       <div className="text-xs font-bold leading-snug">
                         {isBn ? item.titleBn : item.titleEn}
                       </div>
-                      <div className="text-[11px] opacity-70 font-mono">
+                      <div className="text-[11px] opacity-75 font-mono">
                         {isBn ? item.cadenceBn : item.cadenceEn} · {item.reference}
                       </div>
                     </div>
@@ -448,11 +617,350 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
       </div>
 
       {/* ========================================================================= */}
-      {/* SUB-VIEW 1: 12-MONTH HIJRI CALENDAR EXPLORER + DETAIL + TABLE             */}
+      {/* SUB-VIEW 1: 12-MONTH HIJRI LUNAR DIAL + GRID + DETAIL INSPECTOR + TABLE   */}
       {/* ========================================================================= */}
       {subView === 'months' && (
         <div className="space-y-6">
-          {/* Sacred Months Educational Ribbon + Filter & Search */}
+          {/* CREATIVE INTERACTIVE 12-MONTH HIJRI LUNAR DIAL + COMMAND BRIEF */}
+          <div
+            className={`rounded-3xl p-5 sm:p-6 border grid grid-cols-1 lg:grid-cols-12 gap-6 items-center ${
+              isDay
+                ? 'bg-gradient-to-br from-white via-[#f7fbf9] to-[#fffdf5] border-slate-200/90'
+                : 'bg-gradient-to-br from-[#091f25] via-[#0a242b] to-[#07191f] border-[#153c45]'
+            }`}
+          >
+            {/* Left: Interactive 12-Month Hijri Sunnah Wheel SVG */}
+            <div className="lg:col-span-5 flex flex-col items-center justify-center">
+              <div className="relative w-full max-w-[300px] sm:max-w-[320px] aspect-square">
+                <svg
+                  viewBox="0 0 340 340"
+                  className="w-full h-full select-none"
+                  role="img"
+                  aria-label={isBn ? '১২ মাসের হিজরি সুন্নাহ চক্র' : '12-Month Hijri Sunnah Wheel'}
+                >
+                  {/* Subtle outer guide circle */}
+                  <circle
+                    cx="170"
+                    cy="170"
+                    r="156"
+                    fill="none"
+                    stroke={isDay ? '#e2e8f0' : '#163f4a'}
+                    strokeWidth="1"
+                    strokeDasharray="3 4"
+                  />
+
+                  {/* 12 Lunar Sectors */}
+                  {PROPHETIC_12_MONTHS.map((m, idx) => {
+                    const startDeg = -90 + idx * 30 + 1.4;
+                    const endDeg = -90 + (idx + 1) * 30 - 1.4;
+                    const midDeg = -90 + idx * 30 + 15;
+                    const isSel = m.id === activeMonth.id;
+                    const isLive = m.id === currentOngoingMonthId;
+
+                    const sectorPath = describeAnnularSector(170, 170, 74, 142, startDeg, endDeg);
+                    const sacredArc = m.isSacredMonth ? describeArc(170, 170, 150, startDeg, endDeg) : null;
+                    const labelPos = polarToCartesian(170, 170, 108, midDeg);
+                    const tickPosOuter = polarToCartesian(170, 170, 144, midDeg);
+                    const numText = isBn
+                      ? toBnDigits(String(m.order).padStart(2, '0'))
+                      : String(m.order).padStart(2, '0');
+
+                    return (
+                      <g
+                        key={m.id}
+                        onClick={() => selectAndScrollMonth(m.id, false)}
+                        className="cursor-pointer group"
+                      >
+                        {sacredArc && (
+                          <path
+                            d={sacredArc}
+                            fill="none"
+                            stroke={isSel ? '#f59e0b' : isDay ? '#d97706' : '#fbbf24'}
+                            strokeWidth={isSel ? '4.5' : '3'}
+                            strokeLinecap="round"
+                            opacity={isSel ? 1 : 0.72}
+                          />
+                        )}
+
+                        <path
+                          d={sectorPath}
+                          fill={
+                            isSel
+                              ? '#006A4E'
+                              : isLive
+                              ? isDay
+                                ? '#e6f4ef'
+                                : '#0e373f'
+                              : isDay
+                              ? '#f8fafc'
+                              : '#081d23'
+                          }
+                          stroke={
+                            isSel
+                              ? '#fcd34d'
+                              : isLive
+                              ? '#10b981'
+                              : isDay
+                              ? '#cbd5e1'
+                              : '#184550'
+                          }
+                          strokeWidth={isSel ? '2' : '1'}
+                          className="transition-colors duration-150"
+                        />
+
+                        {m.hasSpecialFasting && (
+                          <circle
+                            cx={tickPosOuter.x}
+                            cy={tickPosOuter.y}
+                            r="2.4"
+                            fill={isSel ? '#fcd34d' : m.accentColor}
+                          />
+                        )}
+
+                        <text
+                          x={labelPos.x}
+                          y={labelPos.y}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize="13"
+                          fontWeight="800"
+                          className="font-mono tabular-nums pointer-events-none"
+                          fill={
+                            isSel
+                              ? '#ffffff'
+                              : m.isSacredMonth
+                              ? isDay
+                                ? '#b45309'
+                                : '#fcd34d'
+                              : isDay
+                              ? '#0f172a'
+                              : '#cbd5e1'
+                          }
+                        >
+                          {numText}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Inner Core Dial */}
+                  <circle
+                    cx="170"
+                    cy="170"
+                    r="66"
+                    fill={isDay ? '#ffffff' : '#06171c'}
+                    stroke={isDay ? '#006A4E' : '#10b981'}
+                    strokeWidth="1.5"
+                    strokeOpacity="0.45"
+                  />
+                  <text
+                    x="170"
+                    y="142"
+                    textAnchor="middle"
+                    fontSize="10"
+                    fontWeight="700"
+                    className="font-mono tabular-nums"
+                    fill={isDay ? '#006A4E' : '#fbbf24'}
+                  >
+                    {isBn
+                      ? `মাস ${toBnDigits(activeMonth.order)}/১২`
+                      : `MONTH ${activeMonth.order}/12`}
+                  </text>
+                  <text
+                    x="170"
+                    y="168"
+                    textAnchor="middle"
+                    fontSize="18"
+                    fontWeight="700"
+                    className="font-arabic"
+                    fill={isDay ? '#0f172a' : '#f8fafc'}
+                  >
+                    {activeMonth.nameAr}
+                  </text>
+                  <text
+                    x="170"
+                    y="192"
+                    textAnchor="middle"
+                    fontSize="11.5"
+                    fontWeight="800"
+                    fill={isDay ? '#334155' : '#99f6e4'}
+                  >
+                    {isBn ? activeMonth.nameBn : activeMonth.nameEn}
+                  </text>
+                  <text
+                    x="170"
+                    y="209"
+                    textAnchor="middle"
+                    fontSize="9.5"
+                    fontWeight="600"
+                    className="font-mono tabular-nums"
+                    fill={isDay ? '#64748b' : '#94a3b8'}
+                  >
+                    {isBn ? activeMonth.hijriYearBn : activeMonth.hijriYearEn}
+                  </text>
+                </svg>
+              </div>
+
+              {/* Wheel Legend */}
+              <div className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] font-semibold mt-1 ${isDay ? 'text-slate-600' : 'text-slate-400'}`}>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-3 h-1 rounded-full bg-amber-500 inline-block" />
+                  <span>{isBn ? '৪ সম্মানিত মাস (সোনালি আর্ক)' : '4 Sacred Months (Gold Arc)'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block" />
+                  <span>{isBn ? 'নির্বাচিত মাস' : 'Selected'}</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Active Month Command & Reference Summary */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                  <span className={isDay ? 'text-[#006A4E]' : 'text-emerald-400'}>
+                    {activeMonth.id === currentOngoingMonthId
+                      ? isBn
+                        ? 'বর্তমান চলমান হিজরি মাস'
+                        : 'Current Ongoing Month'
+                      : isBn
+                      ? 'নির্বাচিত হিজরি মাস'
+                      : 'Selected Hijri Month'}
+                  </span>
+                  {activeMonth.isSacredMonth && (
+                    <>
+                      <span aria-hidden="true" className="opacity-35">·</span>
+                      <span className={isDay ? 'text-amber-700' : 'text-amber-300'}>
+                        {isBn ? 'আশহুরে হুরুম (সম্মানিত মাস)' : 'Sacred Month'}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {activeMonth.id !== currentOngoingMonthId && (
+                  <button
+                    type="button"
+                    onClick={() => selectAndScrollMonth(currentOngoingMonthId, false)}
+                    className={`min-h-[34px] px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition whitespace-nowrap ${
+                      isDay
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100'
+                        : 'bg-[#0e343c] border-emerald-500/40 text-emerald-200 hover:bg-[#134650]'
+                    }`}
+                  >
+                    {isBn
+                      ? `চলমান মাসে ফিরুন (${ongoingMonthObj.nameBn})`
+                      : `Jump to Current (${ongoingMonthObj.nameEn})`}
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <div className="flex flex-wrap items-baseline gap-2.5">
+                  <h3 className={`text-2xl sm:text-3xl font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                    {isBn ? activeMonth.nameBn : activeMonth.nameEn}
+                  </h3>
+                  <span className={`font-arabic text-xl font-bold ${isDay ? 'text-emerald-800/80' : 'text-amber-300'}`}>
+                    {activeMonth.nameAr}
+                  </span>
+                </div>
+                <p className={`text-xs sm:text-sm mt-1 leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
+                  {isBn ? activeMonth.headlineBn : activeMonth.headlineEn}
+                </p>
+              </div>
+
+              {/* 4-Cell Reference & Schedule Summary Grid */}
+              <div
+                className={`grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl border ${
+                  isDay ? 'bg-slate-50/90 border-slate-200/80' : 'bg-[#06181d] border-[#153c45]'
+                }`}
+              >
+                <div className="space-y-0.5">
+                  <div className={`text-[11px] font-bold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {isBn ? 'শুরু (উম্মুল কুরা)' : 'Estimated Start'}
+                  </div>
+                  <div className={`text-xs sm:text-sm font-black font-mono tabular-nums ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                    {isBn ? activeMonth.approxStartBn : activeMonth.approxStartEn}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className={`text-[11px] font-bold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {activeMonth.ayyamulBeedhBn
+                      ? isBn
+                        ? 'আইয়ামে বীয (১৩–১৫ তারিখ)'
+                        : 'Ayyamul Beedh (13–15)'
+                      : isBn
+                      ? 'বিশেষ তারিখ'
+                      : 'Key Dates'}
+                  </div>
+                  <div className={`text-xs sm:text-sm font-bold font-mono tabular-nums ${isDay ? 'text-emerald-800' : 'text-emerald-300'}`}>
+                    {activeMonth.ayyamulBeedhBn
+                      ? isBn
+                        ? activeMonth.ayyamulBeedhBn
+                        : activeMonth.ayyamulBeedhEn
+                      : (isBn ? activeMonth.keyDatesBn?.[0] : activeMonth.keyDatesEn?.[0]) || '—'}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className={`text-[11px] font-bold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {isBn ? 'বর্ণনাকারী সাহাবি / ইমাম' : 'Primary Narrators'}
+                  </div>
+                  <div className={`text-xs font-bold leading-snug ${isDay ? 'text-slate-800' : 'text-slate-200'}`}>
+                    {isBn ? activeMonth.narratorsBn : activeMonth.narratorsEn}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className={`text-[11px] font-bold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {isBn ? 'মূল কুরআন ও হাদিস সূত্র' : 'Primary Hadith Sources'}
+                  </div>
+                  <div className={`text-xs font-mono font-bold leading-snug ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
+                    {isBn ? activeMonth.primarySourcesBn : activeMonth.primarySourcesEn}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => stepMonth(-1)}
+                    className={`min-h-[40px] px-3 py-2 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition whitespace-nowrap ${
+                      isDay
+                        ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        : 'bg-[#07191e] border-[#184550] text-teal-200 hover:bg-[#0e2d35]'
+                    }`}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>{isBn ? 'আগের মাস' : 'Previous'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => stepMonth(1)}
+                    className={`min-h-[40px] px-3 py-2 rounded-xl border text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition whitespace-nowrap ${
+                      isDay
+                        ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        : 'bg-[#07191e] border-[#184550] text-teal-200 hover:bg-[#0e2d35]'
+                    }`}
+                  >
+                    <span>{isBn ? 'পরের মাস' : 'Next'}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => selectAndScrollMonth(activeMonth.id, true)}
+                  className="min-h-[40px] px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#055842] text-white text-xs font-bold cursor-pointer transition whitespace-nowrap"
+                >
+                  {isBn ? 'নিচে পূর্ণাঙ্গ দলিল ও তথ্য দেখুন' : 'View Full References Below'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter & Search Bar */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               {[
@@ -468,7 +976,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                     setMonthFilter(f.id);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer shrink-0 whitespace-nowrap ${
+                  className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer shrink-0 whitespace-nowrap ${
                     monthFilter === f.id
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
                       : isDay
@@ -481,14 +989,14 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
               ))}
             </div>
 
-            <div className="relative w-full lg:w-72 shrink-0">
+            <div className="relative w-full lg:w-80 shrink-0">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
               <input
                 type="text"
                 value={monthSearch}
                 onChange={(e) => setMonthSearch(e.target.value)}
-                placeholder={isBn ? 'মাস বা আমল খুঁজুন (যেমন: রজব, আশুরা)...' : 'Search month or amal...'}
-                className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs font-medium outline-none transition ${
+                placeholder={isBn ? 'মাস, সাহাবি বা হাদিস নম্বর (যেমন: রজব, ১৯৫০)...' : 'Search month, narrator or Hadith #...'}
+                className={`w-full min-h-[40px] pl-9 pr-3 py-2 rounded-xl border text-xs font-medium outline-none transition ${
                   isDay
                     ? 'bg-white border-slate-200 focus:border-emerald-500 text-slate-800'
                     : 'bg-[#07181d] border-[#163f48] focus:border-emerald-400 text-white'
@@ -498,7 +1006,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
           </div>
 
           {/* Interactive 12-Month Hijri Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {filteredMonths.map((m) => {
               const isSelected = m.id === activeMonth.id;
               const isOngoing = m.id === currentOngoingMonthId;
@@ -509,7 +1017,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                   key={m.id}
                   type="button"
                   onClick={() => selectAndScrollMonth(m.id, true)}
-                  className={`group relative overflow-hidden rounded-2xl p-3.5 border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 active:scale-[0.985] ${
+                  className={`group relative overflow-hidden rounded-2xl p-4 border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 active:scale-[0.985] ${
                     isSelected
                       ? isDay
                         ? 'bg-gradient-to-br from-[#006A4E] to-[#044e39] text-white border-emerald-600 shadow-md'
@@ -519,13 +1027,12 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                       : 'bg-[#0a2026] border-[#153c45] hover:border-emerald-400/50 text-white hover:-translate-y-0.5'
                   }`}
                 >
-                  {/* Top Accent Line */}
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-x-0 top-0 h-[2.5px]"
                     style={{
                       background: isSelected ? '#fcd34d' : m.accentColor,
-                      opacity: isSelected ? 1 : 0.75,
+                      opacity: isSelected ? 1 : 0.8,
                     }}
                   />
 
@@ -539,11 +1046,11 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                   </div>
 
                   <div className="space-y-0.5">
-                    <div className="flex items-baseline justify-between gap-1">
-                      <h3 className="text-sm sm:text-base font-black tracking-tight leading-snug truncate">
+                    <div className="flex items-baseline justify-between gap-1.5">
+                      <h3 className="text-base font-black tracking-tight leading-snug truncate">
                         {isBn ? m.nameBn : m.nameEn}
                       </h3>
-                      <span className={`font-arabic text-xs shrink-0 ${isSelected ? 'text-amber-200/90' : 'opacity-60'}`}>
+                      <span className={`font-arabic text-sm shrink-0 ${isSelected ? 'text-amber-200/90' : 'opacity-65'}`}>
                         {m.nameAr}
                       </span>
                     </div>
@@ -553,20 +1060,26 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                   </div>
 
                   <div
-                    className={`pt-2 border-t text-[11px] leading-snug line-clamp-2 ${
+                    className={`pt-2 border-t space-y-1 text-[11px] leading-snug ${
                       isSelected
-                        ? 'border-white/15 text-amber-100'
+                        ? 'border-white/15 text-amber-50'
                         : isDay
-                        ? 'border-slate-100 text-slate-600'
+                        ? 'border-slate-100 text-slate-700'
                         : 'border-white/[0.08] text-slate-300'
                     }`}
                   >
-                    {m.isSacredMonth && (
-                      <span className={`font-bold ${isSelected ? 'text-amber-300' : isDay ? 'text-amber-700' : 'text-amber-400'}`}>
-                        {isBn ? 'সম্মানিত মাস · ' : 'Sacred · '}
-                      </span>
-                    )}
-                    {isBn ? m.coreAmalBn : m.coreAmalEn}
+                    <p className="line-clamp-2 font-medium">
+                      {m.isSacredMonth && (
+                        <span className={`font-bold ${isSelected ? 'text-amber-300' : isDay ? 'text-amber-700' : 'text-amber-400'}`}>
+                          {isBn ? 'সম্মানিত মাস · ' : 'Sacred · '}
+                        </span>
+                      )}
+                      {isBn ? m.coreAmalBn : m.coreAmalEn}
+                    </p>
+                    <div className={`font-mono text-[10px] truncate ${isSelected ? 'text-amber-200/90' : isDay ? 'text-amber-800' : 'text-amber-300/90'}`}>
+                      {isBn ? 'সূত্র: ' : 'Ref: '}
+                      {isBn ? m.primarySourcesBn : m.primarySourcesEn}
+                    </div>
                   </div>
                 </button>
               );
@@ -579,7 +1092,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                 isDay ? 'bg-white border-slate-200 text-slate-500' : 'bg-[#0a2026] border-[#153c45] text-slate-400'
               }`}
             >
-              {isBn ? 'এই অনুসন্ধানে কোনো মাস পাওয়া যায়নি।' : 'No months matched your filter.'}
+              {isBn ? 'এই অনুসন্ধানে কোনো মাস বা হাদিস পাওয়া যায়নি।' : 'No months matched your filter.'}
             </div>
           )}
 
@@ -646,7 +1159,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                 <button
                   type="button"
                   onClick={() => stepMonth(-1)}
-                  className={`min-h-[38px] px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer transition ${
+                  className={`min-h-[40px] px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer transition whitespace-nowrap ${
                     isDay
                       ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                       : 'bg-[#07191e] border-[#184550] text-teal-200 hover:bg-[#0e2d35]'
@@ -658,7 +1171,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                 <button
                   type="button"
                   onClick={() => stepMonth(1)}
-                  className={`min-h-[38px] px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer transition ${
+                  className={`min-h-[40px] px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1 cursor-pointer transition whitespace-nowrap ${
                     isDay
                       ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                       : 'bg-[#07191e] border-[#184550] text-teal-200 hover:bg-[#0e2d35]'
@@ -670,70 +1183,166 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
               </div>
             </div>
 
-            {/* Key Dates & Ayyamul Beedh Strip */}
-            {(activeMonth.ayyamulBeedhBn || (activeMonth.keyDatesBn && activeMonth.keyDatesBn.length > 0)) && (
+            {/* 3-Column Info & Citation Strip */}
+            <div
+              className={`grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl border ${
+                isDay ? 'bg-emerald-50/55 border-emerald-200/80 text-emerald-950' : 'bg-[#071b20] border-[#16414b] text-emerald-100'
+              }`}
+            >
+              <div className="space-y-1">
+                <div className="text-[11px] font-black text-[#006A4E] dark:text-amber-300">
+                  {isBn ? '১. সময়কাল ও চাঁদ' : '1. Lunar Schedule'}
+                </div>
+                <div className="text-xs sm:text-sm font-bold font-mono tabular-nums">
+                  {isBn ? activeMonth.approxStartBn : activeMonth.approxStartEn}
+                </div>
+                <p className="text-[11px] opacity-75 leading-snug">
+                  {isBn ? SACRED_MONTHS_INTRO_PDF.calendarNoteBn : SACRED_MONTHS_INTRO_PDF.calendarNoteEn}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-[11px] font-black text-[#006A4E] dark:text-amber-300">
+                  {isBn ? '২. গুরুত্বপূর্ণ তারিখ ও আইয়ামে বীয' : '2. Key Lunar Dates'}
+                </div>
+                {activeMonth.ayyamulBeedhBn && (
+                  <div className="text-xs font-semibold font-mono tabular-nums">
+                    {isBn ? 'আইয়ামে বীয: ' : 'Ayyamul Beedh: '}
+                    {isBn ? activeMonth.ayyamulBeedhBn : activeMonth.ayyamulBeedhEn}
+                  </div>
+                )}
+                {(isBn ? activeMonth.keyDatesBn : activeMonth.keyDatesEn)?.map((kd, i) => (
+                  <div key={i} className="text-xs font-semibold font-mono tabular-nums">
+                    • {kd}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-[11px] font-black text-[#006A4E] dark:text-amber-300 flex items-center gap-1">
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>{isBn ? '৩. বর্ণনাকারী ও মূল দলিল' : '3. Narrators & Sources'}</span>
+                </div>
+                <div className="text-xs font-bold leading-snug">
+                  {isBn ? activeMonth.narratorsBn : activeMonth.narratorsEn}
+                </div>
+                <div className={`text-[11px] font-mono font-bold ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
+                  {isBn ? activeMonth.primarySourcesBn : activeMonth.primarySourcesEn}
+                </div>
+              </div>
+            </div>
+
+            {/* Quranic Reference Card (Rajab, Dhul-Qi'dah, Rabi' al-Awwal) */}
+            {activeMonth.quranRef && (
               <div
-                className={`p-4 rounded-2xl border space-y-2 ${
-                  isDay ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950' : 'bg-[#071b20] border-[#16414b] text-emerald-100'
+                className={`p-4 sm:p-5 rounded-2xl border space-y-2.5 ${
+                  isDay ? 'bg-amber-50/55 border-amber-200/80 text-slate-900' : 'bg-[#092128] border-amber-500/30 text-amber-50'
                 }`}
               >
-                <div className="text-xs font-black text-[#006A4E] dark:text-amber-300">
-                  {isBn ? 'এই মাসের গুরুত্বপূর্ণ তারিখসমূহ' : 'Important Dates This Month'}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-xs font-black text-amber-800 dark:text-amber-300">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>{isBn ? activeMonth.quranRef.surahBn : activeMonth.quranRef.surahEn}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onPlaySpeech(activeMonth.quranRef!.arabic, `month_quran_${activeMonth.id}`, true)}
+                      className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                      title={isBn ? 'শুনুন' : 'Listen'}
+                    >
+                      {isPlayingAudio === `month_quran_${activeMonth.id}` ? (
+                        <VolumeX className="w-4 h-4 text-amber-500" />
+                      ) : (
+                        <Volume2 className="w-4 h-4 text-amber-700 dark:text-amber-300" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onCopyText(
+                          `${activeMonth.quranRef!.arabic}\n${isBn ? activeMonth.quranRef!.meaningBn : activeMonth.quranRef!.meaningEn}\n(${isBn ? activeMonth.quranRef!.surahBn : activeMonth.quranRef!.surahEn})`,
+                          `month_quran_${activeMonth.id}`
+                        )
+                      }
+                      className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                      title={isBn ? 'কপি করুন' : 'Copy'}
+                    >
+                      {copiedItemId === `month_quran_${activeMonth.id}` ? (
+                        <Check className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-amber-700 dark:text-amber-300" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs sm:text-sm font-semibold">
-                  {activeMonth.ayyamulBeedhBn && (
-                    <div>
-                      <span className="opacity-75">{isBn ? 'আইয়ামে বীয (১৩–১৫ হিজরি): ' : 'Ayyamul Beedh: '}</span>
-                      <span className="font-mono font-bold tabular-nums">
-                        {isBn ? activeMonth.ayyamulBeedhBn : activeMonth.ayyamulBeedhEn}
-                      </span>
-                    </div>
-                  )}
-                  {(isBn ? activeMonth.keyDatesBn : activeMonth.keyDatesEn)?.map((kd, i) => (
-                    <div key={i} className="font-mono font-bold tabular-nums">
-                      • {kd}
-                    </div>
-                  ))}
+                <div dir="rtl" className="text-lg sm:text-xl font-arabic font-bold text-right leading-[2.05]">
+                  {activeMonth.quranRef.arabic}
                 </div>
-                <div className="text-[11px] opacity-70">
-                  {isBn ? SACRED_MONTHS_INTRO_PDF.calendarNoteBn : SACRED_MONTHS_INTRO_PDF.calendarNoteEn}
-                </div>
+                <p className={`text-xs sm:text-sm font-medium leading-relaxed ${isDay ? 'text-slate-700' : 'text-amber-100/90'}`}>
+                  {isBn ? activeMonth.quranRef.meaningBn : activeMonth.quranRef.meaningEn}
+                </p>
               </div>
             )}
 
-            {/* Topics & Hadith Citations */}
+            {/* Topics & Per-Point Hadith Citations */}
             <div className="space-y-5">
-              {activeMonth.topics.map((topic, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
-                    isDay ? 'bg-slate-50/70 border-slate-200/80' : 'bg-[#07191e] border-[#133841]'
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h4 className={`text-sm sm:text-base font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                      {isBn ? topic.titleBn : topic.titleEn}
-                    </h4>
-                    <span className={`text-[11px] font-mono font-semibold ${isDay ? 'text-slate-500' : 'text-teal-200/70'}`}>
-                      {isBn ? topic.slideTagBn : topic.slideTagEn}
-                    </span>
-                  </div>
+              {activeMonth.topics.map((topic, idx) => {
+                const topicCopyId = `topic_${activeMonth.id}_${idx}`;
+                const topicText = `${isBn ? topic.titleBn : topic.titleEn}\n${
+                  topic.referencedPoints
+                    ? topic.referencedPoints
+                        .map((rp, i) => `${i + 1}. ${isBn ? rp.textBn : rp.textEn} (${rp.reference})`)
+                        .join('\n')
+                    : (isBn ? topic.pointsBn : topic.pointsEn).join('\n')
+                }\nসূত্র: ${topic.reference}`;
 
-                  <ul className="space-y-2.5">
-                    {(isBn ? topic.pointsBn : topic.pointsEn).map((pt, pIdx) => (
-                      <li key={pIdx} className={`flex items-start gap-2.5 text-xs sm:text-sm leading-relaxed ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
-                        <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
-                        <span>{pt}</span>
-                      </li>
-                    ))}
-                  </ul>
+                return (
+                  <div
+                    key={idx}
+                    className={`p-4 sm:p-5 rounded-2xl border space-y-3.5 ${
+                      isDay ? 'bg-slate-50/75 border-slate-200/80' : 'bg-[#07191e] border-[#133841]'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className={`text-sm sm:text-base font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                        {isBn ? topic.titleBn : topic.titleEn}
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-mono font-semibold ${isDay ? 'text-slate-500' : 'text-teal-200/75'}`}>
+                          {isBn ? topic.slideTagBn : topic.slideTagEn}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onCopyText(topicText, topicCopyId)}
+                          className="min-h-[34px] min-w-[34px] flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer"
+                          title={isBn ? 'এই অংশটি কপি করুন' : 'Copy section'}
+                        >
+                          {copiedItemId === topicCopyId ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5 opacity-60" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
 
-                  <div className={`pt-2 border-t flex items-center gap-1.5 text-xs font-semibold ${isDay ? 'border-slate-200/80 text-amber-800' : 'border-white/[0.08] text-amber-300'}`}>
-                    <BookMarked className="w-3.5 h-3.5 shrink-0" />
-                    <span>{isBn ? 'সূত্র: ' : 'Source: '}{topic.reference}</span>
+                    {renderReferencedPointsList(topic.pointsBn, topic.pointsEn, topic.referencedPoints)}
+
+                    <div
+                      className={`pt-2.5 border-t flex flex-wrap items-center gap-1.5 text-xs font-semibold ${
+                        isDay ? 'border-slate-200/80 text-amber-800' : 'border-white/[0.08] text-amber-300'
+                      }`}
+                    >
+                      <BookMarked className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {isBn ? 'সামগ্রিক সূত্র: ' : 'Combined Source: '}
+                        {topic.reference}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Special Month Dua (e.g. Laylatul Qadr in Ramadan) */}
@@ -753,7 +1362,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                       onClick={() =>
                         onPlaySpeech(activeMonth.specialDua!.arabic, `month_dua_${activeMonth.id}`, true)
                       }
-                      className="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                      className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
                       title={isBn ? 'শুনুন' : 'Listen'}
                     >
                       {isPlayingAudio === `month_dua_${activeMonth.id}` ? (
@@ -770,7 +1379,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                           `month_dua_${activeMonth.id}`
                         )
                       }
-                      className="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                      className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
                       title={isBn ? 'কপি করুন' : 'Copy'}
                     >
                       {copiedItemId === `month_dua_${activeMonth.id}` ? (
@@ -791,7 +1400,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                 <div className="text-xs sm:text-sm font-medium pt-2 border-t border-teal-300/40 dark:border-teal-700/40">
                   {isBn ? activeMonth.specialDua.meaningBn : activeMonth.specialDua.meaningEn}
                 </div>
-                <div className="text-[11px] font-semibold opacity-75 text-right">
+                <div className="text-[11px] font-mono font-semibold opacity-80 text-right">
                   — {activeMonth.specialDua.reference}
                 </div>
               </div>
@@ -820,15 +1429,16 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                       </li>
                     ))}
                   </ul>
-                  <div className="text-[11px] font-semibold opacity-80 pt-1">
-                    {isBn ? 'সূত্র: ' : 'Reference: '}{c.reference}
+                  <div className="text-[11px] font-mono font-semibold opacity-85 pt-1">
+                    {isBn ? 'তাহকীক সূত্র: ' : 'Verification Reference: '}
+                    {c.reference}
                   </div>
                 </div>
               );
             })()}
           </div>
 
-          {/* COMPLETE 12-MONTH AT-A-GLANCE CALENDAR TABLE (Slides 34-35) */}
+          {/* COMPLETE 12-MONTH AT-A-GLANCE CALENDAR TABLE */}
           <div
             className={`rounded-3xl p-5 sm:p-6 border space-y-4 ${
               isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
@@ -837,13 +1447,13 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className={`text-base sm:text-lg font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                  {isBn ? 'এক নজরে ১২ মাসের হিজরি ক্যালেন্ডার (১৪৪৮–১৪৪৯ হিজরি)' : 'Complete 12-Month Hijri Calendar at a Glance'}
+                  {isBn ? 'এক নজরে ১২ মাসের হিজরি ক্যালেন্ডার ও মূল দলিল (১৪৪৮–১৪৪৯ হিজরি)' : 'Complete 12-Month Hijri Calendar & Primary Citations'}
                 </h3>
                 <p className={`text-xs ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {isBn ? 'যেকোনো মাসের সারিতে ক্লিক করে বিস্তারিত আমল ও হাদিস দেখুন' : 'Click any month row to inspect its detailed Sunnah deeds & Hadith references'}
+                  {isBn ? 'যেকোনো মাসের সারিতে ক্লিক করে বিস্তারিত আমল, বর্ণনাকারী ও হাদিস দেখুন' : 'Click any month row to inspect detailed deeds, narrators & Hadith references'}
                 </p>
               </div>
-              <span className={`text-[11px] font-medium ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`text-[11px] font-mono font-bold tabular-nums ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                 {isBn ? 'মোট ১২টি মাস' : '12 Lunar Months'}
               </span>
             </div>
@@ -859,6 +1469,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                     <th className="py-2.5 px-2.5">{isBn ? 'হিজরি মাস' : 'Hijri Month'}</th>
                     <th className="py-2.5 px-2.5 whitespace-nowrap">{isBn ? 'শুরু (আনুমানিক)' : 'Start (Est.)'}</th>
                     <th className="py-2.5 px-2.5">{isBn ? 'মূল আমল' : 'Core Sunnah Focus'}</th>
+                    <th className="py-2.5 px-2.5 hidden md:table-cell">{isBn ? 'প্রধান সূত্র' : 'Primary Sources'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-[#133841]">
@@ -895,6 +1506,9 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                         </td>
                         <td className="py-2.5 px-2.5">
                           {isBn ? m.coreAmalBn : m.coreAmalEn}
+                        </td>
+                        <td className={`py-2.5 px-2.5 hidden md:table-cell font-mono text-[11px] ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
+                          {isBn ? m.primarySourcesBn : m.primarySourcesEn}
                         </td>
                       </tr>
                     );
@@ -948,9 +1562,9 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
               isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
             }`}
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200/70 dark:border-[#153c45]">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-200/70 dark:border-[#153c45]">
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#006A4E] dark:text-amber-300">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#006A4E] dark:text-amber-300">
                   <span>{isBn ? 'সাপ্তাহিক আমল' : 'Weekly Sunnah'}</span>
                   <span aria-hidden="true" className="opacity-35">·</span>
                   <span>{isBn ? selectedWeekDay.shortTagBn : selectedWeekDay.shortTagEn}</span>
@@ -963,6 +1577,12 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                   {isBn ? selectedWeekDay.summaryBn : selectedWeekDay.summaryEn}
                 </p>
               </div>
+              <div className={`text-xs font-semibold shrink-0 max-w-xs sm:text-right ${isDay ? 'text-slate-600' : 'text-teal-200/80'}`}>
+                <span className="opacity-70">{isBn ? 'বর্ণনাকারী সাহাবি: ' : 'Narrators: '}</span>
+                <span className={isDay ? 'text-slate-900 font-bold' : 'text-white font-bold'}>
+                  {isBn ? selectedWeekDay.narratorsBn : selectedWeekDay.narratorsEn}
+                </span>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -973,17 +1593,17 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                     isDay ? 'bg-slate-50/75 border-slate-200/80' : 'bg-[#07191e] border-[#133841]'
                   }`}
                 >
-                  <h4 className={`text-sm sm:text-base font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    {isBn ? sec.titleBn : sec.titleEn}
-                  </h4>
-                  <ul className="space-y-2">
-                    {(isBn ? sec.pointsBn : sec.pointsEn).map((pt, i) => (
-                      <li key={i} className={`flex items-start gap-2.5 text-xs sm:text-sm leading-relaxed ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
-                        <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
-                        <span>{pt}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className={`text-sm sm:text-base font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                      {isBn ? sec.titleBn : sec.titleEn}
+                    </h4>
+                    <span className={`text-[11px] font-mono font-semibold ${isDay ? 'text-slate-500' : 'text-teal-200/75'}`}>
+                      {sec.slideRefBn}
+                    </span>
+                  </div>
+
+                  {renderReferencedPointsList(sec.pointsBn, sec.pointsEn, sec.referencedPoints)}
+
                   <div className={`pt-2 border-t flex items-center gap-1.5 text-xs font-semibold ${isDay ? 'border-slate-200/80 text-amber-800' : 'border-white/[0.08] text-amber-300'}`}>
                     <BookMarked className="w-3.5 h-3.5 shrink-0" />
                     <span>{isBn ? 'সূত্র: ' : 'Source: '}{sec.reference}</span>
@@ -993,14 +1613,14 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
             </div>
           </div>
 
-          {/* Weekly Summary Table (Slide 29) */}
+          {/* Weekly Summary Table */}
           <div
             className={`rounded-3xl p-5 sm:p-6 border space-y-3 ${
               isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
             }`}
           >
             <h3 className={`text-base sm:text-lg font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-              {isBn ? 'সপ্তাহের আমল এক নজরে (শনিবার থেকে শুক্রবার)' : 'Weekly Sunnah Summary Table'}
+              {isBn ? 'সপ্তাহের আমল ও হাদিস সূত্র এক নজরে (শনিবার থেকে শুক্রবার)' : 'Weekly Sunnah & Sources Summary'}
             </h3>
             <div className="divide-y divide-slate-100 dark:divide-[#133841] text-xs sm:text-sm">
               {WEEKLY_PROPHETIC_AMAL.map((d) => (
@@ -1011,7 +1631,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                     setSelectedWeekDayId(d.id);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`w-full py-3 px-2.5 rounded-xl flex items-center justify-between gap-4 text-left transition cursor-pointer ${
+                  className={`w-full py-3 px-2.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4 text-left transition cursor-pointer ${
                     d.id === selectedWeekDay.id
                       ? isDay
                         ? 'bg-emerald-50/90 text-emerald-950 font-bold'
@@ -1021,10 +1641,13 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                       : 'hover:bg-[#071b20] text-slate-200'
                   }`}
                 >
-                  <span className="font-black text-[#006A4E] dark:text-amber-300 w-28 shrink-0">
+                  <span className="font-black text-[#006A4E] dark:text-amber-300 sm:w-28 shrink-0">
                     {isBn ? d.dayBn : d.dayEn}
                   </span>
                   <span className="flex-1">{isBn ? d.shortTagBn : d.shortTagEn}</span>
+                  <span className={`font-mono text-[11px] shrink-0 ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
+                    {d.sections[0]?.reference}
+                  </span>
                 </button>
               ))}
             </div>
@@ -1045,10 +1668,58 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                 : 'bg-[#0a2026] border-[#153c45]'
             }`}
           >
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <h3 className={`text-lg sm:text-xl font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
                 {isBn ? SACRED_MONTHS_INTRO_PDF.titleBn : SACRED_MONTHS_INTRO_PDF.titleEn}
               </h3>
+
+              {/* Quranic Ayah Surah At-Tawbah 9:36 */}
+              <div
+                className={`p-3.5 sm:p-4 rounded-2xl border space-y-2 ${
+                  isDay ? 'bg-white/85 border-amber-200/75 text-slate-900' : 'bg-[#07191e] border-[#184550] text-amber-50'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-black text-amber-800 dark:text-amber-300">
+                    {SACRED_MONTHS_INTRO_PDF.quranRef}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onPlaySpeech(SACRED_MONTHS_INTRO_PDF.quranArabic, 'sacred_quran_9_36', true)}
+                      className="min-h-[34px] min-w-[34px] flex items-center justify-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                      title={isBn ? 'শুনুন' : 'Listen'}
+                    >
+                      {isPlayingAudio === 'sacred_quran_9_36' ? (
+                        <VolumeX className="w-4 h-4 text-amber-500" />
+                      ) : (
+                        <Volume2 className="w-4 h-4 text-amber-700 dark:text-amber-300" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onCopyText(
+                          `${SACRED_MONTHS_INTRO_PDF.quranArabic}\n${SACRED_MONTHS_INTRO_PDF.reference}`,
+                          'sacred_quran_9_36'
+                        )
+                      }
+                      className="min-h-[34px] min-w-[34px] flex items-center justify-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                      title={isBn ? 'কপি' : 'Copy'}
+                    >
+                      {copiedItemId === 'sacred_quran_9_36' ? (
+                        <Check className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-amber-700 dark:text-amber-300" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div dir="rtl" className="text-lg sm:text-xl font-arabic font-bold text-right leading-[2.05]">
+                  {SACRED_MONTHS_INTRO_PDF.quranArabic}
+                </div>
+              </div>
+
               <ul className="space-y-2 pt-1">
                 {(isBn ? SACRED_MONTHS_INTRO_PDF.pointsBn : SACRED_MONTHS_INTRO_PDF.pointsEn).map((p, idx) => (
                   <li key={idx} className={`flex items-start gap-2 text-xs sm:text-sm leading-relaxed ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
@@ -1057,7 +1728,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                   </li>
                 ))}
               </ul>
-              <div className="text-xs font-semibold text-amber-700 dark:text-amber-300 pt-1">
+              <div className="text-xs font-mono font-semibold text-amber-700 dark:text-amber-300 pt-1">
                 {isBn ? 'সূত্র: ' : 'Source: '}{SACRED_MONTHS_INTRO_PDF.reference}
               </div>
             </div>
@@ -1069,13 +1740,13 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                   key={sm.id}
                   type="button"
                   onClick={() => selectAndScrollMonth(sm.id, true)}
-                  className={`min-h-[44px] p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                  className={`min-h-[48px] p-3 rounded-xl border text-left transition cursor-pointer ${
                     isDay
                       ? 'bg-white border-emerald-200 hover:border-emerald-500 text-slate-900'
                       : 'bg-[#07191e] border-[#184752] hover:border-emerald-400 text-white'
                   }`}
                 >
-                  <div className="text-[10px] font-mono font-bold text-[#006A4E] dark:text-amber-300">
+                  <div className="text-[10px] font-mono font-bold tabular-nums text-[#006A4E] dark:text-amber-300">
                     {isBn ? `মাস ${toBnDigits(sm.order)}/১২` : `Month ${sm.order}/12`}
                   </div>
                   <div className="text-xs sm:text-sm font-black">{isBn ? sm.nameBn : sm.nameEn}</div>
@@ -1093,23 +1764,21 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                   isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
                 }`}
               >
-                <div>
-                  <div className="text-xs font-bold text-amber-700 dark:text-amber-300">
-                    {isBn ? rule.timingBn : rule.timingEn}
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                      {isBn ? rule.timingBn : rule.timingEn}
+                    </div>
+                    <h3 className={`text-lg font-black mt-0.5 ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                      {isBn ? rule.titleBn : rule.titleEn}
+                    </h3>
                   </div>
-                  <h3 className={`text-lg font-black mt-0.5 ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                    {isBn ? rule.titleBn : rule.titleEn}
-                  </h3>
+                  <span className={`text-[11px] font-mono font-semibold ${isDay ? 'text-slate-500' : 'text-teal-200/75'}`}>
+                    {rule.slideRefBn}
+                  </span>
                 </div>
 
-                <ul className="space-y-2">
-                  {(isBn ? rule.pointsBn : rule.pointsEn).map((pt, i) => (
-                    <li key={i} className={`flex items-start gap-2.5 text-xs sm:text-sm leading-relaxed ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
-                      <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
-                      <span>{pt}</span>
-                    </li>
-                  ))}
-                </ul>
+                {renderReferencedPointsList(rule.pointsBn, rule.pointsEn, rule.referencedPoints)}
 
                 {rule.dua && (
                   <div
@@ -1125,7 +1794,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                         <button
                           type="button"
                           onClick={() => onPlaySpeech(rule.dua!.arabic, `rule_dua_${rule.id}`, true)}
-                          className="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                          className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
                           title={isBn ? 'শুনুন' : 'Listen'}
                         >
                           {isPlayingAudio === `rule_dua_${rule.id}` ? (
@@ -1142,7 +1811,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                               `rule_dua_${rule.id}`
                             )
                           }
-                          className="p-2 rounded-xl hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                          className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
                           title={isBn ? 'কপি' : 'Copy'}
                         >
                           {copiedItemId === `rule_dua_${rule.id}` ? (
@@ -1186,12 +1855,12 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
         >
           <div>
             <h3 className={`text-lg sm:text-xl font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-              {isBn ? 'দিনের রুটিন এক নজরে (সহিহ হাদিস নম্বরসহ সংযোজন)' : 'Daily Prophetic Snapshot with Sahih Hadith References'}
+              {isBn ? 'দিনের রুটিন এক নজরে (সহিহ হাদিস নম্বর ও বর্ণনাকারীসহ)' : 'Daily Prophetic Snapshot with Narrators & Hadith Citations'}
             </h3>
             <p className={`text-xs sm:text-sm ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
               {isBn
-                ? 'যেকোনো সময়-পর্বে ক্লিক করে বিস্তারিত হাদিস ও তাসবিহ-দোয়া পড়ুন'
-                : 'Click any row to view its exact Hadith points & bedtime/prayer remembrances'}
+                ? 'যেকোনো সময়-পর্বে ক্লিক করে বিস্তারিত হাদিস, বর্ণনাকারী সাহাবি ও মাসনুন দোয়া পড়ুন'
+                : 'Click any row to view detailed narrations, companions & bedtime/prayer duas'}
             </p>
           </div>
 
@@ -1217,7 +1886,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                       setExpandedDailyId(isExpanded ? '' : item.id);
                       if (soundEnabled) soundHaptics.playTap();
                     }}
-                    className="w-full p-3.5 sm:p-4 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer"
+                    className="w-full min-h-[52px] p-3.5 sm:p-4 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-2 cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="px-2.5 py-1 rounded-lg bg-[#006A4E] text-white text-xs font-black shrink-0">
@@ -1233,17 +1902,66 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
                   </button>
 
                   {isExpanded && (
-                    <div className={`px-4 pb-4 pt-2 border-t space-y-2.5 ${isDay ? 'border-emerald-200/60' : 'border-white/10'}`}>
-                      <ul className="space-y-2">
-                        {(isBn ? item.slideDetailsBn : item.slideDetailsEn).map((d, i) => (
-                          <li key={i} className={`flex items-start gap-2 text-xs sm:text-sm leading-relaxed ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
-                            <Sun className="w-3.5 h-3.5 mt-1 text-amber-500 shrink-0" />
-                            <span>{d}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <div className={`text-xs font-semibold pt-1 ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
-                        {item.reference}
+                    <div className={`px-4 pb-4 pt-3 border-t space-y-3 ${isDay ? 'border-emerald-200/60' : 'border-white/10'}`}>
+                      {renderReferencedPointsList(item.slideDetailsBn, item.slideDetailsEn, item.referencedPoints, 'amber')}
+
+                      {item.duaArabic && (
+                        <div
+                          className={`p-3.5 rounded-xl border space-y-2 ${
+                            isDay ? 'bg-teal-50/75 border-teal-200 text-teal-950' : 'bg-[#0a2329] border-[#184954] text-teal-100'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-black text-teal-800 dark:text-amber-300">
+                              {isBn ? 'নির্বাচিত মাসনুন দোয়া / জিকির' : 'Authentic Sunnah Dua'}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => onPlaySpeech(item.duaArabic!, `daily_pdf_dua_${item.id}`, true)}
+                                className="min-h-[34px] min-w-[34px] flex items-center justify-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                                title={isBn ? 'শুনুন' : 'Listen'}
+                              >
+                                {isPlayingAudio === `daily_pdf_dua_${item.id}` ? (
+                                  <VolumeX className="w-4 h-4 text-amber-500" />
+                                ) : (
+                                  <Volume2 className="w-4 h-4 text-teal-700 dark:text-teal-300" />
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onCopyText(
+                                    `${item.duaArabic}\n${item.duaPronunciationBn || ''}\n${item.duaMeaningBn || ''}`,
+                                    `daily_pdf_dua_${item.id}`
+                                  )
+                                }
+                                className="min-h-[34px] min-w-[34px] flex items-center justify-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                                title={isBn ? 'কপি' : 'Copy'}
+                              >
+                                {copiedItemId === `daily_pdf_dua_${item.id}` ? (
+                                  <Check className="w-4 h-4 text-emerald-500" />
+                                ) : (
+                                  <Copy className="w-4 h-4 text-teal-700 dark:text-teal-300" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                          <div dir="rtl" className="text-lg font-arabic font-bold text-right leading-[2.0]">
+                            {item.duaArabic}
+                          </div>
+                          {item.duaPronunciationBn && (
+                            <div className="text-xs italic opacity-85">{item.duaPronunciationBn}</div>
+                          )}
+                          {item.duaMeaningBn && (
+                            <div className="text-xs font-medium">{item.duaMeaningBn}</div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className={`text-xs font-mono font-semibold pt-1 flex items-center gap-1.5 ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
+                        <BookMarked className="w-3.5 h-3.5 shrink-0" />
+                        <span>{item.reference}</span>
                       </div>
                     </div>
                   )}
@@ -1253,6 +1971,84 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 5. VERIFIED HADITH & QURAN REFERENCE VAULT (HADITH_BOOK_REFERENCE_LEDGER) */}
+      {/* ========================================================================= */}
+      <div
+        ref={ledgerRef}
+        className={`rounded-3xl p-5 sm:p-6 border space-y-4 ${
+          isDay ? 'bg-white border-slate-200/90' : 'bg-[#0a2026] border-[#153c45]'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200/70 dark:border-[#153c45]">
+          <div className="space-y-0.5">
+            <div className={`text-[11px] font-bold ${isDay ? 'text-[#006A4E]' : 'text-amber-300'}`}>
+              {isBn ? 'সীরাহ পড়ি · ৬০ স্লাইড ভিত্তিক সম্পূর্ণ দলিল' : 'Complete Citation Audit · 60-Slide Source Ledger'}
+            </div>
+            <h3 className={`text-base sm:text-lg font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
+              {isBn ? 'হাদিস ও কুরআন রেফারেন্স ইনডেক্স (গ্রন্থ ও নম্বর অনুযায়ী)' : 'Verified Hadith & Quran Reference Vault'}
+            </h3>
+          </div>
+          <span className={`text-xs font-mono font-bold tabular-nums shrink-0 ${isDay ? 'text-slate-500' : 'text-teal-200/80'}`}>
+            {isBn ? '৫টি মূল উৎস গ্রন্থ ও তাহকীক' : '5 Core Source Collections'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {HADITH_BOOK_REFERENCE_LEDGER.map((entry, idx) => {
+            const copyKey = `ledger_${idx}`;
+            const bookName = isBn ? entry.bookBn : entry.bookEn;
+            const numbers = isBn ? entry.numbersBn : entry.numbersEn;
+            const scope = isBn ? entry.scopeBn : entry.scopeEn;
+
+            return (
+              <div
+                key={idx}
+                className={`p-4 rounded-2xl border space-y-2 ${
+                  idx === HADITH_BOOK_REFERENCE_LEDGER.length - 1 ? 'md:col-span-2' : ''
+                } ${
+                  isDay ? 'bg-slate-50/80 border-slate-200/80' : 'bg-[#07191e] border-[#133841]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 className={`text-sm font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                      {bookName}
+                    </h4>
+                    <p className={`text-[11px] font-medium ${isDay ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {scope}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onCopyText(`${bookName}: ${numbers}\n(${scope})`, copyKey)}
+                    className="min-h-[34px] min-w-[34px] flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer shrink-0"
+                    title={isBn ? 'নম্বরগুলো কপি করুন' : 'Copy reference numbers'}
+                  >
+                    {copiedItemId === copyKey ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5 opacity-60" />
+                    )}
+                  </button>
+                </div>
+
+                <div
+                  className={`text-xs font-mono leading-relaxed tabular-nums break-words ${
+                    isDay ? 'text-amber-800' : 'text-amber-300/95'
+                  }`}
+                >
+                  <span className={`font-sans font-bold ${isDay ? 'text-slate-600' : 'text-teal-200/75'}`}>
+                    {isBn ? 'হাদিস / আয়াত নম্বর: ' : 'Numbers: '}
+                  </span>
+                  {numbers}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

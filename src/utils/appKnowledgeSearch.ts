@@ -626,12 +626,20 @@ async function buildKnowledgeIndex(): Promise<IndexedEntry[]> {
           joinNonEmpty([
             mo.coreAmalBn,
             mo.headlineBn,
+            mo.narratorsBn ? `বর্ণনাকারী: ${mo.narratorsBn}` : '',
             mo.ayyamulBeedhBn ? `আইয়ামে বীয: ${mo.ayyamulBeedhBn}` : '',
-            mo.topics.map((t) => `${t.titleBn}: ${t.pointsBn.join(' ')} (${t.reference})`).join(' | '),
+            mo.quranRef ? `${mo.quranRef.surahBn}: ${mo.quranRef.meaningBn}` : '',
+            mo.topics
+              .map((t) =>
+                t.referencedPoints?.length
+                  ? `${t.titleBn}: ${t.referencedPoints.map((rp) => `${rp.textBn} (${rp.reference})`).join(' ')}`
+                  : `${t.titleBn}: ${t.pointsBn.join(' ')} (${t.reference})`
+              )
+              .join(' | '),
             mo.authenticityCautionBn ? `${mo.authenticityCautionBn.title}: ${mo.authenticityCautionBn.points.join(' ')}` : '',
           ]),
-          mo.topics[0]?.reference || 'সহিহ বুখারি ও মুসলিম',
-          `${mo.nameEn} ${mo.coreAmalEn}`
+          mo.primarySourcesBn || mo.topics[0]?.reference || 'সহিহ বুখারি ও মুসলিম',
+          `${mo.nameEn} ${mo.coreAmalEn} ${mo.narratorsEn}`
         );
       });
       (m.WEEKLY_PROPHETIC_AMAL || []).forEach((w) => {
@@ -641,6 +649,7 @@ async function buildKnowledgeIndex(): Promise<IndexedEntry[]> {
           `সাপ্তাহিক সুন্নাহ (${w.dayBn}): ${w.shortTagBn}`,
           joinNonEmpty([
             w.summaryBn,
+            w.narratorsBn ? `বর্ণনাকারী: ${w.narratorsBn}` : '',
             w.sections.map((s) => `${s.titleBn}: ${s.pointsBn.join(' ')} (${s.reference})`).join(' | '),
           ]),
           w.sections[0]?.reference || 'সহিহ বুখারি ও মুসলিম',
@@ -655,6 +664,16 @@ async function buildKnowledgeIndex(): Promise<IndexedEntry[]> {
           joinNonEmpty([r.timingBn, r.pointsBn.join(' '), r.dua?.arabic, r.dua?.pronunciationBn, r.dua?.meaningBn]),
           r.reference,
           r.titleEn
+        );
+      });
+      (m.HADITH_BOOK_REFERENCE_LEDGER || []).forEach((refEntry, idx) => {
+        pushEntry(
+          `nobi12_ledger_${idx}`,
+          'nobi_24_hours',
+          `নবীজির ১২ মাসের আমল — রেফারেন্স সূচি (${refEntry.bookBn})`,
+          joinNonEmpty([refEntry.scopeBn, `হাদিস/আয়াত নম্বর: ${refEntry.numbersBn}`]),
+          refEntry.bookBn,
+          `${refEntry.bookEn} ${refEntry.numbersEn}`
         );
       });
     }),
