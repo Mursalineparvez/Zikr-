@@ -9,6 +9,7 @@ import {
   Sparkles,
   BookmarkCheck,
   Search,
+  X,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { TABLIG_UI, TABLIG_CHAPTER_TRANSLATIONS } from '../utils/appTranslations';
@@ -280,6 +281,7 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
   const isBn = selectedLanguage === 'bn';
   const [expandedChapter, setExpandedChapter] = useState<string>('sifats_intro');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [chapterPartFilter, setChapterPartFilter] = useState<Record<string, string>>({});
   const [shareState, setShareState] = useState<{
     content: ShareableContent;
@@ -474,84 +476,122 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
               {TABLIG_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
-          <ShareDownloadButtons
-            variant="card"
-            selectedLanguage={selectedLanguage}
-            themeMode={themeMode}
-            className="shrink-0 self-start sm:self-center"
-            onShare={() => {
-              const fullDoc = filteredChapters
-                .map((c, i) => {
-                  const secText = c.sections
-                    .map(
-                      (s, si) =>
-                        `### ${getLocalizedSectionHeading(c.id, s.heading, si)}\n${getLocalizedSectionContent(c.id, s.content, si)}`
-                    )
-                    .join('\n\n');
-                  return `${i + 1}. ${getChapterTitle(c)}\n${getChapterSubtitle(c)}\n\n${secText}`;
-                })
-                .join('\n\n====================================\n\n');
-              setShareState({
-                focus: 'share',
-                content: {
-                  badge: isBn ? 'দাওয়াত ও তাবলীগ সিলেবাস' : 'Dawah & Tabligh Syllabus',
-                  title: TABLIG_UI.bannerTitle[selectedLanguage],
-                  subtitle: TABLIG_UI.bannerSub[selectedLanguage],
-                  arabic: 'وَمَنْ أَحْسَنُ قَوْلًا مِّمَّن دَعَا إِلَى اللَّهِ',
-                  body: filteredChapters
-                    .map((c, i) => `${i + 1}. ${getChapterTitle(c)} — ${getChapterSubtitle(c)}`)
-                    .join('\n'),
-                  fullDocumentText: fullDoc,
-                  fileNamePrefix: 'Dawah-Tabligh-Guide',
-                },
-              });
-            }}
-            onDownload={() => {
-              const fullDoc = filteredChapters
-                .map((c, i) => {
-                  const secText = c.sections
-                    .map(
-                      (s, si) =>
-                        `### ${getLocalizedSectionHeading(c.id, s.heading, si)}\n${getLocalizedSectionContent(c.id, s.content, si)}`
-                    )
-                    .join('\n\n');
-                  return `${i + 1}. ${getChapterTitle(c)}\n${getChapterSubtitle(c)}\n\n${secText}`;
-                })
-                .join('\n\n====================================\n\n');
-              setShareState({
-                focus: 'download',
-                content: {
-                  badge: isBn ? 'দাওয়াত ও তাবলীগ সিলেবাস' : 'Dawah & Tabligh Syllabus',
-                  title: TABLIG_UI.bannerTitle[selectedLanguage],
-                  subtitle: TABLIG_UI.bannerSub[selectedLanguage],
-                  arabic: 'وَمَنْ أَحْسَنُ قَوْلًا مِّمَّن دَعَا إِلَى اللَّهِ',
-                  body: filteredChapters
-                    .map((c, i) => `${i + 1}. ${getChapterTitle(c)} — ${getChapterSubtitle(c)}`)
-                    .join('\n'),
-                  fullDocumentText: fullDoc,
-                  fileNamePrefix: 'Dawah-Tabligh-Guide',
-                },
-              });
-            }}
-          />
+          <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center">
+            <ShareDownloadButtons
+              variant="card"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => {
+                const fullDoc = filteredChapters
+                  .map((c, i) => {
+                    const secText = c.sections
+                      .map(
+                        (s, si) =>
+                          `### ${getLocalizedSectionHeading(c.id, s.heading, si)}\n${getLocalizedSectionContent(c.id, s.content, si)}`
+                      )
+                      .join('\n\n');
+                    return `${i + 1}. ${getChapterTitle(c)}\n${getChapterSubtitle(c)}\n\n${secText}`;
+                  })
+                  .join('\n\n====================================\n\n');
+                setShareState({
+                  focus: 'share',
+                  content: {
+                    badge: isBn ? 'দাওয়াত ও তাবলীগ সিলেবাস' : 'Dawah & Tabligh Syllabus',
+                    title: TABLIG_UI.bannerTitle[selectedLanguage],
+                    subtitle: TABLIG_UI.bannerSub[selectedLanguage],
+                    arabic: 'وَمَنْ أَحْسَنُ قَوْلًا مِّمَّن دَعَا إِلَى اللَّهِ',
+                    body: filteredChapters
+                      .map((c, i) => `${i + 1}. ${getChapterTitle(c)} — ${getChapterSubtitle(c)}`)
+                      .join('\n'),
+                    fullDocumentText: fullDoc,
+                    fileNamePrefix: 'Dawah-Tabligh-Guide',
+                  },
+                });
+              }}
+              onDownload={() => {
+                const fullDoc = filteredChapters
+                  .map((c, i) => {
+                    const secText = c.sections
+                      .map(
+                        (s, si) =>
+                          `### ${getLocalizedSectionHeading(c.id, s.heading, si)}\n${getLocalizedSectionContent(c.id, s.content, si)}`
+                      )
+                      .join('\n\n');
+                    return `${i + 1}. ${getChapterTitle(c)}\n${getChapterSubtitle(c)}\n\n${secText}`;
+                  })
+                  .join('\n\n====================================\n\n');
+                setShareState({
+                  focus: 'download',
+                  content: {
+                    badge: isBn ? 'দাওয়াত ও তাবলীগ সিলেবাস' : 'Dawah & Tabligh Syllabus',
+                    title: TABLIG_UI.bannerTitle[selectedLanguage],
+                    subtitle: TABLIG_UI.bannerSub[selectedLanguage],
+                    arabic: 'وَمَنْ أَحْسَنُ قَوْلًا مِّمَّن دَعَا إِلَى اللَّهِ',
+                    body: filteredChapters
+                      .map((c, i) => `${i + 1}. ${getChapterTitle(c)} — ${getChapterSubtitle(c)}`)
+                      .join('\n'),
+                    fullDocumentText: fullDoc,
+                    fileNamePrefix: 'Dawah-Tabligh-Guide',
+                  },
+                });
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setIsSearchOpen((prev) => {
+                  if (prev && searchQuery) setSearchQuery('');
+                  return !prev;
+                });
+              }}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
+              }`}
+              title={isBn ? 'খুঁজুন' : 'Search'}
+              aria-label={isBn ? 'খুঁজুন' : 'Search'}
+            >
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Search Input */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={TABLIG_UI.searchPlaceholder[selectedLanguage]}
-          className={`w-full pl-11 pr-4 py-3 rounded-2xl border text-xs sm:text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
-            isDay
-              ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'
-              : 'bg-[#0a242a] border-[#16444e] text-white placeholder-teal-400/60'
-          }`}
-        />
-      </div>
+      {/* Expandable Search Input */}
+      {(isSearchOpen || searchQuery.trim().length > 0) && (
+        <div className="relative animate-in fade-in duration-150">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            autoFocus={isSearchOpen}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={TABLIG_UI.searchPlaceholder[selectedLanguage]}
+            className={`w-full pl-11 pr-10 py-2.5 rounded-2xl border text-xs sm:text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+              isDay
+                ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400'
+                : 'bg-[#0a242a] border-[#16444e] text-white placeholder-teal-400/60'
+            }`}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setIsSearchOpen(false);
+            }}
+            aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Quick Spotlight Jump Strip to Sacrifices & Rewards Chapter */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">

@@ -209,12 +209,15 @@ export const HadithView: React.FC<HadithViewProps> = ({
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [activeTab, selectedBookId, selectedChapterId, selectedTopic, chapterPage]);
 
+  const [isBookSearchOpen, setIsBookSearchOpen] = useState(false);
+
   // Load Chapters when a Book is selected
   useEffect(() => {
     if (!selectedBookId) {
       setChapters([]);
       setChapterFilterQuery('');
       setBookSearchQuery('');
+      setIsBookSearchOpen(false);
       setBookSearchResults(null);
       setBookSearchError(null);
       return;
@@ -1412,10 +1415,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
       {/* =================================================================== */}
       {selectedBookId && selectedBookDef && !selectedChapterId && (
         <div className="space-y-4">
-          {/* Book Header Bar */}
+          {/* Flat Book Header Bar */}
           <div
-            className={`p-4 sm:p-5 rounded-3xl border space-y-3 ${
-              isDay ? 'bg-white border-slate-200' : 'bg-[#0a2329] border-[#16444e]'
+            className={`pb-3.5 border-b space-y-3 ${
+              isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
             }`}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1425,54 +1428,83 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   if (soundEnabled) soundHaptics.playTap();
                   stepBackOr(() => setSelectedBookId(null));
                 }}
-                className={`min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
+                className={`min-h-[40px] px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
                   isDay
-                    ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
-                    : 'bg-[#06181c] hover:bg-[#0e3038] border-[#1a4c56] text-emerald-200'
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                    : 'bg-[#0e1c26] hover:bg-[#132634] border-[#1a3342] text-emerald-200'
                 }`}
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>{isBn ? 'সকল কিতাব' : 'All Books'}</span>
               </button>
 
-              {/* Save Entire Book Offline Button */}
-              {downloadingBookId === selectedBookId ? (
-                <div className="flex items-center gap-2">
-                  <div className="text-xs font-bold text-[#006A4E] dark:text-emerald-300 tabular-nums">
-                    {isBn
-                      ? `ডাউনলোড হচ্ছে: ${formatNum(downloadProgress.done, true)}/${formatNum(downloadProgress.total, true)} অধ্যায়`
-                      : `Saving ${downloadProgress.done}/${downloadProgress.total} chapters`}
+              <div className="flex items-center gap-2">
+                {/* Save Entire Book Offline Button */}
+                {downloadingBookId === selectedBookId ? (
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs font-bold text-[#006A4E] dark:text-emerald-300 tabular-nums">
+                      {isBn
+                        ? `ডাউনলোড হচ্ছে: ${formatNum(downloadProgress.done, true)}/${formatNum(downloadProgress.total, true)} অধ্যায়`
+                        : `Saving ${downloadProgress.done}/${downloadProgress.total} chapters`}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => downloadAbortRef.current?.abort()}
+                      className="min-h-[38px] px-3 py-1.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-300 text-xs font-bold cursor-pointer"
+                    >
+                      {isBn ? 'বাতিল' : 'Cancel'}
+                    </button>
                   </div>
+                ) : offlineStatuses[selectedBookId]?.completed ? (
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">{isBn ? 'অফলাইনে সেভ করা আছে' : 'Saved Offline'}</span>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => downloadAbortRef.current?.abort()}
-                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-300 text-xs font-bold cursor-pointer"
+                    onClick={() => void handleDownloadBookOffline(selectedBookId)}
+                    className={`min-h-[40px] px-3 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
+                      isDay
+                        ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-[#006A4E]'
+                        : 'bg-emerald-950/60 hover:bg-emerald-900/60 border-emerald-700/60 text-emerald-300'
+                    }`}
                   >
-                    {isBn ? 'বাতিল' : 'Cancel'}
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">{isBn ? 'অফলাইন সেভ' : 'Save Offline'}</span>
                   </button>
-                </div>
-              ) : offlineStatuses[selectedBookId]?.completed ? (
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{isBn ? 'সম্পূর্ণ কিতাব অফলাইনে সেভ করা আছে' : 'Full Book Saved Offline'}</span>
-                </div>
-              ) : (
+                )}
+
                 <button
                   type="button"
-                  onClick={() => void handleDownloadBookOffline(selectedBookId)}
-                  className={`min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
-                    isDay
-                      ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-[#006A4E]'
-                      : 'bg-emerald-950/60 hover:bg-emerald-900/60 border-emerald-700/60 text-emerald-300'
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setIsBookSearchOpen((prev) => {
+                      if (prev) {
+                        setBookSearchQuery('');
+                        setChapterFilterQuery('');
+                      }
+                      return !prev;
+                    });
+                  }}
+                  className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                    isBookSearchOpen || bookSearchQuery || chapterFilterQuery
+                      ? isDay
+                        ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                        : 'bg-emerald-600 border-emerald-500 text-white'
+                      : isDay
+                      ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                      : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
                   }`}
+                  title={isBn ? 'কিতাবে খুঁজুন' : 'Search in book'}
+                  aria-label={isBn ? 'কিতাবে খুঁজুন' : 'Search in book'}
                 >
-                  <Download className="w-4 h-4" />
-                  <span>{isBn ? 'সম্পূর্ণ কিতাব অফলাইন সেভ' : 'Save Book Offline'}</span>
+                  {isBookSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
                 </button>
-              )}
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-baseline justify-between gap-2 pt-1">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 pt-0.5">
               <div>
                 <h2 className={`text-lg sm:text-xl font-extrabold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                   {isBn ? selectedBookDef.bnName : selectedBookDef.titles[selectedLanguage] || selectedBookDef.enName}
@@ -1492,51 +1524,64 @@ export const HadithView: React.FC<HadithViewProps> = ({
               </div>
             </div>
 
-            {/* Book-Wide Search & Chapter Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
-              <form onSubmit={handleBookSearchSubmit} className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            {/* Expandable Book-Wide Search & Chapter Filter Controls */}
+            {(isBookSearchOpen || bookSearchQuery.trim().length > 0 || chapterFilterQuery.trim().length > 0) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1 animate-in fade-in duration-150">
+                <form onSubmit={handleBookSearchSubmit} className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      autoFocus={isBookSearchOpen}
+                      value={bookSearchQuery}
+                      onChange={(e) => setBookSearchQuery(e.target.value)}
+                      placeholder={
+                        isBn
+                          ? `এই কিতাবে হাদিস নং বা শব্দ খুঁজুন...`
+                          : `Search Hadith # or text in this book...`
+                      }
+                      className={`w-full min-h-[42px] rounded-xl pl-9 pr-3 py-2 border text-xs sm:text-sm focus:outline-none ${
+                        isDay
+                          ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]'
+                          : 'bg-[#0e1c26] border-[#1a3342] text-white focus:border-emerald-400'
+                      }`}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!bookSearchQuery.trim() || isSearchingBook}
+                    className="min-h-[42px] px-4 rounded-xl bg-[#006A4E] hover:bg-[#005740] text-white text-xs font-extrabold transition active:scale-95 disabled:opacity-50 cursor-pointer shrink-0 whitespace-nowrap"
+                  >
+                    {isSearchingBook ? <Loader2 className="w-4 h-4 animate-spin" /> : isBn ? 'খুঁজুন' : 'Search'}
+                  </button>
+                </form>
+
+                <div className="relative">
+                  <SlidersHorizontal className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
-                    value={bookSearchQuery}
-                    onChange={(e) => setBookSearchQuery(e.target.value)}
-                    placeholder={
-                      isBn
-                        ? `এই কিতাবে হাদিস নং বা শব্দ খুঁজুন...`
-                        : `Search Hadith # or text in this book...`
-                    }
-                    className={`w-full min-h-[44px] rounded-xl pl-9 pr-3 py-2 border text-xs sm:text-sm focus:outline-none ${
+                    value={chapterFilterQuery}
+                    onChange={(e) => setChapterFilterQuery(e.target.value)}
+                    placeholder={isBn ? 'অধ্যায়ের নাম দিয়ে ফিল্টার করুন...' : 'Filter chapters by title or #...'}
+                    className={`w-full min-h-[42px] rounded-xl pl-9 pr-9 py-2 border text-xs sm:text-sm focus:outline-none ${
                       isDay
-                        ? 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-[#006A4E]'
-                        : 'bg-[#06181c] border-[#1a4c56] text-white focus:border-emerald-400'
+                        ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]'
+                        : 'bg-[#0e1c26] border-[#1a3342] text-white focus:border-emerald-400'
                     }`}
                   />
+                  {chapterFilterQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setChapterFilterQuery('')}
+                      aria-label={isBn ? 'মুছুন' : 'Clear'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-                <button
-                  type="submit"
-                  disabled={!bookSearchQuery.trim() || isSearchingBook}
-                  className="min-h-[44px] px-4 rounded-xl bg-[#006A4E] hover:bg-[#005740] text-white text-xs font-extrabold transition active:scale-95 disabled:opacity-50 cursor-pointer shrink-0 whitespace-nowrap"
-                >
-                  {isSearchingBook ? <Loader2 className="w-4 h-4 animate-spin" /> : isBn ? 'খুঁজুন' : 'Search'}
-                </button>
-              </form>
-
-              <div className="relative">
-                <SlidersHorizontal className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={chapterFilterQuery}
-                  onChange={(e) => setChapterFilterQuery(e.target.value)}
-                  placeholder={isBn ? 'অধ্যায়ের নাম দিয়ে ফিল্টার করুন...' : 'Filter chapters by title or #...'}
-                  className={`w-full min-h-[44px] rounded-xl pl-9 pr-3 py-2 border text-xs sm:text-sm focus:outline-none ${
-                    isDay
-                      ? 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-[#006A4E]'
-                      : 'bg-[#06181c] border-[#1a4c56] text-white focus:border-emerald-400'
-                  }`}
-                />
               </div>
-            </div>
+            )}
           </div>
 
           {/* Book Search Results */}
@@ -1657,10 +1702,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
       {/* =================================================================== */}
       {selectedBookId && selectedBookDef && selectedChapterId && (
         <div className="space-y-4">
-          {/* Reader Top Navigation & Settings Bar */}
+          {/* Flat Reader Top Navigation & Settings Bar */}
           <div
-            className={`p-4 rounded-3xl border space-y-3 ${
-              isDay ? 'bg-white border-slate-200' : 'bg-[#0a2329] border-[#16444e]'
+            className={`pb-3.5 border-b space-y-3 ${
+              isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
             }`}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">

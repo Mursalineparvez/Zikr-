@@ -7,6 +7,7 @@ import {
   Volume2,
   Check,
   Award,
+  X,
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { ALLAH_NAMES_UI } from '../utils/appTranslations';
@@ -28,6 +29,7 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
 }) => {
   const isDay = themeMode === 'day';
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [memorizedMap, setMemorizedMap] = useState<Record<number, boolean>>(() => {
     try {
       const saved = localStorage.getItem('zikrmate_allah_names_memorized');
@@ -173,34 +175,63 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
                 </span>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setIsSearchOpen((prev) => {
+                  if (prev && searchQuery) setSearchQuery('');
+                  return !prev;
+                });
+              }}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
+              }`}
+              title={selectedLanguage === 'bn' ? 'খুঁজুন' : 'Search'}
+              aria-label={selectedLanguage === 'bn' ? 'খুঁজুন' : 'Search'}
+            >
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
-        {/* Search Input */}
-        <div className="relative">
-          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${isDay ? 'text-slate-400' : 'text-emerald-300'}`} />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={ALLAH_NAMES_UI.searchPlaceholder[selectedLanguage]}
-            className={`w-full pl-10 pr-14 py-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
-              isDay
-                ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-[#006747]'
-                : 'bg-[#0e1c26] border-[#1a3342] text-white placeholder-slate-400 focus:border-emerald-400'
-            }`}
-          />
-          {searchQuery && (
+        {/* Expandable Search Input */}
+        {(isSearchOpen || searchQuery.trim().length > 0) && (
+          <div className="relative animate-in fade-in duration-150">
+            <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${isDay ? 'text-slate-400' : 'text-emerald-300'}`} />
+            <input
+              type="text"
+              autoFocus={isSearchOpen}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={ALLAH_NAMES_UI.searchPlaceholder[selectedLanguage]}
+              className={`w-full pl-10 pr-10 py-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+                isDay
+                  ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-[#006747]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-white placeholder-slate-400 focus:border-emerald-400'
+              }`}
+            />
             <button
-              onClick={() => setSearchQuery('')}
-              className={`absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold cursor-pointer ${
-                isDay ? 'text-[#006747] hover:underline' : 'text-emerald-300 hover:text-white'
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setIsSearchOpen(false);
+              }}
+              aria-label={ALLAH_NAMES_UI.clear[selectedLanguage]}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 cursor-pointer ${
+                isDay ? 'text-slate-400 hover:text-slate-700' : 'text-emerald-300 hover:text-white'
               }`}
             >
-              {ALLAH_NAMES_UI.clear[selectedLanguage]}
+              <X className="w-4 h-4" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Grid of 99 Names */}

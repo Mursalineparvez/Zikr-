@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v40-fullbleed-modal-cards
+// Version: zikrmate-v41-flat-headers-icon-search
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v40-fullbleed-modal-cards';
+const CACHE_NAME = 'zikrmate-v41-flat-headers-icon-search';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)

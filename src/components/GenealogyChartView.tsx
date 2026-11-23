@@ -51,6 +51,7 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
   useBackLayer(Boolean(selectedPersonModal), () => setSelectedPersonModal(null), 'genealogy-person');
   const [copiedNote, setCopiedNote] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [expandedNodeIds, setExpandedNodeIds] = useState<Record<string, boolean>>({
     prophet_muhammad: true,
     fatima_al_zahra: true,
@@ -297,6 +298,33 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
               <span>{isBn ? 'পবিত্র ৪টি বিবাহ বন্ধন' : '4 Major Intermarriages'}</span>
             </button>
           </div>
+
+          {/* Compact Search Icon for Tree View */}
+          {activeViewMode === 'tree' && (
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setIsSearchOpen((prev) => {
+                  if (prev && searchQuery) setSearchQuery('');
+                  return !prev;
+                });
+              }}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#081c20] border-[#163640] text-emerald-300 hover:border-emerald-500'
+              }`}
+              title={isBn ? 'বংশলতিকায় খুঁজুন' : 'Search in genealogy'}
+              aria-label={isBn ? 'বংশলতিকায় খুঁজুন' : 'Search in genealogy'}
+            >
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </button>
+          )}
 
           {/* Zoom Controls for Chart View */}
           {activeViewMode === 'chart' && (
@@ -825,25 +853,35 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
       {/* 4. FAMILY TREE LIST VIEW WITH DYNAMIC LANGUAGE SEARCH */}
       {activeViewMode === 'tree' && (
         <div className="space-y-5">
-          {/* Search Bar */}
-          <div className={`p-3 rounded-2xl border shadow-md ${
-            isDay ? 'bg-white border-slate-200' : 'bg-[#081c22] border-[#133f4a]'
-          }`}>
-            <div className="relative w-full">
+          {/* Expandable Search Bar */}
+          {(isSearchOpen || searchQuery.trim().length > 0) && (
+            <div className="relative w-full animate-in fade-in duration-150">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
+                autoFocus={isSearchOpen}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={isBn ? "বংশলতিকায় খুঁজুন (যেমন: ফাতিমা, হাসান, হুসাইন, আয়েশা, উমর, আলী)..." : "Search in genealogy (e.g. Fatima, Hasan, Hussein, Aisha, Umar, Ali)..."}
-                className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-colors outline-none ${
+                className={`w-full pl-10 pr-10 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-colors outline-none ${
                   isDay
-                    ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-500'
+                    ? 'bg-white border-slate-200 text-slate-900 focus:border-emerald-500'
                     : 'bg-[#041216] border-teal-800/60 text-white placeholder-slate-400 focus:border-teal-400'
                 }`}
               />
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setIsSearchOpen(false);
+                }}
+                aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-          </div>
+          )}
 
           <div className="space-y-6">
             {filteredBranches.map((branch) => {

@@ -65,6 +65,7 @@ export const SeeratHistoricMapView: React.FC<SeeratHistoricMapViewProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'sanctuary' | 'battle' | 'journey' | 'cave'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showRoutes, setShowRoutes] = useState(true);
 
   const activeLoc: SeeratLocation = SEERAT_LOCATIONS[activeLocationId] || SEERAT_LOCATIONS.makkah;
@@ -460,60 +461,92 @@ export const SeeratHistoricMapView: React.FC<SeeratHistoricMapViewProps> = ({
               : 'bg-[#071d18]/95 border-emerald-800/50 text-white'
           }`}
         >
-          {/* Search & Filter */}
+          {/* Filter & Compact Search Icon */}
           <div className="p-3 border-b border-slate-200 dark:border-emerald-800/40 space-y-2">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={isBn ? 'স্থান খুঁজুন...' : 'Search location...'}
-                className={`w-full pl-8 pr-7 py-1.5 rounded-xl text-xs border outline-none ${
-                  isDay
-                    ? 'bg-slate-50 border-slate-300 text-slate-800 focus:border-emerald-500'
-                    : 'bg-[#051412] border-emerald-800/60 text-white focus:border-emerald-500'
+            {/* Category Pills + Compact Search Icon */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5 text-[11px] font-bold flex-1 min-w-0">
+                {(
+                  [
+                    { key: 'all', bn: 'সকল', en: 'All' },
+                    { key: 'sanctuary', bn: 'পবিত্র নগরী', en: 'Sanctuaries' },
+                    { key: 'battle', bn: 'রণক্ষেত্র', en: 'Battles' },
+                    { key: 'cave', bn: 'গুহা ও পাহাড়', en: 'Caves' },
+                    { key: 'journey', bn: 'সফর ও হিজরত', en: 'Journeys' },
+                  ] as const
+                ).map((cat) => (
+                  <button
+                    key={cat.key}
+                    onClick={() => {
+                      if (soundEnabled) soundHaptics.playTap();
+                      setCategoryFilter(cat.key as any);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition cursor-pointer border ${
+                      categoryFilter === cat.key
+                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
+                        : isDay
+                        ? 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                        : 'bg-[#0c2e26] border-emerald-800/60 text-emerald-200 hover:bg-[#103a30]'
+                    }`}
+                  >
+                    {isBn ? cat.bn : cat.en}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setIsSearchOpen((prev) => {
+                    if (prev && searchQuery) setSearchQuery('');
+                    return !prev;
+                  });
+                }}
+                className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+                  isSearchOpen || searchQuery
+                    ? isDay
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                      : 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                    : 'bg-[#0c2e26] border-emerald-800/60 text-emerald-300 hover:border-emerald-500'
                 }`}
-              />
-              {searchQuery && (
+                title={isBn ? 'স্থান খুঁজুন' : 'Search location'}
+                aria-label={isBn ? 'স্থান খুঁজুন' : 'Search location'}
+              >
+                {isSearchOpen ? <X className="w-3.5 h-3.5" /> : <Search className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {(isSearchOpen || searchQuery.trim().length > 0) && (
+              <div className="relative animate-in fade-in duration-150">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  autoFocus={isSearchOpen}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={isBn ? 'স্থান খুঁজুন...' : 'Search location...'}
+                  className={`w-full pl-8 pr-8 py-1.5 rounded-xl text-xs border outline-none ${
+                    isDay
+                      ? 'bg-slate-50 border-slate-300 text-slate-800 focus:border-emerald-500'
+                      : 'bg-[#051412] border-emerald-800/60 text-white focus:border-emerald-500'
+                  }`}
+                />
                 <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 p-0.5"
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchOpen(false);
+                  }}
+                  aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 p-0.5 cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>
-              )}
-            </div>
-
-            {/* Category Pills */}
-            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5 text-[11px] font-bold">
-              {(
-                [
-                  { key: 'all', bn: 'সকল', en: 'All' },
-                  { key: 'sanctuary', bn: 'পবিত্র নগরী', en: 'Sanctuaries' },
-                  { key: 'battle', bn: 'রণক্ষেত্র', en: 'Battles' },
-                  { key: 'cave', bn: 'গুহা ও পাহাড়', en: 'Caves' },
-                  { key: 'journey', bn: 'সফর ও হিজরত', en: 'Journeys' },
-                ] as const
-              ).map((cat) => (
-                <button
-                  key={cat.key}
-                  onClick={() => {
-                    if (soundEnabled) soundHaptics.playTap();
-                    setCategoryFilter(cat.key as any);
-                  }}
-                  className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition cursor-pointer border ${
-                    categoryFilter === cat.key
-                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
-                      : isDay
-                      ? 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
-                      : 'bg-[#0c2e26] border-emerald-800/60 text-emerald-200 hover:bg-[#103a30]'
-                  }`}
-                >
-                  {isBn ? cat.bn : cat.en}
-                </button>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Active Location Card Spotlight */}

@@ -270,6 +270,7 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
 
   const [branchFilter, setBranchFilter] = useState<TreeBranchFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedMemberNo, setSelectedMemberNo] = useState<number | null>(null);
   const [showAllUncles, setShowAllUncles] = useState<boolean>(true);
   const [showAllAunts, setShowAllAunts] = useState<boolean>(true);
@@ -663,17 +664,17 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
         }`}
       >
         <div className="max-w-5xl mx-auto space-y-2.5">
-          {/* Compact Tree Control Bar: Branch Filter + Search + Mobile Quick Generation Jump */}
+          {/* Flat Compact Tree Control Bar: Branch Filter + Compact Search Icon + Mobile Quick Generation Jump */}
           <div
-            className={`rounded-2xl border p-2.5 sm:p-3.5 space-y-2.5 ${
+            className={`pb-3 border-b space-y-2.5 ${
               isDay
-                ? 'bg-white/95 border-emerald-200/80 shadow-xs'
-                : 'bg-[#061c17]/95 border-emerald-800/60'
+                ? 'border-[#dcebe8]'
+                : 'border-[#163640]'
             }`}
           >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+            <div className="flex items-center justify-between gap-2">
               {/* Segmented Branch Switcher */}
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5 md:pb-0">
+              <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5 md:pb-0 flex-1 min-w-0">
                 {(
                   [
                     { id: 'all', bn: 'সম্পূর্ণ (৪৭)', en: 'Full Tree (47)' },
@@ -705,8 +706,35 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
                 })}
               </div>
 
-              {/* Instant Tree Spotlight Search */}
-              <div className="relative w-full md:w-60 shrink-0">
+              {/* Compact Search Icon Toggle */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (onPlayTap) onPlayTap();
+                  setIsSearchOpen((prev) => {
+                    if (prev && searchQuery) setSearchQuery('');
+                    return !prev;
+                  });
+                }}
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+                  isSearchOpen || searchQuery
+                    ? isDay
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                      : 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
+                }`}
+                title={isBn ? 'বংশতালিকায় খুঁজুন' : 'Search member in tree'}
+                aria-label={isBn ? 'বংশতালিকায় খুঁজুন' : 'Search member in tree'}
+              >
+                {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {/* Expandable Instant Tree Spotlight Search */}
+            {(isSearchOpen || searchQuery.trim().length > 0) && (
+              <div className="relative animate-in fade-in duration-150">
                 <Search
                   className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
                     isDay ? 'text-slate-400' : 'text-emerald-400/70'
@@ -714,27 +742,29 @@ export const ProphetFamilyTreeView: React.FC<ProphetFamilyTreeViewProps> = ({
                 />
                 <input
                   type="text"
+                  autoFocus={isSearchOpen}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={isBn ? 'নাম দিয়ে বংশতালিকায় খুঁজুন...' : 'Search member in tree...'}
-                  className={`w-full pl-8 pr-7 py-1.5 rounded-xl text-xs border outline-none transition-colors ${
+                  className={`w-full pl-8 pr-8 py-2 rounded-xl text-xs border outline-none transition-colors ${
                     isDay
-                      ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500'
+                      ? 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-emerald-500'
                       : 'bg-[#03120e] border-emerald-800 text-emerald-50 placeholder:text-emerald-400/50 focus:border-amber-400/60'
                   }`}
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    aria-label={isBn ? 'মুছুন' : 'Clear'}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchOpen(false);
+                  }}
+                  aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
-            </div>
+            )}
 
             {/* Quick Generation Jump Strip (especially helpful on Mobile!) */}
             {branchFilter === 'all' && (

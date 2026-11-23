@@ -456,7 +456,7 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
       {/* ======================================================= */}
       {activeTab === 'umrah_hub' && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          <div className={`p-4 rounded-2xl border flex items-center justify-between ${isDay ? 'bg-amber-50 border-amber-200 text-slate-900' : 'bg-[#0a242a] border-amber-500/40 text-white'}`}>
+          <div className={`pb-2.5 border-b flex items-center justify-between ${isDay ? 'border-[#dcebe8] text-[#006747]' : 'border-[#163640] text-amber-300'}`}>
             <h3 className="text-sm font-black">{isBn ? '🕋 ওমরাহের ধাপসমূহ, দোয়া ও প্র্যাকটিক্যাল নির্দেশিকা' : '🕋 Umrah Steps, Duas & Practical Guide'}</h3>
           </div>
 

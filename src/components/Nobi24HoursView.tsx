@@ -26,6 +26,7 @@ import {
   Play,
   Share2,
   Download,
+  X,
 } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { useBackLayer } from '../utils/backNavigation';
@@ -115,7 +116,9 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
 
   // Search & Category queries
   const [chapterSearch, setChapterSearch] = useState<string>('');
+  const [isChapterSearchOpen, setIsChapterSearchOpen] = useState<boolean>(false);
   const [duaSearch, setDuaSearch] = useState<string>('');
+  const [isDuaSearchOpen, setIsDuaSearchOpen] = useState<boolean>(false);
   const [duaCategory, setDuaCategory] = useState<'all' | 'sleep_wake' | 'home_mosque' | 'food' | 'zikr'>('all');
 
   // Expanded chapter IDs & Reading Tracker
@@ -2282,31 +2285,71 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
       {/* 5. TAB 3: BOOK GUIDELINES (COMPREHENSIVE CHAPTERS + READING PROGRESS) */}
       {activeTab === 'articles' && (
         <div className="space-y-6">
-          {/* Header & Search */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className={`text-xl sm:text-2xl font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                {strings.articles.title}
-              </h2>
-              <p className={`text-xs sm:text-sm ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                {strings.articles.subtitle}
-              </p>
+          {/* Flat Header & Compact Search Icon */}
+          <div className={`pb-3 border-b space-y-3 ${isDay ? 'border-[#dcebe8]' : 'border-[#163640]'}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1 min-w-0">
+                <h2 className={`text-xl sm:text-2xl font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                  {strings.articles.title}
+                </h2>
+                <p className={`text-xs sm:text-sm ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {strings.articles.subtitle}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setIsChapterSearchOpen((prev) => {
+                    if (prev && chapterSearch) setChapterSearch('');
+                    return !prev;
+                  });
+                }}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+                  isChapterSearchOpen || chapterSearch
+                    ? isDay
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                      : 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                    : 'bg-[#071b20] border-[#153e46] text-emerald-300 hover:border-emerald-500'
+                }`}
+                title={isBn ? 'অধ্যায় খুঁজুন' : 'Search chapters'}
+                aria-label={isBn ? 'অধ্যায় খুঁজুন' : 'Search chapters'}
+              >
+                {isChapterSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+              </button>
             </div>
 
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={chapterSearch}
-                onChange={(e) => setChapterSearch(e.target.value)}
-                placeholder={strings.articles.searchPlaceholder}
-                className={`w-full pl-9 pr-4 py-2.5 rounded-2xl text-xs border transition-all ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-amber-500'
-                    : 'bg-[#071b20] border-[#153e46] text-white placeholder-slate-500 focus:border-amber-400'
-                }`}
-              />
-            </div>
+            {(isChapterSearchOpen || chapterSearch.trim().length > 0) && (
+              <div className="relative animate-in fade-in duration-150">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  autoFocus={isChapterSearchOpen}
+                  value={chapterSearch}
+                  onChange={(e) => setChapterSearch(e.target.value)}
+                  placeholder={strings.articles.searchPlaceholder}
+                  className={`w-full pl-9 pr-10 py-2.5 rounded-2xl text-xs border transition-all outline-none ${
+                    isDay
+                      ? 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-amber-500'
+                      : 'bg-[#071b20] border-[#153e46] text-white placeholder-slate-500 focus:border-amber-400'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChapterSearch('');
+                    setIsChapterSearchOpen(false);
+                  }}
+                  aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Book Attribution & Reading Progress */}
@@ -2561,31 +2604,71 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
       {/* 6. TAB 4: ESSENTIAL MASNUN DUAS */}
       {activeTab === 'duas' && (
         <div className="space-y-5">
-          {/* Header & Search */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className={`text-xl sm:text-2xl font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                {strings.duas.title}
-              </h2>
-              <p className={`text-xs sm:text-sm ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                {strings.duas.subtitle}
-              </p>
+          {/* Flat Header & Compact Search Icon */}
+          <div className={`pb-3 border-b space-y-3 ${isDay ? 'border-[#dcebe8]' : 'border-[#163640]'}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1 min-w-0">
+                <h2 className={`text-xl sm:text-2xl font-black ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                  {strings.duas.title}
+                </h2>
+                <p className={`text-xs sm:text-sm ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {strings.duas.subtitle}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setIsDuaSearchOpen((prev) => {
+                    if (prev && duaSearch) setDuaSearch('');
+                    return !prev;
+                  });
+                }}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+                  isDuaSearchOpen || duaSearch
+                    ? isDay
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                      : 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                    : 'bg-[#071b20] border-[#153e46] text-emerald-300 hover:border-emerald-500'
+                }`}
+                title={isBn ? 'দোয়া খুঁজুন' : 'Search duas'}
+                aria-label={isBn ? 'দোয়া খুঁজুন' : 'Search duas'}
+              >
+                {isDuaSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+              </button>
             </div>
 
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={duaSearch}
-                onChange={(e) => setDuaSearch(e.target.value)}
-                placeholder={strings.duas.searchPlaceholder}
-                className={`w-full pl-9 pr-4 py-2.5 rounded-2xl text-xs border transition-all ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-rose-500'
-                    : 'bg-[#071b20] border-[#153e46] text-white placeholder-slate-500 focus:border-rose-400'
-                }`}
-              />
-            </div>
+            {(isDuaSearchOpen || duaSearch.trim().length > 0) && (
+              <div className="relative animate-in fade-in duration-150">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  autoFocus={isDuaSearchOpen}
+                  value={duaSearch}
+                  onChange={(e) => setDuaSearch(e.target.value)}
+                  placeholder={strings.duas.searchPlaceholder}
+                  className={`w-full pl-9 pr-10 py-2.5 rounded-2xl text-xs border transition-all outline-none ${
+                    isDay
+                      ? 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-rose-500'
+                      : 'bg-[#071b20] border-[#153e46] text-white placeholder-slate-500 focus:border-rose-400'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDuaSearch('');
+                    setIsDuaSearchOpen(false);
+                  }}
+                  aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Timing Filter Chips */}

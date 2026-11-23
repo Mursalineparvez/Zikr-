@@ -19,6 +19,7 @@ import {
   BookOpen,
   UserCheck,
   ArrowDownCircle,
+  X,
 } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
@@ -129,6 +130,7 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
   const [selectedMonthId, setSelectedMonthId] = useState<string>(currentOngoingMonthId);
   const [monthFilter, setMonthFilter] = useState<'all' | 'sacred' | 'fasting' | 'caution'>('all');
   const [monthSearch, setMonthSearch] = useState<string>('');
+  const [isMonthSearchOpen, setIsMonthSearchOpen] = useState<boolean>(false);
   const [selectedWeekDayId, setSelectedWeekDayId] = useState<string>(() => {
     const dayIdx = new Date().getDay();
     const map = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -960,49 +962,89 @@ export const PropheticYearCalendarSection: React.FC<PropheticYearCalendarSection
             </div>
           </div>
 
-          {/* Filter & Search Bar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {[
-                { id: 'all' as const, label: isBn ? 'সকল ১২ মাস' : 'All 12 Months' },
-                { id: 'sacred' as const, label: isBn ? '৪টি সম্মানিত মাস' : '4 Sacred Months' },
-                { id: 'fasting' as const, label: isBn ? 'বিশেষ রোজা ও আমল' : 'Special Fasting' },
-                { id: 'caution' as const, label: isBn ? 'সহিহ যাচাই সতর্কতা' : 'Authenticity Notes' },
-              ].map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => {
-                    setMonthFilter(f.id);
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer shrink-0 whitespace-nowrap ${
-                    monthFilter === f.id
-                      ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
-                      : isDay
-                      ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      : 'bg-[#092226] border-[#153e46] text-emerald-200 hover:bg-[#0e3036]'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+          {/* Filter Bar & Compact Search Icon */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1 min-w-0">
+                {[
+                  { id: 'all' as const, label: isBn ? 'সকল ১২ মাস' : 'All 12 Months' },
+                  { id: 'sacred' as const, label: isBn ? '৪টি সম্মানিত মাস' : '4 Sacred Months' },
+                  { id: 'fasting' as const, label: isBn ? 'বিশেষ রোজা ও আমল' : 'Special Fasting' },
+                  { id: 'caution' as const, label: isBn ? 'সহিহ যাচাই সতর্কতা' : 'Authenticity Notes' },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => {
+                      setMonthFilter(f.id);
+                      if (soundEnabled) soundHaptics.playTap();
+                    }}
+                    className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer shrink-0 whitespace-nowrap ${
+                      monthFilter === f.id
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
+                        : isDay
+                        ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        : 'bg-[#092226] border-[#153e46] text-emerald-200 hover:bg-[#0e3036]'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setIsMonthSearchOpen((prev) => {
+                    if (prev && monthSearch) setMonthSearch('');
+                    return !prev;
+                  });
+                }}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+                  isMonthSearchOpen || monthSearch
+                    ? isDay
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                      : 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                    : 'bg-[#092226] border-[#153e46] text-emerald-300 hover:border-emerald-500'
+                }`}
+                title={isBn ? 'মাস বা হাদিস খুঁজুন' : 'Search month or Hadith'}
+                aria-label={isBn ? 'মাস বা হাদিস খুঁজুন' : 'Search month or Hadith'}
+              >
+                {isMonthSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+              </button>
             </div>
 
-            <div className="relative w-full lg:w-80 shrink-0">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
-              <input
-                type="text"
-                value={monthSearch}
-                onChange={(e) => setMonthSearch(e.target.value)}
-                placeholder={isBn ? 'মাস, সাহাবি বা হাদিস নম্বর (যেমন: রজব, ১৯৫০)...' : 'Search month, narrator or Hadith #...'}
-                className={`w-full min-h-[40px] pl-9 pr-3 py-2 rounded-xl border text-xs font-medium outline-none transition ${
-                  isDay
-                    ? 'bg-white border-slate-200 focus:border-emerald-500 text-slate-800'
-                    : 'bg-[#07181d] border-[#163f48] focus:border-emerald-400 text-white'
-                }`}
-              />
-            </div>
+            {(isMonthSearchOpen || monthSearch.trim().length > 0) && (
+              <div className="relative animate-in fade-in duration-150">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
+                <input
+                  type="text"
+                  autoFocus={isMonthSearchOpen}
+                  value={monthSearch}
+                  onChange={(e) => setMonthSearch(e.target.value)}
+                  placeholder={isBn ? 'মাস, সাহাবি বা হাদিস নম্বর (যেমন: রজব, ১৯৫০)...' : 'Search month, narrator or Hadith #...'}
+                  className={`w-full min-h-[40px] pl-9 pr-10 py-2 rounded-xl border text-xs font-medium outline-none transition ${
+                    isDay
+                      ? 'bg-white border-slate-200 focus:border-emerald-500 text-slate-800'
+                      : 'bg-[#07181d] border-[#163f48] focus:border-emerald-400 text-white'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMonthSearch('');
+                    setIsMonthSearchOpen(false);
+                  }}
+                  aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Interactive 12-Month Hijri Grid */}

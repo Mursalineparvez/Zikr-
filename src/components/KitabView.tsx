@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ISLAMIC_KITABS, KitabItem, KitabChapter } from '../utils/kitabData';
 import { copyToClipboard } from '../utils/clipboard';
-import { BookMarked, Search, ArrowLeft, Check, Copy, ChevronRight, Sparkles } from 'lucide-react';
+import { BookMarked, Search, ArrowLeft, Check, Copy, ChevronRight, Sparkles, X } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { KITAB_UI } from '../utils/appTranslations';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
@@ -37,6 +37,7 @@ export const KitabView: React.FC<KitabViewProps> = ({
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [selectedKitab, selectedChapter]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Filter kitabs
@@ -59,39 +60,66 @@ export const KitabView: React.FC<KitabViewProps> = ({
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Kitab Header */}
       <div
-        className={`pb-4 border-b transition-colors ${
+        className={`pb-4 border-b flex items-start justify-between gap-3 transition-colors ${
           isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div
-          className={`inline-flex items-center gap-2 text-xs font-semibold mb-1.5 ${
-            isDay ? 'text-[#006A4E]' : 'text-teal-300'
-          }`}
-        >
-          <BookMarked className="w-3.5 h-3.5" />
-          <span>المكتبة الإسلامية • Classical Islamic Books</span>
+        <div className="min-w-0">
+          <div
+            className={`inline-flex items-center gap-2 text-xs font-semibold mb-1.5 ${
+              isDay ? 'text-[#006A4E]' : 'text-teal-300'
+            }`}
+          >
+            <BookMarked className="w-3.5 h-3.5" />
+            <span>المكتبة الإسلامية • Classical Islamic Books</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+            {KITAB_UI.bannerTitle[selectedLanguage]}
+          </h2>
+          <p
+            className={`text-xs sm:text-sm mt-1 max-w-xl ${
+              isDay ? 'text-slate-600' : 'text-teal-100/80'
+            }`}
+          >
+            {KITAB_UI.bannerSub[selectedLanguage]}
+          </p>
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-          {KITAB_UI.bannerTitle[selectedLanguage]}
-        </h2>
-        <p
-          className={`text-xs sm:text-sm mt-1 max-w-xl ${
-            isDay ? 'text-slate-600' : 'text-teal-100/80'
-          }`}
-        >
-          {KITAB_UI.bannerSub[selectedLanguage]}
-        </p>
+
+        {!selectedKitab && (
+          <button
+            type="button"
+            onClick={() => {
+              setIsSearchOpen((prev) => {
+                if (prev && searchQuery) setSearchQuery('');
+                return !prev;
+              });
+            }}
+            className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+              isSearchOpen || searchQuery
+                ? isDay
+                  ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                  : 'bg-emerald-600 border-emerald-500 text-white'
+                : isDay
+                ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
+            }`}
+            title={selectedLanguage === 'bn' ? 'কিতাব খুঁজুন' : 'Search Kitab'}
+            aria-label={selectedLanguage === 'bn' ? 'কিতাব খুঁজুন' : 'Search Kitab'}
+          >
+            {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+          </button>
+        )}
       </div>
 
       {/* View: Reading Chapter within a Kitab */}
       {selectedKitab && selectedChapter ? (
         <div className="space-y-5">
-          {/* Navigation bar */}
+          {/* Flat Navigation bar */}
           <div
-            className={`flex items-center justify-between flex-wrap gap-2 p-4 rounded-2xl border shadow-sm ${
+            className={`flex items-center justify-between flex-wrap gap-2 pb-3 border-b ${
               isDay
-                ? 'bg-white border-[#dcebe8] text-[#103e42]'
-                : 'bg-[#0e2f36] border-[#1a515c] text-white'
+                ? 'border-[#dcebe8] text-[#103e42]'
+                : 'border-[#163640] text-white'
             }`}
           >
             <button
@@ -217,10 +245,10 @@ export const KitabView: React.FC<KitabViewProps> = ({
         /* View: Chapters List for Selected Kitab */
         <div className="space-y-5">
           <div
-            className={`flex items-center justify-between p-4 rounded-2xl border shadow-sm ${
+            className={`flex items-center justify-between pb-3 border-b ${
               isDay
-                ? 'bg-white border-[#dcebe8] text-[#103e42]'
-                : 'bg-[#0e2f36] border-[#1a515c] text-white'
+                ? 'border-[#dcebe8] text-[#103e42]'
+                : 'border-[#163640] text-white'
             }`}
           >
             <button
@@ -280,22 +308,36 @@ export const KitabView: React.FC<KitabViewProps> = ({
       ) : (
         /* View: All Kitabs Grid */
         <div className="space-y-4">
-          <div className="relative">
-            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${
-              isDay ? 'text-[#94a3b8]' : 'text-teal-400'
-            }`} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={KITAB_UI.searchPlaceholder[selectedLanguage]}
-              className={`w-full rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none transition shadow-sm border ${
-                isDay
-                  ? 'bg-white border-[#cde5e2] text-[#103e42] placeholder-[#94a3b8] focus:border-[#006747]'
-                  : 'bg-[#0e2f36] border-[#1a515c] text-white placeholder-teal-600 focus:border-teal-400'
-              }`}
-            />
-          </div>
+          {(isSearchOpen || searchQuery.trim().length > 0) && (
+            <div className="relative animate-in fade-in duration-150">
+              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                isDay ? 'text-[#94a3b8]' : 'text-teal-400'
+              }`} />
+              <input
+                type="text"
+                autoFocus={isSearchOpen}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={KITAB_UI.searchPlaceholder[selectedLanguage]}
+                className={`w-full rounded-2xl pl-11 pr-10 py-2.5 text-sm focus:outline-none transition shadow-sm border ${
+                  isDay
+                    ? 'bg-white border-[#cde5e2] text-[#103e42] placeholder-[#94a3b8] focus:border-[#006747]'
+                    : 'bg-[#0e2f36] border-[#1a515c] text-white placeholder-teal-600 focus:border-teal-400'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setIsSearchOpen(false);
+                }}
+                aria-label={selectedLanguage === 'bn' ? 'বন্ধ করুন' : 'Close search'}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {filteredKitabs.map((kitab) => (

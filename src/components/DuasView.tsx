@@ -3,7 +3,7 @@ import { DuaCategory, DuaItem, ZikrItem } from '../types';
 import { AUTHENTIC_DUAS } from '../utils/duasData';
 import { copyToClipboard } from '../utils/clipboard';
 import { calculatePrayerTimes, FormattedPrayerTimes } from '../utils/prayerTimes';
-import { BookOpen, Compass, Search, Plus, Copy, Check, Sparkles, Clock, MapPin, Volume2 } from 'lucide-react';
+import { BookOpen, Compass, Search, Plus, Copy, Check, Sparkles, Clock, MapPin, Volume2, X } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 
 interface DuasViewProps {
@@ -19,6 +19,7 @@ export const DuasView: React.FC<DuasViewProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<DuaCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Quick counter state for inline counting within Dua cards
@@ -172,45 +173,73 @@ export const DuasView: React.FC<DuasViewProps> = ({
         </div>
       </section>
 
-      {/* 2. CATEGORY PILLS & SEARCH BAR */}
+      {/* 2. CATEGORY PILLS & COMPACT SEARCH ICON */}
       <div className="space-y-3">
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search Quran, Hadith, Rabbana, or Salat duas..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 focus:border-emerald-500 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
-            >
-              Clear
-            </button>
-          )}
+        <div className="flex items-center justify-between gap-2">
+          {/* Category Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1 min-w-0">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id as any)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition active:scale-95 ${
+                  selectedCategory === cat.id
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/60'
+                    : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
+                }`}
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (soundEnabled) soundHaptics.playTap();
+              setIsSearchOpen((prev) => {
+                if (prev && searchQuery) setSearchQuery('');
+                return !prev;
+              });
+            }}
+            className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+              isSearchOpen || searchQuery
+                ? 'bg-emerald-600 border-emerald-500 text-white'
+                : 'bg-slate-900/80 border-slate-800 text-emerald-300 hover:border-emerald-500'
+            }`}
+            title="Search"
+            aria-label="Search"
+          >
+            {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+          </button>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((cat) => (
+        {/* Expandable Search */}
+        {(isSearchOpen || searchQuery.trim().length > 0) && (
+          <div className="relative animate-in fade-in duration-150">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              autoFocus={isSearchOpen}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search Quran, Hadith, Rabbana, or Salat duas..."
+              className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 focus:border-emerald-500 text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner"
+            />
             <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id as any)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition active:scale-95 ${
-                selectedCategory === cat.id
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/60'
-                  : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 border border-slate-800'
-              }`}
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setIsSearchOpen(false);
+              }}
+              aria-label="Close search"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
             >
-              <span>{cat.icon}</span>
-              <span>{cat.label}</span>
+              <X className="w-4 h-4" />
             </button>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* 3. DUAS LIST */}
