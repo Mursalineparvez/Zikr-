@@ -126,70 +126,76 @@ export const AllahNamesView: React.FC<AllahNamesViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Banner */}
+      {/* Simple Flat Allah Names Header */}
       <div
-        className={`p-5 sm:p-6 rounded-3xl border shadow-xl relative overflow-hidden ${
-          isDay
-            ? 'bg-gradient-to-r from-teal-700 via-emerald-700 to-teal-800 text-white border-teal-600/40'
-            : 'bg-gradient-to-r from-[#0c2f35] via-[#12414a] to-[#1a5560] text-white border-[#1a535e]'
+        className={`pb-4 border-b space-y-3 ${
+          isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
         }`}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>أَسْمَاءُ اللَّهِ الْحُسْنَى • 99 Beautiful Names of Allah</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className={`flex items-center gap-2 text-xs font-bold ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span className="font-arabic">أَسْمَاءُ اللَّهِ الْحُسْنَى</span>
+              <span className="opacity-40">•</span>
+              <span>99 Beautiful Names of Allah</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[#006747]' : 'text-white'}`}>
               {ALLAH_NAMES_UI.bannerTitle[selectedLanguage]}
             </h2>
-            <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-xl">
+            <p className={`text-xs sm:text-sm max-w-xl ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
               {ALLAH_NAMES_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <ShareDownloadButtons
-              variant="hero"
+              variant="card"
               selectedLanguage={selectedLanguage}
               themeMode={themeMode}
               onShare={() => openPageShare('share')}
               onDownload={() => openPageShare('download')}
             />
             <div
-              className={`px-4 py-2.5 rounded-2xl border shadow-lg flex items-center gap-2.5 ${
+              className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 ${
                 isDay
-                  ? 'bg-white/95 text-slate-800 border-white'
-                  : 'bg-[#092226] text-amber-300 border-amber-500/40'
+                  ? 'bg-white text-slate-800 border-slate-200'
+                  : 'bg-[#0e1c26] text-amber-300 border-[#1a3342]'
               }`}
             >
-              <Award className="w-5 h-5 text-amber-500" />
-              <div>
-                <div className="text-[10px] text-slate-400 font-bold uppercase">
-                  {ALLAH_NAMES_UI.memorized[selectedLanguage]}
-                </div>
-                <div className="text-sm font-black font-mono text-emerald-600 dark:text-amber-300">
+              <Award className="w-4 h-4 text-amber-500" />
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className={`font-bold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {ALLAH_NAMES_UI.memorized[selectedLanguage]}:
+                </span>
+                <span className="font-black font-mono text-[#006747] dark:text-amber-300">
                   {memorizedCount} / 99
-                </div>
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Search Input */}
-        <div className="mt-4 relative">
-          <Search className="w-4 h-4 text-emerald-300 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="relative">
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${isDay ? 'text-slate-400' : 'text-emerald-300'}`} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={ALLAH_NAMES_UI.searchPlaceholder[selectedLanguage]}
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-black/25 border border-white/25 text-white placeholder-teal-200/60 text-xs focus:outline-none focus:ring-2 focus:ring-white/40"
+            className={`w-full pl-10 pr-14 py-2.5 rounded-xl border text-xs sm:text-sm focus:outline-none ${
+              isDay
+                ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-[#006747]'
+                : 'bg-[#0e1c26] border-[#1a3342] text-white placeholder-slate-400 focus:border-emerald-400'
+            }`}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-emerald-300 hover:text-white"
+              className={`absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold cursor-pointer ${
+                isDay ? 'text-[#006747] hover:underline' : 'text-emerald-300 hover:text-white'
+              }`}
             >
               {ALLAH_NAMES_UI.clear[selectedLanguage]}
             </button>

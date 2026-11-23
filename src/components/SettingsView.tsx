@@ -126,11 +126,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
-      <div className="bg-slate-900/80 p-5 rounded-3xl border border-emerald-900/40">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+      <div className="pb-3 border-b border-slate-200 dark:border-emerald-900/40">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span>{SETTINGS_UI.title[selectedLanguage] || 'App Settings & Preferences'}</span>
         </h2>
-        <p className="text-xs text-slate-300 mt-1">
+        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
           {SETTINGS_UI.subtitle[selectedLanguage] ||
             'Customize language, themes, haptics, audio, and data backups.'}
         </p>

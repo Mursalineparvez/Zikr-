@@ -453,29 +453,29 @@ export const DailyTabligView: React.FC<DailyTabligViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Banner */}
+      {/* Simple Flat Tablig Header */}
       <div
-        className={`p-5 sm:p-6 rounded-3xl border shadow-xl ${
-          isDay
-            ? 'bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 text-white border-emerald-600/40'
-            : 'bg-gradient-to-r from-[#0c2f35] via-[#113f47] to-[#17525d] text-white border-[#1b5561]'
+        className={`pb-4 border-b ${
+          isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
         }`}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
-              <Users className="w-3.5 h-3.5 text-amber-300" />
-              <span>الدَّعْوَةُ وَالتَّبْلِيغُ • Complete Authentic Tabligh Syllabus &amp; Bayan</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className={`flex items-center gap-2 text-xs font-bold ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+              <Users className="w-4 h-4 text-amber-500" />
+              <span className="font-arabic">الدَّعْوَةُ وَالتَّبْلِيغُ</span>
+              <span className="opacity-40">•</span>
+              <span>Complete Authentic Tabligh Syllabus &amp; Bayan</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[#006747]' : 'text-white'}`}>
               {TABLIG_UI.bannerTitle[selectedLanguage]}
             </h2>
-            <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-3xl">
+            <p className={`text-xs sm:text-sm max-w-3xl leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
               {TABLIG_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
           <ShareDownloadButtons
-            variant="hero"
+            variant="card"
             selectedLanguage={selectedLanguage}
             themeMode={themeMode}
             className="shrink-0 self-start sm:self-center"

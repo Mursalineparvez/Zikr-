@@ -697,535 +697,613 @@ export const Nobi24HoursView: React.FC<Nobi24HoursViewProps> = ({
         </div>
       )}
 
-      {/* 1. ULTRA-SLIM CELESTIAL EMERALD-GOLD TIMEPIECE HERO CARD */}
+      {/* 1. SIMPLE FLAT CELESTIAL TIMEPIECE HEADER */}
       <div
-        className={`relative overflow-hidden rounded-2xl sm:rounded-3xl px-3.5 py-2.5 sm:px-5 sm:py-3.5 border shadow-lg transition-all duration-300 ${
-          isDay
-            ? 'bg-gradient-to-br from-[#014734] via-[#025b42] to-[#012c20] text-white border-emerald-400/25'
-            : 'bg-gradient-to-br from-[#04171c] via-[#07242c] to-[#030f13] text-white border-teal-500/25'
+        className={`pb-4 border-b space-y-2.5 transition-colors duration-200 ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        {/* Subtle luminous top gold hairline & ambient depth */}
+        {/* Row 1: Ultra-Slim Top Utility Strip */}
         <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-300/80 to-transparent"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-10 -top-10 w-44 h-44 rounded-full bg-amber-400/[0.09] blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-14 -bottom-14 w-40 h-40 rounded-full bg-emerald-300/[0.08] blur-3xl"
-        />
-
-        {/* Subtle Islamic geometric star ornament */}
-        <svg
-          aria-hidden="true"
-          className="pointer-events-none absolute right-0 -top-4 h-36 w-36 sm:h-44 sm:w-44 opacity-[0.06] text-amber-200"
-          viewBox="0 0 200 200"
-          fill="none"
+          className={`flex items-center justify-between gap-2 pb-2 border-b ${
+            isDay ? 'border-slate-200/70' : 'border-white/10'
+          }`}
         >
-          <circle cx="110" cy="95" r="72" stroke="currentColor" strokeWidth="1" />
-          <circle cx="110" cy="95" r="52" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 4" />
-          <polygon points="110,23 160,59 160,131 110,167 60,131 60,59" stroke="currentColor" strokeWidth="0.8" />
-        </svg>
+          <div className="flex items-center gap-2 min-w-0">
+            {onBackToHub && (
+              <button
+                type="button"
+                onClick={onBackToHub}
+                className={`inline-flex items-center justify-center gap-1 h-7 px-2 sm:px-2.5 rounded-lg text-[11px] font-bold border transition active:scale-95 cursor-pointer shrink-0 ${
+                  isDay
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                    : 'bg-[#0a2328] hover:bg-[#11333a] border-[#16444e] text-emerald-100'
+                }`}
+                title={strings.backToHub}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline whitespace-nowrap">{strings.backToHub}</span>
+              </button>
+            )}
 
-        <div className="relative z-10 space-y-2 sm:space-y-2.5">
-          {/* Row 1: Zero-Collision Ultra-Slim Top Utility Strip */}
-          <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-white/10">
-            <div className="flex items-center gap-2 min-w-0">
-              {onBackToHub && (
-                <button
-                  type="button"
-                  onClick={onBackToHub}
-                  className="inline-flex items-center justify-center gap-1 h-7 px-2 sm:px-2.5 rounded-lg text-[11px] font-bold bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-50 transition active:scale-95 cursor-pointer shrink-0"
-                  title={strings.backToHub}
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline whitespace-nowrap">{strings.backToHub}</span>
-                </button>
-              )}
-
-              {/* Mobile: crisp live clock safely on left-center; Desktop: Arabic calligraphy */}
-              <div className="flex sm:hidden items-center gap-1 text-[11px] font-mono font-extrabold tabular-nums text-amber-200/95 truncate">
-                <Clock className="w-3 h-3 text-amber-300 shrink-0" />
-                <span>{formattedShortClock}</span>
-              </div>
-              <span className="hidden sm:inline font-arabic text-sm font-bold text-amber-300/95 tracking-wide truncate">
-                {strings.arabicTitle}
-              </span>
+            {/* Mobile: crisp live clock; Desktop: Arabic calligraphy */}
+            <div
+              className={`flex sm:hidden items-center gap-1 text-[11px] font-mono font-extrabold tabular-nums truncate ${
+                isDay ? 'text-[#006A4E]' : 'text-amber-200/95'
+              }`}
+            >
+              <Clock className={`w-3 h-3 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-amber-300'}`} />
+              <span>{formattedShortClock}</span>
             </div>
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              {/* Mobile: compact icon-only Share & Download (zero crowding or clipping) */}
-              <div className="flex sm:hidden items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => openFullRoutineShare('share')}
-                  className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-50 flex items-center justify-center transition active:scale-95 cursor-pointer"
-                  aria-label={isBn ? 'শেয়ার' : 'Share'}
-                  title={isBn ? 'শেয়ার' : 'Share'}
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openFullRoutineShare('download')}
-                  className="w-7 h-7 rounded-lg bg-amber-400/15 hover:bg-amber-400/25 border border-amber-300/25 text-amber-200 flex items-center justify-center transition active:scale-95 cursor-pointer"
-                  aria-label={isBn ? 'ডাউনলোড' : 'Download'}
-                  title={isBn ? 'ডাউনলোড' : 'Download'}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Desktop/Tablet: full Share & Download buttons + live clock */}
-              <div className="hidden sm:flex items-center gap-2">
-                <ShareDownloadButtons
-                  variant="hero"
-                  selectedLanguage={lang}
-                  themeMode={themeMode}
-                  onShare={() => openFullRoutineShare('share')}
-                  onDownload={() => openFullRoutineShare('download')}
-                />
-                <div className="flex items-center gap-1.5 pl-2 border-l border-white/15">
-                  <Clock className="w-3.5 h-3.5 text-amber-300" />
-                  <span className="text-xs font-mono font-black tabular-nums tracking-tight text-amber-200">
-                    {formattedLiveClock}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <span
+              className={`hidden sm:inline font-arabic text-sm font-bold tracking-wide truncate ${
+                isDay ? 'text-[#006A4E]' : 'text-amber-300/95'
+              }`}
+            >
+              {strings.arabicTitle}
+            </span>
           </div>
 
-          {/* Row 2: Compact Side-by-Side Stage (Editorial + Live Phase Left, Jewel 24H Dial Right) */}
-          <div className="flex items-center justify-between gap-2.5 sm:gap-5">
-            {/* Left: Crisp Title + Unboxed Active Phase + Compact Actions */}
-            <div className="flex-1 min-w-0 space-y-1 sm:space-y-1.5">
-              <div>
-                <h1 className="text-[15px] sm:text-[21px] font-black tracking-tight leading-tight text-white truncate">
-                  {strings.title}
-                </h1>
-                <p className="hidden sm:block text-xs text-emerald-100/75 leading-relaxed mt-0.5 truncate">
-                  {strings.subtitle}
-                </p>
-              </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Mobile: compact icon-only Share & Download */}
+            <div className="flex sm:hidden items-center gap-1">
+              <button
+                type="button"
+                onClick={() => openFullRoutineShare('share')}
+                className={`w-7 h-7 rounded-lg border flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                  isDay
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                    : 'bg-[#0a2328] hover:bg-[#11333a] border-[#16444e] text-emerald-50'
+                }`}
+                aria-label={isBn ? 'শেয়ার' : 'Share'}
+                title={isBn ? 'শেয়ার' : 'Share'}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => openFullRoutineShare('download')}
+                className={`w-7 h-7 rounded-lg border flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                  isDay
+                    ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800'
+                    : 'bg-amber-400/15 hover:bg-amber-400/25 border-amber-300/25 text-amber-200'
+                }`}
+                aria-label={isBn ? 'ডাউনলোড' : 'Download'}
+                title={isBn ? 'ডাউনলোড' : 'Download'}
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-              {/* Clean Unboxed Active Phase Metadata & Title (No nested box-in-box clutter) */}
-              <div className="space-y-0.5 pt-0.5">
-                <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-amber-300/95 tabular-nums truncate">
-                  <span className="truncate">{locActiveSlot.timeSpan}</span>
-                  <span aria-hidden="true" className="text-white/30 shrink-0">·</span>
-                  <span className="text-emerald-200/90 shrink-0">
-                    {formatDurationLabel(activeSlot.startHour, activeSlot.endHour, isBn)}
-                  </span>
-                  {activeSlot.id === currentLiveSlot.id && (
-                    <>
-                      <span aria-hidden="true" className="text-white/30 shrink-0">·</span>
-                      <span className="text-emerald-300 font-black shrink-0">
-                        {isBn ? 'এখন' : 'Live'}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                <h2 className="text-[12.5px] sm:text-[15px] font-extrabold text-white/95 leading-snug truncate flex items-center gap-1.5">
-                  <span className="text-sm sm:text-base leading-none shrink-0" aria-hidden="true">
-                    {activeSlot.icon}
-                  </span>
-                  <span className="truncate">{locActiveSlot.title}</span>
-                </h2>
-              </div>
-
-              {/* Slim Primary Action + Inline Stepper */}
-              <div className="flex items-center gap-1.5 pt-1 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => openPhaseDetail(activeSlot.id, true)}
-                  className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-amber-400 hover:from-amber-200 hover:to-amber-300 text-slate-950 text-[11px] font-black inline-flex items-center gap-1 transition active:scale-95 cursor-pointer shadow-xs whitespace-nowrap"
+            {/* Desktop/Tablet: Share & Download buttons + live clock */}
+            <div className="hidden sm:flex items-center gap-2">
+              <ShareDownloadButtons
+                variant="card"
+                selectedLanguage={lang}
+                themeMode={themeMode}
+                onShare={() => openFullRoutineShare('share')}
+                onDownload={() => openFullRoutineShare('download')}
+              />
+              <div
+                className={`flex items-center gap-1.5 pl-2 border-l ${
+                  isDay ? 'border-slate-200' : 'border-white/15'
+                }`}
+              >
+                <Clock className={`w-3.5 h-3.5 ${isDay ? 'text-[#006A4E]' : 'text-amber-300'}`} />
+                <span
+                  className={`text-xs font-mono font-black tabular-nums tracking-tight ${
+                    isDay ? 'text-[#006A4E]' : 'text-amber-200'
+                  }`}
                 >
-                  <span className="sm:hidden">{isBn ? 'বিস্তারিত' : 'Details'}</span>
-                  <span className="hidden sm:inline">{strings.liveBanner.viewDetails}</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-
-                {selectedSlotId !== currentLiveSlot.id && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedSlotId(currentLiveSlot.id);
-                      if (soundEnabled) soundHaptics.playTap();
-                    }}
-                    className="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[10.5px] sm:text-[11px] font-bold bg-white/10 hover:bg-white/20 text-amber-200 border border-white/15 transition active:scale-95 cursor-pointer whitespace-nowrap"
-                  >
-                    <span className="sm:hidden">{isBn ? 'এখন' : 'Now'}</span>
-                    <span className="hidden sm:inline">{isBn ? 'এখনকার সময়' : 'Live Now'}</span>
-                  </button>
-                )}
-
-                {/* Mobile Inline Phase Stepper (saves an entire vertical row!) */}
-                <div className="flex sm:hidden items-center gap-0.5 ml-auto bg-black/20 rounded-lg p-0.5 border border-white/10">
-                  <button
-                    type="button"
-                    onClick={() => handleStepSlot(-1)}
-                    className="w-6 h-6 rounded-md hover:bg-white/15 text-emerald-100 flex items-center justify-center transition active:scale-90 cursor-pointer"
-                    aria-label={isBn ? 'পূর্ববর্তী পর্ব' : 'Previous phase'}
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <span className="text-[10px] font-mono font-bold tabular-nums text-amber-200 px-1">
-                    {isBn
-                      ? `${toBnDigits(activeSlotIndex + 1)}/${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
-                      : `${activeSlotIndex + 1}/${NOBI_24_TIME_SLOTS.length}`}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleStepSlot(1)}
-                    className="w-6 h-6 rounded-md hover:bg-white/15 text-emerald-100 flex items-center justify-center transition active:scale-90 cursor-pointer"
-                    aria-label={isBn ? 'পরবর্তী পর্ব' : 'Next phase'}
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Desktop subtle next phase hint */}
-                <span className="hidden lg:inline text-[11px] text-emerald-100/70 truncate ml-1">
-                  {activeSlot.id === currentLiveSlot.id
-                    ? `${liveSlotTiming.remainingText} · ${isBn ? `পরবর্তী: ${locNextSlot.title}` : `Next: ${locNextSlot.title}`}`
-                    : isBn
-                    ? `পরবর্তী: ${locActiveNextSlot.title}`
-                    : `Next: ${locActiveNextSlot.title}`}
+                  {formattedLiveClock}
                 </span>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Right: Jewel-Sized Precision 24-Hour Sunnah Watch Dial */}
-            <div className="shrink-0 flex flex-col items-center gap-1">
-              <div className="relative w-[84px] h-[84px] sm:w-[114px] sm:h-[114px] flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 320 320" className="w-full h-full drop-shadow-[0_4px_14px_rgba(0,0,0,0.45)]">
-                  <defs>
-                    <linearGradient id="watchBezelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#fde68a" stopOpacity="0.7" />
-                      <stop offset="50%" stopColor="#34d399" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.7" />
-                    </linearGradient>
-                  </defs>
+        {/* Row 2: Compact Side-by-Side Stage (Editorial + Live Phase Left, Jewel 24H Dial Right) */}
+        <div className="flex items-center justify-between gap-2.5 sm:gap-5">
+          {/* Left: Crisp Title + Unboxed Active Phase + Compact Actions */}
+          <div className="flex-1 min-w-0 space-y-1 sm:space-y-1.5">
+            <div>
+              <h1 className="text-[15px] sm:text-[21px] font-black tracking-tight leading-tight truncate">
+                {strings.title}
+              </h1>
+              <p
+                className={`hidden sm:block text-xs leading-relaxed mt-0.5 truncate ${
+                  isDay ? 'text-slate-600' : 'text-emerald-100/75'
+                }`}
+              >
+                {strings.subtitle}
+              </p>
+            </div>
 
-                  {/* Outer Brushed-Gold Watch Bezel */}
-                  <circle cx="160" cy="160" r="154" fill="rgba(0,0,0,0.28)" stroke="url(#watchBezelGrad)" strokeWidth="2.5" />
-                  <circle cx="160" cy="160" r="145" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-
-                  {/* 24-Hour Precision Tick Marks */}
-                  {Array.from({ length: 24 }).map((_, hr) => {
-                    const angleDeg = (hr / 24) * 360 - 90;
-                    const rad = (angleDeg * Math.PI) / 180;
-                    const isMajor = hr % 3 === 0;
-                    const r1 = 135;
-                    const r2 = isMajor ? 144 : 140;
-                    const x1 = 160 + r1 * Math.cos(rad);
-                    const y1 = 160 + r1 * Math.sin(rad);
-                    const x2 = 160 + r2 * Math.cos(rad);
-                    const y2 = 160 + r2 * Math.sin(rad);
-
-                    return (
-                      <line
-                        key={hr}
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke={isMajor ? '#fcd34d' : 'rgba(255,255,255,0.28)'}
-                        strokeWidth={isMajor ? 2.2 : 1.1}
-                        strokeLinecap="round"
-                      />
-                    );
-                  })}
-
-                  <g transform="rotate(-90 160 160)">
-                    {/* Track Ring */}
-                    <circle cx="160" cy="160" r="116" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="22" />
-
-                    {/* 14 Clickable Sunnah Phase Arcs */}
-                    {NOBI_24_TIME_SLOTS.map((slot) => {
-                      const totalHoursInSlot =
-                        slot.endHour >= slot.startHour
-                          ? slot.endHour - slot.startHour
-                          : 24 - slot.startHour + slot.endHour;
-
-                      const startAngle = (slot.startHour / 24) * 360;
-                      const sliceAngle = (totalHoursInSlot / 24) * 360;
-                      const isSelected = slot.id === activeSlot.id;
-                      const isLive = slot.id === currentLiveSlot.id;
-
-                      const radius = 116;
-                      const strokeW = isSelected ? 26 : 18;
-                      const circumference = 2 * Math.PI * radius;
-                      const strokeDasharray = `${Math.max(2, (sliceAngle / 360) * circumference - 2)} ${circumference}`;
-                      const strokeDashoffset = -((startAngle / 360) * circumference);
-
-                      return (
-                        <circle
-                          key={slot.id}
-                          cx="160"
-                          cy="160"
-                          r={radius}
-                          fill="none"
-                          stroke={slot.color}
-                          strokeWidth={strokeW}
-                          strokeDasharray={strokeDasharray}
-                          strokeDashoffset={strokeDashoffset}
-                          opacity={isSelected ? 1 : isLive ? 0.92 : 0.65}
-                          className="cursor-pointer transition-all duration-200 hover:opacity-100"
-                          onClick={() => {
-                            setSelectedSlotId(slot.id);
-                            if (openedSlotId !== null) setOpenedSlotId(slot.id);
-                            setActiveTab('wheel');
-                            if (soundEnabled) soundHaptics.playTap();
-                          }}
-                        />
-                      );
-                    })}
-
-                    {/* Live Precision Gold Watch Hand */}
-                    {(() => {
-                      const angleRad = ((currentHourVal / 24) * 360 * Math.PI) / 180;
-                      const handX = 160 + 100 * Math.cos(angleRad);
-                      const handY = 160 + 100 * Math.sin(angleRad);
-                      return (
-                        <g>
-                          <line
-                            x1="160"
-                            y1="160"
-                            x2={handX}
-                            y2={handY}
-                            stroke="#fbbf24"
-                            strokeWidth="3.2"
-                            strokeLinecap="round"
-                          />
-                          <circle cx={handX} cy={handY} r="5" fill="#fbbf24" stroke="#ffffff" strokeWidth="1.4" />
-                        </g>
-                      );
-                    })()}
-
-                    {/* Inner Watch Dial Face */}
-                    <circle cx="160" cy="160" r="82" fill={isDay ? '#013426' : '#031217'} />
-                    <circle cx="160" cy="160" r="82" fill="none" stroke="rgba(253,230,138,0.3)" strokeWidth="1.6" />
-                  </g>
-                </svg>
-
-                {/* Center Watch Face Readout */}
-                <button
-                  type="button"
-                  onClick={() => openPhaseDetail(activeSlot.id, true)}
-                  className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center cursor-pointer rounded-full"
-                  title={locActiveSlot.title}
-                >
-                  <span className="text-sm sm:text-base leading-none">{activeSlot.icon}</span>
-                  <span className="text-[9px] sm:text-[10px] font-mono font-black tabular-nums text-amber-300 mt-0.5 leading-tight">
-                    {formatHourClock(activeSlot.startHour, isBn)}
-                  </span>
-                  <span className="hidden sm:block text-[8.5px] font-bold text-white/90 line-clamp-1 mt-0.5 max-w-[68px]">
-                    {locActiveSlot.title}
-                  </span>
-                </button>
+            {/* Clean Unboxed Active Phase Metadata & Title */}
+            <div className="space-y-0.5 pt-0.5">
+              <div
+                className={`flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold tabular-nums truncate ${
+                  isDay ? 'text-amber-700' : 'text-amber-300/95'
+                }`}
+              >
+                <span className="truncate">{locActiveSlot.timeSpan}</span>
+                <span aria-hidden="true" className={isDay ? 'text-slate-300 shrink-0' : 'text-white/30 shrink-0'}>·</span>
+                <span className={`shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-200/90'}`}>
+                  {formatDurationLabel(activeSlot.startHour, activeSlot.endHour, isBn)}
+                </span>
+                {activeSlot.id === currentLiveSlot.id && (
+                  <>
+                    <span aria-hidden="true" className={isDay ? 'text-slate-300 shrink-0' : 'text-white/30 shrink-0'}>·</span>
+                    <span className={`font-black shrink-0 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+                      {isBn ? 'এখন' : 'Live'}
+                    </span>
+                  </>
+                )}
               </div>
 
-              {/* Desktop/Tablet Compact Stepper Below Dial */}
-              <div className="hidden sm:flex items-center justify-center gap-1">
+              <h2 className="text-[12.5px] sm:text-[15px] font-extrabold leading-snug truncate flex items-center gap-1.5">
+                <span className="text-sm sm:text-base leading-none shrink-0" aria-hidden="true">
+                  {activeSlot.icon}
+                </span>
+                <span className="truncate">{locActiveSlot.title}</span>
+              </h2>
+            </div>
+
+            {/* Slim Primary Action + Inline Stepper */}
+            <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+              <button
+                type="button"
+                onClick={() => openPhaseDetail(activeSlot.id, true)}
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] font-black inline-flex items-center gap-1 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+                  isDay
+                    ? 'bg-[#006A4E] hover:bg-[#005a3e] text-white'
+                    : 'bg-gradient-to-r from-amber-300 to-amber-400 hover:from-amber-200 hover:to-amber-300 text-slate-950'
+                }`}
+              >
+                <span className="sm:hidden">{isBn ? 'বিস্তারিত' : 'Details'}</span>
+                <span className="hidden sm:inline">{strings.liveBanner.viewDetails}</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+
+              {selectedSlotId !== currentLiveSlot.id && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSlotId(currentLiveSlot.id);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[10.5px] sm:text-[11px] font-bold border transition active:scale-95 cursor-pointer whitespace-nowrap ${
+                    isDay
+                      ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
+                      : 'bg-white/10 hover:bg-white/20 text-amber-200 border-white/15'
+                  }`}
+                >
+                  <span className="sm:hidden">{isBn ? 'এখন' : 'Now'}</span>
+                  <span className="hidden sm:inline">{isBn ? 'এখনকার সময়' : 'Live Now'}</span>
+                </button>
+              )}
+
+              {/* Mobile Inline Phase Stepper */}
+              <div
+                className={`flex sm:hidden items-center gap-0.5 ml-auto rounded-lg p-0.5 border ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-black/20 border-white/10'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => handleStepSlot(-1)}
-                  className="p-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-100 transition active:scale-95 cursor-pointer"
-                  title={isBn ? 'পূর্ববর্তী পর্ব' : 'Previous phase'}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center transition active:scale-90 cursor-pointer ${
+                    isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/15 text-emerald-100'
+                  }`}
+                  aria-label={isBn ? 'পূর্ববর্তী পর্ব' : 'Previous phase'}
                 >
-                  <ChevronLeft className="w-3 h-3" />
+                  <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                <span className="text-[10px] font-mono font-bold tabular-nums text-amber-200/95 px-1">
+                <span
+                  className={`text-[10px] font-mono font-bold tabular-nums px-1 ${
+                    isDay ? 'text-[#006A4E]' : 'text-amber-200'
+                  }`}
+                >
                   {isBn
-                    ? `${toBnDigits(activeSlotIndex + 1)} / ${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
-                    : `${activeSlotIndex + 1} / ${NOBI_24_TIME_SLOTS.length}`}
+                    ? `${toBnDigits(activeSlotIndex + 1)}/${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
+                    : `${activeSlotIndex + 1}/${NOBI_24_TIME_SLOTS.length}`}
                 </span>
                 <button
                   type="button"
                   onClick={() => handleStepSlot(1)}
-                  className="p-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-emerald-100 transition active:scale-95 cursor-pointer"
-                  title={isBn ? 'পরবর্তী পর্ব' : 'Next phase'}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center transition active:scale-90 cursor-pointer ${
+                    isDay ? 'hover:bg-slate-100 text-slate-700' : 'hover:bg-white/15 text-emerald-100'
+                  }`}
+                  aria-label={isBn ? 'পরবর্তী পর্ব' : 'Next phase'}
                 >
-                  <ChevronRight className="w-3 h-3" />
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
+
+              {/* Desktop subtle next phase hint */}
+              <span
+                className={`hidden lg:inline text-[11px] truncate ml-1 ${
+                  isDay ? 'text-slate-500' : 'text-emerald-100/70'
+                }`}
+              >
+                {activeSlot.id === currentLiveSlot.id
+                  ? `${liveSlotTiming.remainingText} · ${isBn ? `পরবর্তী: ${locNextSlot.title}` : `Next: ${locNextSlot.title}`}`
+                  : isBn
+                  ? `পরবর্তী: ${locActiveNextSlot.title}`
+                  : `Next: ${locActiveNextSlot.title}`}
+              </span>
             </div>
           </div>
 
-          {/* Row 3: Razor-Slim 24H Celestial Horizon Ribbon */}
-          <div className="space-y-1 pt-0.5">
-            <div className="relative h-1.5 w-full rounded-full overflow-hidden bg-black/25">
-              <div
-                className="absolute inset-0 opacity-95"
-                style={{
-                  background:
-                    'linear-gradient(90deg, #f59e0b 0%, #eab308 18%, #14b8a6 38%, #38bdf8 52%, #fb923c 64%, #818cf8 78%, #312e81 92%, #10b981 100%)',
-                }}
-              />
-              <div
-                style={{ left: `${liveDayHorizonPercent}%` }}
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#013426] shadow-[0_0_8px_rgba(255,255,255,0.95)]"
-                title={formattedLiveClock}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono font-semibold tabular-nums text-emerald-100/70">
-              <span>{isBn ? 'ফজর ৪:৩০' : '04:30 Fajr'}</span>
-              <span className="hidden sm:inline">{isBn ? 'সকাল ৮:০০' : '08:00 AM'}</span>
-              <span>{isBn ? 'যোহর ১:০০' : '01:00 PM'}</span>
-              <span className="hidden md:inline">{isBn ? 'মাগরিব ৬:০০' : '06:00 PM'}</span>
-              <span>{isBn ? 'তাহাজ্জুদ ৩:০০' : '03:00 AM'}</span>
-            </div>
-          </div>
+          {/* Right: Jewel-Sized Precision 24-Hour Sunnah Watch Dial */}
+          <div className="shrink-0 flex flex-col items-center gap-1">
+            <div className="relative w-[84px] h-[84px] sm:w-[114px] sm:h-[114px] flex items-center justify-center shrink-0">
+              <svg viewBox="0 0 320 320" className="w-full h-full drop-shadow-[0_3px_10px_rgba(0,0,0,0.22)]">
+                <defs>
+                  <linearGradient id="watchBezelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fde68a" stopOpacity="0.85" />
+                    <stop offset="50%" stopColor="#34d399" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.85" />
+                  </linearGradient>
+                </defs>
 
-          {/* Row 4: Single-Line Segmented Period Filter + Desktop Life Balance */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pt-0.5">
-            <div className="grid grid-cols-4 sm:inline-flex items-center gap-1 p-0.5 rounded-xl bg-black/20 border border-white/10">
-              {[
-                {
-                  id: 'all' as const,
-                  mobileLabel: isBn ? `সব ${toBnDigits(14)}` : 'All 14',
-                  fullLabel: isBn ? `সব (${toBnDigits(14)})` : 'All (14)',
-                },
-                {
-                  id: 'morning' as const,
-                  mobileLabel: isBn ? `ভোর ${toBnDigits(4)}` : 'Dawn 4',
-                  fullLabel: isBn ? `ভোর ও সকাল (${toBnDigits(4)})` : 'Morning (4)',
-                },
-                {
-                  id: 'midday' as const,
-                  mobileLabel: isBn ? `দুপুর ${toBnDigits(5)}` : 'Day 5',
-                  fullLabel: isBn ? `দুপুর ও বিকাল (${toBnDigits(5)})` : 'Midday (5)',
-                },
-                {
-                  id: 'night' as const,
-                  mobileLabel: isBn ? `রাত ${toBnDigits(5)}` : 'Night 5',
-                  fullLabel: isBn ? `সন্ধ্যা ও রাত (${toBnDigits(5)})` : 'Night (5)',
-                },
-              ].map((pf) => {
-                const active = activeTab === 'wheel' && dialPeriodFilter === pf.id;
-                return (
-                  <button
-                    key={pf.id}
-                    type="button"
-                    onClick={() => {
-                      setDialPeriodFilter(pf.id);
-                      setActiveTab('wheel');
-                      setOpenedSlotId(null);
-                      if (soundEnabled) soundHaptics.playTap();
-                    }}
-                    className={`px-1.5 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold whitespace-nowrap text-center transition cursor-pointer ${
-                      active
-                        ? 'bg-amber-300 text-slate-950 shadow-xs'
-                        : 'text-emerald-50/85 hover:bg-white/10'
-                    }`}
-                  >
-                    <span className="sm:hidden">{pf.mobileLabel}</span>
-                    <span className="hidden sm:inline">{pf.fullLabel}</span>
-                  </button>
-                );
-              })}
+                {/* Outer Brushed-Gold Watch Bezel */}
+                <circle cx="160" cy="160" r="154" fill="#03261d" stroke="url(#watchBezelGrad)" strokeWidth="3" />
+                <circle cx="160" cy="160" r="145" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+
+                {/* 24-Hour Precision Tick Marks */}
+                {Array.from({ length: 24 }).map((_, hr) => {
+                  const angleDeg = (hr / 24) * 360 - 90;
+                  const rad = (angleDeg * Math.PI) / 180;
+                  const isMajor = hr % 3 === 0;
+                  const r1 = 135;
+                  const r2 = isMajor ? 144 : 140;
+                  const x1 = 160 + r1 * Math.cos(rad);
+                  const y1 = 160 + r1 * Math.sin(rad);
+                  const x2 = 160 + r2 * Math.cos(rad);
+                  const y2 = 160 + r2 * Math.sin(rad);
+
+                  return (
+                    <line
+                      key={hr}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke={isMajor ? '#fcd34d' : 'rgba(255,255,255,0.32)'}
+                      strokeWidth={isMajor ? 2.2 : 1.1}
+                      strokeLinecap="round"
+                    />
+                  );
+                })}
+
+                <g transform="rotate(-90 160 160)">
+                  {/* Track Ring */}
+                  <circle cx="160" cy="160" r="116" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="22" />
+
+                  {/* 14 Clickable Sunnah Phase Arcs */}
+                  {NOBI_24_TIME_SLOTS.map((slot) => {
+                    const totalHoursInSlot =
+                      slot.endHour >= slot.startHour
+                        ? slot.endHour - slot.startHour
+                        : 24 - slot.startHour + slot.endHour;
+
+                    const startAngle = (slot.startHour / 24) * 360;
+                    const sliceAngle = (totalHoursInSlot / 24) * 360;
+                    const isSelected = slot.id === activeSlot.id;
+                    const isLive = slot.id === currentLiveSlot.id;
+
+                    const radius = 116;
+                    const strokeW = isSelected ? 26 : 18;
+                    const circumference = 2 * Math.PI * radius;
+                    const strokeDasharray = `${Math.max(2, (sliceAngle / 360) * circumference - 2)} ${circumference}`;
+                    const strokeDashoffset = -((startAngle / 360) * circumference);
+
+                    return (
+                      <circle
+                        key={slot.id}
+                        cx="160"
+                        cy="160"
+                        r={radius}
+                        fill="none"
+                        stroke={slot.color}
+                        strokeWidth={strokeW}
+                        strokeDasharray={strokeDasharray}
+                        strokeDashoffset={strokeDashoffset}
+                        opacity={isSelected ? 1 : isLive ? 0.92 : 0.65}
+                        className="cursor-pointer transition-all duration-200 hover:opacity-100"
+                        onClick={() => {
+                          setSelectedSlotId(slot.id);
+                          if (openedSlotId !== null) setOpenedSlotId(slot.id);
+                          setActiveTab('wheel');
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                      />
+                    );
+                  })}
+
+                  {/* Live Precision Gold Watch Hand */}
+                  {(() => {
+                    const angleRad = ((currentHourVal / 24) * 360 * Math.PI) / 180;
+                    const handX = 160 + 100 * Math.cos(angleRad);
+                    const handY = 160 + 100 * Math.sin(angleRad);
+                    return (
+                      <g>
+                        <line
+                          x1="160"
+                          y1="160"
+                          x2={handX}
+                          y2={handY}
+                          stroke="#fbbf24"
+                          strokeWidth="3.2"
+                          strokeLinecap="round"
+                        />
+                        <circle cx={handX} cy={handY} r="5" fill="#fbbf24" stroke="#ffffff" strokeWidth="1.4" />
+                      </g>
+                    );
+                  })()}
+
+                  {/* Inner Watch Dial Face */}
+                  <circle cx="160" cy="160" r="82" fill={isDay ? '#013426' : '#031217'} />
+                  <circle cx="160" cy="160" r="82" fill="none" stroke="rgba(253,230,138,0.35)" strokeWidth="1.6" />
+                </g>
+              </svg>
+
+              {/* Center Watch Face Readout */}
+              <button
+                type="button"
+                onClick={() => openPhaseDetail(activeSlot.id, true)}
+                className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center cursor-pointer rounded-full"
+                title={locActiveSlot.title}
+              >
+                <span className="text-sm sm:text-base leading-none">{activeSlot.icon}</span>
+                <span className="text-[9px] sm:text-[10px] font-mono font-black tabular-nums text-amber-300 mt-0.5 leading-tight">
+                  {formatHourClock(activeSlot.startHour, isBn)}
+                </span>
+                <span className="hidden sm:block text-[8.5px] font-bold text-white/90 line-clamp-1 mt-0.5 max-w-[68px]">
+                  {locActiveSlot.title}
+                </span>
+              </button>
             </div>
 
-            {/* Life Balance breakdown shown cleanly on tablet/desktop */}
-            <div className="hidden md:flex items-center gap-2.5 text-[11px] text-emerald-100/80">
-              {categoryBreakdown.map((cat) => {
-                const shortLabel =
-                  cat.key === 'spiritual'
-                    ? isBn ? 'আধ্যাত্মিক' : 'Spiritual'
-                    : cat.key === 'social'
-                    ? isBn ? 'সামাজিক' : 'Social'
-                    : cat.key === 'physical'
-                    ? isBn ? 'বিশ্রাম' : 'Rest'
-                    : isBn ? 'পরিবার' : 'Family';
-                return (
-                  <button
-                    key={cat.key}
-                    type="button"
-                    onClick={() => {
-                      setCategoryFilter(cat.key);
-                      setTimelineFilter('all');
-                      setActiveTab('timeline');
-                      if (soundEnabled) soundHaptics.playTap();
-                    }}
-                    className="inline-flex items-center gap-1 hover:text-amber-200 transition cursor-pointer whitespace-nowrap"
-                    title={cat.label}
-                  >
-                    <span className="w-2 h-2 rounded-xs shrink-0" style={{ backgroundColor: cat.color }} />
-                    <span>{shortLabel}</span>
-                    <strong className="font-mono font-bold tabular-nums text-white">
-                      {isBn ? `${toBnDigits(cat.hours)}ঘ` : `${cat.hours}h`}
-                    </strong>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Row 5: Quiet Single-Line Quick-Metrics Strip */}
-          <div className="flex items-center justify-between sm:justify-start sm:gap-3 pt-1.5 border-t border-white/10 text-[10px] sm:text-[11px] text-emerald-100/80">
-            <button
-              type="button"
-              onClick={() => setActiveTab('timeline')}
-              className="inline-flex items-baseline gap-1 hover:text-amber-300 transition cursor-pointer whitespace-nowrap"
-            >
-              <strong className="font-mono font-black tabular-nums text-white">
-                {isBn ? toBnDigits(NOBI_24_TIME_SLOTS.length) : NOBI_24_TIME_SLOTS.length}
-              </strong>
-              <span>{isBn ? 'পর্ব' : 'Phases'}</span>
-            </button>
-            <span aria-hidden="true" className="text-white/25">·</span>
-            <button
-              type="button"
-              onClick={() => setActiveTab('articles')}
-              className="inline-flex items-baseline gap-1 hover:text-amber-300 transition cursor-pointer whitespace-nowrap"
-            >
-              <strong className="font-mono font-black tabular-nums text-white">
-                {isBn ? toBnDigits(NOBI_24_CHAPTERS.length) : NOBI_24_CHAPTERS.length}
-              </strong>
-              <span>{isBn ? 'অধ্যায়' : 'Chapters'}</span>
-            </button>
-            <span aria-hidden="true" className="text-white/25">·</span>
-            <button
-              type="button"
-              onClick={() => setActiveTab('duas')}
-              className="inline-flex items-baseline gap-1 hover:text-amber-300 transition cursor-pointer whitespace-nowrap"
-            >
-              <strong className="font-mono font-black tabular-nums text-white">
-                {isBn ? toBnDigits(NOBI_24_DUAS.length) : NOBI_24_DUAS.length}
-              </strong>
-              <span>{isBn ? 'দোয়া' : 'Duas'}</span>
-            </button>
-            <span aria-hidden="true" className="text-white/25">·</span>
-            <button
-              type="button"
-              onClick={() => setActiveTab('calendar')}
-              className="inline-flex items-baseline gap-1 hover:text-amber-300 transition cursor-pointer whitespace-nowrap"
-            >
-              <strong className="font-mono font-black tabular-nums text-white">
-                {isBn ? toBnDigits(12) : '12'}
-              </strong>
-              <span>{isBn ? 'মাস' : 'Months'}</span>
-            </button>
-            <span aria-hidden="true" className="text-white/25">·</span>
-            <button
-              type="button"
-              onClick={() => setActiveTab('tracker')}
-              className="inline-flex items-baseline gap-1 hover:text-amber-200 transition cursor-pointer whitespace-nowrap"
-            >
-              <strong className="font-mono font-black tabular-nums text-amber-300">
+            {/* Desktop/Tablet Compact Stepper Below Dial */}
+            <div className="hidden sm:flex items-center justify-center gap-1">
+              <button
+                type="button"
+                onClick={() => handleStepSlot(-1)}
+                className={`p-1 rounded-lg border transition active:scale-95 cursor-pointer ${
+                  isDay
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-emerald-100'
+                }`}
+                title={isBn ? 'পূর্ববর্তী পর্ব' : 'Previous phase'}
+              >
+                <ChevronLeft className="w-3 h-3" />
+              </button>
+              <span
+                className={`text-[10px] font-mono font-bold tabular-nums px-1 ${
+                  isDay ? 'text-[#006A4E]' : 'text-amber-200/95'
+                }`}
+              >
                 {isBn
-                  ? `${toBnDigits(completedChecklistCount)}/${toBnDigits(NOBI_DAILY_CHECKLIST.length)}`
-                  : `${completedChecklistCount}/${NOBI_DAILY_CHECKLIST.length}`}
-              </strong>
-              <span>{isBn ? 'সুন্নাহ' : 'Sunnah'}</span>
-            </button>
+                  ? `${toBnDigits(activeSlotIndex + 1)} / ${toBnDigits(NOBI_24_TIME_SLOTS.length)}`
+                  : `${activeSlotIndex + 1} / ${NOBI_24_TIME_SLOTS.length}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleStepSlot(1)}
+                className={`p-1 rounded-lg border transition active:scale-95 cursor-pointer ${
+                  isDay
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-emerald-100'
+                }`}
+                title={isBn ? 'পরবর্তী পর্ব' : 'Next phase'}
+              >
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
           </div>
+        </div>
+
+        {/* Row 3: Razor-Slim 24H Celestial Horizon Ribbon */}
+        <div className="space-y-1 pt-0.5">
+          <div className={`relative h-1.5 w-full rounded-full overflow-hidden ${isDay ? 'bg-slate-200' : 'bg-black/25'}`}>
+            <div
+              className="absolute inset-0 opacity-95"
+              style={{
+                background:
+                  'linear-gradient(90deg, #f59e0b 0%, #eab308 18%, #14b8a6 38%, #38bdf8 52%, #fb923c 64%, #818cf8 78%, #312e81 92%, #10b981 100%)',
+              }}
+            />
+            <div
+              style={{ left: `${liveDayHorizonPercent}%` }}
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-[#013426] shadow-[0_0_8px_rgba(255,255,255,0.95)]"
+              title={formattedLiveClock}
+            />
+          </div>
+          <div
+            className={`flex items-center justify-between text-[9px] sm:text-[10px] font-mono font-semibold tabular-nums ${
+              isDay ? 'text-slate-500' : 'text-emerald-100/70'
+            }`}
+          >
+            <span>{isBn ? 'ফজর ৪:৩০' : '04:30 Fajr'}</span>
+            <span className="hidden sm:inline">{isBn ? 'সকাল ৮:০০' : '08:00 AM'}</span>
+            <span>{isBn ? 'যোহর ১:০০' : '01:00 PM'}</span>
+            <span className="hidden md:inline">{isBn ? 'মাগরিব ৬:০০' : '06:00 PM'}</span>
+            <span>{isBn ? 'তাহাজ্জুদ ৩:০০' : '03:00 AM'}</span>
+          </div>
+        </div>
+
+        {/* Row 4: Single-Line Segmented Period Filter + Desktop Life Balance */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pt-0.5">
+          <div
+            className={`grid grid-cols-4 sm:inline-flex items-center gap-1 p-0.5 rounded-xl border ${
+              isDay ? 'bg-slate-100 border-slate-200' : 'bg-black/20 border-white/10'
+            }`}
+          >
+            {[
+              {
+                id: 'all' as const,
+                mobileLabel: isBn ? `সব ${toBnDigits(14)}` : 'All 14',
+                fullLabel: isBn ? `সব (${toBnDigits(14)})` : 'All (14)',
+              },
+              {
+                id: 'morning' as const,
+                mobileLabel: isBn ? `ভোর ${toBnDigits(4)}` : 'Dawn 4',
+                fullLabel: isBn ? `ভোর ও সকাল (${toBnDigits(4)})` : 'Morning (4)',
+              },
+              {
+                id: 'midday' as const,
+                mobileLabel: isBn ? `দুপুর ${toBnDigits(5)}` : 'Day 5',
+                fullLabel: isBn ? `দুপুর ও বিকাল (${toBnDigits(5)})` : 'Midday (5)',
+              },
+              {
+                id: 'night' as const,
+                mobileLabel: isBn ? `রাত ${toBnDigits(5)}` : 'Night 5',
+                fullLabel: isBn ? `সন্ধ্যা ও রাত (${toBnDigits(5)})` : 'Night (5)',
+              },
+            ].map((pf) => {
+              const active = activeTab === 'wheel' && dialPeriodFilter === pf.id;
+              return (
+                <button
+                  key={pf.id}
+                  type="button"
+                  onClick={() => {
+                    setDialPeriodFilter(pf.id);
+                    setActiveTab('wheel');
+                    setOpenedSlotId(null);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`px-1.5 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold whitespace-nowrap text-center transition cursor-pointer ${
+                    active
+                      ? isDay
+                        ? 'bg-[#006A4E] text-white'
+                        : 'bg-amber-300 text-slate-950'
+                      : isDay
+                      ? 'text-slate-600 hover:bg-white'
+                      : 'text-emerald-50/85 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="sm:hidden">{pf.mobileLabel}</span>
+                  <span className="hidden sm:inline">{pf.fullLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Life Balance breakdown shown cleanly on tablet/desktop */}
+          <div
+            className={`hidden md:flex items-center gap-2.5 text-[11px] ${
+              isDay ? 'text-slate-600' : 'text-emerald-100/80'
+            }`}
+          >
+            {categoryBreakdown.map((cat) => {
+              const shortLabel =
+                cat.key === 'spiritual'
+                  ? isBn ? 'আধ্যাত্মিক' : 'Spiritual'
+                  : cat.key === 'social'
+                  ? isBn ? 'সামাজিক' : 'Social'
+                  : cat.key === 'physical'
+                  ? isBn ? 'বিশ্রাম' : 'Rest'
+                  : isBn ? 'পরিবার' : 'Family';
+              return (
+                <button
+                  key={cat.key}
+                  type="button"
+                  onClick={() => {
+                    setCategoryFilter(cat.key);
+                    setTimelineFilter('all');
+                    setActiveTab('timeline');
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`inline-flex items-center gap-1 transition cursor-pointer whitespace-nowrap ${
+                    isDay ? 'hover:text-[#006A4E]' : 'hover:text-amber-200'
+                  }`}
+                  title={cat.label}
+                >
+                  <span className="w-2 h-2 rounded-xs shrink-0" style={{ backgroundColor: cat.color }} />
+                  <span>{shortLabel}</span>
+                  <strong className={`font-mono font-bold tabular-nums ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                    {isBn ? `${toBnDigits(cat.hours)}ঘ` : `${cat.hours}h`}
+                  </strong>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Row 5: Quiet Single-Line Quick-Metrics Strip */}
+        <div
+          className={`flex items-center justify-between sm:justify-start sm:gap-3 pt-1.5 border-t text-[10px] sm:text-[11px] ${
+            isDay ? 'border-slate-200/70 text-slate-600' : 'border-white/10 text-emerald-100/80'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveTab('timeline')}
+            className={`inline-flex items-baseline gap-1 transition cursor-pointer whitespace-nowrap ${
+              isDay ? 'hover:text-[#006A4E]' : 'hover:text-amber-300'
+            }`}
+          >
+            <strong className={`font-mono font-black tabular-nums ${isDay ? 'text-slate-900' : 'text-white'}`}>
+              {isBn ? toBnDigits(NOBI_24_TIME_SLOTS.length) : NOBI_24_TIME_SLOTS.length}
+            </strong>
+            <span>{isBn ? 'পর্ব' : 'Phases'}</span>
+          </button>
+          <span aria-hidden="true" className={isDay ? 'text-slate-300' : 'text-white/25'}>·</span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('articles')}
+            className={`inline-flex items-baseline gap-1 transition cursor-pointer whitespace-nowrap ${
+              isDay ? 'hover:text-[#006A4E]' : 'hover:text-amber-300'
+            }`}
+          >
+            <strong className={`font-mono font-black tabular-nums ${isDay ? 'text-slate-900' : 'text-white'}`}>
+              {isBn ? toBnDigits(NOBI_24_CHAPTERS.length) : NOBI_24_CHAPTERS.length}
+            </strong>
+            <span>{isBn ? 'অধ্যায়' : 'Chapters'}</span>
+          </button>
+          <span aria-hidden="true" className={isDay ? 'text-slate-300' : 'text-white/25'}>·</span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('duas')}
+            className={`inline-flex items-baseline gap-1 transition cursor-pointer whitespace-nowrap ${
+              isDay ? 'hover:text-[#006A4E]' : 'hover:text-amber-300'
+            }`}
+          >
+            <strong className={`font-mono font-black tabular-nums ${isDay ? 'text-slate-900' : 'text-white'}`}>
+              {isBn ? toBnDigits(NOBI_24_DUAS.length) : NOBI_24_DUAS.length}
+            </strong>
+            <span>{isBn ? 'দোয়া' : 'Duas'}</span>
+          </button>
+          <span aria-hidden="true" className={isDay ? 'text-slate-300' : 'text-white/25'}>·</span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('calendar')}
+            className={`inline-flex items-baseline gap-1 transition cursor-pointer whitespace-nowrap ${
+              isDay ? 'hover:text-[#006A4E]' : 'hover:text-amber-300'
+            }`}
+          >
+            <strong className={`font-mono font-black tabular-nums ${isDay ? 'text-slate-900' : 'text-white'}`}>
+              {isBn ? toBnDigits(12) : '12'}
+            </strong>
+            <span>{isBn ? 'মাস' : 'Months'}</span>
+          </button>
+          <span aria-hidden="true" className={isDay ? 'text-slate-300' : 'text-white/25'}>·</span>
+          <button
+            type="button"
+            onClick={() => setActiveTab('tracker')}
+            className={`inline-flex items-baseline gap-1 transition cursor-pointer whitespace-nowrap ${
+              isDay ? 'hover:text-[#006A4E]' : 'hover:text-amber-200'
+            }`}
+          >
+            <strong className={`font-mono font-black tabular-nums ${isDay ? 'text-[#006A4E]' : 'text-amber-300'}`}>
+              {isBn
+                ? `${toBnDigits(completedChecklistCount)}/${toBnDigits(NOBI_DAILY_CHECKLIST.length)}`
+                : `${completedChecklistCount}/${NOBI_DAILY_CHECKLIST.length}`}
+            </strong>
+            <span>{isBn ? 'সুন্নাহ' : 'Sunnah'}</span>
+          </button>
         </div>
       </div>
 

@@ -476,111 +476,108 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* ===================== MUHASABAH TOP APP HEADER ===================== */}
+      {/* ===================== SIMPLE MUHASABAH TOP HEADER ===================== */}
       <div
-        className={`p-4 sm:p-5 rounded-3xl border shadow-xl ${
-          isDay
-            ? 'bg-[#006747] text-white border-emerald-600/40 shadow-[#006747]/20'
-            : 'bg-gradient-to-r from-[#0b292e] via-[#103a42] to-[#154b55] text-white border-[#1c5a66]'
+        className={`pb-3.5 border-b space-y-3 ${
+          isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
         }`}
       >
-        <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/15">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-inner">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <BookOpen className={`w-5 h-5 shrink-0 ${isDay ? 'text-[#006747]' : 'text-emerald-400'}`} />
+            <div className="min-w-0">
+              <h1 className={`text-lg sm:text-xl font-black tracking-tight flex items-center gap-2 flex-wrap ${isDay ? 'text-[#006747]' : 'text-white'}`}>
                 <span>{AAMAL_UI.bannerTitle[selectedLanguage]}</span>
-                <span className="text-xs font-normal text-emerald-100 opacity-90 hidden sm:inline">
+                <span className={`text-xs font-semibold hidden sm:inline ${isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'}`}>
                   {AAMAL_UI.bannerTag[selectedLanguage]}
                 </span>
               </h1>
-              <p className="text-[11px] text-emerald-100/90 font-medium">
+              <p className={`text-[11px] font-medium truncate ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                 {AAMAL_UI.bannerHadith[selectedLanguage]}
               </p>
             </div>
           </div>
 
+          <button
+            onClick={() => {
+              setIsExportModalOpen(true);
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#006747] hover:bg-[#00553a] text-white text-xs font-bold transition active:scale-95 cursor-pointer shrink-0"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{AAMAL_UI.downloadReport[selectedLanguage]}</span>
+            <span className="sm:hidden">{AAMAL_UI.reportShort[selectedLanguage]}</span>
+          </button>
+        </div>
+
+        {/* Simple Date Selector + Inline Counters Row */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => {
-                setIsExportModalOpen(true);
-                if (soundEnabled) soundHaptics.playTap();
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#009b68] hover:bg-[#00ab73] text-white text-xs font-bold shadow-md transition active:scale-95 cursor-pointer"
+              onClick={handlePrevDay}
+              className={`p-1.5 rounded-lg border transition active:scale-95 cursor-pointer ${
+                isDay
+                  ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
+              }`}
+              title={AAMAL_UI.prevDay?.[selectedLanguage] || 'Previous Day'}
             >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">{AAMAL_UI.downloadReport[selectedLanguage]}</span>
-              <span className="sm:hidden">{AAMAL_UI.reportShort[selectedLanguage]}</span>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              <span className={`text-sm sm:text-base font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-[#facc15]'}`}>
+                {selectedDateFormatted}
+              </span>
+              {isSelectedToday ? (
+                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                  isDay ? 'bg-emerald-50 border-emerald-200 text-[#006747]' : 'bg-emerald-950/60 border-emerald-700/50 text-emerald-300'
+                }`}>
+                  {AAMAL_UI.today[selectedLanguage]}
+                </span>
+              ) : (
+                <button
+                  onClick={handleJumpToToday}
+                  className={`text-[11px] font-bold underline cursor-pointer ${isDay ? 'text-[#006747]' : 'text-emerald-300'}`}
+                >
+                  {AAMAL_UI.goToToday[selectedLanguage]}
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={handleNextDay}
+              className={`p-1.5 rounded-lg border transition active:scale-95 cursor-pointer ${
+                isDay
+                  ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
+              }`}
+              title={AAMAL_UI.nextDay?.[selectedLanguage] || 'Next Day'}
+            >
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-        </div>
 
-        {/* Date Selector Row with < Date > Arrows */}
-        <div className="flex items-center justify-between gap-2 pt-3">
-          <button
-            onClick={handlePrevDay}
-            className="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white transition active:scale-95 cursor-pointer"
-            title={AAMAL_UI.prevDay?.[selectedLanguage] || 'Previous Day'}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <div className="text-center flex-1">
-            <div className="text-base sm:text-lg font-black tracking-wide text-[#facc15] font-sans">
-              {selectedDateFormatted}
-            </div>
-            {isSelectedToday ? (
-              <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold border border-white/25">
-                {AAMAL_UI.today[selectedLanguage]}
-              </span>
-            ) : (
-              <button
-                onClick={handleJumpToToday}
-                className="text-[10px] text-emerald-100 underline hover:text-white"
-              >
-                {AAMAL_UI.goToToday[selectedLanguage]}
-              </button>
-            )}
-          </div>
-
-          <button
-            onClick={handleNextDay}
-            className="p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white transition active:scale-95 cursor-pointer"
-            title={AAMAL_UI.nextDay?.[selectedLanguage] || 'Next Day'}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* 2 Quick Summary Indicator Pills */}
-        <div className="grid grid-cols-2 gap-2.5 pt-3">
-          <div className="p-2.5 rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🕌</span>
-              <span className="text-xs font-bold text-emerald-100">
-                {AAMAL_UI.prayersBadge[selectedLanguage]}
+          <div className="flex items-center gap-3 text-xs font-bold">
+            <div className={`flex items-center gap-1.5 ${isDay ? 'text-slate-700' : 'text-emerald-100'}`}>
+              <span>🕌</span>
+              <span>{AAMAL_UI.prayersBadge[selectedLanguage]}:</span>
+              <span className={`font-black font-mono ${isDay ? 'text-[#006747]' : 'text-emerald-300'}`}>
+                {selectedLanguage === 'bn'
+                  ? `${String(fardhCompletedCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}/৫`
+                  : `${fardhCompletedCount}/5`}
               </span>
             </div>
-            <div className="text-sm sm:text-base font-black font-mono text-emerald-300">
-              {selectedLanguage === 'bn'
-                ? `${String(fardhCompletedCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}/৫`
-                : `${fardhCompletedCount}/5`}
-            </div>
-          </div>
-
-          <div className="p-2.5 rounded-2xl bg-black/25 backdrop-blur-md border border-white/20 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">✅</span>
-              <span className="text-xs font-bold text-emerald-100">
-                {AAMAL_UI.aamalBadge[selectedLanguage]}
+            <span className="opacity-30">•</span>
+            <div className={`flex items-center gap-1.5 ${isDay ? 'text-slate-700' : 'text-emerald-100'}`}>
+              <span>✅</span>
+              <span>{AAMAL_UI.aamalBadge[selectedLanguage]}:</span>
+              <span className={`font-black font-mono ${isDay ? 'text-amber-700' : 'text-[#facc15]'}`}>
+                {selectedLanguage === 'bn'
+                  ? `${String(completedAmalCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}/${String(totalAmalCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}`
+                  : `${completedAmalCount}/${totalAmalCount}`}
               </span>
-            </div>
-            <div className="text-sm sm:text-base font-black font-mono text-[#facc15]">
-              {selectedLanguage === 'bn'
-                ? `${String(completedAmalCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}/${String(totalAmalCount).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[parseInt(d, 10)])}`
-                : `${completedAmalCount}/${totalAmalCount}`}
             </div>
           </div>
         </div>

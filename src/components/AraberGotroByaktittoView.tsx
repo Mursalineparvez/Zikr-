@@ -816,91 +816,117 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
     <div className={`min-h-screen pb-24 transition-colors duration-200 ${
       isDay ? 'text-slate-800' : 'text-[#e6f4f2]'
     }`}>
-      {/* 1. Header Banner (Single Unified, Compact, Ultra-Attractive, High-Density) */}
-      <div className={`relative overflow-hidden rounded-xl p-3 sm:p-4 mb-3 shadow-sm border ${
-        isDay
-          ? 'bg-gradient-to-r from-teal-900 via-emerald-850 to-teal-950 text-white border-teal-700/60'
-          : 'bg-gradient-to-r from-[#061e22] via-[#092a30] to-[#041518] text-white border-emerald-500/30'
-      }`}>
-        <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
-          <Shield className="w-36 h-36 text-emerald-300" />
+      {/* 1. Simple Flat Header */}
+      <div
+        className={`pb-3.5 mb-3 border-b space-y-2.5 transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
+        }`}
+      >
+        {/* Top Bar */}
+        <div className="flex items-center justify-between gap-2 flex-wrap text-[11px]">
+          {onBack && (
+            <button
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                onBack();
+              }}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer active:scale-95 ${
+                isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                  : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:bg-[#103239]'
+              }`}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{t.backToLibrary}</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 ml-auto flex-wrap">
+            <span
+              className={`text-[11px] font-arabic tracking-wide font-semibold ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+              }`}
+            >
+              {BOOK_METADATA.titleAr}
+            </span>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full border font-bold whitespace-nowrap ${
+                isDay
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+              }`}
+            >
+              {t.subHeaderBadge}
+            </span>
+            <ShareDownloadButtons
+              variant="card"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openGotroDirectoryShare('share')}
+              onDownload={() => openGotroDirectoryShare('download')}
+            />
+          </div>
         </div>
 
-        <div className="relative z-10 space-y-2">
-          {/* Top Bar inside Banner */}
-          <div className="flex items-center justify-between gap-2 flex-wrap text-[11px]">
-            {onBack && (
-              <button
-                onClick={() => {
-                  if (soundEnabled) soundHaptics.playTap();
-                  onBack();
-                }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-white/10 hover:bg-white/20 backdrop-blur-md transition cursor-pointer text-white border border-white/20 shadow-2xs"
-              >
-                <ArrowLeft className="w-3 h-3" />
-                <span>{t.backToLibrary}</span>
-              </button>
-            )}
+        {/* Header Title & Description */}
+        <div>
+          <h1 className="text-base sm:text-xl font-black tracking-tight flex items-center gap-1.5">
+            <span className="text-lg">🛡️</span>
+            <span>{t.mainHeaderTitle}</span>
+          </h1>
+          <p
+            className={`text-[11px] sm:text-xs leading-relaxed max-w-3xl mt-0.5 ${
+              isDay ? 'text-slate-600' : 'text-emerald-100/80'
+            }`}
+          >
+            {t.mainHeaderDesc}
+          </p>
+        </div>
 
-            <div className="flex items-center gap-2 ml-auto flex-wrap">
-              <span className="text-[10px] font-arabic text-emerald-200/90 tracking-wide font-medium">
-                {BOOK_METADATA.titleAr}
+        {/* Compact Inline 4-Metric Strip */}
+        <div
+          className={`pt-2 border-t grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] ${
+            isDay ? 'border-slate-200/70' : 'border-white/10'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 py-0.5">
+            <span className="text-xs">🗺️</span>
+            <div className="min-w-0">
+              <span className={`block text-[9px] ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
+                {t.metricDomainLabel}
               </span>
-              <span className="text-[9px] px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 font-bold whitespace-nowrap">
-                {t.subHeaderBadge}
-              </span>
-              <ShareDownloadButtons
-                variant="hero"
-                selectedLanguage={selectedLanguage}
-                themeMode={themeMode}
-                onShare={() => openGotroDirectoryShare('share')}
-                onDownload={() => openGotroDirectoryShare('download')}
-              />
+              <span className="font-bold truncate block">{t.metricDomainValue}</span>
             </div>
           </div>
-
-          {/* Banner Title & Description */}
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-            <div>
-              <h1 className="text-base sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5">
-                <span className="text-lg">🛡️</span>
-                <span>{t.mainHeaderTitle}</span>
-              </h1>
-              <p className="text-[11px] sm:text-xs text-emerald-100/90 leading-relaxed max-w-3xl mt-0.5">
-                {t.mainHeaderDesc}
-              </p>
+          <div className="flex items-center gap-1.5 py-0.5">
+            <span className="text-xs">🕋</span>
+            <div className="min-w-0">
+              <span className={`block text-[9px] ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
+                {t.metricKabaLabel}
+              </span>
+              <span className="font-bold truncate block">{t.metricKabaValue}</span>
             </div>
           </div>
-
-          {/* Compact 4-Metric Strip */}
-          <div className="pt-2 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[10px]">
-            <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
-              <span className="text-xs">🗺️</span>
-              <div>
-                <span className="text-emerald-200/70 block text-[9px]">{t.metricDomainLabel}</span>
-                <span className="font-bold text-white truncate block">{t.metricDomainValue}</span>
-              </div>
+          <div className="flex items-center gap-1.5 py-0.5">
+            <span className="text-xs">📜</span>
+            <div className="min-w-0">
+              <span className={`block text-[9px] ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
+                {t.metricTribeLabel}
+              </span>
+              <span className={`font-bold truncate block ${isDay ? 'text-amber-700' : 'text-amber-300'}`}>
+                {t.metricTribeValue}
+              </span>
             </div>
-            <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
-              <span className="text-xs">🕋</span>
-              <div>
-                <span className="text-emerald-200/70 block text-[9px]">{t.metricKabaLabel}</span>
-                <span className="font-bold text-white truncate block">{t.metricKabaValue}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
-              <span className="text-xs">📜</span>
-              <div>
-                <span className="text-emerald-200/70 block text-[9px]">{t.metricTribeLabel}</span>
-                <span className="font-bold text-amber-300 truncate block">{t.metricTribeValue}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-lg border border-white/10">
-              <span className="text-xs">📊</span>
-              <div>
-                <span className="text-emerald-200/70 block text-[9px]">{t.metricSourceLabel}</span>
-                <span className="font-bold text-emerald-200 truncate block">{t.metricSourceValue}</span>
-              </div>
+          </div>
+          <div className="flex items-center gap-1.5 py-0.5">
+            <span className="text-xs">📊</span>
+            <div className="min-w-0">
+              <span className={`block text-[9px] ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
+                {t.metricSourceLabel}
+              </span>
+              <span className={`font-bold truncate block ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}>
+                {t.metricSourceValue}
+              </span>
             </div>
           </div>
         </div>

@@ -696,25 +696,33 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
         {/* Sticky Top Header */}
         <div
-          className={`sticky top-0 z-40 text-white shadow-xl rounded-2xl px-3 sm:px-4 py-3 flex items-center justify-between gap-3 border transition-colors ${
+          className={`sticky top-0 z-40 border-b backdrop-blur-md px-1 sm:px-2 py-2.5 flex items-center justify-between gap-2 transition-colors ${
             isDay
-              ? 'bg-gradient-to-r from-[#005a3e] via-[#006747] to-[#007a52] border-emerald-600/40 shadow-[#006747]/20'
-              : 'bg-gradient-to-r from-[#07191e] via-[#0b262d] to-[#10363e] border-[#163c46] shadow-black/60'
+              ? 'bg-[#F4FAF7]/95 border-[#dcebe8] text-slate-900'
+              : 'bg-[#04171d]/95 border-[#163640] text-white'
           }`}
         >
           <button
             onClick={() => handleSelectSahaba(null)}
-            className="p-2 -ml-1 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer flex items-center gap-1.5"
+            className={`p-2 rounded-xl border active:scale-95 transition cursor-pointer flex items-center gap-1.5 ${
+              isDay
+                ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                : 'bg-[#0a2328] hover:bg-[#11333a] border-[#16444e] text-emerald-200'
+            }`}
           >
-            <ArrowLeft className="w-5 h-5 text-white stroke-[2.5]" />
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
             <span className="text-xs font-bold hidden sm:inline">{isBn ? 'সূচিপত্র' : 'Back'}</span>
           </button>
 
           <div className="flex-1 text-center truncate px-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 truncate block">
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider truncate block ${
+                isDay ? 'text-[#006A4E]' : 'text-amber-300'
+              }`}
+            >
               {isBn ? `ক্রম #${formatNum(activeSahaba.rank)}` : `Rank #${formatNum(activeSahaba.rank)}`} • {activeCat}
             </span>
-            <h2 className="text-sm sm:text-base font-black truncate text-white">
+            <h2 className="text-sm sm:text-base font-black truncate">
               {activeName}
             </h2>
           </div>
@@ -725,8 +733,10 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
               onClick={() => toggleCompleteSahaba(activeSahaba.id)}
               className={`p-2 rounded-xl text-xs font-bold flex items-center gap-1 border transition cursor-pointer active:scale-95 ${
                 isCompleted
-                  ? 'bg-emerald-500 text-white border-emerald-400 shadow-sm'
-                  : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+                  ? 'bg-emerald-600 text-white border-emerald-500'
+                  : isDay
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  : 'bg-[#0a2328] hover:bg-[#11333a] text-white border-[#16444e]'
               }`}
               title={isCompleted ? (isBn ? 'পঠিত সম্পন্ন' : 'Completed') : (isBn ? 'পঠিত হিসেবে চিহ্নিত করুন' : 'Mark as Read')}
             >
@@ -739,8 +749,10 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
               onClick={() => toggleBookmarkSahaba(activeSahaba.id)}
               className={`p-2 rounded-xl text-xs font-bold flex items-center gap-1 border transition cursor-pointer active:scale-95 ${
                 isBookmarked
-                  ? 'bg-amber-500 text-white border-amber-400 shadow-sm'
-                  : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
+                  ? 'bg-amber-500 text-white border-amber-400'
+                  : isDay
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  : 'bg-[#0a2328] hover:bg-[#11333a] text-white border-[#16444e]'
               }`}
               title={isBookmarked ? (isBn ? 'বুকমার্ক সরানো' : 'Remove Bookmark') : (isBn ? 'বুকমার্ক করুন' : 'Bookmark')}
             >
@@ -759,7 +771,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             />
 
             <ShareDownloadButtons
-              variant="hero"
+              variant="card"
               selectedLanguage={selectedLanguage}
               themeMode={themeMode}
               onShare={() => setShareState({ content: buildSahabaShareContent(activeSahaba), focus: 'share' })}
@@ -768,16 +780,28 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
 
             <button
               onClick={handleCopySahabaSummary}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer text-xs font-bold flex items-center gap-1"
+              className={`p-2 rounded-xl border active:scale-95 transition cursor-pointer text-xs font-bold flex items-center gap-1 ${
+                isDay
+                  ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                  : 'bg-[#0a2328] hover:bg-[#11333a] border-[#16444e] text-white'
+              }`}
               title={isBn ? 'জীবনচরিত কপি করুন' : 'Copy Summary'}
             >
-              {copiedQuote ? <CheckCircle2 className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4 text-white" />}
+              {copiedQuote ? (
+                <CheckCircle2 className={`w-4 h-4 ${isDay ? 'text-emerald-600' : 'text-emerald-300'}`} />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
               <span className="hidden sm:inline text-[11px]">{copiedQuote ? (isBn ? 'কপি হয়েছে' : 'Copied') : (isBn ? 'কপি' : 'Copy')}</span>
             </button>
 
             <button
               onClick={() => handleSelectSahaba(null)}
-              className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 active:scale-95 transition cursor-pointer"
+              className={`p-2 rounded-xl border active:scale-95 transition cursor-pointer ${
+                isDay
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200'
+                  : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border-rose-500/30'
+              }`}
             >
               ✕
             </button>
@@ -1554,20 +1578,28 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         </div>
       </div>
 
-      {/* Top Banner */}
+      {/* Simple Flat Top Header */}
       <div
-        className={`p-5 sm:p-6 rounded-3xl border shadow-xl relative overflow-hidden ${
-          isDay
-            ? 'bg-gradient-to-r from-[#005a3e] via-[#006747] to-[#007a52] text-white border-emerald-600/40'
-            : 'bg-gradient-to-r from-[#07191e] via-[#0b262d] to-[#10363e] text-white border-[#163c46]'
+        className={`pb-4 border-b transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-emerald-100 text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <div
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+              isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+            }`}
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${isDay ? 'text-amber-500' : 'text-amber-300'}`} />
             <span>{isBn ? 'হায়াতুস সাহাবা' : isAr ? 'حياة الصحابة رضي الله عنهم' : 'Hayatus Sahaba'}</span>
           </div>
-          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30">
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+              isDay
+                ? 'bg-emerald-50 text-[#006A4E] border-emerald-200'
+                : 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+            }`}
+          >
             {isBn ? `${formatNum(totalSahaba)} জন সাহাবি` : `${totalSahaba} Companions`}
           </span>
         </div>
@@ -1576,14 +1608,18 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
               {isBn ? `হায়াতুস সাহাবা (${formatNum(totalSahaba)}+ বিশিষ্ট সাহাবির জীবনী)` : `Hayatus Sahaba (${totalSahaba}+ Prominent Biographies)`}
             </h2>
-            <p className="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl">
+            <p
+              className={`text-xs sm:text-sm mt-1 max-w-xl ${
+                isDay ? 'text-slate-600' : 'text-emerald-100/80'
+              }`}
+            >
               {isBn
                 ? 'মর্যাদা ও জনপ্রিয়তার ক্রমানুসারে নবীপ্রেমিক সাহাবিগণের পূর্ণাঙ্গ জীবন, পরিবার, সন্তানসন্ততি, ইসলাম গ্রহণ, বীরত্ব ও সহিহ হাদিসের প্রামাণিক দলিল।'
                 : 'Ranked biographical accounts of the beloved companions of Prophet Muhammad (PBUH)—their families, Islam acceptance, virtues, and authentic Hadith evidence.'}
             </p>
           </div>
           <ShareDownloadButtons
-            variant="hero"
+            variant="card"
             selectedLanguage={selectedLanguage}
             themeMode={themeMode}
             className="shrink-0 self-start sm:self-end"

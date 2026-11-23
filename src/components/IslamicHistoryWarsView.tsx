@@ -472,25 +472,33 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
         />
         {/* Sticky Top Header */}
         <div
-          className={`sticky top-0 z-40 text-white shadow-xl rounded-2xl px-3 sm:px-4 py-3 flex items-center justify-between gap-3 border transition-colors ${
+          className={`sticky top-0 z-40 border-b backdrop-blur-md px-1 sm:px-2 py-2.5 flex items-center justify-between gap-2 transition-colors ${
             isDay
-              ? 'bg-gradient-to-r from-amber-700 via-amber-800 to-orange-900 border-amber-600/40 shadow-amber-900/20'
-              : 'bg-gradient-to-r from-[#1c1207] via-[#2c1b0a] to-[#3a250d] border-amber-500/30 shadow-black/60'
+              ? 'bg-[#F4FAF7]/95 border-amber-200/80 text-slate-900'
+              : 'bg-[#04171d]/95 border-amber-500/25 text-white'
           }`}
         >
           <button
             onClick={() => handleSelectWar(null)}
-            className="p-2 -ml-1 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer flex items-center gap-1.5"
+            className={`p-2 rounded-xl border active:scale-95 transition cursor-pointer flex items-center gap-1.5 ${
+              isDay
+                ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                : 'bg-[#0a2328] hover:bg-[#11333a] border-[#16444e] text-amber-200'
+            }`}
           >
-            <ArrowLeft className="w-5 h-5 text-white stroke-[2.5]" />
+            <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
             <span className="text-xs font-bold hidden sm:inline">{isBn ? 'সূচিপত্র ও তালিকা' : 'Back to Index'}</span>
           </button>
 
           <div className="flex-1 text-center truncate px-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 truncate block">
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider truncate block ${
+                isDay ? 'text-amber-700' : 'text-amber-300'
+              }`}
+            >
               {warEra} • #{activeWar.orderNumber}
             </span>
-            <h2 className="text-sm sm:text-base font-black truncate text-white">
+            <h2 className="text-sm sm:text-base font-black truncate">
               {warName}
             </h2>
           </div>
@@ -499,10 +507,12 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             {/* Mark as Completed Toggle */}
             <button
               onClick={() => toggleCompleteWar(activeWar.id)}
-              className={`p-2 rounded-xl transition cursor-pointer text-xs font-bold flex items-center gap-1 active:scale-95 ${
+              className={`p-2 rounded-xl border transition cursor-pointer text-xs font-bold flex items-center gap-1 active:scale-95 ${
                 completedWars.includes(activeWar.id)
-                  ? 'bg-emerald-500 text-white shadow-xs'
-                  : 'bg-white/10 hover:bg-white/20 text-white/90'
+                  ? 'bg-emerald-600 text-white border-emerald-500'
+                  : isDay
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  : 'bg-[#0a2328] hover:bg-[#11333a] text-white/90 border-[#16444e]'
               }`}
               title={completedWars.includes(activeWar.id) ? (isBn ? 'পঠিত চিহ্নিত (ক্লিক করে বাতিল করুন)' : 'Marked as Read') : (isBn ? 'পঠিত চিহ্নিত করুন' : 'Mark as Read')}
             >
@@ -515,10 +525,12 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             {/* Bookmark Toggle */}
             <button
               onClick={() => toggleBookmarkWar(activeWar.id)}
-              className={`p-2 rounded-xl transition cursor-pointer active:scale-95 ${
+              className={`p-2 rounded-xl border transition cursor-pointer active:scale-95 ${
                 bookmarkedWars.includes(activeWar.id)
-                  ? 'bg-amber-400 text-slate-900 shadow-xs'
-                  : 'bg-white/10 hover:bg-white/20 text-white/90'
+                  ? 'bg-amber-400 text-slate-900 border-amber-400'
+                  : isDay
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  : 'bg-[#0a2328] hover:bg-[#11333a] text-white/90 border-[#16444e]'
               }`}
               title={bookmarkedWars.includes(activeWar.id) ? (isBn ? 'বুকমার্ক সরানো' : 'Remove Bookmark') : (isBn ? 'বুকমার্ক করুন' : 'Bookmark')}
             >
@@ -530,10 +542,14 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                 setActive3DMapWarId(activeWar.id);
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className="p-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 active:scale-95 transition cursor-pointer text-xs font-bold flex items-center gap-1 border border-amber-400/40"
+              className={`p-2 rounded-xl active:scale-95 transition cursor-pointer text-xs font-bold flex items-center gap-1 border ${
+                isDay
+                  ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800'
+                  : 'bg-amber-500/20 hover:bg-amber-500/35 border-amber-400/40 text-amber-200'
+              }`}
               title={isBn ? 'মানচিত্রে অবস্থান দেখুন' : 'View on Map'}
             >
-              <Compass className="w-4 h-4 text-amber-300" />
+              <Compass className={`w-4 h-4 ${isDay ? 'text-amber-700' : 'text-amber-300'}`} />
               <span className="hidden sm:inline text-[11px]">{isBn ? 'মানচিত্র' : 'Map'}</span>
             </button>
             <HighlightMarkerButton
@@ -547,7 +563,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
               variant="icon"
             />
             <ShareDownloadButtons
-              variant="hero"
+              variant="card"
               selectedLanguage={selectedLanguage}
               themeMode={themeMode}
               onShare={() => setShareState({ content: buildWarShareContent(activeWar), focus: 'share' })}
@@ -555,14 +571,26 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             />
             <button
               onClick={handleCopyWarSummary}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/25 active:scale-95 transition cursor-pointer text-xs font-bold flex items-center gap-1"
+              className={`p-2 rounded-xl border active:scale-95 transition cursor-pointer text-xs font-bold flex items-center gap-1 ${
+                isDay
+                  ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                  : 'bg-[#0a2328] hover:bg-[#11333a] border-[#16444e] text-white'
+              }`}
             >
-              {copiedQuote ? <CheckCircle2 className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4 text-white" />}
+              {copiedQuote ? (
+                <CheckCircle2 className={`w-4 h-4 ${isDay ? 'text-emerald-600' : 'text-emerald-300'}`} />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
               <span className="hidden sm:inline text-[11px]">{copiedQuote ? (isBn ? 'কপি হয়েছে' : 'Copied') : (isBn ? 'কপি' : 'Copy')}</span>
             </button>
             <button
               onClick={() => handleSelectWar(null)}
-              className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 active:scale-95 transition cursor-pointer"
+              className={`p-2 rounded-xl border active:scale-95 transition cursor-pointer ${
+                isDay
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200'
+                  : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border-rose-500/30'
+              }`}
             >
               ✕
             </button>
@@ -1353,21 +1381,29 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
         </div>
       </div>
 
-      {/* Top Banner */}
+      {/* Simple Flat Header */}
       <div
-        className={`p-5 sm:p-6 rounded-3xl border shadow-xl ${
-          isDay
-            ? 'bg-gradient-to-r from-amber-700 via-amber-800 to-orange-900 text-white border-amber-600/40'
-            : 'bg-gradient-to-r from-[#1c1207] via-[#2c1b0a] to-[#3a250d] text-white border-amber-500/30'
+        className={`pb-4 border-b transition-colors ${
+          isDay ? 'border-amber-200/80 text-slate-900' : 'border-amber-500/25 text-white'
         }`}
       >
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-amber-100 text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-1.5">
+          <div
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+              isDay ? 'text-amber-800' : 'text-amber-300'
+            }`}
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${isDay ? 'text-amber-600' : 'text-amber-300'}`} />
             <span>{isBn ? 'ইসলামের ইতিহাসের যুদ্ধ' : 'Islamic History Wars'}</span>
           </div>
 
-          <span className="px-3 py-1 rounded-full bg-amber-500/25 text-amber-100 text-xs font-bold border border-amber-300/30">
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+              isDay
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-amber-500/20 text-amber-200 border-amber-400/30'
+            }`}
+          >
             {isBn ? `${formatNum(totalWars)}টি ঐতিহাসিক যুদ্ধ` : `${totalWars} Historical Battles`}
           </span>
         </div>
@@ -1377,14 +1413,18 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
               {isBn ? `ইসলামের ইতিহাসের যুদ্ধসমূহ (${formatNum(totalWars)}টি ঐতিহাসিক যুদ্ধ)` : `Battles in Islamic History (${totalWars} Epic Battles)`}
             </h2>
-            <p className="text-xs sm:text-sm text-amber-100/90 mt-1 max-w-xl">
+            <p
+              className={`text-xs sm:text-sm mt-1 max-w-xl ${
+                isDay ? 'text-slate-600' : 'text-amber-100/80'
+              }`}
+            >
               {isBn
                 ? 'নববি যুগ থেকে খিলাফতে রাশিদা, উমাইয়া, আব্বাসি, আন্দালুস ও আধুনিক প্রতিরোধের ঐতিহাসিক যুদ্ধসমূহের পূর্ণাঙ্গ কালানুক্রমিক সূচি ও বিবরণ।'
                 : 'Chronological master guide to the foundational and heroic battles shaping Islamic history.'}
             </p>
           </div>
           <ShareDownloadButtons
-            variant="hero"
+            variant="card"
             selectedLanguage={selectedLanguage}
             themeMode={themeMode}
             className="shrink-0 self-start sm:self-end"

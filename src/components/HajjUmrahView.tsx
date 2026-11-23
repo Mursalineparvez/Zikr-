@@ -325,39 +325,33 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Top Banner with Rich Spiritual Glow */}
+      {/* Simple Flat Hajj & Umrah Header */}
       <div
-        className={`p-5 sm:p-7 rounded-[28px] border shadow-2xl relative overflow-hidden transition-all duration-300 ${
-          isDay
-            ? 'bg-gradient-to-r from-[#004d35] via-[#006747] to-[#004d35] text-white border-emerald-500/40 shadow-emerald-950/20'
-            : 'bg-gradient-to-r from-[#051a1e] via-[#0b2f36] to-[#051a1e] text-white border-[#1a535e] shadow-black/70'
+        className={`pb-4 border-b transition-colors ${
+          isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
         }`}
       >
-        {/* Subtle Gold Geometric Glow */}
-        <div className="absolute right-0 top-0 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute left-0 bottom-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-amber-400/30 text-amber-200 text-xs font-bold backdrop-blur-md shadow-inner">
-              <Compass className="w-3.5 h-3.5 text-amber-400" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className={`flex items-center gap-2 text-xs font-bold ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+              <Compass className={`w-4 h-4 ${isDay ? 'text-amber-600' : 'text-amber-400'}`} />
               <span className="font-arabic text-sm">الحَجُّ وَالعُمْرَةُ</span>
               <span className="opacity-40">•</span>
               <span>All Duas, Ayats &amp; Real Location Photos</span>
             </div>
 
-            <h2 className="text-xl sm:text-3xl font-black tracking-tight drop-shadow-md text-white">
+            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[#006747]' : 'text-white'}`}>
               {HAJJ_UMRAH_UI.bannerTitle[selectedLanguage]}
             </h2>
 
-            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl leading-relaxed italic border-l-2 border-amber-400/80 pl-3 py-0.5">
+            <p className={`text-xs sm:text-sm max-w-2xl leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
               {HAJJ_UMRAH_UI.bannerSub[selectedLanguage]}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <ShareDownloadButtons
-              variant="hero"
+              variant="card"
               selectedLanguage={selectedLanguage}
               themeMode={themeMode}
               onShare={() => openHajjPageShare('share')}
@@ -369,20 +363,11 @@ export const HajjUmrahView: React.FC<HajjUmrahViewProps> = ({
                   'لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ، لَبَّيْكَ لَا شَرِيكَ لَكَ لَبَّيْكَ، إِنَّ الْحَمْدَ وَالنِّعْمَةَ لَكَ وَالْمُلْكَ، لَا شَرِيكَ لَكَ'
                 )
               }
-              className="px-4 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer shrink-0 border border-amber-200"
+              className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs transition active:scale-95 flex items-center gap-2 cursor-pointer shrink-0 border border-amber-300"
               title={isBn ? (voiceGender === 'female' ? 'তালবিয়া অডিও শুনুন (নারী কণ্ঠে)' : 'তালবিয়া অডিও শুনুন (পুরুষ কণ্ঠে)') : (voiceGender === 'female' ? 'Play Talbiyah Audio (Female Voice)' : 'Play Talbiyah Audio (Male Voice)')}
             >
-              <div className="w-8 h-8 rounded-xl bg-slate-950/15 flex items-center justify-center">
-                <Volume2 className="w-4 h-4 text-slate-950" />
-              </div>
-              <div className="text-left">
-                <div className="text-[10px] uppercase font-bold text-slate-900 tracking-wider">
-                  {isBn ? 'তালবিয়া শোনেন' : 'Listen Talbiyah'}
-                </div>
-                <div className="text-xs font-black">
-                  {isBn ? 'তালবিয়াহ অডিও চালান' : 'Play Talbiyah Audio'}
-                </div>
-              </div>
+              <Volume2 className="w-4 h-4 text-slate-950" />
+              <span>{isBn ? 'তালবিয়াহ অডিও শুনুন' : 'Play Talbiyah'}</span>
             </button>
           </div>
         </div>

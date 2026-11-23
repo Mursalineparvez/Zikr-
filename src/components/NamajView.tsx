@@ -132,30 +132,36 @@ export const NamajView: React.FC<NamajViewProps> = ({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
-      {/* Top Banner / Hero */}
+      {/* Top Header */}
       <div
-        className={`rounded-3xl p-5 sm:p-6 border shadow-sm transition-all relative overflow-hidden ${
-          isDay
-            ? 'bg-gradient-to-br from-emerald-800 via-[#006A4E] to-teal-900 text-white border-emerald-700/60'
-            : 'bg-gradient-to-br from-[#042823] via-[#004e39] to-[#041a1c] text-white border-emerald-900/60'
+        className={`pb-4 border-b transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 text-emerald-100 backdrop-blur-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div
+              className={`inline-flex items-center gap-1.5 text-[11px] font-bold ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+              }`}
+            >
               <span>{NAMAJ_UI.guideBadge[lang] || NAMAJ_UI.guideBadge.en}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
               <span>{NAMAJ_UI.bannerTitle[lang] || NAMAJ_UI.bannerTitle.en}</span>
             </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed max-w-xl">
+            <p
+              className={`text-xs sm:text-sm leading-relaxed max-w-xl ${
+                isDay ? 'text-slate-600' : 'text-emerald-100/80'
+              }`}
+            >
               {NAMAJ_UI.bannerSubtitle[lang] || NAMAJ_UI.bannerSubtitle.en}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
             <ShareDownloadButtons
-              variant="hero"
+              variant="card"
               selectedLanguage={lang}
               themeMode={themeMode}
               onShare={() => openNamajPageShare('share')}
@@ -167,9 +173,13 @@ export const NamajView: React.FC<NamajViewProps> = ({
                   if (soundEnabled) soundHaptics.playTap();
                   onNavigateToSalatTime();
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-[#006A4E] font-bold text-xs sm:text-sm shadow-lg hover:bg-emerald-50 active:scale-95 transition cursor-pointer shrink-0"
+                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm active:scale-95 transition cursor-pointer shrink-0 ${
+                  isDay
+                    ? 'bg-[#006A4E] hover:bg-[#005a3e] text-white'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                }`}
               >
-                <Clock className="w-4 h-4 text-[#006A4E]" />
+                <Clock className="w-4 h-4" />
                 <span>{NAMAJ_UI.viewSalatTimes[lang] || NAMAJ_UI.viewSalatTimes.en}</span>
               </button>
             )}

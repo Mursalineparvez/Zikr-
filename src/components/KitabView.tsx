@@ -57,20 +57,30 @@ export const KitabView: React.FC<KitabViewProps> = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Kitab Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#005a3e] via-[#1a5e64] to-[#257277] border border-teal-400/30 p-5 sm:p-6 shadow-xl text-white">
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
-            <BookMarked className="w-3.5 h-3.5" />
-            <span>المكتبة الإسلامية • Classical Islamic Books</span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight drop-shadow-sm">
-            {KITAB_UI.bannerTitle[selectedLanguage]}
-          </h2>
-          <p className="text-xs sm:text-sm text-teal-100 mt-1 max-w-xl">
-            {KITAB_UI.bannerSub[selectedLanguage]}
-          </p>
+      {/* Kitab Header */}
+      <div
+        className={`pb-4 border-b transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
+        }`}
+      >
+        <div
+          className={`inline-flex items-center gap-2 text-xs font-semibold mb-1.5 ${
+            isDay ? 'text-[#006A4E]' : 'text-teal-300'
+          }`}
+        >
+          <BookMarked className="w-3.5 h-3.5" />
+          <span>المكتبة الإسلامية • Classical Islamic Books</span>
         </div>
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+          {KITAB_UI.bannerTitle[selectedLanguage]}
+        </h2>
+        <p
+          className={`text-xs sm:text-sm mt-1 max-w-xl ${
+            isDay ? 'text-slate-600' : 'text-teal-100/80'
+          }`}
+        >
+          {KITAB_UI.bannerSub[selectedLanguage]}
+        </p>
       </div>
 
       {/* View: Reading Chapter within a Kitab */}

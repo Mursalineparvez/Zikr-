@@ -194,17 +194,19 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
   return (
     <div className={`w-full space-y-5 animate-in fade-in duration-300 ${isBn ? 'font-bengali' : 'font-sans'}`}>
       
-      {/* 1. TOP SHANDAR HERO BANNER */}
+      {/* 1. Simple Flat Genealogy Header */}
       <div
-        className={`p-5 sm:p-6 rounded-3xl border shadow-2xl relative overflow-hidden ${
-          isDay
-            ? 'bg-gradient-to-br from-amber-100/90 via-white to-emerald-100/90 border-amber-300 text-slate-900 shadow-amber-900/5'
-            : 'bg-gradient-to-br from-[#0e211b] via-[#091814] to-[#040e0c] border-amber-500/30 text-white shadow-black/80'
+        className={`pb-4 border-b transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/40 text-xs font-black">
-            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+          <div
+            className={`inline-flex items-center gap-1.5 text-xs font-black ${
+              isDay ? 'text-amber-700' : 'text-amber-300'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-500" />
             <span>
               {isBn
                 ? 'প্রামাণিক সচিত্র শাজারা শরীফ • আহলে বাইত ও সাহাবিগণের বংশলতিকা'
@@ -215,12 +217,12 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
           <button
             type="button"
             onClick={handleCopyGenealogySummary}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm ${
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
               copiedNote
                 ? 'bg-emerald-600 text-white border-emerald-500'
                 : isDay
-                ? 'bg-white hover:bg-slate-100 text-slate-800 border-amber-300'
-                : 'bg-[#112d25] hover:bg-[#183e33] text-teal-200 border-teal-700/50'
+                ? 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
+                : 'bg-[#0a2328] hover:bg-[#11333a] text-teal-200 border-[#16444e]'
             }`}
           >
             {copiedNote ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
@@ -228,13 +230,13 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
           </button>
         </div>
 
-        <h2 className="text-xl sm:text-2xl font-black leading-snug text-amber-800 dark:text-amber-400 mb-1.5">
+        <h2 className={`text-xl sm:text-2xl font-black leading-snug mb-1 ${isDay ? 'text-[#006A4E]' : 'text-amber-400'}`}>
           {isBn
             ? 'আহলে বাইত ও চার খলিফায়ে রাশেদীনের পবিত্র বংশলতিকা ও বন্ধন'
             : 'Sacred Lineage & Bonds of Ahl al-Bayt & Rashidun Caliphs'}
         </h2>
         <p className={`text-xs sm:text-sm leading-relaxed font-medium max-w-4xl ${
-          isDay ? 'text-slate-800' : 'text-slate-200'
+          isDay ? 'text-slate-600' : 'text-slate-200'
         }`}>
           {isBn
             ? 'পবিত্র সিরাত গ্রন্থাবলি অনুযায়ী নাবী করীম (ﷺ), হযরত আবু বকর, হযরত উমর, হযরত উসমান এবং হযরত আলী (রা.)-এর পরিবারগুলোর মধ্যে ছিল সর্বোচ্চ ভালোবাসা ও অসংখ্য আন্তঃবিবাহের প্রামাণিক সম্পর্ক।'
@@ -242,9 +244,11 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
         </p>
 
         {/* View Switcher & Zoom Toolbar */}
-        <div className="pt-4 border-t border-black/10 dark:border-white/10 mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className={`pt-3.5 border-t mt-3.5 flex flex-wrap items-center justify-between gap-3 ${isDay ? 'border-slate-200/80' : 'border-white/10'}`}>
           {/* View Toggles */}
-          <div className="flex items-center gap-1.5 bg-black/20 p-1 rounded-2xl border border-amber-500/30 flex-wrap">
+          <div className={`flex items-center gap-1.5 p-1 rounded-2xl border flex-wrap ${
+            isDay ? 'bg-slate-100 border-slate-200' : 'bg-[#081c20] border-[#163640]'
+          }`}>
             <button
               type="button"
               onClick={() => {
@@ -253,8 +257,8 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                 activeViewMode === 'chart'
-                  ? 'bg-gradient-to-r from-amber-600 to-yellow-600 text-white shadow-md'
-                  : 'text-amber-200/80 hover:text-white'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-amber-200/80 hover:text-white'
               }`}
             >
               <span>📊</span>
@@ -269,8 +273,8 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                 activeViewMode === 'tree'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
-                  : 'text-teal-200/80 hover:text-white'
+                  ? 'bg-[#006747] text-white shadow-xs'
+                  : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-teal-200/80 hover:text-white'
               }`}
             >
               <span>🌳</span>
@@ -285,8 +289,8 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                 activeViewMode === 'marriages'
-                  ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-md'
-                  : 'text-rose-200/80 hover:text-white'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : isDay ? 'text-slate-600 hover:text-slate-900' : 'text-rose-200/80 hover:text-white'
               }`}
             >
               <span>💍</span>
@@ -296,11 +300,17 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
 
           {/* Zoom Controls for Chart View */}
           {activeViewMode === 'chart' && (
-            <div className="flex items-center gap-1 bg-black/20 p-1 rounded-2xl border border-amber-500/30">
+            <div
+              className={`flex items-center gap-1 p-1 rounded-2xl border ${
+                isDay ? 'bg-slate-100 border-slate-200' : 'bg-[#081c20] border-amber-500/30'
+              }`}
+            >
               <button
                 type="button"
                 onClick={handleZoomIn}
-                className="p-1.5 hover:bg-white/15 rounded-xl text-amber-300 transition cursor-pointer"
+                className={`p-1.5 rounded-xl transition cursor-pointer ${
+                  isDay ? 'hover:bg-white text-amber-700' : 'hover:bg-white/15 text-amber-300'
+                }`}
                 title={isBn ? 'জুম ইন (+)' : 'Zoom In (+)'}
               >
                 <ZoomIn className="w-4 h-4" />
@@ -308,7 +318,9 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
               <button
                 type="button"
                 onClick={handleZoomOut}
-                className="p-1.5 hover:bg-white/15 rounded-xl text-amber-300 transition cursor-pointer"
+                className={`p-1.5 rounded-xl transition cursor-pointer ${
+                  isDay ? 'hover:bg-white text-amber-700' : 'hover:bg-white/15 text-amber-300'
+                }`}
                 title={isBn ? 'জুম আউট (-)' : 'Zoom Out (-)'}
               >
                 <ZoomOut className="w-4 h-4" />
@@ -316,12 +328,18 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
               <button
                 type="button"
                 onClick={handleResetZoom}
-                className="p-1.5 hover:bg-white/15 rounded-xl text-amber-300 transition cursor-pointer"
+                className={`p-1.5 rounded-xl transition cursor-pointer ${
+                  isDay ? 'hover:bg-white text-amber-700' : 'hover:bg-white/15 text-amber-300'
+                }`}
                 title={isBn ? 'জুম রিসেট' : 'Reset Zoom'}
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
-              <span className="text-[10px] font-mono font-bold text-amber-300 px-2">
+              <span
+                className={`text-[10px] font-mono font-bold px-2 ${
+                  isDay ? 'text-amber-800' : 'text-amber-300'
+                }`}
+              >
                 {Math.round(chartScale * 100)}%
               </span>
             </div>

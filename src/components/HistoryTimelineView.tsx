@@ -1269,18 +1269,22 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
       className={`space-y-4 sm:space-y-5 animate-in fade-in duration-500 pb-24 sm:pb-12 ${selectedLanguage === 'bn' ? 'font-bengali' : ''}`}
     >
       
-      {/* 1. TOP PREMIUM WIDE HERO BANNER - ULTRA SLIM & GORGEOUS EPOCH DASHBOARD */}
-      <div className="relative w-full rounded-2xl overflow-hidden border border-[#1d5763]/70 bg-gradient-to-r from-[#05171d] via-[#0a272f] to-[#0e353f] p-3.5 sm:p-4 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 transition-all">
-        {/* Ambient Backlight Glows */}
-        <div className="absolute -top-12 -left-12 w-40 h-40 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:14px_14px] pointer-events-none opacity-20" />
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-emerald-400 to-teal-400 rounded-l-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-        
-        <div className="z-10 space-y-1 max-w-2xl text-left pl-2 sm:pl-3">
+      {/* 1. Simple Flat Epoch Header */}
+      <div
+        className={`pb-4 border-b flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
+        }`}
+      >
+        <div className="space-y-1 max-w-2xl text-left">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/30 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
-              <Clock className="w-3 h-3 text-amber-400 shrink-0" />
+            <span
+              className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border inline-flex items-center gap-1 ${
+                isDay
+                  ? 'text-amber-800 bg-amber-50 border-amber-200'
+                  : 'text-amber-300 bg-amber-500/15 border-amber-400/30'
+              }`}
+            >
+              <Clock className="w-3 h-3 shrink-0" />
               <span>
                 {selectedLanguage === 'bn' ? 'অধ্যায়' : 'Chapter'}{' '}
                 {formatDigits(ISLAMIC_HISTORY_ERAS.indexOf(activeEra) + 1, selectedLanguage)} •{' '}
@@ -1290,29 +1294,45 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
               </span>
             </span>
           </div>
-          <h2 className="text-base sm:text-lg md:text-xl font-black text-white tracking-tight flex items-center gap-2 drop-shadow-xs">
+          <h2 className="text-base sm:text-lg md:text-xl font-black tracking-tight flex items-center gap-2">
             <span>{getLangText(activeEra.name, selectedLanguage)}</span>
           </h2>
-          <p className="text-[11px] sm:text-xs text-teal-100/90 leading-snug font-medium line-clamp-3 md:line-clamp-2">
+          <p
+            className={`text-[11px] sm:text-xs leading-snug font-medium line-clamp-3 md:line-clamp-2 ${
+              isDay ? 'text-slate-600' : 'text-teal-100/80'
+            }`}
+          >
             {formattedEraSum}
           </p>
         </div>
 
-        {/* Segmented Timeline Chapter Jump buttons - Ultra Slim Capsule */}
-        <div className="z-10 flex flex-col items-start md:items-end justify-between w-full md:w-auto gap-2 shrink-0 pt-1 md:pt-0 border-t md:border-t-0 border-white/5">
+        {/* Segmented Timeline Chapter Jump buttons */}
+        <div
+          className={`flex flex-col items-start md:items-end justify-between w-full md:w-auto gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 ${
+            isDay ? 'border-slate-200/70' : 'border-white/10'
+          }`}
+        >
           <div className="flex items-center justify-between w-full md:w-auto gap-2 flex-wrap">
             <ShareDownloadButtons
-              variant="hero"
+              variant="card"
               selectedLanguage={selectedLanguage}
               themeMode={themeMode}
               onShare={() => openTimelineOverviewShare('share')}
               onDownload={() => openTimelineOverviewShare('download')}
             />
-            <span className="text-[10px] font-bold tracking-wide text-emerald-300/80">
+            <span
+              className={`text-[10px] font-bold tracking-wide ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'
+              }`}
+            >
               {selectedLanguage === 'bn' ? 'অধ্যায় পরিবর্তন করুন' : 'Jump to Chapter'}
             </span>
           </div>
-          <div className="flex items-center gap-1 bg-[#041317]/80 backdrop-blur-md px-1.5 py-1 rounded-full border border-teal-500/20 shadow-inner">
+          <div
+            className={`flex items-center gap-1 px-1.5 py-1 rounded-full border ${
+              isDay ? 'bg-white border-[#dcebe8]' : 'bg-[#072027] border-[#16444e]'
+            }`}
+          >
             {ISLAMIC_HISTORY_ERAS.map((era, index) => {
               const isSelected = activeEra.id === era.id;
               return (
@@ -1321,7 +1341,9 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                   onClick={() => handleJumpToEra(era)}
                   className={`w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full text-[11px] font-bold transition-all active:scale-95 flex items-center justify-center cursor-pointer relative ${
                     isSelected
-                      ? 'bg-gradient-to-br from-[#10b981] to-[#047857] text-white font-extrabold shadow-md shadow-emerald-500/40 ring-1.5 ring-emerald-300 ring-offset-1 ring-offset-[#071d22] scale-105'
+                      ? 'bg-[#006747] text-white font-extrabold'
+                      : isDay
+                      ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                       : 'text-teal-200/70 hover:text-white hover:bg-white/10'
                   }`}
                   title={getLangText(era.name, selectedLanguage)}

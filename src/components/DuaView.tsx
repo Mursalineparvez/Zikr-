@@ -613,75 +613,80 @@ export const DuaView: React.FC<DuaViewProps> = ({
 
   return (
     <div data-highlight-section="dua" className="space-y-6 animate-in fade-in duration-300 pb-16">
-      {/* GTAF-Inspired Hisnul Muslim Portal Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#005a3e] via-[#0d4d4d] to-[#13656c] border border-teal-400/30 p-6 sm:p-8 shadow-2xl text-white">
-        <div className="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
-          <BookOpen className="w-64 h-64 text-white" />
-        </div>
-        <div className="relative z-10 flex flex-col gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/25 text-teal-100 text-xs font-semibold mb-3 backdrop-blur-md shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>
-                حِصْنُ الْمُسْلِمِ •{' '}
-                {selectedLanguage === 'bn'
-                  ? `হিসনুল মুসলিম, কোরআনি ও মাসনূন দোয়া (${formatNum(maxChapterNumber, 'bn')} অধ্যায় • ${formatNum(AUTHENTIC_DUAS.length, 'bn')}টি দোয়া ও যিকির)`
-                  : `Hisnul Muslim, Quranic & Masnoon Duas (All ${maxChapterNumber} Chapters • ${AUTHENTIC_DUAS.length} Duas & Adhkar)`}
-              </span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
+      {/* Simple Flat Header */}
+      <div
+        className={`pb-4 border-b space-y-3 ${
+          isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
+        }`}
+      >
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <BookOpen className={`w-5 h-5 shrink-0 ${isDay ? 'text-[#006747]' : 'text-emerald-400'}`} />
+            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[#006747]' : 'text-white'}`}>
               {DUA_UI.bannerTitle[selectedLanguage]}
             </h2>
-            <p className="text-xs sm:text-sm text-teal-100 mt-2 max-w-2xl leading-relaxed">
-              {DUA_UI.bannerSub[selectedLanguage]}
-            </p>
+            <span className={`text-xs font-semibold font-arabic ${isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'}`}>
+              حِصْنُ الْمُسْلِمِ
+            </span>
+          </div>
+          <p className={`text-xs sm:text-sm max-w-2xl leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
+            {DUA_UI.bannerSub[selectedLanguage]}
+          </p>
+          <p className={`text-[11px] font-semibold ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`}>
+            {selectedLanguage === 'bn'
+              ? `হিসনুল মুসলিম • ${formatNum(maxChapterNumber, 'bn')} অধ্যায় • ${formatNum(AUTHENTIC_DUAS.length, 'bn')}টি দোয়া ও যিকির`
+              : `Hisnul Muslim • ${maxChapterNumber} Chapters • ${AUTHENTIC_DUAS.length} Duas & Adhkar`}
+          </p>
+        </div>
+
+        {/* Step-by-Step Mode Switcher: Topics vs 132 Chapters */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                setBrowseMode('topics');
+                setSelectedChapter(null);
+                setActiveTopicId(null);
+                setSelectedCategory('all');
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                browseMode === 'topics'
+                  ? 'bg-[#006747] text-white border-[#006747]'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-[#006747]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-200 hover:bg-[#132634]'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>{DUA_UI.topicsTab[selectedLanguage]}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setBrowseMode('chapters');
+                setActiveTopicId(null);
+                setSelectedCategory('all');
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                browseMode === 'chapters'
+                  ? 'bg-[#006747] text-white border-[#006747]'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-[#006747]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-200 hover:bg-[#132634]'
+              }`}
+            >
+              <ListOrdered className="w-3.5 h-3.5" />
+              <span>{DUA_UI.chaptersTab[selectedLanguage]}</span>
+            </button>
           </div>
 
-          {/* Step-by-Step Mode Switcher: Topics vs 132 Chapters */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => {
-                  setBrowseMode('topics');
-                  setSelectedChapter(null);
-                  setActiveTopicId(null);
-                  setSelectedCategory('all');
-                }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-                  browseMode === 'topics'
-                    ? 'bg-white text-[#005a3e] shadow-lg'
-                    : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
-                }`}
-              >
-                <LayoutGrid className="w-4 h-4" />
-                <span>{DUA_UI.topicsTab[selectedLanguage]}</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setBrowseMode('chapters');
-                  setActiveTopicId(null);
-                  setSelectedCategory('all');
-                }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-                  browseMode === 'chapters'
-                    ? 'bg-white text-[#005a3e] shadow-lg'
-                    : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
-                }`}
-              >
-                <ListOrdered className="w-4 h-4" />
-                <span>{DUA_UI.chaptersTab[selectedLanguage]}</span>
-              </button>
-            </div>
-
-            <ShareDownloadButtons
-              variant="hero"
-              selectedLanguage={selectedLanguage}
-              themeMode={themeMode}
-              onShare={() => openPageShare('share')}
-              onDownload={() => openPageShare('download')}
-            />
-          </div>
+          <ShareDownloadButtons
+            variant="card"
+            selectedLanguage={selectedLanguage}
+            themeMode={themeMode}
+            onShare={() => openPageShare('share')}
+            onDownload={() => openPageShare('download')}
+          />
         </div>
       </div>
 

@@ -335,9 +335,7 @@ export const SavedView: React.FC<SavedViewProps> = ({
       {/* Editorial Sanctuary Header */}
       <div
         className={`px-5 pt-5 pb-5 sm:px-7 sm:pt-6 border-b ${
-          isDay
-            ? 'bg-gradient-to-br from-[#f3faf7] via-white to-[#f8fbfa] border-slate-200/70'
-            : 'bg-gradient-to-br from-[#0a262c] via-[#071c21] to-[#082228] border-[#133841]'
+          isDay ? 'border-slate-200/70' : 'border-[#133841]'
         }`}
       >
         <div className="flex items-start justify-between gap-3">

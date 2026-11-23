@@ -457,16 +457,14 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     <div className="space-y-5 animate-in fade-in duration-200 pb-6">
       {activeSub === 'hub' && (
         <div className="space-y-5">
-          {/* Header Banner */}
+          {/* Simple Flat Header */}
           <div
-            className={`p-5 sm:p-6 rounded-3xl border shadow-xl ${
-              isDay
-                ? 'bg-gradient-to-r from-teal-700 via-emerald-700 to-teal-800 text-white border-teal-600/40'
-                : 'bg-gradient-to-r from-[#0c2f35] via-[#12414a] to-[#1a5560] text-white border-[#1a535e]'
+            className={`pb-3.5 border-b ${
+              isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
             }`}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-teal-100 text-xs font-semibold mb-2 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <div className={`flex items-center gap-2 text-xs font-bold mb-1 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>
                 {selectedLanguage === 'bn'
                   ? 'ইসলামিক জ্ঞান ও আমলের পূর্ণাঙ্গ সমাহার'
@@ -477,10 +475,10 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   : 'Comprehensive Islamic Suite'}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[#006747]' : 'text-white'}`}>
               {OTHER_HUB_UI.bannerTitle[selectedLanguage] || OTHER_HUB_UI.bannerTitle.en}
             </h2>
-            <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-xl">
+            <p className={`text-xs sm:text-sm mt-1 max-w-xl ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
               {OTHER_HUB_UI.bannerSub[selectedLanguage] || OTHER_HUB_UI.bannerSub.en}
             </p>
           </div>

@@ -643,13 +643,17 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
           }`}
         >
           <div
-            className={`px-5 py-6 sm:px-8 sm:py-8 border-b ${
+            className={`px-5 py-5 sm:px-8 sm:py-6 border-b ${
               isDay
-                ? 'bg-gradient-to-br from-[#005a42] via-[#006A4E] to-[#0a4b3c] text-white border-emerald-700/30'
-                : 'bg-gradient-to-br from-[#0a2d34] via-[#0d3a42] to-[#082329] text-white border-teal-800/50'
+                ? 'border-emerald-200/80 text-slate-900'
+                : 'border-teal-800/50 text-white'
             }`}
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-emerald-100/85 tabular-nums">
+            <div
+              className={`flex flex-wrap items-center justify-between gap-2 text-xs font-semibold tabular-nums ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-200/85'
+              }`}
+            >
               <span>
                 {isBn
                   ? `ক্রমিক ${padRank(selectedProphet.rank, true)} / ২৫`
@@ -670,33 +674,51 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                     : '  ·  Bani Israil Lineage'
                   : ''}
               </span>
-              <span className="text-amber-300 font-bold">
+              <span className={`font-bold ${isDay ? 'text-amber-700' : 'text-amber-300'}`}>
                 {isBn
                   ? `কুরআনে উল্লেখ: ${toBnDigits(selectedProphet.quranMentions)} বার`
                   : `${selectedProphet.quranMentions} Mentions in Quran`}
               </span>
             </div>
 
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-              <div className="space-y-1.5">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white text-balance">
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+              <div className="space-y-1">
+                <h1
+                  className={`text-2xl sm:text-3xl font-black tracking-tight text-balance ${
+                    isDay ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
                   {prophetName}
                 </h1>
-                <p className="text-sm sm:text-base font-medium text-amber-200/95">
+                <p
+                  className={`text-sm sm:text-base font-medium ${
+                    isDay ? 'text-[#006A4E]' : 'text-amber-200/95'
+                  }`}
+                >
                   {prophetTitle}
                 </p>
               </div>
               <div
                 dir="rtl"
-                className="font-arabic text-2xl sm:text-3xl font-bold text-amber-200/95 leading-snug shrink-0"
+                className={`font-arabic text-2xl sm:text-3xl font-bold leading-snug shrink-0 ${
+                  isDay ? 'text-[#006A4E]' : 'text-amber-200/95'
+                }`}
               >
                 {selectedProphet.nameAr}
               </div>
             </div>
 
             {selectedProphet.scriptureBn && (
-              <div className="mt-4 pt-3.5 border-t border-white/15 flex items-start sm:items-center gap-2 text-xs sm:text-sm text-emerald-50/95">
-                <ScrollText className="w-4 h-4 text-amber-300 shrink-0 mt-0.5 sm:mt-0" />
+              <div
+                className={`mt-4 pt-3 border-t flex items-start sm:items-center gap-2 text-xs sm:text-sm ${
+                  isDay ? 'border-slate-200/80 text-slate-700' : 'border-white/15 text-emerald-50/95'
+                }`}
+              >
+                <ScrollText
+                  className={`w-4 h-4 shrink-0 mt-0.5 sm:mt-0 ${
+                    isDay ? 'text-amber-600' : 'text-amber-300'
+                  }`}
+                />
                 <div>
                   <span className="font-bold mr-1.5">
                     {isBn ? 'অবতীর্ণ আসমানি কিতাব / সহীফা:' : 'Revealed Scripture:'}
@@ -1342,91 +1364,121 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
       }
       className="space-y-5 pb-10 animate-in fade-in duration-200"
     >
-      {/* Editorial Hero Header */}
+      {/* Simple Flat Header */}
       <div
-        className={`rounded-3xl border overflow-hidden ${
-          isDay
-            ? 'bg-gradient-to-br from-[#005a42] via-[#006A4E] to-[#0a4b3c] text-white border-emerald-700/30 shadow-lg'
-            : 'bg-gradient-to-br from-[#08282f] via-[#0c3640] to-[#071d23] text-white border-teal-800/60 shadow-2xl'
+        className={`pb-4 border-b space-y-3 transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="p-5 sm:p-7 space-y-4">
-          <div className="flex items-center justify-between gap-2">
-            {onBackToHub ? (
-              <button
-                type="button"
-                onClick={onBackToHub}
-                className="min-h-[44px] px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap"
-              >
-                <ArrowLeft className="w-4 h-4 shrink-0" />
-                <span>{isBn ? 'আরো মেনু' : isAr ? 'المزيد' : 'Back'}</span>
-              </button>
-            ) : (
-              <div />
-            )}
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => openShareModal(buildAll25IndexShareContent(), 'share')}
-                className="min-h-[44px] px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap"
-              >
-                <Share2 className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden sm:inline">{isBn ? 'তালিকা শেয়ার' : 'Share List'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => openShareModal(buildAll25IndexShareContent(), 'download')}
-                className="min-h-[44px] px-3 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-300/30 text-amber-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap"
-              >
-                <Download className="w-3.5 h-3.5 shrink-0" />
-                <span>{isBn ? '২৫ নবী PDF' : 'PDF'}</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div
-              dir="rtl"
-              className="font-arabic text-lg sm:text-xl text-amber-300 font-bold leading-snug"
+        <div className="flex items-center justify-between gap-2">
+          {onBackToHub ? (
+            <button
+              type="button"
+              onClick={onBackToHub}
+              className={`min-h-[40px] px-3 rounded-xl border text-xs sm:text-sm font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
+                isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                  : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:bg-[#103239]'
+              }`}
             >
-              الأنبياء والرسل الـ ٢٥ في القرآن الكريم
-            </div>
-            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white text-balance">
-              {isBn
-                ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল'
-                : isAr
-                ? 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم'
-                : '25 Prophets & Messengers in the Quran'}
-            </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed max-w-3xl">
-              {isBn
-                ? 'হযরত আদম (আ.) থেকে শেষনবী মুহাম্মাদ (সা.) পর্যন্ত পবিত্র কুরআনে নাম উল্লিখিত সকল ২৫ জন নবী ও রাসূলের বিস্তারিত জীবনী, কুরআনী পরিসংখ্যান, মু‘জিযা, প্রসিদ্ধ দোয়া, ইসরাঈলীয়াত যাচাই (সংশয় নিরসন), শিক্ষণীয় বিষয় ও প্রামাণিক তথ্যসূত্র।'
-                : 'Comprehensive profiles, Quranic mention stats, miracles, supplications, scholarly fact-checking, and verified references of all 25 Prophets & Messengers named in the Quran — from Adam (AS) to Muhammad (SAW).'}
-            </p>
+              <ArrowLeft className="w-4 h-4 shrink-0" />
+              <span>{isBn ? 'আরো মেনু' : isAr ? 'المزيد' : 'Back'}</span>
+            </button>
+          ) : (
+            <div />
+          )}
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => openShareModal(buildAll25IndexShareContent(), 'share')}
+              className={`min-h-[40px] px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
+                isDay
+                  ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-[#006A4E]'
+                  : 'bg-[#0a2328] hover:bg-[#11333a] border-[#16444e] text-emerald-300'
+              }`}
+            >
+              <Share2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">{isBn ? 'তালিকা শেয়ার' : 'Share List'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openShareModal(buildAll25IndexShareContent(), 'download')}
+              className={`min-h-[40px] px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
+                isDay
+                  ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800'
+                  : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-400/30 text-amber-300'
+              }`}
+            >
+              <Download className="w-3.5 h-3.5 shrink-0" />
+              <span>{isBn ? '২৫ নবী PDF' : 'PDF'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <div
+            dir="rtl"
+            className={`font-arabic text-base sm:text-lg font-bold leading-snug ${
+              isDay ? 'text-[#006A4E]' : 'text-amber-300'
+            }`}
+          >
+            الأنبياء والرسل الـ ٢٥ في القرآن الكريم
+          </div>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-balance">
+            {isBn
+              ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল'
+              : isAr
+              ? 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم'
+              : '25 Prophets & Messengers in the Quran'}
+          </h1>
+          <p
+            className={`text-xs sm:text-sm leading-relaxed max-w-3xl ${
+              isDay ? 'text-slate-600' : 'text-emerald-100/80'
+            }`}
+          >
+            {isBn
+              ? 'হযরত আদম (আ.) থেকে শেষনবী মুহাম্মাদ (সা.) পর্যন্ত পবিত্র কুরআনে নাম উল্লিখিত সকল ২৫ জন নবী ও রাসূলের বিস্তারিত জীবনী, কুরআনী পরিসংখ্যান, মু‘জিযা, প্রসিদ্ধ দোয়া, ইসরাঈলীয়াত যাচাই (সংশয় নিরসন), শিক্ষণীয় বিষয় ও প্রামাণিক তথ্যসূত্র।'
+              : 'Comprehensive profiles, Quranic mention stats, miracles, supplications, scholarly fact-checking, and verified references of all 25 Prophets & Messengers named in the Quran — from Adam (AS) to Muhammad (SAW).'}
+          </p>
+        </div>
+
+        {/* Unboxed Typographic Key Stats + Progress */}
+        <div
+          className={`pt-2.5 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+            isDay ? 'border-slate-200/70' : 'border-white/10'
+          }`}
+        >
+          <div
+            className={`text-xs font-semibold tabular-nums ${
+              isDay ? 'text-slate-600' : 'text-emerald-100/85'
+            }`}
+          >
+            {isBn
+              ? `${toBnDigits(25)} জন নবী ও রাসূল  ·  ${toBnDigits(ULUL_AZM_COUNT)} জন উলুল আযম  ·  ${toBnDigits(SCRIPTURE_BEARERS_COUNT)} জন কিতাব/সহীফাপ্রাপ্ত  ·  ${toBnDigits(ARAB_PROPHETS_COUNT)} জন আরব নবী`
+              : `25 Prophets & Messengers  ·  ${ULUL_AZM_COUNT} Ulul Azm  ·  ${SCRIPTURE_BEARERS_COUNT} Scripture Bearers  ·  ${ARAB_PROPHETS_COUNT} Arab Prophets`}
           </div>
 
-          {/* Unboxed Typographic Key Stats + Progress */}
-          <div className="pt-3 border-t border-white/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="text-xs text-emerald-100/90 font-semibold tabular-nums">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div
+              className={`w-28 h-2 rounded-full overflow-hidden ${
+                isDay ? 'bg-slate-200' : 'bg-white/15'
+              }`}
+            >
+              <div
+                className="h-full bg-[#006747] dark:bg-amber-300 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span
+              className={`text-xs font-bold tabular-nums ${
+                isDay ? 'text-[#006A4E]' : 'text-amber-200'
+              }`}
+            >
               {isBn
-                ? `${toBnDigits(25)} জন নবী ও রাসূল  ·  ${toBnDigits(ULUL_AZM_COUNT)} জন উলুল আযম  ·  ${toBnDigits(SCRIPTURE_BEARERS_COUNT)} জন কিতাব/সহীফাপ্রাপ্ত  ·  ${toBnDigits(ARAB_PROPHETS_COUNT)} জন আরব নবী`
-                : `25 Prophets & Messengers  ·  ${ULUL_AZM_COUNT} Ulul Azm  ·  ${SCRIPTURE_BEARERS_COUNT} Scripture Bearers  ·  ${ARAB_PROPHETS_COUNT} Arab Prophets`}
-            </div>
-
-            <div className="flex items-center gap-2.5 shrink-0">
-              <div className="w-28 h-2 rounded-full bg-white/15 overflow-hidden">
-                <div
-                  className="h-full bg-amber-300 rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <span className="text-xs font-bold text-amber-200 tabular-nums">
-                {isBn
-                  ? `${toBnDigits(readIds.length)}/${toBnDigits(25)} পঠিত`
-                  : `${readIds.length}/25 Read`}
-              </span>
-            </div>
+                ? `${toBnDigits(readIds.length)}/${toBnDigits(25)} পঠিত`
+                : `${readIds.length}/25 Read`}
+            </span>
           </div>
         </div>
       </div>

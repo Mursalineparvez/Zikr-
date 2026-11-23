@@ -434,13 +434,25 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
   return (
     <div className="space-y-4 animate-in fade-in duration-300 select-text pb-20">
       {/* ========================================================================= */}
-      {/* 1. TOP HEADER RIBBON (Identical to user's uploaded reference screenshot)  */}
+      {/* 1. SIMPLE FLAT MUSHAF HEADER RIBBON                                       */}
       {/* ========================================================================= */}
-      <header className={`${themeStyles.headerBg} text-white p-2.5 sm:p-3 rounded-2xl shadow-xl border border-emerald-700/40 relative z-30 transition-colors`}>
-        {/* Upper Status / Remembrance Hint */}
-        <div className="flex items-center justify-between text-[11px] font-semibold text-emerald-300/80 px-2 pb-1 border-b border-white/10 mb-2">
+      <header
+        className={`pb-2.5 border-b relative z-30 transition-colors ${
+          mushafTheme === 'night'
+            ? 'border-emerald-800/50 text-white'
+            : mushafTheme === 'hafezi'
+            ? 'border-amber-700/25 text-[#1e4830]'
+            : 'border-[#dcebe8] text-[#006747]'
+        }`}
+      >
+        {/* Upper Status / Settings Line */}
+        <div
+          className={`flex items-center justify-between text-[11px] font-semibold pb-1.5 mb-2 ${
+            mushafTheme === 'night' ? 'text-emerald-300/80' : 'text-slate-500'
+          }`}
+        >
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>
               {selectedLanguage === 'bn' ? 'পবিত্র কুরআন শুধু আরবি তিলাওয়াত মোড' : 'Pure Arabic Quran Tilawat Mode'}
             </span>
@@ -451,15 +463,17 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 setShowSettingsDrawer(!showSettingsDrawer);
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className="hover:text-amber-300 transition flex items-center gap-1 text-[11px] font-bold cursor-pointer"
+              className={`transition flex items-center gap-1 text-[11px] font-bold cursor-pointer ${
+                mushafTheme === 'night' ? 'text-amber-300 hover:text-amber-200' : 'text-[#006747] hover:underline'
+              }`}
             >
-              <Sliders className="w-3 h-3 text-amber-400" />
+              <Sliders className="w-3 h-3 text-amber-500" />
               <span>{selectedLanguage === 'bn' ? 'সেটিংস' : 'Settings'}</span>
             </button>
           </div>
         </div>
 
-        {/* Main Nav Row: Back Chevron | Sage Pill (JUZ | Page | Surah) | Right Action */}
+        {/* Main Nav Row: Back Chevron | Flat Switcher (JUZ | Page | Surah) | Right Action */}
         <div className="flex items-center justify-between gap-1.5 sm:gap-3">
           {/* Back button to leave Mushaf Mode or go to Quran Directory */}
           <button
@@ -467,34 +481,42 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
               if (soundEnabled) soundHaptics.playTap();
               onExitMushaf();
             }}
-            className="p-2 sm:p-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition cursor-pointer text-white shrink-0"
+            className={`p-2 rounded-lg border active:scale-95 transition cursor-pointer shrink-0 ${
+              mushafTheme === 'night'
+                ? 'bg-[#09241d] border-emerald-700/50 text-emerald-200 hover:bg-[#0f362c]'
+                : 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
+            }`}
             title={selectedLanguage === 'bn' ? 'সাধারণ অনুবাদসহ মোডে ফিরুন' : 'Return to Standard Mode'}
           >
-            <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
           </button>
 
-          {/* Central Interactive Pill Container matching App UI */}
+          {/* Central Interactive Switcher */}
           <div
             onClick={() => {
               setShowSurahPicker(true);
               if (soundEnabled) soundHaptics.playTap();
             }}
-            className={`flex-1 max-w-xl ${themeStyles.ribbonContainer} font-bold text-xs sm:text-sm py-2 px-3 sm:px-5 rounded-xl border flex items-center justify-between shadow-inner cursor-pointer hover:opacity-95 transition select-none`}
+            className={`flex-1 max-w-xl font-bold text-xs sm:text-sm py-1.5 px-3 sm:px-4 rounded-xl border flex items-center justify-between cursor-pointer transition select-none ${
+              mushafTheme === 'night'
+                ? 'bg-[#072019] border-emerald-700/50 text-white hover:bg-[#0b2e24]'
+                : 'bg-white border-slate-200 text-slate-900 hover:border-emerald-400'
+            }`}
             title={selectedLanguage === 'bn' ? 'অন্য সূরা বা জুয নির্বাচন করতে ক্লিক করুন' : 'Click to jump to another Surah or Juz'}
           >
             {/* Left: JUZ badge */}
-            <span className="font-extrabold tracking-wide uppercase flex items-center gap-1.5 text-amber-300">
-              <span className="text-amber-400 text-xs">✦</span>
+            <span className={`font-extrabold tracking-wide uppercase flex items-center gap-1 ${mushafTheme === 'night' ? 'text-amber-300' : 'text-amber-700'}`}>
+              <span className="text-xs">✦</span>
               <span>JUZ {juzNumber}</span>
             </span>
 
             {/* Center: Page Number badge */}
-            <span className={`font-mono font-black px-2.5 py-0.5 rounded-lg ${themeStyles.pageNumberBadge} text-xs sm:text-sm shadow-xs`}>
+            <span className={`font-mono font-black px-2 py-0.5 rounded-md ${themeStyles.pageNumberBadge} text-xs sm:text-sm`}>
               {startPage}
             </span>
 
             {/* Right: Surah Number and Localized Name badge */}
-            <span className="font-extrabold tracking-wide flex items-center gap-1 truncate max-w-[150px] sm:max-w-none text-white">
+            <span className={`font-extrabold tracking-wide flex items-center gap-1 truncate max-w-[150px] sm:max-w-none ${mushafTheme === 'night' ? 'text-white' : 'text-[#006747]'}`}>
               <span>{surahDetail.number}. {getBareSurahName(surahDetail.number, selectedLanguage)}</span>
             </span>
           </div>
@@ -511,10 +533,12 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 }
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className={`p-2 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer ${
+              className={`p-2 sm:px-3 sm:py-1.5 rounded-lg border text-xs font-bold transition flex items-center gap-1.5 active:scale-95 cursor-pointer ${
                 isPlaying
-                  ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 ring-2 ring-amber-400/50 font-black'
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/40 shadow-emerald-950/20'
+                  ? 'bg-amber-400 text-slate-950 border-amber-400 font-black'
+                  : mushafTheme === 'night'
+                  ? 'bg-[#09241d] border-emerald-700/50 text-emerald-300 hover:bg-[#0f362c]'
+                  : 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
               }`}
               title={
                 isPlaying
@@ -524,12 +548,12 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
             >
               {isPlaying ? (
                 <>
-                  <Pause className="w-4 h-4 fill-current" />
+                  <Pause className="w-3.5 h-3.5 fill-current" />
                   <span className="hidden md:inline">{selectedLanguage === 'bn' ? 'থামান' : selectedLanguage === 'ar' ? 'إيقاف' : 'Pause'}</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4 fill-current" />
+                  <Play className="w-3.5 h-3.5 fill-current" />
                   <span className="hidden md:inline">{selectedLanguage === 'bn' ? 'তিলাওয়াত' : selectedLanguage === 'ar' ? 'تلاوة' : 'Recite'}</span>
                 </>
               )}
@@ -541,7 +565,11 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
                 if (soundEnabled) soundHaptics.playTap();
                 onExitMushaf();
               }}
-              className="px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-100 text-[11px] font-bold border border-white/20 transition cursor-pointer active:scale-95"
+              className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition cursor-pointer active:scale-95 ${
+                mushafTheme === 'night'
+                  ? 'bg-[#09241d] border-emerald-700/50 text-emerald-200 hover:bg-[#0f362c]'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
               title={selectedLanguage === 'bn' ? 'অনুবাদসহ সাধারণ ভিউতে ফিরুন' : selectedLanguage === 'ar' ? 'العودة إلى العرض العادي' : 'Return to Normal View'}
             >
               <span>{selectedLanguage === 'bn' ? 'অনুবাদসহ' : selectedLanguage === 'ar' ? 'الوضع العادي' : 'Normal'}</span>

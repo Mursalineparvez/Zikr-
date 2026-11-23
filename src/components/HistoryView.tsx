@@ -30,33 +30,39 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Active Live Counter Summary Banner */}
+      {/* Active Live Counter Summary */}
       <div
-        className={`p-5 rounded-3xl border shadow-xl relative overflow-hidden ${
-          isDay
-            ? 'bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white border-emerald-500'
-            : 'bg-gradient-to-br from-[#06282d] via-[#0b3840] to-[#041d21] text-white border-teal-800/80'
+        className={`pb-4 border-b transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-              <span>{selectedLanguage === 'bn' ? 'আজকের লাইভ রানিং কাউন্টার' : 'Today\'s Active Live Counter'}</span>
+            <div
+              className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-1 ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+              }`}
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${isDay ? 'text-amber-500' : 'text-amber-300'}`} />
+              <span>{selectedLanguage === 'bn' ? 'আজকের লাইভ রানিং কাউন্টার' : "Today's Active Live Counter"}</span>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight flex items-baseline gap-2">
+            <div className="text-3xl font-black tracking-tight flex items-baseline gap-2">
               <span>{dailyTotal.toLocaleString()}</span>
-              <span className="text-xs font-normal text-emerald-200">
+              <span className={`text-xs font-normal ${isDay ? 'text-slate-600' : 'text-emerald-200/80'}`}>
                 {selectedLanguage === 'bn' ? 'বার আজকের জিকির সম্পন্ন' : 'times today'}
               </span>
             </div>
           </div>
 
-          <div className="sm:text-right border-t sm:border-t-0 sm:border-l border-emerald-500/30 pt-3 sm:pt-0 sm:pl-4">
-            <div className="text-xs text-emerald-300 font-medium">
+          <div
+            className={`sm:text-right border-t sm:border-t-0 sm:border-l pt-3 sm:pt-0 sm:pl-4 ${
+              isDay ? 'border-slate-200' : 'border-emerald-500/30'
+            }`}
+          >
+            <div className={`text-xs font-medium ${isDay ? 'text-slate-500' : 'text-emerald-300'}`}>
               {selectedLanguage === 'bn' ? 'সর্বমোট গ্র্যান্ড টোটাল (লাইফটাইম)' : 'Lifetime Grand Total'}
             </div>
-            <div className="text-xl font-extrabold text-amber-300 mt-0.5">
+            <div className={`text-xl font-extrabold mt-0.5 ${isDay ? 'text-amber-600' : 'text-amber-300'}`}>
               {lifetimeTotalCount.toLocaleString()}
             </div>
           </div>
@@ -64,14 +70,22 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
         {/* Breakdown preview of today's live zikrs if any */}
         {activeZikrs.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-emerald-500/30 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+          <div
+            className={`mt-3 pt-3 border-t grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs ${
+              isDay ? 'border-slate-200/80' : 'border-white/10'
+            }`}
+          >
             {activeZikrs.map((z) => (
               <div
                 key={z.id}
-                className="bg-black/20 backdrop-blur-sm px-2.5 py-1.5 rounded-xl border border-white/10 flex items-center justify-between"
+                className={`px-2.5 py-1.5 rounded-xl border flex items-center justify-between ${
+                  isDay
+                    ? 'bg-white border-[#dcebe8] text-slate-800'
+                    : 'bg-[#082026] border-[#163640] text-emerald-100'
+                }`}
               >
-                <span className="truncate text-emerald-100 font-medium">{z.name}</span>
-                <span className="font-bold text-amber-300 ml-1">{z.count}</span>
+                <span className="truncate font-medium">{z.name}</span>
+                <span className={`font-bold ml-1 ${isDay ? 'text-[#006A4E]' : 'text-amber-300'}`}>{z.count}</span>
               </div>
             ))}
           </div>
@@ -80,18 +94,14 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
       {/* Header Bar */}
       <div
-        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl border shadow-xl ${
-          isDay
-            ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/60 border-emerald-200 text-slate-800'
-            : 'bg-slate-900/80 border-emerald-900/40 text-white'
+        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b ${
+          isDay ? 'border-[#dcebe8] text-slate-800' : 'border-[#163640] text-white'
         }`}
       >
         <div>
           <div
-            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1.5 ${
-              isDay
-                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
-                : 'bg-emerald-950 text-emerald-300 border border-emerald-700/40'
+            className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-1 ${
+              isDay ? 'text-[#006A4E]' : 'text-emerald-300'
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -117,9 +127,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
           <button
             onClick={onExportPdf}
             disabled={isExportingPdf}
-            className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-xs font-semibold shadow-md transition active:scale-95 disabled:opacity-50 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold transition active:scale-95 disabled:opacity-50 cursor-pointer ${
               isDay
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500'
+                ? 'bg-[#006A4E] hover:bg-[#005a3e] text-white border-[#006A4E]'
                 : 'bg-emerald-900/70 hover:bg-emerald-800 border-emerald-600/50 text-emerald-200'
             }`}
           >
@@ -131,7 +141,11 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             <button
               onClick={onClearHistory}
               title="Clear all archived sessions"
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 text-red-300 text-xs font-semibold transition active:scale-95 cursor-pointer"
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold transition active:scale-95 cursor-pointer ${
+                isDay
+                  ? 'bg-red-50 hover:bg-red-100 border-red-200 text-red-700'
+                  : 'bg-red-950/40 hover:bg-red-900/60 border-red-800/40 text-red-300'
+              }`}
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>{selectedLanguage === 'bn' ? 'হিস্ট্রি মুছুন' : 'Clear History'}</span>
