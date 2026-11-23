@@ -13,7 +13,7 @@ import {
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
 import { prefetchView } from '../utils/viewPreloader';
-import { getAllUnifiedBookmarks, getSavedHighlights, getSavedNotes } from '../utils/savedItems';
+import { getSavedLibrarySummary, SavedLibrarySummary } from '../utils/savedItems';
 import type { CloudZikrState } from '../services/firebase';
 import { pushAppHistoryState, stepBackOr, useBackLayer } from '../utils/backNavigation';
 
@@ -189,15 +189,17 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [activeSub]);
 
-  const [savedStats, setSavedStats] = useState({ bookmarks: 0, highlights: 0, notes: 0 });
+  const [savedStats, setSavedStats] = useState<SavedLibrarySummary>({
+    totalItems: 0,
+    activeTopicCount: 0,
+    bookmarksCount: 0,
+    highlightsCount: 0,
+    notesAndVaultCount: 0,
+  });
 
   useEffect(() => {
     const updateCounts = () => {
-      setSavedStats({
-        bookmarks: getAllUnifiedBookmarks().length,
-        highlights: getSavedHighlights().length,
-        notes: getSavedNotes().length,
-      });
+      setSavedStats(getSavedLibrarySummary());
     };
     updateCounts();
     window.addEventListener('zikrplus-saved-updated', updateCounts);
@@ -517,13 +519,13 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     ? 'প্রোফাইল ও সেটিংস'
                     : 'Profile & Settings'
                   : item.id === 'saved'
-                  ? savedStats.bookmarks + savedStats.highlights + savedStats.notes > 0
+                  ? savedStats.totalItems > 0
                     ? selectedLanguage === 'bn'
-                      ? `${toBnDigits(savedStats.bookmarks)} বুকমার্ক · ${toBnDigits(savedStats.highlights)} হাইলাইট · ${toBnDigits(savedStats.notes)} নোট`
-                      : `${savedStats.bookmarks} Bookmarks · ${savedStats.highlights} Highlights · ${savedStats.notes} Notes`
+                      ? `${toBnDigits(savedStats.totalItems)} সংরক্ষিত · ${toBnDigits(savedStats.activeTopicCount)} টপিক`
+                      : `${savedStats.totalItems} Saved · ${savedStats.activeTopicCount} Topics`
                     : selectedLanguage === 'bn'
-                    ? 'বুকমার্ক, হাইলাইট ও নোটস'
-                    : 'Bookmarks, Highlights & Notes'
+                    ? 'টপিক অনুযায়ী যেকোনো কিছু সেভ'
+                    : 'Notes, Links, Quotes & Topics'
                   : item.id === 'nobi_24_hours'
                   ? selectedLanguage === 'bn'
                     ? 'সুন্নাহ গাইডলাইন'

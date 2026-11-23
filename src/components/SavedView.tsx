@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Bookmark,
   Pencil,
@@ -13,30 +13,55 @@ import {
   ArrowLeft,
   Search,
   ChevronRight,
+  ChevronDown,
+  Link2,
+  ListChecks,
+  Image as ImageIcon,
+  Quote,
+  Pin,
+  PinOff,
+  FolderPlus,
+  FolderInput,
+  ExternalLink,
+  Maximize2,
+  CheckSquare,
+  Square,
+  Sparkles,
 } from 'lucide-react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
 import {
-  SavedHighlight,
-  SavedNote,
-  UnifiedBookmarkItem,
+  SavedTopic,
+  TopicAccentColor,
+  TOPIC_ACCENT_STYLES,
+  VaultItemKind,
+  SavedChecklistEntry,
+  NormalizedSavedEntry,
   HighlightColor,
-  getAllUnifiedBookmarks,
-  removeUnifiedBookmark,
-  addCustomBookmark,
-  getSavedHighlights,
-  addSavedHighlight,
+  HIGHLIGHT_COLOR_STYLES,
+  getAllSavedTopics,
+  getCustomTopics,
+  createCustomTopic,
+  updateCustomTopic,
+  deleteCustomTopic,
+  getAllSavedNormalizedEntries,
+  saveOrUpdateVaultItem,
+  removeVaultItem,
+  toggleVaultChecklistRow,
+  compressImageForStorage,
+  saveOrUpdateNote,
+  removeSavedNote,
   updateSavedHighlightColor,
   updateSavedHighlightNote,
   removeSavedHighlight,
-  getSavedNotes,
-  saveOrUpdateNote,
-  removeSavedNote,
+  removeUnifiedBookmark,
+  reassignSavedEntryTopic,
+  togglePinSavedEntry,
 } from '../utils/savedItems';
 
-type SavedTab = 'bookmarks' | 'highlights' | 'notes';
+type TypeFilter = 'all' | VaultItemKind | 'highlight';
 
 interface SavedViewProps {
   themeMode?: ThemeMode;
@@ -44,55 +69,16 @@ interface SavedViewProps {
   soundEnabled?: boolean;
   onNavigateToQuran?: () => void;
   onBackToHub?: () => void;
-  initialTab?: SavedTab;
+  initialTab?: 'bookmarks' | 'highlights' | 'notes';
 }
 
-const HIGHLIGHT_COLORS: Array<{
-  id: HighlightColor;
-  label: string;
-  labelBn: string;
-  cardDay: string;
-  cardNight: string;
-  dotClass: string;
-  textAccent: string;
-}> = [
-  {
-    id: 'amber',
-    label: 'Gold',
-    labelBn: 'সোনালি',
-    cardDay: 'bg-amber-50/70 border-amber-200/80',
-    cardNight: 'bg-amber-950/20 border-amber-800/40',
-    dotClass: 'bg-amber-400',
-    textAccent: 'text-amber-700 dark:text-amber-300',
-  },
-  {
-    id: 'emerald',
-    label: 'Emerald',
-    labelBn: 'সবুজ',
-    cardDay: 'bg-emerald-50/70 border-emerald-200/80',
-    cardNight: 'bg-emerald-950/20 border-emerald-800/40',
-    dotClass: 'bg-emerald-500',
-    textAccent: 'text-emerald-700 dark:text-emerald-300',
-  },
-  {
-    id: 'rose',
-    label: 'Crimson',
-    labelBn: 'মেরুন',
-    cardDay: 'bg-rose-50/70 border-rose-200/80',
-    cardNight: 'bg-rose-950/20 border-rose-800/40',
-    dotClass: 'bg-rose-500',
-    textAccent: 'text-rose-700 dark:text-rose-300',
-  },
-  {
-    id: 'teal',
-    label: 'Teal',
-    labelBn: 'টিল',
-    cardDay: 'bg-teal-50/70 border-teal-200/80',
-    cardNight: 'bg-teal-950/20 border-teal-800/40',
-    dotClass: 'bg-teal-500',
-    textAccent: 'text-teal-700 dark:text-teal-300',
-  },
-];
+const toBnDigits = (num: number | string) =>
+  String(num).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+
+const TOPIC_EMOJI_OPTIONS = ['📁', '📖', '📜', '🤲', '🕌', '🌙', '💎', '📝', '🔖', '⭐', '🎓', '🌿'];
+
+const HIGHLIGHT_COLORS: HighlightColor[] = ['amber', 'emerald', 'rose', 'teal'];
+const ACCENT_KEYS: TopicAccentColor[] = ['emerald', 'teal', 'amber', 'rose', 'indigo', 'violet'];
 
 export const SavedView: React.FC<SavedViewProps> = ({
   themeMode = 'night',
@@ -100,46 +86,62 @@ export const SavedView: React.FC<SavedViewProps> = ({
   soundEnabled = true,
   onNavigateToQuran,
   onBackToHub,
-  initialTab = 'bookmarks',
 }) => {
   const isDay = themeMode === 'day';
   const isBn = selectedLanguage === 'bn';
 
-  const [activeTab, setActiveTab] = useState<SavedTab>(initialTab);
-  const [bookmarks, setBookmarks] = useState<UnifiedBookmarkItem[]>([]);
-  const [highlights, setHighlights] = useState<SavedHighlight[]>([]);
-  const [notes, setNotes] = useState<SavedNote[]>([]);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [topics, setTopics] = useState<SavedTopic[]>([]);
+  const [entries, setEntries] = useState<NormalizedSavedEntry[]>([]);
+  const [selectedTopicId, setSelectedTopicId] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [onlyPinned, setOnlyPinned] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [highlightColorFilter, setHighlightColorFilter] = useState<HighlightColor | 'all'>('all');
+  const [collapsedTopics, setCollapsedTopics] = useState<Record<string, boolean>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [moveTopicEntryId, setMoveTopicEntryId] = useState<string | null>(null);
+  const [editingHighlightNoteId, setEditingHighlightNoteId] = useState<string | null>(null);
+  const [highlightNoteDraft, setHighlightNoteDraft] = useState('');
+  const [lightboxImage, setLightboxImage] = useState<{ src: string; title: string; caption?: string } | null>(null);
   const [shareState, setShareState] = useState<{
     content: ShareableContent;
     focus: 'share' | 'download';
   } | null>(null);
 
-  // Composer state
-  const [showAddBookmark, setShowAddBookmark] = useState(false);
-  const [bmTitle, setBmTitle] = useState('');
-  const [bmSubtitle, setBmSubtitle] = useState('');
-  const [bmSource, setBmSource] = useState('Al-Quran');
+  // Universal "Save Anything" Composer Modal state
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<NormalizedSavedEntry | null>(null);
+  const [formKind, setFormKind] = useState<VaultItemKind>('note');
+  const [formTopicId, setFormTopicId] = useState<string>('study_notes');
+  const [formTitle, setFormTitle] = useState('');
+  const [formContent, setFormContent] = useState('');
+  const [formArabic, setFormArabic] = useState('');
+  const [formReference, setFormReference] = useState('');
+  const [formUrl, setFormUrl] = useState('');
+  const [formImageDataUrl, setFormImageDataUrl] = useState<string | undefined>(undefined);
+  const [formChecklist, setFormChecklist] = useState<SavedChecklistEntry[]>([
+    { id: 'row_1', text: '', done: false },
+  ]);
+  const [formAccent, setFormAccent] = useState<TopicAccentColor>('emerald');
+  const [formPinned, setFormPinned] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [showAddHighlight, setShowAddHighlight] = useState(false);
-  const [hlText, setHlText] = useState('');
-  const [hlSource, setHlSource] = useState('');
-  const [hlColor, setHlColor] = useState<HighlightColor>('amber');
+  // Inline Quick Custom Topic creation inside composer
+  const [inlineTopicCreate, setInlineTopicCreate] = useState(false);
+  const [inlineTopicName, setInlineTopicName] = useState('');
 
-  const [showNoteForm, setShowNoteForm] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | undefined>(undefined);
-  const [noteTitle, setNoteTitle] = useState('');
-  const [noteContent, setNoteContent] = useState('');
-  const [noteSource, setNoteSource] = useState('');
-  const [editingHighlightNoteId, setEditingHighlightNoteId] = useState<string | null>(null);
-  const [highlightNoteDraft, setHighlightNoteDraft] = useState('');
+  // Topic Manager Modal state
+  const [topicModalOpen, setTopicModalOpen] = useState(false);
+  const [editingCustomTopic, setEditingCustomTopic] = useState<SavedTopic | null>(null);
+  const [topicNameDraft, setTopicNameDraft] = useState('');
+  const [topicDescDraft, setTopicDescDraft] = useState('');
+  const [topicEmojiDraft, setTopicEmojiDraft] = useState('📁');
+  const [topicAccentDraft, setTopicAccentDraft] = useState<TopicAccentColor>('emerald');
 
   const refreshAll = () => {
-    setBookmarks(getAllUnifiedBookmarks());
-    setHighlights(getSavedHighlights());
-    setNotes(getSavedNotes());
+    setTopics(getAllSavedTopics());
+    setEntries(getAllSavedNormalizedEntries());
   };
 
   useEffect(() => {
@@ -153,43 +155,67 @@ export const SavedView: React.FC<SavedViewProps> = ({
     };
   }, []);
 
-  const filteredBookmarks = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return bookmarks;
-    return bookmarks.filter(
-      (b) =>
-        b.title.toLowerCase().includes(q) ||
-        b.subtitle.toLowerCase().includes(q) ||
-        b.sourceLabel.toLowerCase().includes(q) ||
-        (b.arabic && b.arabic.includes(q))
-    );
-  }, [bookmarks, searchQuery]);
+  // Topic counts across ALL items (for Topic Bar)
+  const topicCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    entries.forEach((e) => {
+      counts[e.topicId] = (counts[e.topicId] || 0) + 1;
+    });
+    return counts;
+  }, [entries]);
 
-  const filteredHighlights = useMemo(() => {
+  const pinnedCount = useMemo(() => entries.filter((e) => e.pinned).length, [entries]);
+  const activeTopicTotal = useMemo(
+    () => topics.filter((t) => (topicCounts[t.id] || 0) > 0).length,
+    [topics, topicCounts]
+  );
+
+  // Topics shown in navigator (custom topics always visible, built-in topics visible if non-empty or if library has items)
+  const visibleNavigatorTopics = useMemo(() => {
+    return topics.filter((t) => t.isCustom || (topicCounts[t.id] || 0) > 0);
+  }, [topics, topicCounts]);
+
+  // Filtered entries
+  const filteredEntries = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return highlights.filter((h) => {
-      const colorOk = highlightColorFilter === 'all' || h.color === highlightColorFilter;
-      if (!colorOk) return false;
+    return entries.filter((e) => {
+      if (selectedTopicId !== 'all' && e.topicId !== selectedTopicId) return false;
+      if (typeFilter !== 'all' && e.displayKind !== typeFilter) return false;
+      if (onlyPinned && !e.pinned) return false;
       if (!q) return true;
+      const checkText = (e.checklist || []).map((c) => c.text).join(' ').toLowerCase();
       return (
-        (h.text || '').toLowerCase().includes(q) ||
-        (h.source || '').toLowerCase().includes(q) ||
-        (h.section && h.section.toLowerCase().includes(q)) ||
-        (h.note && h.note.toLowerCase().includes(q))
+        e.title.toLowerCase().includes(q) ||
+        (e.body && e.body.toLowerCase().includes(q)) ||
+        (e.arabic && e.arabic.includes(q)) ||
+        (e.reference && e.reference.toLowerCase().includes(q)) ||
+        (e.url && e.url.toLowerCase().includes(q)) ||
+        (e.highlightNote && e.highlightNote.toLowerCase().includes(q)) ||
+        checkText.includes(q)
       );
     });
-  }, [highlights, searchQuery, highlightColorFilter]);
+  }, [entries, selectedTopicId, typeFilter, onlyPinned, searchQuery]);
 
-  const filteredNotes = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return notes;
-    return notes.filter(
-      (n) =>
-        (n.title || '').toLowerCase().includes(q) ||
-        (n.content || '').toLowerCase().includes(q) ||
-        (n.source && n.source.toLowerCase().includes(q))
-    );
-  }, [notes, searchQuery]);
+  // Grouped by Topic sections
+  const groupedByTopic = useMemo(() => {
+    const map = new Map<string, NormalizedSavedEntry[]>();
+    filteredEntries.forEach((entry) => {
+      const list = map.get(entry.topicId) || [];
+      list.push(entry);
+      map.set(entry.topicId, list);
+    });
+
+    const orderedGroups: Array<{ topic: SavedTopic; items: NormalizedSavedEntry[] }> = [];
+    topics.forEach((topic) => {
+      const items = map.get(topic.id);
+      if (items && items.length > 0) {
+        orderedGroups.push({ topic, items });
+      } else if (selectedTopicId === topic.id) {
+        orderedGroups.push({ topic, items: [] });
+      }
+    });
+    return orderedGroups;
+  }, [filteredEntries, topics, selectedTopicId]);
 
   const handleCopy = (id: string, text: string) => {
     try {
@@ -198,56 +224,6 @@ export const SavedView: React.FC<SavedViewProps> = ({
     setCopiedId(id);
     if (soundEnabled) soundHaptics.playTap();
     setTimeout(() => setCopiedId(null), 1800);
-  };
-
-  const handleCreateBookmark = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bmTitle.trim()) return;
-    addCustomBookmark(bmTitle, bmSubtitle, bmSource);
-    setBmTitle('');
-    setBmSubtitle('');
-    setShowAddBookmark(false);
-    refreshAll();
-    if (soundEnabled) soundHaptics.playMilestone();
-  };
-
-  const handleCreateHighlight = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!hlText.trim()) return;
-    addSavedHighlight(hlText, hlSource || (isBn ? 'তাফসীর ও ব্যাখ্যা' : 'Commentary'), hlColor);
-    setHlText('');
-    setHlSource('');
-    setShowAddHighlight(false);
-    refreshAll();
-    if (soundEnabled) soundHaptics.playMilestone();
-  };
-
-  const handleOpenEditNote = (note?: SavedNote) => {
-    if (note) {
-      setEditingNoteId(note.id);
-      setNoteTitle(note.title);
-      setNoteContent(note.content);
-      setNoteSource(note.source || '');
-    } else {
-      setEditingNoteId(undefined);
-      setNoteTitle('');
-      setNoteContent('');
-      setNoteSource('');
-    }
-    setShowNoteForm(true);
-  };
-
-  const handleSaveNote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!noteContent.trim() && !noteTitle.trim()) return;
-    saveOrUpdateNote(noteTitle, noteContent, noteSource, editingNoteId);
-    setShowNoteForm(false);
-    setEditingNoteId(undefined);
-    setNoteTitle('');
-    setNoteContent('');
-    setNoteSource('');
-    refreshAll();
-    if (soundEnabled) soundHaptics.playMilestone();
   };
 
   const formatDate = (ts: number) => {
@@ -263,82 +239,787 @@ export const SavedView: React.FC<SavedViewProps> = ({
     }
   };
 
-  const tabs: Array<{ id: SavedTab; label: string; count: number; icon: React.ReactNode }> = [
-    {
-      id: 'bookmarks',
-      label: isBn ? 'বুকমার্ক' : 'Bookmarks',
-      count: bookmarks.length,
-      icon: <Bookmark className="w-4 h-4" />,
-    },
-    {
-      id: 'highlights',
-      label: isBn ? 'হাইলাইট' : 'Highlights',
-      count: highlights.length,
-      icon: <Pencil className="w-4 h-4" />,
-    },
-    {
-      id: 'notes',
-      label: isBn ? 'নোটস' : 'Notes',
-      count: notes.length,
-      icon: <FileText className="w-4 h-4" />,
-    },
-  ];
+  const formatNum = (n: number) => (isBn ? toBnDigits(n) : String(n));
 
-  const totalSaved = bookmarks.length + highlights.length + notes.length;
+  const kindLabel = (k: NormalizedSavedEntry['displayKind']) => {
+    switch (k) {
+      case 'note':
+        return isBn ? 'নোট' : 'Note';
+      case 'quote':
+        return isBn ? 'উক্তি ও আয়াত' : 'Quote';
+      case 'link':
+        return isBn ? 'ওয়েব লিংক' : 'Link';
+      case 'checklist':
+        return isBn ? 'চেকলিস্ট' : 'Checklist';
+      case 'image':
+        return isBn ? 'ছবি' : 'Image';
+      case 'highlight':
+        return isBn ? 'হাইলাইট' : 'Highlight';
+      case 'bookmark':
+        return isBn ? 'বুকমার্ক' : 'Bookmark';
+    }
+  };
+
+  const renderKindIcon = (k: NormalizedSavedEntry['displayKind'], className = 'w-3.5 h-3.5') => {
+    switch (k) {
+      case 'note':
+        return <FileText className={className} />;
+      case 'quote':
+        return <Quote className={className} />;
+      case 'link':
+        return <Link2 className={className} />;
+      case 'checklist':
+        return <ListChecks className={className} />;
+      case 'image':
+        return <ImageIcon className={className} />;
+      case 'highlight':
+        return <Pencil className={className} />;
+      case 'bookmark':
+        return <Bookmark className={className} />;
+    }
+  };
+
+  // ---------- Composer Open / Edit / Submit ----------
+
+  const openComposer = (opts?: {
+    presetTopicId?: string;
+    presetKind?: VaultItemKind;
+    entryToEdit?: NormalizedSavedEntry;
+  }) => {
+    setFormError(null);
+    setInlineTopicCreate(false);
+    setInlineTopicName('');
+
+    if (opts?.entryToEdit) {
+      const e = opts.entryToEdit;
+      setEditingEntry(e);
+      if (e.origin === 'note' && e.rawNote) {
+        setFormKind('note');
+        setFormTopicId(e.topicId);
+        setFormTitle(e.rawNote.title);
+        setFormContent(e.rawNote.content);
+        setFormArabic('');
+        setFormReference(e.rawNote.source || '');
+        setFormUrl('');
+        setFormImageDataUrl(undefined);
+        setFormChecklist([{ id: 'row_1', text: '', done: false }]);
+        setFormAccent('emerald');
+        setFormPinned(e.pinned);
+      } else if (e.origin === 'vault' && e.rawVault) {
+        const v = e.rawVault;
+        setFormKind(v.kind);
+        setFormTopicId(v.topicId);
+        setFormTitle(v.title);
+        setFormContent(v.content || '');
+        setFormArabic(v.arabic || '');
+        setFormReference(v.reference || '');
+        setFormUrl(v.url || '');
+        setFormImageDataUrl(v.imageDataUrl);
+        setFormChecklist(
+          v.checklist && v.checklist.length > 0
+            ? v.checklist
+            : [{ id: 'row_1', text: '', done: false }]
+        );
+        setFormAccent(v.accent || 'emerald');
+        setFormPinned(Boolean(v.pinned));
+      }
+    } else {
+      setEditingEntry(null);
+      setFormKind(opts?.presetKind || 'note');
+      setFormTopicId(
+        opts?.presetTopicId && opts.presetTopicId !== 'all'
+          ? opts.presetTopicId
+          : selectedTopicId !== 'all'
+          ? selectedTopicId
+          : 'study_notes'
+      );
+      setFormTitle('');
+      setFormContent('');
+      setFormArabic('');
+      setFormReference('');
+      setFormUrl('');
+      setFormImageDataUrl(undefined);
+      setFormChecklist([
+        { id: `row_${Date.now()}_1`, text: '', done: false },
+        { id: `row_${Date.now()}_2`, text: '', done: false },
+      ]);
+      setFormAccent('emerald');
+      setFormPinned(false);
+    }
+
+    setComposerOpen(true);
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleImageFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFormError(null);
+    setIsProcessingImage(true);
+    try {
+      const compressed = await compressImageForStorage(file, 720, 0.72);
+      setFormImageDataUrl(compressed);
+      if (!formTitle.trim()) {
+        setFormTitle(file.name.replace(/\.[^.]+$/, '') || (isBn ? 'সংরক্ষিত ছবি' : 'Saved Image'));
+      }
+    } catch {
+      setFormError(isBn ? 'ছবিটি প্রসেস করা যায়নি, অনুগ্রহ করে অন্য ছবি দিন।' : 'Could not process image.');
+    } finally {
+      setIsProcessingImage(false);
+    }
+  };
+
+  const handleComposerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    // Handle inline custom topic if user entered one
+    let targetTopicId = formTopicId;
+    if (inlineTopicCreate && inlineTopicName.trim()) {
+      const newTopic = createCustomTopic({ name: inlineTopicName.trim(), accent: formAccent });
+      targetTopicId = newTopic.id;
+    }
+
+    if (formKind === 'link' && !formUrl.trim()) {
+      setFormError(isBn ? 'অনুগ্রহ করে একটি ওয়েব লিংক (URL) লিখুন।' : 'Please enter a valid URL.');
+      return;
+    }
+    if (formKind === 'image' && !formImageDataUrl) {
+      setFormError(isBn ? 'অনুগ্রহ করে একটি ছবি নির্বাচন করুন।' : 'Please choose an image file.');
+      return;
+    }
+    if (formKind === 'checklist') {
+      const nonEmpty = formChecklist.filter((r) => r.text.trim());
+      if (nonEmpty.length === 0) {
+        setFormError(isBn ? 'চেকলিস্টে অন্তত একটি আইটেম লিখুন।' : 'Add at least one checklist item.');
+        return;
+      }
+    }
+
+    if (editingEntry?.origin === 'note' && editingEntry.rawNote) {
+      saveOrUpdateNote(formTitle, formContent, formReference, editingEntry.rawNote.id, targetTopicId);
+      setComposerOpen(false);
+      setEditingEntry(null);
+      refreshAll();
+      if (soundEnabled) soundHaptics.playMilestone();
+      return;
+    }
+
+    let safeUrl = formUrl.trim();
+    if (safeUrl && !/^https?:\/\//i.test(safeUrl)) {
+      safeUrl = `https://${safeUrl}`;
+    }
+
+    const res = saveOrUpdateVaultItem({
+      id: editingEntry?.origin === 'vault' ? editingEntry.id : undefined,
+      kind: formKind,
+      topicId: targetTopicId,
+      title:
+        formTitle.trim() ||
+        (formKind === 'quote'
+          ? isBn ? 'সংরক্ষিত উক্তি' : 'Saved Quote'
+          : formKind === 'link'
+          ? safeUrl
+          : formKind === 'checklist'
+          ? isBn ? 'আমলের তালিকা' : 'Checklist'
+          : isBn ? 'ব্যক্তিগত নোট' : 'Personal Note'),
+      content: formContent,
+      arabic: formArabic,
+      reference: formReference,
+      url: formKind === 'link' ? safeUrl : undefined,
+      imageDataUrl: formKind === 'image' ? formImageDataUrl : undefined,
+      checklist: formKind === 'checklist' ? formChecklist : undefined,
+      accent: formAccent,
+      pinned: formPinned,
+    });
+
+    if (!res.ok) {
+      setFormError(
+        res.quotaExceeded
+          ? isBn
+            ? 'স্টোরেজ সীমা পূর্ণ হয়ে গেছে! পুরনো বড় ছবি মুছে আবার চেষ্টা করুন।'
+            : 'Browser storage quota reached. Please remove a large image and retry.'
+          : isBn
+          ? 'সংরক্ষণ করতে সমস্যা হয়েছে।'
+          : 'Could not save item.'
+      );
+      return;
+    }
+
+    setComposerOpen(false);
+    setEditingEntry(null);
+    refreshAll();
+    if (soundEnabled) soundHaptics.playMilestone();
+  };
+
+  // ---------- Topic Manager Submit ----------
+
+  const openTopicModal = (topicToEdit?: SavedTopic) => {
+    if (topicToEdit) {
+      setEditingCustomTopic(topicToEdit);
+      setTopicNameDraft(isBn ? topicToEdit.nameBn : topicToEdit.nameEn);
+      setTopicDescDraft((isBn ? topicToEdit.descBn : topicToEdit.descEn) || '');
+      setTopicEmojiDraft(topicToEdit.emoji || '📁');
+      setTopicAccentDraft(topicToEdit.accent || 'emerald');
+    } else {
+      setEditingCustomTopic(null);
+      setTopicNameDraft('');
+      setTopicDescDraft('');
+      setTopicEmojiDraft('📁');
+      setTopicAccentDraft('emerald');
+    }
+    setTopicModalOpen(true);
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const handleSaveCustomTopic = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!topicNameDraft.trim()) return;
+    if (editingCustomTopic) {
+      updateCustomTopic(editingCustomTopic.id, {
+        name: topicNameDraft,
+        desc: topicDescDraft,
+        emoji: topicEmojiDraft,
+        accent: topicAccentDraft,
+      });
+    } else {
+      const created = createCustomTopic({
+        name: topicNameDraft,
+        desc: topicDescDraft,
+        emoji: topicEmojiDraft,
+        accent: topicAccentDraft,
+      });
+      setSelectedTopicId(created.id);
+    }
+    setTopicModalOpen(false);
+    refreshAll();
+    if (soundEnabled) soundHaptics.playMilestone();
+  };
+
+  // ---------- Share Helpers ----------
+
+  const buildEntryShareText = (entry: NormalizedSavedEntry) => {
+    const parts: string[] = [];
+    if (entry.arabic) parts.push(entry.arabic);
+    if (entry.body) parts.push(entry.body);
+    if (entry.checklist?.length) {
+      parts.push(entry.checklist.map((c) => `${c.done ? '✅' : '⬜'} ${c.text}`).join('\n'));
+    }
+    if (entry.url) parts.push(`🔗 ${entry.url}`);
+    if (entry.highlightNote) parts.push(`📝 ${entry.highlightNote}`);
+    if (entry.reference) parts.push(`— ${entry.reference}`);
+    return parts.join('\n\n') || entry.title;
+  };
+
+  const openTopicShare = (topic: SavedTopic, items: NormalizedSavedEntry[], focus: 'share' | 'download') => {
+    const body = items
+      .map((item, idx) => `${idx + 1}. ${item.title}\n${buildEntryShareText(item)}`)
+      .join('\n\n────────────────────\n\n');
+    setShareState({
+      focus,
+      content: {
+        badge: isBn ? topic.nameBn : topic.nameEn,
+        title: `${topic.emoji} ${isBn ? topic.nameBn : topic.nameEn}`,
+        subtitle: isBn ? `${formatNum(items.length)}টি সংরক্ষিত আইটেম` : `${items.length} Saved Items`,
+        body: body || (isBn ? 'এই টপিকে এখনো কোনো আইটেম নেই।' : 'No items in this topic yet.'),
+        fullDocumentText: body || undefined,
+        fileNamePrefix: `ZikrPlus-Topic-${topic.id}`,
+      },
+    });
+  };
 
   const openLibraryShare = (focus: 'share' | 'download') => {
-    const bmText = bookmarks
-      .map((b, i) => `${i + 1}. ${b.title} [${b.sourceLabel}]\n${b.arabic || ''}\n${b.subtitle}`)
-      .join('\n\n');
-    const hlText = highlights
-      .map((h, i) => `${i + 1}. "${h.text}" — ${h.source}`)
-      .join('\n\n');
-    const noteText = notes
-      .map((n, i) => `${i + 1}. ${n.title}\n${n.content}${n.source ? `\n(${n.source})` : ''}`)
-      .join('\n\n');
-
-    const fullDoc = [
-      bookmarks.length ? `=== ${isBn ? 'বুকমার্ক সমূহ' : 'Bookmarks'} (${bookmarks.length}) ===\n${bmText}` : '',
-      highlights.length ? `=== ${isBn ? 'হাইলাইট সমূহ' : 'Highlights'} (${highlights.length}) ===\n${hlText}` : '',
-      notes.length ? `=== ${isBn ? 'নোটস' : 'Notes'} (${notes.length}) ===\n${noteText}` : '',
-    ]
-      .filter(Boolean)
+    const fullDoc = groupedByTopic
+      .map(({ topic, items }) => {
+        const header = `=== ${topic.emoji} ${isBn ? topic.nameBn : topic.nameEn} (${items.length}) ===`;
+        const body = items
+          .map((item, i) => `${i + 1}. ${item.title} [${kindLabel(item.displayKind)}]\n${buildEntryShareText(item)}`)
+          .join('\n\n');
+        return `${header}\n${body}`;
+      })
       .join('\n\n====================================\n\n');
 
     setShareState({
       focus,
       content: {
         badge: isBn ? 'সংরক্ষিত লাইব্রেরি' : 'Saved Library',
-        title: isBn ? 'আমার সংরক্ষিত ইসলামিক লাইব্রেরি' : 'My Saved Islamic Library',
+        title: isBn ? 'আমার টপিকভিত্তিক ইসলামিক লাইব্রেরি' : 'My Topic-Organized Saved Library',
         subtitle: isBn
-          ? `বুকমার্ক: ${bookmarks.length} • হাইলাইট: ${highlights.length} • নোটস: ${notes.length}`
-          : `Bookmarks: ${bookmarks.length} • Highlights: ${highlights.length} • Notes: ${notes.length}`,
-        body:
-          fullDoc ||
-          (isBn
-            ? 'এখনো কোনো বুকমার্ক, হাইলাইট বা নোট সংরক্ষণ করা হয়নি।'
-            : 'No bookmarks, highlights, or notes saved yet.'),
+          ? `মোট ${formatNum(entries.length)}টি সংরক্ষিত · ${formatNum(activeTopicTotal)}টি টপিক`
+          : `${entries.length} Saved · ${activeTopicTotal} Topics`,
+        body: fullDoc || (isBn ? 'এখনো কোনো কিছু সংরক্ষণ করা হয়নি।' : 'Nothing saved yet.'),
         fullDocumentText: fullDoc || undefined,
         fileNamePrefix: 'ZikrPlus-Saved-Library',
       },
     });
   };
 
+  const handleDeleteEntry = (entry: NormalizedSavedEntry) => {
+    if (entry.origin === 'vault') removeVaultItem(entry.id);
+    else if (entry.origin === 'note') removeSavedNote(entry.id);
+    else if (entry.origin === 'highlight') removeSavedHighlight(entry.id);
+    else if (entry.origin === 'bookmark' && entry.rawBookmark) removeUnifiedBookmark(entry.rawBookmark);
+    refreshAll();
+    if (soundEnabled) soundHaptics.playTap();
+  };
+
+  const renderEntryCard = (entry: NormalizedSavedEntry) => {
+    const topicObj = topics.find((t) => t.id === entry.topicId);
+    const hlColorObj =
+      entry.origin === 'highlight' && entry.highlightColor
+        ? HIGHLIGHT_COLOR_STYLES[entry.highlightColor]
+        : null;
+    const checkDoneCount = entry.checklist ? entry.checklist.filter((c) => c.done).length : 0;
+    const checkTotalCount = entry.checklist ? entry.checklist.length : 0;
+
+    let cardClasses = isDay
+      ? 'bg-white border-slate-200/90 hover:border-emerald-300 shadow-2xs'
+      : 'bg-[#0b262d] border-[#17444e] hover:border-emerald-700/60';
+    if (hlColorObj) {
+      cardClasses = isDay ? hlColorObj.cardDayClass : hlColorObj.cardNightClass;
+    }
+
+    return (
+      <div
+        key={entry.id}
+        className={`p-4 sm:p-5 rounded-2xl border transition flex flex-col justify-between gap-3 ${cardClasses}`}
+      >
+        <div className="space-y-2.5">
+          {/* Top Metadata & Action Strip */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div
+                className={`text-[11px] font-semibold flex flex-wrap items-center gap-1.5 ${
+                  isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                }`}
+              >
+                <span className="inline-flex items-center gap-1">
+                  {renderKindIcon(entry.displayKind, 'w-3 h-3')}
+                  <span>{kindLabel(entry.displayKind)}</span>
+                </span>
+                {entry.reference && (
+                  <>
+                    <span aria-hidden="true" className="opacity-45">·</span>
+                    <span className="truncate max-w-[170px] opacity-85">{entry.reference}</span>
+                  </>
+                )}
+                {(entry.updatedAt || entry.createdAt) > 0 && (
+                  <>
+                    <span aria-hidden="true" className="opacity-45">·</span>
+                    <span className="opacity-65 whitespace-nowrap">
+                      {formatDate(entry.updatedAt || entry.createdAt)}
+                    </span>
+                  </>
+                )}
+              </div>
+              <h4 className="font-bold text-sm sm:text-base leading-snug mt-0.5 text-balance">
+                {entry.title}
+              </h4>
+            </div>
+
+            <div className="flex items-center gap-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  togglePinSavedEntry(entry.origin, entry.id);
+                  refreshAll();
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center transition cursor-pointer ${
+                  entry.pinned
+                    ? 'text-amber-500 bg-amber-500/15'
+                    : 'text-slate-400 hover:text-amber-500 hover:bg-black/5 dark:hover:bg-white/10'
+                }`}
+                title={entry.pinned ? (isBn ? 'আনপিন করুন' : 'Unpin') : isBn ? 'পিন করুন' : 'Pin'}
+              >
+                {entry.pinned ? <Pin className="w-3.5 h-3.5 fill-current" /> : <PinOff className="w-3.5 h-3.5" />}
+              </button>
+
+              <ShareDownloadButtons
+                variant="compact"
+                selectedLanguage={selectedLanguage}
+                themeMode={themeMode}
+                onShare={() =>
+                  setShareState({
+                    focus: 'share',
+                    content: {
+                      badge: topicObj ? (isBn ? topicObj.nameBn : topicObj.nameEn) : kindLabel(entry.displayKind),
+                      title: entry.title,
+                      arabic: entry.arabic,
+                      body: buildEntryShareText(entry),
+                      reference: entry.reference,
+                      fileNamePrefix: 'ZikrPlus-Saved-Item',
+                    },
+                  })
+                }
+                onDownload={() =>
+                  setShareState({
+                    focus: 'download',
+                    content: {
+                      badge: topicObj ? (isBn ? topicObj.nameBn : topicObj.nameEn) : kindLabel(entry.displayKind),
+                      title: entry.title,
+                      arabic: entry.arabic,
+                      body: buildEntryShareText(entry),
+                      reference: entry.reference,
+                      fileNamePrefix: 'ZikrPlus-Saved-Item',
+                    },
+                  })
+                }
+              />
+
+              {(entry.origin === 'vault' || entry.origin === 'note') && (
+                <button
+                  type="button"
+                  onClick={() => openComposer({ entryToEdit: entry })}
+                  className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-slate-400 hover:text-emerald-500 cursor-pointer"
+                  title={isBn ? 'সম্পাদনা' : 'Edit'}
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => handleCopy(entry.id, `${entry.title}\n\n${buildEntryShareText(entry)}`)}
+                className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-slate-400 hover:text-emerald-500 cursor-pointer"
+                title={isBn ? 'কপি' : 'Copy'}
+              >
+                {copiedId === entry.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteEntry(entry)}
+                className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 cursor-pointer"
+                title={isBn ? 'মুছে ফেলুন' : 'Delete'}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Image Attachment Preview */}
+          {entry.imageDataUrl && (
+            <div className="relative rounded-xl overflow-hidden border border-black/10 dark:border-white/10 group">
+              <img
+                src={entry.imageDataUrl}
+                alt={entry.title}
+                onClick={() =>
+                  setLightboxImage({
+                    src: entry.imageDataUrl!,
+                    title: entry.title,
+                    caption: entry.body,
+                  })
+                }
+                className="w-full max-h-56 object-cover cursor-zoom-in transition-transform duration-300 group-hover:scale-[1.02]"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setLightboxImage({
+                    src: entry.imageDataUrl!,
+                    title: entry.title,
+                    caption: entry.body,
+                  })
+                }
+                className="absolute bottom-2 right-2 p-2 rounded-xl bg-black/60 text-white backdrop-blur-xs hover:bg-black/80 cursor-pointer"
+                aria-label={isBn ? 'বড় করে দেখুন' : 'Zoom image'}
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Arabic Text Block */}
+          {entry.arabic && (
+            <p
+              dir="rtl"
+              className="font-arabic text-lg sm:text-xl leading-loose text-[#006A4E] dark:text-emerald-300 pt-0.5"
+            >
+              {entry.arabic}
+            </p>
+          )}
+
+          {/* Body / Translation / Quote */}
+          {entry.body && (
+            <p
+              className={`text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                entry.displayKind === 'quote'
+                  ? 'italic font-medium'
+                  : isDay
+                  ? 'text-slate-700'
+                  : 'text-slate-200'
+              }`}
+            >
+              {entry.displayKind === 'quote' ? `“${entry.body}”` : entry.body}
+            </p>
+          )}
+
+          {/* External Link Action */}
+          {entry.url && (
+            <a
+              href={entry.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition ${
+                isDay
+                  ? 'bg-emerald-50/70 border-emerald-200 text-[#006A4E] hover:bg-emerald-100/70'
+                  : 'bg-[#071b20] border-[#194a55] text-emerald-300 hover:bg-[#0e2d35]'
+              }`}
+            >
+              <span className="truncate flex items-center gap-2 min-w-0">
+                <Link2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{entry.url.replace(/^https?:\/\//i, '')}</span>
+              </span>
+              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+            </a>
+          )}
+
+          {/* Interactive Checklist */}
+          {entry.checklist && entry.checklist.length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-[11px] font-semibold opacity-75">
+                <span>
+                  {isBn
+                    ? `${formatNum(checkDoneCount)} / ${formatNum(checkTotalCount)} সম্পন্ন`
+                    : `${checkDoneCount} / ${checkTotalCount} completed`}
+                </span>
+                <span className="font-mono tabular-nums">
+                  {Math.round((checkDoneCount / Math.max(1, checkTotalCount)) * 100)}%
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 transition-all duration-300"
+                  style={{ width: `${Math.round((checkDoneCount / Math.max(1, checkTotalCount)) * 100)}%` }}
+                />
+              </div>
+              <div className="space-y-1 pt-1">
+                {entry.checklist.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    onClick={() => {
+                      toggleVaultChecklistRow(entry.id, row.id);
+                      refreshAll();
+                      if (soundEnabled) soundHaptics.playTap();
+                    }}
+                    className={`w-full min-h-[38px] px-2.5 py-1.5 rounded-xl flex items-center gap-2.5 text-left text-xs sm:text-sm transition cursor-pointer ${
+                      row.done
+                        ? 'opacity-60 line-through'
+                        : isDay
+                        ? 'hover:bg-slate-100/80'
+                        : 'hover:bg-white/5'
+                    }`}
+                  >
+                    {row.done ? (
+                      <CheckSquare className="w-4 h-4 text-emerald-500 shrink-0" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400 shrink-0" />
+                    )}
+                    <span className="flex-1">{row.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Highlight Personal Note */}
+          {entry.origin === 'highlight' && entry.highlightNote && editingHighlightNoteId !== entry.id && (
+            <div className="px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 text-xs italic opacity-85 border border-black/10 dark:border-white/10">
+              📝 {entry.highlightNote}
+            </div>
+          )}
+
+          {entry.origin === 'highlight' && editingHighlightNoteId === entry.id && (
+            <div className="flex items-center gap-1.5 pt-1">
+              <input
+                type="text"
+                value={highlightNoteDraft}
+                onChange={(e) => setHighlightNoteDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    updateSavedHighlightNote(entry.id, highlightNoteDraft);
+                    setEditingHighlightNoteId(null);
+                    refreshAll();
+                  }
+                }}
+                placeholder={isBn ? 'হাইলাইটে নোট লিখুন...' : 'Write a note for this highlight...'}
+                className={`flex-1 min-w-0 min-h-[40px] px-3 py-1.5 rounded-xl border text-xs focus:outline-none ${
+                  isDay ? 'bg-white border-slate-300 text-slate-900' : 'bg-[#07181d] border-[#1f5563] text-white'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  updateSavedHighlightNote(entry.id, highlightNoteDraft);
+                  setEditingHighlightNoteId(null);
+                  refreshAll();
+                  if (soundEnabled) soundHaptics.playMilestone();
+                }}
+                className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-[#006A4E] text-white text-xs font-bold cursor-pointer"
+              >
+                {isBn ? 'সেভ' : 'Save'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Footer: Topic Move + Highlight Color Controls + Quran Jump */}
+        <div className="pt-2.5 border-t border-black/10 dark:border-white/10 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Move Topic Control */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMoveTopicEntryId((prev) => (prev === entry.id ? null : entry.id))}
+                className={`min-h-[34px] px-2.5 py-1 rounded-lg text-[11px] font-semibold inline-flex items-center gap-1.5 transition cursor-pointer ${
+                  isDay
+                    ? 'bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-[#006A4E]'
+                    : 'bg-[#07191e] hover:bg-[#11353e] text-slate-300 hover:text-emerald-300'
+                }`}
+                title={isBn ? 'অন্য টপিকে সরান' : 'Move to another topic'}
+              >
+                <FolderInput className="w-3.5 h-3.5" />
+                <span>{topicObj ? `${topicObj.emoji} ${isBn ? topicObj.nameBn : topicObj.nameEn}` : isBn ? 'টপিক বদলান' : 'Topic'}</span>
+              </button>
+
+              {moveTopicEntryId === entry.id && (
+                <div
+                  className={`absolute left-0 bottom-full mb-1.5 z-30 w-60 max-h-60 overflow-y-auto rounded-2xl border p-1.5 shadow-xl ${
+                    isDay ? 'bg-white border-slate-200' : 'bg-[#092128] border-[#1b505d]'
+                  }`}
+                >
+                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider opacity-60">
+                    {isBn ? 'টপিক নির্বাচন করুন' : 'Move to Topic'}
+                  </div>
+                  {topics.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        reassignSavedEntryTopic(entry.origin, entry.id, t.id);
+                        setMoveTopicEntryId(null);
+                        refreshAll();
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`w-full px-2.5 py-2 rounded-xl text-left text-xs font-semibold flex items-center justify-between gap-2 cursor-pointer transition ${
+                        entry.topicId === t.id
+                          ? isDay
+                            ? 'bg-emerald-50 text-[#006A4E]'
+                            : 'bg-emerald-950/60 text-emerald-300'
+                          : isDay
+                          ? 'hover:bg-slate-100 text-slate-700'
+                          : 'hover:bg-white/5 text-slate-200'
+                      }`}
+                    >
+                      <span className="truncate flex items-center gap-1.5">
+                        <span>{t.emoji}</span>
+                        <span className="truncate">{isBn ? t.nameBn : t.nameEn}</span>
+                      </span>
+                      {entry.topicId === t.id && <Check className="w-3.5 h-3.5 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Highlight Color Switcher */}
+            {entry.origin === 'highlight' && (
+              <div className="flex items-center gap-1">
+                {HIGHLIGHT_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => {
+                      updateSavedHighlightColor(entry.id, c);
+                      refreshAll();
+                      if (soundEnabled) soundHaptics.playTap();
+                    }}
+                    className={`w-4 h-4 rounded-full ${HIGHLIGHT_COLOR_STYLES[c].dotClass} border transition cursor-pointer ${
+                      entry.highlightColor === c
+                        ? 'border-slate-900 dark:border-white scale-110'
+                        : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                    title={isBn ? HIGHLIGHT_COLOR_STYLES[c].labelBn : HIGHLIGHT_COLOR_STYLES[c].labelEn}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {entry.origin === 'highlight' && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (editingHighlightNoteId === entry.id) {
+                    setEditingHighlightNoteId(null);
+                  } else {
+                    setEditingHighlightNoteId(entry.id);
+                    setHighlightNoteDraft(entry.highlightNote || '');
+                  }
+                }}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold hover:bg-black/5 dark:hover:bg-white/10 opacity-85 hover:opacity-100 cursor-pointer"
+              >
+                <Edit3 className="w-3 h-3" />
+                <span>{entry.highlightNote ? (isBn ? 'নোট সম্পাদনা' : 'Edit Note') : (isBn ? 'নোট লিখুন' : 'Add Note')}</span>
+              </button>
+            )}
+
+            {entry.rawBookmark?.kind === 'quran' && onNavigateToQuran && (
+              <button
+                type="button"
+                onClick={onNavigateToQuran}
+                className={`text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
+                  isDay ? 'text-[#006A4E] hover:underline' : 'text-emerald-400 hover:underline'
+                }`}
+              >
+                <span>{isBn ? 'কোরআনে দেখুন' : 'Open Quran'}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const quickTemplates: Array<{ kind: VaultItemKind; icon: React.ReactNode; labelBn: string; labelEn: string }> = [
+    { kind: 'note', icon: <FileText className="w-4 h-4" />, labelBn: 'নোট / লেখা', labelEn: 'Note' },
+    { kind: 'quote', icon: <Quote className="w-4 h-4" />, labelBn: 'আয়াত / হাদীস / উক্তি', labelEn: 'Quote / Ayah' },
+    { kind: 'link', icon: <Link2 className="w-4 h-4" />, labelBn: 'গুরুত্বপূর্ণ লিংক', labelEn: 'Web Link' },
+    { kind: 'checklist', icon: <ListChecks className="w-4 h-4" />, labelBn: 'আমল চেকলিস্ট', labelEn: 'Checklist' },
+    { kind: 'image', icon: <ImageIcon className="w-4 h-4" />, labelBn: 'ছবি / স্ক্রিনশট', labelEn: 'Image' },
+    { kind: 'bookmark', icon: <Bookmark className="w-4 h-4" />, labelBn: 'বুকমার্ক', labelEn: 'Bookmark' },
+  ];
+
+  const typeFilters: Array<{ id: TypeFilter; labelBn: string; labelEn: string }> = [
+    { id: 'all', labelBn: 'সব ধরন', labelEn: 'All Types' },
+    { id: 'note', labelBn: 'নোট', labelEn: 'Notes' },
+    { id: 'quote', labelBn: 'উক্তি', labelEn: 'Quotes' },
+    { id: 'link', labelBn: 'লিংক', labelEn: 'Links' },
+    { id: 'checklist', labelBn: 'চেকলিস্ট', labelEn: 'Checklists' },
+    { id: 'image', labelBn: 'ছবি', labelEn: 'Images' },
+    { id: 'highlight', labelBn: 'হাইলাইট', labelEn: 'Highlights' },
+    { id: 'bookmark', labelBn: 'বুকমার্ক', labelEn: 'Bookmarks' },
+  ];
+
   return (
     <div
-      className={`rounded-3xl border overflow-hidden flex flex-col min-h-[580px] transition-colors ${
+      className={`rounded-3xl border overflow-hidden flex flex-col min-h-[620px] transition-colors ${
         isDay
           ? 'bg-white border-slate-200/90 text-slate-900 shadow-sm'
           : 'bg-[#071c21] border-[#143b44] text-white shadow-xl'
       }`}
     >
-      {/* Editorial Sanctuary Header */}
+      {/* Flat Editorial Sanctuary Header */}
       <div
-        className={`px-5 pt-5 pb-5 sm:px-7 sm:pt-6 border-b ${
-          isDay ? 'border-slate-200/70' : 'border-[#133841]'
+        className={`px-4 pt-5 pb-5 sm:px-7 sm:pt-6 border-b ${
+          isDay ? 'border-slate-200/75' : 'border-[#133841]'
         }`}
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0">
             {onBackToHub && (
               <button
@@ -356,19 +1037,19 @@ export const SavedView: React.FC<SavedViewProps> = ({
             )}
             <div className="min-w-0">
               <div className="font-arabic text-sm text-emerald-700 dark:text-emerald-400/90 leading-none mb-1">
-                المحفوظات والملاحظات
+                المكتبة المحفوظة حسب المواضيع
               </div>
               <h2
                 className={`text-2xl sm:text-3xl font-black tracking-tight text-balance ${
                   isDay ? 'text-[#006A4E]' : 'text-white'
                 }`}
               >
-                {isBn ? 'সংরক্ষিত লাইব্রেরি' : 'Saved'}
+                {isBn ? 'সংরক্ষিত লাইব্রেরি' : 'Saved Library'}
               </h2>
               <p className={`text-xs sm:text-sm mt-1 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
                 {isBn
-                  ? 'আপনার সংরক্ষিত বুকমার্ক, হাইলাইট এবং ব্যক্তিগত নোটসমূহ'
-                  : 'Your bookmarks, highlights, and notes'}
+                  ? 'নোট, আয়াত, হাদীস, লিংক, চেকলিস্ট ও ছবি — টপিক অনুযায়ী আলাদা সাজানো'
+                  : 'Save notes, quotes, links, checklists & images — cleanly separated by topic'}
               </p>
             </div>
           </div>
@@ -383,12 +1064,19 @@ export const SavedView: React.FC<SavedViewProps> = ({
             />
             <button
               type="button"
-              onClick={() => {
-                if (soundEnabled) soundHaptics.playTap();
-                if (activeTab === 'bookmarks') setShowAddBookmark((p) => !p);
-                else if (activeTab === 'highlights') setShowAddHighlight((p) => !p);
-                else handleOpenEditNote();
-              }}
+              onClick={() => openTopicModal()}
+              className={`min-h-[44px] px-3.5 py-2 rounded-full border text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+                isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#0b262d] border-[#1a4954] text-slate-200 hover:border-emerald-500'
+              }`}
+            >
+              <FolderPlus className="w-4 h-4" />
+              <span>{isBn ? 'নতুন টপিক' : 'New Topic'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openComposer()}
               className={`min-h-[44px] px-4 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0 whitespace-nowrap shadow-sm ${
                 isDay
                   ? 'bg-[#006A4E] hover:bg-[#005740] text-white'
@@ -396,858 +1084,885 @@ export const SavedView: React.FC<SavedViewProps> = ({
               }`}
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>
-                {activeTab === 'bookmarks'
-                  ? isBn ? 'বুকমার্ক' : 'Add Bookmark'
-                  : activeTab === 'highlights'
-                  ? isBn ? 'হাইলাইট' : 'Add Highlight'
-                  : isBn ? 'নতুন নোট' : 'New Note'}
-              </span>
+              <span>{isBn ? 'সংরক্ষণ করুন' : 'Save Anything'}</span>
             </button>
           </div>
         </div>
 
-        {/* Clean 3-Column Tabular Summary Strip */}
+        {/* Clean 3-Column Metrics Strip */}
         <div
           className={`mt-5 grid grid-cols-3 rounded-2xl border divide-x ${
             isDay
-              ? 'bg-white border-slate-200/80 divide-slate-200/80'
+              ? 'bg-slate-50/50 border-slate-200/80 divide-slate-200/80'
               : 'bg-[#092127] border-[#153e47] divide-[#153e47]'
           }`}
         >
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
+          <div className="py-3 px-3 sm:px-4">
+            <div className={`text-[11px] sm:text-xs font-semibold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+              {isBn ? 'মোট সংরক্ষিত' : 'Total Saved'}
+            </div>
+            <div className="text-lg sm:text-xl font-black font-mono tabular-nums mt-0.5">
+              {formatNum(entries.length)}
+            </div>
+          </div>
+          <div className="py-3 px-3 sm:px-4">
+            <div className={`text-[11px] sm:text-xs font-semibold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+              {isBn ? 'সক্রিয় টপিক' : 'Active Topics'}
+            </div>
+            <div className="text-lg sm:text-xl font-black font-mono tabular-nums mt-0.5 text-[#006A4E] dark:text-emerald-400">
+              {formatNum(activeTopicTotal)}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setOnlyPinned((p) => !p);
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className={`py-3 px-3 sm:px-4 text-left transition cursor-pointer ${
+              onlyPinned ? (isDay ? 'bg-amber-50/90' : 'bg-amber-950/35') : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className={`text-[11px] sm:text-xs font-semibold ${onlyPinned ? 'text-amber-600 dark:text-amber-300' : isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                {isBn ? 'পিন করা' : 'Pinned'}
+              </span>
+              <Pin className={`w-3.5 h-3.5 ${onlyPinned ? 'text-amber-500 fill-current' : 'opacity-45'}`} />
+            </div>
+            <div className="text-lg sm:text-xl font-black font-mono tabular-nums mt-0.5">
+              {formatNum(pinnedCount)}
+            </div>
+          </button>
+        </div>
+
+        {/* Topic Folder Strip (Separate by Topic Navigation) */}
+        <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedTopicId('all');
+              if (soundEnabled) soundHaptics.playTap();
+            }}
+            className={`min-h-[40px] px-4 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
+              selectedTopicId === 'all'
+                ? isDay
+                  ? 'bg-[#006A4E] border-[#006A4E] text-white shadow-2xs'
+                  : 'bg-emerald-600 border-emerald-500 text-white shadow-2xs'
+                : isDay
+                ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300'
+                : 'bg-[#0a2329] border-[#18444e] text-slate-300 hover:border-emerald-500/50'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{isBn ? 'সব টপিক' : 'All Topics'}</span>
+            <span className="font-mono tabular-nums opacity-80">({formatNum(entries.length)})</span>
+          </button>
+
+          {visibleNavigatorTopics.map((topic) => {
+            const isSelected = selectedTopicId === topic.id;
+            const count = topicCounts[topic.id] || 0;
+            const accentStyle = TOPIC_ACCENT_STYLES[topic.accent];
             return (
               <button
-                key={tab.id}
+                key={topic.id}
                 type="button"
                 onClick={() => {
-                  setActiveTab(tab.id);
+                  setSelectedTopicId(topic.id);
                   if (soundEnabled) soundHaptics.playTap();
                 }}
-                className={`py-3 px-2 sm:px-4 text-left transition cursor-pointer flex flex-col justify-center ${
-                  isActive
+                className={`min-h-[40px] px-3.5 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
+                  isSelected
                     ? isDay
-                      ? 'bg-emerald-50/70'
-                      : 'bg-emerald-950/40'
-                    : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]'
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white shadow-2xs'
+                      : 'bg-emerald-600 border-emerald-500 text-white shadow-2xs'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300'
+                    : 'bg-[#0a2329] border-[#18444e] text-slate-200 hover:border-emerald-500/50'
                 }`}
               >
-                <div className="flex items-center justify-between gap-1">
-                  <span
-                    className={`text-[11px] sm:text-xs font-semibold truncate ${
-                      isActive
-                        ? isDay
-                          ? 'text-[#006A4E]'
-                          : 'text-emerald-400'
-                        : isDay
-                        ? 'text-slate-500'
-                        : 'text-slate-400'
-                    }`}
-                  >
-                    {tab.label}
-                  </span>
-                  <span
-                    className={`${
-                      isActive
-                        ? isDay
-                          ? 'text-[#006A4E]'
-                          : 'text-emerald-400'
-                        : isDay
-                        ? 'text-slate-400'
-                        : 'text-slate-500'
-                    }`}
-                  >
-                    {tab.icon}
-                  </span>
-                </div>
-                <div className="text-lg sm:text-xl font-black font-mono tabular-nums mt-0.5">
-                  {tab.count}
-                </div>
+                {!isSelected && <span className={`w-2 h-2 rounded-full ${accentStyle.dotBg}`} />}
+                <span>{topic.emoji}</span>
+                <span>{isBn ? topic.nameBn : topic.nameEn}</span>
+                <span className="font-mono tabular-nums opacity-80">({formatNum(count)})</span>
               </button>
             );
           })}
         </div>
 
-        {/* Segmented Control & Search Row */}
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div
-            className={`inline-flex items-center gap-1 p-1 rounded-full border self-start ${
-              isDay ? 'bg-slate-100/90 border-slate-200/80' : 'bg-[#051519] border-[#143a43]'
-            }`}
-          >
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
+        {/* Search & Format Filter Row */}
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+            {typeFilters.map((tf) => {
+              const active = typeFilter === tf.id;
               return (
                 <button
-                  key={tab.id}
+                  key={tf.id}
                   type="button"
                   onClick={() => {
-                    setActiveTab(tab.id);
+                    setTypeFilter(tf.id);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`min-h-[40px] px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
-                    isActive
+                  className={`min-h-[34px] px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer whitespace-nowrap shrink-0 ${
+                    active
                       ? isDay
-                        ? 'bg-[#006A4E] text-white shadow-sm'
-                        : 'bg-emerald-600 text-white shadow-sm'
+                        ? 'bg-slate-900 border-slate-900 text-white'
+                        : 'bg-white border-white text-slate-950'
                       : isDay
-                      ? 'text-slate-600 hover:text-slate-900'
-                      : 'text-slate-300 hover:text-white'
+                      ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      : 'bg-[#081f25] border-[#163f49] text-slate-300 hover:bg-white/5'
                   }`}
                 >
-                  {tab.label}
+                  {isBn ? tf.labelBn : tf.labelEn}
                 </button>
               );
             })}
           </div>
 
-          {totalSaved > 0 && (
-            <div className="relative flex-1 sm:max-w-xs">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={isBn ? 'সংরক্ষিত আইটেম খুঁজুন...' : 'Search saved items...'}
-                className={`w-full min-h-[42px] pl-9 pr-8 py-2 rounded-full border text-xs font-medium focus:outline-none transition ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]'
-                    : 'bg-[#092127] border-[#153e47] text-white focus:border-emerald-500'
-                }`}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          )}
+          <div className="relative sm:w-64 shrink-0">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isBn ? 'টপিক বা লেখা খুঁজুন...' : 'Search saved library...'}
+              className={`w-full min-h-[40px] pl-9 pr-8 py-1.5 rounded-full border text-xs font-medium focus:outline-none transition ${
+                isDay
+                  ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]'
+                  : 'bg-[#092127] border-[#153e47] text-white focus:border-emerald-500'
+              }`}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Main Tab Body */}
-      <div className="flex-1 p-5 sm:p-7 flex flex-col">
-        {/* TAB 1: BOOKMARKS */}
-        {activeTab === 'bookmarks' && (
-          <div className="flex-1 flex flex-col">
-            {showAddBookmark && (
-              <form
-                onSubmit={handleCreateBookmark}
-                className={`mb-5 p-4 sm:p-5 rounded-2xl border space-y-3 animate-in fade-in ${
-                  isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0a2329] border-[#17444e]'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#006A4E] dark:text-emerald-400">
-                    {isBn ? 'নতুন বুকমার্ক যোগ করুন' : 'Save Custom Bookmark'}
-                  </span>
+      {/* Main Topic-Separated Content Body */}
+      <div className="flex-1 p-4 sm:p-7 flex flex-col gap-6">
+        {groupedByTopic.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-10 px-4">
+            <div
+              className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-4 ${
+                isDay
+                  ? 'bg-emerald-50 border border-emerald-200/70 text-[#006A4E]'
+                  : 'bg-emerald-950/50 border border-emerald-800/50 text-emerald-400'
+              }`}
+            >
+              <Bookmark className="w-9 h-9 stroke-[1.8]" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-extrabold tracking-tight">
+              {searchQuery || typeFilter !== 'all' || onlyPinned
+                ? isBn ? 'কোনো মিল পাওয়া যায়নি' : 'No Matching Saved Items'
+                : isBn ? 'আপনার ব্যক্তিগত সংরক্ষিত লাইব্রেরি' : 'Your Personal Saved Vault'}
+            </h3>
+            <p className={`text-xs sm:text-sm mt-1.5 max-w-md leading-relaxed ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+              {searchQuery || typeFilter !== 'all' || onlyPinned
+                ? isBn ? 'ফিল্টার পরিবর্তন করে বা অন্য শব্দ দিয়ে খুঁজে দেখুন।' : 'Try adjusting your filter or search query.'
+                : isBn
+                ? 'কুরআনের আয়াত, হাদীস, দোয়া, ব্যক্তিগত নোট, ওয়েব লিংক, আমলের চেকলিস্ট কিংবা ছবি — যেকোনো কিছু সেভ করুন। প্রতিটি জিনিস টপিক অনুযায়ী আলাদা সাজানো থাকবে।'
+                : 'Save ayahs, hadiths, personal notes, links, checklists, or images — everything will be neatly organized into separate topics.'}
+            </p>
+
+            {/* Quick Start Creation Tiles */}
+            {!searchQuery && typeFilter === 'all' && !onlyPinned && (
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full max-w-xl">
+                {quickTemplates.map((tpl) => (
                   <button
+                    key={tpl.kind}
                     type="button"
-                    onClick={() => setShowAddBookmark(false)}
-                    className="min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={bmTitle}
-                  onChange={(e) => setBmTitle(e.target.value)}
-                  placeholder={isBn ? 'শিরোনাম (যেমন: সূরা আল-মুলক • আয়াত ১-৫)' : 'Title (e.g. Surah Al-Mulk • Ayah 1-5)'}
-                  className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs font-semibold focus:outline-none ${
-                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
-                  }`}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <input
-                    type="text"
-                    value={bmSubtitle}
-                    onChange={(e) => setBmSubtitle(e.target.value)}
-                    placeholder={isBn ? 'বিবরণ বা রেফারেন্স (ঐচ্ছিক)' : 'Reference or short description (optional)'}
-                    className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs font-medium focus:outline-none ${
-                      isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
+                    onClick={() =>
+                      openComposer({
+                        presetKind: tpl.kind,
+                        presetTopicId: selectedTopicId !== 'all' ? selectedTopicId : undefined,
+                      })
+                    }
+                    className={`min-h-[52px] px-3.5 py-2.5 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer ${
+                      isDay
+                        ? 'bg-white border-slate-200 text-slate-800 hover:border-emerald-400 hover:bg-emerald-50/50 hover:text-[#006A4E]'
+                        : 'bg-[#0b262d] border-[#18444e] text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300'
                     }`}
-                  />
-                  <input
-                    type="text"
-                    value={bmSource}
-                    onChange={(e) => setBmSource(e.target.value)}
-                    placeholder={isBn ? 'উৎস (যেমন: আল-কোরআন)' : 'Source (e.g. Al-Quran)'}
-                    className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs font-medium focus:outline-none ${
-                      isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
-                    }`}
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="min-h-[44px] px-5 py-2 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white text-xs font-bold cursor-pointer transition active:scale-95"
                   >
-                    {isBn ? 'সংরক্ষণ করুন' : 'Save Bookmark'}
+                    <span className="text-[#006A4E] dark:text-emerald-400">{tpl.icon}</span>
+                    <span>{isBn ? tpl.labelBn : tpl.labelEn}</span>
                   </button>
-                </div>
-              </form>
+                ))}
+              </div>
             )}
 
-            {filteredBookmarks.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center py-14 px-4">
+            {onNavigateToQuran && !searchQuery && typeFilter === 'all' && (
+              <button
+                type="button"
+                onClick={onNavigateToQuran}
+                className={`mt-5 min-h-[44px] px-5 py-2 rounded-full text-xs font-bold border flex items-center gap-2 transition active:scale-95 cursor-pointer ${
+                  isDay
+                    ? 'bg-white border-slate-200 text-[#006A4E] hover:bg-emerald-50'
+                    : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>{isBn ? 'আল-কোরআন থেকে বুকমার্ক করুন' : 'Browse Al-Quran'}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        ) : (
+          groupedByTopic.map(({ topic, items }) => {
+            const accent = TOPIC_ACCENT_STYLES[topic.accent];
+            const isCollapsed = Boolean(collapsedTopics[topic.id]);
+
+            return (
+              <section
+                key={topic.id}
+                className={`rounded-3xl border overflow-hidden transition ${
+                  isDay ? 'bg-slate-50/45 border-slate-200/85' : 'bg-[#081f25]/80 border-[#143d47]'
+                }`}
+              >
+                {/* Distinct Topic Section Header */}
                 <div
-                  className={`w-24 h-24 rounded-full flex items-center justify-center mb-5 ${
-                    isDay
-                      ? 'bg-emerald-50/90 ring-8 ring-emerald-50/40 text-[#006A4E]'
-                      : 'bg-emerald-950/60 ring-8 ring-emerald-950/25 text-emerald-400'
+                  className={`px-4 py-3.5 sm:px-5 sm:py-4 border-b flex flex-wrap items-center justify-between gap-3 ${
+                    isDay ? accent.headerDayBg : accent.headerNightBg
                   }`}
                 >
-                  <Bookmark className="w-9 h-9 stroke-[1.8]" />
-                </div>
-                <h3 className="text-lg sm:text-xl font-extrabold tracking-tight">
-                  {searchQuery
-                    ? isBn ? 'কোনো বুকমার্ক পাওয়া যায়নি' : 'No Matching Bookmarks'
-                    : isBn ? 'এখনো কোনো বুকমার্ক নেই' : 'No Bookmarks Yet'}
-                </h3>
-                <p className={`text-xs sm:text-sm mt-1.5 max-w-sm leading-relaxed ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {searchQuery
-                    ? isBn ? 'অন্য কোনো শব্দ দিয়ে খুঁজে দেখুন।' : 'Try searching with a different keyword.'
-                    : isBn
-                    ? 'কোরআন, সাহাবি জীবনী বা হাদিস পড়ার সময় বুকমার্ক আইকনে ট্যাপ করে এখানে সংরক্ষণ করুন'
-                    : 'Tap the bookmark icon while reading Quran or chapters to save them here'}
-                </p>
-                {!searchQuery && onNavigateToQuran && (
                   <button
                     type="button"
-                    onClick={onNavigateToQuran}
-                    className={`mt-6 min-h-[44px] px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold border flex items-center gap-2 transition active:scale-95 cursor-pointer ${
-                      isDay
-                        ? 'bg-white border-slate-200 text-[#006A4E] hover:bg-emerald-50 shadow-2xs'
-                        : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
-                    }`}
+                    onClick={() =>
+                      setCollapsedTopics((prev) => ({ ...prev, [topic.id]: !prev[topic.id] }))
+                    }
+                    className="flex items-center gap-3 min-w-0 text-left cursor-pointer flex-1"
                   >
-                    <BookOpen className="w-4 h-4" />
-                    <span>{isBn ? 'আল-কোরআন থেকে পড়া শুরু করুন' : 'Browse Al-Quran'}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredBookmarks.map((bm) => (
-                  <div
-                    key={bm.id}
-                    className={`p-4 sm:p-5 rounded-2xl border transition flex flex-col justify-between gap-3 ${
-                      isDay
-                        ? 'bg-white border-slate-200/90 hover:border-emerald-300 shadow-2xs'
-                        : 'bg-[#0b262d] border-[#17444e] hover:border-emerald-700/60'
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className={`text-[11px] font-semibold flex items-center gap-1.5 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}>
-                            <span>{bm.sourceLabel}</span>
-                            {bm.timestamp > 0 && (
-                              <>
-                                <span aria-hidden="true">·</span>
-                                <span className={isDay ? 'text-slate-400' : 'text-slate-400'}>
-                                  {formatDate(bm.timestamp)}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                          <h4 className="font-bold text-sm sm:text-base leading-snug mt-0.5">{bm.title}</h4>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <ShareDownloadButtons
-                            variant="compact"
-                            selectedLanguage={selectedLanguage}
-                            themeMode={themeMode}
-                            onShare={() =>
-                              setShareState({
-                                focus: 'share',
-                                content: {
-                                  badge: bm.sourceLabel,
-                                  title: bm.title,
-                                  arabic: bm.arabic,
-                                  body: bm.subtitle || bm.title,
-                                  fileNamePrefix: 'Saved-Bookmark',
-                                },
-                              })
-                            }
-                            onDownload={() =>
-                              setShareState({
-                                focus: 'download',
-                                content: {
-                                  badge: bm.sourceLabel,
-                                  title: bm.title,
-                                  arabic: bm.arabic,
-                                  body: bm.subtitle || bm.title,
-                                  fileNamePrefix: 'Saved-Bookmark',
-                                },
-                              })
-                            }
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(bm.id, `${bm.title}\n${bm.arabic || ''}\n${bm.subtitle}`)}
-                            className="min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-slate-400 hover:text-emerald-500 cursor-pointer"
-                            title="Copy"
-                          >
-                            {copiedId === bm.id ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              removeUnifiedBookmark(bm);
-                              refreshAll();
-                              if (soundEnabled) soundHaptics.playTap();
-                            }}
-                            className="min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 cursor-pointer"
-                            title="Remove"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                    <div
+                      className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-2xs ${
+                        isDay ? accent.iconDayBg : accent.iconNightBg
+                      }`}
+                    >
+                      {topic.emoji}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className={`text-base sm:text-lg font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                          {isBn ? topic.nameBn : topic.nameEn}
+                        </h3>
+                        <span className={`text-xs font-bold font-mono tabular-nums ${isDay ? accent.textDay : accent.textNight}`}>
+                          · {formatNum(items.length)} {isBn ? 'টি' : 'items'}
+                        </span>
                       </div>
-                      {bm.arabic && (
-                        <p dir="rtl" className="font-arabic text-lg leading-loose text-[#006A4E] dark:text-emerald-300">
-                          {bm.arabic}
-                        </p>
-                      )}
-                      {bm.subtitle && (
-                        <p className={`text-xs sm:text-sm leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
-                          {bm.subtitle}
+                      {(topic.descBn || topic.arabicLabel) && (
+                        <p className={`text-[11px] sm:text-xs truncate mt-0.5 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
+                          {isBn ? topic.descBn || topic.arabicLabel : topic.descEn || topic.arabicLabel}
                         </p>
                       )}
                     </div>
-                    {bm.kind === 'quran' && onNavigateToQuran && (
-                      <button
-                        type="button"
-                        onClick={onNavigateToQuran}
-                        className={`self-start text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
-                          isDay ? 'text-[#006A4E] hover:underline' : 'text-emerald-400 hover:underline'
-                        }`}
-                      >
-                        <span>{isBn ? 'কোরআনে দেখুন' : 'Open in Quran'}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                  </button>
 
-        {/* TAB 2: HIGHLIGHTS */}
-        {activeTab === 'highlights' && (
-          <div className="flex-1 flex flex-col">
-            {highlights.length > 0 && (
-              <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-                <button
-                  type="button"
-                  onClick={() => setHighlightColorFilter('all')}
-                  className={`min-h-[36px] px-3.5 py-1 rounded-full text-xs font-semibold border transition cursor-pointer whitespace-nowrap ${
-                    highlightColorFilter === 'all'
-                      ? isDay
-                        ? 'bg-slate-900 text-white border-slate-900'
-                        : 'bg-white text-slate-900 border-white'
-                      : isDay
-                      ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                      : 'bg-[#092127] border-[#153e47] text-slate-300 hover:bg-white/5'
-                  }`}
-                >
-                  {isBn ? 'সব রঙ' : 'All'}
-                </button>
-                {HIGHLIGHT_COLORS.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setHighlightColorFilter(c.id)}
-                    className={`min-h-[36px] px-3.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                      highlightColorFilter === c.id
-                        ? isDay
-                          ? 'bg-slate-900 text-white border-slate-900'
-                          : 'bg-white text-slate-900 border-white'
-                        : isDay
-                        ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                        : 'bg-[#092127] border-[#153e47] text-slate-300 hover:bg-white/5'
-                    }`}
-                  >
-                    <span className={`w-2.5 h-2.5 rounded-full ${c.dotClass}`} />
-                    <span>{isBn ? c.labelBn : c.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {showAddHighlight && (
-              <form
-                onSubmit={handleCreateHighlight}
-                className={`mb-5 p-4 sm:p-5 rounded-2xl border space-y-3 animate-in fade-in ${
-                  isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0a2329] border-[#17444e]'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#006A4E] dark:text-emerald-400">
-                    {isBn ? 'নতুন হাইলাইট সংরক্ষণ করুন' : 'Save Commentary Highlight'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddHighlight(false)}
-                    className="min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <textarea
-                  required
-                  rows={3}
-                  value={hlText}
-                  onChange={(e) => setHlText(e.target.value)}
-                  placeholder={isBn ? 'তাফসীর বা গুরুত্বপূর্ণ অংশ লিখুন বা পেস্ট করুন...' : 'Write or paste commentary text to highlight...'}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium focus:outline-none resize-none ${
-                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
-                  }`}
-                />
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <input
-                    type="text"
-                    value={hlSource}
-                    onChange={(e) => setHlSource(e.target.value)}
-                    placeholder={isBn ? 'সূত্র (যেমন: সূরা বাকারা তাফসীর)' : 'Source (e.g. Surah Al-Baqarah Tafsir)'}
-                    className={`flex-1 min-w-[180px] min-h-[44px] px-3.5 py-2 rounded-xl border text-xs font-medium focus:outline-none ${
-                      isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
-                    }`}
-                  />
-                  <div className="flex items-center gap-2">
-                    {HIGHLIGHT_COLORS.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => setHlColor(c.id)}
-                        className={`w-7 h-7 rounded-full ${c.dotClass} transition cursor-pointer ${
-                          hlColor === c.id ? 'ring-2 ring-offset-2 ring-[#006A4E] scale-110' : 'opacity-70 hover:opacity-100'
-                        }`}
-                        title={isBn ? c.labelBn : c.label}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="min-h-[44px] px-5 py-2 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white text-xs font-bold cursor-pointer transition active:scale-95"
-                  >
-                    {isBn ? 'হাইলাইট সেভ করুন' : 'Save Highlight'}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {filteredHighlights.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center py-14 px-4">
-                <div
-                  className={`w-24 h-24 rounded-full flex items-center justify-center mb-5 ${
-                    isDay
-                      ? 'bg-emerald-50/90 ring-8 ring-emerald-50/40 text-[#006A4E]'
-                      : 'bg-emerald-950/60 ring-8 ring-emerald-950/25 text-emerald-400'
-                  }`}
-                >
-                  <Pencil className="w-9 h-9 stroke-[1.8]" />
-                </div>
-                <h3 className="text-lg sm:text-xl font-extrabold tracking-tight">
-                  {searchQuery || highlightColorFilter !== 'all'
-                    ? isBn ? 'কোনো হাইলাইট পাওয়া যায়নি' : 'No Matching Highlights'
-                    : isBn ? 'এখনো কোনো হাইলাইট নেই' : 'No Highlights Yet'}
-                </h3>
-                <p className={`text-xs sm:text-sm mt-1.5 max-w-sm leading-relaxed ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {searchQuery || highlightColorFilter !== 'all'
-                    ? isBn ? 'অন্য ফিল্টার বা শব্দ দিয়ে চেষ্টা করুন।' : 'Try clearing your filter or search query.'
-                    : isBn
-                    ? 'তাফসীর বা ব্যাখ্যার কোনো লেখা সিলেক্ট করে হাইলাইট করুন'
-                    : 'Select text in commentary to highlight it'}
-                </p>
-                {!searchQuery && highlightColorFilter === 'all' && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAddHighlight(true)}
-                    className={`mt-6 min-h-[44px] px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold border flex items-center gap-2 transition active:scale-95 cursor-pointer ${
-                      isDay
-                        ? 'bg-white border-slate-200 text-[#006A4E] hover:bg-emerald-50 shadow-2xs'
-                        : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
-                    }`}
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{isBn ? 'প্রথম হাইলাইট যোগ করুন' : 'Add Your First Highlight'}</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredHighlights.map((hl) => {
-                  const colorObj = HIGHLIGHT_COLORS.find((c) => c.id === hl.color) || HIGHLIGHT_COLORS[0];
-                  return (
-                    <div
-                      key={hl.id}
-                      className={`p-4 sm:p-5 rounded-2xl border flex flex-col justify-between gap-3 ${
-                        isDay ? colorObj.cardDay : colorObj.cardNight
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openComposer({ presetTopicId: topic.id })}
+                      className={`min-h-[36px] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border transition active:scale-95 cursor-pointer ${
+                        isDay
+                          ? 'bg-white border-slate-200/90 text-[#006A4E] hover:bg-emerald-50'
+                          : 'bg-[#071a1f] border-[#1b4c57] text-emerald-300 hover:bg-[#10323b]'
                       }`}
+                      title={isBn ? 'এই টপিকে নতুন কিছু যোগ করুন' : 'Add item to this topic'}
                     >
-                      <div className="space-y-2.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0 text-[11px] font-semibold">
-                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${colorObj.dotClass}`} />
-                            <span className={`truncate ${colorObj.textAccent}`}>{hl.source}</span>
-                            <span aria-hidden="true" className="opacity-50">·</span>
-                            <span className="opacity-65 whitespace-nowrap">{formatDate(hl.createdAt)}</span>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <ShareDownloadButtons
-                              variant="compact"
-                              selectedLanguage={selectedLanguage}
-                              themeMode={themeMode}
-                              onShare={() =>
-                                setShareState({
-                                  focus: 'share',
-                                  content: {
-                                    badge: isBn ? 'সংরক্ষিত হাইলাইট' : 'Saved Highlight',
-                                    title: hl.source || (isBn ? 'তাফসীর হাইলাইট' : 'Commentary Highlight'),
-                                    body: `"${hl.text}"`,
-                                    reference: hl.source,
-                                    fileNamePrefix: 'Saved-Highlight',
-                                  },
-                                })
-                              }
-                              onDownload={() =>
-                                setShareState({
-                                  focus: 'download',
-                                  content: {
-                                    badge: isBn ? 'সংরক্ষিত হাইলাইট' : 'Saved Highlight',
-                                    title: hl.source || (isBn ? 'তাফসীর হাইলাইট' : 'Commentary Highlight'),
-                                    body: `"${hl.text}"`,
-                                    reference: hl.source,
-                                    fileNamePrefix: 'Saved-Highlight',
-                                  },
-                                })
-                              }
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(hl.id, hl.text)}
-                              className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-slate-400 hover:text-emerald-500 cursor-pointer"
-                              title="Copy"
-                            >
-                              {copiedId === hl.id ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                removeSavedHighlight(hl.id);
-                                refreshAll();
-                                if (soundEnabled) soundHaptics.playTap();
-                              }}
-                              className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 cursor-pointer"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-xs sm:text-sm leading-relaxed font-medium whitespace-pre-wrap">
-                          “{hl.text}”
-                        </p>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{isBn ? 'যোগ করুন' : 'Add'}</span>
+                    </button>
 
-                        {hl.note && editingHighlightNoteId !== hl.id && (
-                          <div className="px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 text-xs italic opacity-85 border border-black/10 dark:border-white/10">
-                            📝 {hl.note}
-                          </div>
-                        )}
+                    <ShareDownloadButtons
+                      variant="compact"
+                      selectedLanguage={selectedLanguage}
+                      themeMode={themeMode}
+                      onShare={() => openTopicShare(topic, items, 'share')}
+                      onDownload={() => openTopicShare(topic, items, 'download')}
+                    />
 
-                        {editingHighlightNoteId === hl.id && (
-                          <div className="flex items-center gap-1.5 pt-1">
-                            <input
-                              type="text"
-                              value={highlightNoteDraft}
-                              onChange={(e) => setHighlightNoteDraft(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  updateSavedHighlightNote(hl.id, highlightNoteDraft);
-                                  setEditingHighlightNoteId(null);
-                                  refreshAll();
-                                }
-                              }}
-                              placeholder={isBn ? 'হাইলাইটে নিজের নোট লিখুন...' : 'Write a note for this highlight...'}
-                              className={`flex-1 min-w-0 px-2.5 py-1.5 rounded-xl border text-xs focus:outline-none ${
-                                isDay ? 'bg-white border-slate-300 text-slate-900' : 'bg-[#07181d] border-[#1f5563] text-white'
-                              }`}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateSavedHighlightNote(hl.id, highlightNoteDraft);
-                                setEditingHighlightNoteId(null);
-                                refreshAll();
-                                if (soundEnabled) soundHaptics.playMilestone();
-                              }}
-                              className="px-3 py-1.5 rounded-xl bg-[#006A4E] text-white text-xs font-bold cursor-pointer"
-                            >
-                              {isBn ? 'সেভ' : 'Save'}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Color Switcher & Quick Note Footer */}
-                      <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-black/10 dark:border-white/10">
-                        <div className="flex items-center gap-1.5">
-                          {HIGHLIGHT_COLORS.map((c) => (
-                            <button
-                              key={c.id}
-                              type="button"
-                              onClick={() => {
-                                updateSavedHighlightColor(hl.id, c.id);
-                                refreshAll();
-                                if (soundEnabled) soundHaptics.playTap();
-                              }}
-                              className={`w-5 h-5 rounded-full ${c.dotClass} border-2 transition cursor-pointer ${
-                                hl.color === c.id
-                                  ? 'border-slate-900 dark:border-white scale-110 shadow'
-                                  : 'border-transparent opacity-65 hover:opacity-100'
-                              }`}
-                              title={isBn ? c.labelBn : c.label}
-                            />
-                          ))}
-                        </div>
+                    {topic.isCustom && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => openTopicModal(topic)}
+                          className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-slate-500 hover:text-emerald-500 cursor-pointer"
+                          title={isBn ? 'টপিক সম্পাদনা' : 'Edit topic'}
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
-                            if (editingHighlightNoteId === hl.id) {
-                              setEditingHighlightNoteId(null);
-                            } else {
-                              setEditingHighlightNoteId(hl.id);
-                              setHighlightNoteDraft(hl.note || '');
-                            }
+                            deleteCustomTopic(topic.id);
+                            if (selectedTopicId === topic.id) setSelectedTopicId('all');
+                            refreshAll();
+                            if (soundEnabled) soundHaptics.playTap();
                           }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold hover:bg-black/5 dark:hover:bg-white/10 opacity-80 hover:opacity-100 cursor-pointer"
+                          className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 cursor-pointer"
+                          title={isBn ? 'কাস্টম টপিক মুছুন' : 'Delete custom topic'}
                         >
-                          <Edit3 className="w-3 h-3" />
-                          <span>{hl.note ? (isBn ? 'নোট সম্পাদনা' : 'Edit Note') : (isBn ? 'নোট যোগ করুন' : 'Add Note')}</span>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollapsedTopics((prev) => ({ ...prev, [topic.id]: !prev[topic.id] }))
+                      }
+                      className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 opacity-70 hover:opacity-100 cursor-pointer"
+                      aria-label={isCollapsed ? 'Expand' : 'Collapse'}
+                    >
+                      <ChevronDown className={`w-4 h-4 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Items inside this Topic */}
+                {!isCollapsed && (
+                  <div className="p-4 sm:p-5">
+                    {items.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className={`text-xs sm:text-sm ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {isBn ? 'এই টপিকে এখনো কোনো কিছু সংরক্ষণ করা হয়নি।' : 'No items saved in this topic yet.'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => openComposer({ presetTopicId: topic.id })}
+                          className="mt-3 min-h-[40px] px-4 py-1.5 rounded-full bg-[#006A4E] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer hover:bg-[#005740]"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>{isBn ? 'প্রথম আইটেম যোগ করুন' : 'Add First Item'}</span>
                         </button>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {items.map((item) => renderEntryCard(item))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+            );
+          })
         )}
+      </div>
 
-        {/* TAB 3: NOTES */}
-        {activeTab === 'notes' && (
-          <div className="flex-1 flex flex-col">
-            {showNoteForm && (
-              <form
-                onSubmit={handleSaveNote}
-                className={`mb-5 p-4 sm:p-5 rounded-2xl border space-y-3 animate-in fade-in ${
-                  isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0a2329] border-[#17444e]'
-                }`}
+      {/* UNIVERSAL "SAVE ANYTHING" COMPOSER MODAL */}
+      {composerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in"
+          onClick={() => setComposerOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full sm:max-w-xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border shadow-2xl p-5 sm:p-6 space-y-4 ${
+              isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#081d22] border-[#184852] text-white'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 pb-2 border-b border-black/10 dark:border-white/10">
+              <div>
+                <h3 className="text-lg font-black tracking-tight text-[#006A4E] dark:text-emerald-400">
+                  {editingEntry
+                    ? isBn ? 'তথ্য সম্পাদনা করুন' : 'Edit Saved Item'
+                    : isBn ? 'যেকোনো কিছু সংরক্ষণ করুন' : 'Save Anything to Library'}
+                </h3>
+                <p className="text-[11px] opacity-70">
+                  {isBn
+                    ? 'টপিক নির্বাচন করে নোট, আয়াত, লিংক, চেকলিস্ট বা ছবি সেভ করুন'
+                    : 'Choose a topic and save notes, quotes, links, checklists, or images'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setComposerOpen(false)}
+                className="min-w-[40px] min-h-[40px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
               >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleComposerSubmit} className="space-y-4">
+              {/* Step 1: Choose Content Format (only when creating or editing vault item) */}
+              {(!editingEntry || editingEntry.origin === 'vault') && (
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                    {isBn ? 'কী সংরক্ষণ করতে চান?' : 'Content Format'}
+                  </label>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {quickTemplates.map((tpl) => {
+                      const active = formKind === tpl.kind;
+                      return (
+                        <button
+                          key={tpl.kind}
+                          type="button"
+                          onClick={() => setFormKind(tpl.kind)}
+                          className={`min-h-[54px] px-2 py-2 rounded-2xl border text-[11px] font-bold flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+                            active
+                              ? isDay
+                                ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                                : 'bg-emerald-600 border-emerald-500 text-white'
+                              : isDay
+                              ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-emerald-300'
+                              : 'bg-[#0a242b] border-[#174651] text-slate-300 hover:border-emerald-500/50'
+                          }`}
+                        >
+                          {tpl.icon}
+                          <span className="truncate max-w-full">{isBn ? tpl.labelBn.split(' ')[0] : tpl.labelEn}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Topic Selection + Inline Custom Topic Creator */}
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#006A4E] dark:text-emerald-400">
-                    {editingNoteId
-                      ? isBn ? 'নোট সম্পাদনা করুন' : 'Edit Study Note'
-                      : isBn ? 'নতুন নোট লিখুন' : 'Create Study Note'}
-                  </span>
+                  <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                    {isBn ? 'টপিক (ক্যাটাগরি)' : 'Topic'}
+                  </label>
                   <button
                     type="button"
-                    onClick={() => setShowNoteForm(false)}
-                    className="min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+                    onClick={() => setInlineTopicCreate((v) => !v)}
+                    className="text-[11px] font-bold text-[#006A4E] dark:text-emerald-400 hover:underline cursor-pointer"
                   >
-                    <X className="w-4 h-4" />
+                    {inlineTopicCreate
+                      ? isBn ? 'বিদ্যমান টপিক বেছে নিন' : 'Choose existing'
+                      : isBn ? '+ নতুন টপিক তৈরি করুন' : '+ Create new topic'}
                   </button>
                 </div>
+
+                {inlineTopicCreate ? (
+                  <input
+                    type="text"
+                    value={inlineTopicName}
+                    onChange={(e) => setInlineTopicName(e.target.value)}
+                    placeholder={isBn ? 'নতুন টপিকের নাম (যেমন: রমজানের আমল, ব্যক্তিগত)...' : 'New topic name...'}
+                    className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-semibold focus:outline-none ${
+                      isDay ? 'bg-white border-emerald-400 text-slate-900' : 'bg-[#06161a] border-emerald-500 text-white'
+                    }`}
+                  />
+                ) : (
+                  <select
+                    value={formTopicId}
+                    onChange={(e) => setFormTopicId(e.target.value)}
+                    className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-semibold focus:outline-none cursor-pointer ${
+                      isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
+                    }`}
+                  >
+                    {topics.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.emoji} {isBn ? t.nameBn : t.nameEn}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Title */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                  {isBn ? 'শিরোনাম' : 'Title'}
+                </label>
                 <input
                   type="text"
-                  value={noteTitle}
-                  onChange={(e) => setNoteTitle(e.target.value)}
-                  placeholder={isBn ? 'নোটের শিরোনাম...' : 'Note title...'}
+                  required={formKind !== 'image'}
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  placeholder={
+                    formKind === 'quote'
+                      ? isBn ? 'যেমন: ধৈর্য ও আল্লাহর ওপর তাওয়াক্কুল' : 'e.g. Patience & Reliance on Allah'
+                      : formKind === 'link'
+                      ? isBn ? 'যেমন: গুরুত্বপূর্ণ তাফসীর লেকচার বা আর্টিকেল' : 'e.g. Useful Article or Video'
+                      : formKind === 'checklist'
+                      ? isBn ? 'যেমন: দৈনন্দিন ফজর পরবর্তী আমল' : 'e.g. Daily Morning Routine'
+                      : isBn ? 'সংরক্ষণের শিরোনাম লিখুন...' : 'Enter a clear title...'
+                  }
                   className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-bold focus:outline-none ${
                     isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
                   }`}
                 />
-                <textarea
-                  required
-                  rows={4}
-                  value={noteContent}
-                  onChange={(e) => setNoteContent(e.target.value)}
-                  placeholder={isBn ? 'আপনার চিন্তাভাবনা, তাফসীরের শিক্ষা বা আমলের নোট লিখুন...' : 'Write your reflection, tafsir insight, or reminder...'}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium focus:outline-none resize-none ${
-                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
-                  }`}
-                />
+              </div>
+
+              {/* Optional Arabic Field for Quote / Note */}
+              {(formKind === 'quote' || formKind === 'note') && (
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                    {isBn ? 'আরবি পাঠ (ঐচ্ছিক)' : 'Arabic Text (Optional)'}
+                  </label>
+                  <textarea
+                    rows={2}
+                    dir="rtl"
+                    value={formArabic}
+                    onChange={(e) => setFormArabic(e.target.value)}
+                    placeholder="اكتب النص العربي هنا (اختياري)..."
+                    className={`w-full px-3.5 py-2 rounded-xl border font-arabic text-base focus:outline-none resize-none ${
+                      isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
+                    }`}
+                  />
+                </div>
+              )}
+
+              {/* Link URL Field */}
+              {formKind === 'link' && (
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                    {isBn ? 'ওয়েব লিংক (URL)' : 'Web Link (URL)'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formUrl}
+                    onChange={(e) => setFormUrl(e.target.value)}
+                    placeholder="https://example.com/article"
+                    className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-mono focus:outline-none ${
+                      isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
+                    }`}
+                  />
+                </div>
+              )}
+
+              {/* Image Upload Field */}
+              {formKind === 'image' && (
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                    {isBn ? 'ছবি / স্ক্রিনশট আপলোড' : 'Image / Screenshot'}
+                  </label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageFileSelect}
+                    className="hidden"
+                  />
+                  {formImageDataUrl ? (
+                    <div className="relative rounded-2xl overflow-hidden border border-black/15 dark:border-white/15">
+                      <img src={formImageDataUrl} alt="Preview" className="w-full max-h-52 object-contain bg-black/5 dark:bg-black/30" />
+                      <button
+                        type="button"
+                        onClick={() => setFormImageDataUrl(undefined)}
+                        className="absolute top-2 right-2 px-3 py-1.5 rounded-full bg-rose-600 text-white text-xs font-bold shadow cursor-pointer"
+                      >
+                        {isBn ? 'ছবি সরান' : 'Remove'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isProcessingImage}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`w-full min-h-[110px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 text-xs font-bold transition cursor-pointer ${
+                        isDay
+                          ? 'border-slate-300 bg-slate-50 hover:border-[#006A4E] text-slate-600'
+                          : 'border-[#1d4e5a] bg-[#07191e] hover:border-emerald-500 text-slate-300'
+                      }`}
+                    >
+                      <ImageIcon className="w-6 h-6 text-[#006A4E] dark:text-emerald-400" />
+                      <span>
+                        {isProcessingImage
+                          ? isBn ? 'ছবি প্রসেস হচ্ছে...' : 'Processing image...'
+                          : isBn ? 'গ্যালারি বা ডিভাইস থেকে ছবি নির্বাচন করুন' : 'Pick an image from device'}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Checklist Rows Builder */}
+              {formKind === 'checklist' && (
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                    {isBn ? 'চেকলিস্ট আইটেমসমূহ' : 'Checklist Items'}
+                  </label>
+                  <div className="space-y-2">
+                    {formChecklist.map((row, idx) => (
+                      <div key={row.id} className="flex items-center gap-2">
+                        <span className="text-xs font-mono opacity-50 w-5 text-center">{idx + 1}.</span>
+                        <input
+                          type="text"
+                          value={row.text}
+                          onChange={(e) =>
+                            setFormChecklist((prev) =>
+                              prev.map((r) => (r.id === row.id ? { ...r, text: e.target.value } : r))
+                            )
+                          }
+                          placeholder={isBn ? `আইটেম ${formatNum(idx + 1)}...` : `Task ${idx + 1}...`}
+                          className={`flex-1 min-h-[42px] px-3 py-1.5 rounded-xl border text-xs sm:text-sm font-medium focus:outline-none ${
+                            isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
+                          }`}
+                        />
+                        {formChecklist.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormChecklist((prev) => prev.filter((r) => r.id !== row.id))
+                            }
+                            className="min-w-[38px] min-h-[38px] rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormChecklist((prev) => [
+                          ...prev,
+                          { id: `row_${Date.now()}_${prev.length}`, text: '', done: false },
+                        ])
+                      }
+                      className="min-h-[38px] px-3.5 py-1.5 rounded-xl border border-dashed border-emerald-500/50 text-xs font-bold text-[#006A4E] dark:text-emerald-400 inline-flex items-center gap-1.5 hover:bg-emerald-500/10 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{isBn ? 'আরও আইটেম যোগ করুন' : 'Add Checklist Row'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Main Body / Notes / Description */}
+              {formKind !== 'checklist' && (
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                    {formKind === 'quote'
+                      ? isBn ? 'অর্থ ও মূল উক্তি' : 'Quote / Translation'
+                      : formKind === 'image' || formKind === 'link' || formKind === 'bookmark'
+                      ? isBn ? 'বিবরণ / নোট (ঐচ্ছিক)' : 'Notes / Description (Optional)'
+                      : isBn ? 'বিস্তারিত লেখা' : 'Content'}
+                  </label>
+                  <textarea
+                    required={formKind === 'note' || formKind === 'quote'}
+                    rows={formKind === 'image' || formKind === 'link' ? 2 : 4}
+                    value={formContent}
+                    onChange={(e) => setFormContent(e.target.value)}
+                    placeholder={
+                      isBn
+                        ? 'আপনার গুরুত্বপূর্ণ কথা, তাফসীর, দোয়া বা যেকোনো তথ্য লিখুন...'
+                        : 'Write your notes, quote, or details...'
+                    }
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium focus:outline-none resize-y ${
+                      isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
+                    }`}
+                  />
+                </div>
+              )}
+
+              {/* Reference & Pin Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                 <input
                   type="text"
-                  value={noteSource}
-                  onChange={(e) => setNoteSource(e.target.value)}
-                  placeholder={isBn ? 'সূত্র বা বিষয় (ঐচ্ছিক)' : 'Topic or reference (optional)'}
-                  className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs font-medium focus:outline-none ${
+                  value={formReference}
+                  onChange={(e) => setFormReference(e.target.value)}
+                  placeholder={isBn ? 'সূত্র / রেফারেন্স (ঐচ্ছিক)' : 'Source / Reference (optional)'}
+                  className={`w-full min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-medium focus:outline-none ${
                     isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
                   }`}
                 />
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="min-h-[44px] px-5 py-2 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white text-xs font-bold cursor-pointer transition active:scale-95"
-                  >
-                    {isBn ? 'নোট সংরক্ষণ করুন' : 'Save Note'}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {filteredNotes.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center py-14 px-4">
-                <div
-                  className={`w-24 h-24 rounded-full flex items-center justify-center mb-5 ${
-                    isDay
-                      ? 'bg-emerald-50/90 ring-8 ring-emerald-50/40 text-[#006A4E]'
-                      : 'bg-emerald-950/60 ring-8 ring-emerald-950/25 text-emerald-400'
+                <button
+                  type="button"
+                  onClick={() => setFormPinned((p) => !p)}
+                  className={`min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+                    formPinned
+                      ? 'bg-amber-500/15 border-amber-500/50 text-amber-600 dark:text-amber-300'
+                      : isDay
+                      ? 'bg-white border-slate-200 text-slate-600'
+                      : 'bg-[#06161a] border-[#194a55] text-slate-300'
                   }`}
                 >
-                  <FileText className="w-9 h-9 stroke-[1.8]" />
+                  <Pin className={`w-4 h-4 ${formPinned ? 'fill-current' : ''}`} />
+                  <span>{isBn ? 'উপরে পিন করে রাখুন' : 'Pin to Top'}</span>
+                </button>
+              </div>
+
+              {formError && (
+                <div className="px-3.5 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-semibold text-rose-500">
+                  {formError}
                 </div>
-                <h3 className="text-lg sm:text-xl font-extrabold tracking-tight">
-                  {searchQuery
-                    ? isBn ? 'কোনো নোট পাওয়া যায়নি' : 'No Matching Notes'
-                    : isBn ? 'এখনো কোনো নোট নেই' : 'No Notes Yet'}
-                </h3>
-                <p className={`text-xs sm:text-sm mt-1.5 max-w-sm leading-relaxed ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {searchQuery
-                    ? isBn ? 'অন্য কোনো শব্দ দিয়ে খুঁজে দেখুন।' : 'Try searching with a different keyword.'
-                    : isBn
-                    ? 'কোরআন, তাফসীর বা দ্বীনি শিক্ষার গুরুত্বপূর্ণ নোটস এখানে লিখে সংরক্ষণ করুন'
-                    : 'Write personal reflections and study notes to keep them organized here'}
-                </p>
-                {!searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditNote()}
-                    className={`mt-6 min-h-[44px] px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold border flex items-center gap-2 transition active:scale-95 cursor-pointer ${
-                      isDay
-                        ? 'bg-white border-slate-200 text-[#006A4E] hover:bg-emerald-50 shadow-2xs'
-                        : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
-                    }`}
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{isBn ? 'নতুন নোট লিখুন' : 'Write Your First Note'}</span>
-                  </button>
-                )}
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setComposerOpen(false)}
+                  className={`min-h-[44px] px-4 py-2 rounded-full border text-xs font-bold cursor-pointer ${
+                    isDay ? 'border-slate-200 text-slate-600 hover:bg-slate-50' : 'border-[#194a55] text-slate-300 hover:bg-white/5'
+                  }`}
+                >
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="min-h-[44px] px-6 py-2 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white text-xs sm:text-sm font-bold cursor-pointer transition active:scale-95"
+                >
+                  {editingEntry ? (isBn ? 'আপডেট করুন' : 'Update') : isBn ? 'সংরক্ষণ করুন' : 'Save Item'}
+                </button>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredNotes.map((n) => (
-                  <div
-                    key={n.id}
-                    className={`p-4 sm:p-5 rounded-2xl border transition flex flex-col justify-between gap-2.5 ${
-                      isDay
-                        ? 'bg-white border-slate-200/90 hover:border-emerald-300 shadow-2xs'
-                        : 'bg-[#0b262d] border-[#17444e] hover:border-emerald-700/60'
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-sm sm:text-base leading-snug">{n.title}</h4>
-                          <div className={`text-[11px] font-medium mt-0.5 flex items-center gap-1.5 ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                            {n.source && (
-                              <>
-                                <span className={isDay ? 'text-[#006A4E] font-semibold' : 'text-emerald-400 font-semibold'}>
-                                  {n.source}
-                                </span>
-                                <span aria-hidden="true">·</span>
-                              </>
-                            )}
-                            <span>{formatDate(n.updatedAt || n.createdAt)}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          <ShareDownloadButtons
-                            variant="compact"
-                            selectedLanguage={selectedLanguage}
-                            themeMode={themeMode}
-                            onShare={() =>
-                              setShareState({
-                                focus: 'share',
-                                content: {
-                                  badge: isBn ? 'ব্যক্তিগত নোট' : 'Study Note',
-                                  title: n.title || (isBn ? 'সংরক্ষিত নোট' : 'Saved Note'),
-                                  subtitle: n.source,
-                                  body: n.content,
-                                  reference: n.source,
-                                  fileNamePrefix: 'Saved-Note',
-                                },
-                              })
-                            }
-                            onDownload={() =>
-                              setShareState({
-                                focus: 'download',
-                                content: {
-                                  badge: isBn ? 'ব্যক্তিগত নোট' : 'Study Note',
-                                  title: n.title || (isBn ? 'সংরক্ষিত নোট' : 'Saved Note'),
-                                  subtitle: n.source,
-                                  body: n.content,
-                                  reference: n.source,
-                                  fileNamePrefix: 'Saved-Note',
-                                },
-                              })
-                            }
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditNote(n)}
-                            className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-slate-400 hover:text-emerald-500 cursor-pointer"
-                            title="Edit"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(n.id, `${n.title}\n\n${n.content}`)}
-                            className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-slate-400 hover:text-emerald-500 cursor-pointer"
-                            title="Copy"
-                          >
-                            {copiedId === n.id ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              removeSavedNote(n.id);
-                              refreshAll();
-                              if (soundEnabled) soundHaptics.playTap();
-                            }}
-                            className="min-w-[34px] min-h-[34px] rounded-xl flex items-center justify-center hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 cursor-pointer"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <p className={`text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
-                        {n.content}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* CUSTOM TOPIC CREATE / EDIT MODAL */}
+      {topicModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in"
+          onClick={() => setTopicModalOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-md rounded-3xl border shadow-2xl p-5 sm:p-6 space-y-4 ${
+              isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#081d22] border-[#184852] text-white'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black tracking-tight text-[#006A4E] dark:text-emerald-400">
+                {editingCustomTopic
+                  ? isBn ? 'টপিক সম্পাদনা করুন' : 'Edit Topic'
+                  : isBn ? 'নতুন কাস্টম টপিক তৈরি করুন' : 'Create Custom Topic'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setTopicModalOpen(false)}
+                className="min-w-[38px] min-h-[38px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomTopic} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                  {isBn ? 'আইকন পছন্দ করুন' : 'Choose Icon'}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {TOPIC_EMOJI_OPTIONS.map((em) => (
+                    <button
+                      key={em}
+                      type="button"
+                      onClick={() => setTopicEmojiDraft(em)}
+                      className={`w-10 h-10 rounded-xl border text-lg flex items-center justify-center transition cursor-pointer ${
+                        topicEmojiDraft === em
+                          ? 'border-[#006A4E] bg-emerald-500/15 scale-105'
+                          : isDay
+                          ? 'border-slate-200 bg-slate-50 hover:border-emerald-300'
+                          : 'border-[#194a55] bg-[#0a242b] hover:border-emerald-500/50'
+                      }`}
+                    >
+                      {em}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                  {isBn ? 'টপিকের নাম' : 'Topic Name'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={topicNameDraft}
+                  onChange={(e) => setTopicNameDraft(e.target.value)}
+                  placeholder={isBn ? 'যেমন: রমজানের পরিকল্পনা, মাসআলা-মাসায়েল...' : 'e.g. Ramadan Plan, Fiqh Notes...'}
+                  className={`w-full min-h-[44px] px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-bold focus:outline-none ${
+                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                  {isBn ? 'সংক্ষিপ্ত বিবরণ (ঐচ্ছিক)' : 'Short Description (Optional)'}
+                </label>
+                <input
+                  type="text"
+                  value={topicDescDraft}
+                  onChange={(e) => setTopicDescDraft(e.target.value)}
+                  placeholder={isBn ? 'এই টপিকে কী ধরনের তথ্য রাখবেন?' : 'What goes in this topic?'}
+                  className={`w-full min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-medium focus:outline-none ${
+                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#06161a] border-[#194a55] text-white'
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
+                  {isBn ? 'থিম রঙ' : 'Accent Color'}
+                </label>
+                <div className="flex items-center gap-2.5">
+                  {ACCENT_KEYS.map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setTopicAccentDraft(key)}
+                      className={`w-8 h-8 rounded-full ${TOPIC_ACCENT_STYLES[key].dotBg} transition cursor-pointer ${
+                        topicAccentDraft === key ? 'ring-2 ring-offset-2 ring-[#006A4E] scale-110' : 'opacity-70 hover:opacity-100'
+                      }`}
+                      title={isBn ? TOPIC_ACCENT_STYLES[key].labelBn : TOPIC_ACCENT_STYLES[key].labelEn}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setTopicModalOpen(false)}
+                  className={`min-h-[42px] px-4 py-2 rounded-full border text-xs font-bold cursor-pointer ${
+                    isDay ? 'border-slate-200 text-slate-600' : 'border-[#194a55] text-slate-300'
+                  }`}
+                >
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="min-h-[42px] px-5 py-2 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white text-xs font-bold cursor-pointer"
+                >
+                  {editingCustomTopic ? (isBn ? 'আপডেট' : 'Update') : isBn ? 'টপিক তৈরি করুন' : 'Create Topic'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* IMAGE LIGHTBOX PREVIEW */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-3xl w-full flex flex-col items-center gap-3"
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxImage(null)}
+              className="self-end w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={lightboxImage.src}
+              alt={lightboxImage.title}
+              className="max-h-[75vh] w-auto rounded-2xl object-contain shadow-2xl"
+            />
+            <div className="text-center text-white space-y-1">
+              <div className="font-bold text-sm sm:text-base">{lightboxImage.title}</div>
+              {lightboxImage.caption && <p className="text-xs text-slate-300">{lightboxImage.caption}</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
       <ContentShareModal
         isOpen={!!shareState}
         onClose={() => setShareState(null)}
