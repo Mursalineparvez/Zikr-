@@ -885,28 +885,6 @@ export const AppAssistantModal: React.FC<AppAssistantModalProps> = ({
         <div className="flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-5 py-4 space-y-4">
           {messages.length === 0 ? (
             <div className="space-y-4 py-2">
-              <div
-                className={`p-4 rounded-2xl border space-y-2 ${
-                  isDay
-                    ? 'bg-white border-emerald-200/80 shadow-xs'
-                    : 'bg-[#072026] border-[#14434d]'
-                }`}
-              >
-                <div className="flex items-center gap-2 font-black text-sm text-[var(--app-primary,#006A4E)] dark:text-emerald-300">
-                  <Search className="w-4 h-4 shrink-0" />
-                  <span>
-                    {isBn
-                      ? 'অ্যাপ এবং বিশ্বস্ত ওয়েব উৎস থেকে যেকোনো প্রশ্নের উত্তর পান'
-                      : 'Ask Anything — Grounded in Zikr+ & Trusted Web Sources'}
-                  </span>
-                </div>
-                <p className={`text-xs leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
-                  {isBn
-                    ? 'কুরআন, হাদিস, ২৫ নবী-রাসূল, সীরাতুন নবী, সাহাবি, দোয়া, তাবলিগ, নামাজ বা যেকোনো নৈতিক প্রশ্ন করুন। তথ্যটি অ্যাপে না থাকলে স্বয়ংক্রিয়ভাবে বিভিন্ন বিশ্বস্ত ও নির্ভরযোগ্য ওয়েবসাইট থেকে যাচাইকৃত উত্তর খুঁজে দেওয়া হবে।'
-                    : 'Ask about Quran, Hadith, Prophets, Seerat, Sahaba, Duas, Namaz, or any ethical question. If not available inside the app, Zikr+ automatically gathers verified answers from trusted web sources.'}
-                </p>
-              </div>
-
               {/* Contextual Starter Prompts */}
               <div className="space-y-2">
                 <div className={`text-[11px] font-extrabold uppercase tracking-wider ${isDay ? 'text-slate-500' : 'text-emerald-300/80'}`}>
