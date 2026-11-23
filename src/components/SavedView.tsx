@@ -1324,10 +1324,12 @@ export const SavedView: React.FC<SavedViewProps> = ({
                   isDay ? 'bg-slate-50/45 border-slate-200/85' : 'bg-[#081f25]/80 border-[#143d47]'
                 }`}
               >
-                {/* Distinct Topic Section Header */}
+                {/* Clean Topic Section Header */}
                 <div
                   className={`px-4 py-3.5 sm:px-5 sm:py-4 border-b flex flex-wrap items-center justify-between gap-3 ${
-                    isDay ? accent.headerDayBg : accent.headerNightBg
+                    isDay
+                      ? 'bg-white border-slate-200/80'
+                      : 'bg-[#0a2229] border-[#143d47]'
                   }`}
                 >
                   <button
@@ -1338,23 +1340,24 @@ export const SavedView: React.FC<SavedViewProps> = ({
                     className="flex items-center gap-3 min-w-0 text-left cursor-pointer flex-1"
                   >
                     <div
-                      className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-2xs ${
-                        isDay ? accent.iconDayBg : accent.iconNightBg
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${
+                        isDay ? 'bg-[#f0f7f4] text-[#006A4E]' : 'bg-[#123138] text-emerald-300'
                       }`}
                     >
                       {topic.emoji}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`w-2 h-2 rounded-full ${accent.dotBg} shrink-0`} />
                         <h3 className={`text-base sm:text-lg font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
                           {isBn ? topic.nameBn : topic.nameEn}
                         </h3>
-                        <span className={`text-xs font-bold font-mono tabular-nums ${isDay ? accent.textDay : accent.textNight}`}>
+                        <span className={`text-xs font-bold font-mono tabular-nums ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}>
                           · {formatNum(items.length)} {isBn ? 'টি' : 'items'}
                         </span>
                       </div>
                       {(topic.descBn || topic.arabicLabel) && (
-                        <p className={`text-[11px] sm:text-xs truncate mt-0.5 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
+                        <p className={`text-[11px] sm:text-xs truncate mt-0.5 ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                           {isBn ? topic.descBn || topic.arabicLabel : topic.descEn || topic.arabicLabel}
                         </p>
                       )}

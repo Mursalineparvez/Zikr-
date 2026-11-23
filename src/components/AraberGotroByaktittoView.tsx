@@ -1320,183 +1320,135 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           ===================================================================== */}
       {viewMode === 'directory' && (
         <div className="space-y-4">
-          {/* 3 Major Era/Chapter Showcase Cards */}
+          {/* 3 Major Era/Chapter Filter Cards (Simple Unified UI) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div
-              onClick={() => {
-                if (soundEnabled) soundHaptics.playTap();
-                setChapterFilter(chapterFilter === 1 ? 'all' : 1);
-              }}
-              className={`p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2 relative overflow-hidden ${
-                chapterFilter === 1
-                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
-              }`}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
-                    chapterFilter === 1 ? 'bg-white/20 text-white' : 'bg-amber-500/15 text-amber-500 font-black'
-                  }`}>
-                    {t.topicNumLabel(1)}
-                  </span>
-                  <span className="text-base">🏛️</span>
+            {[
+              {
+                num: 1 as const,
+                icon: '🏛️',
+                title: t.dirTopic1Title,
+                desc: t.dirTopic1Desc,
+                footer: t.dirTopic1Footer,
+              },
+              {
+                num: 2 as const,
+                icon: '🌴',
+                title: t.dirTopic2Title,
+                desc: t.dirTopic2Desc,
+                footer: t.dirTopic2Footer,
+              },
+              {
+                num: 3 as const,
+                icon: '🧭',
+                title: t.dirTopic3Title,
+                desc: t.dirTopic3Desc,
+                footer: t.dirTopic3Footer,
+              },
+            ].map((item) => {
+              const isSelected = chapterFilter === item.num;
+              return (
+                <div
+                  key={item.num}
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setChapterFilter(isSelected ? 'all' : item.num);
+                  }}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                    isSelected
+                      ? isDay
+                        ? 'bg-emerald-50/75 border-[#006A4E] ring-1 ring-[#006A4E]/20 text-slate-900 shadow-2xs'
+                        : 'bg-[#0d2d35] border-emerald-500 ring-1 ring-emerald-500/30 text-white shadow-2xs'
+                      : isDay
+                      ? 'bg-white border-slate-200/90 hover:border-emerald-400 text-slate-900 shadow-2xs'
+                      : 'bg-[#0a2026] border-[#143b44] hover:border-emerald-500/50 text-white'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span
+                        className={`font-bold text-[11px] ${
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                        }`}
+                      >
+                        {t.topicNumLabel(item.num)}
+                      </span>
+                      <span className="text-base">{item.icon}</span>
+                    </div>
+                    <h3 className="text-sm sm:text-base font-black tracking-tight">
+                      {item.title}
+                    </h3>
+                    <p
+                      className={`text-[11px] leading-relaxed line-clamp-2 ${
+                        isDay ? 'text-slate-600' : 'text-slate-300/80'
+                      }`}
+                    >
+                      {item.desc}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`pt-2 border-t flex items-center justify-between text-[11px] font-bold ${
+                      isDay ? 'border-slate-200/75' : 'border-white/10'
+                    }`}
+                  >
+                    <span className={isDay ? 'text-slate-600' : 'text-slate-300'}>
+                      {item.footer}
+                    </span>
+                    <span className={isDay ? 'text-[#006A4E]' : 'text-emerald-400'}>
+                      {isSelected ? t.filterSelected : t.filterDefault}
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
-                  {t.dirTopic1Title}
-                </h3>
-                <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 1 ? 'text-white/80' : 'opacity-70'}`}>
-                  {t.dirTopic1Desc}
-                </p>
-              </div>
-
-              <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
-                <span>{t.dirTopic1Footer}</span>
-                <span className={chapterFilter === 1 ? 'text-amber-200' : 'text-emerald-500'}>
-                  {chapterFilter === 1 ? t.filterSelected : t.filterDefault}
-                </span>
-              </div>
-            </div>
-
-            <div
-              onClick={() => {
-                if (soundEnabled) soundHaptics.playTap();
-                setChapterFilter(chapterFilter === 2 ? 'all' : 2);
-              }}
-              className={`p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2 relative overflow-hidden ${
-                chapterFilter === 2
-                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
-              }`}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
-                    chapterFilter === 2 ? 'bg-white/20 text-white' : 'bg-teal-500/15 text-teal-400 font-black'
-                  }`}>
-                    {t.topicNumLabel(2)}
-                  </span>
-                  <span className="text-base">🌴</span>
-                </div>
-                <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
-                  {t.dirTopic2Title}
-                </h3>
-                <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 2 ? 'text-white/80' : 'opacity-70'}`}>
-                  {t.dirTopic2Desc}
-                </p>
-              </div>
-
-              <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
-                <span>{t.dirTopic2Footer}</span>
-                <span className={chapterFilter === 2 ? 'text-amber-200' : 'text-teal-400'}>
-                  {chapterFilter === 2 ? t.filterSelected : t.filterDefault}
-                </span>
-              </div>
-            </div>
-
-            <div
-              onClick={() => {
-                if (soundEnabled) soundHaptics.playTap();
-                setChapterFilter(chapterFilter === 3 ? 'all' : 3);
-              }}
-              className={`p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2 relative overflow-hidden ${
-                chapterFilter === 3
-                  ? isDay ? 'bg-teal-700 text-white border-teal-600 shadow-sm' : 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                  : isDay ? 'bg-white border-slate-200 hover:border-teal-400' : 'bg-[#082226] border-[#153e46] hover:border-emerald-500'
-              }`}
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
-                    chapterFilter === 3 ? 'bg-white/20 text-white' : 'bg-orange-500/15 text-orange-400 font-black'
-                  }`}>
-                    {t.topicNumLabel(3)}
-                  </span>
-                  <span className="text-base">🧭</span>
-                </div>
-                <h3 className="text-sm sm:text-base font-black tracking-tight mt-0.5">
-                  {t.dirTopic3Title}
-                </h3>
-                <p className={`text-[11px] leading-relaxed line-clamp-2 ${chapterFilter === 3 ? 'text-white/80' : 'opacity-70'}`}>
-                  {t.dirTopic3Desc}
-                </p>
-              </div>
-
-              <div className="pt-1.5 border-t border-dashed border-white/20 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold">
-                <span>{t.dirTopic3Footer}</span>
-                <span className={chapterFilter === 3 ? 'text-amber-200' : 'text-orange-400'}>
-                  {chapterFilter === 3 ? t.filterSelected : t.filterDefault}
-                </span>
-              </div>
-            </div>
+              );
+            })}
           </div>
 
-          {/* Quick Shortcuts to Visual Charts */}
-          <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 overflow-x-auto scrollbar-none ${
-            isDay ? 'bg-teal-50/70 border-teal-200' : 'bg-[#051e22] border-emerald-500/20'
-          }`}>
-            <span className="text-[11px] font-bold text-amber-500 flex items-center gap-1 whitespace-nowrap">
-              <Sparkles className="w-3.5 h-3.5" />
+          {/* Quick Shortcuts to Visual Charts (Clean Unified Strip) */}
+          <div
+            className={`p-2.5 sm:px-3.5 rounded-2xl border flex items-center justify-between gap-2.5 overflow-x-auto scrollbar-none ${
+              isDay ? 'bg-white border-slate-200/90 shadow-2xs' : 'bg-[#0a2026] border-[#143b44]'
+            }`}
+          >
+            <span
+              className={`text-xs font-bold flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
               <span>{t.keyChartsStripLabel}</span>
             </span>
 
             <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  setViewMode('charts_gallery');
-                  setActiveChartTab('quraysh_roles');
-                }}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 whitespace-nowrap transition cursor-pointer"
-              >
-                {t.chartBtnQurayshRoles}
-              </button>
-
-              <button
-                onClick={() => {
-                  setViewMode('charts_gallery');
-                  setActiveChartTab('hashim_tree');
-                }}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 whitespace-nowrap transition cursor-pointer"
-              >
-                {t.chartBtnHashimTree}
-              </button>
-
-              <button
-                onClick={() => {
-                  setViewMode('charts_gallery');
-                  setActiveChartTab('ansar_tree');
-                }}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30 hover:bg-teal-500/25 whitespace-nowrap transition cursor-pointer"
-              >
-                {t.chartBtnAnsarTree}
-              </button>
-
-              <button
-                onClick={() => {
-                  setViewMode('charts_gallery');
-                  setActiveChartTab('statistics');
-                }}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/25 whitespace-nowrap transition cursor-pointer"
-              >
-                {t.chartBtnStats}
-              </button>
+              {[
+                { tab: 'quraysh_roles' as const, label: t.chartBtnQurayshRoles },
+                { tab: 'hashim_tree' as const, label: t.chartBtnHashimTree },
+                { tab: 'ansar_tree' as const, label: t.chartBtnAnsarTree },
+                { tab: 'statistics' as const, label: t.chartBtnStats },
+              ].map((btn) => (
+                <button
+                  key={btn.tab}
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setViewMode('charts_gallery');
+                    setActiveChartTab(btn.tab);
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold border whitespace-nowrap transition cursor-pointer ${
+                    isDay
+                      ? 'bg-slate-50/80 border-slate-200 text-slate-700 hover:border-[#006A4E] hover:text-[#006A4E] hover:bg-emerald-50/50'
+                      : 'bg-[#07181c] border-[#17424c] text-slate-200 hover:border-emerald-500 hover:text-emerald-300'
+                  }`}
+                >
+                  {btn.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Compact Clan Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Clean Simple Clan Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {filteredClans.map((sec) => {
               const secEn = ARABER_GOTRO_DATABASE_EN[sec.id];
-              const meta = getClanVisualMeta(sec.id) || {
-                icon: '🛡️',
-                badgeBn: sec.responsibilityOrRoleBn,
-                badgeEn: secEn?.responsibilityOrRoleEn || sec.responsibilityOrRoleEn || sec.responsibilityOrRoleBn,
-                gradientDay: 'from-slate-50 to-white',
-                gradientNight: 'from-[#082226] to-[#041417]',
-                borderDay: 'border-slate-200',
-                borderNight: 'border-[#153e46]',
-                themeColor: 'text-emerald-400'
-              };
+              const meta = getClanVisualMeta(sec.id);
 
               const tribeName = isBn ? sec.tribeNameBn : (secEn?.tribeNameEn || sec.tribeNameEn || sec.tribeNameBn);
               const locationText = isBn ? sec.locationOrContextBn : (secEn?.locationOrContextEn || sec.locationOrContextEn || sec.locationOrContextBn);
@@ -1511,65 +1463,113 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <div
                   key={sec.id}
                   onClick={() => openClanInReader(sec.id)}
-                  className={`p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 group hover:scale-[1.01] shadow-2xs hover:shadow-xs ${
+                  className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 group shadow-2xs hover:shadow-md ${
                     isDay
-                      ? `bg-gradient-to-br ${meta.gradientDay} ${meta.borderDay} hover:border-teal-500`
-                      : `bg-gradient-to-br ${meta.gradientNight} ${meta.borderNight} hover:border-emerald-400`
+                      ? 'bg-white border-slate-200/90 hover:border-emerald-400 text-slate-900'
+                      : 'bg-[#0a2026] border-[#143b44] hover:border-emerald-500/50 text-white'
                   }`}
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-white/20 dark:bg-black/30 backdrop-blur-sm border border-white/30 dark:border-white/10 shrink-0 shadow-2xs">
-                          {meta.icon}
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 ${
+                            isDay ? 'bg-[#f0f7f4] text-[#006A4E]' : 'bg-[#123138] text-emerald-300'
+                          }`}
+                        >
+                          {meta?.icon || '🛡️'}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <h4 className="text-sm font-black tracking-tight group-hover:text-amber-400 transition">
+                        <div className="min-w-0">
+                          <div className="flex items-baseline gap-1.5 flex-wrap">
+                            <h4
+                              className={`text-sm sm:text-base font-black tracking-tight transition-colors ${
+                                isDay
+                                  ? 'text-slate-900 group-hover:text-[#006A4E]'
+                                  : 'text-white group-hover:text-emerald-400'
+                              }`}
+                            >
                               {tribeName}
                             </h4>
                             {sec.tribeNameAr && (
-                              <span className="text-[10px] font-arabic text-amber-500/80 font-bold hidden sm:inline">
+                              <span
+                                className={`text-[11px] font-arabic font-semibold ${
+                                  isDay ? 'text-[#006A4E]/80' : 'text-emerald-300/80'
+                                }`}
+                              >
                                 ({sec.tribeNameAr})
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] opacity-75 block mt-0.5">
+                          <span
+                            className={`text-[11px] block mt-0.5 leading-snug ${
+                              isDay ? 'text-slate-500' : 'text-slate-400'
+                            }`}
+                          >
                             {locationText}
                           </span>
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black/5 dark:bg-white/10 border border-black/10 dark:border-white/10 shrink-0">
+                      <span
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded-lg border shrink-0 font-mono tabular-nums ${
+                          isDay
+                            ? 'bg-slate-50 border-slate-200 text-slate-600'
+                            : 'bg-[#07181c] border-[#18444e] text-slate-300'
+                        }`}
+                      >
                         {t.figureCountBadge(sec.personalities.length)}
                       </span>
                     </div>
 
-                    {/* Role / Responsibility Badge */}
-                    <div className="p-2 rounded-lg bg-black/5 dark:bg-black/30 border border-black/5 dark:border-white/5 text-[11px]">
-                      <span className="font-bold text-amber-500 block mb-0.5">{t.roleLabel}</span>
-                      <p className="leading-relaxed opacity-90 line-clamp-2">
+                    {/* Clean Responsibility / Role Box */}
+                    <div
+                      className={`p-2.5 rounded-xl border text-[11px] ${
+                        isDay
+                          ? 'bg-slate-50/75 border-slate-200/75 text-slate-700'
+                          : 'bg-[#07181c] border-[#133841] text-slate-200'
+                      }`}
+                    >
+                      <span
+                        className={`font-bold block mb-0.5 ${
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                        }`}
+                      >
+                        {t.roleLabel}
+                      </span>
+                      <p className="leading-relaxed line-clamp-2 opacity-90">
                         {roleText}
                       </p>
                     </div>
 
                     {/* Prominent Personalities Preview */}
                     {prominentSahaba.length > 0 && (
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
+                      <div className="space-y-1.5">
+                        <span
+                          className={`text-[10px] font-bold tracking-wide block ${
+                            isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                          }`}
+                        >
                           {t.notableFiguresLabel}
                         </span>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {prominentSahaba.map((name, nIdx) => (
                             <span
                               key={nIdx}
-                              className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-white/40 dark:bg-white/5 border border-black/5 dark:border-white/5"
+                              className={`text-[11px] font-medium px-2 py-0.5 rounded-lg border ${
+                                isDay
+                                  ? 'bg-slate-50 border-slate-200/80 text-slate-700'
+                                  : 'bg-[#0e2a31] border-[#194651] text-slate-200'
+                              }`}
                             >
                               {name}
                             </span>
                           ))}
                           {sec.personalities.length > 3 && (
-                            <span className="text-[9px] font-bold opacity-60 self-center">
+                            <span
+                              className={`text-[10px] font-bold self-center font-mono ${
+                                isDay ? 'text-slate-400' : 'text-slate-400'
+                              }`}
+                            >
                               +{sec.personalities.length - 3}
                             </span>
                           )}
@@ -1578,7 +1578,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                     )}
                   </div>
 
-                  <div className="pt-2 border-t border-dashed border-black/10 dark:border-white/10 flex items-center justify-between gap-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <div
+                    className={`pt-2.5 border-t flex items-center justify-between gap-2 text-xs font-bold ${
+                      isDay
+                        ? 'border-slate-200/75 text-[#006A4E]'
+                        : 'border-white/10 text-emerald-400'
+                    }`}
+                  >
                     <span className="flex items-center gap-1 group-hover:translate-x-0.5 transition truncate">
                       <span>{t.readSeerahBtn}</span>
                       <ChevronRight className="w-3.5 h-3.5 shrink-0" />

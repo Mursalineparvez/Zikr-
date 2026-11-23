@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v37-saved-library-topics
+// Version: zikrmate-v38-simple-gotro-cards
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v37-saved-library-topics';
+const CACHE_NAME = 'zikrmate-v38-simple-gotro-cards';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
