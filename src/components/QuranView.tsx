@@ -3009,46 +3009,55 @@ export const QuranView: React.FC<QuranViewProps> = ({
         /* 2. SURAH INDEX DIRECTORY (MATCHING HOME PAGE THEME)       */
         /* ======================================================== */
         <div className="space-y-4">
-          {/* Slim Sleek Hero Header */}
-          <div
-            className={`relative overflow-hidden rounded-2xl border p-3.5 sm:p-4 shadow-md text-white ${
-              isDay
-                ? 'bg-[#006747] border-emerald-600/40 shadow-[#006747]/15'
-                : 'bg-gradient-to-b from-[#0e1c26] to-[#071018] border-[#1a3342] shadow-black/50'
-            }`}
-          >
-            {/* Top row: Title + Inline Stats on left, Quick Actions on right */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-                  <BookOpen className="w-4 h-4 text-emerald-300" />
-                </div>
+          {/* Simple Flat Header (No heavy card system) */}
+          <div className="space-y-2 pb-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <BookOpen
+                  className={`w-5 h-5 shrink-0 ${
+                    isDay ? 'text-[#006747]' : 'text-emerald-400'
+                  }`}
+                />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-base sm:text-lg font-black text-white tracking-tight leading-none">
+                    <h2
+                      className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                        isDay ? 'text-[#006747]' : 'text-white'
+                      }`}
+                    >
                       {selectedLanguage === 'bn' ? 'আল-কুরআনুল কারীম' : 'The Noble Quran'}
                     </h2>
-                    <span className="text-[11px] font-semibold text-emerald-200/90 font-arabic hidden xs:inline">
+                    <span
+                      className={`text-xs font-semibold font-arabic hidden xs:inline ${
+                        isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                      }`}
+                    >
                       الْقُرْآنُ الْكَرِيمُ
                     </span>
                   </div>
-                  <p className="text-[11px] text-emerald-100/75 leading-tight mt-0.5">
+                  <p
+                    className={`text-[11px] leading-tight mt-0.5 ${
+                      isDay ? 'text-slate-500' : 'text-slate-400'
+                    }`}
+                  >
                     {selectedLanguage === 'bn' ? '১১৪টি সূরা • মাক্কী ৮৬ • মাদানী ২৮' : '114 Surahs • 86 Meccan • 28 Medinan'}
                   </p>
                 </div>
               </div>
 
-              {/* Action Buttons: Pure Arabic & Topics */}
+              {/* Simple Flat Action Buttons */}
               <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 <button
                   onClick={() => {
                     setIsNuraniMode(!isNuraniMode);
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className={`px-3 py-1.5 rounded-xl border text-[11px] font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm ${
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer ${
                     isNuraniMode
-                      ? 'bg-amber-400 text-black border-amber-300 ring-2 ring-amber-400/40'
-                      : 'bg-white/10 hover:bg-white/20 border-white/20 text-emerald-100'
+                      ? 'bg-amber-400 text-black border-amber-400'
+                      : isDay
+                      ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
+                      : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
                   }`}
                   title={selectedLanguage === 'bn' ? 'শুধু আরবি মুসহাফ মোড চালু/বন্ধ' : 'Toggle Pure Arabic Mushaf Mode'}
                 >
@@ -3065,38 +3074,49 @@ export const QuranView: React.FC<QuranViewProps> = ({
                     setActiveTab('topics');
                     if (soundEnabled) soundHaptics.playTap();
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/40 text-amber-200 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition active:scale-95 cursor-pointer ${
+                    isDay
+                      ? 'bg-white border-amber-300/80 text-amber-800 hover:bg-amber-50'
+                      : 'bg-[#0e1c26] border-amber-500/30 text-amber-300 hover:bg-[#132634]'
+                  }`}
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <Sparkles className="w-3 h-3" />
                   <span>{selectedLanguage === 'bn' ? 'বিষয়ভিত্তিক' : 'Topics'}</span>
                 </button>
               </div>
             </div>
 
-            {/* Slim Horizontal Continue Reading Strip */}
+            {/* Simple Inline Continue Reading Line */}
             {lastRead && (
-              <div
+              <button
+                type="button"
                 onClick={() => loadSurah(lastRead.surahNumber, lastRead.ayahNumber)}
-                className="mt-2.5 px-3 py-2 rounded-xl bg-black/25 hover:bg-black/35 border border-white/15 flex items-center justify-between gap-3 cursor-pointer transition active:scale-[0.99] group shadow-inner"
+                className={`w-full py-1.5 border-b flex items-center justify-between gap-2 text-left cursor-pointer transition group ${
+                  isDay
+                    ? 'border-[#dcebe8] text-slate-700 hover:text-[#006747]'
+                    : 'border-[#1a3342] text-slate-300 hover:text-emerald-300'
+                }`}
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <RotateCcw className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300 shrink-0">
-                    {selectedLanguage === 'bn' ? 'সর্বশেষ:' : 'LAST:'}
+                <div className="flex items-center gap-1.5 min-w-0 text-xs">
+                  <RotateCcw className={`w-3.5 h-3.5 shrink-0 ${isDay ? 'text-[#006747]' : 'text-emerald-400'}`} />
+                  <span className={`font-bold shrink-0 ${isDay ? 'text-[#006747]' : 'text-emerald-400'}`}>
+                    {selectedLanguage === 'bn' ? 'সর্বশেষ:' : 'Last:'}
                   </span>
-                  <span className="text-xs font-bold text-white truncate">
+                  <span className="font-semibold truncate">
                     {getLocalizedSurahName(lastRead.surahNumber, selectedLanguage)}
                   </span>
-                  <span className="text-[11px] text-emerald-100/75 shrink-0 hidden sm:inline">
+                  <span className="text-[11px] opacity-75 shrink-0">
                     • {selectedLanguage === 'bn' ? `আয়াত ${lastRead.ayahNumber}` : `Ayah ${lastRead.ayahNumber}`}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-300 group-hover:text-white shrink-0 bg-emerald-600/50 group-hover:bg-emerald-600 px-2.5 py-1 rounded-lg border border-emerald-400/30 transition">
-                  <span>{selectedLanguage === 'bn' ? `পড়া শুরু করুন (আয়াত ${lastRead.ayahNumber})` : `Resume (${lastRead.ayahNumber})`}</span>
+                <span className={`flex items-center gap-0.5 text-[11px] font-bold shrink-0 group-hover:underline ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-400'
+                }`}>
+                  <span>{selectedLanguage === 'bn' ? 'পড়া শুরু করুন' : 'Resume'}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
+                </span>
+              </button>
             )}
           </div>
 

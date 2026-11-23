@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v34-header-avatar-clean
+// Version: zikrmate-v35-quran-simple-header
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v34-header-avatar-clean';
+const CACHE_NAME = 'zikrmate-v35-quran-simple-header';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
