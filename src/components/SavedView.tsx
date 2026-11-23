@@ -96,6 +96,7 @@ export const SavedView: React.FC<SavedViewProps> = ({
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [onlyPinned, setOnlyPinned] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [collapsedTopics, setCollapsedTopics] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [moveTopicEntryId, setMoveTopicEntryId] = useState<string | null>(null);
@@ -1013,137 +1014,173 @@ export const SavedView: React.FC<SavedViewProps> = ({
           : 'bg-[#071c21] border-[#143b44] text-white shadow-xl'
       }`}
     >
-      {/* Flat Editorial Sanctuary Header */}
+      {/* Clean Centered Sanctuary Header */}
       <div
-        className={`px-4 pt-5 pb-5 sm:px-7 sm:pt-6 border-b ${
+        className={`px-4 pt-4 pb-4 sm:px-7 sm:pt-5 border-b space-y-3.5 ${
           isDay ? 'border-slate-200/75' : 'border-[#133841]'
         }`}
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0">
-            {onBackToHub && (
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          {/* Left: Back Button */}
+          <div className="flex items-center">
+            {onBackToHub ? (
               <button
                 type="button"
                 onClick={onBackToHub}
-                className={`min-w-[44px] min-h-[44px] rounded-2xl border flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0 ${
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition active:scale-95 cursor-pointer ${
                   isDay
                     ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                     : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
                 }`}
                 aria-label={isBn ? 'ফিরে যান' : 'Back'}
+                title={isBn ? 'ফিরে যান' : 'Back'}
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4" />
               </button>
+            ) : (
+              <div className="w-10" />
             )}
-            <div className="min-w-0">
-              <div className="font-arabic text-sm text-emerald-700 dark:text-emerald-400/90 leading-none mb-1">
-                المكتبة المحفوظة حسب المواضيع
-              </div>
-              <h2
-                className={`text-2xl sm:text-3xl font-black tracking-tight text-balance ${
-                  isDay ? 'text-[#006A4E]' : 'text-white'
-                }`}
-              >
-                {isBn ? 'সংরক্ষিত লাইব্রেরি' : 'Saved Library'}
-              </h2>
-              <p className={`text-xs sm:text-sm mt-1 ${isDay ? 'text-slate-600' : 'text-slate-300/80'}`}>
-                {isBn
-                  ? 'নোট, আয়াত, হাদীস, লিংক, চেকলিস্ট ও ছবি — টপিক অনুযায়ী আলাদা সাজানো'
-                  : 'Save notes, quotes, links, checklists & images — cleanly separated by topic'}
-              </p>
-            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {/* Center: Centered Title + Concise Metadata */}
+          <div className="text-center min-w-0 px-1">
+            <h2
+              className={`text-lg sm:text-xl font-black tracking-tight truncate ${
+                isDay ? 'text-[#006A4E]' : 'text-white'
+              }`}
+            >
+              {isBn ? 'সংরক্ষিত লাইব্রেরি' : 'Saved Library'}
+            </h2>
+            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300/90'}`}>
+              {isBn
+                ? `${formatNum(entries.length)}টি সংরক্ষিত · ${formatNum(activeTopicTotal)}টি টপিক`
+                : `${entries.length} Saved · ${activeTopicTotal} Topics`}
+            </p>
+          </div>
+
+          {/* Right: Search Icon + Share/Download */}
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setIsSearchOpen((prev) => {
+                  if (prev && searchQuery) setSearchQuery('');
+                  return !prev;
+                });
+              }}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:border-emerald-500'
+              }`}
+              title={isBn ? 'খুঁজুন' : 'Search'}
+              aria-label={isBn ? 'খুঁজুন' : 'Search'}
+            >
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </button>
             <ShareDownloadButtons
-              variant="card"
+              variant="compact"
               selectedLanguage={selectedLanguage}
               themeMode={themeMode}
               onShare={() => openLibraryShare('share')}
               onDownload={() => openLibraryShare('download')}
             />
-            <button
-              type="button"
-              onClick={() => openTopicModal()}
-              className={`min-h-[44px] px-3.5 py-2 rounded-full border text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
-                isDay
-                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
-                  : 'bg-[#0b262d] border-[#1a4954] text-slate-200 hover:border-emerald-500'
-              }`}
-            >
-              <FolderPlus className="w-4 h-4" />
-              <span>{isBn ? 'নতুন টপিক' : 'New Topic'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => openComposer()}
-              className={`min-h-[44px] px-4 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shrink-0 whitespace-nowrap shadow-sm ${
-                isDay
-                  ? 'bg-[#006A4E] hover:bg-[#005740] text-white'
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-              }`}
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>{isBn ? 'সংরক্ষণ করুন' : 'Save Anything'}</span>
-            </button>
           </div>
         </div>
 
-        {/* Clean 3-Column Metrics Strip */}
-        <div
-          className={`mt-5 grid grid-cols-3 rounded-2xl border divide-x ${
-            isDay
-              ? 'bg-slate-50/50 border-slate-200/80 divide-slate-200/80'
-              : 'bg-[#092127] border-[#153e47] divide-[#153e47]'
-          }`}
-        >
-          <div className="py-3 px-3 sm:px-4">
-            <div className={`text-[11px] sm:text-xs font-semibold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-              {isBn ? 'মোট সংরক্ষিত' : 'Total Saved'}
-            </div>
-            <div className="text-lg sm:text-xl font-black font-mono tabular-nums mt-0.5">
-              {formatNum(entries.length)}
-            </div>
-          </div>
-          <div className="py-3 px-3 sm:px-4">
-            <div className={`text-[11px] sm:text-xs font-semibold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-              {isBn ? 'সক্রিয় টপিক' : 'Active Topics'}
-            </div>
-            <div className="text-lg sm:text-xl font-black font-mono tabular-nums mt-0.5 text-[#006A4E] dark:text-emerald-400">
-              {formatNum(activeTopicTotal)}
-            </div>
-          </div>
+        {/* Centered Essential Quick Actions */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => openComposer()}
+            className={`min-h-[38px] px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap shadow-xs ${
+              isDay
+                ? 'bg-[#006A4E] hover:bg-[#005740] text-white'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+            }`}
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>{isBn ? 'সংরক্ষণ করুন' : 'Save Anything'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => openTopicModal()}
+            className={`min-h-[38px] px-3.5 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer whitespace-nowrap ${
+              isDay
+                ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                : 'bg-[#0b262d] border-[#1a4954] text-slate-200 hover:border-emerald-500'
+            }`}
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            <span>{isBn ? 'নতুন টপিক' : 'New Topic'}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
               setOnlyPinned((p) => !p);
               if (soundEnabled) soundHaptics.playTap();
             }}
-            className={`py-3 px-3 sm:px-4 text-left transition cursor-pointer ${
-              onlyPinned ? (isDay ? 'bg-amber-50/90' : 'bg-amber-950/35') : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.03]'
+            className={`min-h-[38px] px-3.5 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+              onlyPinned
+                ? isDay
+                  ? 'bg-emerald-50 border-emerald-400 text-[#006A4E]'
+                  : 'bg-emerald-950/60 border-emerald-500 text-emerald-300'
+                : isDay
+                ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300'
+                : 'bg-[#0b262d] border-[#1a4954] text-slate-200 hover:border-emerald-500/60'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className={`text-[11px] sm:text-xs font-semibold ${onlyPinned ? 'text-amber-600 dark:text-amber-300' : isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                {isBn ? 'পিন করা' : 'Pinned'}
-              </span>
-              <Pin className={`w-3.5 h-3.5 ${onlyPinned ? 'text-amber-500 fill-current' : 'opacity-45'}`} />
-            </div>
-            <div className="text-lg sm:text-xl font-black font-mono tabular-nums mt-0.5">
-              {formatNum(pinnedCount)}
-            </div>
+            <Pin className={`w-3.5 h-3.5 ${onlyPinned ? 'fill-current' : 'opacity-70'}`} />
+            <span>{isBn ? `পিন করা (${formatNum(pinnedCount)})` : `Pinned (${pinnedCount})`}</span>
           </button>
         </div>
 
+        {/* Expandable Search Bar */}
+        {(isSearchOpen || searchQuery.trim().length > 0) && (
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              autoFocus={isSearchOpen}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isBn ? 'টপিক বা লেখা খুঁজুন...' : 'Search saved library...'}
+              className={`w-full min-h-[40px] pl-10 pr-9 py-2 rounded-full border text-xs font-medium focus:outline-none transition ${
+                isDay
+                  ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]'
+                  : 'bg-[#092127] border-[#153e47] text-white focus:border-emerald-500'
+              }`}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setIsSearchOpen(false);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+              aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Topic Folder Strip (Separate by Topic Navigation) */}
-        <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           <button
             type="button"
             onClick={() => {
               setSelectedTopicId('all');
               if (soundEnabled) soundHaptics.playTap();
             }}
-            className={`min-h-[40px] px-4 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
+            className={`min-h-[38px] px-4 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
               selectedTopicId === 'all'
                 ? isDay
                   ? 'bg-[#006A4E] border-[#006A4E] text-white shadow-2xs'
@@ -1170,7 +1207,7 @@ export const SavedView: React.FC<SavedViewProps> = ({
                   setSelectedTopicId(topic.id);
                   if (soundEnabled) soundHaptics.playTap();
                 }}
-                className={`min-h-[40px] px-3.5 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
+                className={`min-h-[38px] px-3.5 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
                   isSelected
                     ? isDay
                       ? 'bg-[#006A4E] border-[#006A4E] text-white shadow-2xs'
@@ -1189,58 +1226,32 @@ export const SavedView: React.FC<SavedViewProps> = ({
           })}
         </div>
 
-        {/* Search & Format Filter Row */}
-        <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
-            {typeFilters.map((tf) => {
-              const active = typeFilter === tf.id;
-              return (
-                <button
-                  key={tf.id}
-                  type="button"
-                  onClick={() => {
-                    setTypeFilter(tf.id);
-                    if (soundEnabled) soundHaptics.playTap();
-                  }}
-                  className={`min-h-[34px] px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer whitespace-nowrap shrink-0 ${
-                    active
-                      ? isDay
-                        ? 'bg-slate-900 border-slate-900 text-white'
-                        : 'bg-white border-white text-slate-950'
-                      : isDay
-                      ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                      : 'bg-[#081f25] border-[#163f49] text-slate-300 hover:bg-white/5'
-                  }`}
-                >
-                  {isBn ? tf.labelBn : tf.labelEn}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="relative sm:w-64 shrink-0">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isBn ? 'টপিক বা লেখা খুঁজুন...' : 'Search saved library...'}
-              className={`w-full min-h-[40px] pl-9 pr-8 py-1.5 rounded-full border text-xs font-medium focus:outline-none transition ${
-                isDay
-                  ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]'
-                  : 'bg-[#092127] border-[#153e47] text-white focus:border-emerald-500'
-              }`}
-            />
-            {searchQuery && (
+        {/* Format Filter Row */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+          {typeFilters.map((tf) => {
+            const active = typeFilter === tf.id;
+            return (
               <button
+                key={tf.id}
                 type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                onClick={() => {
+                  setTypeFilter(tf.id);
+                  if (soundEnabled) soundHaptics.playTap();
+                }}
+                className={`min-h-[34px] px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer whitespace-nowrap shrink-0 ${
+                  active
+                    ? isDay
+                      ? 'bg-slate-900 border-slate-900 text-white'
+                      : 'bg-white border-white text-slate-950'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    : 'bg-[#081f25] border-[#163f49] text-slate-300 hover:bg-white/5'
+                }`}
               >
-                <X className="w-3.5 h-3.5" />
+                {isBn ? tf.labelBn : tf.labelEn}
               </button>
-            )}
-          </div>
+            );
+          })}
         </div>
       </div>
 

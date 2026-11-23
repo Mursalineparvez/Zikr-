@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v38-simple-gotro-cards
+// Version: zikrmate-v39-centered-simple-headers
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v38-simple-gotro-cards';
+const CACHE_NAME = 'zikrmate-v39-centered-simple-headers';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)

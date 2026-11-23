@@ -186,6 +186,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   };
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [chroniclePhaseFilter, setChroniclePhaseFilter] = useState<number | 'all'>('all');
   const [chronicleViewMode, setChronicleViewMode] = useState<'grid' | 'slide'>('grid');
   const [chronicleSlideIdx, setChronicleSlideIdx] = useState<number>(0);
@@ -1334,126 +1335,136 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
   // =========================================================================
   return (
     <div className="space-y-5 pb-24 animate-in fade-in duration-200">
-      {/* Top Action Pills Bar Matching Seerat & Hayatus Sahaba Screenshot */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Clean Centered Header */}
+      <div
+        className={`pb-3.5 border-b space-y-3 transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
+        }`}
+      >
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          <div className="flex items-center">
+            {onBackToHub ? (
+              <button
+                type="button"
+                onClick={onBackToHub}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isDay
+                    ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
+                }`}
+                title={isBn ? 'ফিরে যান' : 'Back'}
+                aria-label={isBn ? 'ফিরে যান' : 'Back'}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            ) : (
+              <div className="w-10" />
+            )}
+          </div>
+
+          <div className="text-center min-w-0 px-1">
+            <h2 className="text-lg sm:text-xl font-black tracking-tight truncate">
+              {isBn ? 'ইসলামের ইতিহাসের যুদ্ধ' : 'Islamic History Wars'}
+            </h2>
+            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
+              {isBn
+                ? `${formatNum(totalWars)}টি যুদ্ধ · পঠিত ${formatNum(completedCount)}/${formatNum(totalWars)}`
+                : `${totalWars} Battles · Read ${completedCount}/${totalWars}`}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setIsSearchOpen((prev) => {
+                  if (prev && searchQuery) setSearchQuery('');
+                  return !prev;
+                });
+              }}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#09221d] border-emerald-800/60 text-emerald-300 hover:border-emerald-500'
+              }`}
+              title={isBn ? 'খুঁজুন' : 'Search'}
+              aria-label={isBn ? 'খুঁজুন' : 'Search'}
+            >
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </button>
+            <ShareDownloadButtons
+              variant="compact"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openWarsIndexShare('share')}
+              onDownload={() => openWarsIndexShare('download')}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2">
           {lastReadWar && (
             <button
+              type="button"
               onClick={() => handleSelectWar(lastReadWar.id)}
-              className="px-3.5 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                isDay
+                  ? 'bg-emerald-50 text-[#006A4E] border-emerald-200 hover:bg-emerald-100'
+                  : 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60 hover:bg-emerald-900/60'
+              }`}
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>{isBn ? `সর্বশেষ পঠিত (${lastReadWar.nameBn})` : `Resume (${lastReadWar.nameEn})`}</span>
+              <RotateCcw className="w-3 h-3" />
+              <span className="truncate max-w-[160px]">{isBn ? `সর্বশেষ: ${lastReadWar.nameBn}` : `Resume: ${lastReadWar.nameEn}`}</span>
             </button>
           )}
 
           <button
+            type="button"
             onClick={() => setShowWarBibliographyModal(true)}
-            className="px-3.5 py-2 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700/60 font-bold text-xs flex items-center gap-1.5 shadow-xs hover:bg-amber-200 dark:hover:bg-amber-900/60 active:scale-95 transition cursor-pointer"
+            className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+              isDay
+                ? 'bg-white text-slate-700 border-slate-200 hover:border-emerald-400 hover:text-[#006A4E]'
+                : 'bg-[#09221d] text-slate-200 border-emerald-800/60 hover:border-emerald-500'
+            }`}
           >
-            <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <BookOpen className="w-3.5 h-3.5 text-[#006A4E] dark:text-emerald-400" />
             <span>{isBn ? 'যুদ্ধ ইতিহাস গ্রন্থমালা' : 'War Chronicles'}</span>
           </button>
         </div>
-
-        {onBackToHub && (
-          <button
-            onClick={onBackToHub}
-            className="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition shadow-xs cursor-pointer"
-            title={isBn ? 'ফিরে যান' : 'Back'}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-        )}
       </div>
 
-      {/* Reading Progress Indicator Matching Seerat & Hayatus Sahaba */}
-      <div className="space-y-1.5 px-1">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
-          <span>{isBn ? 'পঠন অগ্রগতি' : 'Reading Progress'}</span>
-          <span className="font-mono text-[11px]">{formatNum(completedCount)}/{formatNum(totalWars)} ({formatNum(progressPercentage)}%)</span>
-        </div>
-        <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-300"
-            style={{ width: `${progressPercentage}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Simple Flat Header */}
-      <div
-        className={`pb-4 border-b transition-colors ${
-          isDay ? 'border-amber-200/80 text-slate-900' : 'border-amber-500/25 text-white'
-        }`}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-1.5">
-          <div
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
-              isDay ? 'text-amber-800' : 'text-amber-300'
-            }`}
-          >
-            <Sparkles className={`w-3.5 h-3.5 ${isDay ? 'text-amber-600' : 'text-amber-300'}`} />
-            <span>{isBn ? 'ইসলামের ইতিহাসের যুদ্ধ' : 'Islamic History Wars'}</span>
-          </div>
-
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-              isDay
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : 'bg-amber-500/20 text-amber-200 border-amber-400/30'
-            }`}
-          >
-            {isBn ? `${formatNum(totalWars)}টি ঐতিহাসিক যুদ্ধ` : `${totalWars} Historical Battles`}
-          </span>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              {isBn ? `ইসলামের ইতিহাসের যুদ্ধসমূহ (${formatNum(totalWars)}টি ঐতিহাসিক যুদ্ধ)` : `Battles in Islamic History (${totalWars} Epic Battles)`}
-            </h2>
-            <p
-              className={`text-xs sm:text-sm mt-1 max-w-xl ${
-                isDay ? 'text-slate-600' : 'text-amber-100/80'
-              }`}
-            >
-              {isBn
-                ? 'নববি যুগ থেকে খিলাফতে রাশিদা, উমাইয়া, আব্বাসি, আন্দালুস ও আধুনিক প্রতিরোধের ঐতিহাসিক যুদ্ধসমূহের পূর্ণাঙ্গ কালানুক্রমিক সূচি ও বিবরণ।'
-                : 'Chronological master guide to the foundational and heroic battles shaping Islamic history.'}
-            </p>
-          </div>
-          <ShareDownloadButtons
-            variant="card"
-            selectedLanguage={selectedLanguage}
-            themeMode={themeMode}
-            className="shrink-0 self-start sm:self-end"
-            onShare={() => openWarsIndexShare('share')}
-            onDownload={() => openWarsIndexShare('download')}
-          />
-        </div>
-      </div>
-
-      {/* Search Bar (Matching Hayatus Sahaba) */}
-      <div className={`p-4 rounded-3xl border shadow-md ${isDay ? 'bg-white border-slate-200' : 'bg-[#181108] border-amber-500/30'}`}>
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Expandable Search Bar (Opened via top Search icon) */}
+      {(isSearchOpen || searchQuery.trim().length > 0) && (
+        <div className="relative animate-in fade-in duration-150">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
+            autoFocus={isSearchOpen}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isBn ? 'যুদ্ধের নাম, যুগ, সেনাপতি, স্থান দিয়ে খুঁজুন...' : 'Search battles by name, era, commander, location...'}
-            className={`w-full pl-10 pr-9 py-2.5 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
-              isDay ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-amber-500' : 'bg-[#0d0905] border-amber-900/60 text-white focus:border-amber-500'
+            placeholder={isBn ? 'যুদ্ধের নাম, সেনাপতি বা স্থান খুঁজুন...' : 'Search battles by name, commander, location...'}
+            className={`w-full min-h-[44px] pl-10 pr-10 py-2 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
+              isDay ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]' : 'bg-[#0a2026] border-[#16424c] text-white focus:border-emerald-500'
             }`}
           />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 cursor-pointer">
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setIsSearchOpen(false);
+            }}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+            aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Search Results View (Only shown when actively searching) */}
       {searchQuery.trim() !== '' && (

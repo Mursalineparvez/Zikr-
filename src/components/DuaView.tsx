@@ -33,6 +33,7 @@ import {
   ChevronRight,
   BookMarked,
   Coins,
+  X,
 } from 'lucide-react';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
@@ -105,6 +106,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [inlineCounts, setInlineCounts] = useState<{ [key: string]: number }>({});
   const [visibleLimit, setVisibleLimit] = useState<number>(40);
@@ -613,106 +615,130 @@ export const DuaView: React.FC<DuaViewProps> = ({
 
   return (
     <div data-highlight-section="dua" className="space-y-6 animate-in fade-in duration-300 pb-16">
-      {/* Simple Flat Header */}
+      {/* Simple Centered Header */}
       <div
-        className={`pb-4 border-b space-y-3 ${
+        className={`pb-3.5 border-b space-y-3 ${
           isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
         }`}
       >
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <BookOpen className={`w-5 h-5 shrink-0 ${isDay ? 'text-[#006747]' : 'text-emerald-400'}`} />
-            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[#006747]' : 'text-white'}`}>
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          <div className="w-10" />
+
+          <div className="text-center min-w-0 px-1">
+            <h2 className={`text-lg sm:text-xl font-black tracking-tight truncate ${isDay ? 'text-[#006747]' : 'text-white'}`}>
               {DUA_UI.bannerTitle[selectedLanguage]}
             </h2>
-            <span className={`text-xs font-semibold font-arabic ${isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'}`}>
-              حِصْنُ الْمُسْلِمِ
-            </span>
-          </div>
-          <p className={`text-xs sm:text-sm max-w-2xl leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
-            {DUA_UI.bannerSub[selectedLanguage]}
-          </p>
-          <p className={`text-[11px] font-semibold ${isDay ? 'text-emerald-700' : 'text-emerald-400'}`}>
-            {selectedLanguage === 'bn'
-              ? `হিসনুল মুসলিম • ${formatNum(maxChapterNumber, 'bn')} অধ্যায় • ${formatNum(AUTHENTIC_DUAS.length, 'bn')}টি দোয়া ও যিকির`
-              : `Hisnul Muslim • ${maxChapterNumber} Chapters • ${AUTHENTIC_DUAS.length} Duas & Adhkar`}
-          </p>
-        </div>
-
-        {/* Step-by-Step Mode Switcher: Topics vs 132 Chapters */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => {
-                setBrowseMode('topics');
-                setSelectedChapter(null);
-                setActiveTopicId(null);
-                setSelectedCategory('all');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
-                browseMode === 'topics'
-                  ? 'bg-[#006747] text-white border-[#006747]'
-                  : isDay
-                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-[#006747]'
-                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-200 hover:bg-[#132634]'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>{DUA_UI.topicsTab[selectedLanguage]}</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setBrowseMode('chapters');
-                setActiveTopicId(null);
-                setSelectedCategory('all');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
-                browseMode === 'chapters'
-                  ? 'bg-[#006747] text-white border-[#006747]'
-                  : isDay
-                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-[#006747]'
-                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-200 hover:bg-[#132634]'
-              }`}
-            >
-              <ListOrdered className="w-3.5 h-3.5" />
-              <span>{DUA_UI.chaptersTab[selectedLanguage]}</span>
-            </button>
+            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300/90'}`}>
+              {selectedLanguage === 'bn'
+                ? `${formatNum(maxChapterNumber, 'bn')} অধ্যায় · ${formatNum(AUTHENTIC_DUAS.length, 'bn')}টি দোয়া`
+                : `${maxChapterNumber} Chapters · ${AUTHENTIC_DUAS.length} Duas`}
+            </p>
           </div>
 
-          <ShareDownloadButtons
-            variant="card"
-            selectedLanguage={selectedLanguage}
-            themeMode={themeMode}
-            onShare={() => openPageShare('share')}
-            onDownload={() => openPageShare('download')}
-          />
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setIsSearchOpen((prev) => {
+                  if (prev && searchQuery) setSearchQuery('');
+                  return !prev;
+                });
+              }}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
+              }`}
+              title={selectedLanguage === 'bn' ? 'খুঁজুন' : 'Search'}
+              aria-label={selectedLanguage === 'bn' ? 'খুঁজুন' : 'Search'}
+            >
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </button>
+            <ShareDownloadButtons
+              variant="compact"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openPageShare('share')}
+              onDownload={() => openPageShare('download')}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${isDay ? 'text-teal-700' : 'text-teal-400'}`} />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={DUA_UI.searchPlaceholder?.[selectedLanguage] || 'Search duas...'}
-          className={`w-full rounded-2xl pl-11 pr-16 py-3.5 text-sm font-medium focus:outline-none transition shadow-sm border ${
-            isDay
-              ? 'bg-white border-teal-200 text-[#0f3630] placeholder-teal-600/70 focus:border-[#006747]'
-              : 'bg-[#0f2e35] border-[#184c56] text-white placeholder-slate-400 focus:border-emerald-500'
-          }`}
-        />
-        {searchQuery && (
+        {/* Centered Mode Switcher: Topics vs 132 Chapters */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <button
-            onClick={() => setSearchQuery('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-500 hover:text-emerald-400 cursor-pointer"
+            onClick={() => {
+              setBrowseMode('topics');
+              setSelectedChapter(null);
+              setActiveTopicId(null);
+              setSelectedCategory('all');
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+              browseMode === 'topics'
+                ? 'bg-[#006747] text-white border-[#006747]'
+                : isDay
+                ? 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-[#006747]'
+                : 'bg-[#0e1c26] border-[#1a3342] text-emerald-200 hover:bg-[#132634]'
+            }`}
           >
-            {selectedLanguage === 'bn' ? 'মুছুন' : 'Clear'}
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>{DUA_UI.topicsTab[selectedLanguage]}</span>
           </button>
-        )}
+
+          <button
+            onClick={() => {
+              setBrowseMode('chapters');
+              setActiveTopicId(null);
+              setSelectedCategory('all');
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
+              browseMode === 'chapters'
+                ? 'bg-[#006747] text-white border-[#006747]'
+                : isDay
+                ? 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-[#006747]'
+                : 'bg-[#0e1c26] border-[#1a3342] text-emerald-200 hover:bg-[#132634]'
+            }`}
+          >
+            <ListOrdered className="w-3.5 h-3.5" />
+            <span>{DUA_UI.chaptersTab[selectedLanguage]}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Expandable Search Bar */}
+      {(isSearchOpen || searchQuery.trim().length > 0) && (
+        <div className="relative">
+          <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${isDay ? 'text-teal-700' : 'text-teal-400'}`} />
+          <input
+            type="text"
+            autoFocus={isSearchOpen}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={DUA_UI.searchPlaceholder?.[selectedLanguage] || 'Search duas...'}
+            className={`w-full rounded-2xl pl-11 pr-11 py-3 text-sm font-medium focus:outline-none transition shadow-sm border ${
+              isDay
+                ? 'bg-white border-teal-200 text-[#0f3630] placeholder-teal-600/70 focus:border-[#006747]'
+                : 'bg-[#0f2e35] border-[#184c56] text-white placeholder-slate-400 focus:border-emerald-500'
+            }`}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setIsSearchOpen(false);
+            }}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+            aria-label={selectedLanguage === 'bn' ? 'বন্ধ করুন' : 'Close search'}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* MODE 1: TOPIC CATEGORIES GRID (shown only when no specific topic is opened & not searching) */}
       {browseMode === 'topics' && activeTopicId === null && searchQuery.trim().length === 0 && (

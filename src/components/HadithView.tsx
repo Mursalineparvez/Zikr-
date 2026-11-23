@@ -110,6 +110,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
   // Global Quick Jump & Book Search
   const [globalBookId, setGlobalBookId] = useState<string>('bukhari');
   const [globalQuery, setGlobalQuery] = useState('');
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [globalSearchResults, setGlobalSearchResults] = useState<FullHadithEntry[] | null>(null);
   const [globalSearchTotal, setGlobalSearchTotal] = useState(0);
   const [isGlobalSearching, setIsGlobalSearching] = useState(false);
@@ -983,99 +984,120 @@ export const HadithView: React.FC<HadithViewProps> = ({
 
   return (
     <div data-highlight-section="hadith" className="max-w-5xl mx-auto space-y-5 pb-8 animate-in fade-in duration-200">
-      {/* SIMPLE HADIS LIBRARY HEADER (Only visible at top Library Level) */}
+      {/* SIMPLE CENTERED HADIS LIBRARY HEADER (Only visible at top Library Level) */}
       {!selectedBookId && (
         <section
-          className={`pb-4 border-b space-y-3 ${
+          className={`pb-3.5 border-b space-y-3 ${
             isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
           }`}
         >
-          <div className="space-y-1">
-            <div className={`text-xs font-semibold flex items-center gap-2 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
-              <span className="font-arabic text-base">الحديث النبوي الشريف</span>
-              <span aria-hidden="true">·</span>
-              <span>{isBn ? 'iHadis পূর্ণাঙ্গ সংকলন' : 'Complete Canonical Compendiums'}</span>
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+            <div className="w-10" />
+
+            <div className="text-center min-w-0 px-1">
+              <h1 className={`text-lg sm:text-xl font-black tracking-tight truncate ${isDay ? 'text-[#006747]' : 'text-white'}`}>
+                {isBn ? 'হাদিস গ্রন্থাগার' : 'Al-Hadith Library'}
+              </h1>
+              <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300/90'}`}>
+                {isBn ? '১৭টি কিতাব · ৫৩,০০০+ হাদিস' : '17 Books · 53,000+ Hadiths'}
+              </p>
             </div>
-            <h1 className={`text-xl sm:text-2xl font-black tracking-tight text-balance ${isDay ? 'text-[#006747]' : 'text-white'}`}>
-              {isBn ? 'হাদিস (আল-হাদিস গ্রন্থাগার — ১৭টি কিতাব)' : 'Hadis — Al-Hadith Library (17 Books)'}
-            </h1>
-            <p className={`text-xs sm:text-sm max-w-2xl leading-relaxed ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
-              {isBn
-                ? 'সহীহ বুখারী (৭,৫৬৩), সহীহ মুসলিম (৭,৫৬৩), নাসায়ী, আবূ দাউদ, তিরমিযী, ইবনে মাজাহ, মুয়াত্তা মালিক, রিয়াদুস সালেহীন, বুলুগুল মারাম, আল-আদাবুল মুফরাদ ও শামাইলসহ ৫০,০০০+ পূর্ণাঙ্গ হাদিস — একটি হাদিসও বাদ ছাড়া।'
-                : 'Read every single hadith across Sahih Bukhari (7,563), Sahih Muslim (7,563), Nasai, Abu Dawud, Tirmidhi, Ibn Majah, Muwatta Malik, Riyad as-Salihin, Bulugh al-Maram, Adabul Mufrad, Shamail & more.'}
-            </p>
-          </div>
 
-          {/* Direct Global Hadith Number & Keyword Jump */}
-          <form onSubmit={handleGlobalSearchSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
-            <select
-              value={globalBookId}
-              onChange={(e) => setGlobalBookId(e.target.value)}
-              aria-label={isBn ? 'হাদিস কিতাব নির্বাচন করুন' : 'Select Hadith book'}
-              className={`sm:col-span-4 min-h-[42px] rounded-xl px-3 py-2 border text-xs sm:text-sm font-bold focus:outline-none cursor-pointer ${
-                isDay
-                  ? 'bg-white border-slate-200 text-slate-800 focus:border-[#006747]'
-                  : 'bg-[#0e1c26] border-[#1a3342] text-white focus:border-emerald-400'
-              }`}
-            >
-              {HADIS_LIBRARY_BOOKS.map((b) => (
-                <option key={b.id} value={b.id} className="text-slate-900 bg-white">
-                  {isBn ? `${b.bnName} (${formatNum(b.hadithCount, true)})` : `${b.enName} (${b.hadithCount})`}
-                </option>
-              ))}
-            </select>
-
-            <div className="sm:col-span-6 relative">
-              <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isDay ? 'text-slate-400' : 'text-emerald-300'}`} />
-              <input
-                type="text"
-                value={globalQuery}
-                onChange={(e) => setGlobalQuery(e.target.value)}
-                placeholder={
-                  isBn
-                    ? 'হাদিস নম্বর (যেমন: ৬৪০৭) বা শব্দ লিখে খুঁজুন...'
-                    : 'Enter Hadith # (e.g. 6407) or keyword...'
-                }
-                className={`w-full min-h-[42px] rounded-xl pl-10 pr-9 py-2 border text-xs sm:text-sm focus:outline-none ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-[#006747]'
-                    : 'bg-[#0e1c26] border-[#1a3342] text-white placeholder:text-slate-400 focus:border-emerald-400'
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setIsGlobalSearchOpen((prev) => {
+                    if (prev) {
+                      setGlobalQuery('');
+                      setGlobalSearchResults(null);
+                      setGlobalSearchError(null);
+                    }
+                    return !prev;
+                  });
+                }}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isGlobalSearchOpen || globalQuery || globalSearchResults !== null
+                    ? isDay
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                      : 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
                 }`}
-              />
-              {globalQuery && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setGlobalQuery('');
-                    setGlobalSearchResults(null);
-                    setGlobalSearchError(null);
-                  }}
-                  aria-label="Clear search"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+                title={isBn ? 'খুঁজুন' : 'Search'}
+                aria-label={isBn ? 'খুঁজুন' : 'Search'}
+              >
+                {isGlobalSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={!globalQuery.trim() || isGlobalSearching}
-              className="sm:col-span-2 min-h-[42px] rounded-xl px-4 py-2 bg-[#006747] hover:bg-[#00553a] text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition active:scale-95 disabled:opacity-50 cursor-pointer whitespace-nowrap"
-            >
-              {isGlobalSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              <span>{isBn ? 'খুঁজুন' : 'Find'}</span>
-            </button>
-          </form>
-
-          {/* Unboxed Stats Row */}
-          <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs font-semibold tabular-nums ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-            <span>{isBn ? '১৭টি পূর্ণাঙ্গ কিতাব' : '17 Complete Books'}</span>
-            <span aria-hidden="true">·</span>
-            <span>{isBn ? '৫৩,০০০+ হাদিস' : '53,000+ Hadiths'}</span>
-            <span aria-hidden="true">·</span>
-            <span>{isBn ? 'অফলাইন সংরক্ষণ ও বাংলা অর্থসহ' : 'Offline Sync + Multilingual'}</span>
           </div>
+
+          {/* Expandable Global Hadith Number & Keyword Jump */}
+          {(isGlobalSearchOpen || globalQuery.trim().length > 0 || globalSearchResults !== null) && (
+            <form onSubmit={handleGlobalSearchSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+              <select
+                value={globalBookId}
+                onChange={(e) => setGlobalBookId(e.target.value)}
+                aria-label={isBn ? 'হাদিস কিতাব নির্বাচন করুন' : 'Select Hadith book'}
+                className={`sm:col-span-4 min-h-[42px] rounded-xl px-3 py-2 border text-xs sm:text-sm font-bold focus:outline-none cursor-pointer ${
+                  isDay
+                    ? 'bg-white border-slate-200 text-slate-800 focus:border-[#006747]'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-white focus:border-emerald-400'
+                }`}
+              >
+                {HADIS_LIBRARY_BOOKS.map((b) => (
+                  <option key={b.id} value={b.id} className="text-slate-900 bg-white">
+                    {isBn ? `${b.bnName} (${formatNum(b.hadithCount, true)})` : `${b.enName} (${b.hadithCount})`}
+                  </option>
+                ))}
+              </select>
+
+              <div className="sm:col-span-6 relative">
+                <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${isDay ? 'text-slate-400' : 'text-emerald-300'}`} />
+                <input
+                  type="text"
+                  autoFocus={isGlobalSearchOpen}
+                  value={globalQuery}
+                  onChange={(e) => setGlobalQuery(e.target.value)}
+                  placeholder={
+                    isBn
+                      ? 'হাদিস নম্বর (যেমন: ৬৪০৭) বা শব্দ লিখে খুঁজুন...'
+                      : 'Enter Hadith # (e.g. 6407) or keyword...'
+                  }
+                  className={`w-full min-h-[42px] rounded-xl pl-10 pr-9 py-2 border text-xs sm:text-sm focus:outline-none ${
+                    isDay
+                      ? 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-[#006747]'
+                      : 'bg-[#0e1c26] border-[#1a3342] text-white placeholder:text-slate-400 focus:border-emerald-400'
+                  }`}
+                />
+                {globalQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGlobalQuery('');
+                      setGlobalSearchResults(null);
+                      setGlobalSearchError(null);
+                    }}
+                    aria-label="Clear search"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={!globalQuery.trim() || isGlobalSearching}
+                className="sm:col-span-2 min-h-[42px] rounded-xl px-4 py-2 bg-[#006747] hover:bg-[#00553a] text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition active:scale-95 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+              >
+                {isGlobalSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                <span>{isBn ? 'খুঁজুন' : 'Find'}</span>
+              </button>
+            </form>
+          )}
         </section>
       )}
 

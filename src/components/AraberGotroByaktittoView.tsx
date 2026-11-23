@@ -343,6 +343,7 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
   const [collapsedTopics, setCollapsedTopics] = useState<Record<string, boolean>>({});
   const [isTocDrawerOpen, setIsTocDrawerOpen] = useState<boolean>(false);
   const [tocSearchQuery, setTocSearchQuery] = useState<string>('');
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [qurayshRoleFilter, setQurayshRoleFilter] = useState<'all' | 'kaba_service' | 'military' | 'judiciary' | 'parliament'>('all');
   const [hashimTreeBranch, setHashimTreeBranch] = useState<'all' | 'prophet' | 'martyrs_caliphs' | 'uncles'>('all');
   const [ansarTab, setAnsarTab] = useState<'tree' | 'comparison' | 'virtues'>('tree');
@@ -816,118 +817,82 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
     <div className={`min-h-screen pb-24 transition-colors duration-200 ${
       isDay ? 'text-slate-800' : 'text-[#e6f4f2]'
     }`}>
-      {/* 1. Simple Flat Header */}
+      {/* 1. Simple Centered Header */}
       <div
         className={`pb-3.5 mb-3 border-b space-y-2.5 transition-colors ${
           isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        {/* Top Bar */}
-        <div className="flex items-center justify-between gap-2 flex-wrap text-[11px]">
-          {onBack && (
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          {/* Left: Back Button */}
+          <div className="flex items-center">
+            {onBack ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  onBack();
+                }}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:bg-[#103239]'
+                }`}
+                title={t.backToLibrary}
+                aria-label={t.backToLibrary}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            ) : (
+              <div className="w-10" />
+            )}
+          </div>
+
+          {/* Center: Centered Title + Concise Key Info */}
+          <div className="text-center min-w-0 px-1">
+            <h1 className="text-lg sm:text-xl font-black tracking-tight truncate">
+              {t.mainHeaderTitle}
+            </h1>
+            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
+              {t.metricTribeValue} · {t.subHeaderBadge}
+            </p>
+          </div>
+
+          {/* Right: Search Icon + Share/Download */}
+          <div className="flex items-center justify-end gap-1.5">
             <button
+              type="button"
               onClick={() => {
                 if (soundEnabled) soundHaptics.playTap();
-                onBack();
+                setIsSearchOpen((prev) => {
+                  if (prev) {
+                    setSearchQuery('');
+                    setTocSearchQuery('');
+                  }
+                  return !prev;
+                });
               }}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer active:scale-95 ${
-                isDay
-                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                  : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:bg-[#103239]'
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery || tocSearchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#0a2328] border-[#16444e] text-emerald-300 hover:border-emerald-500'
               }`}
+              title={isBn ? 'খুঁজুন' : 'Search'}
+              aria-label={isBn ? 'খুঁজুন' : 'Search'}
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{t.backToLibrary}</span>
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             </button>
-          )}
-
-          <div className="flex items-center gap-2 ml-auto flex-wrap">
-            <span
-              className={`text-[11px] font-arabic tracking-wide font-semibold ${
-                isDay ? 'text-[#006A4E]' : 'text-emerald-300'
-              }`}
-            >
-              {BOOK_METADATA.titleAr}
-            </span>
-            <span
-              className={`text-[10px] px-2 py-0.5 rounded-full border font-bold whitespace-nowrap ${
-                isDay
-                  ? 'bg-amber-50 text-amber-800 border-amber-200'
-                  : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-              }`}
-            >
-              {t.subHeaderBadge}
-            </span>
             <ShareDownloadButtons
-              variant="card"
+              variant="compact"
               selectedLanguage={selectedLanguage}
               themeMode={themeMode}
               onShare={() => openGotroDirectoryShare('share')}
               onDownload={() => openGotroDirectoryShare('download')}
             />
-          </div>
-        </div>
-
-        {/* Header Title & Description */}
-        <div>
-          <h1 className="text-base sm:text-xl font-black tracking-tight flex items-center gap-1.5">
-            <span className="text-lg">🛡️</span>
-            <span>{t.mainHeaderTitle}</span>
-          </h1>
-          <p
-            className={`text-[11px] sm:text-xs leading-relaxed max-w-3xl mt-0.5 ${
-              isDay ? 'text-slate-600' : 'text-emerald-100/80'
-            }`}
-          >
-            {t.mainHeaderDesc}
-          </p>
-        </div>
-
-        {/* Compact Inline 4-Metric Strip */}
-        <div
-          className={`pt-2 border-t grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] ${
-            isDay ? 'border-slate-200/70' : 'border-white/10'
-          }`}
-        >
-          <div className="flex items-center gap-1.5 py-0.5">
-            <span className="text-xs">🗺️</span>
-            <div className="min-w-0">
-              <span className={`block text-[9px] ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
-                {t.metricDomainLabel}
-              </span>
-              <span className="font-bold truncate block">{t.metricDomainValue}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 py-0.5">
-            <span className="text-xs">🕋</span>
-            <div className="min-w-0">
-              <span className={`block text-[9px] ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
-                {t.metricKabaLabel}
-              </span>
-              <span className="font-bold truncate block">{t.metricKabaValue}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 py-0.5">
-            <span className="text-xs">📜</span>
-            <div className="min-w-0">
-              <span className={`block text-[9px] ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
-                {t.metricTribeLabel}
-              </span>
-              <span className={`font-bold truncate block ${isDay ? 'text-amber-700' : 'text-amber-300'}`}>
-                {t.metricTribeValue}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 py-0.5">
-            <span className="text-xs">📊</span>
-            <div className="min-w-0">
-              <span className={`block text-[9px] ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
-                {t.metricSourceLabel}
-              </span>
-              <span className={`font-bold truncate block ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}>
-                {t.metricSourceValue}
-              </span>
-            </div>
           </div>
         </div>
       </div>
@@ -1042,58 +1007,73 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
         </button>
       </div>
 
-      {/* 3. Global Search & Font Size Controls */}
-      <div className={`p-2.5 sm:p-3 rounded-xl border mb-4 flex flex-col sm:flex-row items-center gap-2.5 justify-between ${
-        isDay ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#082226] border-[#153e46]'
-      }`}>
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t.searchPlaceholderGlobal}
-            className={`w-full pl-9 pr-7 py-1.5 rounded-lg text-xs border outline-none transition ${
-              isDay
-                ? 'bg-slate-50 border-slate-200 focus:border-teal-600 text-slate-800'
-                : 'bg-[#041417] border-[#153e46] focus:border-emerald-500 text-emerald-100 placeholder-emerald-400/50'
-            }`}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-rose-500 font-bold"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end text-xs font-semibold">
-          <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-black/5 dark:bg-black/20 border-slate-200 dark:border-slate-800">
-            <button
-              onClick={() => setFontSizeLevel('normal')}
-              className={`px-2 py-0.5 rounded text-[11px] transition ${
-                fontSizeLevel === 'normal'
-                  ? isDay ? 'bg-white shadow-xs text-teal-800 font-bold' : 'bg-emerald-600 text-white font-bold'
-                  : 'opacity-70'
+      {/* 3. Expandable Search & Font Size Controls (Triggered by Search Icon) */}
+      {(isSearchOpen || searchQuery.trim().length > 0 || tocSearchQuery.trim().length > 0) && (
+        <div className={`p-2.5 sm:p-3 rounded-xl border mb-4 flex flex-col sm:flex-row items-center gap-2.5 justify-between ${
+          isDay ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#082226] border-[#153e46]'
+        }`}>
+          <div className="relative w-full sm:flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              type="text"
+              autoFocus={isSearchOpen}
+              value={viewMode === 'topic_toc' ? tocSearchQuery : searchQuery}
+              onChange={(e) => {
+                if (viewMode === 'topic_toc') {
+                  setTocSearchQuery(e.target.value);
+                } else {
+                  setSearchQuery(e.target.value);
+                }
+              }}
+              placeholder={viewMode === 'topic_toc' ? t.searchPlaceholderToc : t.searchPlaceholderGlobal}
+              className={`w-full pl-9 pr-8 py-2 rounded-lg text-xs border outline-none transition ${
+                isDay
+                  ? 'bg-slate-50 border-slate-200 focus:border-teal-600 text-slate-800'
+                  : 'bg-[#041417] border-[#153e46] focus:border-emerald-500 text-emerald-100 placeholder-emerald-400/50'
               }`}
-            >
-              {t.fontSizeNormal}
-            </button>
+            />
             <button
-              onClick={() => setFontSizeLevel('large')}
-              className={`px-2 py-0.5 rounded text-[11px] transition ${
-                fontSizeLevel === 'large'
-                  ? isDay ? 'bg-white shadow-xs text-teal-800 font-bold' : 'bg-emerald-600 text-white font-bold'
-                  : 'opacity-70'
-              }`}
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setTocSearchQuery('');
+                setIsSearchOpen(false);
+              }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+              aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
             >
-              {t.fontSizeLarge}
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end text-xs font-semibold shrink-0">
+            <div className="flex items-center gap-1 border rounded-lg p-0.5 bg-black/5 dark:bg-black/20 border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setFontSizeLevel('normal')}
+                className={`px-2 py-0.5 rounded text-[11px] transition cursor-pointer ${
+                  fontSizeLevel === 'normal'
+                    ? isDay ? 'bg-white shadow-xs text-teal-800 font-bold' : 'bg-emerald-600 text-white font-bold'
+                    : 'opacity-70'
+                }`}
+              >
+                {t.fontSizeNormal}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFontSizeLevel('large')}
+                className={`px-2 py-0.5 rounded text-[11px] transition cursor-pointer ${
+                  fontSizeLevel === 'large'
+                    ? isDay ? 'bg-white shadow-xs text-teal-800 font-bold' : 'bg-emerald-600 text-white font-bold'
+                    : 'opacity-70'
+                }`}
+              >
+                {t.fontSizeLarge}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* =====================================================================
           VIEW MODE 0: HAYATUS SAHABA STYLE TABLE OF CONTENTS
@@ -1101,31 +1081,6 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
           ===================================================================== */}
       {viewMode === 'topic_toc' && (
         <div className="space-y-3">
-          {/* 3. Search Bar with Instant Reset */}
-          <div className={`p-2.5 sm:p-3 rounded-xl border shadow-xs ${isDay ? 'bg-white border-slate-200' : 'bg-[#0b2228] border-[#16424b]'}`}>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input
-                type="text"
-                value={tocSearchQuery}
-                onChange={(e) => setTocSearchQuery(e.target.value)}
-                placeholder={t.searchPlaceholderToc}
-                className={`w-full pl-9 pr-7 py-1.5 rounded-lg border text-xs font-semibold transition focus:outline-none ${
-                  isDay
-                    ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500'
-                    : 'bg-[#07171c] border-teal-900/60 text-white focus:border-emerald-500'
-                }`}
-              />
-              {tocSearchQuery && (
-                <button
-                  onClick={() => setTocSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer text-xs"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
 
           {/* 4. BOOK TABLE OF CONTENTS (TOC) — 5 CATEGORY BOXES WITH NUMBERED LISTS */}
           <div className={`p-3.5 sm:p-4 rounded-2xl border shadow-md space-y-4 ${

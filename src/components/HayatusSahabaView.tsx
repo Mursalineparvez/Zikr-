@@ -309,6 +309,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
   useBackLayer(showBibliographyModal, () => setShowBibliographyModal(false), 'sahaba-bibliography');
   useBackLayer(Boolean(shareState), () => setShareState(null), 'sahaba-share');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<SahabaCategoryKey | 'all' | 'prophetic_titles' | 'last_10_days'>('all');
   const [last10DaysMode, setLast10DaysMode] = useState<'by_sahaba' | 'timeline'>('by_sahaba');
   const [last10DaysPhaseFilter, setLast10DaysPhaseFilter] = useState<number | 'all'>('all');
@@ -1500,155 +1501,164 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
           <span>{toastMessage}</span>
         </div>
       )}
-      {/* Top Action Pills Bar Matching Seerat Screenshot */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Clean Simple Centered Header */}
+      <div
+        className={`pb-3.5 border-b space-y-3 transition-colors ${
+          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
+        }`}
+      >
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          {/* Left: Back Button */}
+          <div className="flex items-center">
+            {onBackToHub ? (
+              <button
+                type="button"
+                onClick={onBackToHub}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isDay
+                    ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
+                }`}
+                title={isBn ? 'ফিরে যান' : 'Back to Hub'}
+                aria-label={isBn ? 'ফিরে যান' : 'Back'}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            ) : (
+              <div className="w-10" />
+            )}
+          </div>
+
+          {/* Center: Centered Title + Concise Key Info */}
+          <div className="text-center min-w-0 px-1">
+            <h2 className="text-lg sm:text-xl font-black tracking-tight truncate">
+              {isBn ? 'হায়াতুস সাহাবা' : 'Hayatus Sahaba'}
+            </h2>
+            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
+              {isBn
+                ? `${formatNum(totalSahaba)}+ সাহাবি · পঠিত ${formatNum(completedCount)}/${formatNum(totalSahaba)}`
+                : `${totalSahaba}+ Sahaba · Read ${completedCount}/${totalSahaba}`}
+            </p>
+          </div>
+
+          {/* Right: Search Icon + Share/Download */}
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setIsSearchOpen((prev) => {
+                  if (prev && searchQuery) setSearchQuery('');
+                  return !prev;
+                });
+              }}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#09221d] border-emerald-800/60 text-emerald-300 hover:border-emerald-500'
+              }`}
+              title={isBn ? 'খুঁজুন' : 'Search'}
+              aria-label={isBn ? 'খুঁজুন' : 'Search'}
+            >
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+            </button>
+            <ShareDownloadButtons
+              variant="compact"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openSahabaIndexShare('share')}
+              onDownload={() => openSahabaIndexShare('download')}
+            />
+          </div>
+        </div>
+
+        {/* Centered Essential Quick Actions */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
           {lastReadSahaba && (
             <button
+              type="button"
               onClick={() => handleSelectSahaba(lastReadSahaba.id)}
-              className="px-3.5 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                isDay
+                  ? 'bg-emerald-50 text-[#006A4E] border-emerald-200 hover:bg-emerald-100'
+                  : 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60 hover:bg-emerald-900/60'
+              }`}
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>{isBn ? `সর্বশেষ পঠিত (${getSahabaName(lastReadSahaba, selectedLanguage)})` : `Resume (${getSahabaName(lastReadSahaba, selectedLanguage)})`}</span>
+              <RotateCcw className="w-3 h-3" />
+              <span className="truncate max-w-[160px]">
+                {isBn ? `সর্বশেষ: ${getSahabaName(lastReadSahaba, selectedLanguage)}` : `Resume: ${getSahabaName(lastReadSahaba, selectedLanguage)}`}
+              </span>
             </button>
           )}
 
           <button
+            type="button"
             onClick={() => {
               if (soundEnabled) soundHaptics.playTap();
               setShowBibliographyModal(true);
             }}
-            className={`px-3.5 py-2 rounded-2xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+            className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
               isDay
-                ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200'
-                : 'bg-emerald-950/80 text-amber-300 border-emerald-700/60 hover:bg-emerald-900'
+                ? 'bg-white text-slate-700 border-slate-200 hover:border-emerald-400 hover:text-[#006A4E]'
+                : 'bg-[#09221d] text-slate-200 border-emerald-800/60 hover:border-emerald-500'
             }`}
-            title={isBn ? 'হায়াতুস সাহাবা প্রামাণ্য গ্রন্থমালা' : 'Hayatus Sahaba Master Bibliography'}
           >
-            <BookOpen className="w-3.5 h-3.5 text-amber-500" />
+            <BookOpen className="w-3.5 h-3.5 text-[#006A4E] dark:text-emerald-400" />
             <span>{isBn ? 'সাহাবা গ্রন্থমালা' : 'Bibliography'}</span>
           </button>
 
           <button
+            type="button"
             onClick={() => {
               if (soundEnabled) soundHaptics.playTap();
               setActiveCategoryFilter((prev) => (prev === 'last_10_days' ? 'all' : 'last_10_days'));
               setSelectedLast10SahabaId('all');
             }}
-            className={`px-3.5 py-2 rounded-2xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+            className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
               activeCategoryFilter === 'last_10_days'
-                ? 'bg-[#006747] text-white border-emerald-500 shadow-sm'
+                ? 'bg-[#006747] text-white border-[#006747]'
                 : isDay
-                  ? 'bg-emerald-50 text-emerald-950 border-emerald-300 hover:bg-emerald-100'
-                  : 'bg-[#072620] text-emerald-200 border-emerald-700/60 hover:bg-emerald-900/70'
+                ? 'bg-white text-slate-700 border-slate-200 hover:border-emerald-400 hover:text-[#006A4E]'
+                : 'bg-[#09221d] text-slate-200 border-emerald-800/60 hover:border-emerald-500'
             }`}
-            title={isBn ? 'নবীজী (সা.)-এর ইন্তেকালের শেষ ১০ দিন — ৩৫টি ঘটনা (সাহাবিদের নাম অনুযায়ী)' : 'Prophet’s Final 10 Days — 35 Events by Sahabi Name'}
           >
-            <ScrollText className={`w-3.5 h-3.5 ${activeCategoryFilter === 'last_10_days' ? 'text-amber-300' : 'text-emerald-600 dark:text-amber-400'}`} />
+            <ScrollText className="w-3.5 h-3.5" />
             <span>{isBn ? 'শেষ ১০ দিন (৩৫ ঘটনা)' : 'Final 10 Days (35 Events)'}</span>
           </button>
-
-          {onBackToHub && (
-            <button
-              onClick={onBackToHub}
-              className={`p-2.5 rounded-2xl text-xs font-bold border transition cursor-pointer active:scale-95 ${
-                isDay
-                  ? 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
-                  : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
-              }`}
-              title={isBn ? 'ফিরে যান' : 'Back to Hub'}
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Reading Progress Bar */}
-        <div className="w-full sm:w-56 space-y-1">
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-emerald-300">
-            <span>{isBn ? 'পঠন অগ্রগতি' : 'Reading Progress'}</span>
-            <span className="font-mono">{formatNum(completedCount)}/{formatNum(totalSahaba)} ({formatNum(progressPercentage)}%)</span>
-          </div>
-          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-emerald-950/80 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
         </div>
       </div>
 
-      {/* Simple Flat Top Header */}
-      <div
-        className={`pb-4 border-b transition-colors ${
-          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
-        }`}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-          <div
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
-              isDay ? 'text-[#006A4E]' : 'text-emerald-300'
-            }`}
-          >
-            <Sparkles className={`w-3.5 h-3.5 ${isDay ? 'text-amber-500' : 'text-amber-300'}`} />
-            <span>{isBn ? 'হায়াতুস সাহাবা' : isAr ? 'حياة الصحابة رضي الله عنهم' : 'Hayatus Sahaba'}</span>
-          </div>
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-              isDay
-                ? 'bg-emerald-50 text-[#006A4E] border-emerald-200'
-                : 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
-            }`}
-          >
-            {isBn ? `${formatNum(totalSahaba)} জন সাহাবি` : `${totalSahaba} Companions`}
-          </span>
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-              {isBn ? `হায়াতুস সাহাবা (${formatNum(totalSahaba)}+ বিশিষ্ট সাহাবির জীবনী)` : `Hayatus Sahaba (${totalSahaba}+ Prominent Biographies)`}
-            </h2>
-            <p
-              className={`text-xs sm:text-sm mt-1 max-w-xl ${
-                isDay ? 'text-slate-600' : 'text-emerald-100/80'
-              }`}
-            >
-              {isBn
-                ? 'মর্যাদা ও জনপ্রিয়তার ক্রমানুসারে নবীপ্রেমিক সাহাবিগণের পূর্ণাঙ্গ জীবন, পরিবার, সন্তানসন্ততি, ইসলাম গ্রহণ, বীরত্ব ও সহিহ হাদিসের প্রামাণিক দলিল।'
-                : 'Ranked biographical accounts of the beloved companions of Prophet Muhammad (PBUH)—their families, Islam acceptance, virtues, and authentic Hadith evidence.'}
-            </p>
-          </div>
-          <ShareDownloadButtons
-            variant="card"
-            selectedLanguage={selectedLanguage}
-            themeMode={themeMode}
-            className="shrink-0 self-start sm:self-end"
-            onShare={() => openSahabaIndexShare('share')}
-            onDownload={() => openSahabaIndexShare('download')}
-          />
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className={`p-4 rounded-3xl border shadow-md ${isDay ? 'bg-white border-slate-200' : 'bg-[#0b2228] border-[#16424b]'}`}>
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Expandable Search Input (Shown only when Search icon clicked) */}
+      {(isSearchOpen || searchQuery.trim().length > 0) && (
+        <div className="relative animate-in fade-in duration-150">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
+            autoFocus={isSearchOpen}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isBn ? 'সাহাবিগণের নাম, উপাধি (যেমন: যুশ শাহাদাতাইন, ফারায়েয, সাইফুল্লাহ) দিয়ে খুঁজুন...' : 'Search Sahaba by name, title...'}
-            className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
-              isDay ? 'bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500' : 'bg-[#07171c] border-teal-900/60 text-white focus:border-emerald-500'
+            placeholder={isBn ? 'সাহাবির নাম বা উপাধি দিয়ে খুঁজুন...' : 'Search Sahaba by name or title...'}
+            className={`w-full min-h-[44px] pl-10 pr-10 py-2 rounded-2xl border text-xs sm:text-sm font-semibold transition focus:outline-none ${
+              isDay ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]' : 'bg-[#07171c] border-teal-900/60 text-white focus:border-emerald-500'
             }`}
           />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setIsSearchOpen(false);
+            }}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+            aria-label={isBn ? 'বন্ধ করুন' : 'Close search'}
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-      </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 40 PROPHETIC TITLES SPECIAL COLLECTION VIEW                                */}

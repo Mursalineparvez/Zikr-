@@ -97,6 +97,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
   const [selectedProphetId, setSelectedProphetId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<Prophet25FilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showIntroDrawer, setShowIntroDrawer] = useState(false);
   const [readIds, setReadIds] = useState<string[]>(() => readStoredStringArray(READ_STORAGE_KEY));
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() =>
@@ -1364,121 +1365,97 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
       }
       className="space-y-5 pb-10 animate-in fade-in duration-200"
     >
-      {/* Simple Flat Header */}
+      {/* Clean Simple Centered Header */}
       <div
-        className={`pb-4 border-b space-y-3 transition-colors ${
+        className={`pb-3.5 border-b transition-colors ${
           isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="flex items-center justify-between gap-2">
-          {onBackToHub ? (
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          <div className="flex items-center">
+            {onBackToHub ? (
+              <button
+                type="button"
+                onClick={onBackToHub}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                    : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:bg-[#103239]'
+                }`}
+                aria-label={isBn ? 'ফিরে যান' : 'Back'}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            ) : (
+              <div className="w-10" />
+            )}
+          </div>
+
+          <div className="text-center min-w-0 px-1">
+            <h1 className="text-lg sm:text-xl font-black tracking-tight truncate">
+              {isBn
+                ? '২৫ জন নবী ও রাসূল'
+                : isAr
+                ? 'الأنبياء والرسل الـ ٢٥'
+                : '25 Prophets & Messengers'}
+            </h1>
+            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
+              {isBn
+                ? `${toBnDigits(25)} জন নবী · পঠিত ${toBnDigits(readIds.length)}/${toBnDigits(25)}`
+                : `25 Prophets · Read ${readIds.length}/25`}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-1.5">
             <button
               type="button"
-              onClick={onBackToHub}
-              className={`min-h-[40px] px-3 rounded-xl border text-xs sm:text-sm font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
-                isDay
-                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                  : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:bg-[#103239]'
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setIsSearchOpen((prev) => {
+                  if (prev && searchQuery) setSearchQuery('');
+                  return !prev;
+                });
+              }}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isSearchOpen || searchQuery
+                  ? isDay
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-emerald-600 border-emerald-500 text-white'
+                  : isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                  : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:border-emerald-500'
               }`}
+              title={isBn ? 'খুঁজুন' : 'Search'}
+              aria-label={isBn ? 'খুঁজুন' : 'Search'}
             >
-              <ArrowLeft className="w-4 h-4 shrink-0" />
-              <span>{isBn ? 'আরো মেনু' : isAr ? 'المزيد' : 'Back'}</span>
+              {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             </button>
-          ) : (
-            <div />
-          )}
-
-          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => openShareModal(buildAll25IndexShareContent(), 'share')}
-              className={`min-h-[40px] px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isDay
-                  ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-[#006A4E]'
-                  : 'bg-[#0a2328] hover:bg-[#11333a] border-[#16444e] text-emerald-300'
+                  ? 'bg-white border-slate-200 text-[#006A4E] hover:bg-emerald-50'
+                  : 'bg-[#0a2328] border-[#16444e] text-emerald-300 hover:bg-[#11333a]'
               }`}
+              title={isBn ? 'শেয়ার' : 'Share'}
+              aria-label={isBn ? 'শেয়ার' : 'Share'}
             >
-              <Share2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">{isBn ? 'তালিকা শেয়ার' : 'Share List'}</span>
+              <Share2 className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={() => openShareModal(buildAll25IndexShareContent(), 'download')}
-              className={`min-h-[40px] px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isDay
-                  ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800'
-                  : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-400/30 text-amber-300'
+                  ? 'bg-white border-slate-200 text-[#006A4E] hover:bg-emerald-50'
+                  : 'bg-[#0a2328] border-[#16444e] text-emerald-300 hover:bg-[#11333a]'
               }`}
+              title={isBn ? 'PDF / ডাউনলোড' : 'Download'}
+              aria-label={isBn ? 'ডাউনলোড' : 'Download'}
             >
-              <Download className="w-3.5 h-3.5 shrink-0" />
-              <span>{isBn ? '২৫ নবী PDF' : 'PDF'}</span>
+              <Download className="w-4 h-4" />
             </button>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <div
-            dir="rtl"
-            className={`font-arabic text-base sm:text-lg font-bold leading-snug ${
-              isDay ? 'text-[#006A4E]' : 'text-amber-300'
-            }`}
-          >
-            الأنبياء والرسل الـ ٢٥ في القرآن الكريم
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-balance">
-            {isBn
-              ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল'
-              : isAr
-              ? 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم'
-              : '25 Prophets & Messengers in the Quran'}
-          </h1>
-          <p
-            className={`text-xs sm:text-sm leading-relaxed max-w-3xl ${
-              isDay ? 'text-slate-600' : 'text-emerald-100/80'
-            }`}
-          >
-            {isBn
-              ? 'হযরত আদম (আ.) থেকে শেষনবী মুহাম্মাদ (সা.) পর্যন্ত পবিত্র কুরআনে নাম উল্লিখিত সকল ২৫ জন নবী ও রাসূলের বিস্তারিত জীবনী, কুরআনী পরিসংখ্যান, মু‘জিযা, প্রসিদ্ধ দোয়া, ইসরাঈলীয়াত যাচাই (সংশয় নিরসন), শিক্ষণীয় বিষয় ও প্রামাণিক তথ্যসূত্র।'
-              : 'Comprehensive profiles, Quranic mention stats, miracles, supplications, scholarly fact-checking, and verified references of all 25 Prophets & Messengers named in the Quran — from Adam (AS) to Muhammad (SAW).'}
-          </p>
-        </div>
-
-        {/* Unboxed Typographic Key Stats + Progress */}
-        <div
-          className={`pt-2.5 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
-            isDay ? 'border-slate-200/70' : 'border-white/10'
-          }`}
-        >
-          <div
-            className={`text-xs font-semibold tabular-nums ${
-              isDay ? 'text-slate-600' : 'text-emerald-100/85'
-            }`}
-          >
-            {isBn
-              ? `${toBnDigits(25)} জন নবী ও রাসূল  ·  ${toBnDigits(ULUL_AZM_COUNT)} জন উলুল আযম  ·  ${toBnDigits(SCRIPTURE_BEARERS_COUNT)} জন কিতাব/সহীফাপ্রাপ্ত  ·  ${toBnDigits(ARAB_PROPHETS_COUNT)} জন আরব নবী`
-              : `25 Prophets & Messengers  ·  ${ULUL_AZM_COUNT} Ulul Azm  ·  ${SCRIPTURE_BEARERS_COUNT} Scripture Bearers  ·  ${ARAB_PROPHETS_COUNT} Arab Prophets`}
-          </div>
-
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div
-              className={`w-28 h-2 rounded-full overflow-hidden ${
-                isDay ? 'bg-slate-200' : 'bg-white/15'
-              }`}
-            >
-              <div
-                className="h-full bg-[#006747] dark:bg-amber-300 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <span
-              className={`text-xs font-bold tabular-nums ${
-                isDay ? 'text-[#006A4E]' : 'text-amber-200'
-              }`}
-            >
-              {isBn
-                ? `${toBnDigits(readIds.length)}/${toBnDigits(25)} পঠিত`
-                : `${readIds.length}/25 Read`}
-            </span>
           </div>
         </div>
       </div>
@@ -1604,42 +1581,46 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
         )}
       </div>
 
-      {/* Search + Interactive Filter Strip */}
+      {/* Search (Expandable via top icon) + Interactive Filter Strip */}
       <div className="space-y-3">
-        <div className="relative">
-          <Search
-            className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
-              isDay ? 'text-slate-400' : 'text-emerald-400/70'
-            }`}
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={
-              isBn
-                ? 'নবীর নাম, লকব, জাতি, অঞ্চল বা কিতাব খুঁজুন (যেমন: ইবরাহীম, মূসা, ইউনুস, তাওরাত)...'
-                : 'Search prophet by name, title, nation, era, or scripture...'
-            }
-            className={`w-full min-h-[46px] pl-10 pr-10 rounded-2xl border text-sm font-medium outline-none transition ${
-              isDay
-                ? 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-[#006A4E]'
-                : 'bg-[#082026] border-teal-900/70 text-white placeholder:text-slate-400 focus:border-emerald-400'
-            }`}
-          />
-          {searchQuery && (
+        {(isSearchOpen || searchQuery.trim().length > 0) && (
+          <div className="relative animate-in fade-in duration-150">
+            <Search
+              className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
+                isDay ? 'text-slate-400' : 'text-emerald-400/70'
+              }`}
+            />
+            <input
+              type="text"
+              autoFocus={isSearchOpen}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={
+                isBn
+                  ? 'নবীর নাম, লকব, অঞ্চল বা কিতাব খুঁজুন...'
+                  : 'Search prophet by name, title, or scripture...'
+              }
+              className={`w-full min-h-[44px] pl-10 pr-10 rounded-2xl border text-xs sm:text-sm font-medium outline-none transition ${
+                isDay
+                  ? 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-[#006A4E]'
+                  : 'bg-[#082026] border-teal-900/70 text-white placeholder:text-slate-400 focus:border-emerald-400'
+              }`}
+            />
             <button
               type="button"
-              onClick={() => setSearchQuery('')}
-              aria-label="Clear search"
+              onClick={() => {
+                setSearchQuery('');
+                setIsSearchOpen(false);
+              }}
+              aria-label="Close search"
               className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer ${
                 isDay ? 'text-slate-500 hover:bg-slate-100' : 'text-slate-400 hover:bg-teal-900/50'
               }`}
             >
               <X className="w-4 h-4" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Horizontal Filter Tabs */}
         <div

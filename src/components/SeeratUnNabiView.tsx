@@ -467,6 +467,7 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
   const [selectedAge, setSelectedAge] = useState<number | null>(null);
   const [readerTab, setReaderTab] = useState<ReaderTab>('biography');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [copiedChapter, setCopiedChapter] = useState(false);
   const [filterOnlyBookmarked, setFilterOnlyBookmarked] = useState(false);
 
@@ -1762,95 +1763,112 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
   return (
     <div className="w-full space-y-5 animate-in fade-in duration-300">
-      {/* Simple Flat Overview Header */}
+      {/* Clean Centered Overview Header */}
       <div
-        className={`pb-3.5 border-b transition-colors ${
+        className={`pb-3.5 border-b space-y-3 transition-colors ${
           isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300">
-              <Sparkles className="w-3 h-3 text-amber-500" />
-              <span>{t('headerBadge')}</span>
-              <span className="w-1 h-1 rounded-full bg-emerald-500" />
-              <span>{isBn ? '৬৩টি পূর্ণাঙ্গ অধ্যায় (১-৬৩ বছর)' : '63 Complete Chapters (Ages 1-63)'}</span>
-            </div>
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          <div className="flex items-center">
+            {onBackToHub ? (
+              <button
+                type="button"
+                onClick={onBackToHub}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isDay
+                    ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
+                }`}
+                title="Back to Hub"
+                aria-label="Back"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            ) : (
+              <div className="w-10" />
+            )}
+          </div>
 
-            <h1 className="text-base sm:text-lg md:text-xl font-black tracking-tight text-slate-900 dark:text-white">
+          <div className="text-center min-w-0 px-1">
+            <h1 className="text-lg sm:text-xl font-black tracking-tight truncate">
               {t('mainTitle')}
             </h1>
-
-            <p className="text-[11px] sm:text-xs text-slate-600 dark:text-emerald-200/80 max-w-2xl leading-snug line-clamp-2 md:line-clamp-none">
-              {t('subTitle')}
+            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
+              {isBn
+                ? `৬৩ বছর (১–৬৩ অধ্যায়) · পঠিত ${completedAges.length}/৬৩`
+                : `Ages 1–63 · Read ${completedAges.length}/63`}
             </p>
           </div>
 
-          {/* Reading Progress Metric & Resume Button */}
-          <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/60 dark:border-emerald-800/40">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <ShareDownloadButtons
-                variant="card"
-                selectedLanguage={lang}
-                themeMode={themeMode}
-                onShare={() => openSeeratOverviewShare('share')}
-                onDownload={() => openSeeratOverviewShare('download')}
-              />
-              {lastReadAge && (
-                <button
-                  onClick={() => handleSelectAge(lastReadAge)}
-                  className="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] flex items-center gap-1 shadow-2xs transition active:scale-95 cursor-pointer"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>{isBn ? `সর্বশেষ পঠিত (বয়স ${lastReadAge})` : `Resume (${lastReadAge})`}</span>
-                </button>
-              )}
-
+          <div className="flex items-center justify-end gap-1.5">
+            {viewMode !== 'map' && (
               <button
+                type="button"
                 onClick={() => {
                   if (soundEnabled) soundHaptics.playTap();
-                  setShowBibliographyModal(true);
+                  setIsSearchOpen((prev) => {
+                    if (prev && searchQuery) setSearchQuery('');
+                    return !prev;
+                  });
                 }}
-                className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition flex items-center gap-1 cursor-pointer active:scale-95 ${
-                  isDay
-                    ? 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
-                    : 'bg-emerald-950/80 text-amber-300 border-emerald-700/60 hover:bg-emerald-900'
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isSearchOpen || searchQuery
+                    ? isDay
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                      : 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                    : 'bg-[#09221d] border-emerald-800/60 text-emerald-300 hover:border-emerald-500'
                 }`}
-                title="View Classical Seerah Bibliography"
+                title={isBn ? 'খুঁজুন' : 'Search'}
+                aria-label={isBn ? 'খুঁজুন' : 'Search'}
               >
-                <BookOpen className="w-3 h-3 text-amber-500" />
-                <span>{isBn ? 'সীরাত গ্রন্থমালা' : 'Bibliography'}</span>
+                {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
               </button>
-
-              {onBackToHub && (
-                <button
-                  onClick={onBackToHub}
-                  className={`p-1.5 rounded-xl text-xs font-bold border transition cursor-pointer active:scale-95 ${
-                    isDay
-                      ? 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
-                      : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
-                  }`}
-                  title="Back to Hub"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Reading Progress Bar */}
-            <div className="w-32 sm:w-40 space-y-0.5">
-              <div className="flex items-center justify-between text-[10px] font-bold text-slate-600 dark:text-emerald-300">
-                <span>{t('readingProgress')}</span>
-                <span className="font-mono">{completedAges.length}/63 ({completionPercentage}%)</span>
-              </div>
-              <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-emerald-950/80 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 rounded-full"
-                  style={{ width: `${completionPercentage}%` }}
-                />
-              </div>
-            </div>
+            )}
+            <ShareDownloadButtons
+              variant="compact"
+              selectedLanguage={lang}
+              themeMode={themeMode}
+              onShare={() => openSeeratOverviewShare('share')}
+              onDownload={() => openSeeratOverviewShare('download')}
+            />
           </div>
+        </div>
+
+        {/* Centered Essential Quick Actions */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {lastReadAge && (
+            <button
+              type="button"
+              onClick={() => handleSelectAge(lastReadAge)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                isDay
+                  ? 'bg-emerald-50 text-[#006A4E] border-emerald-200 hover:bg-emerald-100'
+                  : 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60 hover:bg-emerald-900/60'
+              }`}
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>{isBn ? `সর্বশেষ: বয়স ${lastReadAge}` : `Resume: Age ${lastReadAge}`}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              if (soundEnabled) soundHaptics.playTap();
+              setShowBibliographyModal(true);
+            }}
+            className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+              isDay
+                ? 'bg-white text-slate-700 border-slate-200 hover:border-emerald-400 hover:text-[#006A4E]'
+                : 'bg-[#09221d] text-slate-200 border-emerald-800/60 hover:border-emerald-500'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[#006A4E] dark:text-emerald-400" />
+            <span>{isBn ? 'সীরাত গ্রন্থমালা' : 'Bibliography'}</span>
+          </button>
         </div>
       </div>
 
@@ -1955,29 +1973,33 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
         </div>
       </div>
 
-      {/* Search Bar */}
-      {viewMode !== 'map' && (
-        <div className="relative w-full">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+      {/* Expandable Search Bar (Opened via top Search icon) */}
+      {viewMode !== 'map' && (isSearchOpen || searchQuery.trim().length > 0) && (
+        <div className="relative w-full animate-in fade-in duration-150">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           <input
             type="text"
+            autoFocus={isSearchOpen}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className={`w-full pl-9 pr-8 py-2.5 rounded-2xl text-xs sm:text-sm font-medium border transition-colors outline-none ${
+            className={`w-full min-h-[44px] pl-10 pr-10 py-2 rounded-2xl text-xs sm:text-sm font-medium border transition-colors outline-none ${
               isDay
-                ? 'bg-white border-slate-300 text-slate-900 focus:border-emerald-500 shadow-xs'
-                : 'bg-[#061b17] border-emerald-800/60 text-emerald-100 placeholder:text-emerald-500/60 focus:border-emerald-500 shadow-xs'
+                ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E] shadow-2xs'
+                : 'bg-[#061b17] border-emerald-800/60 text-emerald-100 placeholder:text-emerald-500/60 focus:border-emerald-500 shadow-2xs'
             }`}
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setIsSearchOpen(false);
+            }}
+            aria-label="Close search"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-1.5 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
