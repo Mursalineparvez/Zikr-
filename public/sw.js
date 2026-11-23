@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v32-chatbot-clean
+// Version: zikrmate-v33-tablig-muzakara-sync
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v32-chatbot-clean';
+const CACHE_NAME = 'zikrmate-v33-tablig-muzakara-sync';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
