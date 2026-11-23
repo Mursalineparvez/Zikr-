@@ -1649,45 +1649,51 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
 
       {/* Bibliography Modal for Islamic History Wars */}
       {showWarBibliographyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
-          <div
-            className={`w-full max-w-xl rounded-3xl border p-5 sm:p-7 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto ${
-              isDay ? 'bg-white border-amber-200 text-slate-900' : 'bg-[#181108] border-amber-500/30 text-white'
-            }`}
-          >
+        <div className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+          isDay ? 'bg-white text-slate-900' : 'bg-[#071c21] text-white'
+        }`}>
+          <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0a2328] border-[#163d46]'
+          }`}>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-[#006A4E] dark:text-emerald-400">
+                {isBn ? 'প্রামাণ্য গ্রন্থ ও উৎসপঞ্জি' : 'Classical War Chronicles'}
+              </div>
+              <h3 className="text-base sm:text-xl font-black truncate">
+                {isBn ? 'ইসলামের ইতিহাসের যুদ্ধসমূহ: প্রামাণ্য গ্রন্থমালা' : 'Chronicles of Islamic Battles: Bibliography'}
+              </h3>
+            </div>
             <button
+              type="button"
               onClick={() => {
                 setShowWarBibliographyModal(false);
                 if (soundEnabled) soundHaptics.playTap();
               }}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-white"
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer transition ${
+                isDay ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
+              }`}
+              aria-label="Close"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
+          </div>
 
-            <div className="space-y-1 border-b pb-3 border-amber-500/20 pr-8">
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-300">
-                {isBn ? 'প্রামাণ্য গ্রন্থ ও উৎসপঞ্জি' : 'Classical War Chronicles'}
-              </span>
-              <h3 className="text-lg sm:text-xl font-black text-amber-700 dark:text-amber-400">
-                {isBn ? 'ইসলামের ইতিহাসের যুদ্ধসমূহ: প্রামাণ্য গ্রন্থমালা' : 'Chronicles of Islamic Battles: Bibliography'}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {isBn
-                  ? 'এই সংকলনে উল্লেখিত প্রতিটি যুদ্ধের তারিখ, পটভূমি, সেনাদল ও শহীদ সাহাবিগণের বিবরণ নিম্নোক্ত প্রামাণ্য শাস্ত্রীয় গ্রন্থাবলি থেকে সংকলিত:'
-                  : 'Historical dates, causal backgrounds, troop numbers, and martyr accounts referenced from primary chronicles:'}
-              </p>
-            </div>
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+            <p className={`text-xs sm:text-sm ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
+              {isBn
+                ? 'এই সংকলনে উল্লেখিত প্রতিটি যুদ্ধের তারিখ, পটভূমি, সেনাদল ও শহীদ সাহাবিগণের বিবরণ নিম্নোক্ত প্রামাণ্য শাস্ত্রীয় গ্রন্থাবলি থেকে সংকলিত:'
+                : 'Historical dates, causal backgrounds, troop numbers, and martyr accounts referenced from primary chronicles:'}
+            </p>
 
-            <div className="space-y-3 text-xs sm:text-sm leading-relaxed">
-              <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-amber-50/60 border-amber-200' : 'bg-[#1f160a] border-amber-500/30'}`}>
-                <h4 className="font-extrabold text-amber-600 dark:text-amber-300 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-amber-500" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs sm:text-sm leading-relaxed">
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-2.5 ${isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0a2328] border-[#163d46]'}`}>
+                <h4 className="font-extrabold text-[#006A4E] dark:text-emerald-300 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-emerald-500" />
                   <span>{isBn ? '১. ইতিহাস ও সীরাতের মূল ক্লাসিক্যাল গ্রন্থাবলি' : '1. Classical Military & History Compilations'}</span>
                 </h4>
-                <ul className="space-y-2 text-xs">
+                <ul className="space-y-2 text-xs sm:text-sm">
                   <li className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">•</span>
+                    <span className="text-emerald-500 font-bold">•</span>
                     <span>
                       {isBn ? (
                         <><strong>تاريخ الرسل والملوك (তারীখে তাবারী):</strong> ইমাম আবু জাফর আত-তাবারী (২২৪–৩১০ হি:) — প্রাচীনতম ও প্রামাণ্য ইতিহাস বিশ্বকোষ।</>
@@ -1697,7 +1703,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">•</span>
+                    <span className="text-emerald-500 font-bold">•</span>
                     <span>
                       {isBn ? (
                         <><strong>البداية والنهاية (আল-বিদায়া ওয়ান নিহায়া):</strong> হাফেজ ইবনে কাসীর (৭০১–৭৭৪ হি:) — বদর, উহুদ, খন্দক ও খিলাফতের বিজয়াভিযানের ধারাবাহিক ইতিহাস।</>
@@ -1707,7 +1713,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">•</span>
+                    <span className="text-emerald-500 font-bold">•</span>
                     <span>
                       {isBn ? (
                         <><strong>كتاب المغازي (কিতাবুল মাগাযী):</strong> ইমাম মুহাম্মদ ইবনে উমর আল-ওয়াকিদী (১৩০–২০৭ হি:) — রাসূলুল্লাহ (সা.)-এর পবিত্র সামরিক অভিযানের পুঙ্খানুপুঙ্খ দলিল।</>
@@ -1717,7 +1723,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">•</span>
+                    <span className="text-emerald-500 font-bold">•</span>
                     <span>
                       {isBn ? (
                         <><strong>سيرة ابن هشام (সীরাতে ইবনে হিশাম):</strong> আবু মুহাম্মদ আবদুল মালিক ইবনে হিশাম (মৃত্যু ২১৩ হি:) — আদি সীরাতের নির্ভরযোগ্য রূপ।</>
@@ -1727,7 +1733,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">•</span>
+                    <span className="text-emerald-500 font-bold">•</span>
                     <span>
                       {isBn ? (
                         <><strong>الكامل في التاريخ (আল-কামিল ফিত তারীখ):</strong> আল্লামা ইবনুল আসীর (৫৫৫–৬৩০ হি:) — ইসলামের সার্বিক ইতিহাস ও আন্দালুস/ক্রুসেড প্রতিরোধ।</>
@@ -1737,7 +1743,7 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-amber-500 font-bold">•</span>
+                    <span className="text-emerald-500 font-bold">•</span>
                     <span>
                       {isBn ? (
                         <><strong>زاد المعاد (যাদুল মা‘আদ):</strong> ইমাম ইবনুল কাইয়্যিম (৬৯১–৭৫১ হি:) — নববি যুদ্ধনীতি, ফিকহ ও সামরিক চুক্তিবিধান।</>
@@ -1749,30 +1755,33 @@ export const IslamicHistoryWarsView: React.FC<IslamicHistoryWarsViewProps> = ({
                 </ul>
               </div>
 
-              <div className={`p-4 rounded-2xl border space-y-2 ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#081f19] border-emerald-500/30'}`}>
-                <h4 className="font-extrabold text-emerald-600 dark:text-emerald-300 flex items-center gap-2">
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-2.5 ${isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0a2328] border-[#163d46]'}`}>
+                <h4 className="font-extrabold text-[#006A4E] dark:text-emerald-300 flex items-center gap-2">
                   <Shield className="w-4 h-4 text-emerald-500" />
                   <span>{isBn ? '২. সহিহ হাদিস ও তাফসির শাস্ত্র' : '2. Hadith & Tafsir Foundations'}</span>
                 </h4>
-                <p className="text-xs">
+                <p className="text-xs sm:text-sm">
                   {isBn
                     ? 'সহিহ বুখারি (কিতাবুল মাগাযী ও কিতাবুল জিহাদ), সহিহ মুসলিম, জামে আত-তিরমিজি ও তাফসিরে ইবনে কাসীর থেকে যুদ্ধের প্রত্যক্ষ বর্ণনা ও কুরআনের আয়াতের শানে নুযুল গ্রহণ করা হয়েছে।'
                     : 'Authentic narrations derived from Sahih al-Bukhari (Kitab al-Maghazi & Kitab al-Jihad), Sahih Muslim, Jami at-Tirmidhi, and Tafsir Ibn Kathir.'}
                 </p>
               </div>
             </div>
+          </div>
 
-            <div className="pt-3 border-t border-amber-500/20 text-center">
-              <button
-                onClick={() => {
-                  setShowWarBibliographyModal(false);
-                  if (soundEnabled) soundHaptics.playTap();
-                }}
-                className="px-6 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-black text-xs shadow-lg transition cursor-pointer"
-              >
-                {isBn ? 'বুঝেছি, পঠন শুরু করুন' : 'Got it, Start Reading'}
-              </button>
-            </div>
+          <div className={`px-4 sm:px-6 py-3.5 border-t text-center shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0a2328] border-[#163d46]'
+          }`}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowWarBibliographyModal(false);
+                if (soundEnabled) soundHaptics.playTap();
+              }}
+              className="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#005740] text-white font-bold text-xs sm:text-sm transition cursor-pointer"
+            >
+              {isBn ? 'বুঝেছি, পঠন শুরু করুন' : 'Got it, Start Reading'}
+            </button>
           </div>
         </div>
       )}

@@ -1091,15 +1091,11 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
       {/* ========================================================================= */}
       {showQiblaModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
-          onClick={() => setShowQiblaModal(false)}
+          className="fixed inset-0 z-50 w-full h-[100dvh] bg-white dark:bg-[#0a2721] flex flex-col overflow-hidden animate-in fade-in"
         >
-          <div
-            className="w-full max-w-md bg-white dark:bg-[#0a2721] border border-slate-200/90 dark:border-emerald-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="px-4 py-3.5 border-b border-slate-100 dark:border-emerald-900/50 flex items-center justify-between bg-emerald-50/60 dark:bg-emerald-950/40">
+            <div className="px-4 py-3.5 sm:px-6 border-b border-slate-100 dark:border-emerald-900/50 flex items-center justify-between bg-emerald-50/60 dark:bg-emerald-950/40 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-emerald-600 text-amber-300 flex items-center justify-center shrink-0 shadow-xs">
                   <Compass className="w-5 h-5" />
@@ -1116,14 +1112,15 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowQiblaModal(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-200/80 dark:hover:bg-emerald-900/60 text-slate-500 dark:text-emerald-200 cursor-pointer transition"
+                className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-200/80 dark:hover:bg-emerald-900/60 text-slate-500 dark:text-emerald-200 cursor-pointer transition shrink-0"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="overflow-y-auto p-5 text-center flex flex-col items-center justify-center space-y-4">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 text-center flex flex-col items-center justify-center space-y-5">
               {/* Circular 360-Degree Watch Dial Compass */}
               <div className="relative w-52 h-52 sm:w-56 sm:h-56 flex items-center justify-center select-none">
                 <svg viewBox="0 0 160 160" className="w-full h-full drop-shadow-md">
@@ -1235,9 +1232,9 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
       {/* QUICK PRAYER DETAILS MODAL (Rakats, Hadiths, Virtues)                     */}
       {/* ========================================================================= */}
       {selectedQuickPrayer && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
-          <div className="w-full max-w-lg bg-white dark:bg-[#092226] border border-slate-200 dark:border-emerald-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-slate-100 dark:border-emerald-900/40 flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-950/40">
+        <div className="fixed inset-0 z-50 w-full h-[100dvh] bg-white dark:bg-[#092226] flex flex-col overflow-hidden animate-in fade-in">
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <div className="px-4 py-3.5 sm:px-6 border-b border-slate-100 dark:border-emerald-900/40 flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-950/40 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                   <Sun className="w-5 h-5" />
@@ -1253,15 +1250,16 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               </div>
               <button
                 onClick={() => setSelectedQuickPrayer(null)}
-                className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-emerald-900/60 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-200 dark:hover:bg-emerald-900/60 text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="overflow-y-auto p-4 sm:p-5 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
               {/* Rakats Breakdown */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#071f1a] border border-slate-200/80 dark:border-emerald-900/40 space-y-1">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#071f1a] border border-slate-200/80 dark:border-emerald-900/40 space-y-1">
                 <div className="text-xs font-bold text-slate-500 dark:text-slate-400">
                   {(SALAT_TEXTS.modal.totalRakats as any)[lang] || 'Total Rak’ats'}: {formatLocalizedNumber(selectedQuickPrayer.totalRakats, lang)}
                 </div>
@@ -1276,13 +1274,13 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
                   <BookOpen className="w-4 h-4 text-emerald-600" />
                   <span>{(SALAT_TEXTS.modal.virtueTitle as any)[lang] || 'Spiritual Virtue & Reward'}</span>
                 </div>
-                <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed italic">
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed italic">
                   "{selectedQuickPrayer.virtue}"
                 </p>
               </div>
             </div>
 
-            <div className="p-3 border-t border-slate-100 dark:border-emerald-900/40 text-center">
+            <div className="px-4 py-3 sm:px-6 border-t border-slate-100 dark:border-emerald-900/40 text-center shrink-0">
               <button
                 onClick={() => setSelectedQuickPrayer(null)}
                 className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer shadow-sm transition"
@@ -1298,9 +1296,9 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
       {/* CITY SELECTION DRAWER                                                     */}
       {/* ========================================================================= */}
       {showSettingsDrawer && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in">
-          <div className="w-full max-w-lg bg-white dark:bg-[#092226] border border-slate-200 dark:border-emerald-800/60 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-slate-100 dark:border-emerald-900/40 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 w-full h-[100dvh] bg-white dark:bg-[#092226] flex flex-col overflow-hidden animate-in fade-in">
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <div className="px-4 py-3.5 sm:px-6 border-b border-slate-100 dark:border-emerald-900/40 flex items-center justify-between shrink-0 bg-emerald-50/40 dark:bg-emerald-950/30">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-emerald-600" />
                 <h3 className="font-black text-sm sm:text-base text-slate-900 dark:text-white">
@@ -1309,14 +1307,15 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
               </div>
               <button
                 onClick={() => setShowSettingsDrawer(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-emerald-900/60 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-200 dark:hover:bg-emerald-900/60 text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* City Search Bar */}
-            <div className="p-3 border-b border-slate-100 dark:border-emerald-900/40">
+            <div className="px-4 py-3 sm:px-6 border-b border-slate-100 dark:border-emerald-900/40 shrink-0">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                 <input
@@ -1330,7 +1329,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
             </div>
 
             {/* Popular Cities List */}
-            <div className="overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-2 content-start">
               {POPULAR_CITIES.filter((c) =>
                 c.name.toLowerCase().includes(citySearchQuery.toLowerCase()) ||
                 c.country.toLowerCase().includes(citySearchQuery.toLowerCase())

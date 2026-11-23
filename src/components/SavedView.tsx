@@ -1470,16 +1470,12 @@ export const SavedView: React.FC<SavedViewProps> = ({
       {/* UNIVERSAL "SAVE ANYTHING" COMPOSER MODAL */}
       {composerOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in"
-          onClick={() => setComposerOpen(false)}
+          className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
+            isDay ? 'bg-white text-slate-900' : 'bg-[#081d22] text-white'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full sm:max-w-xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border shadow-2xl p-5 sm:p-6 space-y-4 ${
-              isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#081d22] border-[#184852] text-white'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2 pb-2 border-b border-black/10 dark:border-white/10">
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between gap-2 border-b border-black/10 dark:border-white/10 shrink-0">
               <div>
                 <h3 className="text-lg font-black tracking-tight text-[#006A4E] dark:text-emerald-400">
                   {editingEntry
@@ -1495,13 +1491,14 @@ export const SavedView: React.FC<SavedViewProps> = ({
               <button
                 type="button"
                 onClick={() => setComposerOpen(false)}
-                className="min-w-[40px] min-h-[40px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer shrink-0"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleComposerSubmit} className="space-y-4">
+            <form onSubmit={handleComposerSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
               {/* Step 1: Choose Content Format (only when creating or editing vault item) */}
               {(!editingEntry || editingEntry.origin === 'vault') && (
                 <div className="space-y-1.5">
@@ -1826,16 +1823,12 @@ export const SavedView: React.FC<SavedViewProps> = ({
       {/* CUSTOM TOPIC CREATE / EDIT MODAL */}
       {topicModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in"
-          onClick={() => setTopicModalOpen(false)}
+          className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
+            isDay ? 'bg-white text-slate-900' : 'bg-[#081d22] text-white'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-md rounded-3xl border shadow-2xl p-5 sm:p-6 space-y-4 ${
-              isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#081d22] border-[#184852] text-white'
-            }`}
-          >
-            <div className="flex items-center justify-between">
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-black/10 dark:border-white/10 shrink-0">
               <h3 className="text-lg font-black tracking-tight text-[#006A4E] dark:text-emerald-400">
                 {editingCustomTopic
                   ? isBn ? 'টপিক সম্পাদনা করুন' : 'Edit Topic'
@@ -1844,13 +1837,14 @@ export const SavedView: React.FC<SavedViewProps> = ({
               <button
                 type="button"
                 onClick={() => setTopicModalOpen(false)}
-                className="min-w-[38px] min-h-[38px] rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer shrink-0"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveCustomTopic} className="space-y-4">
+            <form onSubmit={handleSaveCustomTopic} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold uppercase tracking-wider opacity-70">
                   {isBn ? 'আইকন পছন্দ করুন' : 'Choose Icon'}
@@ -1950,17 +1944,18 @@ export const SavedView: React.FC<SavedViewProps> = ({
       {/* IMAGE LIGHTBOX PREVIEW */}
       {lightboxImage && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in"
+          className="fixed inset-0 z-50 w-full h-[100dvh] flex flex-col items-center justify-center bg-black p-4 animate-in fade-in"
           onClick={() => setLightboxImage(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative max-w-3xl w-full flex flex-col items-center gap-3"
+            className="relative w-full h-full flex flex-col items-center justify-center gap-3"
           >
             <button
               type="button"
               onClick={() => setLightboxImage(null)}
-              className="self-end w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center cursor-pointer"
+              className="absolute top-2 right-2 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center cursor-pointer"
+              aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>

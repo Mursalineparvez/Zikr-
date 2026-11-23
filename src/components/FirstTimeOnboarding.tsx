@@ -1260,10 +1260,10 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
 
         {/* 270+ Zikr / Dua Custom Picker Modal */}
         {isDuaPickerOpen && (
-          <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden text-slate-900 animate-in fade-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-[150] w-full h-[100dvh] bg-white text-slate-900 flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <div className="w-full h-full flex flex-col overflow-hidden">
               {/* Modal Header */}
-              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="px-4 py-3.5 sm:px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
                 <div>
                   <h3 className="text-base font-black text-slate-900">
                     {isBn ? '২৭০+ জিকির ও দোয়া থেকে বাছাই করুন' : 'Choose from 270+ Zikrs & Duas'}
@@ -1277,14 +1277,15 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsDuaPickerOpen(false)}
-                  className="w-9 h-9 rounded-full bg-slate-200/70 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer"
+                  className="w-10 h-10 rounded-full bg-slate-200/70 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer shrink-0"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Search Input */}
-              <div className="p-4 border-b border-slate-100 bg-white">
+              <div className="px-4 py-3 sm:px-6 border-b border-slate-100 bg-white shrink-0">
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
@@ -1298,7 +1299,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
               </div>
 
               {/* Duas List (270+ Items) */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-2.5 content-start">
                 {AUTHENTIC_DUAS.filter((d) => {
                   const q = duaSearchQuery.trim().toLowerCase();
                   if (!q) return true;
@@ -1353,7 +1354,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+              <div className="px-4 py-3 sm:px-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
                 <span className="text-xs font-bold text-slate-600">
                   {isBn ? `${toBnDigits(selectedCustomZikrs.length)}টি জিকির নির্বাচিত` : `${selectedCustomZikrs.length} Zikrs selected`}
                 </span>

@@ -3704,70 +3704,69 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
         return (
         <div
-          onClick={() => setActivePersonalityModal(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+          className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            isDay ? 'bg-white text-slate-800' : 'bg-[#082226] text-emerald-100'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-lg rounded-3xl p-6 sm:p-7 border shadow-2xl relative space-y-4 ${
-              isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#082226] border-[#153e46] text-emerald-100'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
-                  activePersonalityModal.category === 'negative'
-                    ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
-                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                }`}>
-                  {modalRole}
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black mt-2">
-                  {modalName}
-                </h3>
-                {activePersonalityModal.nameAr && (
-                  <p className="text-sm font-arabic text-amber-500 font-bold" dir="rtl">
-                    {activePersonalityModal.nameAr}
-                  </p>
-                )}
+          <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0a272c] border-[#153e46]'
+          }`}>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-[#006A4E] dark:text-emerald-400 truncate">
+                {modalRole}
               </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <ShareDownloadButtons
-                  variant="compact"
-                  selectedLanguage={selectedLanguage}
-                  themeMode={themeMode}
-                  onShare={() => openShareModal(buildPersonalityShareContent(activePersonalityModal), 'share')}
-                  onDownload={() => openShareModal(buildPersonalityShareContent(activePersonalityModal), 'download')}
-                />
-                <button
-                  onClick={(e) => toggleBookmark(activePersonalityModal.id, e)}
-                  className={`p-2 rounded-xl border transition ${
-                    bookmarks[activePersonalityModal.id]
-                      ? 'bg-amber-500 text-white border-amber-400'
-                      : isDay ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
-                  }`}
-                >
-                  <Bookmark className="w-4 h-4 fill-current" />
-                </button>
-                <button
-                  onClick={() => {
-                    if (soundEnabled) soundHaptics.playTap();
-                    setActivePersonalityModal(null);
-                  }}
-                  className={`p-2 rounded-xl border text-xs font-bold transition cursor-pointer ${
-                    isDay ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200' : 'bg-[#041417] hover:bg-[#0d333a] text-emerald-300 border-[#153e46]'
-                  }`}
-                >
-                  ✕
-                </button>
-              </div>
+              <h3 className="text-base sm:text-xl font-black truncate">
+                {modalName}
+              </h3>
             </div>
 
-            <div className={`p-4 rounded-2xl border text-sm leading-relaxed ${
+            <div className="flex items-center gap-1.5 shrink-0">
+              <ShareDownloadButtons
+                variant="compact"
+                selectedLanguage={selectedLanguage}
+                themeMode={themeMode}
+                onShare={() => openShareModal(buildPersonalityShareContent(activePersonalityModal), 'share')}
+                onDownload={() => openShareModal(buildPersonalityShareContent(activePersonalityModal), 'download')}
+              />
+              <button
+                type="button"
+                onClick={(e) => toggleBookmark(activePersonalityModal.id, e)}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer ${
+                  bookmarks[activePersonalityModal.id]
+                    ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                    : isDay ? 'bg-white text-slate-600 border-slate-200' : 'bg-[#041417] text-emerald-300 border-[#153e46]'
+                }`}
+                aria-label="Bookmark"
+              >
+                <Bookmark className="w-4 h-4 fill-current" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setActivePersonalityModal(null);
+                }}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer ${
+                  isDay ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#041417] hover:bg-[#0d333a] text-emerald-300 border-[#153e46]'
+                }`}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+            {activePersonalityModal.nameAr && (
+              <p className="text-base font-arabic text-[#006A4E] dark:text-emerald-300 font-bold" dir="rtl">
+                {activePersonalityModal.nameAr}
+              </p>
+            )}
+
+            <div className={`p-4 sm:p-5 rounded-2xl border text-sm leading-relaxed ${
               isDay ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#041417] border-[#153e46] text-emerald-100'
             }`}>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 mb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#006A4E] dark:text-emerald-400 mb-2">
                 {t.modalBioTitle}
               </h4>
               <p className="leading-relaxed text-sm sm:text-base">
@@ -3775,14 +3774,15 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               </p>
             </div>
 
-            <div className={`p-3.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
-              isDay ? 'bg-teal-50 border-teal-200 text-teal-800' : 'bg-emerald-950/50 border-emerald-500/30 text-emerald-300'
+            <div className={`p-4 rounded-2xl border text-xs sm:text-sm flex items-center justify-between gap-2 ${
+              isDay ? 'bg-teal-50/70 border-teal-200 text-teal-900' : 'bg-emerald-950/50 border-emerald-500/30 text-emerald-300'
             }`}>
               <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-400 shrink-0" />
+                <Award className="w-4 h-4 text-[#006A4E] dark:text-emerald-400 shrink-0" />
                 <span><strong>{t.modalRefTitle}:</strong> {modalRef}</span>
               </div>
               <button
+                type="button"
                 onClick={(e) => handleCopy(`${modalName}\n${modalBio}\n${t.modalRefTitle}: ${modalRef}`, 'modal-copy', e)}
                 className="hover:underline flex items-center gap-1 font-bold shrink-0 cursor-pointer"
               >
@@ -3790,18 +3790,21 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                 <span>{copiedId === 'modal-copy' ? t.copiedBtn : t.copyBtn}</span>
               </button>
             </div>
+          </div>
 
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => {
-                  if (soundEnabled) soundHaptics.playTap();
-                  setActivePersonalityModal(null);
-                }}
-                className="px-6 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer shadow-md"
-              >
-                {t.modalDoneReading}
-              </button>
-            </div>
+          <div className={`px-4 sm:px-6 py-3.5 border-t flex justify-end shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0a272c] border-[#153e46]'
+          }`}>
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setActivePersonalityModal(null);
+              }}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#006A4E] hover:bg-[#005740] text-white transition cursor-pointer"
+            >
+              {t.modalDoneReading}
+            </button>
           </div>
         </div>
         );
@@ -3812,48 +3815,43 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
         const selRespEn = MAKKAH_RESPONSIBILITIES_EN[selectedResponsibility.clanBn];
         return (
         <div
-          onClick={() => setSelectedResponsibility(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+          className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            isDay ? 'bg-white text-slate-800' : 'bg-[#082226] text-emerald-100'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-lg rounded-3xl p-6 sm:p-7 border shadow-2xl relative space-y-4 ${
-              isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#082226] border-[#153e46] text-emerald-100'
-            }`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-inner ${
-                  isDay ? 'bg-teal-50 border-teal-200 text-teal-800' : 'bg-[#041417] border-emerald-500/30 text-emerald-400'
-                }`}>
-                  {renderResponsibilityIcon(selectedResponsibility.iconName)}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-xl font-black">
-                      {isBn ? selectedResponsibility.clanBn : (selRespEn?.clanEn || selectedResponsibility.clanEn || selectedResponsibility.clanBn)}
-                    </h4>
-                    {selectedResponsibility.responsibilityAr && (
-                      <span className="text-xs font-arabic text-amber-500 opacity-80" dir="rtl">
-                        {selectedResponsibility.responsibilityAr}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs opacity-60">{t.modalOfficeSub}</span>
-                </div>
+          <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0a272c] border-[#153e46]'
+          }`}>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${
+                isDay ? 'bg-teal-50 border-teal-200 text-teal-800' : 'bg-[#041417] border-emerald-500/30 text-emerald-400'
+              }`}>
+                {renderResponsibilityIcon(selectedResponsibility.iconName)}
               </div>
-              <button
-                onClick={() => setSelectedResponsibility(null)}
-                className="p-2 rounded-xl border text-xs font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition"
-              >
-                ✕
-              </button>
+              <div className="min-w-0">
+                <h4 className="text-base sm:text-lg font-black truncate">
+                  {isBn ? selectedResponsibility.clanBn : (selRespEn?.clanEn || selectedResponsibility.clanEn || selectedResponsibility.clanBn)}
+                </h4>
+                <span className="text-xs opacity-65 block truncate">{t.modalOfficeSub}</span>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setSelectedResponsibility(null)}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer transition ${
+                isDay ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200' : 'bg-[#041417] hover:bg-[#0d333a] text-emerald-300 border-[#153e46]'
+              }`}
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            <div className={`p-4 rounded-2xl border space-y-2.5 ${
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+            <div className={`p-4 sm:p-5 rounded-2xl border space-y-2.5 ${
               isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#041417] border-[#153e46]'
             }`}>
-              <div className="text-sm font-black text-amber-500 flex items-center gap-1.5">
+              <div className="text-sm font-black text-[#006A4E] dark:text-emerald-300 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4" />
                 <span>{t.roleLabel}: {isBn ? selectedResponsibility.responsibilityBn : (selRespEn?.responsibilityEn || selectedResponsibility.responsibilityEn || selectedResponsibility.responsibilityBn)}</span>
               </div>
@@ -3863,13 +3861,13 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
             </div>
 
             {/* Dual Era Insight */}
-            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs p-3.5 rounded-2xl border ${
-              isDay ? 'bg-amber-50/50 border-amber-200/60' : 'bg-[#051a1e] border-[#18464f]'
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs p-4 rounded-2xl border ${
+              isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#051a1e] border-[#18464f]'
             }`}>
               {selectedResponsibility.preIslamicHolder && (
                 <div>
                   <span className="text-[10px] font-bold opacity-60 block uppercase">{t.preIslamicLeadership}</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">
                     {isBn ? selectedResponsibility.preIslamicHolder : (selRespEn?.preIslamicHolderEn || selectedResponsibility.preIslamicHolderEn || selectedResponsibility.preIslamicHolder)}
                   </span>
                 </div>
@@ -3877,38 +3875,42 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
               {selectedResponsibility.islamicHolder && (
                 <div>
                   <span className="text-[10px] font-bold text-emerald-500 block uppercase">{t.islamicPosition}</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs">
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
                     {isBn ? selectedResponsibility.islamicHolder : (selRespEn?.islamicHolderEn || selectedResponsibility.islamicHolderEn || selectedResponsibility.islamicHolder)}
                   </span>
                 </div>
               )}
             </div>
+          </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
-              <button
-                onClick={() => setSelectedResponsibility(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold opacity-75 hover:opacity-100 cursor-pointer"
-              >
-                {t.modalClose}
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedResponsibility(null);
-                  const targetId =
-                    selectedResponsibility.clanBn.includes('হাশিম') ? 'banu-hashim' :
-                    (selectedResponsibility.clanBn.includes('উমাইয়া') || selectedResponsibility.clanBn.includes('উমাইয়া')) ? 'banu-umayya' :
-                    selectedResponsibility.clanBn.includes('মাখযুম') ? 'banu-makhzum' :
-                    selectedResponsibility.clanBn.includes('আদি') ? 'banu-adi' :
-                    selectedResponsibility.clanBn.includes('তাইম') ? 'banu-taym' :
-                    selectedResponsibility.clanBn.includes('আসাদ') ? 'banu-asad-quraysh' :
-                    (selectedResponsibility.clanBn.includes('যোহরা') || selectedResponsibility.clanBn.includes('যাহরা')) ? 'banu-zuhrah' : 'quraysh-other-branches';
-                  openClanInReader(targetId);
-                }}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-md transition"
-              >
-                {t.readClanSeerahBtn}
-              </button>
-            </div>
+          <div className={`px-4 sm:px-6 py-3.5 border-t flex items-center justify-end gap-2 shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0a272c] border-[#153e46]'
+          }`}>
+            <button
+              type="button"
+              onClick={() => setSelectedResponsibility(null)}
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold opacity-75 hover:opacity-100 cursor-pointer"
+            >
+              {t.modalClose}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedResponsibility(null);
+                const targetId =
+                  selectedResponsibility.clanBn.includes('হাশিম') ? 'banu-hashim' :
+                  (selectedResponsibility.clanBn.includes('উমাইয়া') || selectedResponsibility.clanBn.includes('উমাইয়া')) ? 'banu-umayya' :
+                  selectedResponsibility.clanBn.includes('মাখযুম') ? 'banu-makhzum' :
+                  selectedResponsibility.clanBn.includes('আদি') ? 'banu-adi' :
+                  selectedResponsibility.clanBn.includes('তাইম') ? 'banu-taym' :
+                  selectedResponsibility.clanBn.includes('আসাদ') ? 'banu-asad-quraysh' :
+                  (selectedResponsibility.clanBn.includes('যোহরা') || selectedResponsibility.clanBn.includes('যাহরা')) ? 'banu-zuhrah' : 'quraysh-other-branches';
+                openClanInReader(targetId);
+              }}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#006A4E] hover:bg-[#005740] text-white cursor-pointer transition"
+            >
+              {t.readClanSeerahBtn}
+            </button>
           </div>
         </div>
         );
@@ -3917,15 +3919,11 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
       {/* Sliding Quick-TOC Drawer Modal */}
       {isTocDrawerOpen && (
         <div
-          onClick={() => setIsTocDrawerOpen(false)}
-          className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
+          className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            isDay ? 'bg-white text-slate-800' : 'bg-[#05191c] text-emerald-100'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-md h-full overflow-y-auto p-5 sm:p-6 border-l shadow-2xl space-y-5 animate-in slide-in-from-right duration-300 ${
-              isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#05191c] border-[#153e46] text-emerald-100'
-            }`}
-          >
+          <div className="w-full h-full overflow-y-auto p-5 sm:p-6 space-y-5">
             {/* Drawer Header */}
             <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="space-y-0.5">
@@ -3943,7 +3941,8 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
 
               <button
                 onClick={() => setIsTocDrawerOpen(false)}
-                className="p-2 rounded-xl border text-xs font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+                className="w-10 h-10 rounded-xl border text-xs font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center shrink-0"
+                aria-label="Close"
               >
                 ✕
               </button>

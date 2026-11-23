@@ -424,14 +424,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   ).length;
 
   return (
-    <div className="fixed inset-0 z-[75] bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
-      <div
-        className={`w-full max-w-4xl h-full sm:h-[92vh] sm:rounded-3xl border shadow-2xl flex flex-col overflow-hidden transition-all ${
-          isDayTheme
-            ? 'bg-[#f8fcfb] text-slate-800 border-emerald-200'
-            : 'bg-[#071d22] text-white border-[#1c5561]'
-        }`}
-      >
+    <div
+      className={`fixed inset-0 z-[75] w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+        isDayTheme
+          ? 'bg-[#f8fcfb] text-slate-800'
+          : 'bg-[#071d22] text-white'
+      }`}
+    >
+      <div className="w-full h-full flex flex-col overflow-hidden transition-all">
         {/* 1. ADMIN TOP BAR */}
         <div className="bg-gradient-to-r from-[#1b5e39] via-[#236a42] to-[#11462d] text-white px-4 py-3.5 flex items-center justify-between shadow-md shrink-0 select-none">
           <div className="flex items-center gap-2.5">
@@ -1050,24 +1050,24 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
         {/* 4. SUB-MODAL: USER DETAIL INSPECTION (ZIKR BREAKDOWN & AAMAL HISTORY) */}
         {selectedUser && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in">
-            <div
-              className={`w-full max-w-2xl max-h-[90vh] rounded-3xl border shadow-2xl p-4 sm:p-6 space-y-4 overflow-y-auto transition-all ${
-                isDayTheme
-                  ? 'bg-gradient-to-b from-[#f9fcfb] to-white text-slate-800 border-emerald-200'
-                  : 'bg-gradient-to-b from-[#0a252b] to-[#071a1e] text-white border-[#1c5561]'
-              }`}
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-teal-900/40">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/30">
+          <div
+            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
+              isDayTheme
+                ? 'bg-white text-slate-800'
+                : 'bg-[#071a1e] text-white'
+            }`}
+          >
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/30 shrink-0">
                     <User className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-tight">
+                  <div className="min-w-0">
+                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-tight truncate">
                       {selectedUser.name} - {isBn ? 'আমল ও জিকির রিপোর্ট' : 'Aamal & Zikr Report'}
                     </h3>
-                    <p className="text-[11px] font-mono text-slate-500 dark:text-emerald-300/80">
+                    <p className="text-[11px] font-mono text-slate-500 dark:text-emerald-300/80 truncate">
                       {selectedUser.emailOrPhone}
                     </p>
                   </div>
@@ -1076,11 +1076,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedUser(null)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
 
               {/* USER DEVICE TELEMETRY SUMMARY */}
               <div
@@ -1289,6 +1292,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
         )}

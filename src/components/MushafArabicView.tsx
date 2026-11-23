@@ -1111,36 +1111,39 @@ export const MushafArabicView: React.FC<MushafArabicViewProps> = ({
       {/* 5. SURAH / JUZ QUICK SWITCHER MODAL                                       */}
       {/* ========================================================================= */}
       {showSurahPicker && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
-          <div className="w-full max-w-xl bg-white dark:bg-[#071f1a] text-slate-900 dark:text-emerald-50 rounded-3xl border border-slate-200 dark:border-emerald-800 shadow-2xl p-5 space-y-4 max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 w-full h-[100dvh] bg-white dark:bg-[#071f1a] text-slate-900 dark:text-emerald-50 flex flex-col overflow-hidden animate-in fade-in duration-200">
+          <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b pb-3 border-slate-200 dark:border-emerald-800/40 shrink-0">
+            <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-200 dark:border-emerald-800/40 shrink-0 bg-slate-50/70 dark:bg-[#051814]">
               <h3 className="text-base font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
                 <span>📖</span>
                 <span>{selectedLanguage === 'bn' ? 'সূরা ও জুয নির্বাচন করুন (১১৪টি সূরা)' : 'Select Surah or Juz (114 Surahs)'}</span>
               </h3>
               <button
                 onClick={() => setShowSurahPicker(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-200/70 dark:bg-emerald-900/50 text-slate-600 dark:text-emerald-200 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Search Input */}
-            <div className="relative shrink-0">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={surahPickerSearch}
-                onChange={(e) => setSurahPickerSearch(e.target.value)}
-                placeholder={selectedLanguage === 'bn' ? 'সূরার নাম বা নম্বর দিয়ে খুঁজুন (যেমন: 55 বা রহমান)...' : 'Search by name or number (e.g. 55 or Rahman)...'}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-emerald-800 bg-slate-50 dark:bg-black/30 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
+            <div className="px-4 py-3 sm:px-6 border-b border-slate-100 dark:border-emerald-900/40 shrink-0">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={surahPickerSearch}
+                  onChange={(e) => setSurahPickerSearch(e.target.value)}
+                  placeholder={selectedLanguage === 'bn' ? 'সূরার নাম বা নম্বর দিয়ে খুঁজুন (যেমন: 55 বা রহমান)...' : 'Search by name or number (e.g. 55 or Rahman)...'}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-emerald-800 bg-slate-50 dark:bg-black/30 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
             </div>
 
             {/* Surah List Grid */}
-            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-2.5 content-start">
               {filteredSurahs.map((surah) => {
                 const isSelected = surah.number === surahDetail.number;
                 const surahPage = MADANI_SURAH_PAGES[surah.number] || 1;

@@ -66,39 +66,39 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div
-        className={`w-full max-w-lg rounded-3xl border shadow-2xl overflow-hidden max-h-[92vh] flex flex-col transition-all ${
-          isDay
-            ? 'bg-gradient-to-b from-white via-emerald-50/40 to-slate-50 text-slate-900 border-emerald-300 shadow-emerald-950/20'
-            : 'bg-gradient-to-b from-[#0a252b] via-[#081f24] to-[#041216] text-white border-[#1c5561] shadow-black/80'
-        }`}
-      >
+    <div
+      className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+        isDay
+          ? 'bg-white text-slate-900'
+          : 'bg-[#081f24] text-white'
+      }`}
+    >
+      <div className="w-full h-full flex flex-col overflow-hidden">
         {/* Header Bar */}
         <div
-          className={`px-5 py-4 flex items-center justify-between border-b ${
+          className={`px-4 py-3.5 sm:px-6 flex items-center justify-between border-b shrink-0 ${
             isDay ? 'border-emerald-200 bg-emerald-100/50' : 'border-[#174650] bg-[#0c2f37]'
           }`}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <img
               src="/pwa-192x192.png"
               alt="Zikr+ Logo"
-              className="w-10 h-10 rounded-2xl shadow-md border border-white/20 object-cover"
+              className="w-10 h-10 rounded-2xl shadow-md border border-white/20 object-cover shrink-0"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = '/icon.svg';
               }}
             />
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h3 className="text-base font-extrabold tracking-tight">
+                <h3 className="text-base font-extrabold tracking-tight truncate">
                   {isBn ? 'Zikr+ অ্যাপ ইনস্টল' : 'Install Zikr+ App'}
                 </h3>
-                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30">
+                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
                   PWA App
                 </span>
               </div>
-              <p className={`text-[11px] ${isDay ? 'text-slate-600' : 'text-teal-200/80'}`}>
+              <p className={`text-[11px] truncate ${isDay ? 'text-slate-600' : 'text-teal-200/80'}`}>
                 {isBn ? 'ইন্টারনেট ছাড়া দ্রুততম ফুল-স্ক্রিন মোড' : 'Fastest full-screen mode even offline'}
               </p>
             </div>
@@ -106,19 +106,20 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
 
           <button
             onClick={onClose}
-            className={`p-2 rounded-xl transition cursor-pointer ${
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition cursor-pointer shrink-0 ${
               isDay
                 ? 'hover:bg-slate-200 text-slate-700'
                 : 'hover:bg-white/10 text-slate-300'
             }`}
             title={isBn ? 'বন্ধ করুন' : 'Close'}
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="p-5 space-y-4 overflow-y-auto scrollbar-thin">
+        <div className="flex-1 p-4 sm:p-6 space-y-4 overflow-y-auto scrollbar-thin">
           {/* Status Banner */}
           {successMessage ? (
             <div className="p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-600 dark:text-emerald-300 flex items-start gap-3">
@@ -361,14 +362,14 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
 
         {/* Footer */}
         <div
-          className={`px-5 py-3 border-t flex items-center justify-end ${
+          className={`px-4 py-3 sm:px-6 border-t flex items-center justify-end shrink-0 ${
             isDay ? 'border-slate-200 bg-slate-50' : 'border-[#15414a] bg-[#072127]'
           }`}
         >
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer"
           >
             {isBn ? 'ঠিক আছে (Close)' : 'Close'}
           </button>

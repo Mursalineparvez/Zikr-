@@ -1735,8 +1735,8 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
         {/* Full Historic Map Modal if triggered */}
         {showFullMapModal && (
-          <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-2 sm:p-4 animate-in fade-in">
-            <div className="w-full max-w-5xl h-[90vh] bg-transparent rounded-3xl overflow-hidden relative">
+          <div className="fixed inset-0 z-50 w-full h-[100dvh] bg-black overflow-hidden animate-in fade-in">
+            <div className="w-full h-full relative">
               <SeeratHistoricMapView
                 themeMode={themeMode}
                 selectedLanguage={selectedLanguage}
@@ -2244,8 +2244,8 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
       {/* Global Historic Map Modal */}
       {showFullMapModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-2 sm:p-4 animate-in fade-in">
-          <div className="w-full max-w-5xl h-[90vh] bg-transparent rounded-3xl overflow-hidden relative">
+        <div className="fixed inset-0 z-50 w-full h-[100dvh] bg-black overflow-hidden animate-in fade-in">
+          <div className="w-full h-full relative">
             <SeeratHistoricMapView
               themeMode={themeMode}
               selectedLanguage={selectedLanguage}
@@ -2264,140 +2264,147 @@ export const SeeratUnNabiView: React.FC<SeeratUnNabiViewProps> = ({
 
       {/* Classical Seerah Bibliography Modal */}
       {showBibliographyModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in">
-          <div
-            className={`w-full max-w-3xl max-h-[88vh] overflow-y-auto rounded-3xl p-5 sm:p-7 border shadow-2xl space-y-5 relative scrollbar-thin ${
-              isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#08221d] border-emerald-700 text-white'
-            }`}
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-emerald-800/60 sticky top-0 z-10 bg-inherit pt-1">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-6 h-6 text-amber-500" />
-                <div>
-                  <h3 className="text-base sm:text-lg font-black text-amber-900 dark:text-amber-300">
-                    {isBn ? 'প্রামাণ্য সীরাত গ্রন্থমালা' : 'Primary Seerah Bibliography & Sources'}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-emerald-300/80">
-                    {isBn ? 'সিরাতুন নবী (সা.) বিশ্বকোষের তথ্যসূত্রে ব্যবহৃত মূল সিরাত গ্রন্থ তালিকা' : 'Primary classical reference texts used in the Seerat-un-Nabi encyclopedia.'}
-                  </p>
-                </div>
+        <div className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
+          isDay ? 'bg-white text-slate-900' : 'bg-[#08221d] text-white'
+        }`}>
+          <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0a2a23] border-emerald-800/60'
+          }`}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <BookOpen className="w-5 h-5 text-[#006A4E] dark:text-emerald-400 shrink-0" />
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-black truncate">
+                  {isBn ? 'প্রামাণ্য সীরাত গ্রন্থমালা' : 'Primary Seerah Bibliography & Sources'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-emerald-300/80 truncate">
+                  {isBn ? 'সিরাতুন নবী (সা.) বিশ্বকোষের তথ্যসূত্রে ব্যবহৃত মূল সিরাত গ্রন্থ তালিকা' : 'Primary classical reference texts used in the Seerat-un-Nabi encyclopedia.'}
+                </p>
               </div>
-              <button
-                onClick={() => setShowBibliographyModal(false)}
-                className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-emerald-800 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowBibliographyModal(false)}
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer transition ${
+                isDay ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
+              }`}
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-2 ${isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0c2e27] border-emerald-700/60'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-sm font-extrabold text-[#006A4E] dark:text-emerald-300">
                     {isBn ? '১. আর-রাহীকুল মাখতূম' : '1. Ar-Raheeq Al-Makhtum (The Sealed Nectar)'}
                   </h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-emerald-300/80 shrink-0">
                     {isBn ? 'বিশ্ববিখ্যাত' : 'World Renowned'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
                   <strong>{isBn ? 'লেখক:' : 'Author:'}</strong> {isBn ? 'আল্লামা সফিউর রহমান মুবারকপুরী (র.)' : 'Allamah Safiur Rahman Mubarakpuri (RA)'}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-emerald-100/90 leading-relaxed">
                   {isBn
                     ? 'রবেতায়ে আলমে ইসলামী আয়োজিত বিশ্ব সীরাত প্রতিযোগিতা প্রথম স্থান অধিকারী মহাকাব্যিক গ্রন্থ। রসুলুল্লাহ (সা.)-এর শুভ জন্ম থেকে ওফাত পর্যন্ত প্রতিটি ঐতিহাসিক যুদ্ধ, সন্ধি ও দাওয়াতের প্রামাণ্য বিশ্লেষণ।'
                     : 'First prize winner in the World Seerah Competition organized by Muslim World League. A comprehensive chronological analysis from the blessed birth to the departure of Prophet Muhammad (PBUH).'}
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-2 ${isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0c2e27] border-emerald-700/60'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-sm font-extrabold text-[#006A4E] dark:text-emerald-300">
                     {isBn ? '২. সীরাতে ইবনে হিশাম' : '2. Seerat Ibn Hisham'}
                   </h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-emerald-300/80 shrink-0">
                     {isBn ? 'প্রাচীনতম সীরাত' : 'Earliest Source'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
                   <strong>{isBn ? 'লেখক:' : 'Author:'}</strong> {isBn ? 'আল-হাফিজ ইবনে হিশাম (র.) (মূল: ইবনে ইসহাক)' : 'Al-Hafiz Ibn Hisham (RA) (Original: Ibn Ishaq)'}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-emerald-100/90 leading-relaxed">
                   {isBn
                     ? 'ইসলামি ইতিহাসের প্রথম ও সর্বাধিক প্রামাণ্য সীরাত সংকলন। সাহাবি ও তাবেঈদের প্রামাণ্য বিবরণী, মক্কার কুরাইশদের ঘটনাপঞ্জি ও প্রথম সারির যুদ্ধসমূহের নির্ভরযোগ্য বিবরণ।'
                     : 'The earliest surviving, highly authentic classical biographical collection detailing early Islamic history, Quraysh lineage, and early expeditions.'}
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-2 ${isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0c2e27] border-emerald-700/60'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-sm font-extrabold text-[#006A4E] dark:text-emerald-300">
                     {isBn ? '৩. জাদুল মাআদ' : '3. Zad al-Ma\'ad'}
                   </h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-emerald-300/80 shrink-0">
                     {isBn ? 'ফিকহুস সীরাহ' : 'Fiqh & Ethics'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
                   <strong>{isBn ? 'লেখক:' : 'Author:'}</strong> {isBn ? 'ইমাম ইবনুল কাইয়্যিম আল-জাওযিয়্যাহ (র.)' : 'Ibn Qayyim al-Jawziyya (RA)'}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-emerald-100/90 leading-relaxed">
                   {isBn
                     ? 'রসুলুল্লাহ (সা.)-এর ব্যক্তিগত জীবন, ইবাদত, যুদ্ধনীতি, বিচারব্যবস্থা ও দৈনন্দিন জীবনাচরণের বিস্তৃত ফিকহি ব্যাখ্যা ও আত্মিক শিক্ষা সংবলিত মাস্টারপিস গ্রন্থ।'
                     : 'Masterwork on the practical sunnah, jurisprudence, spiritual guidance, medicine, and governance extracted from the life of the Prophet (PBUH).'}
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-2 ${isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0c2e27] border-emerald-700/60'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-sm font-extrabold text-[#006A4E] dark:text-emerald-300">
                     {isBn ? '৪. আল-বিদায়া ওয়ান নিহায়া' : '4. Al-Bidayah wan-Nihayah'}
                   </h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-emerald-300/80 shrink-0">
                     {isBn ? 'ঐতিহাসিক বিশ্বকোষ' : 'Historical Chronicle'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
                   <strong>{isBn ? 'লেখক:' : 'Author:'}</strong> {isBn ? 'আল-হাফিজ ইবনে কাছীর (র.)' : 'Al-Hafiz Ibn Kathir (RA)'}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-emerald-100/90 leading-relaxed">
                   {isBn
                     ? 'সৃষ্টির শুরু থেকে বিশ্ব ইতিহাসের প্রামাণ্য গ্রন্থাবলি। খণ্ড ৩ থেকে ৫ পর্যন্ত নবুওয়াত, মক্কী ও মাদানী যুগের পুঙ্খানুপুঙ্খ বিবরণ ধারণ করে।'
                     : 'Classic multi-volume historical encyclopedia. Volumes 3 to 5 contain meticulous accounts of Prophethood, Meccan, and Medinan eras.'}
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl border bg-amber-50/50 dark:bg-[#0c2e27] border-amber-200 dark:border-emerald-700/60 space-y-2 col-span-1 md:col-span-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-extrabold text-amber-900 dark:text-amber-300">
+              <div className={`p-4 sm:p-5 rounded-2xl border space-y-2 col-span-1 md:col-span-2 ${isDay ? 'bg-slate-50/70 border-slate-200' : 'bg-[#0c2e27] border-emerald-700/60'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-sm font-extrabold text-[#006A4E] dark:text-emerald-300">
                     {isBn ? '৫. আস-সহীহাইনি (সহীহ আল-বুখারী ও সহীহ মুসলিম)' : '5. Al-Sahihayn (Sahih al-Bukhari & Sahih Muslim)'}
                   </h4>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-emerald-300/80 shrink-0">
                     {isBn ? 'বিশুদ্ধতম হাদিস' : 'Authentic Hadith'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-emerald-200/80">
                   <strong>{isBn ? 'সংকলক:' : 'Compilers:'}</strong> {isBn ? 'ইমাম মুহাম্মদ ইবনে ইসমাইল আল-বুখারী (র.) ও ইমাম মুসলিম ইবনুল হাজ্জাজ (র.)' : 'Imam Muhammad al-Bukhari (RA) & Imam Muslim ibn al-Hajjaj (RA)'}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-emerald-100/90 leading-relaxed font-serif">
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-emerald-100/90 leading-relaxed">
                   {isBn
                     ? "কুরআনুল কারিমের পর পৃথিবীর সবচেয়ে বিশুদ্ধ কিতাবসমূহ। 'কিতাবুল মাগাজী' (যুদ্ধসমূহ), 'কিতাবুম মানাকিব' (মর্যাদাপূর্ণ গুণাবলী) ও 'কিতাবুল হজ্জ' থেকে প্রতিটি ঐতিহাসিক ঘটনার শতভাগ বিশুদ্ধ সনদ যাচাইকৃত।"
                     : "The most authentic sources of prophetic traditions after the Holy Qur'an. Verified narrations from Kitab al-Maghazi, Kitab al-Manaqib, and Kitab al-Hajj."}
                 </p>
               </div>
             </div>
+          </div>
 
-            <div className="pt-3 border-t border-slate-200 dark:border-emerald-800/60 flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-emerald-300/80 font-medium">
-                {isBn ? 'পরম শ্রদ্ধাভরে সংকলিত — Zikr+ Apps' : 'Compiled with reverence — Zikr+ Apps'}
-              </span>
-              <button
-                onClick={() => setShowBibliographyModal(false)}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
-              >
-                {isBn ? 'বন্ধ করুন' : 'Close'}
-              </button>
-            </div>
+          <div className={`px-4 sm:px-6 py-3.5 border-t flex items-center justify-between text-xs shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0a2a23] border-emerald-800/60'
+          }`}>
+            <span className="text-slate-500 dark:text-emerald-300/80 font-medium">
+              {isBn ? 'পরম শ্রদ্ধাভরে সংকলিত — Zikr+ Apps' : 'Compiled with reverence — Zikr+ Apps'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowBibliographyModal(false)}
+              className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#005740] text-white font-bold cursor-pointer"
+            >
+              {isBn ? 'বন্ধ করুন' : 'Close'}
+            </button>
           </div>
         </div>
       )}

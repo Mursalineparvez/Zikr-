@@ -1326,15 +1326,13 @@ export const SahabaFamilyTreeSection: React.FC<SahabaFamilyTreeSectionProps> = (
       {/* ================================================================= */}
       {selectedNode && (
         <div
-          onClick={() => setSelectedNode(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-[2px] animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-150"
         >
           <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-lg rounded-2xl border overflow-hidden shadow-2xl max-h-[88vh] flex flex-col ${
+            className={`w-full h-full flex flex-col overflow-hidden ${
               isDay
-                ? 'bg-[#FDFBF7] border-emerald-200 text-slate-900'
-                : 'bg-[#061d18] border-emerald-700/70 text-white'
+                ? 'bg-[#FDFBF7] text-slate-900'
+                : 'bg-[#061d18] text-white'
             }`}
           >
             {/* Header */}

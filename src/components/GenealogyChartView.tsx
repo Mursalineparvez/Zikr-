@@ -918,57 +918,62 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
 
       {/* 5. PERSON DETAILS POPUP MODAL (100% DYNAMIC LANGUAGE) */}
       {selectedPersonModal && (
-        <div 
-          onClick={() => setSelectedPersonModal(null)}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+        <div
+          className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            isDay ? 'bg-white text-slate-900' : 'bg-[#091f26] text-white'
+          }`}
         >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-lg max-h-[92vh] sm:max-h-[88vh] overflow-y-auto p-5 sm:p-6 rounded-t-3xl sm:rounded-3xl border shadow-2xl space-y-4 relative ${
-              isDay ? 'bg-white border-amber-300 text-slate-900' : 'bg-[#091f26] border-amber-500/40 text-white'
-            }`}
-          >
+          <div className={`px-4 sm:px-6 py-3.5 border-b flex items-center justify-between gap-3 shrink-0 ${
+            isDay ? 'bg-white border-slate-200' : 'bg-[#0b262e] border-[#17424d]'
+          }`}>
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-black text-[#006A4E] dark:text-emerald-400 truncate">
+                {isBn ? selectedPersonModal.nameBn : selectedPersonModal.nameEn}
+              </h3>
+              <span className="text-sm font-arabic font-bold text-slate-500 dark:text-emerald-300/80 dir-rtl block truncate">
+                {selectedPersonModal.nameAr}
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => setSelectedPersonModal(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+              className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer transition ${
+                isDay ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
+              }`}
+              aria-label="Close"
             >
-              <X className="w-5 h-5 text-slate-400" />
+              <X className="w-5 h-5" />
             </button>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">✨</span>
-              <div>
-                <h3 className="text-lg font-black text-amber-700 dark:text-amber-400">
-                  {isBn ? selectedPersonModal.nameBn : selectedPersonModal.nameEn}
-                </h3>
-                <span className="text-sm font-arabic font-bold text-amber-500/90 dir-rtl block">
-                  {selectedPersonModal.nameAr}
-                </span>
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs sm:text-sm font-medium">
+            {(selectedPersonModal.relationNoteBn || selectedPersonModal.relationNoteEn) && (
+              <div className={`p-3.5 rounded-2xl border font-bold ${
+                isDay ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#0d2b33] border-[#1a4c59] text-emerald-200'
+              }`}>
+                {isBn ? selectedPersonModal.relationNoteBn : selectedPersonModal.relationNoteEn}
               </div>
-            </div>
+            )}
 
-            <div className="space-y-2 text-xs font-medium pt-2 border-t border-black/10 dark:border-white/10">
-              {(selectedPersonModal.relationNoteBn || selectedPersonModal.relationNoteEn) && (
-                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-bold">
-                  🏷️ {isBn ? selectedPersonModal.relationNoteBn : selectedPersonModal.relationNoteEn}
-                </div>
-              )}
+            {(selectedPersonModal.spouseBn || selectedPersonModal.spouseEn) && (
+              <div className={`p-3.5 rounded-2xl border font-bold ${
+                isDay ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#0d2b33] border-[#1a4c59] text-emerald-200'
+              }`}>
+                {isBn ? 'বিবাহ:' : 'Married:'} {isBn ? selectedPersonModal.spouseBn : selectedPersonModal.spouseEn}
+              </div>
+            )}
 
-              {(selectedPersonModal.spouseBn || selectedPersonModal.spouseEn) && (
-                <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-800 dark:text-rose-300 font-bold">
-                  💍 {isBn ? 'বিবাহ:' : 'Married:'} {isBn ? selectedPersonModal.spouseBn : selectedPersonModal.spouseEn}
-                </div>
-              )}
+            {(selectedPersonModal.detailsBn || selectedPersonModal.detailsEn) && (
+              <p className="leading-relaxed text-sm sm:text-base">
+                {isBn ? selectedPersonModal.detailsBn : selectedPersonModal.detailsEn}
+              </p>
+            )}
+          </div>
 
-              {(selectedPersonModal.detailsBn || selectedPersonModal.detailsEn) && (
-                <p className="leading-relaxed italic pt-1">
-                  "{isBn ? selectedPersonModal.detailsBn : selectedPersonModal.detailsEn}"
-                </p>
-              )}
-            </div>
-
-            {selectedPersonModal.sahabaId && onSelectSahabaBio && (
+          {selectedPersonModal.sahabaId && onSelectSahabaBio && (
+            <div className={`px-4 sm:px-6 py-3.5 border-t shrink-0 ${
+              isDay ? 'bg-white border-slate-200' : 'bg-[#0b262e] border-[#17424d]'
+            }`}>
               <button
                 type="button"
                 onClick={() => {
@@ -977,13 +982,13 @@ export const GenealogyChartView: React.FC<GenealogyChartViewProps> = ({
                     setSelectedPersonModal(null);
                   }
                 }}
-                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                className="w-full py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#005740] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <BookOpen className="w-4 h-4" />
                 <span>{isBn ? 'হায়াতুস সাহাবাতে পূর্ণাঙ্গ জীবনী পড়ুন' : 'Read Full Biography in Hayatus Sahaba'}</span>
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 

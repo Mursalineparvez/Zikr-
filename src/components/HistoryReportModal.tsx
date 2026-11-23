@@ -124,28 +124,24 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
 
   const modalNode = (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
-      onClick={onClose}
+      className={`fixed inset-0 z-[9999] w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+        isDay ? 'bg-white text-slate-800' : 'bg-[#0a2328] text-white'
+      }`}
     >
-      <div
-        className={`w-full max-w-3xl rounded-3xl border shadow-2xl flex flex-col max-h-[90vh] overflow-hidden my-auto ${
-          isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0a2328] text-white border-[#194c56]'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="w-full h-full flex flex-col overflow-hidden">
         {/* Modal Top Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-teal-900/40 flex items-center justify-between gap-3 bg-gradient-to-r from-emerald-600/10 via-teal-600/5 to-transparent shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+        <div className="px-4 py-3.5 sm:px-6 border-b border-slate-200 dark:border-teal-900/40 flex items-center justify-between gap-3 bg-gradient-to-r from-emerald-600/10 via-teal-600/5 to-transparent shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
               <FileText className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-black leading-tight">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-black leading-tight truncate">
                 {selectedLanguage === 'bn'
                   ? 'হিস্ট্রি রিপোর্ট ও পূর্ণাঙ্গ পিডিএফ এক্সপোর্ট'
                   : 'History Report & Full PDF Export'}
               </h2>
-              <p className="text-[11px] text-slate-500 dark:text-emerald-300/80">
+              <p className="text-[11px] text-slate-500 dark:text-emerald-300/80 truncate">
                 {selectedLanguage === 'bn'
                   ? '১ দিন, ১ মাস, ৪ মাস, ১ বছর বা ১০ বছরের সুবিন্যস্ত হিসাব ও যোগফল'
                   : 'Custom periods with aggregated sums, prayers, and dhikr counts'}
@@ -155,7 +151,8 @@ export const HistoryReportModal: React.FC<HistoryReportModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-teal-900/40 transition cursor-pointer"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-teal-900/40 transition cursor-pointer shrink-0"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>

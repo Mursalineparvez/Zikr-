@@ -929,7 +929,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       className={
         embedded
           ? 'w-full animate-in fade-in duration-200'
-          : 'fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200'
+          : 'fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200'
       }
     >
       <div
@@ -938,8 +938,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             ? `w-full rounded-3xl border shadow-sm flex flex-col overflow-hidden ${
                 isDay ? 'bg-[#fcfaf5] text-[#103e42] border-stone-200/90' : 'bg-[#071c21] text-white border-[#143b44]'
               }`
-            : `w-full max-w-md h-full sm:h-auto sm:max-h-[92vh] sm:rounded-3xl border shadow-2xl flex flex-col overflow-hidden ${
-                isDay ? 'bg-[#f6f9f8] text-[#103e42] border-[#d2ece9]' : 'bg-[#0a2328] text-white border-[#1a515c]'
+            : `w-full h-full flex flex-col overflow-hidden ${
+                isDay ? 'bg-[#f6f9f8] text-[#103e42]' : 'bg-[#0a2328] text-white'
               }`
         }
       >
@@ -2099,25 +2099,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         {/* ----------------- SUB-MODAL: UNIFIED AUTHENTICATION FORM ----------------- */}
         {activeSubModal === 'verified_auth' && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-            <div
-              className={`w-full max-w-md rounded-3xl border shadow-2xl p-5 sm:p-6 space-y-4 max-h-[92vh] overflow-y-auto relative ${
-                isDay
-                  ? 'bg-gradient-to-b from-[#f9fcfb] to-white text-slate-800 border-emerald-200/80'
-                  : 'bg-gradient-to-b from-[#0a252b] to-[#071a1e] text-white border-[#1c5561]'
-              }`}
-            >
+          <div
+            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+              isDay
+                ? 'bg-white text-slate-800'
+                : 'bg-[#071a1e] text-white'
+            }`}
+          >
+            <div className="w-full h-full flex flex-col overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-teal-900/40">
-                <div className="flex items-center gap-3">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h3 className="font-black text-base text-slate-900 dark:text-white">
+                  <div className="min-w-0">
+                    <h3 className="font-black text-base text-slate-900 dark:text-white truncate">
                       {t('Zikr+ লগইন / সাইন আপ', 'تسجيل الدخول / إنشاء حساب Zikr+', 'Zikr+ Login / Sign Up')}
                     </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-emerald-300/80">
+                    <p className="text-[11px] text-slate-500 dark:text-emerald-300/80 truncate">
                       {t('সহজ ও নিরাপদ ১-ক্লিক অ্যাকাউন্ট সাইন-ইন', 'تسجيل دخول آمن وسهل بنقرة واحدة', 'Easy & secure 1-click account sign-in')}
                     </p>
                   </div>
@@ -2130,11 +2130,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     setVerificationStep('input');
                     setOtpErrorMessage(null);
                   }}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer shrink-0"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
 
               {/* STEP 1: INPUT FORM */}
               {verificationStep === 'input' && (
@@ -2467,32 +2470,35 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
         )}
 
         {/* SUB-MODAL: EDIT PROFILE */}
         {activeSubModal === 'edit_profile' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-            <div
-              className={`w-full max-w-sm rounded-3xl border p-5 shadow-2xl space-y-4 ${
-                isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0f343c] text-white border-[#1c5763]'
-              }`}
-            >
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+          <div
+            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
+              isDay ? 'bg-white text-slate-800' : 'bg-[#0f343c] text-white'
+            }`}
+          >
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
                 <h3 className="font-bold text-base flex items-center gap-2">
                   <User className="w-4 h-4 text-emerald-600" />
                   <span>{t('প্রোফাইল সম্পাদনা করুন', 'تعديل الملف الشخصي', 'Edit Account Profile')}</span>
                 </h3>
                 <button
                   onClick={() => setActiveSubModal('none')}
-                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-teal-900/40"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-teal-900/40 cursor-pointer shrink-0"
+                  aria-label="Close"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveProfile} className="space-y-3 text-xs">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
                 <div>
                   <label className="font-bold block mb-1 text-slate-500 dark:text-emerald-300">
                     {t('পূর্ণ নাম', 'الاسم الكامل', 'Full Name')}
@@ -2543,32 +2549,34 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </button>
                 </div>
               </form>
+              </div>
             </div>
           </div>
         )}
 
         {/* SUB-MODAL: FEEDBACK */}
         {activeSubModal === 'feedback' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-            <div
-              className={`w-full max-w-md rounded-3xl border p-5 shadow-2xl space-y-4 ${
-                isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0f343c] text-white border-[#1c5763]'
-              }`}
-            >
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+          <div
+            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
+              isDay ? 'bg-white text-slate-800' : 'bg-[#0f343c] text-white'
+            }`}
+          >
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-emerald-600" />
                   <h3 className="font-bold text-base">{t('মতামত পাঠান', 'إرسال الملاحظات', 'Send Feedback')}</h3>
                 </div>
                 <button
                   onClick={() => setActiveSubModal('none')}
-                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-teal-900/40"
+                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-teal-900/40 cursor-pointer shrink-0"
+                  aria-label="Close"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
                 <div>
                   <label className="font-bold block text-slate-500 dark:text-emerald-300 mb-1">
                     {t('মাধ্যম নির্বাচন করুন:', 'الوسيلة:', 'Channel:')}
@@ -2649,23 +2657,27 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         {/* SUB-MODAL: BOOKMARKS */}
         {activeSubModal === 'bookmarks' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-            <div
-              className={`w-full max-w-md rounded-3xl border p-5 shadow-2xl space-y-4 ${
-                isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0f343c] text-white border-[#1c5763]'
-              }`}
-            >
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+          <div
+            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
+              isDay ? 'bg-white text-slate-800' : 'bg-[#0f343c] text-white'
+            }`}
+          >
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
                 <div className="flex items-center gap-2">
                   <Bookmark className="w-4 h-4 text-emerald-600 fill-current" />
                   <h3 className="font-bold text-base">{t('আপনার বুকমার্কসমূহ', 'علاماتك المرجعية', 'Your Bookmarks')}</h3>
                 </div>
-                <button onClick={() => setActiveSubModal('none')} className="p-1 rounded-lg hover:bg-slate-100">
-                  <X className="w-4 h-4" />
+                <button
+                  onClick={() => setActiveSubModal('none')}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer shrink-0"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto">
+              <div className="flex-1 p-4 sm:p-6 space-y-2.5 overflow-y-auto">
                 {sampleBookmarks.map((item, idx) => (
                   <div
                     key={idx}
@@ -2698,23 +2710,27 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         {/* SUB-MODAL: DOWNLOADS */}
         {activeSubModal === 'downloads' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-            <div
-              className={`w-full max-w-md rounded-3xl border p-5 shadow-2xl space-y-4 ${
-                isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0f343c] text-white border-[#1c5763]'
-              }`}
-            >
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+          <div
+            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
+              isDay ? 'bg-white text-slate-800' : 'bg-[#0f343c] text-white'
+            }`}
+          >
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-blue-600" />
                   <h3 className="font-bold text-base">{t('ডাউনলোডকৃত কিতাব', 'الكتب المحملة', 'Downloaded Books')}</h3>
                 </div>
-                <button onClick={() => setActiveSubModal('none')} className="p-1 rounded-lg hover:bg-slate-100">
-                  <X className="w-4 h-4" />
+                <button
+                  onClick={() => setActiveSubModal('none')}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer shrink-0"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-2">
+              <div className="flex-1 p-4 sm:p-6 space-y-2.5 overflow-y-auto">
                 {sampleDownloads.map((item, idx) => (
                   <div
                     key={idx}

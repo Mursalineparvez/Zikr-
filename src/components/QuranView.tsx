@@ -4109,17 +4109,13 @@ export const QuranView: React.FC<QuranViewProps> = ({
       {/* ======================================================== */}
       {showTafsirModal && activeTafsirAyah && surahDetail && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-start justify-center p-2 sm:p-4 pt-2 sm:pt-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
-          onClick={handleCloseTafsir}
+          className={`fixed inset-0 z-[9999] w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            isDay
+              ? 'bg-white text-slate-900'
+              : 'bg-[#0e1c26] text-white'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col rounded-[26px] sm:rounded-[28px] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ${
-              isDay
-                ? 'bg-white border-[#dcebe8] text-slate-900 shadow-2xl shadow-emerald-950/20'
-                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-2xl shadow-black'
-            }`}
-          >
+          <div className="w-full h-full flex flex-col overflow-hidden">
 
             {/* STICKY MODAL HEADER (Always visible, never scrolls away) */}
             <div
@@ -4493,20 +4489,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
       {/* ======================================================== */}
       {showDetailsModal && surahDetail && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setShowDetailsModal(false)}
+          className={`fixed inset-0 z-[9999] w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            isDay
+              ? 'bg-white text-slate-900'
+              : 'bg-[#0e1c26] text-white'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-md rounded-[28px] border shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200 ${
-              isDay
-                ? 'bg-white border-[#dcebe8] text-slate-900'
-                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-black'
-            }`}
-          >
+          <div className="w-full h-full flex flex-col overflow-hidden">
             <div
-              className={`flex items-center justify-between pb-3 border-b ${
-                isDay ? 'border-[#e8f3f1]' : 'border-[#152936]'
+              className={`px-4 py-3.5 sm:px-6 flex items-center justify-between border-b shrink-0 ${
+                isDay ? 'bg-[#f8fafc] border-[#e8f3f1]' : 'bg-[#0a1620] border-[#152936]'
               }`}
             >
               <h3 className="font-bold text-base">
@@ -4514,11 +4506,14 @@ export const QuranView: React.FC<QuranViewProps> = ({
               </h3>
               <button
                 onClick={() => setShowDetailsModal(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-white"
+                className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 active:scale-95 transition cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
 
             <div className="text-center py-2 space-y-1">
               <div className="font-arabic text-3xl font-bold text-[#10b981]">
@@ -4599,6 +4594,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
                 ))}
               </select>
             </div>
+            </div>
+
+            <div className={`px-4 py-3 sm:px-6 border-t shrink-0 ${isDay ? 'bg-[#f8fafc] border-[#e8f3f1]' : 'bg-[#0a1620] border-[#152936]'}`}>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#006747] hover:bg-[#007a52] text-white font-bold text-xs cursor-pointer transition active:scale-95"
+              >
+                {selectedLanguage === 'bn' ? 'বন্ধ করুন' : 'Close'}
+              </button>
+            </div>
           </div>
         </div>,
         document.body
@@ -4609,20 +4614,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
       {/* ======================================================== */}
       {showAnimationModal && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setShowAnimationModal(false)}
+          className={`fixed inset-0 z-[9999] w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            isDay
+              ? 'bg-white text-slate-900'
+              : 'bg-[#0e1c26] text-white'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-lg max-h-[92vh] flex flex-col rounded-[28px] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ${
-              isDay
-                ? 'bg-white border-[#dcebe8] text-slate-900 shadow-2xl shadow-emerald-950/20'
-                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-2xl shadow-black'
-            }`}
-          >
+          <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Modal Header */}
             <div
-              className={`p-4 sm:p-5 border-b flex items-center justify-between shrink-0 ${
+              className={`px-4 py-3.5 sm:px-6 border-b flex items-center justify-between shrink-0 ${
                 isDay ? 'bg-[#f8fafc] border-[#e8f3f1]' : 'bg-[#0a1620] border-[#152936]'
               }`}
             >
@@ -4646,16 +4647,15 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
               <button
                 onClick={() => setShowAnimationModal(false)}
-                className={`p-1.5 rounded-xl transition cursor-pointer ${
-                  isDay ? 'hover:bg-slate-200 text-slate-500' : 'hover:bg-white/10 text-slate-400'
-                }`}
+                className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 active:scale-95 transition cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Scrollable Content */}
-            <div className="p-4 sm:p-5 overflow-y-auto space-y-4">
+            <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4">
               {/* LIVE INTERACTIVE PREVIEW BOX */}
               <div
                 className={`p-4 rounded-2xl border text-center relative overflow-hidden ${
@@ -4788,20 +4788,16 @@ export const QuranView: React.FC<QuranViewProps> = ({
       {/* ======================================================== */}
       {showOthersModal && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setShowOthersModal(false)}
+          className={`fixed inset-0 z-[9999] w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            isDay
+              ? 'bg-white text-slate-900'
+              : 'bg-[#0e1c26] text-white'
+          }`}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-md flex flex-col rounded-[28px] border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 ${
-              isDay
-                ? 'bg-white border-[#dcebe8] text-slate-900 shadow-2xl shadow-emerald-950/20'
-                : 'bg-[#0e1c26] border-[#1a3342] text-white shadow-2xl shadow-black'
-            }`}
-          >
+          <div className="w-full h-full flex flex-col overflow-hidden">
             {/* Modal Header */}
             <div
-              className={`p-4 sm:p-5 border-b flex items-center justify-between shrink-0 ${
+              className={`px-4 py-3.5 sm:px-6 border-b flex items-center justify-between shrink-0 ${
                 isDay ? 'bg-[#f8fafc] border-[#e8f3f1]' : 'bg-[#0a1620] border-[#152936]'
               }`}
             >
@@ -4823,16 +4819,15 @@ export const QuranView: React.FC<QuranViewProps> = ({
 
               <button
                 onClick={() => setShowOthersModal(false)}
-                className={`p-1.5 rounded-xl transition cursor-pointer ${
-                  isDay ? 'hover:bg-slate-200 text-slate-500' : 'hover:bg-white/10 text-slate-400'
-                }`}
+                className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 active:scale-95 transition cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Options Grid */}
-            <div className="p-4 sm:p-5 grid grid-cols-1 gap-2.5 max-h-[75vh] overflow-y-auto">
+            <div className="flex-1 p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 content-start overflow-y-auto">
               {/* Option 1: Tafsir */}
               <button
                 onClick={() => {
