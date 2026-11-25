@@ -1810,7 +1810,7 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
               onScroll={updateScrollState}
               data-highlight-section="history_timeline"
               data-highlight-source={formattedTitle}
-              className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-2 space-y-3 scrollbar-none select-text"
+              className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-1.5 space-y-2 scrollbar-none select-text"
             >
               {/* Category pill with dot + Event Share/Download */}
               <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1841,22 +1841,6 @@ export const HistoryTimelineView: React.FC<HistoryTimelineViewProps> = ({
                     onDownload={() => openShareModal(buildHistoryEventShareContent(activeEvent), 'download')}
                   />
                 </div>
-              </div>
-
-              {/* Event Title with Golden Honorifics Highlighting (as in Pic 2) */}
-              <h2 className={`text-base sm:text-lg font-bold leading-snug tracking-tight select-text ${
-                isDay ? 'text-slate-900' : 'text-white'
-              }`}>
-                {renderHonorificText(formattedTitle, isDay)}
-              </h2>
-
-              {/* Year & Hijri Era in Golden Amber Text (as in Pic 2) */}
-              <div className={`text-xs font-bold flex items-center gap-1.5 ${
-                isDay ? 'text-amber-800' : 'text-amber-400'
-              }`}>
-                <span>{formatYearSuffix(activeEvent.y, selectedLanguage)}</span>
-                <span>-</span>
-                <span>{getEraYearText(activeEvent, selectedLanguage)}</span>
               </div>
 
               {/* Clean Compact Location Pill: তখন -> বর্তমানে (as in Pic 2) */}

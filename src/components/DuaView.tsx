@@ -615,27 +615,49 @@ export const DuaView: React.FC<DuaViewProps> = ({
 
   return (
     <div data-highlight-section="dua" className="space-y-6 animate-in fade-in duration-300 pb-16">
-      {/* Simple Centered Header */}
-      <div
-        className={`pb-3.5 border-b space-y-3 ${
+      {/* UNIFIED HEADER (Matching QuranView style) */}
+      <section
+        className={`pb-3.5 border-b space-y-2.5 ${
           isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
         }`}
       >
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          <div className="w-10" />
-
-          <div className="text-center min-w-0 px-1">
-            <h2 className={`text-lg sm:text-xl font-black tracking-tight truncate ${isDay ? 'text-[#006747]' : 'text-white'}`}>
-              {DUA_UI.bannerTitle[selectedLanguage]}
-            </h2>
-            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300/90'}`}>
-              {selectedLanguage === 'bn'
-                ? `${formatNum(maxChapterNumber, 'bn')} অধ্যায় · ${formatNum(AUTHENTIC_DUAS.length, 'bn')}টি দোয়া`
-                : `${maxChapterNumber} Chapters · ${AUTHENTIC_DUAS.length} Duas`}
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Heart
+              className={`w-5 h-5 shrink-0 ${
+                isDay ? 'text-[#006747]' : 'text-emerald-400'
+              }`}
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1
+                  className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                    isDay ? 'text-[#006747]' : 'text-white'
+                  }`}
+                >
+                  {DUA_UI.bannerTitle[selectedLanguage]}
+                </h1>
+                <span
+                  className={`text-xs font-semibold font-arabic hidden xs:inline ${
+                    isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                  }`}
+                >
+                  الدُّعَاءُ مُلْخَصُ الْعِبَادَةِ
+                </span>
+              </div>
+              <p
+                className={`text-[11px] leading-tight mt-0.5 ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {selectedLanguage === 'bn'
+                  ? `${formatNum(maxChapterNumber, 'bn')} অধ্যায় · ${formatNum(AUTHENTIC_DUAS.length, 'bn')}টি দোয়া`
+                  : `${maxChapterNumber} Chapters · ${AUTHENTIC_DUAS.length} Duas`}
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center justify-end gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
             <button
               type="button"
               onClick={() => {
@@ -645,7 +667,7 @@ export const DuaView: React.FC<DuaViewProps> = ({
                   return !prev;
                 });
               }}
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isSearchOpen || searchQuery
                   ? isDay
                     ? 'bg-[#006A4E] border-[#006A4E] text-white'
@@ -654,8 +676,8 @@ export const DuaView: React.FC<DuaViewProps> = ({
                   ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
                   : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
               }`}
-              title={selectedLanguage === 'bn' ? 'খুঁজুন' : 'Search'}
-              aria-label={selectedLanguage === 'bn' ? 'খুঁজুন' : 'Search'}
+              title={selectedLanguage === 'bn' ? 'দোয়া খুঁজুন' : 'Search Dua'}
+              aria-label={selectedLanguage === 'bn' ? 'দোয়া খুঁজুন' : 'Search Dua'}
             >
               {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             </button>
@@ -668,7 +690,9 @@ export const DuaView: React.FC<DuaViewProps> = ({
             />
           </div>
         </div>
+      </section>
 
+      <div>
         {/* Centered Mode Switcher: Topics vs 132 Chapters */}
         <div className="flex flex-wrap items-center justify-center gap-2">
           <button

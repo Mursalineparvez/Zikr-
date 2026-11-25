@@ -987,26 +987,48 @@ export const HadithView: React.FC<HadithViewProps> = ({
 
   return (
     <div data-highlight-section="hadith" className="max-w-5xl mx-auto space-y-5 pb-8 animate-in fade-in duration-200">
-      {/* SIMPLE CENTERED HADIS LIBRARY HEADER (Only visible at top Library Level) */}
+      {/* UNIFIED HEADER (Matching QuranView style) */}
       {!selectedBookId && (
         <section
-          className={`pb-3.5 border-b space-y-3 ${
+          className={`pb-3.5 border-b space-y-2.5 ${
             isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
           }`}
         >
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-            <div className="w-10" />
-
-            <div className="text-center min-w-0 px-1">
-              <h1 className={`text-lg sm:text-xl font-black tracking-tight truncate ${isDay ? 'text-[#006747]' : 'text-white'}`}>
-                {isBn ? 'হাদিস গ্রন্থাগার' : 'Al-Hadith Library'}
-              </h1>
-              <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300/90'}`}>
-                {isBn ? '১৭টি কিতাব · ৫৩,০০০+ হাদিস' : '17 Books · 53,000+ Hadiths'}
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <BookOpen
+                className={`w-5 h-5 shrink-0 ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-400'
+                }`}
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1
+                    className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                      isDay ? 'text-[#006747]' : 'text-white'
+                    }`}
+                  >
+                    {isBn ? 'হাদিস গ্রন্থাগার' : 'Al-Hadith Library'}
+                  </h1>
+                  <span
+                    className={`text-xs font-semibold font-arabic hidden xs:inline ${
+                      isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                    }`}
+                  >
+                    الْحَدِيثُ الشَّرِيفُ
+                  </span>
+                </div>
+                <p
+                  className={`text-[11px] leading-tight mt-0.5 ${
+                    isDay ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
+                  {isBn ? '১৭টি কিতাব • ৫৩,০০০+ হাদিস' : '17 Books • 53,000+ Hadiths'}
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
               <button
                 type="button"
                 onClick={() => {
@@ -1020,7 +1042,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
                     return !prev;
                   });
                 }}
-                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                   isGlobalSearchOpen || globalQuery || globalSearchResults !== null
                     ? isDay
                       ? 'bg-[#006A4E] border-[#006A4E] text-white'

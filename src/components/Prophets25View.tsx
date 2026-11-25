@@ -30,6 +30,7 @@ import {
   Share2,
   Download,
   Compass,
+  GitBranch,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { copyToClipboard } from '../utils/clipboard';
@@ -38,7 +39,8 @@ import { SwipeFloatingFeedback, QuickReaderSwitcherStrip } from './SwipeNavigati
 import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
 import { ShareableContent } from '../utils/shareDownload';
 import { HighlightMarkerButton } from './HighlightMarkerButton';
-import { pushAppHistoryState, stepBackOr, useBackLayer } from '../utils/backNavigation';
+import { stepBackOr, useBackLayer } from '../utils/backNavigation';
+import { ProphetsFamilyTreeView } from './ProphetsFamilyTreeView';
 import {
   PROPHETS_25_DATABASE,
   PROPHETS_25_FILTERS,
@@ -61,6 +63,7 @@ interface Prophets25ViewProps {
 
 const READ_STORAGE_KEY = 'zikrmate_prophets25_read_v1';
 const BOOKMARK_STORAGE_KEY = 'zikrmate_prophets25_bookmarks_v1';
+const LAST_PROPHET_STORAGE_KEY = 'zikrmate_prophets25_last_v1';
 
 const toBnDigits = (val: number | string): string =>
   String(val).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
@@ -94,7 +97,15 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
   const isBn = selectedLanguage === 'bn';
   const isAr = selectedLanguage === 'ar';
 
+  const [subPage, setSubPage] = useState<'hub' | 'biographies' | 'tree'>('hub');
   const [selectedProphetId, setSelectedProphetId] = useState<string | null>(null);
+  const [lastProphetId, setLastProphetId] = useState<string>(() => {
+    try {
+      return localStorage.getItem(LAST_PROPHET_STORAGE_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
   const [activeFilter, setActiveFilter] = useState<Prophet25FilterKey>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -124,21 +135,44 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
   }, [bookmarkedIds]);
 
   useBackLayer(
+    subPage !== 'hub',
+    () => setSubPage('hub'),
+    'prophets-subpage'
+  );
+
+  useBackLayer(
     Boolean(selectedProphetId),
     () => setSelectedProphetId(null),
     'prophets-25-detail'
   );
 
+  const openSubPage = useCallback(
+    (target: 'biographies' | 'tree') => {
+      if (soundEnabled) soundHaptics.playTap();
+      setSubPage(target);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    [soundEnabled]
+  );
+
+  const closeSubPage = useCallback(() => {
+    if (soundEnabled) soundHaptics.playTap();
+    stepBackOr(() => setSubPage('hub'));
+  }, [soundEnabled]);
+
   const openProphetDetail = useCallback(
     (id: string) => {
       if (soundEnabled) soundHaptics.playTap();
-      if (!selectedProphetId) {
-        pushAppHistoryState({ appModule: 'other', appSub: 'prophets_25', prophetId: id });
-      }
       setSelectedProphetId(id);
+      setLastProphetId(id);
+      try {
+        localStorage.setItem(LAST_PROPHET_STORAGE_KEY, id);
+      } catch {
+        // ignore storage quota issues
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
-    [selectedProphetId, soundEnabled]
+    [soundEnabled]
   );
 
   const closeProphetDetail = useCallback(() => {
@@ -377,8 +411,8 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
       return {
         id: `prophet25-${p.id}`,
         badge: isBn
-          ? `কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল · ক্রমিক ${toBnDigits(p.rank)}${p.isUlulAzm ? ' · উলুল আযম' : ''}`
-          : `25 Prophets & Messengers in the Quran · #${p.rank}${p.isUlulAzm ? ' · Ulul Azm' : ''}`,
+          ? `নবী ও রাসূল · ক্রমিক ${toBnDigits(p.rank)}${p.isUlulAzm ? ' · উলুল আযম' : ''}`
+          : `Prophets & Messengers · #${p.rank}${p.isUlulAzm ? ' · Ulul Azm' : ''}`,
         title: name,
         subtitle: `${title} (${p.nameAr})`,
         arabic: p.dua?.arabic || p.nameAr,
@@ -409,11 +443,11 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
 
     return {
       id: 'prophets25-complete-list',
-      badge: isBn ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল' : '25 Prophets & Messengers in the Quran',
+      badge: isBn ? 'নবী ও রাসূল' : 'Prophets & Messengers',
       title: isBn
-        ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূলের পূর্ণাঙ্গ পরিচিতি ও তালিকা'
-        : 'Complete Profiles & List of the 25 Prophets & Messengers in the Quran',
-      subtitle: 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم',
+        ? 'নবী ও রাসূল: কুরআনে বর্ণিত ২৫ জন নবী-রাসূলের পূর্ণাঙ্গ পরিচিতি'
+        : 'Prophets & Messengers: Complete Profiles of the 25 Prophets in the Quran',
+      subtitle: 'الأنبياء والرسل في القرآن الكريم',
       arabic: 'لَا نُفَرِّقُ بَيْنَ أَحَدٍ مِّن رُّسُلِهِ',
       body: isBn
         ? 'পবিত্র কুরআনে সর্বমোট ২৫ জন নবী ও রাসূলের নাম সরাসরি উল্লেখ রয়েছে (১,২৪,০০০ নবী ও ৩১৫ রাসূলের মধ্য থেকে)। তাঁদের মধ্যে ৫ জন উলুল আযম, ৪টি প্রধান আসমানি কিতাব ও সহীফাপ্রাপ্ত এবং ৪ জন আরব নবী রয়েছেন।'
@@ -565,7 +599,17 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
           >
             <ArrowLeft className="w-4 h-4 shrink-0" />
             <span className="truncate whitespace-nowrap">
-              {isBn ? '২৫ নবী ও রাসূল' : isAr ? 'قائمة الأنبياء' : 'All 25 Prophets'}
+              {subPage === 'tree'
+                ? isBn
+                  ? 'বংশলতিকা ট্রি'
+                  : isAr
+                  ? 'شجرة الأنبياء'
+                  : 'Family Tree'
+                : isBn
+                ? '২৫ নবীর জীবনী'
+                : isAr
+                ? 'سير الأنبياء'
+                : '25 Biographies'}
             </span>
           </button>
 
@@ -1355,58 +1399,534 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
   }
 
   // =========================================================================
-  // OVERVIEW / INDEX VIEW (ALL 25 QURANIC PROPHETS)
+  // SUB-PAGE 2: PROPHETS FAMILY TREE
+  // =========================================================================
+  if (subPage === 'tree') {
+    return (
+      <ProphetsFamilyTreeView
+        themeMode={themeMode}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        readIds={readIds}
+        onOpenProphetDetail={openProphetDetail}
+        onBack={closeSubPage}
+        onSwitchToBiographies={() => setSubPage('biographies')}
+      />
+    );
+  }
+
+  // =========================================================================
+  // MAIN HUB VIEW ("নবী ও রাসূল" -> 2 SUB-PAGES)
+  // =========================================================================
+  if (subPage === 'hub') {
+    const resumeProphet =
+      PROPHETS_25_DATABASE.find((p) => p.id === lastProphetId) || PROPHETS_25_DATABASE[0];
+
+    return (
+      <div
+        data-highlight-section="prophets_25"
+        data-highlight-source={isBn ? 'নবী ও রাসূল' : 'Prophets & Messengers'}
+        className="space-y-5 pb-10 animate-in fade-in duration-200"
+      >
+        {/* QuranView-Matched Flat Header */}
+        <div
+          className={`pb-3.5 border-b space-y-2.5 transition-colors ${
+            isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {onBackToHub && (
+                <button
+                  type="button"
+                  onClick={onBackToHub}
+                  aria-label={isBn ? 'ফিরে যান' : 'Back'}
+                  className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+                    isDay
+                      ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006747]'
+                      : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
+                  }`}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+              )}
+
+              <Users
+                className={`w-5 h-5 shrink-0 hidden xs:block ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-400'
+                }`}
+              />
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1
+                    className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                      isDay ? 'text-[#006747]' : 'text-white'
+                    }`}
+                  >
+                    {isBn
+                      ? 'নবী ও রাসূল'
+                      : isAr
+                      ? 'الأنبياء والرسل'
+                      : 'Prophets & Messengers'}
+                  </h1>
+                  <span
+                    className={`text-xs font-semibold font-arabic hidden xs:inline ${
+                      isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                    }`}
+                  >
+                    الْأَنْبِيَاءُ وَالرُّسُلُ
+                  </span>
+                </div>
+                <p
+                  className={`text-[11px] leading-tight mt-0.5 truncate ${
+                    isDay ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
+                  {isBn
+                    ? `${toBnDigits(25)} জন নবী ও রাসূল • জীবনী ও বংশলতিকা • পঠিত ${toBnDigits(readIds.length)}/${toBnDigits(25)}`
+                    : `25 Prophets & Messengers • Biographies & Family Tree • Read ${readIds.length}/25`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+              <button
+                type="button"
+                onClick={() => openSubPage('tree')}
+                className={`px-2.5 py-1.5 min-h-[36px] rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                  isDay
+                    ? 'bg-white border-amber-300/80 text-amber-800 hover:bg-amber-50'
+                    : 'bg-[#0e1c26] border-amber-500/30 text-amber-300 hover:bg-[#132634]'
+                }`}
+              >
+                <GitBranch className="w-3.5 h-3.5" />
+                <span>{isBn ? 'বংশলতিকা ট্রি' : 'Family Tree'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openShareModal(buildAll25IndexShareContent(), 'share')}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isDay
+                    ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
+                }`}
+                title={isBn ? 'শেয়ার' : 'Share'}
+                aria-label={isBn ? 'শেয়ার' : 'Share'}
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => openShareModal(buildAll25IndexShareContent(), 'download')}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isDay
+                    ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
+                }`}
+                title={isBn ? 'PDF / ডাউনলোড' : 'Download'}
+                aria-label={isBn ? 'ডাউনলোড' : 'Download'}
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* QuranView-style Resume Hairline Bar */}
+          <div
+            onClick={() => openProphetDetail(resumeProphet.id)}
+            className={`pt-2 border-t flex items-center justify-between gap-2 text-xs cursor-pointer transition ${
+              isDay
+                ? 'border-[#e6f1ee] text-[#006747] hover:text-emerald-900'
+                : 'border-[#122e36] text-emerald-300 hover:text-emerald-200'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0 truncate">
+              <Clock className="w-3.5 h-3.5 shrink-0" />
+              <span className="font-bold">
+                {lastProphetId
+                  ? isBn
+                    ? 'সর্বশেষ পাঠ:'
+                    : 'Last read:'
+                  : isBn
+                  ? 'শুরু করুন:'
+                  : 'Start with:'}
+              </span>
+              <span className={`font-black truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                {isBn ? resumeProphet.nameBn : resumeProphet.nameEn}
+              </span>
+              <span className="opacity-70 hidden sm:inline">
+                · {isBn ? resumeProphet.titleBn : resumeProphet.titleEn}
+              </span>
+            </div>
+            <span className="font-extrabold flex items-center gap-0.5 shrink-0 whitespace-nowrap">
+              <span>{lastProphetId ? (isBn ? 'পড়া চালিয়ে যান' : 'Continue') : isBn ? 'পড়া শুরু করুন' : 'Start Reading'}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </div>
+
+        {/* Two Sub-Pages Hub Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Sub-Page 1 Card: 25 Prophets & Messengers Biographies */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => openSubPage('biographies')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openSubPage('biographies');
+              }
+            }}
+            className={`group rounded-3xl border p-5 sm:p-6 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
+              isDay
+                ? 'bg-white border-emerald-200/90 hover:border-[#006A4E] hover:shadow-md'
+                : 'bg-[#082026] border-teal-900/70 hover:border-emerald-400/60 hover:bg-[#0a262e]'
+            }`}
+          >
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
+                    isDay
+                      ? 'bg-[#edf7f4] text-[#006747]'
+                      : 'bg-[#103038] text-emerald-300'
+                  }`}
+                >
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <span
+                  dir="rtl"
+                  className={`font-arabic text-base font-bold ${
+                    isDay ? 'text-[#006747]' : 'text-emerald-300'
+                  }`}
+                >
+                  قَصَصُ الْأَنْبِيَاءِ
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <div
+                  className={`text-[11px] font-extrabold tabular-nums ${
+                    isDay ? 'text-amber-700' : 'text-amber-300'
+                  }`}
+                >
+                  {isBn
+                    ? `সাব-পেজ ১  ·  ২৫ জন নবী ও রাসূল  ·  পঠিত ${toBnDigits(readIds.length)}/${toBnDigits(25)}`
+                    : `SUB-PAGE 1  ·  25 PROPHETS  ·  READ ${readIds.length}/25`}
+                </div>
+                <h2
+                  className={`text-lg sm:text-xl font-black tracking-tight transition-colors ${
+                    isDay
+                      ? 'text-slate-900 group-hover:text-[#006747]'
+                      : 'text-white group-hover:text-emerald-300'
+                  }`}
+                >
+                  {isBn
+                    ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূলের জীবনী'
+                    : '25 Prophets & Messengers Biographies'}
+                </h2>
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${
+                    isDay ? 'text-slate-600' : 'text-slate-300'
+                  }`}
+                >
+                  {isBn
+                    ? 'আদম (আ.) থেকে শেষনবী মুহাম্মাদ (ﷺ) পর্যন্ত ২৫ জন নবী-রাসূলের বিস্তারিত জীবনী, ঘটনাপ্রবাহ, মু‘জিযা, কুরআনী পরিসংখ্যান, দোয়া, সংশয় নিরসন ও রেফারেন্স।'
+                    : 'Comprehensive biographies, timelines, miracles, Quranic stats, supplications, scholarly clarifications, and authentic references from Adam (AS) to Muhammad (SAW).'}
+                </p>
+              </div>
+            </div>
+
+            <div
+              className={`pt-3 border-t flex items-center justify-between gap-2 ${
+                isDay ? 'border-slate-100' : 'border-teal-900/50'
+              }`}
+            >
+              <span
+                className={`text-[11px] font-bold tabular-nums ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {isBn
+                  ? `উলুল আযম ${toBnDigits(ULUL_AZM_COUNT)} · কিতাব ${toBnDigits(SCRIPTURE_BEARERS_COUNT)} · আরব নবী ${toBnDigits(ARAB_PROPHETS_COUNT)}`
+                  : `${ULUL_AZM_COUNT} Ulul Azm · ${SCRIPTURE_BEARERS_COUNT} Scriptures · ${ARAB_PROPHETS_COUNT} Arab`}
+              </span>
+              <span
+                className={`text-xs sm:text-sm font-black flex items-center gap-1 ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-300'
+                }`}
+              >
+                <span>{isBn ? 'প্রবেশ করুন' : 'Open'}</span>
+                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </div>
+          </div>
+
+          {/* Sub-Page 2 Card: Interactive Prophets Family Tree */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => openSubPage('tree')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openSubPage('tree');
+              }
+            }}
+            className={`group rounded-3xl border p-5 sm:p-6 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
+              isDay
+                ? 'bg-white border-amber-300/80 hover:border-amber-600 hover:shadow-md'
+                : 'bg-[#082026] border-amber-500/35 hover:border-amber-400 hover:bg-[#0c272f]'
+            }`}
+          >
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
+                    isDay
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'bg-amber-500/15 text-amber-300'
+                  }`}
+                >
+                  <GitBranch className="w-6 h-6" />
+                </div>
+                <span
+                  dir="rtl"
+                  className={`font-arabic text-base font-bold ${
+                    isDay ? 'text-amber-800' : 'text-amber-300'
+                  }`}
+                >
+                  شَجَرَةُ الْأَنْبِيَاءِ
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <div
+                  className={`text-[11px] font-extrabold ${
+                    isDay ? 'text-[#006747]' : 'text-emerald-300'
+                  }`}
+                >
+                  {isBn
+                    ? 'সাব-পেজ ২  ·  ইন্টারেক্টিভ ফ্যামিলি ট্রি  ·  বংশলতিকা চার্ট'
+                    : 'SUB-PAGE 2  ·  INTERACTIVE FAMILY TREE  ·  LINEAGES'}
+                </div>
+                <h2
+                  className={`text-lg sm:text-xl font-black tracking-tight transition-colors ${
+                    isDay
+                      ? 'text-slate-900 group-hover:text-amber-800'
+                      : 'text-white group-hover:text-amber-300'
+                  }`}
+                >
+                  {isBn
+                    ? 'সকল নবী ও রাসূলের বংশলতিকা (ট্রি চার্ট)'
+                    : 'Prophets & Messengers Family Tree'}
+                </h2>
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${
+                    isDay ? 'text-slate-600' : 'text-slate-300'
+                  }`}
+                >
+                  {isBn
+                    ? 'আদম (আ.) থেকে নূহ, ইবরাহীম, ইসমাঈলী-কুরাইশ ধারা (মুহাম্মাদ ﷺ) এবং বনী ইসরাঈল ধারার (মূসা, দাঊদ, ঈসা আ.) সংযুক্ত ইন্টারেক্টিভ ট্রি চার্ট ও কুরআনে বর্ণিত অন্যান্য ব্যক্তিত্ব।'
+                    : 'Interactive genealogical chart linking Adam, Nuh, Ibrahim, Ishmaelite-Quraysh (Muhammad SAW), and Banu Israil lineages, plus other notable Quranic names.'}
+                </p>
+              </div>
+            </div>
+
+            <div
+              className={`pt-3 border-t flex items-center justify-between gap-2 ${
+                isDay ? 'border-slate-100' : 'border-teal-900/50'
+              }`}
+            >
+              <span
+                className={`text-[11px] font-bold ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {isBn
+                  ? 'ভিজ্যুয়াল ট্রি · বংশধারা · ২৫ নবী তালিকা'
+                  : 'Visual Tree · Branches · Quick Table'}
+              </span>
+              <span
+                className={`text-xs sm:text-sm font-black flex items-center gap-1 ${
+                  isDay ? 'text-amber-700' : 'text-amber-300'
+                }`}
+              >
+                <span>{isBn ? 'ট্রি দেখুন' : 'Explore Tree'}</span>
+                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick 25 Prophets Preview Strip */}
+        <div
+          className={`rounded-2xl border p-4 sm:p-5 space-y-3 ${
+            isDay
+              ? 'bg-white border-emerald-200/80'
+              : 'bg-[#082026] border-teal-900/60'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3
+                className={`text-sm font-black ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-300'
+                }`}
+              >
+                {isBn
+                  ? '২৫ জন নবী ও রাসূলের দ্রুত সূচি'
+                  : 'Quick Jump to Any Prophet'}
+              </h3>
+              <p
+                className={`text-[11px] ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {isBn
+                  ? 'যেকোনো নামে ক্লিক করে সরাসরি জীবনী খুলুন'
+                  : 'Tap any name to open biography directly'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => openSubPage('biographies')}
+              className={`text-xs font-extrabold flex items-center gap-0.5 cursor-pointer ${
+                isDay ? 'text-[#006747]' : 'text-emerald-300'
+              }`}
+            >
+              <span>{isBn ? 'সব দেখুন' : 'View All'}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {PROPHETS_25_DATABASE.map((p) => {
+              const isRead = readIds.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => openProphetDetail(p.id)}
+                  className={`min-h-[36px] px-2.5 py-1 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                    isRead
+                      ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                      : isDay
+                      ? 'bg-[#f8fcfa] border-slate-200 text-slate-800 hover:border-[#006A4E] hover:text-[#006A4E]'
+                      : 'bg-[#0b252c] border-teal-900/60 text-slate-200 hover:border-emerald-400'
+                  }`}
+                >
+                  <span className="tabular-nums opacity-75">{padRank(p.rank, isBn)}.</span>
+                  <span>{isBn ? p.nameBn.replace(' (আ.)', '').replace(' (ﷺ)', '') : p.nameEn.replace(' (AS)', '').replace(' (SAW)', '')}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <ContentShareModal
+          content={shareModalContent}
+          isOpen={Boolean(shareModalContent)}
+          onClose={() => setShareModalContent(null)}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={soundEnabled}
+          initialFocus={shareModalInitialAction}
+        />
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // SUB-PAGE 1: BIOGRAPHIES VIEW (ALL 25 QURANIC PROPHETS)
   // =========================================================================
   return (
     <div
       data-highlight-section="prophets_25"
       data-highlight-source={
-        isBn ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল' : '25 Prophets & Messengers in the Quran'
+        isBn ? '২৫ জন নবী ও রাসূলের জীবনী' : '25 Prophets & Messengers Biographies'
       }
       className="space-y-5 pb-10 animate-in fade-in duration-200"
     >
-      {/* Clean Simple Centered Header */}
+      {/* QuranView-Matched Flat Header */}
       <div
-        className={`pb-3.5 border-b transition-colors ${
+        className={`pb-3.5 border-b space-y-2.5 transition-colors ${
           isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          <div className="flex items-center">
-            {onBackToHub ? (
-              <button
-                type="button"
-                onClick={onBackToHub}
-                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                    : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:bg-[#103239]'
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              type="button"
+              onClick={closeSubPage}
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
+                isDay
+                  ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006747]'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
+              }`}
+              aria-label={isBn ? 'ফিরে যান' : 'Back'}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+
+            <BookOpen
+              className={`w-5 h-5 shrink-0 hidden xs:block ${
+                isDay ? 'text-[#006747]' : 'text-emerald-400'
+              }`}
+            />
+
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1
+                  className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                    isDay ? 'text-[#006747]' : 'text-white'
+                  }`}
+                >
+                  {isBn
+                    ? '২৫ জন নবী ও রাসূলের জীবনী'
+                    : isAr
+                    ? 'قصص الأنبياء في القرآن'
+                    : '25 Prophets Biographies'}
+                </h1>
+                <span
+                  className={`text-xs font-semibold font-arabic hidden sm:inline ${
+                    isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                  }`}
+                >
+                  قَصَصُ الْأَنْبِيَاءِ
+                </span>
+              </div>
+              <p
+                className={`text-[11px] leading-tight mt-0.5 tabular-nums truncate ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
                 }`}
-                aria-label={isBn ? 'ফিরে যান' : 'Back'}
               >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-            ) : (
-              <div className="w-10" />
-            )}
+                {isBn
+                  ? `${toBnDigits(25)} জন নবী • পঠিত ${toBnDigits(readIds.length)}/${toBnDigits(25)} (${toBnDigits(progressPercent)}%)`
+                  : `25 Prophets • Read ${readIds.length}/25 (${progressPercent}%)`}
+              </p>
+            </div>
           </div>
 
-          <div className="text-center min-w-0 px-1">
-            <h1 className="text-lg sm:text-xl font-black tracking-tight truncate">
-              {isBn
-                ? '২৫ জন নবী ও রাসূল'
-                : isAr
-                ? 'الأنبياء والرسل الـ ٢٥'
-                : '25 Prophets & Messengers'}
-            </h1>
-            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
-              {isBn
-                ? `${toBnDigits(25)} জন নবী · পঠিত ${toBnDigits(readIds.length)}/${toBnDigits(25)}`
-                : `25 Prophets · Read ${readIds.length}/25`}
-            </p>
-          </div>
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                setSubPage('tree');
+              }}
+              className={`px-2.5 py-1.5 min-h-[36px] rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer ${
+                isDay
+                  ? 'bg-white border-amber-300/80 text-amber-800 hover:bg-amber-50'
+                  : 'bg-[#0e1c26] border-amber-500/30 text-amber-300 hover:bg-[#132634]'
+              }`}
+            >
+              <GitBranch className="w-3.5 h-3.5" />
+              <span>{isBn ? 'বংশলতিকা' : 'Family Tree'}</span>
+            </button>
 
-          <div className="flex items-center justify-end gap-1.5">
             <button
               type="button"
               onClick={() => {
@@ -1416,14 +1936,14 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   return !prev;
                 });
               }}
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isSearchOpen || searchQuery
                   ? isDay
                     ? 'bg-[#006A4E] border-[#006A4E] text-white'
                     : 'bg-emerald-600 border-emerald-500 text-white'
                   : isDay
                   ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
-                  : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:border-emerald-500'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
               }`}
               title={isBn ? 'খুঁজুন' : 'Search'}
               aria-label={isBn ? 'খুঁজুন' : 'Search'}
@@ -1433,10 +1953,10 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             <button
               type="button"
               onClick={() => openShareModal(buildAll25IndexShareContent(), 'share')}
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isDay
-                  ? 'bg-white border-slate-200 text-[#006A4E] hover:bg-emerald-50'
-                  : 'bg-[#0a2328] border-[#16444e] text-emerald-300 hover:bg-[#11333a]'
+                  ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
               }`}
               title={isBn ? 'শেয়ার' : 'Share'}
               aria-label={isBn ? 'শেয়ার' : 'Share'}
@@ -1446,10 +1966,10 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             <button
               type="button"
               onClick={() => openShareModal(buildAll25IndexShareContent(), 'download')}
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isDay
-                  ? 'bg-white border-slate-200 text-[#006A4E] hover:bg-emerald-50'
-                  : 'bg-[#0a2328] border-[#16444e] text-emerald-300 hover:bg-[#11333a]'
+                  ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
               }`}
               title={isBn ? 'PDF / ডাউনলোড' : 'Download'}
               aria-label={isBn ? 'ডাউনলোড' : 'Download'}

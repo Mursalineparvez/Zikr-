@@ -684,22 +684,45 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
         </div>
       )}
 
-      {/* 1. Top Bar: Greeting, Hijri & Gregorian Dates, Weather Badge */}
-      <div className="relative z-10 flex items-start justify-between gap-3 pt-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-amber-500 text-sm">✦</span>
-            <h1 className="text-xl sm:text-2xl font-black text-[#004d35] dark:text-emerald-100 tracking-tight leading-tight">
-              {hijriGregorian.greeting}
-            </h1>
+      {/* UNIFIED HEADER (Matching QuranView style) */}
+      <section
+        className={`pb-3.5 border-b space-y-2.5 relative z-10 ${
+          isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Clock
+              className={`w-5 h-5 shrink-0 ${
+                isDay ? 'text-[#006747]' : 'text-emerald-400'
+              }`}
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1
+                  className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                    isDay ? 'text-[#006747]' : 'text-white'
+                  }`}
+                >
+                  {hijriGregorian.greeting}
+                </h1>
+                <span
+                  className={`text-xs font-semibold font-arabic hidden xs:inline ${
+                    isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                  }`}
+                >
+                  مَوَاقِيتُ الصَّلَاةِ
+                </span>
+              </div>
+              <p
+                className={`text-[11px] leading-tight mt-0.5 ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {hijriGregorian.hijri} · {hijriGregorian.gregorian}
+              </p>
+            </div>
           </div>
-          <p className="text-xs sm:text-[13px] font-semibold text-slate-600 dark:text-emerald-300/80 leading-relaxed mt-0.5">
-            {hijriGregorian.hijri}
-          </p>
-          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            {hijriGregorian.gregorian}
-          </p>
-        </div>
 
         {/* Live Weather Widget */}
         <button
@@ -725,6 +748,7 @@ export const SalatTimeView: React.FC<SalatTimeViewProps> = ({
           </div>
         </button>
       </div>
+    </section>
 
       {/* ========================================================================= */}
       {/* MAIN PRAYERS CONTENT (Arc Card + Location/Qibla Dock + 5 Prayer Cards)    */}

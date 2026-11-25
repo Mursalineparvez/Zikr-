@@ -187,8 +187,8 @@ export const ISLAMIC_HISTORY_EVENTS: HistoryEvent[] = [
     "lon": 39.8262,
     "sc": "kaaba",
     "t": {
-      "en": "The Blessed Birth of Rasulullah {SAW}",
-      "bn": "রাসূলুল্লাহ {SAW} উনার পবিত্র বিলাদত শরীফ"
+      "en": "The Blessed Birth",
+      "bn": "পবিত্র বিলাদত শরীফ"
     },
     "p": {
       "en": "Makkah al-Mukarramah",

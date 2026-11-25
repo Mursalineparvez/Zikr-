@@ -1512,19 +1512,19 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
         </div>
       )}
       {/* Clean Simple Centered Header */}
-      <div
-        className={`pb-3.5 border-b space-y-3 transition-colors ${
+      {/* UNIFIED HEADER (Matching QuranView style) */}
+      <section
+        className={`pb-3.5 border-b space-y-2.5 transition-colors ${
           isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          {/* Left: Back Button */}
-          <div className="flex items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {onBackToHub ? (
               <button
                 type="button"
                 onClick={onBackToHub}
-                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 shrink-0 ${
                   isDay
                     ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                     : 'bg-[#09221d] text-emerald-300 border-emerald-800/60 hover:bg-[#0f342c]'
@@ -1535,24 +1535,42 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                 <ArrowLeft className="w-4 h-4" />
               </button>
             ) : (
-              <div className="w-10" />
+              <Users
+                className={`w-5 h-5 shrink-0 ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-400'
+                }`}
+              />
             )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1
+                  className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                    isDay ? 'text-[#006747]' : 'text-white'
+                  }`}
+                >
+                  {isBn ? 'হায়াতুস সাহাবা' : 'Hayatus Sahaba'}
+                </h1>
+                <span
+                  className={`text-xs font-semibold font-arabic hidden xs:inline ${
+                    isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                  }`}
+                >
+                  حَيَاةُ الصَّحَابَةِ
+                </span>
+              </div>
+              <p
+                className={`text-[11px] leading-tight mt-0.5 ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {isBn
+                  ? `${formatNum(totalSahaba)}+ সাহাবি · পঠিত ${formatNum(completedCount)}/${formatNum(totalSahaba)}`
+                  : `${totalSahaba}+ Sahaba · Read ${completedCount}/${totalSahaba}`}
+              </p>
+            </div>
           </div>
 
-          {/* Center: Centered Title + Concise Key Info */}
-          <div className="text-center min-w-0 px-1">
-            <h2 className="text-lg sm:text-xl font-black tracking-tight truncate">
-              {isBn ? 'হায়াতুস সাহাবা' : 'Hayatus Sahaba'}
-            </h2>
-            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
-              {isBn
-                ? `${formatNum(totalSahaba)}+ সাহাবি · পঠিত ${formatNum(completedCount)}/${formatNum(totalSahaba)}`
-                : `${totalSahaba}+ Sahaba · Read ${completedCount}/${totalSahaba}`}
-            </p>
-          </div>
-
-          {/* Right: Search Icon + Share/Download */}
-          <div className="flex items-center justify-end gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
             <button
               type="button"
               onClick={() => {
@@ -1562,7 +1580,7 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
                   return !prev;
                 });
               }}
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isSearchOpen || searchQuery
                   ? isDay
                     ? 'bg-[#006A4E] border-[#006A4E] text-white'
@@ -1585,7 +1603,8 @@ export const HayatusSahabaView: React.FC<HayatusSahabaViewProps> = ({
             />
           </div>
         </div>
-
+      </section>
+      <div>
         {/* Centered Essential Quick Actions */}
         <div className="flex flex-wrap items-center justify-center gap-2">
           {lastReadSahaba && (

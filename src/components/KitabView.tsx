@@ -58,58 +58,74 @@ export const KitabView: React.FC<KitabViewProps> = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Kitab Header */}
-      <div
-        className={`pb-4 border-b flex items-start justify-between gap-3 transition-colors ${
-          isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
-        }`}
-      >
-        <div className="min-w-0">
-          <div
-            className={`inline-flex items-center gap-2 text-xs font-semibold mb-1.5 ${
-              isDay ? 'text-[#006A4E]' : 'text-teal-300'
-            }`}
-          >
-            <BookMarked className="w-3.5 h-3.5" />
-            <span>المكتبة الإسلامية • Classical Islamic Books</span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-            {KITAB_UI.bannerTitle[selectedLanguage]}
-          </h2>
-          <p
-            className={`text-xs sm:text-sm mt-1 max-w-xl ${
-              isDay ? 'text-slate-600' : 'text-teal-100/80'
-            }`}
-          >
-            {KITAB_UI.bannerSub[selectedLanguage]}
-          </p>
-        </div>
+      {/* UNIFIED HEADER (Matching QuranView style) */}
+      {!selectedKitab && (
+        <section
+          className={`pb-3.5 border-b space-y-2.5 ${
+            isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <BookMarked
+                className={`w-5 h-5 shrink-0 ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-400'
+                }`}
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1
+                    className={`text-lg sm:text-xl font-black tracking-tight leading-none ${
+                      isDay ? 'text-[#006747]' : 'text-white'
+                    }`}
+                  >
+                    {KITAB_UI.bannerTitle[selectedLanguage]}
+                  </h1>
+                  <span
+                    className={`text-xs font-semibold font-arabic hidden xs:inline ${
+                      isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                    }`}
+                  >
+                    المكتبة الإسلامية
+                  </span>
+                </div>
+                <p
+                  className={`text-[11px] leading-tight mt-0.5 ${
+                    isDay ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
+                  {KITAB_UI.bannerSub[selectedLanguage]}
+                </p>
+              </div>
+            </div>
 
-        {!selectedKitab && (
-          <button
-            type="button"
-            onClick={() => {
-              setIsSearchOpen((prev) => {
-                if (prev && searchQuery) setSearchQuery('');
-                return !prev;
-              });
-            }}
-            className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
-              isSearchOpen || searchQuery
-                ? isDay
-                  ? 'bg-[#006A4E] border-[#006A4E] text-white'
-                  : 'bg-emerald-600 border-emerald-500 text-white'
-                : isDay
-                ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
-                : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
-            }`}
-            title={selectedLanguage === 'bn' ? 'কিতাব খুঁজুন' : 'Search Kitab'}
-            aria-label={selectedLanguage === 'bn' ? 'কিতাব খুঁজুন' : 'Search Kitab'}
-          >
-            {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-          </button>
-        )}
-      </div>
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSearchOpen((prev) => {
+                    if (prev && searchQuery) setSearchQuery('');
+                    return !prev;
+                  });
+                }}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                  isSearchOpen || searchQuery
+                    ? isDay
+                      ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                      : 'bg-emerald-600 border-emerald-500 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
+                }`}
+                title={selectedLanguage === 'bn' ? 'কিতাব খুঁজুন' : 'Search Kitab'}
+                aria-label={selectedLanguage === 'bn' ? 'কিতাব খুঁজুন' : 'Search Kitab'}
+              >
+                {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* View: Reading Chapter within a Kitab */}
       {selectedKitab && selectedChapter ? (

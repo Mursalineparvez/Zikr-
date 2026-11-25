@@ -1014,52 +1014,60 @@ export const SavedView: React.FC<SavedViewProps> = ({
           : 'bg-[#071c21] border-[#143b44] text-white shadow-xl'
       }`}
     >
-      {/* Clean Centered Sanctuary Header */}
+      {/* Unified Flat Header */}
       <div
-        className={`px-4 pt-4 pb-4 sm:px-7 sm:pt-5 border-b space-y-3.5 ${
-          isDay ? 'border-slate-200/75' : 'border-[#133841]'
+        className={`px-4 pt-4 pb-3.5 sm:px-7 sm:pt-5 border-b space-y-3 ${
+          isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
         }`}
       >
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          {/* Left: Back Button */}
-          <div className="flex items-center">
-            {onBackToHub ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {onBackToHub && (
               <button
                 type="button"
                 onClick={onBackToHub}
-                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 transition active:scale-95 cursor-pointer ${
                   isDay
-                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                    : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:bg-[#123840]'
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006747]'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
                 }`}
                 aria-label={isBn ? 'ফিরে যান' : 'Back'}
                 title={isBn ? 'ফিরে যান' : 'Back'}
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-            ) : (
-              <div className="w-10" />
             )}
-          </div>
-
-          {/* Center: Centered Title + Concise Metadata */}
-          <div className="text-center min-w-0 px-1">
-            <h2
-              className={`text-lg sm:text-xl font-black tracking-tight truncate ${
-                isDay ? 'text-[#006A4E]' : 'text-white'
+            <Bookmark
+              className={`w-5 h-5 shrink-0 hidden xs:block ${
+                isDay ? 'text-[#006747]' : 'text-emerald-400'
               }`}
-            >
-              {isBn ? 'সংরক্ষিত লাইব্রেরি' : 'Saved Library'}
-            </h2>
-            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-emerald-700' : 'text-emerald-300/90'}`}>
-              {isBn
-                ? `${formatNum(entries.length)}টি সংরক্ষিত · ${formatNum(activeTopicTotal)}টি টপিক`
-                : `${entries.length} Saved · ${activeTopicTotal} Topics`}
-            </p>
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2
+                  className={`text-lg sm:text-xl font-black tracking-tight leading-none truncate ${
+                    isDay ? 'text-[#006747]' : 'text-white'
+                  }`}
+                >
+                  {isBn ? 'সংরক্ষিত লাইব্রেরি' : 'Saved Library'}
+                </h2>
+                <span
+                  className={`text-xs font-semibold font-arabic hidden sm:inline ${
+                    isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                  }`}
+                >
+                  الْمَحْفُوظَاتُ
+                </span>
+              </div>
+              <p className={`text-[11px] leading-tight mt-0.5 tabular-nums truncate ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                {isBn
+                  ? `${formatNum(entries.length)}টি সংরক্ষিত • ${formatNum(activeTopicTotal)}টি টপিক`
+                  : `${entries.length} Saved • ${activeTopicTotal} Topics`}
+              </p>
+            </div>
           </div>
 
-          {/* Right: Search Icon + Share/Download */}
-          <div className="flex items-center justify-end gap-1.5">
+          <div className="flex items-center justify-end gap-1.5 shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -1069,14 +1077,14 @@ export const SavedView: React.FC<SavedViewProps> = ({
                   return !prev;
                 });
               }}
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isSearchOpen || searchQuery
                   ? isDay
                     ? 'bg-[#006A4E] border-[#006A4E] text-white'
                     : 'bg-emerald-600 border-emerald-500 text-white'
                   : isDay
                   ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
-                  : 'bg-[#0c2930] border-[#194a55] text-emerald-300 hover:border-emerald-500'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
               }`}
               title={isBn ? 'খুঁজুন' : 'Search'}
               aria-label={isBn ? 'খুঁজুন' : 'Search'}

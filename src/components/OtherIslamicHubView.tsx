@@ -299,6 +299,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       color: 'from-amber-500/20 via-rose-500/15 to-emerald-500/10 border-amber-500/40',
       badge: selectedLanguage === 'bn' ? 'বইয়ের সূচিপত্র' : 'Battles',
     },
+
     {
       id: 'arober_gotro' as OtherSubSection,
       title: selectedLanguage === 'bn' ? 'আরবের গোত্র ও ব্যক্তিত্ব' : 'Arab Tribes & Personalities',
@@ -314,18 +315,18 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       id: 'prophets_25' as OtherSubSection,
       title:
         selectedLanguage === 'bn'
-          ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূল'
+          ? 'নবী ও রাসূল'
           : selectedLanguage === 'ar'
-          ? 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم'
-          : '25 Prophets & Messengers in the Quran',
-      arabic: 'الأنبياء والرسل الـ ٢٥ في القرآن الكريم',
+          ? 'الأنبياء والرسل'
+          : 'Prophets & Messengers',
+      arabic: 'الأنبياء والرسل',
       desc:
         selectedLanguage === 'bn'
-          ? 'হযরত আদম (আ.) থেকে শেষনবী মুহাম্মাদ (সা.) পর্যন্ত কুরআনে বর্ণিত ২৫ জন নবী ও রাসূলের পূর্ণাঙ্গ জীবনী, মুজিযা, কুরআনী পরিসংখ্যান, সংশয় নিরসন ও রেফারেন্স'
-          : 'Comprehensive biographies, miracles, Quranic stats, scholarly clarifications, supplications, and verified references for all 25 Prophets & Messengers in the Quran.',
+          ? 'হযরত আদম (আ.) থেকে শেষনবী মুহাম্মাদ (ﷺ) পর্যন্ত ২৫ জন নবী ও রাসূলের বিস্তারিত জীবনী এবং বংশলতিকা ট্রি চার্ট'
+          : 'Comprehensive biographies of the 25 Prophets & Messengers in the Quran along with an interactive Prophets Family Tree.',
       icon: <span className="text-2xl">📜</span>,
       color: 'from-emerald-600/25 via-amber-500/15 to-teal-500/10 border-emerald-500/40',
-      badge: selectedLanguage === 'bn' ? '২৫ নবী ও রাসূল' : '25 Prophets & Messengers',
+      badge: selectedLanguage === 'bn' ? 'জীবনী ও বংশলতিকা' : 'Biographies & Tree',
     },
     {
       id: 'allah_names' as OtherSubSection,
@@ -561,7 +562,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   : item.id === 'hajj_checklist'
                   ? selectedLanguage === 'bn' ? 'হজ ও ওমরাহ' : 'Hajj & Umrah'
                   : item.id === 'prophets_25'
-                  ? selectedLanguage === 'bn' ? '২৫ নবী ও রাসূল' : '25 Prophets'
+                  ? selectedLanguage === 'bn' ? 'জীবনী ও বংশলতিকা' : 'Biographies & Tree'
                   : item.id === 'tablig'
                   ? selectedLanguage === 'bn' ? 'দাওয়াত ও আমল' : 'Dawah & Amal'
                   : selectedLanguage === 'bn' ? '৯৯টি নাম ও জিকির' : '99 Names';
@@ -665,6 +666,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             onBackToHub={handleBackStep}
           />
         )}
+
+
 
         {/* Sub-view: Arabian Illustrated Pictorial Map */}
         {activeSub === 'arabian_map' && (

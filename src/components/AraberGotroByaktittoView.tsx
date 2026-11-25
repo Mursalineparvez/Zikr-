@@ -817,49 +817,56 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
     <div className={`min-h-screen pb-24 transition-colors duration-200 ${
       isDay ? 'text-slate-800' : 'text-[#e6f4f2]'
     }`}>
-      {/* 1. Simple Centered Header */}
+      {/* 1. Unified Flat Header */}
       <div
         className={`pb-3.5 mb-3 border-b space-y-2.5 transition-colors ${
           isDay ? 'border-[#dcebe8] text-slate-900' : 'border-[#163640] text-white'
         }`}
       >
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          {/* Left: Back Button */}
-          <div className="flex items-center">
-            {onBack ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {onBack && (
               <button
                 type="button"
                 onClick={() => {
                   if (soundEnabled) soundHaptics.playTap();
                   onBack();
                 }}
-                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 transition cursor-pointer active:scale-95 ${
                   isDay
-                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                    : 'bg-[#0a2328] border-[#16444e] text-emerald-200 hover:bg-[#103239]'
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006747]'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
                 }`}
                 title={t.backToLibrary}
                 aria-label={t.backToLibrary}
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-            ) : (
-              <div className="w-10" />
             )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1
+                  className={`text-lg sm:text-xl font-black tracking-tight leading-none truncate ${
+                    isDay ? 'text-[#006747]' : 'text-white'
+                  }`}
+                >
+                  {t.mainHeaderTitle}
+                </h1>
+                <span
+                  className={`text-xs font-semibold font-arabic hidden sm:inline ${
+                    isDay ? 'text-emerald-700/80' : 'text-emerald-300/80'
+                  }`}
+                >
+                  قَبَائِلُ الْعَرَبِ
+                </span>
+              </div>
+              <p className={`text-[11px] leading-tight mt-0.5 tabular-nums truncate ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                {t.metricTribeValue} • {t.subHeaderBadge}
+              </p>
+            </div>
           </div>
 
-          {/* Center: Centered Title + Concise Key Info */}
-          <div className="text-center min-w-0 px-1">
-            <h1 className="text-lg sm:text-xl font-black tracking-tight truncate">
-              {t.mainHeaderTitle}
-            </h1>
-            <p className={`text-[11px] font-semibold mt-0.5 tabular-nums truncate ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
-              {t.metricTribeValue} · {t.subHeaderBadge}
-            </p>
-          </div>
-
-          {/* Right: Search Icon + Share/Download */}
-          <div className="flex items-center justify-end gap-1.5">
+          <div className="flex items-center justify-end gap-1.5 shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -872,14 +879,14 @@ export const AraberGotroByaktittoView: React.FC<AraberGotroByaktittoViewProps> =
                   return !prev;
                 });
               }}
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
                 isSearchOpen || searchQuery || tocSearchQuery
                   ? isDay
                     ? 'bg-[#006A4E] border-[#006A4E] text-white'
                     : 'bg-emerald-600 border-emerald-500 text-white'
                   : isDay
                   ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
-                  : 'bg-[#0a2328] border-[#16444e] text-emerald-300 hover:border-emerald-500'
+                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
               }`}
               title={isBn ? 'খুঁজুন' : 'Search'}
               aria-label={isBn ? 'খুঁজুন' : 'Search'}
