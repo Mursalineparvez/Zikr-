@@ -54,6 +54,11 @@ import {
   ARAB_PROPHETS_COUNT,
 } from '../data/prophets25Data';
 
+import {
+  OTHER_PROPHETS_HISTORY_LIST,
+  OtherProphetHistoryItem,
+} from '../data/otherProphetsHistoryData';
+
 interface Prophets25ViewProps {
   themeMode?: ThemeMode;
   selectedLanguage?: ZikrLanguage;
@@ -64,6 +69,8 @@ interface Prophets25ViewProps {
 const READ_STORAGE_KEY = 'zikrmate_prophets25_read_v1';
 const BOOKMARK_STORAGE_KEY = 'zikrmate_prophets25_bookmarks_v1';
 const LAST_PROPHET_STORAGE_KEY = 'zikrmate_prophets25_last_v1';
+const OTHER_READ_STORAGE_KEY = 'zikrmate_other_prophets_read_v1';
+const OTHER_BOOKMARK_STORAGE_KEY = 'zikrmate_other_prophets_bookmarks_v1';
 
 const toBnDigits = (val: number | string): string =>
   String(val).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
@@ -99,6 +106,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
 
   const [subPage, setSubPage] = useState<'hub' | 'biographies' | 'tree'>('hub');
   const [selectedProphetId, setSelectedProphetId] = useState<string | null>(null);
+  const [selectedOtherProphetId, setSelectedOtherProphetId] = useState<string | null>(null);
   const [lastProphetId, setLastProphetId] = useState<string>(() => {
     try {
       return localStorage.getItem(LAST_PROPHET_STORAGE_KEY) || '';
@@ -113,6 +121,12 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
   const [readIds, setReadIds] = useState<string[]>(() => readStoredStringArray(READ_STORAGE_KEY));
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() =>
     readStoredStringArray(BOOKMARK_STORAGE_KEY)
+  );
+  const [otherReadIds, setOtherReadIds] = useState<string[]>(() =>
+    readStoredStringArray(OTHER_READ_STORAGE_KEY)
+  );
+  const [otherBookmarkedIds, setOtherBookmarkedIds] = useState<string[]>(() =>
+    readStoredStringArray(OTHER_BOOKMARK_STORAGE_KEY)
   );
   const [copiedDuaKey, setCopiedDuaKey] = useState<string | null>(null);
   const [shareModalContent, setShareModalContent] = useState<ShareableContent | null>(null);
@@ -134,6 +148,22 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     }
   }, [bookmarkedIds]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(OTHER_READ_STORAGE_KEY, JSON.stringify(otherReadIds));
+    } catch {
+      // ignore storage quota issues
+    }
+  }, [otherReadIds]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(OTHER_BOOKMARK_STORAGE_KEY, JSON.stringify(otherBookmarkedIds));
+    } catch {
+      // ignore storage quota issues
+    }
+  }, [otherBookmarkedIds]);
+
   useBackLayer(
     subPage !== 'hub',
     () => setSubPage('hub'),
@@ -144,6 +174,12 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     Boolean(selectedProphetId),
     () => setSelectedProphetId(null),
     'prophets-25-detail'
+  );
+
+  useBackLayer(
+    Boolean(selectedOtherProphetId),
+    () => setSelectedOtherProphetId(null),
+    'other-prophets-detail'
   );
 
   const openSubPage = useCallback(
@@ -163,6 +199,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
   const openProphetDetail = useCallback(
     (id: string) => {
       if (soundEnabled) soundHaptics.playTap();
+      setSelectedOtherProphetId(null);
       setSelectedProphetId(id);
       setLastProphetId(id);
       try {
@@ -179,6 +216,45 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     if (soundEnabled) soundHaptics.playTap();
     stepBackOr(() => setSelectedProphetId(null));
   }, [soundEnabled]);
+
+  const openOtherProphetDetail = useCallback(
+    (idOrTreeId: string) => {
+      const matched = OTHER_PROPHETS_HISTORY_LIST.find(
+        (item) => item.id === idOrTreeId || item.treeOrSideId === idOrTreeId
+      );
+      if (!matched) return;
+      if (soundEnabled) soundHaptics.playTap();
+      setSelectedProphetId(null);
+      setSelectedOtherProphetId(matched.id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    [soundEnabled]
+  );
+
+  const closeOtherProphetDetail = useCallback(() => {
+    if (soundEnabled) soundHaptics.playTap();
+    stepBackOr(() => setSelectedOtherProphetId(null));
+  }, [soundEnabled]);
+
+  const toggleOtherRead = useCallback(
+    (id: string, e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      if (soundEnabled) soundHaptics.playTap();
+      setOtherReadIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    },
+    [soundEnabled]
+  );
+
+  const toggleOtherBookmark = useCallback(
+    (id: string, e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      if (soundEnabled) soundHaptics.playTap();
+      setOtherBookmarkedIds((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      );
+    },
+    [soundEnabled]
+  );
 
   const toggleRead = useCallback(
     (id: string, e?: React.MouseEvent) => {
@@ -288,6 +364,114 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     onSwipeLeft: goNextProphet,
     onSwipeRight: goPrevProphet,
   });
+
+  const selectedOtherProphet = useMemo(
+    () => OTHER_PROPHETS_HISTORY_LIST.find((p) => p.id === selectedOtherProphetId) || null,
+    [selectedOtherProphetId]
+  );
+
+  const otherCurrentIdx = selectedOtherProphet
+    ? OTHER_PROPHETS_HISTORY_LIST.findIndex((p) => p.id === selectedOtherProphet.id)
+    : -1;
+  const prevOtherProphet =
+    otherCurrentIdx > 0 ? OTHER_PROPHETS_HISTORY_LIST[otherCurrentIdx - 1] : null;
+  const nextOtherProphet =
+    otherCurrentIdx >= 0 && otherCurrentIdx < OTHER_PROPHETS_HISTORY_LIST.length - 1
+      ? OTHER_PROPHETS_HISTORY_LIST[otherCurrentIdx + 1]
+      : null;
+
+  const goPrevOtherProphet = useCallback(() => {
+    if (!prevOtherProphet) return;
+    if (soundEnabled) soundHaptics.playTap();
+    setSelectedOtherProphetId(prevOtherProphet.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [prevOtherProphet, soundEnabled]);
+
+  const goNextOtherProphet = useCallback(() => {
+    if (!nextOtherProphet) return;
+    if (soundEnabled) soundHaptics.playTap();
+    setSelectedOtherProphetId(nextOtherProphet.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [nextOtherProphet, soundEnabled]);
+
+  const {
+    touchHandlers: otherTouchHandlers,
+    swipeDirection: otherSwipeDirection,
+    isReadyToTrigger: otherIsReadyToTrigger,
+  } = useHorizontalSwipe({
+    enabled: Boolean(selectedOtherProphet),
+    canSwipeLeft: Boolean(nextOtherProphet),
+    canSwipeRight: Boolean(prevOtherProphet),
+    onSwipeLeft: goNextOtherProphet,
+    onSwipeRight: goPrevOtherProphet,
+  });
+
+  const buildOtherProphetShareContent = useCallback(
+    (item: OtherProphetHistoryItem): ShareableContent => {
+      const name = isBn ? item.nameBn : item.nameEn;
+      const status = isBn ? item.statusBn : item.statusEn;
+      const refs = isBn ? item.referencesBn : item.referencesEn;
+      const lessons = isBn ? item.lessonsBn : item.lessonsEn;
+
+      const meta = [
+        {
+          label: isBn ? 'ক্রমিক নং' : 'Order',
+          value: `${formatNum(item.rank, isBn)} / ${formatNum(OTHER_PROPHETS_HISTORY_LIST.length, isBn)}`,
+        },
+        {
+          label: isBn ? 'অবস্থান ও দলীল' : 'Scholarly Status',
+          value: status,
+        },
+        {
+          label: isBn ? 'সময়কাল ও অঞ্চল' : 'Era & Region',
+          value: isBn ? item.eraOrRegionBn : item.eraOrRegionEn,
+        },
+        {
+          label: isBn ? 'বংশ ও প্রেক্ষাপট' : 'Lineage & Context',
+          value: isBn ? item.lineageOrContextBn : item.lineageOrContextEn,
+        },
+      ];
+
+      const fullSections: string[] = [
+        `📖 ${isBn ? 'বিস্তারিত ইতিহাস ও জীবনী' : 'Detailed History & Biography'}`,
+        isBn ? item.historyBn : item.historyEn,
+        '',
+        `🗓️ ${isBn ? 'প্রধান ঐতিহাসিক অধ্যায়' : 'Key Historical Milestones'}`,
+        ...item.timelineEvents.map(
+          (ev, i) =>
+            `${formatNum(i + 1, isBn)}. ${isBn ? ev.titleBn : ev.titleEn}: ${
+              isBn ? ev.detailBn : ev.detailEn
+            }`
+        ),
+        '',
+        `🔎 ${isBn ? 'শরয়ী তাহক্বীক্ব ও অবস্থান' : 'Scholarly Verification'}`,
+        isBn ? item.scholarlyNoteBn : item.scholarlyNoteEn,
+        '',
+        `💡 ${isBn ? 'শিক্ষণীয় বিষয়সমূহ' : 'Key Lessons'}`,
+        ...lessons.map((l) => `• ${l}`),
+        '',
+        `📚 ${isBn ? 'রেফারেন্স' : 'References'}`,
+        ...refs.map((r) => `• ${r}`),
+      ];
+
+      return {
+        id: `other-prophet-${item.id}`,
+        badge: isBn
+          ? `অন্যান্য ও বর্ণিত নবী · ক্রমিক ${toBnDigits(item.rank)}`
+          : `Remaining & Narrated Prophets · #${item.rank}`,
+        title: name,
+        subtitle: `${status} (${item.nameAr})`,
+        arabic: item.nameAr,
+        body: isBn ? item.historyBn : item.historyEn,
+        highlights: lessons,
+        meta,
+        reference: refs.join(' | '),
+        fullDocumentText: fullSections.join('\n'),
+        fileNamePrefix: `ZikrPlus-Other-Prophet-${String(item.rank).padStart(2, '0')}-${item.id}`,
+      };
+    },
+    [isBn]
+  );
 
   const buildProphetShareContent = useCallback(
     (p: Prophet25Item): ShareableContent => {
@@ -1399,6 +1583,650 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
   }
 
   // =========================================================================
+  // OTHER / REMAINING PROPHETS HISTORY READER VIEW
+  // =========================================================================
+  if (selectedOtherProphet) {
+    const isRead = otherReadIds.includes(selectedOtherProphet.id);
+    const isBookmarked = otherBookmarkedIds.includes(selectedOtherProphet.id);
+    const otherName = isBn ? selectedOtherProphet.nameBn : selectedOtherProphet.nameEn;
+    const otherStatus = isBn ? selectedOtherProphet.statusBn : selectedOtherProphet.statusEn;
+    const otherSharePayload = buildOtherProphetShareContent(selectedOtherProphet);
+    const historyParagraphs = (
+      isBn ? selectedOtherProphet.historyBn : selectedOtherProphet.historyEn
+    )
+      .split(/\n\s*\n/)
+      .filter(Boolean);
+
+    const otherIdentityRows = [
+      {
+        icon: MapPin,
+        label: isBn ? 'সময়কাল ও ভৌগোলিক অঞ্চল' : 'Era & Geographical Region',
+        value: isBn ? selectedOtherProphet.eraOrRegionBn : selectedOtherProphet.eraOrRegionEn,
+      },
+      {
+        icon: Users,
+        label: isBn ? 'বংশপরিচয় ও ঐতিহাসিক প্রেক্ষাপট' : 'Lineage & Historical Context',
+        value: isBn
+          ? selectedOtherProphet.lineageOrContextBn
+          : selectedOtherProphet.lineageOrContextEn,
+      },
+      {
+        icon: ScrollText,
+        label: isBn ? 'সহীফা / প্রসিদ্ধ ভূমিকা' : 'Scrolls / Key Role',
+        value: isBn
+          ? selectedOtherProphet.scriptureOrRoleBn
+          : selectedOtherProphet.scriptureOrRoleEn,
+      },
+      {
+        icon: Shield,
+        label: isBn ? 'কুরআন-হাদীসে অবস্থান' : 'Scriptural & Scholarly Standing',
+        value: otherStatus,
+      },
+    ];
+
+    const otherQuickNavItems = [
+      { id: 'sec-other-history', label: isBn ? 'পূর্ণাঙ্গ ইতিহাস' : 'Full History' },
+      { id: 'sec-other-timeline', label: isBn ? 'ঘটনাপ্রবাহ' : 'Milestones' },
+      { id: 'sec-other-tahqiq', label: isBn ? 'তাহক্বীক্ব ও অবস্থান' : 'Verification' },
+      { id: 'sec-other-lessons', label: isBn ? 'শিক্ষা ও তথ্যসূত্র' : 'Lessons & Refs' },
+    ];
+
+    return (
+      <div
+        {...otherTouchHandlers}
+        data-highlight-section="prophets_25"
+        data-highlight-source={otherName}
+        className="space-y-4 sm:space-y-5 pb-10 animate-in fade-in duration-200"
+      >
+        <SwipeFloatingFeedback
+          swipeDirection={otherSwipeDirection}
+          isReadyToTrigger={otherIsReadyToTrigger}
+          canSwipeLeft={Boolean(nextOtherProphet)}
+          canSwipeRight={Boolean(prevOtherProphet)}
+          nextLabel={
+            nextOtherProphet
+              ? isBn
+                ? nextOtherProphet.nameBn
+                : nextOtherProphet.nameEn
+              : undefined
+          }
+          prevLabel={
+            prevOtherProphet
+              ? isBn
+                ? prevOtherProphet.nameBn
+                : prevOtherProphet.nameEn
+              : undefined
+          }
+          selectedLanguage={selectedLanguage}
+        />
+
+        {/* Sticky Compact Reader Topbar */}
+        <div
+          className={`sticky top-[62px] z-30 rounded-2xl border backdrop-blur-xl px-3 py-2 flex items-center justify-between gap-2 shadow-sm ${
+            isDay
+              ? 'bg-white/95 border-emerald-200/80 text-slate-900'
+              : 'bg-[#071d22]/95 border-teal-800/60 text-white'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={closeOtherProphetDetail}
+            className={`min-h-[44px] px-3 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-bold transition cursor-pointer active:scale-95 ${
+              isDay
+                ? 'hover:bg-emerald-50 text-[#006A4E]'
+                : 'hover:bg-teal-900/50 text-emerald-300'
+            }`}
+          >
+            <ArrowLeft className="w-4 h-4 shrink-0" />
+            <span className="truncate whitespace-nowrap">
+              {subPage === 'tree'
+                ? isBn
+                  ? 'বংশলতিকা ট্রি'
+                  : isAr
+                  ? 'شجرة الأنبياء'
+                  : 'Family Tree'
+                : isBn
+                ? 'নবী ও রাসূল'
+                : isAr
+                ? 'الأنبياء والرسل'
+                : 'Prophets Hub'}
+            </span>
+          </button>
+
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => toggleOtherRead(selectedOtherProphet.id)}
+              title={isBn ? 'পঠিত চিহ্নিত করুন' : 'Mark as read'}
+              className={`min-h-[44px] px-2.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 whitespace-nowrap ${
+                isRead
+                  ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                  : isDay
+                  ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-emerald-400'
+                  : 'bg-[#0d2830] border-teal-800/70 text-slate-200 hover:border-emerald-500/50'
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">
+                {isRead ? (isBn ? 'পঠিত' : 'Read') : isBn ? 'পঠিত করুন' : 'Mark Read'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => toggleOtherBookmark(selectedOtherProphet.id)}
+              aria-label={isBn ? 'বুকমার্ক' : 'Bookmark'}
+              className={`min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
+                isBookmarked
+                  ? 'bg-amber-500/15 border-amber-500/50 text-amber-500'
+                  : isDay
+                  ? 'bg-slate-50 border-slate-200 text-slate-600 hover:text-amber-600'
+                  : 'bg-[#0d2830] border-teal-800/70 text-slate-300 hover:text-amber-400'
+              }`}
+            >
+              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+            </button>
+
+            <HighlightMarkerButton
+              itemKey={`other-prophet-${selectedOtherProphet.id}`}
+              text={`${otherName} — ${
+                isBn ? selectedOtherProphet.summaryBn : selectedOtherProphet.summaryEn
+              }`}
+              source={otherName}
+              section="prophets_25"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              soundEnabled={soundEnabled}
+            />
+
+            <ShareDownloadButtons
+              themeMode={themeMode}
+              selectedLanguage={selectedLanguage}
+              variant="compact"
+              onShare={() => openShareModal(otherSharePayload, 'share')}
+              onDownload={() => openShareModal(otherSharePayload, 'download')}
+            />
+          </div>
+        </div>
+
+        {/* Swipe Quick Switcher */}
+        <QuickReaderSwitcherStrip
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          prevLabel={
+            prevOtherProphet
+              ? isBn
+                ? prevOtherProphet.nameBn
+                : prevOtherProphet.nameEn
+              : null
+          }
+          nextLabel={
+            nextOtherProphet
+              ? isBn
+                ? nextOtherProphet.nameBn
+                : nextOtherProphet.nameEn
+              : null
+          }
+          onPrev={goPrevOtherProphet}
+          onNext={goNextOtherProphet}
+          hasPrev={Boolean(prevOtherProphet)}
+          hasNext={Boolean(nextOtherProphet)}
+        />
+
+        {/* Editorial History Reader Card */}
+        <article
+          className={`rounded-3xl border overflow-hidden ${
+            isDay
+              ? 'bg-white border-emerald-200/80 shadow-sm'
+              : 'bg-[#082026] border-teal-900/60 shadow-xl'
+          }`}
+        >
+          <div
+            className={`px-5 py-5 sm:px-8 sm:py-6 border-b ${
+              isDay
+                ? 'border-emerald-200/80 text-slate-900'
+                : 'border-teal-800/50 text-white'
+            }`}
+          >
+            <div
+              className={`flex flex-wrap items-center justify-between gap-2 text-xs font-semibold tabular-nums ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-200/85'
+              }`}
+            >
+              <span>
+                {isBn
+                  ? `বর্ণিত নবী ও ঐতিহাসিক ব্যক্তিত্ব · ক্রমিক ${padRank(selectedOtherProphet.rank, true)} / ${toBnDigits(OTHER_PROPHETS_HISTORY_LIST.length)}`
+                  : `NARRATED PROPHETS & FIGURES · ${padRank(selectedOtherProphet.rank, false)} OF ${OTHER_PROPHETS_HISTORY_LIST.length}`}
+              </span>
+              <span className={`font-bold ${isDay ? 'text-amber-700' : 'text-amber-300'}`}>
+                {selectedOtherProphet.category === 'hadith_quran'
+                  ? isBn
+                    ? 'হাদীস ও কুরআনের ইঙ্গিতে বর্ণিত'
+                    : 'Hadith & Quranic Allusion'
+                  : selectedOtherProphet.category === 'tafsir_history'
+                  ? isBn
+                    ? 'তাফসীর ও ইসলামী ইতিহাস'
+                    : 'Classical Tafsir & History'
+                  : selectedOtherProphet.category === 'universal_umam'
+                  ? isBn
+                    ? 'সকল জাতির নবীগণ'
+                    : 'Universal Prophethood'
+                  : isBn
+                  ? 'কুরআনে উল্লেখ ও নবুয়তে মতভেদ'
+                  : 'Named in Quran · Debated Status'}
+              </span>
+            </div>
+
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+              <div className="space-y-1">
+                <h1
+                  className={`text-2xl sm:text-3xl font-black tracking-tight text-balance ${
+                    isDay ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {otherName}
+                </h1>
+                <p
+                  className={`text-sm sm:text-base font-medium ${
+                    isDay ? 'text-[#006A4E]' : 'text-amber-200/95'
+                  }`}
+                >
+                  {otherStatus}
+                </p>
+              </div>
+              <div
+                dir="rtl"
+                className={`font-arabic text-2xl sm:text-3xl font-bold leading-snug shrink-0 ${
+                  isDay ? 'text-[#006A4E]' : 'text-amber-200/95'
+                }`}
+              >
+                {selectedOtherProphet.nameAr}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Section Jump Navigation Strip */}
+          <div
+            data-no-swipe="true"
+            className={`px-4 sm:px-6 py-2.5 border-b flex items-center gap-1.5 overflow-x-auto no-scrollbar ${
+              isDay
+                ? 'bg-[#f4faf7] border-emerald-200/70'
+                : 'bg-[#071a20] border-teal-900/50'
+            }`}
+          >
+            {otherQuickNavItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => scrollToSection(item.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 transition cursor-pointer ${
+                  isDay
+                    ? 'bg-white border border-slate-200/80 text-slate-700 hover:border-[#006A4E] hover:text-[#006A4E]'
+                    : 'bg-[#0c262d] border border-teal-800/60 text-slate-200 hover:border-emerald-400 hover:text-emerald-300'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Identity & Historical Facts Matrix (2x2 Clean Hairline Grid) */}
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 border-b ${
+              isDay
+                ? 'divide-slate-200/80 border-slate-200/80 bg-[#f8fcfa]'
+                : 'divide-teal-900/50 border-teal-900/50 bg-[#06181d]'
+            }`}
+          >
+            {otherIdentityRows.map((row, idx) => {
+              const IconComp = row.icon;
+              return (
+                <div
+                  key={row.label}
+                  className={`p-3 sm:p-3.5 flex items-start gap-2.5 ${
+                    idx % 2 === 1
+                      ? isDay
+                        ? 'sm:border-l sm:border-slate-200/80'
+                        : 'sm:border-l sm:border-teal-900/50'
+                      : ''
+                  } ${
+                    idx >= 2
+                      ? isDay
+                        ? 'sm:border-t sm:border-slate-200/80'
+                        : 'sm:border-t sm:border-teal-900/50'
+                      : ''
+                  }`}
+                >
+                  <IconComp
+                    className={`w-4 h-4 mt-0.5 shrink-0 ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                    }`}
+                  />
+                  <div className="min-w-0 space-y-1">
+                    <div
+                      className={`text-[11px] font-bold tracking-wider ${
+                        isDay ? 'text-slate-500' : 'text-emerald-300/75'
+                      }`}
+                    >
+                      {row.label}
+                    </div>
+                    <p
+                      className={`text-xs sm:text-sm leading-relaxed font-medium whitespace-pre-line ${
+                        isDay ? 'text-slate-800' : 'text-slate-100'
+                      }`}
+                    >
+                      {row.value}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Reading Body */}
+          <div className="p-3 sm:p-5 space-y-5">
+            {/* Summary Callout */}
+            <div
+              className={`rounded-2xl border p-3 sm:p-3.5 flex items-start gap-2.5 ${
+                isDay
+                  ? 'bg-emerald-50/50 border-emerald-200/80'
+                  : 'bg-[#0b252b] border-emerald-500/25'
+              }`}
+            >
+              <Compass
+                className={`w-5 h-5 mt-0.5 shrink-0 ${
+                  isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                }`}
+              />
+              <div className="space-y-1">
+                <div
+                  className={`text-xs sm:text-sm font-black ${
+                    isDay ? 'text-[#005a42]' : 'text-emerald-300'
+                  }`}
+                >
+                  {isBn ? 'সংক্ষিপ্ত পরিচিতি' : 'Overview'}
+                </div>
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${
+                    isDay ? 'text-slate-700' : 'text-slate-200'
+                  }`}
+                >
+                  {isBn ? selectedOtherProphet.summaryBn : selectedOtherProphet.summaryEn}
+                </p>
+              </div>
+            </div>
+
+            {/* 1. Detailed History */}
+            <section id="sec-other-history" className="scroll-mt-32 space-y-3.5">
+              <div className="flex items-center gap-2">
+                <BookOpen
+                  className={`w-5 h-5 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}
+                />
+                <h2
+                  className={`text-base sm:text-lg font-black tracking-tight ${
+                    isDay ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isBn ? 'বিস্তারিত ইতিহাস ও জীবনী' : 'Detailed History & Biography'}
+                </h2>
+              </div>
+
+              <div className="space-y-4">
+                {historyParagraphs.map((para, pIdx) => (
+                  <p
+                    key={pIdx}
+                    className={`text-[15px] sm:text-base leading-[1.85] ${
+                      isDay ? 'text-slate-700' : 'text-slate-200'
+                    }`}
+                  >
+                    {para}
+                  </p>
+                ))}
+              </div>
+            </section>
+
+            {/* 2. Key Historical Milestones */}
+            <section
+              id="sec-other-timeline"
+              className={`scroll-mt-32 pt-6 border-t space-y-4 ${
+                isDay ? 'border-slate-200/80' : 'border-teal-900/50'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <ScrollText
+                  className={`w-5 h-5 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`}
+                />
+                <h2
+                  className={`text-base sm:text-lg font-black tracking-tight ${
+                    isDay ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isBn ? 'ইতিহাসের প্রধান অধ্যায় ও ঘটনাপ্রবাহ' : 'Key Historical Milestones'}
+                </h2>
+              </div>
+
+              <div className="space-y-2.5">
+                {selectedOtherProphet.timelineEvents.map((ev, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 sm:p-3.5 rounded-xl border flex items-start gap-3 ${
+                      isDay
+                        ? 'bg-[#f8fcfa] border-emerald-200/70'
+                        : 'bg-[#0b262d] border-teal-900/60'
+                    }`}
+                  >
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0 tabular-nums ${
+                        isDay
+                          ? 'bg-[#006A4E] text-white'
+                          : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      }`}
+                    >
+                      {formatNum(idx + 1, isBn)}
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <h3
+                        className={`text-sm sm:text-base font-extrabold ${
+                          isDay ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {isBn ? ev.titleBn : ev.titleEn}
+                      </h3>
+                      <p
+                        className={`text-xs sm:text-sm leading-relaxed ${
+                          isDay ? 'text-slate-600' : 'text-slate-300'
+                        }`}
+                      >
+                        {isBn ? ev.detailBn : ev.detailEn}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* 3. Scholarly Tahqiq Box */}
+            <section
+              id="sec-other-tahqiq"
+              className={`scroll-mt-32 rounded-2xl border p-3.5 sm:p-4 space-y-2 ${
+                isDay
+                  ? 'bg-amber-50/70 border-amber-200/90'
+                  : 'bg-[#0e2226] border-amber-500/30'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <ShieldAlert
+                  className={`w-4 h-4 shrink-0 ${
+                    isDay ? 'text-amber-700' : 'text-amber-300'
+                  }`}
+                />
+                <h2
+                  className={`text-sm sm:text-base font-black ${
+                    isDay ? 'text-amber-900' : 'text-amber-300'
+                  }`}
+                >
+                  {isBn
+                    ? 'আকীদা ও হাদীসের আলোকে শরয়ী তাহক্বীক্ব'
+                    : 'Scholarly Verification & Scriptural Note'}
+                </h2>
+              </div>
+              <p
+                className={`text-xs sm:text-sm leading-relaxed ${
+                  isDay ? 'text-slate-700' : 'text-slate-200'
+                }`}
+              >
+                {isBn ? selectedOtherProphet.scholarlyNoteBn : selectedOtherProphet.scholarlyNoteEn}
+              </p>
+            </section>
+
+            {/* 4. Lessons */}
+            <section
+              id="sec-other-lessons"
+              className={`scroll-mt-32 p-3.5 rounded-2xl border space-y-2 ${
+                isDay
+                  ? 'bg-emerald-50/45 border-emerald-200/80'
+                  : 'bg-[#0b252b] border-emerald-500/25'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Heart
+                  className={`w-4 h-4 shrink-0 ${
+                    isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                  }`}
+                />
+                <h2
+                  className={`text-sm sm:text-base font-black ${
+                    isDay ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isBn ? 'আমাদের জন্য শিক্ষণীয় বিষয়সমূহ' : 'Enduring Lessons'}
+                </h2>
+              </div>
+              <ul className="space-y-2">
+                {(isBn ? selectedOtherProphet.lessonsBn : selectedOtherProphet.lessonsEn).map(
+                  (lesson, idx) => (
+                    <li
+                      key={idx}
+                      className={`text-xs sm:text-sm leading-relaxed flex items-start gap-2 ${
+                        isDay ? 'text-slate-700' : 'text-slate-200'
+                      }`}
+                    >
+                      <span
+                        className={`font-black tabular-nums ${
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                        }`}
+                      >
+                        {formatNum(idx + 1, isBn)}.
+                      </span>
+                      <span>{lesson}</span>
+                    </li>
+                  )
+                )}
+              </ul>
+            </section>
+
+            {/* 5. Verified Sources */}
+            <footer
+              className={`pt-5 border-t space-y-2.5 ${
+                isDay ? 'border-slate-200/80' : 'border-teal-900/50'
+              }`}
+            >
+              <div
+                className={`text-xs font-bold tracking-wider ${
+                  isDay ? 'text-slate-500' : 'text-emerald-300/75'
+                }`}
+              >
+                {isBn ? 'প্রামাণিক উৎস ও তথ্যসূত্র (রেফারেন্স)' : 'Authentic Sources & References'}
+              </div>
+              <ul className="space-y-1.5">
+                {(isBn ? selectedOtherProphet.referencesBn : selectedOtherProphet.referencesEn).map(
+                  (ref, rIdx) => (
+                    <li
+                      key={rIdx}
+                      className={`text-xs sm:text-sm leading-relaxed flex items-start gap-2 ${
+                        isDay ? 'text-slate-600' : 'text-slate-300'
+                      }`}
+                    >
+                      <span className={isDay ? 'text-[#006A4E]' : 'text-emerald-400'}>•</span>
+                      <span>{ref}</span>
+                    </li>
+                  )
+                )}
+              </ul>
+            </footer>
+          </div>
+        </article>
+
+        {/* Bottom Prev / Next Remaining Prophet Navigation */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            disabled={!prevOtherProphet}
+            onClick={goPrevOtherProphet}
+            className={`min-h-[64px] p-3.5 rounded-2xl border text-left transition flex items-center gap-2.5 ${
+              prevOtherProphet
+                ? isDay
+                  ? 'bg-white border-slate-200 hover:border-emerald-400 text-slate-900 cursor-pointer active:scale-[0.99]'
+                  : 'bg-[#082026] border-teal-900/60 hover:border-emerald-500/50 text-white cursor-pointer active:scale-[0.99]'
+                : 'opacity-40 cursor-not-allowed bg-transparent border-slate-300/40 dark:border-teal-900/30'
+            }`}
+          >
+            <ChevronLeft className="w-5 h-5 shrink-0 text-emerald-500" />
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold opacity-65">
+                {isBn ? 'পূর্ববর্তী' : 'Previous'}
+              </div>
+              <div className="text-xs sm:text-sm font-bold truncate">
+                {prevOtherProphet
+                  ? isBn
+                    ? prevOtherProphet.nameBn
+                    : prevOtherProphet.nameEn
+                  : '—'}
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            disabled={!nextOtherProphet}
+            onClick={goNextOtherProphet}
+            className={`min-h-[64px] p-3.5 rounded-2xl border text-right transition flex items-center justify-end gap-2.5 ${
+              nextOtherProphet
+                ? isDay
+                  ? 'bg-white border-slate-200 hover:border-emerald-400 text-slate-900 cursor-pointer active:scale-[0.99]'
+                  : 'bg-[#082026] border-teal-900/60 hover:border-emerald-500/50 text-white cursor-pointer active:scale-[0.99]'
+                : 'opacity-40 cursor-not-allowed bg-transparent border-slate-300/40 dark:border-teal-900/30'
+            }`}
+          >
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold opacity-65">
+                {isBn ? 'পরবর্তী' : 'Next'}
+              </div>
+              <div className="text-xs sm:text-sm font-bold truncate">
+                {nextOtherProphet
+                  ? isBn
+                    ? nextOtherProphet.nameBn
+                    : nextOtherProphet.nameEn
+                  : '—'}
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 shrink-0 text-emerald-500" />
+          </button>
+        </div>
+
+        <ContentShareModal
+          content={shareModalContent}
+          isOpen={Boolean(shareModalContent)}
+          onClose={() => setShareModalContent(null)}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={soundEnabled}
+          initialFocus={shareModalInitialAction}
+        />
+      </div>
+    );
+  }
+
+  // =========================================================================
   // SUB-PAGE 2: PROPHETS FAMILY TREE
   // =========================================================================
   if (subPage === 'tree') {
@@ -1409,6 +2237,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
         soundEnabled={soundEnabled}
         readIds={readIds}
         onOpenProphetDetail={openProphetDetail}
+        onOpenOtherProphetDetail={openOtherProphetDetail}
         onBack={closeSubPage}
         onSwitchToBiographies={() => setSubPage('biographies')}
       />
@@ -1821,6 +2650,71 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                 >
                   <span className="tabular-nums opacity-75">{padRank(p.rank, isBn)}.</span>
                   <span>{isBn ? p.nameBn.replace(' (আ.)', '').replace(' (ﷺ)', '') : p.nameEn.replace(' (AS)', '').replace(' (SAW)', '')}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Remaining & Narrated Prophets Quick Index (Matched Style Below 25 Prophets Strip) */}
+        <div
+          className={`rounded-2xl border p-4 sm:p-5 space-y-3 ${
+            isDay
+              ? 'bg-white border-emerald-200/80'
+              : 'bg-[#082026] border-teal-900/60'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3
+                className={`text-sm font-black ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-300'
+                }`}
+              >
+                {isBn
+                  ? 'বাকি সকল নবী ও হাদীস-তাফসীরে বর্ণিত নবীগণের দ্রুত সূচি'
+                  : 'Remaining & Narrated Prophets Quick Index'}
+              </h3>
+              <p
+                className={`text-[11px] ${
+                  isDay ? 'text-slate-500' : 'text-slate-400'
+                }`}
+              >
+                {isBn
+                  ? 'হাদীস, তাফসীর ও ইতিহাসে বর্ণিত অবশিষ্ট নবীগণ — যেকোনো নামে ক্লিক করে পূর্ণাঙ্গ ইতিহাস পড়ুন'
+                  : 'Prophets documented in Hadith, Tafsir & History — tap any name to read full history'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => openSubPage('tree')}
+              className={`text-xs font-extrabold flex items-center gap-0.5 cursor-pointer shrink-0 whitespace-nowrap ${
+                isDay ? 'text-[#006747]' : 'text-emerald-300'
+              }`}
+            >
+              <span>{isBn ? 'ট্রি-তে দেখুন' : 'View in Tree'}</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {OTHER_PROPHETS_HISTORY_LIST.map((item) => {
+              const isRead = otherReadIds.includes(item.id);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => openOtherProphetDetail(item.id)}
+                  className={`min-h-[36px] px-2.5 py-1 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                    isRead
+                      ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                      : isDay
+                      ? 'bg-[#f8fcfa] border-slate-200 text-slate-800 hover:border-[#006A4E] hover:text-[#006A4E]'
+                      : 'bg-[#0b252c] border-teal-900/60 text-slate-200 hover:border-emerald-400'
+                  }`}
+                >
+                  <span className="tabular-nums opacity-75">{padRank(item.rank, isBn)}.</span>
+                  <span>{isBn ? item.shortNameBn : item.shortNameEn}</span>
                 </button>
               );
             })}

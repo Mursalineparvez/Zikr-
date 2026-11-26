@@ -49,6 +49,7 @@ interface ProphetsFamilyTreeViewProps {
   soundEnabled?: boolean;
   readIds: string[];
   onOpenProphetDetail: (prophetId: string) => void;
+  onOpenOtherProphetDetail?: (otherId: string) => void;
   onBack: () => void;
   onSwitchToBiographies: () => void;
 }
@@ -252,6 +253,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
   soundEnabled = true,
   readIds,
   onOpenProphetDetail,
+  onOpenOtherProphetDetail,
   onBack,
   onSwitchToBiographies,
 }) => {
@@ -989,8 +991,8 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                         }`}
                       >
                         {isBn
-                          ? 'মোট ১১৫টি বংশলতিকা নোড · ১,২৪,০০০ নবী'
-                          : '115 Connected Lineage Nodes · 124k Prophets'}
+                          ? `মোট ${formatNum(PROPHET_TREE_NODES.length, true)}টি বংশলতিকা নোড · ১,২৪,০০০ নবী`
+                          : `${PROPHET_TREE_NODES.length} Connected Lineage Nodes · 124k Prophets`}
                       </div>
                       <div
                         className={`text-[10.5px] font-medium mt-1 leading-snug ${
@@ -1548,8 +1550,8 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                     }`}
                   >
                     {isBn
-                      ? 'খিজির, উযায়র, যুল-কারনাইন, তালূত, লুকমান, হিযকীল, ইরমিয়া, শা‘ইয়া, দানিয়াল, কালীবে ও ১,২৪,০০০ নবী'
-                      : 'Al-Khidr, Uzayr, Dhul-Qarnayn, Talut, Luqman, Hizqil, Irmiya, Sha‘ya, Daniyal, Kaleeb & 124,000 Prophets'}
+                      ? 'খিজির, উযায়র, যুল-কারনাইন, তালূত, লুকমান, হিযকীল, ইরমিয়া, শা‘ইয়া, দানিয়াল, কালীবে, জিরজীস, হানযালা, তুব্বা ও ১,২৪,০০০ নবী'
+                      : 'Al-Khidr, Uzayr, Dhul-Qarnayn, Talut, Luqman, Hizqil, Irmiya, Sha‘ya, Daniyal, Kaleeb, Jirjis, Hanzalah, Tubba & 124k Prophets'}
                   </p>
                 </div>
 
@@ -2133,6 +2135,23 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                   <ChevronRight className="w-4 h-4" />
                 </button>
               )}
+              {!selectedNode.prophetId &&
+                (selectedNode.isHadithProphet || selectedNode.otherProphetId) &&
+                onOpenOtherProphetDetail && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const targetId = selectedNode.otherProphetId || selectedNode.id;
+                      setSelectedNodeId(null);
+                      onOpenOtherProphetDetail(targetId);
+                    }}
+                    className="min-h-[42px] px-4 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs sm:text-sm font-black flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                  >
+                    <ScrollText className="w-4 h-4" />
+                    <span>{isBn ? 'পূর্ণাঙ্গ ইতিহাস পড়ুন' : 'Read Full History'}</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
             </div>
           </div>
         </div>
@@ -2266,10 +2285,29 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedSideProphet(null)}
-                className="min-h-[42px] px-5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs sm:text-sm font-black transition cursor-pointer active:scale-95"
+                className={`min-h-[42px] px-4 rounded-xl border text-xs font-bold cursor-pointer ${
+                  isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                    : 'bg-[#0c262d] border-teal-800/70 text-slate-300 hover:bg-teal-950'
+                }`}
               >
                 {isBn ? 'বন্ধ করুন' : 'Close'}
               </button>
+              {onOpenOtherProphetDetail && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetId = selectedSideProphet.id;
+                    setSelectedSideProphet(null);
+                    onOpenOtherProphetDetail(targetId);
+                  }}
+                  className="min-h-[42px] px-4 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs sm:text-sm font-black flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                >
+                  <ScrollText className="w-4 h-4" />
+                  <span>{isBn ? 'পূর্ণাঙ্গ ইতিহাস পড়ুন' : 'Read Full History'}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>

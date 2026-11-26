@@ -15,6 +15,8 @@ export interface ProphetTreeNode {
   id: string;
   /** Matches `id` in PROPHETS_25_DATABASE when this node is one of the 25 Quranic Prophets */
   prophetId?: string;
+  /** Matches `id` in OTHER_PROPHETS_HISTORY_LIST when clicking opens the remaining prophets history reader */
+  otherProphetId?: string;
   /** Quranic / chronological order badge (1-25) if one of the 25 Prophets */
   rank?: number;
   nameBn: string;
@@ -340,11 +342,12 @@ export const PROPHET_TREE_NODES: ProphetTreeNode[] = [
   // ================= ROW 5 (y=490): SONS OF NUH (THE GREAT FLOOD) =================
   {
     id: 'sam',
+    otherProphetId: 'sam',
     nameBn: 'সাম (আ.)',
-    nameEn: 'Sam',
+    nameEn: 'Sam / Shem',
     nameAr: 'سَام',
-    roleBn: 'নূহ (আ.)-এর পুত্র · সেমেটিক ধারা',
-    roleEn: 'Son of Nuh · Forefather of Semites',
+    roleBn: 'নূহ (আ.)-এর জ্যেষ্ঠ পুত্র · সেমেটিক ও নবুয়ত ধারা',
+    roleEn: 'Son of Nuh · Forefather of Semites & Prophets',
     eraOrRegionBn: 'প্লাবন-পরবর্তী যুগ',
     eraOrRegionEn: 'Post-Flood',
     lineage: 'ancestor_family',
@@ -352,16 +355,17 @@ export const PROPHET_TREE_NODES: ProphetTreeNode[] = [
     x: 400,
     y: 490,
     size: 'sm',
-    noteBn: 'নূহ (আ.)-এর জ্যেষ্ঠ পুত্র, যাঁর বংশ থেকে আরব ও বনী ইসরাঈলের সমস্ত নবী-রাসূলের আগমন ঘটে।',
-    noteEn: 'Son of Nuh (AS) through whom all Arab and Israelite Prophets descend.',
+    noteBn: 'নূহ (আ.)-এর জ্যেষ্ঠ মুমিন পুত্র, যাঁর বংশ থেকে আরব ও বনী ইসরাঈলের সমস্ত নবী-রাসূলের আগমন ঘটে। ৪১ নবীর জনপ্রিয় তালিকায়ও তাঁকে উল্লেখ করা হয়।',
+    noteEn: 'Eldest surviving son of Nuh (AS) through whom all Arab and Israelite Prophets descend; also cited in 41-prophet compilations.',
   },
   {
     id: 'ham',
+    otherProphetId: 'ham',
     nameBn: 'হাম',
-    nameEn: 'Ham',
+    nameEn: 'Ham ibn Nuh',
     nameAr: 'حَام',
-    roleBn: 'নূহ (আ.)-এর পুত্র',
-    roleEn: 'Son of Nuh',
+    roleBn: 'নূহ (আ.)-এর পুত্র · হাবশা ও আফ্রিকা ধারা',
+    roleEn: 'Son of Nuh · Forefather of Abyssinians',
     eraOrRegionBn: 'প্লাবন-পরবর্তী যুগ',
     eraOrRegionEn: 'Post-Flood',
     lineage: 'ancestor_family',
@@ -369,16 +373,17 @@ export const PROPHET_TREE_NODES: ProphetTreeNode[] = [
     x: 590,
     y: 490,
     size: 'sm',
-    noteBn: 'নূহ (আ.)-এর মুমিন পুত্রদের একজন।',
-    noteEn: 'One of the surviving sons of Nuh (AS).',
+    noteBn: 'নূহ (আ.)-এর মুমিন পুত্রদের একজন এবং হাদীস অনুযায়ী হাবশা-আফ্রিকান জাতিগুলোর পূর্বপুরুষ। ৪১ নবীর তালিকায়ও নাম আলোচিত।',
+    noteEn: 'Surviving believing son of Nuh (AS) and forefather of African/Abyssinian lineages; also listed in expanded 41-prophet charts.',
   },
   {
     id: 'yafith',
+    otherProphetId: 'yafith',
     nameBn: 'ইয়াফিস',
-    nameEn: 'Yaafis (Yafith)',
+    nameEn: 'Yaafis (Yafith / Japheth)',
     nameAr: 'يَافِث',
-    roleBn: 'নূহ (আ.)-এর পুত্র',
-    roleEn: 'Son of Nuh',
+    roleBn: 'নূহ (আ.)-এর পুত্র · ইউরেশীয়া ও রূম ধারা',
+    roleEn: 'Son of Nuh · Forefather of Eurasian Peoples',
     eraOrRegionBn: 'প্লাবন-পরবর্তী যুগ',
     eraOrRegionEn: 'Post-Flood',
     lineage: 'ancestor_family',
@@ -386,8 +391,8 @@ export const PROPHET_TREE_NODES: ProphetTreeNode[] = [
     x: 790,
     y: 490,
     size: 'sm',
-    noteBn: 'নূহ (আ.)-এর মুমিন পুত্রদের একজন।',
-    noteEn: 'One of the surviving sons of Nuh (AS).',
+    noteBn: 'নূহ (আ.)-এর মুমিন পুত্রদের একজন; হাদীসে রূম ও উত্তরাঞ্চলীয় জাতিসমূহের পূর্বপুরুষ হিসেবে উল্লেখিত এবং ৪১ নবীর তালিকায় আলোচিত।',
+    noteEn: 'Surviving believing son of Nuh (AS) and ancestor of Mediterranean/Eurasian nations; cited in 41-prophet compilations.',
   },
   {
     id: 'yam',
@@ -2531,6 +2536,23 @@ export const SIDE_PANEL_PROPHETS: SidePanelProphet[] = [
     summaryEn: 'One of the two God-fearing men alongside Yusha (AS) who urged Banu Israil to trust Allah and enter the Holy Land.',
     refBn: 'সূরা মায়িদাহ ৫:২৩ (তাফসীরে ইবনে কাছীর)',
     refEn: 'Surah Al-Maidah 5:23 (Tafsir Ibn Kathir)',
+  },
+  {
+    id: 'side-jirjis',
+    nameBn: 'হযরত জিরজীস (আ.)',
+    nameEn: 'Jirjis (Al-Tabari & Ibn Kathir)',
+    nameAr: 'جِرْجِيس',
+    statusBn: 'ঈসা (আ.)-পরবর্তী যুগের তাওহীদপন্থী দা‘ঈ (মতান্তরে নবী)',
+    statusEn: 'Post-Isa Monotheist Caller in Classical Chronicles',
+    evidenceTier: 'tafsir_history',
+    eraOrRegionBn: 'ফিলিস্তিন ও মসুল (ইরাক)',
+    eraOrRegionEn: 'Palestine & Mosul (Post-Isa Era)',
+    reasonNotInTreeBn: 'ছহীহ বুখারী হা/৩৪৪২ অনুযায়ী ঈসা (আ.) ও শেষনবী (ﷺ)-এর মাঝে কোনো নবী ছিলেন না—তাই তাঁকে ঈসা (আ.)-এর সত্য দ্বীনের দা‘ঈ হিসেবে পার্শ্ব-তালিকায় রাখা হয়েছে।',
+    reasonNotInTreeEn: 'Sahih Bukhari 3442 states there was no prophet between Isa and Muhammad (SAW), so scholars place him as a steadfast believer/martyr beside the tree.',
+    summaryBn: 'ইমাম তাবারী ও ইবনে কাছীরের ইতিহাসে মসুলের জালিম শাসকের বিরুদ্ধে তাওহীদের দাওয়াত ও চরম নির্যাতনে অবিচল ধৈর্যের জন্য প্রসিদ্ধ।',
+    summaryEn: 'Recounted by Al-Tabari and Ibn Kathir for steadfast monotheism under extreme persecution in Mosul.',
+    refBn: 'তারীখে তাবারী · ছহীহ বুখারী হা/৩৪৪২',
+    refEn: 'Tarikh al-Tabari · Sahih al-Bukhari 3442',
   },
   {
     id: 'side-antakiyah-3',
