@@ -481,7 +481,7 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               <span>{ZIKIR_UI.reset[selectedLanguage] || 'Reset'}</span>
             </button>
 
-            {/* Export PDF Button */}
+            {/* History Charts & Export PDF Button */}
             <button
               onClick={onExportPdf}
               disabled={isExportingPdf}
@@ -491,8 +491,12 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
                   : 'bg-[var(--app-dark-surface,#062024)] hover:bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
               }`}
             >
-              <FileText className="w-3.5 h-3.5 text-slate-500 dark:text-slate-300" />
-              <span>{ZIKIR_UI.exportPdf[selectedLanguage] || 'PDF Report'}</span>
+              <FileText className="w-3.5 h-3.5 text-[var(--app-primary,#006A4E)] dark:text-emerald-400" />
+              <span>
+                {selectedLanguage === 'bn'
+                  ? 'হিস্ট্রি ও চার্ট'
+                  : ZIKIR_UI.exportPdf[selectedLanguage] || 'History & Charts'}
+              </span>
             </button>
 
             {/* Focus Mode Button */}

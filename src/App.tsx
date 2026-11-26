@@ -2272,6 +2272,8 @@ export default function App() {
                 selectedLanguage={selectedLanguage}
                 userProfile={userProfile}
                 liveZikrs={zikrs}
+                historySessions={historySessions}
+                masterTotal={masterGrandTotal}
               />
             </React.Suspense>
           </div>
@@ -2455,6 +2457,7 @@ export default function App() {
             selectedLanguage={selectedLanguage}
             userProfile={userProfile}
             liveZikrs={zikrs}
+            historySessions={historySessions}
             masterTotal={masterGrandTotal}
           />
         )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AamalCheckItem, AamalDayLog, ThemeMode, ZikrLanguage, UserProfile, ZikrItem } from '../types';
+import { AamalCheckItem, AamalDayLog, ThemeMode, ZikrLanguage, UserProfile, ZikrItem, HistorySession } from '../types';
 import {
   DEFAULT_AAMAL_ITEMS,
   WAQT_SALAH_PLANS,
@@ -49,6 +49,8 @@ import {
 import confetti from 'canvas-confetti';
 import { soundHaptics } from '../utils/audioHaptics';
 import { HistoryReportModal } from './HistoryReportModal';
+import { HistoryChartsDashboard } from './HistoryChartsDashboard';
+import { compileAggregatedReport, HistoryPeriodRange } from '../utils/exportPdf';
 import { AAMAL_ITEM_TRANSLATIONS, AAMAL_UI, PRAYER_NAMES } from '../utils/appTranslations';
 import { getZikrLeaderboard, LeaderboardUserEntry } from '../services/firebase';
 
@@ -58,6 +60,8 @@ interface AamalTrackerViewProps {
   selectedLanguage?: ZikrLanguage;
   userProfile?: UserProfile;
   liveZikrs?: ZikrItem[];
+  historySessions?: HistorySession[];
+  masterTotal?: number;
 }
 
 const LOCALE_MAP: Record<ZikrLanguage, string> = {
@@ -90,12 +94,15 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
   selectedLanguage = 'bn',
   userProfile,
   liveZikrs,
+  historySessions = [],
+  masterTotal,
 }) => {
   const isDay = themeMode === 'day';
   const todayKey = getTodayDateKey();
 
   // Active view subtab: 'checklist', 'calendar', 'trends', 'leaderboard'
   const [activeSubTab, setActiveSubTab] = useState<'checklist' | 'calendar' | 'trends' | 'leaderboard'>('checklist');
+  const [trendsChartRange, setTrendsChartRange] = useState<HistoryPeriodRange>('1month');
   const [leaderboardUsers, setLeaderboardUsers] = useState<LeaderboardUserEntry[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState<boolean>(false);
   const [leaderboardFilter, setLeaderboardFilter] = useState<'lifetime' | 'today'>('lifetime');
@@ -2141,7 +2148,7 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               isDay ? 'bg-white border-[#dcebe8]' : 'bg-[#0e2f36] border-[#1a515c]'
             }`}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-teal-900/40 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Flame className="w-5 h-5 text-amber-500 fill-amber-500" />
                 <div>
@@ -2217,6 +2224,57 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Interactive Period Switcher + Full Charts Dashboard */}
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <h4 className={`text-sm font-black ${isDay ? 'text-slate-800' : 'text-white'}`}>
+              {selectedLanguage === 'bn' ? 'দৈনিক আমল ও জিকিরের ভিজ্যুয়াল চার্টসমূহ' : 'Visual Analytics & Graphs'}
+            </h4>
+            <div
+              className={`p-1 rounded-xl border flex items-center gap-1 overflow-x-auto ${
+                isDay ? 'bg-white border-slate-200' : 'bg-[#082024] border-[#153e46]'
+              }`}
+            >
+              {(
+                [
+                  { id: '1day', bn: '১ দিন', en: '1D' },
+                  { id: '1month', bn: '১ মাস', en: '1M' },
+                  { id: '4months', bn: '৪ মাস', en: '4M' },
+                  { id: '1year', bn: '১ বছর', en: '1Y' },
+                  { id: '10years', bn: 'আজীবন', en: 'All' },
+                ] as const
+              ).map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => {
+                    setTrendsChartRange(r.id);
+                    if (soundEnabled) soundHaptics.playTap();
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] whitespace-nowrap shrink-0 transition cursor-pointer ${
+                    trendsChartRange === r.id
+                      ? 'bg-[var(--app-primary,#006A4E)] text-white font-extrabold shadow-xs'
+                      : isDay
+                      ? 'text-slate-600 hover:text-slate-900 font-semibold'
+                      : 'text-slate-300 hover:text-white font-semibold'
+                  }`}
+                >
+                  {selectedLanguage === 'bn' ? r.bn : r.en}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <HistoryChartsDashboard
+            reportData={compileAggregatedReport(allLogs, trendsChartRange, selectedDateKey, liveZikrs)}
+            allLogs={allLogs}
+            selectedRange={trendsChartRange}
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            liveZikrs={liveZikrs}
+            historySessions={historySessions}
+            masterTotal={masterTotal}
+          />
         </div>
       )}
 
@@ -2392,6 +2450,8 @@ export const AamalTrackerView: React.FC<AamalTrackerViewProps> = ({
         userProfile={userProfile}
         selectedDayKey={selectedDateKey}
         liveZikrs={liveZikrs}
+        historySessions={historySessions}
+        masterTotal={masterTotal}
       />
     </div>
   );
