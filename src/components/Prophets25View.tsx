@@ -650,6 +650,88 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
     };
   }, [isBn]);
 
+  const buildFamilyTreeOverviewShareContent = useCallback((): ShareableContent => {
+    const prophetLines = PROPHETS_25_DATABASE.map((p) => {
+      const rankStr = formatNum(p.rank, isBn);
+      return `${rankStr}. ${isBn ? p.nameBn : p.nameEn} (${p.nameAr})\n   ${
+        isBn ? 'বংশধারা' : 'Lineage'
+      }: ${isBn ? p.lineageBn : p.lineageEn}\n   ${
+        isBn ? 'অঞ্চল' : 'Region'
+      }: ${isBn ? p.nationRegionBn : p.nationRegionEn}`;
+    });
+
+    const otherLines = OTHER_PROPHETS_HISTORY_LIST.map(
+      (o) =>
+        `• ${isBn ? o.nameBn : o.nameEn} (${o.nameAr}) — ${isBn ? o.statusBn : o.statusEn}\n  ${
+          isBn ? o.lineageOrContextBn : o.lineageOrContextEn
+        }`
+    );
+
+    return {
+      id: 'prophets-family-tree-guide',
+      badge: isBn ? 'বংশলতিকা ও মানবজাতির ধারা' : 'Prophets Family Tree',
+      title: isBn
+        ? 'সকল নবী ও রাসূলের বংশলতিকা (আদম আ. থেকে মুহাম্মাদ ﷺ)'
+        : 'Sacred Family Tree of All Prophets (Adam AS to Muhammad SAW)',
+      subtitle: 'شَجَرَةُ الْأَنْبِيَاءِ وَالرُّسُلِ',
+      arabic: 'ذُرِّيَّةً بَعْضُهَا مِن بَعْضٍ',
+      body: isBn
+        ? 'হযরত আদম (আ.) ও হযরত নূহ (আ.)-এর বংশধর হতে আবুল আম্বিয়া ইবরাহীম (আ.), অতঃপর ইসমাঈলী-কুরাইশ ধারা (মুহাম্মাদ ﷺ) এবং ইসহাক্ব-ইয়াকূব-বনী ইসরাঈল ধারার (মূসা, দাঊদ, সুলায়মান, ঈসা আ.) পূর্ণাঙ্গ বংশলতিকা ও মানবজাতির শাখাসমূহ।'
+        : 'Complete prophetic genealogy from Adam (AS) and Nuh (AS) through Ibrahim (AS) into the Ishmaelite-Quraysh branch (Muhammad SAW) and Banu Israil branch (Musa, Dawud, Sulayman, Isa AS).',
+      meta: [
+        { label: isBn ? 'কুরআনে বর্ণিত নবী' : 'Quranic Prophets', value: formatNum(25, isBn) },
+        { label: isBn ? 'মূল নবী ধারা' : 'Main Branches', value: isBn ? 'ইসমাঈলী ও বনী ইসরাঈল' : 'Ishmaelite & Israelite' },
+        { label: isBn ? 'বর্ণিত অন্যান্য নবী' : 'Narrated Prophets', value: formatNum(OTHER_PROPHETS_HISTORY_LIST.length, isBn) },
+        { label: isBn ? 'মোট নবী সংখ্যা' : 'Total Prophets', value: isBn ? '১,২৪,০০০ (৩১৫ রাসূল)' : '124,000 (315 Messengers)' },
+      ],
+      fullDocumentText: [
+        isBn ? '═══ ২৫ জন কুরআনী নবীর বংশলতিকা ═══' : '═══ GENEALOGY OF THE 25 QURANIC PROPHETS ═══',
+        prophetLines.join('\n\n'),
+        '',
+        isBn ? '═══ হাদীস, তাফসীর ও ইতিহাসে বর্ণিত অন্যান্য নবীগণ ═══' : '═══ OTHER PROPHETS IN HADITH & TAFSIR ═══',
+        otherLines.join('\n\n'),
+      ].join('\n\n'),
+      reference: isBn
+        ? 'আল-কুরআন · আর-রাহীকুল মাখতূম · আল-বিদায়া ওয়ান নিহায়া · নবীদের কাহিনী'
+        : 'The Holy Quran · Ar-Raheeq Al-Makhtum · Al-Bidayah wan-Nihayah',
+      fileNamePrefix: 'ZikrPlus-Prophets-Family-Tree',
+    };
+  }, [isBn]);
+
+  const buildOtherProphetsListShareContent = useCallback((): ShareableContent => {
+    const lines = OTHER_PROPHETS_HISTORY_LIST.map((item) => {
+      const rankStr = formatNum(item.rank, isBn);
+      const refs = (isBn ? item.referencesBn : item.referencesEn).join(', ');
+      return `${rankStr}. ${isBn ? item.nameBn : item.nameEn} (${item.nameAr})\n   ${
+        isBn ? item.statusBn : item.statusEn
+      } · ${isBn ? item.eraOrRegionBn : item.eraOrRegionEn}\n   ${
+        isBn ? item.summaryBn : item.summaryEn
+      }\n   [${isBn ? 'সূত্র' : 'Ref'}: ${refs}]`;
+    });
+
+    return {
+      id: 'other-narrated-prophets-list',
+      badge: isBn ? 'হাদীস ও তাফসীরে বর্ণিত নবীগণ' : 'Remaining & Narrated Prophets',
+      title: isBn
+        ? 'বাকি সকল নবী ও হাদীস-তাফসীরে বর্ণিত নবীগণের পূর্ণাঙ্গ তালিকা'
+        : 'Remaining & Narrated Prophets in Hadith, Tafsir & History',
+      subtitle: 'الأنبياء المذكورون في السنة والتفسير',
+      arabic: 'وَرُسُلًا لَّمْ نَقْصُصْهُمْ عَلَيْكَ',
+      body: isBn
+        ? 'কুরআনে উল্লিখিত ২৫ জন ব্যতীত ছহীহ হাদীস, তাফসীর ও প্রামাণ্য ইসলামী ইতিহাসে বর্ণিত শীষ, ইউশা ইবনে নূন, খিজির, উযায়র, শামঊন, সামূঈল, দানিয়াল, হিযকীল ও হানযালা (আ.) প্রমুখ নবীগণের প্রামাণিক তালিকা।'
+        : 'Authenticated list of prophets and debated figures mentioned in Hadith, Tafsir, and Islamic history alongside the 25 Quranic prophets.',
+      meta: [
+        { label: isBn ? 'মোট সংকলিত ব্যক্তিত্ব' : 'Documented Entries', value: formatNum(OTHER_PROPHETS_HISTORY_LIST.length, isBn) },
+        { label: isBn ? 'প্রামাণ্য ভিত্তি' : 'Primary Basis', value: isBn ? 'হাদীস, তাফসীর ও ইতিহাস' : 'Hadith, Tafsir & History' },
+      ],
+      fullDocumentText: lines.join('\n\n'),
+      reference: isBn
+        ? 'সূরা নিসা ৪:১৬৪ · ছহীহ বুখারী ও মুসলিম · তাফসীরে ইবনে কাছীর · আল-বিদায়া ওয়ান নিহায়া'
+        : 'Quran 4:164 · Sahih al-Bukhari & Muslim · Tafsir Ibn Kathir',
+      fileNamePrefix: 'ZikrPlus-Other-Narrated-Prophets',
+    };
+  }, [isBn]);
+
   const handleCopyDua = async (dua: Prophet25Dua, key: string) => {
     const text = `${dua.arabic}\n\n${
       isBn
@@ -2333,32 +2415,13 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                 <span>{isBn ? 'বংশলতিকা ট্রি' : 'Family Tree'}</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => openShareModal(buildAll25IndexShareContent(), 'share')}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
-                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
-                }`}
-                title={isBn ? 'শেয়ার' : 'Share'}
-                aria-label={isBn ? 'শেয়ার' : 'Share'}
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => openShareModal(buildAll25IndexShareContent(), 'download')}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
-                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
-                }`}
-                title={isBn ? 'PDF / ডাউনলোড' : 'Download'}
-                aria-label={isBn ? 'ডাউনলোড' : 'Download'}
-              >
-                <Download className="w-4 h-4" />
-              </button>
+              <ShareDownloadButtons
+                variant="compact"
+                selectedLanguage={selectedLanguage}
+                themeMode={themeMode}
+                onShare={() => openShareModal(buildAll25IndexShareContent(), 'share')}
+                onDownload={() => openShareModal(buildAll25IndexShareContent(), 'download')}
+              />
             </div>
           </div>
 
@@ -2483,14 +2546,24 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   ? `উলুল আযম ${toBnDigits(ULUL_AZM_COUNT)} · কিতাব ${toBnDigits(SCRIPTURE_BEARERS_COUNT)} · আরব নবী ${toBnDigits(ARAB_PROPHETS_COUNT)}`
                   : `${ULUL_AZM_COUNT} Ulul Azm · ${SCRIPTURE_BEARERS_COUNT} Scriptures · ${ARAB_PROPHETS_COUNT} Arab`}
               </span>
-              <span
-                className={`text-xs sm:text-sm font-black flex items-center gap-1 ${
-                  isDay ? 'text-[#006747]' : 'text-emerald-300'
-                }`}
-              >
-                <span>{isBn ? 'প্রবেশ করুন' : 'Open'}</span>
-                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </span>
+              <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                <ShareDownloadButtons
+                  variant="compact"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  onShare={() => openShareModal(buildAll25IndexShareContent(), 'share')}
+                  onDownload={() => openShareModal(buildAll25IndexShareContent(), 'download')}
+                />
+                <span
+                  onClick={() => openSubPage('biographies')}
+                  className={`text-xs sm:text-sm font-black flex items-center gap-1 whitespace-nowrap cursor-pointer ${
+                    isDay ? 'text-[#006747]' : 'text-emerald-300'
+                  }`}
+                >
+                  <span>{isBn ? 'প্রবেশ করুন' : 'Open'}</span>
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </div>
             </div>
           </div>
 
@@ -2579,14 +2652,24 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   ? 'ভিজ্যুয়াল ট্রি · বংশধারা · ২৫ নবী তালিকা'
                   : 'Visual Tree · Branches · Quick Table'}
               </span>
-              <span
-                className={`text-xs sm:text-sm font-black flex items-center gap-1 ${
-                  isDay ? 'text-amber-700' : 'text-amber-300'
-                }`}
-              >
-                <span>{isBn ? 'ট্রি দেখুন' : 'Explore Tree'}</span>
-                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </span>
+              <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                <ShareDownloadButtons
+                  variant="compact"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  onShare={() => openShareModal(buildFamilyTreeOverviewShareContent(), 'share')}
+                  onDownload={() => openShareModal(buildFamilyTreeOverviewShareContent(), 'download')}
+                />
+                <span
+                  onClick={() => openSubPage('tree')}
+                  className={`text-xs sm:text-sm font-black flex items-center gap-1 whitespace-nowrap cursor-pointer ${
+                    isDay ? 'text-amber-700' : 'text-amber-300'
+                  }`}
+                >
+                  <span>{isBn ? 'ট্রি দেখুন' : 'Explore Tree'}</span>
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -2685,16 +2768,25 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   : 'Prophets documented in Hadith, Tafsir & History — tap any name to read full history'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => openSubPage('tree')}
-              className={`text-xs font-extrabold flex items-center gap-0.5 cursor-pointer shrink-0 whitespace-nowrap ${
-                isDay ? 'text-[#006747]' : 'text-emerald-300'
-              }`}
-            >
-              <span>{isBn ? 'ট্রি-তে দেখুন' : 'View in Tree'}</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <ShareDownloadButtons
+                variant="compact"
+                selectedLanguage={selectedLanguage}
+                themeMode={themeMode}
+                onShare={() => openShareModal(buildOtherProphetsListShareContent(), 'share')}
+                onDownload={() => openShareModal(buildOtherProphetsListShareContent(), 'download')}
+              />
+              <button
+                type="button"
+                onClick={() => openSubPage('tree')}
+                className={`text-xs font-extrabold flex items-center gap-0.5 cursor-pointer shrink-0 whitespace-nowrap ${
+                  isDay ? 'text-[#006747]' : 'text-emerald-300'
+                }`}
+              >
+                <span>{isBn ? 'ট্রি-তে দেখুন' : 'View in Tree'}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
@@ -2844,32 +2936,13 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             >
               {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             </button>
-            <button
-              type="button"
-              onClick={() => openShareModal(buildAll25IndexShareContent(), 'share')}
-              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
-                isDay
-                  ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
-                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
-              }`}
-              title={isBn ? 'শেয়ার' : 'Share'}
-              aria-label={isBn ? 'শেয়ার' : 'Share'}
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => openShareModal(buildAll25IndexShareContent(), 'download')}
-              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer active:scale-95 ${
-                isDay
-                  ? 'bg-white border-slate-200 text-[#006747] hover:bg-emerald-50'
-                  : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:bg-[#132634]'
-              }`}
-              title={isBn ? 'PDF / ডাউনলোড' : 'Download'}
-              aria-label={isBn ? 'ডাউনলোড' : 'Download'}
-            >
-              <Download className="w-4 h-4" />
-            </button>
+            <ShareDownloadButtons
+              variant="compact"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openShareModal(buildAll25IndexShareContent(), 'share')}
+              onDownload={() => openShareModal(buildAll25IndexShareContent(), 'download')}
+            />
           </div>
         </div>
       </div>

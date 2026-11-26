@@ -1856,7 +1856,7 @@ export default function App() {
       'kitab', 'hadith', 'dua', 'tablig', 'prophets_25', 'allah_names',
       'hajj_checklist', 'umrah_guide', 'hajj_route_map', 'hajj_essentials',
       'history_timeline', 'hayatus_sahaba', 'islamic_history_wars',
-      'seerat_un_nabi', 'araber_gotro', 'nobi_24_hours',
+      'seerat_un_nabi', 'araber_gotro', 'nobi_24_hours', 'daily_sunnah',
     ];
     if (validModules.includes(normalized as NavModule)) {
       if (normalized === activeModule && normalized !== 'other') {
@@ -2088,6 +2088,7 @@ export default function App() {
   // Primary 5 module items metadata (Zikir Counter, Quran, Salat Time, Aamal Tracker, Other)
   const otherModules: NavModule[] = [
     'other',
+    'daily_sunnah',
     'nobi_24_hours',
     'seerat_un_nabi',
     'hayatus_sahaba',
@@ -2329,7 +2330,9 @@ export default function App() {
                 subSectionSyncKey={otherNavTick}
                 initialAccountTab={otherAccountTab}
                 initialSubSection={
-                  activeModule === 'nobi_24_hours'
+                  activeModule === 'daily_sunnah'
+                    ? 'daily_sunnah'
+                    : activeModule === 'nobi_24_hours'
                     ? 'nobi_24_hours'
                     : activeModule === 'seerat_un_nabi'
                     ? 'seerat_un_nabi'

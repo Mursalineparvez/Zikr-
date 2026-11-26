@@ -15,6 +15,7 @@ type PreloadableView =
   | 'islamic_history_wars'
   | 'seerat_un_nabi'
   | 'nobi_24_hours'
+  | 'daily_sunnah'
   | 'history_timeline'
   | 'arabian_map'
   | 'arober_gotro'
@@ -40,6 +41,7 @@ const viewLoaders: Record<PreloadableView, () => Promise<any>> = {
   islamic_history_wars: () => import('../components/IslamicHistoryWarsView'),
   seerat_un_nabi: () => import('../components/SeeratUnNabiView'),
   nobi_24_hours: () => import('../components/Nobi24HoursView'),
+  daily_sunnah: () => import('../components/DailySunnahView'),
   history_timeline: () => import('../components/HistoryTimelineView'),
   arabian_map: () => import('../components/ArabianIllustratedMapView'),
   arober_gotro: () => import('../components/AraberGotroByaktittoView'),
@@ -115,6 +117,7 @@ export function warmupViewsIdle(): void {
     prefetchView('allah_names');
     prefetchView('hajj_checklist');
     prefetchView('history_timeline');
+    prefetchView('daily_sunnah');
     prefetchView('settings');
     prefetchView('zikr_modal');
   }, 16000);

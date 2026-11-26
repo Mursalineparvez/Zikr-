@@ -42,6 +42,12 @@ import {
   TreeLineageGroup,
 } from '../data/prophetsFamilyTreeData';
 import { HumanityBranchesTreeSection } from './HumanityBranchesTreeSection';
+import { ContentShareModal, ShareDownloadButtons } from './ContentShareModal';
+import { ShareableContent } from '../utils/shareDownload';
+import {
+  HUMANITY_ERAS_LIST,
+  HUMANITY_PERSON_TO_NATION_LIST,
+} from '../data/humanityBranchesData';
 
 interface ProphetsFamilyTreeViewProps {
   themeMode?: ThemeMode;
@@ -278,7 +284,18 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
   const [sideTierFilter, setSideTierFilter] = useState<'all' | SideProphetEvidenceTier>('all');
   const [selectedSideProphet, setSelectedSideProphet] = useState<SidePanelProphet | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
+  const [shareModalContent, setShareModalContent] = useState<ShareableContent | null>(null);
+  const [shareModalFocus, setShareModalFocus] = useState<'share' | 'download'>('share');
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const openShare = useCallback(
+    (content: ShareableContent, focus: 'share' | 'download') => {
+      if (soundEnabled) soundHaptics.playTap();
+      setShareModalFocus(focus);
+      setShareModalContent(content);
+    },
+    [soundEnabled]
+  );
 
   const nodeMap = useMemo(() => {
     const map = new Map<string, ProphetTreeNode>();
@@ -544,6 +561,256 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
     });
   }, [figureFilter, searchQuery]);
 
+  const buildNodeShareContent = useCallback(
+    (node: ProphetTreeNode): ShareableContent => {
+      const name = isBn ? node.nameBn : node.nameEn;
+      const role = isBn ? node.roleBn : node.roleEn;
+      const region = isBn ? node.eraOrRegionBn : node.eraOrRegionEn;
+      const note = isBn ? node.noteBn : node.noteEn;
+      return {
+        id: `prophet-tree-node-${node.id}`,
+        badge: node.rank
+          ? isBn
+            ? `বংশলতিকা · ক্রমিক ${padRank(node.rank, true)} / ২৫`
+            : `Family Tree · #${node.rank} of 25`
+          : getLineageLabel(node.lineage, isBn, isAr),
+        title: name,
+        subtitle: `${role} (${node.nameAr})`,
+        arabic: node.nameAr,
+        body: note,
+        meta: [
+          { label: isBn ? 'বংশধারা' : 'Lineage', value: getLineageLabel(node.lineage, isBn, isAr) },
+          { label: isBn ? 'সময়কাল ও অঞ্চল' : 'Era & Region', value: region },
+          ...(node.quranMentions
+            ? [
+                {
+                  label: isBn ? 'কুরআনে উল্লেখ' : 'Quran Mentions',
+                  value: isBn ? `${toBnDigits(node.quranMentions)} বার` : `${node.quranMentions} times`,
+                },
+              ]
+            : []),
+          ...(node.scriptureBn
+            ? [{ label: isBn ? 'আসমানি কিতাব' : 'Scripture', value: isBn ? node.scriptureBn : node.scriptureEn || '' }]
+            : []),
+        ],
+        reference: isBn
+          ? 'আল-কুরআনুল কারীম · আর-রাহীকুল মাখতূম · আল-বিদায়া ওয়ান নিহায়া'
+          : 'The Holy Quran · Ar-Raheeq Al-Makhtum · Al-Bidayah wan-Nihayah',
+        fileNamePrefix: `ZikrPlus-Prophet-Tree-${node.id}`,
+      };
+    },
+    [isBn, isAr]
+  );
+
+  const buildSideProphetShareContent = useCallback(
+    (sp: SidePanelProphet): ShareableContent => ({
+      id: `side-prophet-${sp.id}`,
+      badge: getSideTierLabel(sp.evidenceTier, isBn, isAr),
+      title: isBn ? sp.nameBn : sp.nameEn,
+      subtitle: `${isBn ? sp.statusBn : sp.statusEn} (${sp.nameAr})`,
+      arabic: sp.nameAr,
+      body: isBn ? sp.summaryBn : sp.summaryEn,
+      meta: [
+        { label: isBn ? 'শরয়ী প্রমাণ' : 'Evidence Tier', value: getSideTierLabel(sp.evidenceTier, isBn, isAr) },
+        { label: isBn ? 'সময়কাল ও অঞ্চল' : 'Era & Region', value: isBn ? sp.eraOrRegionBn : sp.eraOrRegionEn },
+      ],
+      highlights: [isBn ? sp.reasonNotInTreeBn : sp.reasonNotInTreeEn],
+      reference: isBn ? sp.refBn : sp.refEn,
+      fullDocumentText: [
+        `${isBn ? 'মূল বংশ-ট্রি-তে অবস্থান' : 'Placement Note'}: ${isBn ? sp.reasonNotInTreeBn : sp.reasonNotInTreeEn}`,
+        '',
+        isBn ? sp.summaryBn : sp.summaryEn,
+        '',
+        `${isBn ? 'সূত্র' : 'Ref'}: ${isBn ? sp.refBn : sp.refEn}`,
+      ].join('\n'),
+      fileNamePrefix: `ZikrPlus-Prophet-${sp.id}`,
+    }),
+    [isBn, isAr]
+  );
+
+  const buildBranchGroupShareContent = useCallback(
+    (titleBn: string, titleEn: string, subtitleBn: string, subtitleEn: string, nodes: ProphetTreeNode[]): ShareableContent => ({
+      id: `prophet-branch-${titleEn.slice(0, 24).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      badge: isBn ? 'নবীগণের বংশধারা' : 'Prophetic Lineage Branch',
+      title: isBn ? titleBn : titleEn,
+      subtitle: isBn ? subtitleBn : subtitleEn,
+      arabic: 'ذُرِّيَّةً بَعْضُهَا مِن بَعْضٍ',
+      body: nodes
+        .map(
+          (n, idx) =>
+            `${formatNum(idx + 1, isBn)}. ${isBn ? n.nameBn : n.nameEn} (${n.nameAr}) — ${
+              isBn ? n.roleBn : n.roleEn
+            } [${isBn ? n.eraOrRegionBn : n.eraOrRegionEn}]`
+        )
+        .join('\n'),
+      fullDocumentText: nodes
+        .map(
+          (n, idx) =>
+            `${formatNum(idx + 1, isBn)}. ${isBn ? n.nameBn : n.nameEn} (${n.nameAr})\n   ${
+              isBn ? n.roleBn : n.roleEn
+            } · ${isBn ? n.eraOrRegionBn : n.eraOrRegionEn}\n   ${isBn ? n.noteBn : n.noteEn}`
+        )
+        .join('\n\n'),
+      reference: isBn
+        ? 'আল-কুরআনুল কারীম · আর-রাহীকুল মাখতূম · আল-বিদায়া ওয়ান নিহায়া'
+        : 'The Holy Quran · Ar-Raheeq Al-Makhtum · Al-Bidayah wan-Nihayah',
+      fileNamePrefix: 'ZikrPlus-Prophets-Branch',
+    }),
+    [isBn]
+  );
+
+  const build25TableShareContent = useCallback((): ShareableContent => {
+    const lines = ranked25Nodes.map(
+      (n) =>
+        `${formatNum(n.rank || 0, isBn)}. ${isBn ? n.nameBn : n.nameEn} (${n.nameAr}) — ${
+          isBn ? n.eraOrRegionBn : n.eraOrRegionEn
+        }${n.quranMentions ? ` [${isBn ? `কুরআনে ${toBnDigits(n.quranMentions)} বার` : `${n.quranMentions}x in Quran`}]` : ''}${
+          n.scriptureBn ? ` · ${isBn ? n.scriptureBn : n.scriptureEn}` : ''
+        }`
+    );
+    return {
+      id: 'prophets-25-table',
+      badge: isBn ? 'কুরআনের ২৫ নবী তালিকা' : '25 Quranic Prophets Table',
+      title: isBn
+        ? 'কুরআনে বর্ণিত ২৫ জন নবী ও রাসূলের ক্রমবিন্যস্ত তালিকা'
+        : 'Chronological Table of 25 Prophets Named in the Quran',
+      subtitle: 'الأنبياء والرسل في القرآن الكريم',
+      arabic: 'لَا نُفَرِّقُ بَيْنَ أَحَدٍ مِّن رُّسُلِهِ',
+      body: lines.slice(0, 12).join('\n'),
+      fullDocumentText: lines.join('\n\n'),
+      reference: isBn ? 'আল-কুরআনুল কারীম ও ছহীহ হাদীস' : 'The Holy Quran & Sahih Hadith',
+      fileNamePrefix: 'ZikrPlus-25-Prophets-Table',
+    };
+  }, [ranked25Nodes, isBn]);
+
+  const buildOtherFiguresShareContent = useCallback((): ShareableContent => {
+    const lines = filteredOtherFigures.map(
+      (f, idx) =>
+        `${formatNum(idx + 1, isBn)}. ${isBn ? f.nameBn : f.nameEn} (${f.nameAr})\n   ${
+          isBn ? f.identificationBn : f.identificationEn
+        }\n   [${isBn ? f.refBn : f.refEn}]`
+    );
+    return {
+      id: 'quran-other-notable-figures',
+      badge: isBn ? 'কুরআনে বর্ণিত ব্যক্তিত্ব' : 'Notable Quranic Figures',
+      title: isBn
+        ? 'কুরআনে উল্লেখিত অন্যান্য প্রসিদ্ধ ব্যক্তিত্ব ও নাম'
+        : 'Other Notable Names Mentioned in the Quran',
+      subtitle: 'شخصيات مذكورة في القرآن الكريم',
+      arabic: 'لَقَدْ كَانَ فِي قَصَصِهِمْ عِبْرَةٌ',
+      body: lines.slice(0, 10).join('\n\n'),
+      fullDocumentText: lines.join('\n\n'),
+      reference: isBn ? 'আল-কুরআনুল কারীম ও তাফসীরে ইবনে কাছীর' : 'The Holy Quran & Tafsir Ibn Kathir',
+      fileNamePrefix: 'ZikrPlus-Quran-Notable-Figures',
+    };
+  }, [filteredOtherFigures, isBn]);
+
+  const buildSideIndexShareContent = useCallback((): ShareableContent => {
+    const lines = SIDE_PANEL_PROPHETS.map(
+      (sp, idx) =>
+        `${formatNum(idx + 1, isBn)}. ${isBn ? sp.nameBn : sp.nameEn} (${sp.nameAr}) — ${getSideTierLabel(
+          sp.evidenceTier,
+          isBn,
+          isAr
+        )}\n   ${isBn ? sp.reasonNotInTreeBn : sp.reasonNotInTreeEn}\n   ${
+          isBn ? sp.summaryBn : sp.summaryEn
+        }\n   [${isBn ? sp.refBn : sp.refEn}]`
+    );
+    return {
+      id: 'prophets-side-panel-index',
+      badge: isBn ? 'ট্রি-র বাইরের নবী তালিকা' : 'Side Index Prophets',
+      title: isBn
+        ? 'ট্রি-র বাইরের ও বংশলতিকাবিহীন নবীগণ (পার্শ্ব-তালিকা)'
+        : 'Prophets Outside Direct Lineage Tree (Side Index)',
+      subtitle: 'الأنبياء المذكورون في السنة والتفسير',
+      arabic: 'وَرُسُلًا لَّمْ نَقْصُصْهُمْ عَلَيْكَ',
+      body: lines.slice(0, 8).join('\n\n'),
+      fullDocumentText: lines.join('\n\n'),
+      reference: isBn ? 'কুরআন, ছহীহ হাদীস ও তাফসীরে ইবনে কাছীর' : 'Quran, Sahih Hadith & Tafsir Ibn Kathir',
+      fileNamePrefix: 'ZikrPlus-Side-Prophets-List',
+    };
+  }, [isBn, isAr]);
+
+  const buildActiveViewShareContent = useCallback((): ShareableContent => {
+    if (viewMode === 'humanity') {
+      const eraLines = HUMANITY_ERAS_LIST.map(
+        (e, i) =>
+          `${formatNum(i + 1, isBn)}. ${isBn ? e.titleBn : e.titleEn}\n   ${
+            isBn ? 'মূল ধারা' : 'Root'
+          }: ${isBn ? e.rootOrProphetBn : e.rootOrProphetEn}\n   ${
+            isBn ? 'কীভাবে বিভক্ত' : 'How Split'
+          }: ${isBn ? e.howSplitBn : e.howSplitEn}\n   ${
+            isBn ? 'আজকের অবস্থান' : 'Today'
+          }: ${isBn ? e.whereTodayBn : e.whereTodayEn}\n   ${isBn ? e.summaryBn : e.summaryEn}`
+      );
+      const nationLines = HUMANITY_PERSON_TO_NATION_LIST.map(
+        (p, i) =>
+          `${formatNum(i + 1, isBn)}. ${isBn ? p.ancestorPersonBn : p.ancestorPersonEn} → ${
+            isBn ? p.nationsFormedBn : p.nationsFormedEn
+          }\n   ${isBn ? p.howDividedBn : p.howDividedEn} | ${isBn ? p.whereTodayBn : p.whereTodayEn}`
+      );
+      return {
+        id: 'humanity-branches-complete',
+        badge: isBn ? 'মানবজাতির মূল শাখা' : 'Main Branches of Humanity',
+        title: isBn
+          ? 'আদম (আ.) ও নূহ (আ.) থেকে আজকের মানবজাতির শাখা ও বংশতালিকা'
+          : 'Main Branches of Humanity from Adam & Nuh (AS) to Today',
+        subtitle: 'أنساب البشرية من آدم ونوح عليهما السلام',
+        arabic: 'يَا أَيُّهَا النَّاسُ إِنَّا خَلَقْنَاكُم مِّن ذَكَرٍ وَأُنثَىٰ',
+        body: isBn
+          ? 'হযরত আদম (আ.) ও মহাপ্লাবন-পরবর্তী হযরত নূহ (আ.)-এর তিন পুত্র সাম, হাম ও ইয়াফিস থেকে কীভাবে পৃথিবীর সকল জাতিগোষ্ঠী বিভক্ত হয়ে আজকের ১৯৫+ দেশে বসবাস করছে তার পূর্ণাঙ্গ ঐতিহাসিক ও কুরআনী মানচিত্র।'
+          : 'Historical and scriptural overview of how humanity branched out from Adam (AS) and the three sons of Nuh (AS) — Sam, Ham, and Yafith — into modern nations.',
+        fullDocumentText: [
+          isBn ? '═══ মানবজাতির যুগভিত্তিক বিভাজন ═══' : '═══ HUMANITY ERAS & SPLITS ═══',
+          eraLines.join('\n\n'),
+          '',
+          isBn ? '═══ ব্যক্তি থেকে জাতিগোষ্ঠী তালিকা ═══' : '═══ PERSON TO NATION DIRECTORY ═══',
+          nationLines.join('\n\n'),
+        ].join('\n\n'),
+        reference: isBn ? 'সূরা হুজুরাত ৪৯:১৩ · আল-বিদায়া ওয়ান নিহায়া · আর-রাহীকুল মাখতূম' : 'Quran 49:13 · Al-Bidayah · Ar-Raheeq Al-Makhtum',
+        fileNamePrefix: 'ZikrPlus-Humanity-Branches-Tree',
+      };
+    }
+
+    if (viewMode === 'list') {
+      return build25TableShareContent();
+    }
+
+    const fullTreeLines = PROPHET_TREE_NODES.map(
+      (n, i) =>
+        `${formatNum(i + 1, isBn)}. ${isBn ? n.nameBn : n.nameEn} (${n.nameAr}) — ${
+          isBn ? n.roleBn : n.roleEn
+        }\n   ${getLineageLabel(n.lineage, isBn, isAr)} · ${isBn ? n.eraOrRegionBn : n.eraOrRegionEn}\n   ${
+          isBn ? n.noteBn : n.noteEn
+        }`
+    );
+
+    return {
+      id: 'prophets-family-tree-complete',
+      badge: isBn ? 'নবী ও রাসূলগণের বংশলতিকা' : 'Prophets Family Tree',
+      title: isBn
+        ? 'নবী ও রাসূলগণের পবিত্র বংশলতিকা (আদম আ. থেকে মুহাম্মাদ ﷺ)'
+        : 'Sacred Family Tree of the Prophets (Adam AS to Muhammad SAW)',
+      subtitle: 'شَجَرَةُ الْأَنْبِيَاءِ وَالرُّسُلِ',
+      arabic: 'بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ',
+      body: isBn
+        ? `আদম (আ.) থেকে ইদরীস ও নূহ (আ.), আবুল আম্বিয়া ইবরাহীম (আ.), ইসমাঈলী-কুরাইশ ধারা (মুহাম্মাদ ﷺ) এবং ইসহাক্ব-বনী ইসরাঈল ধারার (মূসা, দাঊদ, সুলায়মান, ঈসা আ.) মোট ${toBnDigits(
+            PROPHET_TREE_NODES.length
+          )}টি বংশ-নোড ও পার্শ্ববর্তী নবী-তালিকা।`
+        : `Complete genealogical map connecting ${PROPHET_TREE_NODES.length} nodes from Adam (AS) and Nuh (AS) through Ibrahim (AS) into Ishmaelite-Quraysh and Banu Israil branches.`,
+      meta: [
+        { label: isBn ? 'বংশ-নোড' : 'Tree Nodes', value: formatNum(PROPHET_TREE_NODES.length, isBn) },
+        { label: isBn ? 'কুরআনের নবী' : 'Quranic Prophets', value: formatNum(25, isBn) },
+        { label: isBn ? 'পার্শ্ব নবী তালিকা' : 'Side Index', value: formatNum(SIDE_PANEL_PROPHETS.length, isBn) },
+      ],
+      fullDocumentText: fullTreeLines.join('\n\n'),
+      reference: isBn
+        ? 'আল-কুরআনুল কারীম · আর-রাহীকুল মাখতূম · আল-বিদায়া ওয়ান নিহায়া · নবীদের কাহিনী'
+        : 'The Holy Quran · Ar-Raheeq Al-Makhtum · Al-Bidayah wan-Nihayah',
+      fileNamePrefix: 'ZikrPlus-Prophets-Family-Tree',
+    };
+  }, [viewMode, isBn, isAr, build25TableShareContent]);
+
   return (
     <div
       data-highlight-section="prophets_25"
@@ -653,6 +920,14 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
             >
               {isSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
             </button>
+
+            <ShareDownloadButtons
+              variant="compact"
+              selectedLanguage={selectedLanguage}
+              themeMode={themeMode}
+              onShare={() => openShare(buildActiveViewShareContent(), 'share')}
+              onDownload={() => openShare(buildActiveViewShareContent(), 'download')}
+            />
           </div>
         </div>
       </div>
@@ -1422,26 +1697,57 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                 }`}
               >
                 <div
-                  className={`px-3 sm:px-4 py-2.5 border-b ${
+                  className={`px-3 sm:px-4 py-2.5 border-b flex items-start justify-between gap-2 ${
                     isDay
                       ? 'bg-[#f4faf7] border-emerald-200/70'
                       : 'bg-[#071a20] border-teal-900/50'
                   }`}
                 >
-                  <h2
-                    className={`text-sm sm:text-base font-black ${
-                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
-                    }`}
-                  >
-                    {isBn ? group.titleBn : group.titleEn}
-                  </h2>
-                  <p
-                    className={`text-[11px] font-medium mt-0.5 ${
-                      isDay ? 'text-slate-500' : 'text-slate-400'
-                    }`}
-                  >
-                    {isBn ? group.subtitleBn : group.subtitleEn}
-                  </p>
+                  <div className="min-w-0">
+                    <h2
+                      className={`text-sm sm:text-base font-black ${
+                        isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                      }`}
+                    >
+                      {isBn ? group.titleBn : group.titleEn}
+                    </h2>
+                    <p
+                      className={`text-[11px] font-medium mt-0.5 ${
+                        isDay ? 'text-slate-500' : 'text-slate-400'
+                      }`}
+                    >
+                      {isBn ? group.subtitleBn : group.subtitleEn}
+                    </p>
+                  </div>
+                  <ShareDownloadButtons
+                    variant="compact"
+                    selectedLanguage={selectedLanguage}
+                    themeMode={themeMode}
+                    onShare={() =>
+                      openShare(
+                        buildBranchGroupShareContent(
+                          group.titleBn,
+                          group.titleEn,
+                          group.subtitleBn,
+                          group.subtitleEn,
+                          group.nodes
+                        ),
+                        'share'
+                      )
+                    }
+                    onDownload={() =>
+                      openShare(
+                        buildBranchGroupShareContent(
+                          group.titleBn,
+                          group.titleEn,
+                          group.subtitleBn,
+                          group.subtitleEn,
+                          group.nodes
+                        ),
+                        'download'
+                      )
+                    }
+                  />
                 </div>
 
                 <div className="p-2 sm:p-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -1529,30 +1835,39 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                 }`}
               >
                 <div
-                  className={`px-3 sm:px-4 py-2.5 border-b ${
+                  className={`px-3 sm:px-4 py-2.5 border-b flex items-start justify-between gap-2 ${
                     isDay
                       ? 'bg-[#f4faf7] border-emerald-200/70'
                       : 'bg-[#071a20] border-teal-900/50'
                   }`}
                 >
-                  <h2
-                    className={`text-sm sm:text-base font-black ${
-                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
-                    }`}
-                  >
-                    {isBn
-                      ? '৬. ট্রি-র বাইরের ও বংশলতিকাবিহীন নবীগণ (পার্শ্ব-তালিকা)'
-                      : '6. Prophets Outside Direct Lineage Tree (Side Index)'}
-                  </h2>
-                  <p
-                    className={`text-[11px] font-medium mt-0.5 ${
-                      isDay ? 'text-slate-500' : 'text-slate-400'
-                    }`}
-                  >
-                    {isBn
-                      ? 'খিজির, উযায়র, যুল-কারনাইন, তালূত, লুকমান, হিযকীল, ইরমিয়া, শা‘ইয়া, দানিয়াল, কালীবে, জিরজীস, হানযালা, তুব্বা ও ১,২৪,০০০ নবী'
-                      : 'Al-Khidr, Uzayr, Dhul-Qarnayn, Talut, Luqman, Hizqil, Irmiya, Sha‘ya, Daniyal, Kaleeb, Jirjis, Hanzalah, Tubba & 124k Prophets'}
-                  </p>
+                  <div className="min-w-0">
+                    <h2
+                      className={`text-sm sm:text-base font-black ${
+                        isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                      }`}
+                    >
+                      {isBn
+                        ? '৬. ট্রি-র বাইরের ও বংশলতিকাবিহীন নবীগণ (পার্শ্ব-তালিকা)'
+                        : '6. Prophets Outside Direct Lineage Tree (Side Index)'}
+                    </h2>
+                    <p
+                      className={`text-[11px] font-medium mt-0.5 ${
+                        isDay ? 'text-slate-500' : 'text-slate-400'
+                      }`}
+                    >
+                      {isBn
+                        ? 'খিজির, উযায়র, যুল-কারনাইন, তালূত, লুকমান, হিযকীল, ইরমিয়া, শা‘ইয়া, দানিয়াল, কালীবে, জিরজীস, হানযালা, তুব্বা ও ১,২৪,০০০ নবী'
+                        : 'Al-Khidr, Uzayr, Dhul-Qarnayn, Talut, Luqman, Hizqil, Irmiya, Sha‘ya, Daniyal, Kaleeb, Jirjis, Hanzalah, Tubba & 124k Prophets'}
+                    </p>
+                  </div>
+                  <ShareDownloadButtons
+                    variant="compact"
+                    selectedLanguage={selectedLanguage}
+                    themeMode={themeMode}
+                    onShare={() => openShare(buildSideIndexShareContent(), 'share')}
+                    onDownload={() => openShare(buildSideIndexShareContent(), 'download')}
+                  />
                 </div>
 
                 <div className="p-2 sm:p-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -1661,6 +1976,13 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                     : 'Tap any row to open full biography, timeline, and supplications'}
                 </p>
               </div>
+              <ShareDownloadButtons
+                variant="compact"
+                selectedLanguage={selectedLanguage}
+                themeMode={themeMode}
+                onShare={() => openShare(build25TableShareContent(), 'share')}
+                onDownload={() => openShare(build25TableShareContent(), 'download')}
+              />
             </div>
 
             <div className="overflow-x-auto">
@@ -1792,21 +2114,30 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                   : 'bg-[#071a20] border-teal-900/50'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <Users
-                  className={`w-4 h-4 shrink-0 ${
-                    isDay ? 'text-[#006A4E]' : 'text-emerald-400'
-                  }`}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Users
+                    className={`w-4 h-4 shrink-0 ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                    }`}
+                  />
+                  <h2
+                    className={`text-sm sm:text-base font-black ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                    }`}
+                  >
+                    {isBn
+                      ? 'কুরআনে উল্লেখিত অন্যান্য প্রসিদ্ধ ব্যক্তিত্ব ও নাম'
+                      : 'Other Notable Names Mentioned in the Quran'}
+                  </h2>
+                </div>
+                <ShareDownloadButtons
+                  variant="compact"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  onShare={() => openShare(buildOtherFiguresShareContent(), 'share')}
+                  onDownload={() => openShare(buildOtherFiguresShareContent(), 'download')}
                 />
-                <h2
-                  className={`text-sm sm:text-base font-black ${
-                    isDay ? 'text-[#006A4E]' : 'text-emerald-300'
-                  }`}
-                >
-                  {isBn
-                    ? 'কুরআনে উল্লেখিত অন্যান্য প্রসিদ্ধ ব্যক্তিত্ব ও নাম'
-                    : 'Other Notable Names Mentioned in the Quran'}
-                </h2>
               </div>
 
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -1955,18 +2286,27 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedNodeId(null)}
-                aria-label="Close"
-                className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
-                    : 'bg-[#0c262d] border-teal-800/70 text-slate-300 hover:text-white'
-                }`}
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <ShareDownloadButtons
+                  variant="compact"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  onShare={() => openShare(buildNodeShareContent(selectedNode), 'share')}
+                  onDownload={() => openShare(buildNodeShareContent(selectedNode), 'download')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSelectedNodeId(null)}
+                  aria-label="Close"
+                  className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer ${
+                    isDay
+                      ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
+                      : 'bg-[#0c262d] border-teal-800/70 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Body */}
@@ -2215,18 +2555,27 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedSideProphet(null)}
-                aria-label="Close"
-                className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer ${
-                  isDay
-                    ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
-                    : 'bg-[#0c262d] border-teal-800/70 text-slate-300 hover:text-white'
-                }`}
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <ShareDownloadButtons
+                  variant="compact"
+                  selectedLanguage={selectedLanguage}
+                  themeMode={themeMode}
+                  onShare={() => openShare(buildSideProphetShareContent(selectedSideProphet), 'share')}
+                  onDownload={() => openShare(buildSideProphetShareContent(selectedSideProphet), 'download')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSelectedSideProphet(null)}
+                  aria-label="Close"
+                  className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer ${
+                    isDay
+                      ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
+                      : 'bg-[#0c262d] border-teal-800/70 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Body */}
@@ -2312,6 +2661,15 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
           </div>
         </div>
       )}
+
+      <ContentShareModal
+        content={shareModalContent}
+        isOpen={Boolean(shareModalContent)}
+        onClose={() => setShareModalContent(null)}
+        selectedLanguage={selectedLanguage}
+        soundEnabled={soundEnabled}
+        initialFocus={shareModalFocus}
+      />
     </div>
   );
 };

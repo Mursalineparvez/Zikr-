@@ -80,7 +80,8 @@ export type NavModule =
   | 'seerat_un_nabi'
   | 'araber_gotro'
   | 'namaj'
-  | 'nobi_24_hours';
+  | 'nobi_24_hours'
+  | 'daily_sunnah';
 
 
 export type DuaCategory =

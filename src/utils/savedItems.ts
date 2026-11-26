@@ -444,6 +444,7 @@ export function inferTopicId(params: {
     kind === 'hadith' ||
     sec === 'hadith' ||
     sec === 'nobi_24_hours' ||
+    sec === 'daily_sunnah' ||
     /হাদীস|হাদিস|বুখারী|মুসলিম|তিরমিযী|আবূ দাউদ|নাসাঈ|মিশকাত|সুন্নাহ|২৪ ঘণ্টা|hadith|bukhari|muslim|sunnah/.test(
       combined
     )

@@ -26,6 +26,7 @@ const MODULE_LABELS: Record<string, { bn: string; en: string; ar: string }> = {
   islamic_history_wars: { bn: 'ইসলামের ইতিহাসের যুদ্ধ', en: 'Islamic Battles', ar: 'غزوات الإسلام' },
   araber_gotro: { bn: 'আরবের গোত্র ও ব্যক্তিত্ব', en: 'Arab Tribes & Personalities', ar: 'القبائل والشخصيات' },
   nobi_24_hours: { bn: 'নবীজির ২৪ ঘণ্টা', en: 'Prophet 24 Hours', ar: '٢٤ ساعة في حياة الرسول' },
+  daily_sunnah: { bn: 'দৈনন্দিন সুন্নাহ', en: 'Daily Sunnah', ar: 'السنن اليومية' },
   prophets_25: { bn: 'নবী ও রাসূল', en: 'Prophets & Messengers', ar: 'الأنبياء والرسل' },
   allah_names: { bn: 'আল্লাহর ৯৯ নাম', en: '99 Names of Allah', ar: 'أسماء الله الحسنى' },
   tablig: { bn: 'দাওয়াত ও তাবলীগ', en: 'Dawat & Tabligh', ar: 'الدعوة والتبليغ' },

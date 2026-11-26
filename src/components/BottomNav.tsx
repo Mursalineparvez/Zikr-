@@ -58,6 +58,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     'seerat_un_nabi',
     'araber_gotro',
     'nobi_24_hours',
+    'daily_sunnah',
   ];
   const isOtherActive = otherModules.includes(activeModule);
 

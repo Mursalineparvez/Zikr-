@@ -9,6 +9,7 @@ import {
   Compass,
   Bookmark,
   User,
+  Sun,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { NAV_TRANSLATIONS, OTHER_HUB_UI } from '../utils/appTranslations';
@@ -33,6 +34,7 @@ const HayatusSahabaView = React.lazy(() => import('./HayatusSahabaView').then((m
 const SeeratUnNabiView = React.lazy(() => import('./SeeratUnNabiView').then((m) => ({ default: m.SeeratUnNabiView })));
 const AraberGotroByaktittoView = React.lazy(() => import('./AraberGotroByaktittoView').then((m) => ({ default: m.AraberGotroByaktittoView })));
 const Nobi24HoursView = React.lazy(() => import('./Nobi24HoursView').then((m) => ({ default: m.Nobi24HoursView })));
+const DailySunnahView = React.lazy(() => import('./DailySunnahView').then((m) => ({ default: m.DailySunnahView })));
 const ProfileModal = React.lazy(() => import('./ProfileModal').then((m) => ({ default: m.ProfileModal })));
 
 const toBnDigits = (num: number | string) =>
@@ -55,6 +57,7 @@ export type OtherSubSection =
   | 'hub'
   | 'my_account'
   | 'saved'
+  | 'daily_sunnah'
   | 'nobi_24_hours'
   | 'seerat_un_nabi'
   | 'hayatus_sahaba'
@@ -238,6 +241,18 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       icon: <BookMarked className="w-6 h-6 text-emerald-500" />,
       color: 'from-emerald-600/25 via-teal-500/15 to-amber-500/10 border-emerald-500/45',
       badge: selectedLanguage === 'bn' ? '১৭ কিতাব · ৫৩,০০০+ হাদিস' : '17 Books · 53,000+ Hadiths',
+    },
+    {
+      id: 'daily_sunnah' as OtherSubSection,
+      title: NAV_TRANSLATIONS.daily_sunnah?.[selectedLanguage] || (selectedLanguage === 'bn' ? 'দৈনন্দিন সুন্নাহ' : 'Daily Sunnah'),
+      arabic: 'السنن اليومية',
+      desc:
+        selectedLanguage === 'bn'
+          ? 'ঘুম থেকে ওঠা, খাওয়া-দাওয়া, ওজু-পবিত্রতা, নামাজের ৫ ধাপ, সফর ও সামাজিক জীবনের ৩৮টি অধ্যায়ে ৩৪২টি হাদিসভিত্তিক দৈনন্দিন সুন্নাহ'
+          : '38 daily life Sunnah categories and 342 authenticated Sunnahs from waking up, eating, purification, 5 prayer stages to social manners.',
+      icon: <Sun className="w-6 h-6 text-amber-500" />,
+      color: 'from-amber-500/20 via-emerald-500/15 to-teal-500/10 border-amber-500/40',
+      badge: selectedLanguage === 'bn' ? '৩৮ অধ্যায় · ৩৪২ সুন্নাহ' : '38 Topics · 342 Sunnahs',
     },
     {
       id: 'nobi_24_hours' as OtherSubSection,
@@ -504,7 +519,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     : selectedLanguage === 'tr'
                     ? 'Çizelgeyi Gör >'
                     : 'View Routine >'
-                  : item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'hadith' || item.id === 'tablig' || item.id === 'prophets_25'
+                  : item.id === 'daily_sunnah' || item.id === 'seerat_un_nabi' || item.id === 'hayatus_sahaba' || item.id === 'dua' || item.id === 'hadith' || item.id === 'tablig' || item.id === 'prophets_25'
                   ? selectedLanguage === 'bn' ? 'পড়ুন >' : 'Read >'
                   : item.id === 'saved' || item.id === 'my_account'
                   ? selectedLanguage === 'bn' ? 'খুলুন >' : 'Open >'
@@ -541,6 +556,12 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                     : selectedLanguage === 'tr'
                     ? 'Sünnet Rehberi'
                     : 'Sunnah Guideline'
+                  : item.id === 'daily_sunnah'
+                  ? selectedLanguage === 'bn'
+                    ? '৩৮ অধ্যায় · ৩৪২ সুন্নাহ'
+                    : selectedLanguage === 'ar'
+                    ? '٣٨ باباً · ٣٤٢ سنة'
+                    : '38 Topics · 342 Sunnahs'
                   : item.id === 'seerat_un_nabi'
                   ? selectedLanguage === 'bn' ? '১ থেকে ৬৩ বছর' : 'Ages 1 to 63'
                   : item.id === 'hayatus_sahaba'
@@ -632,6 +653,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       )}
 
       <React.Suspense fallback={<SubViewFallback isDay={isDay} selectedLanguage={selectedLanguage} />}>
+        {/* Sub-view: Daily Sunnah (38 Categories, 342 Sunnahs) */}
+        {activeSub === 'daily_sunnah' && (
+          <DailySunnahView
+            themeMode={themeMode}
+            selectedLanguage={selectedLanguage}
+            soundEnabled={soundEnabled}
+            onBackToHub={handleBackStep}
+          />
+        )}
+
         {/* Sub-view: Nobi Karim (SA) 24 Hours Sunnah Guideline */}
         {activeSub === 'nobi_24_hours' && (
           <Nobi24HoursView

@@ -50,6 +50,7 @@ const MODULE_LABELS_BN: Record<string, string> = {
   seerat_un_nabi: 'সীরাতুন নবী ﷺ (১–৬৩ বছর ও ইন্তেকাল)',
   araber_gotro: 'আরবের গোত্র ও ব্যক্তিত্ব',
   nobi_24_hours: 'নবীজির ২৪ ঘণ্টা সুন্নাহ রুটিন',
+  daily_sunnah: 'দৈনন্দিন সুন্নাহ (৩৮ অধ্যায় ও ৩৪২ সুন্নাহ)',
 };
 
 const MODULE_LABELS_EN: Record<string, string> = {
@@ -75,6 +76,7 @@ const MODULE_LABELS_EN: Record<string, string> = {
   seerat_un_nabi: 'Seerat-un-Nabi ﷺ',
   araber_gotro: 'Arab Tribes & Personalities',
   nobi_24_hours: "Prophet's 24 Hours Sunnah Routine",
+  daily_sunnah: 'Daily Sunnah (38 Categories & 342 Sunnahs)',
 };
 
 export function getModuleDisplayLabel(moduleId: string, lang: ZikrLanguage = 'bn'): string {
