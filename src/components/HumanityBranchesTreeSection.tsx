@@ -7,12 +7,14 @@ import React, { useMemo, useRef, useState } from 'react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import {
   BookMarked,
+  BookOpen,
   ChevronRight,
   Compass,
   GitBranch,
   Globe2,
   Layers,
   LayoutGrid,
+  Lightbulb,
   MapPin,
   Maximize2,
   Minimize2,
@@ -29,13 +31,16 @@ import {
   AR_RAHEEQ_GENEALOGY_TRACKS,
   AR_RAHEEQ_HISTORY_SECTIONS,
   ArRaheeqCategory,
+  AstonishingEventCategory,
   CLASSICAL_SOURCE_BOOKS,
+  HUMANITY_ASTONISHING_EVENTS,
   HUMANITY_CANVAS_HEIGHT,
   HUMANITY_CANVAS_WIDTH,
   HUMANITY_ERAS_LIST,
   HUMANITY_PERSON_TO_NATION_LIST,
   HUMANITY_TREE_EDGES,
   HUMANITY_TREE_NODES,
+  HumanityAstonishingEvent,
   HumanityEraGroup,
   HumanityTreeEdge,
   HumanityTreeNode,
@@ -205,6 +210,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
   const isBn = selectedLanguage === 'bn';
 
   const [eraFilter, setEraFilter] = useState<EraFilterKey>('all');
+  const [eventCategory, setEventCategory] = useState<AstonishingEventCategory>('all');
   const [rootLineFilter, setRootLineFilter] = useState<RootLineFilter>('all');
   const [raheeqCategory, setRaheeqCategory] = useState<ArRaheeqCategory>('all');
   const [activeTrackStep, setActiveTrackStep] = useState<Record<string, number>>({
@@ -246,6 +252,8 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
         node.modernLocationEn,
         node.detailBn,
         node.detailEn,
+        node.astonishingFactBn ?? '',
+        node.astonishingFactEn ?? '',
       ]
         .join(' ')
         .toLowerCase();
@@ -254,6 +262,34 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
     if (eraFilter !== 'all' && node.eraGroup !== eraFilter) return false;
     return true;
   };
+
+  const filteredAstonishingEvents = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return HUMANITY_ASTONISHING_EVENTS.filter((ev) => {
+      if (eventCategory !== 'all' && ev.category !== eventCategory) return false;
+      if (!q) return true;
+      return [
+        ev.categoryLabelBn,
+        ev.categoryLabelEn,
+        ev.eraContextBn,
+        ev.eraContextEn,
+        ev.titleBn,
+        ev.titleEn,
+        ev.titleAr,
+        ev.hookBn,
+        ev.hookEn,
+        ev.storyBn,
+        ev.storyEn,
+        ev.impactOnHumanityBn,
+        ev.impactOnHumanityEn,
+        ev.referenceBn,
+        ev.referenceEn,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [eventCategory, searchQuery]);
 
   const filteredPersonToNations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -367,6 +403,18 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
     { key: 'religion_world', bn: '৫. ধর্মীয় অবস্থা ও বিশ্ব', en: '5. Religion & World' },
   ];
 
+  const eventFilterTabs: Array<{ key: AstonishingEventCategory; bn: string; en: string }> = [
+    {
+      key: 'all',
+      bn: `সকল চমকপ্রদ ঘটনা (${toBnDigits(HUMANITY_ASTONISHING_EVENTS.length)})`,
+      en: `All Milestones (${HUMANITY_ASTONISHING_EVENTS.length})`,
+    },
+    { key: 'creation_flood', bn: '১. সৃষ্টি ও প্লাবন যুগ (৪)', en: '1. Creation & Flood (4)' },
+    { key: 'civilization_miracle', bn: '২. প্রাচীন সভ্যতা ও নিদর্শন (৪)', en: '2. Lost Civilizations (4)' },
+    { key: 'arab_prophets', bn: '৩. নবীগণ ও আরব-ইতিহাস (৪)', en: '3. Prophets & Arabia (4)' },
+    { key: 'ummah_bengal', bn: '৪. বিশ্ব-উম্মাহ ও বাংলা (৪)', en: '4. Ummah & Bengal (4)' },
+  ];
+
   const totalCountBn = toBnDigits(HUMANITY_PERSON_TO_NATION_LIST.length);
   const rootTabs: Array<{ key: RootLineFilter; bn: string; en: string }> = [
     { key: 'all', bn: `সকল শাখা (${totalCountBn})`, en: `All Roots (${HUMANITY_PERSON_TO_NATION_LIST.length})` },
@@ -403,11 +451,19 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
               ? `${totalCountBn} ব্যক্তি-জাতি শাখা ও ১৯৫+ দেশ`
               : `${HUMANITY_PERSON_TO_NATION_LIST.length} Ancestral Lines & 195+ Nations`}
           </span>
+          <span aria-hidden="true" className="opacity-40">
+            ·
+          </span>
+          <span className={isDay ? 'text-amber-700 font-bold' : 'text-amber-300 font-bold'}>
+            {isBn
+              ? `${toBnDigits(HUMANITY_ASTONISHING_EVENTS.length)}টি চমকপ্রদ ঘটনা (রেফারেন্সসহ)`
+              : `${HUMANITY_ASTONISHING_EVENTS.length} Astonishing Cited Events`}
+          </span>
         </div>
         <span className={`text-[11px] font-bold ${isDay ? 'text-amber-700' : 'text-amber-300'}`}>
           {isBn
-            ? 'সূত্র: আর-রাহীকুল মাখতূম · তাফসীরে ইবনে কাসীর · তারীখে তাবারী · ইবনে খালদুন'
-            : 'Sources: Ar-Raheeq al-Makhtum · Ibn Kathir · Al-Tabari · Ibn Khaldun'}
+            ? 'সূত্র: আল-কুরআন · সহীহ হাদীস · আর-রাহীকুল মাখতূম · ইবনে কাসীর · তাবারী · ইবনে খালদুন'
+            : 'Sources: Quran · Sahih Hadith · Ar-Raheeq · Ibn Kathir · Al-Tabari · Ibn Khaldun'}
         </span>
       </div>
 
@@ -491,6 +547,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             onClick={() => {
               handleZoomChange(0.85);
               setEraFilter('all');
+              setEventCategory('all');
               setRootLineFilter('all');
               setSelectedNode(null);
             }}
@@ -711,6 +768,210 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
           </div>
         </div>
       </div>
+
+      {/* SECTION 1B: ASTONISHING & ESSENTIAL HISTORICAL MILESTONES (WITH REFERENCES) */}
+      <section
+        className={`rounded-2xl border overflow-hidden ${
+          isDay ? 'bg-white border-emerald-200/90' : 'bg-[#082026] border-teal-900/70'
+        }`}
+      >
+        <div
+          className={`px-3 sm:px-4 py-2.5 sm:py-3 border-b space-y-2.5 ${
+            isDay
+              ? 'bg-gradient-to-r from-[#f1faf5] via-[#f8fcfa] to-[#fffaf0] border-emerald-200/80'
+              : 'bg-gradient-to-r from-[#07221d] via-[#071a20] to-[#1a180d] border-teal-900/60'
+          }`}
+        >
+          <div className="flex items-start sm:items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Lightbulb className={`w-4 h-4 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`} />
+              <div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <h2
+                    className={`text-sm sm:text-base font-black ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                    }`}
+                  >
+                    {isBn
+                      ? 'মানবজাতির ইতিহাসের বিস্ময়কর ও জরুরি চমকপ্রদ ঘটনাবলি (রেফারেন্সসহ)'
+                      : 'Astonishing & Essential Historical Turning Points of Humanity (With References)'}
+                  </h2>
+                  <span
+                    dir="rtl"
+                    className={`font-arabic text-sm font-bold ${
+                      isDay ? 'text-amber-700' : 'text-amber-300'
+                    }`}
+                  >
+                    لَقَدْ كَانَ فِي قَصَصِهِمْ عِبْرَةٌ
+                  </span>
+                </div>
+                <p className={`text-[11px] font-medium ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
+                  {isBn
+                    ? 'আদম (আ.)-এর মাটির রহস্য, প্রথম শিরক, নূহের তান্নূর চুলা, বাবেলের ৭২ ভাষা, ইরাম নগরী, মা‘রিব বাঁধ ধস থেকে বাংলায় ইসলাম ও ডিএনএ-ঐক্য পর্যন্ত ১৬টি প্রামাণ্য ঘটনা'
+                    : '16 verified, lesser-known turning points—from Adam’s soil and Nuh’s oven signal to Babel’s tongues, lost Iram, Ma’rib Dam collapse, Bengal maritime Islam & modern genomics'}
+                </p>
+              </div>
+            </div>
+
+            <span
+              className={`text-xs font-black tabular-nums shrink-0 ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+              }`}
+            >
+              {isBn
+                ? `${toBnDigits(filteredAstonishingEvents.length)}টি প্রামাণ্য ঘটনা`
+                : `${filteredAstonishingEvents.length} Verified Events`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {eventFilterTabs.map((tab) => {
+              const active = eventCategory === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setEventCategory(tab.key);
+                  }}
+                  className={`min-h-[34px] px-3 rounded-lg border text-[11px] font-bold whitespace-nowrap shrink-0 transition cursor-pointer ${
+                    active
+                      ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                      : isDay
+                      ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400'
+                      : 'bg-[#0c262d] border-teal-800/60 text-slate-300 hover:border-emerald-400/60'
+                  }`}
+                >
+                  {isBn ? tab.bn : tab.en}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="p-2 sm:p-2.5 grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          {filteredAstonishingEvents.length === 0 ? (
+            <div
+              className={`col-span-full p-6 text-center text-sm font-bold ${
+                isDay ? 'text-slate-500' : 'text-slate-400'
+              }`}
+            >
+              {isBn ? 'এই অনুসন্ধানে কোনো চমকপ্রদ ঘটনা পাওয়া যায়নি।' : 'No matching historical milestones found.'}
+            </div>
+          ) : (
+            filteredAstonishingEvents.map((ev: HumanityAstonishingEvent) => (
+              <article
+                key={ev.id}
+                className={`rounded-xl border p-3 space-y-2.5 flex flex-col justify-between ${
+                  isDay
+                    ? 'bg-[#f8fcfa] border-emerald-200/80'
+                    : 'bg-[#0a2329] border-teal-900/65'
+                }`}
+              >
+                <div className="space-y-2">
+                  {/* Unboxed editorial metadata header */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div
+                      className={`text-[11px] font-black tabular-nums flex items-center gap-1.5 flex-wrap ${
+                        isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                      }`}
+                    >
+                      <span>{isBn ? `ঘটনা ${toBnDigits(ev.order).padStart(2, '০')}` : `#${String(ev.order).padStart(2, '0')}`}</span>
+                      <span aria-hidden="true" className="opacity-40">
+                        ·
+                      </span>
+                      <span>{isBn ? ev.categoryLabelBn : ev.categoryLabelEn}</span>
+                      <span aria-hidden="true" className="opacity-40">
+                        ·
+                      </span>
+                      <span className={isDay ? 'text-amber-700' : 'text-amber-300'}>
+                        {isBn ? ev.eraContextBn : ev.eraContextEn}
+                      </span>
+                    </div>
+
+                    <span
+                      dir="rtl"
+                      className={`font-arabic text-xs font-bold ${
+                        isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                      }`}
+                    >
+                      {ev.titleAr}
+                    </span>
+                  </div>
+
+                  <h3
+                    className={`text-sm sm:text-[15px] font-black leading-snug ${
+                      isDay ? 'text-slate-900' : 'text-white'
+                    }`}
+                  >
+                    {isBn ? ev.titleBn : ev.titleEn}
+                  </h3>
+
+                  {/* Key Highlight / Why It Matters */}
+                  <div
+                    className={`rounded-lg border px-2.5 py-2 space-y-0.5 text-xs ${
+                      isDay
+                        ? 'bg-amber-50/65 border-amber-200/85 text-slate-900'
+                        : 'bg-amber-950/25 border-amber-800/45 text-amber-100'
+                    }`}
+                  >
+                    <div
+                      className={`text-[10.5px] font-black ${
+                        isDay ? 'text-amber-800' : 'text-amber-300'
+                      }`}
+                    >
+                      {isBn ? 'মূল চমক ও কেন জানা জরুরি:' : 'Key Revelation & Why It Matters:'}
+                    </div>
+                    <p className="font-bold leading-relaxed">{isBn ? ev.hookBn : ev.hookEn}</p>
+                  </div>
+
+                  {/* Full Narrative */}
+                  <div className="space-y-1 text-xs leading-relaxed">
+                    <div
+                      className={`text-[10.5px] font-black flex items-center gap-1 ${
+                        isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                      }`}
+                    >
+                      <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                      <span>{isBn ? 'পূর্ণাঙ্গ প্রামাণ্য বিবরণ:' : 'Full Verified Account:'}</span>
+                    </div>
+                    <p className={isDay ? 'text-slate-700' : 'text-slate-200'}>
+                      {isBn ? ev.storyBn : ev.storyEn}
+                    </p>
+                  </div>
+
+                  {/* Impact on Humanity */}
+                  <div
+                    className={`rounded-lg border px-2.5 py-2 text-xs leading-relaxed ${
+                      isDay
+                        ? 'bg-white border-emerald-200/75 text-slate-700'
+                        : 'bg-[#071b20] border-teal-900/55 text-slate-200'
+                    }`}
+                  >
+                    <span className={`font-black ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}>
+                      {isBn ? 'মানবজাতির ওপর প্রভাব: ' : 'Impact on Humanity: '}
+                    </span>
+                    <span>{isBn ? ev.impactOnHumanityBn : ev.impactOnHumanityEn}</span>
+                  </div>
+                </div>
+
+                {/* Exact Authentic Reference */}
+                <div
+                  className={`pt-2 border-t text-[11px] font-bold flex items-start gap-1.5 ${
+                    isDay
+                      ? 'border-slate-200/80 text-amber-700'
+                      : 'border-teal-900/50 text-amber-300'
+                  }`}
+                >
+                  <ScrollText className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>{isBn ? ev.referenceBn : ev.referenceEn}</span>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
 
       {/* SECTION 2: AR-RAHEEQ AL-MAKHTUM DETAILED LINEAGE & HISTORICAL CHAPTERS */}
       <section
@@ -1519,6 +1780,28 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
                     </ul>
                   </div>
 
+                  {(era.astonishingFactBn || era.astonishingFactEn) && (
+                    <div
+                      className={`rounded-xl border p-2.5 space-y-1 text-xs ${
+                        isDay
+                          ? 'bg-amber-50/60 border-amber-200/80 text-slate-800'
+                          : 'bg-amber-950/20 border-amber-800/40 text-amber-100'
+                      }`}
+                    >
+                      <div
+                        className={`text-[10.5px] font-black flex items-center gap-1 ${
+                          isDay ? 'text-amber-800' : 'text-amber-300'
+                        }`}
+                      >
+                        <Lightbulb className="w-3.5 h-3.5 shrink-0" />
+                        <span>{isBn ? 'এ যুগের চমকপ্রদ ও জরুরি তথ্য' : 'Astonishing Milestone of This Era'}</span>
+                      </div>
+                      <p className="leading-relaxed font-medium">
+                        {isBn ? era.astonishingFactBn : era.astonishingFactEn}
+                      </p>
+                    </div>
+                  )}
+
                   <div
                     className={`pt-2.5 mt-1 border-t space-y-1 ${
                       isDay ? 'border-slate-200/80' : 'border-teal-900/50'
@@ -1762,6 +2045,28 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
               >
                 {isBn ? selectedNode.detailBn : selectedNode.detailEn}
               </p>
+
+              {(selectedNode.astonishingFactBn || selectedNode.astonishingFactEn) && (
+                <div
+                  className={`rounded-xl border p-2.5 space-y-1 ${
+                    isDay
+                      ? 'bg-emerald-50/65 border-emerald-200/85 text-slate-800'
+                      : 'bg-emerald-950/25 border-emerald-800/45 text-emerald-100'
+                  }`}
+                >
+                  <div
+                    className={`text-[11px] font-black flex items-center gap-1 ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                    }`}
+                  >
+                    <Lightbulb className="w-3.5 h-3.5 shrink-0" />
+                    <span>{isBn ? 'চমকপ্রদ ও জরুরি ঐতিহাসিক তথ্য' : 'Astonishing & Essential Historical Fact'}</span>
+                  </div>
+                  <p className="text-xs sm:text-sm font-medium leading-relaxed">
+                    {isBn ? selectedNode.astonishingFactBn : selectedNode.astonishingFactEn}
+                  </p>
+                </div>
+              )}
 
               <div
                 className={`pt-2 border-t text-xs font-bold flex items-center gap-1.5 ${

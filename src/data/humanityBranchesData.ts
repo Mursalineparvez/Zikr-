@@ -32,6 +32,8 @@ export interface HumanityTreeNode {
   modernLocationEn: string;
   detailBn: string;
   detailEn: string;
+  astonishingFactBn?: string;
+  astonishingFactEn?: string;
   referenceBn: string;
   referenceEn: string;
   x: number;
@@ -88,6 +90,36 @@ export interface HumanityEraListItem {
   branchesEn: string[];
   scholarlyNoteBn: string;
   scholarlyNoteEn: string;
+  astonishingFactBn?: string;
+  astonishingFactEn?: string;
+  referenceBn: string;
+  referenceEn: string;
+}
+
+export type AstonishingEventCategory =
+  | 'all'
+  | 'creation_flood'
+  | 'civilization_miracle'
+  | 'arab_prophets'
+  | 'ummah_bengal';
+
+export interface HumanityAstonishingEvent {
+  id: string;
+  order: number;
+  category: Exclude<AstonishingEventCategory, 'all'>;
+  categoryLabelBn: string;
+  categoryLabelEn: string;
+  eraContextBn: string;
+  eraContextEn: string;
+  titleBn: string;
+  titleEn: string;
+  titleAr: string;
+  hookBn: string;
+  hookEn: string;
+  storyBn: string;
+  storyEn: string;
+  impactOnHumanityBn: string;
+  impactOnHumanityEn: string;
   referenceBn: string;
   referenceEn: string;
 }
@@ -189,8 +221,12 @@ export const HUMANITY_TREE_NODES: HumanityTreeNode[] = [
       'পৃথিবীর প্রতিটি মানুষ—যে কোনো বর্ণ, ভাষা বা দেশের হোক না কেন—হযরত আদম (আ.) ও বিবি হাওয়া (আ.)-এর বংশধর।',
     detailEn:
       'Every human being of any ethnicity, language, or continent traces their origin back to Prophet Adam and Hawwa (AS).',
-    referenceBn: 'সূরা আন-নিসা ৪:১ · সূরা আল-হুজুরাত ৪৯:১৩',
-    referenceEn: 'Surah An-Nisa 4:1 · Al-Hujurat 49:13',
+    astonishingFactBn:
+      'চমকপ্রদ হাদীস: আদম (আ.)-কে তৈরি করতে পৃথিবীর সর্বত্র থেকে লাল, সাদা, কালো, নরম ও শক্ত মাটি নেওয়া হয়েছিল—এ কারণেই তাঁর সন্তানেরা বিভিন্ন গাত্রবর্ণ ও নানা স্বভাবের হয়েছে (সুনানে আবু দাউদ হা/৪৬৯৩ · জামে তিরমিযী হা/২৯৫৫)।',
+    astonishingFactEn:
+      'Remarkable Hadith: Soil was gathered from across the entire Earth—red, white, black, soft, and firm—to fashion Adam (AS), explaining why humanity bears diverse skin tones and temperaments (Abu Dawud 4693 · Tirmidhi 2955).',
+    referenceBn: 'সূরা আন-নিসা ৪:১ · সূরা আল-হুজুরাত ৪৯:১৩ · তিরমিযী ২৯৫৫',
+    referenceEn: 'Surah An-Nisa 4:1 · Al-Hujurat 49:13 · Tirmidhi 2955',
     x: 760,
     y: 85,
     width: 280,
@@ -217,8 +253,12 @@ export const HUMANITY_TREE_NODES: HumanityTreeNode[] = [
       'সহীহ বুখারীতে ইবনে আব্বাস (রা.) জানান, আদম ও নূহের মাঝে ১০ প্রজন্ম মানুষ তাওহীদে ছিল; পরে নেককারদের মূর্তি-পূজার মাধ্যমে শিরক ও গোত্রীয় বিভেদ শুরু হয়।',
     detailEn:
       'Between Adam and Nuh (AS), 10 generations held onto Tawhid before idol veneration and moral corruption emerged.',
-    referenceBn: 'সহীহ বুখারী · সূরা নূহ ৭১:২৩',
-    referenceEn: 'Sahih al-Bukhari · Surah Nuh 71:23',
+    astonishingFactBn:
+      'চমকপ্রদ তথ্য: ইদরীস (আ.) সর্বপ্রথম কলম দিয়ে লেখা, কাপড় সেলাই ও জ্যোতির্বিজ্ঞান প্রচলন করেন; আর ৫ জন নেককার আবেদের স্মৃতিমূর্তি থেকে মানব ইতিহাসের প্রথম শিরক শুরু হয় (সহীহ বুখারী হা/৪৯২০ ও ৩২০৭)।',
+    astonishingFactEn:
+      'Astonishing Fact: Prophet Idris (AS) pioneered writing with a pen and tailoring garments, while humanity’s first idolatry began innocently as memorial statues of five pious scholars (Bukhari 4920 & 3207).',
+    referenceBn: 'সহীহ বুখারী ৪৯২০, ৩২০৭ · সূরা নূহ ৭১:২৩',
+    referenceEn: 'Sahih al-Bukhari 4920, 3207 · Surah Nuh 71:23',
     x: 760,
     y: 240,
     width: 300,
@@ -271,8 +311,12 @@ export const HUMANITY_TREE_NODES: HumanityTreeNode[] = [
       'তাফসীরে ইবনে কাসীর (১১:৪০ ও ৩৭:৭৭) ও তারীখে তাবারী মতে কিস্তিতে প্রায় ৮০ জন মুমিন (আশিজনের গ্রাম: "সূকুস সামানীন") রক্ষা পান। তবে সূরা আস-সাফফাত (৩৭:৭৭)-এর ঘোষণা "ওয়া জা‘আলনা যুররিয়্যাতাহু হুমুল বাকীন" অনুযায়ী বাকিদের বংশ স্থায়ী হয়নি; ফলে আজকের সমগ্র মানবজাতি নূহ (আ.)-এর তিন পুত্র সাম, হাম ও ইয়াফিস থেকেই বিস্তার লাভ করেছে।',
     detailEn:
       'Tafsir Ibn Kathir & Tarikh al-Tabari record ~80 believers landed near Mount Judi and founded Qaryat al-Thamanin ("Village of the Eighty"), while Quran 37:77 clarifies only Nuh’s three sons left lasting posterity worldwide.',
-    referenceBn: 'সূরা আস-সাফফাত ৩৭:৭৭ · তাফসীরে ইবনে কাসীর · তারীখে তাবারী',
-    referenceEn: 'Surah As-Saffat 37:77 · Tafsir Ibn Kathir · Tarikh al-Tabari',
+    astonishingFactBn:
+      'বিস্ময়কর নিদর্শন: প্লাবন শুরু হওয়ার সংকেত ছিল ঘরের রুটি সেঁকার মাটির চুলা (তান্নূর) থেকে ফেনিল পানি উথলে ওঠা (সূরা হূদ ১১:৪০), এবং অবতরণের পর স্থাপিত গ্রামটির নাম শতাব্দী পরও "সুক সামানীন" (আশিজনের নগরী) নামে পরিচিত ছিল!',
+    astonishingFactEn:
+      'Astonishing Sign: The Flood’s first signal was water gushing from Prophet Nuh’s baking oven (Tannur, Quran 11:40), and the settlement founded after landing remained historically known as Suq Thamanin ("Market of the Eighty").',
+    referenceBn: 'সূরা হূদ ১১:৪০ · সূরা আস-সাফফাত ৩৭:৭৭ · তাফসীরে ইবনে কাসীর · তারীখে তাবারী',
+    referenceEn: 'Surah Hud 11:40 · As-Saffat 37:77 · Tafsir Ibn Kathir · Tarikh al-Tabari',
     x: 990,
     y: 395,
     width: 300,
@@ -547,8 +591,12 @@ export const HUMANITY_TREE_NODES: HumanityTreeNode[] = [
       'সফিউর রহমান মুবারকপুরী (রহ.) আর-রাহীকুল মাখতূমে ব্যাখ্যা করেছেন: ইসমাঈল (আ.) জুরহুম গোত্রের নিকট আরবি শিখে মক্কায় বসতি গড়েন; তাঁর বংশে আদনান → ফিহর (কুরাইশ) → কুসাই ইবনে কিলাব কাবার সেবা ও মক্কার নেতৃত্ব সুসংগঠিত করেন এবং তাঁরই বংশে শেষ নবী (ﷺ) জন্মগ্রহণ করেন।',
     detailEn:
       'Al-Mubarakpuri details how Ismail learned Arabic from Jurhum in Makkah; through Adnan and Qusay ibn Kilab, Quraysh united Makkah’s custodianship leading to Prophet Muhammad (SAW).',
-    referenceBn: 'আর-রাহীকুল মাখতূম · অধ্যায়: আরবের ভৌগোলিক অবস্থান ও জাতিসমূহ',
-    referenceEn: 'Ar-Raheeq al-Makhtum · Tribes & Nations of Arabia',
+    astonishingFactBn:
+      'চমকপ্রদ ঐতিহাসিক মোড়: ইয়েমেনের বিশাল মা‘রিব বাঁধ একটি ছোট ইঁদুরের গর্তে ভেঙে যাওয়ার ফলেই মদীনার আনসার (আউস-খাযরাজ) ও মক্কার খুযা‘আহ গোত্র আরবে ছড়িয়ে পড়ে; আর অন্যদিকে শিশু ইসমাঈলের গোড়ালির নিচে যমযম ফুটে ওঠায় মক্কা জনপদে রূপ নেয় (সূরা সাবা ৩৪:১৬ · সহীহ বুখারী ৩৩৬৪)!',
+    astonishingFactEn:
+      'Astonishing Turning Point: A single burrowing rat caused the collapse of Yemen’s colossal Ma’rib Dam, dispersing the future Ansar (Aws & Khazraj) to Madinah—while in barren Makkah, Zamzam gushed beneath infant Ismail’s heels (Quran 34:16 · Bukhari 3364).',
+    referenceBn: 'আর-রাহীকুল মাখতূম · সূরা সাবা ৩৪:১৫-১৭ · সহীহ বুখারী ৩৩৬৪',
+    referenceEn: 'Ar-Raheeq al-Makhtum · Surah Saba 34:15-17 · Sahih al-Bukhari 3364',
     x: 140,
     y: 995,
     width: 215,
@@ -710,8 +758,12 @@ export const HUMANITY_TREE_NODES: HumanityTreeNode[] = [
       'পূর্ববর্তী নবীগণ নিজ নিজ গোত্র বা জাতির জন্য এসেছিলেন। কিন্তু শেষ নবী (ﷺ) সাম, হাম, ইয়াফিস—সকল মানুষের নবী হিসেবে প্রেরিত হন। তাঁর পর আর কোনো নবী আসবেন না।',
     detailEn:
       'Previous prophets were sent to specific nations, whereas Prophet Muhammad (SAW) was sent to all descendants of Sam, Ham, and Yafith until Qiyamah.',
-    referenceBn: 'সূরা আল-আহযাব ৩৩:৪০ · সূরা আল-আম্বিয়া ২১:১০৭',
-    referenceEn: 'Surah Al-Ahzab 33:40 · Al-Anbiya 21:107',
+    astonishingFactBn:
+      'বিস্ময়কর মিলন: শেষ নবী (ﷺ)-এর প্রথম মজলিশেই নূহ (আ.)-এর তিন পুত্রের ধারা এক হয়ে যায়—আরব-সাম থেকে আবু বকর/আলী (রা.), আফ্রিকা-হাম থেকে বিলাল হাবশী (রা.) এবং পারস্য-ইউরোপ-ইয়াফিস থেকে সালমান ফারসী ও সুহাইব রূমী (রা.)!',
+    astonishingFactEn:
+      'Remarkable Convergence: Inside the Prophet’s inner circle, all three sons of Nuh reunited—Abu Bakr & Ali (Sam), Bilal of Abyssinia (Ham), and Salman of Persia & Suhayb of Rome (Yafith)!',
+    referenceBn: 'সূরা আল-আহযাব ৩৩:৪০ · সূরা আল-আম্বিয়া ২১:১০৭ · সহীহ মুসলিম',
+    referenceEn: 'Surah Al-Ahzab 33:40 · Al-Anbiya 21:107 · Sahih Muslim',
     x: 460,
     y: 1210,
     width: 295,
@@ -928,8 +980,12 @@ export const HUMANITY_TREE_NODES: HumanityTreeNode[] = [
       'আল-কুরআন (৪৯:১৩) স্পষ্ট করেছে: তোমাদের বিভিন্ন জাতি ও গোত্রে বিভক্ত করার একমাত্র উদ্দেশ্য হলো পরস্পরকে চেনা; আল্লাহর কাছে শ্রেষ্ঠত্বের একমাত্র মাপকাঠি তাকওয়া।',
     detailEn:
       'Quran 49:13 affirms that nations and tribes exist solely so humanity may know one another, while true honor lies in righteousness (Taqwa).',
-    referenceBn: 'সূরা আল-হুজুরাত ৪৯:১৩ · বিদায় হজ্জের ভাষণ',
-    referenceEn: 'Surah Al-Hujurat 49:13 · Farewell Sermon',
+    astonishingFactBn:
+      'আধুনিক বিজ্ঞান ও ওহীর অবিশ্বাস্য ঐক্য: বিদায় হজ্জের ভাষণে নবীজি (ﷺ) ঘোষণা করেন, "আরবের ওপর অনারবের ও সাদার ওপর কালোর কোনো শ্রেষ্ঠত্ব নেই, কারণ তোমরা সবাই আদমের সন্তান।" আজ আধুনিক মানব-জিনোম (DNA) গবেষণাও প্রমাণ করেছে পৃথিবীর সকল মানুষ একই প্রাচীন মূল পিতা-মাতা থেকেই উদ্ভূত!',
+    astonishingFactEn:
+      'Faith & Science Alignment: The Farewell Sermon declared absolute human equality because all hail from Adam—and modern human genomics confirms all 8+ billion humans share common ancestral origins.',
+    referenceBn: 'সূরা আল-হুজুরাত ৪৯:১৩ · মুসনাদে আহমাদ ২৩৪৮৯ (সহীহ)',
+    referenceEn: 'Surah Al-Hujurat 49:13 · Musnad Ahmad 23489 (Sahih)',
     x: 760,
     y: 1650,
     width: 560,
@@ -1442,9 +1498,51 @@ export const CLASSICAL_SOURCE_BOOKS: ClassicalSourceBook[] = [
     eraBn: '৩য় শতাব্দী হিজরি',
     eraEn: '3rd Century AH',
     contributionBn:
-      'আদম থেকে নূহ (আ.)-এর ১০ প্রজন্ম, সাম-হাম-ইয়াফিসের মৌলিক হাদীস (তিরমিযী ৩৯৩১) এবং শেষ নবী (ﷺ)-এর সার্বজনীন রিসালাতের (সকল মানুষ আদমের সন্তান) বিশুদ্ধ প্রমাণ।',
+      'আদম থেকে নূহ (আ.)-এর ১০ প্রজন্ম, আদমের দেহের মাটির বৈচিত্র্য, সাম-হাম-ইয়াফিসের হাদীস এবং শেষ নবী (ﷺ)-এর সার্বজনীন রিসালাতের বিশুদ্ধতম প্রমাণ।',
     contributionEn:
-      'Authentic Hadith on the 10 pre-Flood generations, Noah’s three sons, and the universal message of Prophet Muhammad (SAW).',
+      'Authentic Hadith on Adam’s diverse earth, 10 pre-Flood generations, Noah’s three sons, and the universal message of Prophet Muhammad (SAW).',
+  },
+  {
+    id: 'book-abu-dawud-ahmad',
+    titleBn: 'সুনানে আবু দাউদ ও মুসনাদে ইমাম আহমাদ',
+    titleEn: 'Sunan Abi Dawud & Musnad Imam Ahmad',
+    titleAr: 'سُنَنُ أَبِي دَاوُدَ وَمُسْنَدُ أَحْمَدَ',
+    authorBn: 'ইমাম আবু দাউদ (রহ.) ও ইমাম আহমাদ ইবনে হাম্বল (রহ.)',
+    authorEn: 'Imam Abu Dawud & Imam Ahmad ibn Hanbal',
+    eraBn: '৩য় শতাব্দী হিজরি',
+    eraEn: '3rd Century AH',
+    contributionBn:
+      'মানুষের গাত্রবর্ণ ও মেজাজ ভিন্ন হওয়ার কারণ (আবু দাউদ ৪৬৯৩), সালমান ফারসী (রা.)-এর সত্য-সন্ধান (আহমাদ ২৩৭৩৭) এবং বিদায় হজ্জের বিশ্বজনীন মানবাধিকার সনদ (আহমাদ ২৩৪৮৯)।',
+    contributionEn:
+      'Records the Hadith on humanity’s diverse complexions (4693), Salman al-Farsi’s journey (23737), and the Farewell Sermon (23489).',
+  },
+  {
+    id: 'book-futuh',
+    titleBn: 'ফুতূহুল বুলদান (দেশ বিজয়ের ইতিহাস)',
+    titleEn: 'Futuh al-Buldan (The Origins of the Islamic State)',
+    titleAr: 'فُتُوحُ الْبُلْدَانِ (لِلْبَلَاذُرِيّ)',
+    authorBn: 'ইমাম আহমাদ ইবনে ইয়াহইয়া আল-বালাযুরী (রহ.)',
+    authorEn: 'Imam Ahmad al-Baladhuri',
+    eraBn: '৩য় শতাব্দী হিজরি / ৯ম শতক',
+    eraEn: '9th Century CE (279 AH)',
+    contributionBn:
+      'খুলাফায়ে রাশেদীন ও উমাইয়া আমলে আরব থেকে শাম, মিসর, মাগরেব, সিন্ধু ও পূর্ব প্রান্ত পর্যন্ত ইসলামী বিশ্ববিস্তার ও নগর-জনপদ প্রতিষ্ঠার প্রথম প্রামাণ্য ইতিহাস।',
+    contributionEn:
+      'Earliest systematic chronicle detailing how Islam expanded from Arabia across Sham, Egypt, Maghreb, Sindh, and eastern frontiers.',
+  },
+  {
+    id: 'book-battuta',
+    titleBn: 'তুহফাতুন নুযযার (রিহলাহ ইবনে বতুতা)',
+    titleEn: 'Tuhfat an-Nuzzar (Rihlah of Ibn Battuta)',
+    titleAr: 'رِحْلَةُ ابْنِ بَطُّوطَةَ (تُحْفَةُ النُّظَّارِ)',
+    authorBn: 'শায়খ মুহাম্মাদ ইবনে বতুতা আল-তানজী (রহ.)',
+    authorEn: 'Ibn Battuta of Tangier',
+    eraBn: '৭০৩–৭৭০ হিজরি / ১৪শ শতক',
+    eraEn: '14th Century CE (1345–1346 CE in Bengal)',
+    contributionBn:
+      'চট্টগ্রাম (সাদকাওয়ান), সোনারগাঁও ও সিলেটে হযরত শাহজালাল ইয়েমেনী (রহ.)-এর সাথে সাক্ষাতের প্রত্যক্ষ ভ্রমণ-বিবরণ এবং আরব-বাংলার প্রাচীন ভ্রাতৃত্বের ঐতিহাসিক দলীল।',
+    contributionEn:
+      'Eyewitness 14th-century travelogue documenting Chittagong, Sonargaon, and meeting Hazrat Shah Jalal of Sylhet in Bengal.',
   },
 ];
 
@@ -1482,8 +1580,12 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
       'ইবনে আব্বাস (রা.) বর্ণনা করেন, আদম (আ.) ও নূহ (আ.)-এর মধ্যবর্তী ১০ শতাব্দী মানুষ সত্য দ্বীনের ওপর ছিল (সহীহ বুখারী)।',
     scholarlyNoteEn:
       'Ibn Abbas (RA) narrated that for ten centuries between Adam and Nuh (AS), humanity followed pure monotheism.',
-    referenceBn: 'সূরা আন-নিসা ৪:১ · সূরা নূহ ৭১:২৩ · সহীহ বুখারী',
-    referenceEn: 'Surah An-Nisa 4:1 · Nuh 71:23 · Sahih al-Bukhari',
+    astonishingFactBn:
+      'মানুষের গাত্রবর্ণ ও মেজাজ কেন ভিন্ন? কারণ আদম (আ.)-এর দেহের মাটি পৃথিবীর সকল অঞ্চলের লাল, সাদা ও কালো মাটি থেকে সংগ্রহ করা হয়েছিল (আবু দাউদ হা/৪৬৯৩)। আর শিরকের জন্ম হয়েছিল ৫ জন নেককার মানুষের প্রতিমা তৈরির মাধ্যমে (বুখারী হা/৪৯২০)।',
+    astonishingFactEn:
+      'Why do humans vary in complexion and temperament? Adam (AS) was created from earth gathered across all lands (Abu Dawud 4693), and the very first idolatry began via memorial statues of 5 righteous people (Bukhari 4920).',
+    referenceBn: 'সূরা আন-নিসা ৪:১ · সূরা নূহ ৭১:২৩ · সহীহ বুখারী ৪৯২০ · আবু দাউদ ৪৬৯৩',
+    referenceEn: 'Surah An-Nisa 4:1 · Nuh 71:23 · Bukhari 4920 · Abu Dawud 4693',
   },
   {
     id: 'era-2',
@@ -1518,8 +1620,12 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
       'তাফসীরে ইবনে কাসীর (হূদ ১১:৪০ ও সাফফাত ৩৭:৭৭) স্পষ্ট করেছেন: কিস্তিতে থাকা ~৮০ জনের মধ্যে নূহ (আ.)-এর পরিবার ছাড়া অন্যদের বংশ দীর্ঘস্থায়ী হয়নি; ফলে বর্তমান বিশ্বের সব মানুষ নূহ (আ.)-এর সন্তান।',
     scholarlyNoteEn:
       'Tafsir Ibn Kathir clarifies on 11:40 and 37:77 that among the ~80 believers on the Ark, only Nuh’s lineage left surviving generations.',
-    referenceBn: 'সূরা হূদ ১১:৪০ · সূরা আস-সাফফাত ৩৭:৭৭ · তাফসীরে ইবনে কাসীর',
-    referenceEn: 'Surah Hud 11:40 · As-Saffat 37:77 · Tafsir Ibn Kathir',
+    astonishingFactBn:
+      'প্লাবনের প্রথম সংকেত দিয়েছিল নূহ (আ.)-এর ঘরের রুটি সেঁকার মাটির চুলা (তান্নূর)—হঠাৎ সেই চুলার ভেতর থেকে পানি উথলে ওঠা শুরু হয়! আর জুদী পাহাড়ে কিস্তি থামার পর ৮০ জন মুমিনের স্থাপিত শহরের নাম হয় "সুক সামানীন" (আশিজনের বাজার)।',
+    astonishingFactEn:
+      'The Flood’s divine signal came from inside Nuh’s household baking oven (Tannur) overflowing with water (Quran 11:40), and the survivors’ settlement by Mount Judi became famed as Suq Thamanin.',
+    referenceBn: 'সূরা হূদ ১১:৪০-৪৪ · সূরা আস-সাফফাত ৩৭:৭৭ · তাফসীরে ইবনে কাসীর',
+    referenceEn: 'Surah Hud 11:40-44 · As-Saffat 37:77 · Tafsir Ibn Kathir',
   },
   {
     id: 'era-3',
@@ -1554,8 +1660,12 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
       'জামে তিরমিযী (৩৯৩১)-এ বর্ণিত: "সাম আরবের পিতা, ইয়াফিস রোমীয়দের পিতা এবং হাম হাবশীদের পিতা।"',
     scholarlyNoteEn:
       'Tirmidhi (3931): Sam is ancestor of the Arabs, Yafith of Romans/Eurasians, and Ham of Abyssinians/Africans.',
-    referenceBn: 'জামে তিরমিযী ৩৯৩১ · সূরা আর-রূম ৩০:২২',
-    referenceEn: 'Jami at-Tirmidhi 3931 · Surah Ar-Rum 30:22',
+    astonishingFactBn:
+      'ইতিহাসবিদ তাবারী ও ইবনে কাসীরের মতে, বাবেল (ব্যাবিলন) শহরে মানবজাতির একক ভাষা বিভক্ত হয়ে ৭২টিরও বেশি ভাষায় রূপ নিলে সমভাষী গোষ্ঠীগুলো ৩ ভাইয়ের ১৬ পুত্রের অধীনে বিশ্বময় ছড়িয়ে পড়ে—যাকে সূরা রূমে (৩০:২২) আল্লাহর অন্যতম মহানিদর্শন বলা হয়েছে।',
+    astonishingFactEn:
+      'Classical historians record that when humanity’s single speech diversified into dozens of tongues around Babel, groups dispersed under Nuh’s 16 grandsons—honored in Quran 30:22 as a miracle of Allah’s creation.',
+    referenceBn: 'জামে তিরমিযী ৩৯৩১ · সূরা আর-রূম ৩০:২২ · তারীখে তাবারী',
+    referenceEn: 'Jami at-Tirmidhi 3931 · Surah Ar-Rum 30:22 · Tarikh al-Tabari',
   },
   {
     id: 'era-4',
@@ -1590,8 +1700,12 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
       'আর-রাহীকুল মাখতূম: "হিজায স্বাধীন ছিল—বাইজেন্টাইন বা পারস্য কোনো সম্রাটই মক্কা-মদীনাকে করদ রাজ্যে পরিণত করতে পারেনি; কুসাই ইবনে কিলাব কাবার হিজাবাহ, সিক্বায়াহ, রিফাদাহ, নদওয়া ও লিওয়া প্রতিষ্ঠা করেন।"',
     scholarlyNoteEn:
       'Ar-Raheeq al-Makhtum: Hijaz remained independent of Rome and Persia while Qusay ibn Kilab institutionalized Ka‘bah custodianship in Makkah.',
-    referenceBn: 'সূরা আল-বাকারাহ ২:১২৪-১২৯ · আর-রাহীকুল মাখতূম',
-    referenceEn: 'Surah Al-Baqarah 2:124-129 · Ar-Raheeq al-Makhtum',
+    astonishingFactBn:
+      'দুটো বিস্ময়কর ঘটনা এ যুগকে বদলে দেয়: (১) ইয়েমেনের মা‘রিব বাঁধ ছোট্ট ইঁদুরের গর্তে ভেঙে যাওয়ায় মদীনার আনসার ও মক্কার খুযা‘আহ বেরিয়ে আসে (সূরা সাবা ৩৪:১৬); (২) আবদুল মুত্তালিব ১০০ উট কুরবানী দিয়ে নবীজির পিতা আব্দুল্লাহকে মানত থেকে মুক্ত করেন!',
+    astonishingFactEn:
+      'Two astonishing pivots shaped Arabia: (1) A small burrowing rodent triggered the collapse of the great Ma’rib Dam (Quran 34:16), sending the Ansar to Madinah; (2) Abdul Muttalib ransomed the Prophet’s father Abdullah with 100 camels.',
+    referenceBn: 'সূরা আল-বাকারাহ ২:১২৪-১২৯ · সূরা সাবা ৩৪:১৬ · আর-রাহীকুল মাখতূম',
+    referenceEn: 'Surah Al-Baqarah 2:124-129 · Saba 34:16 · Ar-Raheeq al-Makhtum',
   },
   {
     id: 'era-5',
@@ -1626,8 +1740,12 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
       'সহীহ বুখারী (৩৪৪২)-এ নবী করীম (ﷺ) বলেন: "আমার ও ঈসা (আ.)-এর মাঝে আর কোনো নবী নেই।"',
     scholarlyNoteEn:
       'Sahih al-Bukhari (3442): "There is no prophet between me and Isa (AS)."',
-    referenceBn: 'সূরা আস-সাফ ৬১:৬ · সহীহ বুখারী ৩৪৪২',
-    referenceEn: 'Surah As-Saff 61:6 · Sahih al-Bukhari 3442',
+    astonishingFactBn:
+      'ফাতরাত যুগেও কতিপয় সত্যসন্ধানী মদীনায় ও মক্কায় তাওরাত-ইনজীলের সুসংবাদ অনুযায়ী শেষ নবীর অপেক্ষা করছিলেন—যেমন ইরানের ইসফাহান থেকে সালমান ফারসী (রা.) খ্রিষ্টান পাদ্রীর শেষ উপদেশ অনুসরণ করে মদীনায় এসে খেজুর বাগানে আশ্রয় নেন (মুসনাদে আহমাদ হা/২৩৭৩৭)!',
+    astonishingFactEn:
+      'During the 600-year Fatrah, truth-seekers followed earlier scriptures toward Arabia—most famously Salman al-Farsi (RA), who traveled from Persia via Syria and Iraq to Madinah following a monk’s final prophecy (Ahmad 23737).',
+    referenceBn: 'সূরা আস-সাফ ৬১:৬ · সহীহ বুখারী ৩৪৪২ · মুসনাদে আহমাদ ২৩৭৩৭',
+    referenceEn: 'Surah As-Saff 61:6 · Sahih al-Bukhari 3442 · Musnad Ahmad 23737',
   },
   {
     id: 'era-6',
@@ -1662,8 +1780,12 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
       'সহীহ মুসলিম: পূর্ববর্তী নবীরা কেবল নিজ কওমের কাছে আসতেন, কিন্তু শেষ নবী (ﷺ) প্রেরিত হয়েছেন সমগ্র মানবজাতির জন্য।',
     scholarlyNoteEn:
       'Sahih Muslim: Muhammad (SAW) was sent universally to all of mankind.',
-    referenceBn: 'সূরা আল-আহযাব ৩৩:৪০ · সূরা সাবা ৩৪:২৮',
-    referenceEn: 'Surah Al-Ahzab 33:40 · Saba 34:28',
+    astonishingFactBn:
+      '১ম হিজরি শতাব্দী থেকেই আরব সমুদ্রবণিকরা চীন (ক্যান্টন) ও বাংলা-চট্টগ্রাম উপকূলে পৌঁছান; পরবর্তীতে ইবনে বতুতা (১৩৪৫–৪৬ খ্রি.) তাঁর রিহলাহ গ্রন্থে চট্টগ্রাম (সাদকাওয়ান) ও সিলেটে হযরত শাহজালাল (রহ.)-এর সাথে সাক্ষাতের চমৎকার বিবরণ লিপিবদ্ধ করেন।',
+    astonishingFactEn:
+      'From the 1st Hijri century, Arab maritime networks reached Canton and the Bay of Bengal; later Ibn Battuta (1345–46 CE) recorded meeting Hazrat Shah Jalal in Sylhet and visiting bustling Chittagong (Sadkawan).',
+    referenceBn: 'সূরা আল-আহযাব ৩৩:৪০ · সূরা সাবা ৩৪:২৮ · রিহলাহ ইবনে বতুতা',
+    referenceEn: 'Surah Al-Ahzab 33:40 · Saba 34:28 · Rihlah Ibn Battuta',
   },
   {
     id: 'era-7',
@@ -1704,8 +1826,403 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
       'বিদায় হজ্জের ভাষণে রাসূলুল্লাহ (ﷺ) ঘোষণা করেন: তোমাদের সকলের রব এক এবং তোমাদের সকলের পিতা (আদম আ.) এক।',
     scholarlyNoteEn:
       'In his Farewell Sermon, Prophet Muhammad (SAW) affirmed: Your Lord is One, and your father Adam is one.',
+    astonishingFactBn:
+      'আধুনিক মানব-জিনোম ও ওহীর অবিশ্বাস্য ঐক্য: বিদায় হজ্জে ঘোষিত সকল মানুষের এক পিতা-মাতা (আদম ও হাওয়া আ.) তত্ত্বকে আধুনিক জেনেটিক্সও সমর্থন করে প্রমাণ করেছে—পৃথিবীর ৮০০+ কোটি মানুষই অত্যন্ত ঘনিষ্ঠ একটি অভিন্ন আদিম মানব-উৎস থেকে এসেছে!',
+    astonishingFactEn:
+      'Science & Revelation Convergence: Just as the Farewell Sermon proclaimed all humans stem from Adam (AS), modern genomic research confirms all 8+ billion people share remarkably close common ancestral roots.',
     referenceBn: 'সূরা আল-হুজুরাত ৪৯:১৩ · মুসনাদে আহমাদ ২৩৪৮৯',
     referenceEn: 'Surah Al-Hujurat 49:13 · Musnad Ahmad 23489',
+  },
+];
+
+// ============================================================================
+// ASTONISHING & ESSENTIAL HISTORICAL EVENTS (চমকপ্রদ ও জরুরি ঘটনাবলি — রেফারেন্সসহ)
+// ============================================================================
+
+export const HUMANITY_ASTONISHING_EVENTS: HumanityAstonishingEvent[] = [
+  {
+    id: 'event-01-adam-soil',
+    order: 1,
+    category: 'creation_flood',
+    categoryLabelBn: 'সৃষ্টি ও প্লাবন যুগ',
+    categoryLabelEn: 'Creation & Flood',
+    eraContextBn: 'মানবসৃষ্টির প্রথম অধ্যায়',
+    eraContextEn: 'Dawn of Creation',
+    titleBn: 'পৃথিবীর নানা প্রান্তের মাটিতেই মানুষের গাত্রবর্ণ ও মেজাজের বৈচিত্র্য!',
+    titleEn: 'Why Humans Have Different Skin Tones & Temperaments (Adam’s Diverse Soil)',
+    titleAr: 'خُلِقَ آدَمُ مِنْ قَبْضَةٍ قَبَضَهَا اللَّهُ مِنْ جَمِيعِ الْأَرْضِ',
+    hookBn: 'আফ্রিকার কালো, ইউরোপের সাদা, এশিয়ার শ্যামলা বা আরবের গেরুয়া রঙ—সবই এসেছে হযরত আদম (আ.)-এর দেহের মাটির ভেতর থেকেই!',
+    hookEn: 'Every human complexion—white, black, brown, and golden—was already present in the very soil collected to form Adam (AS).',
+    storyBn:
+      'অনেকে প্রশ্ন করেন—একই পিতা-মাতা আদম ও হাওয়া (আ.) থেকে যদি সব মানুষের জন্ম হয়, তবে পৃথিবীর মানুষের গাত্রবর্ণ, আকার ও মেজাজ এত ভিন্ন হলো কেন? সহীহ হাদীসে রাসূলুল্লাহ (ﷺ) এর অসাধারণ বৈজ্ঞানিক-আধ্যাত্মিক উত্তর দিয়েছেন: আল্লাহ তাআলা সমগ্র পৃথিবীর লাল, সাদা, কালো, নরম, শক্ত, উর্বর ও লবণাক্ত—সকল অঞ্চলের মাটি থেকে এক মুষ্টি মাটি নিয়ে আদম (আ.)-কে সৃষ্টি করেছিলেন। তাই তাঁর সন্তানদের মধ্যে মাটির সেই বৈচিত্র্য প্রকাশ পেয়েছে।',
+    storyEn:
+      'People often ask how one couple produced humanity’s rich spectrum of complexions and temperaments. The Prophet (SAW) explained in an authentic Hadith that Allah gathered a handful of soil from across the entire Earth—red, white, black, and shades between, soft and rugged, pure and mixed—to create Adam (AS), and thus his descendants naturally reflect that Earth-wide diversity.',
+    impactOnHumanityBn:
+      'মানুষের বর্ণবৈষম্যের কোনো ভিত্তিই নেই; কোনো জাতি জন্মগতভাবে শ্রেষ্ঠ বা হীন নয়—সব বর্ণই আদমের মূল দেহের অংশ।',
+    impactOnHumanityEn:
+      'Uproots racism at its core: no skin color is superior, as every shade belongs equally to the original mold of Adam (AS).',
+    referenceBn: 'সুনানে আবু দাউদ হা/৪৬৯৩ · জামে তিরমিযী হা/২৯৫৫ (সহীহ) · মুসনাদে আহমাদ হা/১৯৫৮৬',
+    referenceEn: 'Sunan Abi Dawud 4693 · Jami at-Tirmidhi 2955 (Sahih) · Musnad Ahmad 19586',
+  },
+  {
+    id: 'event-02-first-shirk',
+    order: 2,
+    category: 'creation_flood',
+    categoryLabelBn: 'সৃষ্টি ও প্লাবন যুগ',
+    categoryLabelEn: 'Creation & Flood',
+    eraContextBn: 'আদম থেকে নূহ (আ.) · ১০ প্রজন্ম',
+    eraContextEn: '10 Centuries Before Nuh (AS)',
+    titleBn: 'টানা ১,০০০ বছর পৃথিবীতে শিরক ছিল না — যেভাবে ৫ নেককার মানুষের মূর্তি থেকে প্রথম মূর্তিপূজার জন্ম!',
+    titleEn: '1,000 Years Without Idolatry: How Revering Five Pious Men Birthed World’s First Idols',
+    titleAr: 'وَدًّا وَلَا سُوَاعًا وَلَا يَغُوثَ وَيَعُوقَ وَنَسْرًا',
+    hookBn: 'পৃথিবীর প্রথম মানুষ আদম (আ.) শিরক করেননি, এমনকি নূহ (আ.)-এর আগ পর্যন্ত টানা ১০ শতাব্দী মানুষ খাঁটি তাওহীদে ছিল!',
+    hookEn: 'Humanity did not start with polytheism—for ten full centuries after Adam (AS), not a single idol existed on Earth.',
+    storyBn:
+      'অনেকে মনে করেন আদিম মানুষ শুরু থেকেই মূর্তিপূজক ছিল, কিন্তু ইসলামী ইতিহাস এর বিপরীত সত্য জানায়। হযরত ইবনে আব্বাস (রা.) বর্ণনা করেন, আদম ও নূহ (আ.)-এর মাঝে ১০ শতাব্দী সকল মানুষ খাঁটি একত্ববাদে (তাওহীদে) ছিল। নূহের কওমে ওয়াদ্দ, সুওয়া‘, ইয়াগূস, ইয়া‘ঊক ও নাসর নামে ৫ জন অত্যন্ত নেককার আবেদ ছিলেন। তাঁদের মৃত্যুর পর শোকাহত ভক্তরা স্মৃতি রক্ষায় মজলিশে তাঁদের প্রতিকৃতি স্থাপন করে; সে প্রজন্ম পূজা করেনি। কিন্তু জ্ঞান লোপ পাওয়ার পর পরবর্তী প্রজন্মের কাছে শয়তান প্রচার করে—তোমাদের পূর্বপুরুষেরা তো এদেরই ইবাদত করতেন! এভাবেই ইতিহাসের প্রথম শিরকের সূচনা হয়।',
+    storyEn:
+      'Contrary to evolutionary myths that early humans began as polytheists, Ibn Abbas (RA) narrated that ten generations between Adam and Nuh (AS) lived in pure monotheism. Later, five righteous worshippers—Wadd, Suwa‘, Yaghuth, Ya‘uq, and Nasr—passed away. Devoted followers built memorial statues out of love without worshipping them; once knowledge faded, subsequent generations were deceived into worshipping those statues.',
+    impactOnHumanityBn:
+      'মানব ইতিহাসে দ্বীনের মূল ভিত্তি ছিল তাওহীদ (একত্ববাদ); আর অন্ধ ভক্তি ও স্মৃতিস্তম্ভ পূজার মাধ্যমেই পৃথিবীতে শিরক ঢুকে পড়ে এবং এর সংশোধনেই নূহ (আ.)-এর আগমন ঘটে।',
+    impactOnHumanityEn:
+      'Proves monotheism was humanity’s original religion, while excessive veneration of pious graves/statues triggered the corruption that prompted Nuh’s mission.',
+    referenceBn: 'সূরা নূহ ৭১:২৩ · সহীহ বুখারী হা/৪৯২০ · তাফসীরে ইবনে কাসীর (সূরা নূহ)',
+    referenceEn: 'Surah Nuh 71:23 · Sahih al-Bukhari 4920 · Tafsir Ibn Kathir',
+  },
+  {
+    id: 'event-03-idris-innovations',
+    order: 3,
+    category: 'creation_flood',
+    categoryLabelBn: 'সৃষ্টি ও প্লাবন যুগ',
+    categoryLabelEn: 'Creation & Flood',
+    eraContextBn: 'প্লাবন-পূর্ব ৬ষ্ঠ প্রজন্ম',
+    eraContextEn: '6th Generation Before Flood',
+    titleBn: 'মানব ইতিহাসের প্রথম কলম, সেলাই করা পোশাক ও জ্যোতির্বিদ্যা — ইদরীস (আ.)-এর অজানা অবদান',
+    titleEn: 'First Pen, Stitched Garments & Astronomy: Prophet Idris (AS) & the Fourth Heaven',
+    titleAr: 'وَرَفَعْنَاهُ مَكَانًا عَلِيًّا',
+    hookBn: 'ইদরীস (আ.)-এর পূর্বে মানুষ কেবল পশুর চামড়া গায়ে জড়াত; তিনিই সর্বপ্রথম কলমে লেখা ও সুঁইয়ে কাপড় সেলাই শেখান!',
+    hookEn: 'Before Prophet Idris (AS), humans draped raw animal hides; he pioneered writing with the pen, tailoring garments, and celestial calculation.',
+    storyBn:
+      'ইবনে ইসহাক ও ইমাম ইবনে কাসীর (রহ.) উল্লেখ করেন, শীস (আ.)-এর ৫ম অধস্তন পুরুষ হযরত ইদরীস (আ.) ছিলেন মানব সভ্যতার অন্যতম প্রথম জ্ঞান-বিপ্লবের পথিকৃৎ। তাঁর হাতেই সর্বপ্রথম কলম দিয়ে লিখনপদ্ধতি, ওজন-পরিমাপ ও নক্ষত্র-গণনার সূচনা হয় এবং তাঁর সময়েই মানুষ প্রথম সুঁই-সুতা দিয়ে সেলাই করা বস্ত্র পরতে শুরু করে। তিনি বহু নগর ও তাওহীদী সভ্যতার ভিত্তি গড়েন এবং আল্লাহ তাঁকে সশরীরে চতুর্থ আসমানে উচ্চ মর্যাদায় উন্নীত করেন—যেখানে মিরাজের রাতে আমাদের প্রিয় নবী (ﷺ) তাঁর সাথে সাক্ষাৎ করে সালাম বিনিময় করেন।',
+    storyEn:
+      'Ibn Ishaq and Ibn Kathir record that Prophet Idris (AS)—six generations from Adam—pioneered humanity’s earliest technological milestones: writing with a pen, tailoring stitched clothing instead of raw skins, weights/measures, and observational astronomy. Allah honored him by raising him to an exalted station in the Fourth Heaven, where Prophet Muhammad (SAW) met and greeted him during the Night Journey (Mi‘raj).',
+    impactOnHumanityBn:
+      'জ্ঞান-বিজ্ঞান, লেখালেখি ও শিল্প-প্রযুক্তি ইসলামের সাথে সাংঘর্ষিক নয়—বরং নবী ইদরীস (আ.)-এর হাত ধরেই মানব সভ্যতার লিখিত ইতিহাসের সূচনা।',
+    impactOnHumanityEn:
+      'Demonstrates that literacy, craftsmanship, and scientific inquiry trace directly back to prophetic guidance.',
+    referenceBn: 'সূরা মারইয়াম ১৯:৫৬-৫৭ · সহীহ বুখারী হা/৩২০৭ (মিরাজ) · আল-বিদায়াহ ওয়ান-নিহায়াহ ১/১০০-১০২',
+    referenceEn: 'Surah Maryam 19:56-57 · Sahih al-Bukhari 3207 · Al-Bidayah wan-Nihayah 1:100-102',
+  },
+  {
+    id: 'event-04-nuh-tannur-thamanin',
+    order: 4,
+    category: 'creation_flood',
+    categoryLabelBn: 'সৃষ্টি ও প্লাবন যুগ',
+    categoryLabelEn: 'Creation & Flood',
+    eraContextBn: 'মহাপ্লাবন ও মানবতার রিসেট',
+    eraContextEn: 'The Great Flood & Reset',
+    titleBn: 'রুটির চুলা (তান্নূর) থেকে প্লাবনের সংকেত ও জুদী পাহাড়ে "আশিজনের শহর" (সুক সামানীন)!',
+    titleEn: 'Boiling Water From a Baking Oven & the Town of Eighty Survivors ("Suq Thamanin")',
+    titleAr: 'فَارَ التَّنُّورُ · قَرْيَةُ الثَّمَانِينَ',
+    hookBn: 'আকাশ থেকে বৃষ্টি নামার আগেই নূহ (আ.)-এর ঘরের আগুন জ্বালানো রুটির চুলা থেকে হঠাৎ পানির ফোয়ারা ছুটে বেরিয়েছিল!',
+    hookEn: 'Before the skies opened, boiling water erupted right inside Prophet Nuh’s household baking oven as the divine signal to board the Ark.',
+    storyBn:
+      'হযরত নূহ (আ.) সাড়ে নয়শ বছর দাওয়াত দেওয়ার পর যখন মাত্র ~৮০ জন মানুষ ঈমান আনেন, তখন আল্লাহ বিশাল তিনতলাবিশিষ্ট কাঠের কিস্তি তৈরির নির্দেশ দেন। মরুভূমিতে নৌকা বানাতে দেখে অবিশ্বাসীরা ঠাট্টা করত। অবশেষে আল্লাহর দেওয়া নির্ধারিত সংকেত পূর্ণ হলো: নূহ (আ.)-এর ঘরের রুটি সেঁকার চুলা (তান্নূর) থেকে আচমকা পানি উথলে উঠল! তখন প্রতিটি প্রাণী থেকে জোড়া ও ~৮০ মুমিন নৌকায় ওঠেন। প্লাবন শেষে জুদী পর্বতে (দক্ষিণ-পূর্ব তুরস্ক/উত্তর ইরাক) কিস্তি স্থির হলে তাঁরা পাদদেশে যে গ্রাম গড়েন, ইতিহাসবিদ ইবনে কাসীর ও তাবারীর মতে তার নাম হয় "সুক সামানীন" (আশিজনের গ্রাম)—তবে সূরা ৩৭:৭৭ অনুযায়ী পরবর্তী পৃথিবীতে কেবল নূহ (আ.)-এর ৩ পুত্রের বংশধরই স্থায়ীভাবে টিকে থাকে।',
+    storyEn:
+      'After 950 years of calling his people, only ~80 souls believed. Mocked for building a massive three-deck Ark far from the sea, Nuh (AS) waited for the sign: water suddenly gushed from his baking oven (Tannur). Believers and animal pairs boarded while the Earth’s springs and skies unleashed the Flood. When the Ark rested upon Mount Judi, survivors founded Qaryat al-Thamanin ("Village of the Eighty"), though Quran 37:77 confirms only Nuh’s three sons produced all subsequent nations.',
+    impactOnHumanityBn:
+      'সমগ্র আধুনিক মানবজাতির দ্বিতীয় জন্ম হয় জুদী পর্বতের এই প্লাবন-পরবর্তী সূচনা থেকেই; এ জন্যই নূহ (আ.)-কে "মানবজাতির দ্বিতীয় আদম" বলা হয়।',
+    impactOnHumanityEn:
+      'Marks the second biological and spiritual genesis of humanity, earning Nuh (AS) the classical title "Second Father of Mankind."',
+    referenceBn: 'সূরা হূদ ১১:৪০-৪৪ · সূরা আল-আনকাবূত ২৯:১৪ · সূরা আস-সাফফাত ৩৭:৭৭ · তাফসীরে ইবনে কাসীর',
+    referenceEn: 'Surah Hud 11:40-44 · Al-Ankabut 29:14 · As-Saffat 37:77 · Tafsir Ibn Kathir',
+  },
+  {
+    id: 'event-05-babel-languages',
+    order: 5,
+    category: 'civilization_miracle',
+    categoryLabelBn: 'সভ্যতা ও নিদর্শন',
+    categoryLabelEn: 'Civilizations & Signs',
+    eraContextBn: 'নূহ-পরবর্তী ব্যাবিলন যুগ',
+    eraContextEn: 'Post-Flood Babylon Era',
+    titleBn: 'বাবেল প্রান্তরে এক ভাষা ভেঙে ৭২+ ভাষার জন্ম — যেভাবে ৩ ভাইয়ের সন্তানেরা মহাদেশে ছড়িয়ে পড়ল!',
+    titleEn: 'How One Human Language Split Into 72+ Tongues Around Babel',
+    titleAr: 'وَمِنْ آيَاتِهِ خَلْقُ السَّمَاوَاتِ وَالْأَرْضِ وَاخْتِلَافُ أَلْسِنَتِكُمْ',
+    hookBn: 'আদম থেকে বাবেল যুগ পর্যন্ত মানুষ একটিই ভাষা বলত; কিন্তু ভাষা-বিভাজনের পরই পৃথিবীর ৩ মহাদিকে জনবসতি ছড়িয়ে পড়ে!',
+    hookEn: 'Until the dispersal from Babel, humans spoke one shared language; the sudden diversification of tongues populated every continent.',
+    storyBn:
+      'ইমাম তাবারী, আল-মাস‘ঊদী ও ইবনে কাসীর (রহ.) উল্লেখ করেন—নূহ (আ.)-এর বংশধরেরা সংখ্যায় বহুগুণ বেড়ে ইরাকের "বাবেল" (ব্যাবিলন) সমভূমিতে একত্রে বসবাস করছিলেন এবং সবার ভাষা ছিল অভিন্ন। অতঃপর আল্লাহর হিকমতে মানুষের মাঝে বিভিন্ন ভাষা ও উচ্চারণ সৃষ্টি হয়ে যায় (যাকে আল-কুরআন ৩০:২২-এ আল্লাহর মহানিদর্শন বলেছে)। ভাষা ভিন্ন হওয়ায় মানুষ আর এক জায়গায় না থেকে সমভাষী দল বেঁধে ছড়িয়ে পড়ে: সামের বংশধর মধ্যপ্রাচ্যে, হামের বংশধর নীল-উপত্যকা ও আফ্রিকায় এবং ইয়াফিসের বংশধর ইউরোপ, আনাতোলিয়া ও পূর্ব-দক্ষিণ এশিয়ায়।',
+    storyEn:
+      'Al-Tabari, Al-Mas‘udi, and Ibn Kathir chronicle that Nuh’s descendants grew numerous on the plain of Babel (Babylon) speaking a single shared tongue. By divine decree, humanity’s speech branched into dozens of distinct languages—celebrated in Quran 30:22 as a sign of Allah’s wisdom. Unable to remain in one cluster, linguistic families migrated outward: Sam’s line across Arabia and Mesopotamia, Ham’s into Egypt and Africa, and Yafith’s across Europe and Asia.',
+    impactOnHumanityBn:
+      'পৃথিবীর হাজার হাজার ভাষা ও জাতির উৎপত্তি কোনো দুর্ঘটনা নয়—বরং আল্লাহর সুপরিকল্পিত ব্যবস্থা, যাতে পৃথিবীর প্রতিটি প্রান্ত আবাদ হয় ও মানুষ পরস্পরকে চেনে।',
+    impactOnHumanityEn:
+      'Explains both global linguistic diversity and why distinct civilizations emerged across Africa, Europe, and Asia after Mesopotamia.',
+    referenceBn: 'সূরা আর-রূম ৩০:২২ · সূরা আল-হুজুরাত ৪৯:১৩ · তারীখে তাবারী ১ম খণ্ড · আল-বিদায়াহ ১/১৩৫',
+    referenceEn: 'Surah Ar-Rum 30:22 · Al-Hujurat 49:13 · Tarikh al-Tabari Vol 1 · Al-Bidayah 1:135',
+  },
+  {
+    id: 'event-06-nimrod-mosquito',
+    order: 6,
+    category: 'civilization_miracle',
+    categoryLabelBn: 'সভ্যতা ও নিদর্শন',
+    categoryLabelEn: 'Civilizations & Signs',
+    eraContextBn: 'বাবেল সাম্রাজ্য ও ইবরাহীম (আ.)',
+    eraContextEn: 'Babylon & Ibrahim (AS)',
+    titleBn: 'অগ্নিকুণ্ডের ফুলবাগান ও একটি ক্ষুদ্র মশার হাতে মহাপরাশক্তি নমরূদের চমকপ্রদ পতন!',
+    titleEn: 'The Cooled Fire & How a Tiny Mosquito Brought Down Emperor Nimrod',
+    titleAr: 'يَا نَارُ كُونِي بَرْدًا وَسَلَامًا عَلَىٰ إِبْرَاهِيمَ',
+    hookBn: 'বাবেলের দম্ভকারী সম্রাট নমরূদ নিজেকে খোদা দাবি করেছিল—আল্লাহ তার বিরুদ্ধে কোনো সেনাবাহিনী নয়, পাঠিয়েছিলেন একটি ক্ষুদ্র মশা!',
+    hookEn: 'Against Nimrod—who claimed divinity and built massive armies—Allah sent no legion, only a single tiny mosquito.',
+    storyBn:
+      'পৃথিবীর প্রাচীনতম পরাশক্তিগুলোর একটি ছিল বাবেলের নমরূদ ইবনে কুশের সাম্রাজ্য। হযরত ইবরাহীম (আ.) যখন তার মূর্তি ও খোদাত্বের অহংকার ভেঙে দেন, তখন এক বিশাল অগ্নিকুণ্ড তৈরি করে ইবরাহীমকে তাতে নিক্ষেপ করা হয়—কিন্তু আল্লাহর নির্দেশে আগুন আরামদায়ক শীতল ও শান্তিময় হয়ে ওঠে এবং কেবল তাঁর হাতের রশি পুড়ে যায়! পরবর্তীতে ইবরাহীম (আ.)-এর সাথে তর্কে হেরেও যখন নমরূদ ক্ষমা চাইল না, তখন আল্লাহ একটি ক্ষুদ্র মশা পাঠান, যা নাক দিয়ে তার মস্তিষ্কে ঢুকে পড়ে এবং অসহনীয় যন্ত্রণায় নিজের মাথায় আঘাত করতে করতে বিশ্ব-সম্রাটের করুণ মৃত্যু ঘটে।',
+    storyEn:
+      'Nimrod’s Mesopotamian empire wielded unmatched power, yet when Ibrahim (AS) shattered its idols and exposed its tyranny, Nimrod cast him into a roaring furnace. Allah commanded the fire to turn "coolness and peace" (Quran 21:69), burning only Ibrahim’s ropes. When Nimrod persisted in arrogance, Allah humbled his entire army with swarms of gnats—one entering his nostril into his skull, tormenting him until his downfall.',
+    impactOnHumanityBn:
+      'অত্যাচারী পরাশক্তি যতই প্রবল হোক না কেন, আল্লাহর ক্ষুদ্রতম সৃষ্টির সামনেও সে অসহায়; আর এই ঘটনার পরই ইবরাহীম (আ.) শাম ও মক্কার দিকে হিজরত করে বিশ্ব-ইতিহাসের নতুন অধ্যায় গড়েন।',
+    impactOnHumanityEn:
+      'Demonstrates the fragility of earthly empires before divine justice and led directly to Ibrahim’s historic migration shaping Arabia and the Levant.',
+    referenceBn: 'সূরা আল-আম্বিয়া ২১:৬৮-৭০ · সূরা আল-বাকারাহ ২:২৫৮ · তাফসীরে ইবনে কাসীর ১/৪৭৭ · আল-বিদায়াহ ১/১৪৭',
+    referenceEn: 'Surah Al-Anbiya 21:68-70 · Al-Baqarah 2:258 · Tafsir Ibn Kathir 1:477 · Al-Bidayah 1:147',
+  },
+  {
+    id: 'event-07-iram-thamud-archaeology',
+    order: 7,
+    category: 'civilization_miracle',
+    categoryLabelBn: 'সভ্যতা ও নিদর্শন',
+    categoryLabelEn: 'Civilizations & Signs',
+    eraContextBn: 'আদ ও সামূদ সভ্যতা',
+    eraContextEn: 'Civilizations of ‘Ad & Thamud',
+    titleBn: 'মরুভূমির নিচে হারিয়ে যাওয়া "ইরাম যাতুল ইমাদ" ও পাহাড়-কাটা সামূদের প্রাসাদ — কুরআনের ঐতিহাসিক সত্যতা!',
+    titleEn: 'Lost Desert Pillars of "Iram" & Rock-Carved Thamud Palaces Verified in History',
+    titleAr: 'إِرَمَ ذَاتِ الْعِمَادِ الَّتِي لَمْ يُخْلَقْ مِثْلُهَا فِي الْبِلَادِ',
+    hookBn: 'শত শত বছর মানুষ আদ জাতির "ইরাম" শহরকে রূপকথা ভাবত—অথচ ১৯৯০-এর দশকে আধুনিক স্যাটেলাইট ইমেজিংয়ে ওমানের মরুতে সেই স্তম্ভনগরী আবিষ্কৃত হয়েছে!',
+    hookEn: 'Long dismissed by skeptics as legend, satellite radar uncovered ancient oasis ruins beneath Oman’s sands, while Thamud’s carved tombs stand in Saudi Arabia today.',
+    storyBn:
+      'আল-কুরআনের সূরা ফাজরে (৮৯:৬-৮) বর্ণিত হয়েছে: বিশাল স্তম্ভবিশিষ্ট "ইরাম" নগরীর মতো শহর পৃথিবীতে আর নির্মিত হয়নি (হূদ আ.-এর কওম আদ); আর সামূদ জাতি (ছালেহ আ.) বিশাল পাথুরে পাহাড় খোদাই করে প্রাসাদ গড়েছিল (সূরা হিজর ১৫:৮২)। মজার ব্যাপার হলো, ১৯৯২ সালে ভূ-তাত্ত্বিক ও মহাকাশ স্যাটেলাইট রাডারের সাহায্যে ওমানের রুবুল খালী বালির নিচে প্রাচীন বাণিজ্য-নগরী ও বিশাল স্তম্ভের ধ্বংসাবশেষ ("উবার") আবিষ্কৃত হয়! আর সৌদি আরবের আল-উলায় (মাদায়েন ছালেহ) সামূদ জাতির পাথর কেটে বানানো শতাধিক সুউচ্চ প্রাসাদ-সমাধি আজও কুরআনের জীবন্ত সাক্ষী হয়ে দাঁড়িয়ে আছে।',
+    storyEn:
+      'The Quran describes the towering pillared city of Iram of ‘Ad ("whose like was never built in the land", 89:6-8) and Thamud who carved homes out of rock mountains (15:82). In the 1990s, space-shuttle ground-penetrating radar revealed ancient collapsed caravan ruins and limestone pillars buried beneath Oman’s Empty Quarter ("Ubar"), while Thamud’s monumental rock-cut facades at Mada’in Salih (Al-Hijr) remain standing in Saudi Arabia as living Quranic testimony.',
+    impactOnHumanityBn:
+      'আধুনিক মহাকাশ বিজ্ঞান ও প্রত্নতত্ত্ব শতাব্দী পর কুরআনের বর্ণিত "আরবে বায়দা" জাতির অস্তিত্ব ও ভয়াবহ পতনের নিদর্শন হাতেকলমে প্রমাণ করেছে।',
+    impactOnHumanityEn:
+      'Modern archaeology and remote sensing strikingly corroborate the Quranic record of Arabia’s perished civilizations.',
+    referenceBn: 'সূরা আল-ফাজর ৮৯:৬-৮ · সূরা আল-হিজর ১৫:৮০-৮৪ · আর-রাহীকুল মাখতূম (আরবে বায়দা) · আল-বিদায়াহ ১/১২৫',
+    referenceEn: 'Surah Al-Fajr 89:6-8 · Al-Hijr 15:80-84 · Ar-Raheeq al-Makhtum · Al-Bidayah 1:125',
+  },
+  {
+    id: 'event-08-yusuf-economy',
+    order: 8,
+    category: 'civilization_miracle',
+    categoryLabelBn: 'সভ্যতা ও নিদর্শন',
+    categoryLabelEn: 'Civilizations & Signs',
+    eraContextBn: 'মিসর ও বনী ইসরাঈলের মিসর যাত্রা',
+    eraContextEn: 'Ancient Egypt & Israelite Entry',
+    titleBn: 'বিশ্ব ইতিহাসের প্রথম রাষ্ট্রীয় খাদ্যভাণ্ডার ও ৭ বছরের দুর্ভিক্ষ জয় — হযরত ইউসুফ (আ.)-এর অর্থনৈতিক বিপ্লব!',
+    titleEn: 'World’s First National Grain Reserve: How Prophet Yusuf (AS) Saved Two Continents',
+    titleAr: 'تَزْرَعُونَ سَبْعَ سِنِينَ دَأَبًا',
+    hookBn: 'আধুনিক অর্থনীতিতে রাষ্ট্রীয় "বাফার স্টক" ও শস্য-সংরক্ষণের যে মডেল আমরা দেখি, তার প্রথম সফল প্রবর্তক ছিলেন মিসরের অর্থমন্ত্রী হযরত ইউসুফ (আ.)!',
+    hookEn: 'Long before modern economics, Prophet Yusuf (AS) engineered a 14-year agricultural reserve system that rescued Egypt and Canaan from continental famine.',
+    storyBn:
+      'কারাগারে থাকা অবস্থায় মিসরের বাদশাহের "সাতটি মোটাতাজা গাভী ও সাতটি শীর্ণ গাভী"-সংক্রান্ত অদ্ভুত স্বপ্নের ব্যাখ্যা দিয়ে ইউসুফ (আ.) এক যুগান্তকারী ১৫-বছরের পরিকল্পনা দেন: প্রথম ৭ বছরের অতি-উৎপাদনশীল ফসল মাড়াই না করে খোসা-শীষসহই গুদামজাত করতে হবে যেন পোকা না ধরে এবং আর্দ্রতায় নষ্ট না হয়! পরের ৭ বছর যখন গোটা মিসর, শাম ও ফিলিস্তিন ভয়াবহ দুর্ভিক্ষে অচল হয়ে পড়ে, তখন মিসরের সরকারি খাদ্যভাণ্ডার থেকেই পুরো অঞ্চলের মানুষ রক্ষা পায়। এই খাদ্য সংগ্রহ করতেই ইউসুফের ভাইয়েরা কান‘আন থেকে মিসরে আসেন এবং এভাবেই ইয়াকূব (আ.)-এর ১২ পুত্র (বনী ইসরাঈল) মিসরে বসবাস শুরু করেন।',
+    storyEn:
+      'Interpreting the Egyptian monarch’s dream of seven fat and seven lean cows, Yusuf (AS) proposed a 14-year fiscal strategy: harvest abundantly for seven years and store grain on the stalk so it resists spoilage and pests, then ration it across seven years of severe regional drought. That national reserve saved Egypt, Sinai, and Canaan—drawing Yusuf’s brothers to Egypt and initiating Banu Israil’s centuries-long chapter on the Nile.',
+    impactOnHumanityBn:
+      'খাদ্য-নিরাপত্তা ও দুর্যোগ ব্যবস্থাপনার প্রথম রাষ্ট্রীয় মডেল প্রতিষ্ঠা হয় এবং মিসরের সাথে শামের মানববংশের ঐতিহাসিক সংযোগ ঘটে।',
+    impactOnHumanityEn:
+      'Established the earliest documented famine-resilience policy and permanently linked Levantine Banu Israil with Nile Valley history.',
+    referenceBn: 'সূরা ইউসুফ ১২:৪৩-৫৬ ও ৯৯-১০১ · তাফসীরে ইবনে কাসীর · আল-বিদায়াহ ওয়ান-নিহায়াহ ১/২০৭',
+    referenceEn: 'Surah Yusuf 12:43-56 & 99-101 · Tafsir Ibn Kathir · Al-Bidayah 1:207',
+  },
+  {
+    id: 'event-09-zamzam-arabic',
+    order: 9,
+    category: 'arab_prophets',
+    categoryLabelBn: 'নবী ও আরব ইতিহাস',
+    categoryLabelEn: 'Prophets & Arabia',
+    eraContextBn: 'মক্কার সূচনা ও ইসমাঈল (আ.)',
+    eraContextEn: 'Founding of Makkah',
+    titleBn: 'শিশু ইসমাঈল (আ.)-এর গোড়ালির নিচে যমযম কূপ ও বিশ্বসেরা বিশুদ্ধ আরবি ভাষার জন্ম!',
+    titleEn: 'Zamzam Beneath Infant Ismail’s Heels & the Birth of Classical Arabic',
+    titleAr: 'زَمْزَمُ وَاللُّغَةُ الْعَرَبِيَّةُ الْمُبِينَةُ',
+    hookBn: 'চার হাজার বছর ধরে মরুভূমির মাঝে বিরামহীন পানি দেওয়া যমযম কূপের সূচনা হয়েছিল মা হাজেরার সাতবার সাফা-মারওয়া দৌড় আর শিশু ইসমাঈলের পায়ের গোড়ালিতে!',
+    hookEn: 'After 4,000+ years, Zamzam still flows in arid Makkah—originating when angel Jibril struck the earth beside infant Ismail’s kicking heels.',
+    storyBn:
+      'হযরত ইবরাহীম (আ.) যখন আল্লাহর নির্দেশে স্ত্রী হাজেরা ও শিশুপুত্র ইসমাঈল (আ.)-কে জনমানবহীন, গাছপালাহীন তপ্ত মক্কা উপত্যকায় রেখে যান, তখন সামান্য খেজুর ও পানি ফুরিয়ে যাওয়ায় তৃষ্ণার্ত মা হাজেরা সাফা ও মারওয়া পাহাড়ের মাঝে ৭ বার ছুটে যান (যা আজ হজ্জ-উমরাহর সা‘ঈ)। ঠিক তখনই ফেরেশতা জিবরীল (আ.) শিশু ইসমাঈলের পায়ের কাছে ডানা বা গোড়ালি দিয়ে আঘাত করলে অকস্মাৎ স্বচ্ছ পানির ধারা উৎসারিত হয়! পানির খোঁজে থাকা ইয়েমেনী "জুরহুম" গোত্র সেখানে বসতি গড়ে; আর ইসমাঈল (আ.) তাঁদের কাছ থেকে আরবি শিখে আল্লাহ প্রদত্ত এমন বিশুদ্ধ ও সাবলীল আরবি বলতে শুরু করেন যে তাঁর বংশেই পরবর্তীতে কুরআন নাযিল হয়।',
+    storyEn:
+      'Left by Ibrahim (AS) in barren Makkah, Hajar ran seven times between Safa and Marwah (immortalized as Sa‘y) seeking help as her infant wept. Angel Jibril struck the sand by Ismail’s heels, bursting forth Zamzam. Drawn by the spring, the Yemeni tribe of Jurhum settled nearby, marrying into Ismail’s household; from this union emerged the eloquent Adnani Arabic in which the Noble Quran was later revealed.',
+    impactOnHumanityBn:
+      'শূন্য মরুভূমি হয়ে উঠল পৃথিবীর আধ্যাত্মিক রাজধানী মক্কা নগরী—যেখানে আজও প্রতিবছর কোটি মুসলিম হজ্জ-উমরায় যমযমের পানি পান করেন।',
+    impactOnHumanityEn:
+      'Transformed an uninhabited valley into Makkah, the spiritual axis of humanity and birthplace of the Final Messenger (SAW).',
+    referenceBn: 'সহীহ বুখারী হা/৩৩৬৪-৩৩৬৫ · সূরা ইবরাহীম ১৪:৩৭ · আর-রাহীকুল মাখতূম (ইসমাঈলের ধারা)',
+    referenceEn: 'Sahih al-Bukhari 3364-3365 · Surah Ibrahim 14:37 · Ar-Raheeq al-Makhtum',
+  },
+  {
+    id: 'event-10-marib-dam-ansar',
+    order: 10,
+    category: 'arab_prophets',
+    categoryLabelBn: 'নবী ও আরব ইতিহাস',
+    categoryLabelEn: 'Prophets & Arabia',
+    eraContextBn: 'আর-রাহীকুল মাখতূম · কাহতানী ধারা',
+    eraContextEn: 'Ar-Raheeq · Qahtani Dispersion',
+    titleBn: 'একটি ইঁদুরের গর্তে ভেঙে গেল প্রাচীন বিশ্বের বিস্ময়কর মা‘রিব বাঁধ — যেভাবে মদীনায় এলেন আনসারগণ!',
+    titleEn: 'One Burrowing Rat Collapses the Great Ma’rib Dam — Sending the Future Ansar to Madinah!',
+    titleAr: 'سَيْلُ الْعَرِمِ وَهَدْمُ سَدِّ مَأْرِبٍ',
+    hookBn: 'সাবা রাজ্যের অবিশ্বাস্য প্রকৌশলগত মা‘রিব বাঁধ কোনো শত্রুর কামানে ভাঙেনি—ভেঙেছিল একটি ছোট্ট অন্ধ ইঁদুরের (আল-খুলদ) গর্তে! আর সেই ধসেই মদীনায় আসেন আনসার সাহাবীরা!',
+    hookEn: 'No army shattered Yemen’s engineering marvel, the Ma’rib Dam—a single burrowing rodent weakened its wall, triggering the migration that brought the Ansar to Madinah!',
+    storyBn:
+      'ইয়েমেনের সাবা জাতি দুই পাহাড়ের মাঝখানে বিশাল পাথর-সিমেন্টের "মা‘রিব বাঁধ" তৈরি করে সমগ্র উপত্যকাকে ডানে-বামে দুই সবুজ উদ্যানে (সূরা সাবা ৩৪:১৫) পরিণত করেছিল। কিন্তু অহংকার ও অবাধ্যতা বাড়লে আল্লাহ বাঁধের গোড়ায় এক ধরনের অন্ধ ইঁদুর পাঠান, যে ভেতর থেকে মাটি খুঁড়ে বাঁধ দুর্বল করে দেয়। প্রবল বর্ষণে বাঁধ ধসে (সাইলুল আরিম) সব বাগান লণ্ডভণ্ড হয়ে গেলে কাহতানী আযদ গোত্র ইয়েমেন ছাড়তে বাধ্য হয়। এর ফলেই হারিসাহ ইবনে সা‘লাবার দুই পুত্র আউস ও খাযরাজ মদীনায় (যাঁরা পরে নবীজির আনসার হন), গাসসান শামে, লাখম ইরাকে এবং খুযা‘আহ মক্কায় বসতি স্থাপন করে!',
+    storyEn:
+      'Using brilliant hydraulic engineering, the Sabaeans of Yemen built the Ma’rib Dam between two mountains, nourishing twin paradisiacal gardens (Quran 34:15). When gratitude turned into arrogance, burrowing rodents hollowed the dam’s foundation until torrential floods (Sayl al-‘Arim) swept away the valley. Forced to disperse northward, the Azd tribes split: Aws and Khazraj settled Yathrib (becoming the Prophet’s future Ansar), Ghassan moved to Syria, Lakhm to Iraq, and Khuza‘ah to Makkah.',
+    impactOnHumanityBn:
+      'একটি ইঁদুর ও বাঁধ ভাঙার ঘটনাই ইসলামের ইতিহাসের গতিপথ নির্ধারণ করেছিল—কারণ মদীনার সেই অভিবাসী আউস ও খাযরাজই পরবর্তীতে নবীজিকে (ﷺ) আশ্রয় দিয়ে ইসলামী রাষ্ট্র প্রতিষ্ঠা করেন।',
+    impactOnHumanityEn:
+      'Directly explains how Madinah’s Aws and Khazraj came from Yemen—positioning the Ansar to welcome and defend Prophet Muhammad (SAW) centuries later.',
+    referenceBn: 'সূরা সাবা ৩৪:১৫-১৭ · আর-রাহীকুল মাখতূম (পৃ. ১৮-২০) · তারীখে তাবারী · কিতাবুল ইবার',
+    referenceEn: 'Surah Saba 34:15-17 · Ar-Raheeq al-Makhtum · Tarikh al-Tabari',
+  },
+  {
+    id: 'event-11-amr-ibn-luhayy',
+    order: 11,
+    category: 'arab_prophets',
+    categoryLabelBn: 'নবী ও আরব ইতিহাস',
+    categoryLabelEn: 'Prophets & Arabia',
+    eraContextBn: 'আর-রাহীকুল মাখতূম · ধর্মীয় বিকৃতি',
+    eraContextEn: 'Ar-Raheeq · Religious History',
+    titleBn: 'কাবার বুকে ৩৬০ মূর্তি ঢুকিয়েছিল যে ব্যক্তি: আমর ইবনে লুহাইয়ের শাম সফর ও জাহান্নামের দৃশ্য!',
+    titleEn: 'How 360 Idols Entered Makkah: ‘Amr ibn Luhayy’s Fateful Journey to Sham',
+    titleAr: 'عَمْرُو بْنُ لُحَيٍّ وَتَغْيِيرُ دِينِ إِبْرَاهِيمَ',
+    hookBn: 'মক্কার মানুষ শুরুতে মূর্তিপূজক ছিল না; বরং এক প্রভাবশালী দানশীল নেতার শাম সফরের অন্ধ অনুকরণ থেকেই সমগ্র আরবে মূর্তিপূজা ছড়িয়ে পড়ে!',
+    hookEn: 'Makkah long worshipped Allah alone—until one respected leader’s trip to Syria brought the first idol into the Ka‘bah, transforming Arabian religion for centuries.',
+    storyBn:
+      'ইসমাঈল (আ.)-এর যুগ থেকে শত শত বছর মক্কাবাসীরা খাঁটি তাওহীদে ছিল। কিন্তু খুযা‘আহ গোত্রের শাসক "আমর ইবনে লুহাই" প্রচুর দানশীল হওয়ায় আরবরা তার কথাকে ধর্মের মতো মানত। একবার সে সিরিয়ার বালকা অঞ্চলে গিয়ে লোকদের মূর্তিপূজা করতে দেখে আকৃষ্ট হয় এবং "হুবাল" নামের বিশাল লাল আকীক পাথরের মূর্তি মক্কায় এনে কাবার ভেতর স্থাপন করে! এমনকি নূহ (আ.)-এর যুগের ধ্বংস হওয়া ৫টি মূর্তি মাটি খুঁড়ে বের করে আরবের গোত্রগুলোতে ভাগ করে দেয়। ফাতহে মক্কায় (৮ম হিজরি) রাসূলুল্লাহ (ﷺ) ৩৬০টি মূর্তিই ভেঙে চুরমার করেন এবং সহীহ হাদীসে জানান—তিনি মিরাজে আমর ইবনে লুহাইকে জাহান্নামে নিজের নাড়িভুঁড়ি টানতে দেখেছেন।',
+    storyEn:
+      'For generations after Ismail (AS), Makkah upheld pure monotheism. Later, Khuza‘ah chief ‘Amr ibn Luhayy—revered across Arabia for extreme generosity—visited Balqa in Syria, admired local idol shrines, and imported the red-carnelian idol "Hubal" into the Ka‘bah, also reviving ancient Nuh-era idols across tribes. Prophet Muhammad (SAW) toppled all 360 idols at Makkah’s Conquest (8 AH) and saw ‘Amr punished in Hellfire for altering Ibrahim’s religion.',
+    impactOnHumanityBn:
+      'একজন জনপ্রিয় নেতার ধর্মীয় বিদআত কীভাবে পুরো জাতিকে শতাব্দীকালের শিরকে ডুবাতে পারে এবং কাবার তাওহীদী মর্যাদা কীভাবে ফিরে এল—তার জীবন্ত শিক্ষা।',
+    impactOnHumanityEn:
+      'Reveals the exact historical origin of pre-Islamic Arabian idolatry and underscores why the Prophet’s mission restored pure Abrahamic monotheism.',
+    referenceBn: 'সহীহ বুখারী হা/৩৫২১ ও ৪২৮৭ · সহীহ মুসলিম হা/২৮৫৬ · আর-রাহীকুল মাখতূম (অধ্যায় ৩)',
+    referenceEn: 'Sahih al-Bukhari 3521 & 4287 · Sahih Muslim 2856 · Ar-Raheeq al-Makhtum Ch. 3',
+  },
+  {
+    id: 'event-12-abdullah-100-camels',
+    order: 12,
+    category: 'arab_prophets',
+    categoryLabelBn: 'নবী ও আরব ইতিহাস',
+    categoryLabelEn: 'Prophets & Arabia',
+    eraContextBn: 'রাসূলুল্লাহ (ﷺ)-এর জন্মের প্রাক্কালে',
+    eraContextEn: 'Eve of the Prophet’s Birth',
+    titleBn: 'হারানো যমযম পুনঃখনন, ১০ পুত্রের মানত এবং ১০০ উটের বিনিময়ে নবীজির পিতা আব্দুল্লাহর অলৌকিক মুক্তি!',
+    titleEn: 'Rediscovering Lost Zamzam & Ransoming the Prophet’s Father Abdullah With 100 Camels',
+    titleAr: 'أَنَا ابْنُ الذَّبِيحَيْنِ · فِدَاءُ عَبْدِ اللَّهِ',
+    hookBn: 'কয়েক শতাব্দী মাটির নিচে হারিয়ে থাকা যমযম কূপ স্বপ্নে দেখে খুঁড়তে গিয়েই নবীজির দাদা আবদুল মুত্তালিব তাঁর প্রিয়তম পুত্র আব্দুল্লাহকে কুরবানী দেওয়ার মানত করেছিলেন!',
+    hookEn: 'After Zamzam lay buried for centuries, Abdul Muttalib’s dream-guided excavation led to a vow that nearly sacrificed the Prophet’s father Abdullah—until 100 camels ransomed him!',
+    storyBn:
+      'জুরহুম গোত্র মক্কা ছাড়ার সময় যমযম কূপ মাটি দিয়ে বুজিয়ে ফেলে, ফলে শতাব্দীর পর শতাব্দী কূপটির চিহ্ন পর্যন্ত হারিয়ে যায়। নবীজির দাদা আবদুল মুত্তালিব একাই হিজরে শুয়ে থাকা অবস্থায় পরপর কয়েক রাত স্বপ্নে কূপটি খননের নির্দেশ পান। খনন করার সময় মাত্র একটি পুত্র সাথে থাকায় কুরাইশদের বাধায় তিনি মানত করেন—আল্লাহ তাঁকে ১০ পুত্র দান করলে একজনকে কাবার কাছে কুরবানী দেবেন। ১০ পুত্র বড় হলে লটারিতে বারবার উঠে আসে সর্বকনিষ্ঠ প্রিয়তম পুত্র আব্দুল্লাহর (নবীজির পিতা) নাম! কুরাইশদের অনুরোধে ১০টি উটের বিপরীতে লটারি হতে হতে ১০০তম উটে গিয়ে তীর স্থির হয়। এভাবেই ১০০ উটের বিনিময়ে আব্দুল্লাহ মুক্তি পান এবং আরবে মানুষের প্রাণপণ মান-দণ্ডে ১০০ উট "দিয়াত" হিসেবে চালু হয়।',
+    storyEn:
+      'Before leaving Makkah, Jurhum buried Zamzam’s mouth, erasing its site for centuries. Guided by recurring dreams, the Prophet’s grandfather Abdul Muttalib and his lone son excavated the spring—and amid opposition, he vowed to sacrifice one son if granted ten. When ten grew up, repeated lots fell upon his youngest, Abdullah (the Prophet’s father). Drawn against camels ten by ten, the lot finally rested at 100 camels—sparing Abdullah and establishing Arabia’s blood-money standard.',
+    impactOnHumanityBn:
+      'এ অলৌকিক রক্ষার কারণেই নবীজি (ﷺ) নিজেকে "ইবনুয যবীহাইন" (দুই যবীহ ইসমাঈল ও আব্দুল্লাহর সন্তান) বলতেন; আর ঠিক সেই বছরই হাতির বাহিনীর ওপর আবাবীলের আযাব নেমে আসে।',
+    impactOnHumanityEn:
+      'Explains why the Prophet (SAW) called himself "Son of the Two Ransomed Ones" (Ismail and Abdullah), clearing the lineage for his blessed birth in 571 CE.',
+    referenceBn: 'সীরাত ইবনে হিশাম ১/১৪২-১৫৫ · আর-রাহীকুল মাখতূম · মুসতাদরাকে হাকিম হা/৪০৪৮',
+    referenceEn: 'Sirah Ibn Hisham 1:142-155 · Ar-Raheeq al-Makhtum · Mustadrak al-Hakim 4048',
+  },
+  {
+    id: 'event-13-dhul-qarnayn-wall',
+    order: 13,
+    category: 'ummah_bengal',
+    categoryLabelBn: 'বিশ্ব-উম্মাহ ও বাংলা',
+    categoryLabelEn: 'Global Ummah & Bengal',
+    eraContextBn: 'ইয়াফিসের ধারা ও শেষ যুগ',
+    eraContextEn: 'Yafith Line & End Times',
+    titleBn: 'যুল-কারনাইনের গলিত লোহা ও তামার প্রাচীর — দুই পাহাড়ের মাঝে ইয়াজূজ-মাজূজের ঐতিহাসিক রহস্য!',
+    titleEn: 'Dhul-Qarnayn’s Molten Iron & Copper Barrier: The Unseen Nations of Ya’juj & Ma’juj',
+    titleAr: 'رَدْمُ ذِي الْقَرْنَيْنِ وَيَأْجُوجُ وَمَأْجُوجُ',
+    hookBn: 'আদম ও নূহ (আ.)-এর বংশধরেরই একটি বিশাল অংশ (ইয়াফিস-ধারা) আজও এক অদৃশ্য পাহাড়-প্রাচীরের পেছনে আবদ্ধ—যা কিয়ামতের আগে খুলে যাবে!',
+    hookEn: 'Hidden behind an iron-and-copper mountain barrier built by righteous king Dhul-Qarnayn, Ya’juj and Ma’juj remain part of Adam’s lineage until the final era.',
+    storyBn:
+      'সূরা কাহফে (১৮:৯৩-৯৮) বর্ণিত ন্যায়পরায়ণ বিশ্ববিজয়ী বাদশাহ যুল-কারনাইন পূর্বে ও উত্তরে ভ্রমণ শেষে এমন এক জাতির কাছে পৌঁছান, যারা ইয়াজূজ ও মাজূজের (ইয়াফিসের বংশধর) তাণ্ডবে অতিষ্ঠ ছিল। যুল-কারনাইন তাদের থেকে কোনো কর না নিয়েই দুই পাহাড়ের মধ্যবর্তী গিরিপথ বিশাল লোহার পাত দিয়ে ভরাট করেন এবং হাপরের আগুনে গলিয়ে তাতে গলিত তামা ঢেলে অভেদ্য প্রাচীর গড়ে দেন। সহীহ বুখারী ও মুসলিমে রাসূলুল্লাহ (ﷺ) জানিয়েছেন—তারা প্রতিদিন সেই প্রাচীর খনন করে, কিন্তু ইনশাআল্লাহ না বলায় পরদিন তা আবার মজবুত হয়ে যায়; কিয়ামতের পূর্বে ঈসা (আ.)-এর যুগে আল্লাহর হুকুমে তারা প্রাচীর ভেঙে বের হবে।',
+    storyEn:
+      'In Surah Al-Kahf (18:93-98), righteous ruler Dhul-Qarnayn reached a mountain pass where locals suffered raids from Ya’juj and Ma’juj (descendants of Yafith). Refusing tribute, he stacked iron blocks between two peaks, fanned them white-hot, and poured molten copper over them into a seamless barrier. Sahih Hadith confirm they dig daily yet cannot breach it until Allah’s appointed hour after the return of Isa (AS).',
+    impactOnHumanityBn:
+      'মানবজাতির ইতিহাস কেবল আমাদের দৃশ্যমান মানচিত্রে সীমাবদ্ধ নয়; পৃথিবীর এই প্রাচীর ও শেষ যুগের ঘটনা কুরআনের অন্যতম গভীর বিশ্ব-রহস্য।',
+    impactOnHumanityEn:
+      'Connects classical Yafith genealogy directly with Quranic eschatology and reminds humanity of Allah’s unseen decree over history.',
+    referenceBn: 'সূরা আল-কাহফ ১৮:৯৩-৯৮ · সূরা আল-আম্বিয়া ২১:৯৬ · সহীহ বুখারী হা/৩৩৪৬ ও ৩৩৪৭ · সহীহ মুসলিম হা/২৮৮০',
+    referenceEn: 'Surah Al-Kahf 18:93-98 · Al-Anbiya 21:96 · Bukhari 3346-3347 · Muslim 2880',
+  },
+  {
+    id: 'event-14-salman-three-continents',
+    order: 14,
+    category: 'ummah_bengal',
+    categoryLabelBn: 'বিশ্ব-উম্মাহ ও বাংলা',
+    categoryLabelEn: 'Global Ummah & Bengal',
+    eraContextBn: '৬০০ বছরের ফাতরাত ও মদীনা',
+    eraContextEn: 'End of 600-Year Fatrah',
+    titleBn: 'অগ্নিপূজা ছেড়ে পারস্য থেকে মদীনায় সালমান ফারসী (রা.)-এর মহাযাত্রা ও তিন মহাদেশের সাহাবী ঐক্য!',
+    titleEn: 'Salman al-Farsi’s Epic Search for the Final Prophet & the Three-Continent Companions',
+    titleAr: 'سَلْمَانُ مِنَّا أَهْلَ الْبَيْتِ',
+    hookBn: 'নূহ (আ.)-এর যে তিন পুত্র (সাম, হাম, ইয়াফিস) ব্যাবিলন থেকে তিন মহাদেশে আলাদা হয়ে গিয়েছিলেন, মদীনার মসজিদে নববীতে তাঁরাই প্রথম এক কাতারে দাঁড়ান!',
+    hookEn: 'Separated since Babel across three continents, the lines of Sam, Ham, and Yafith stood shoulder to shoulder in Madinah inside the Prophet’s Mosque.',
+    storyBn:
+      'ইরানের ইসফাহানের এক অগ্নি-উপাসক পুরোহিতের ধনী পুত্র ছিলেন "রূযবাহ" (সালমান ফারসী রা.)। সত্যের খোঁজে বাড়ির বিলাসিতা ছেড়ে সিরিয়া, মসুল ও আম্মূরিয়ায় একের পর এক খ্রিষ্টান সাধুদের সেবা করেন। সর্বশেষ সাধু মৃত্যুর আগে বলে যান—তাওহীদের শেষ নবী আরবের দুই কালো পাথুরে ভূমির মাঝে খেজুরের দেশে আসবেন; তাঁর দুই কাঁধের মাঝে নবুওয়াতের মোহর থাকবে এবং তিনি হাদিয়া নেবেন কিন্তু সাদাকাহ খাবেন না! পথিমধ্যে দাস হিসেবে বিক্রি হয়েও সালমান (রা.) মদীনায় পৌঁছান ও এই তিনটি নিদর্শন পরীক্ষা করে ইসলাম গ্রহণ করেন। আর মদীনায় তাঁর সাথে এক কাতারে ছিলেন আবিসিনিয়ার বিলাল (হাম), রোমের সুহাইব (ইয়াফিস) ও মক্কা-মদীনার কুরাইশ-আনসার (সাম)!',
+    storyEn:
+      'Born wealthy into a Zoroastrian priest’s family in Isfahan, Salman al-Farsi (RA) abandoned luxury to seek truth under Christian ascetics across Syria and Anatolia. His final dying teacher foretold the Last Prophet in a land of date palms between volcanic hills, bearing the Seal of Prophethood and accepting gifts rather than charity. Enslaved en route to Arabia, Salman reached Madinah, verified all three signs, and joined Bilal of Abyssinia (Ham), Suhayb of Rome (Yafith), and the Arabs (Sam).',
+    impactOnHumanityBn:
+      'সাম-হাম-ইয়াফিসের হাজার বছরের ভৌগোলিক বিভেদ ভেঙে শেষ নবী (ﷺ) পৃথিবীতে বর্ণ-গোত্রহীন একক ভ্রাতৃত্ববোধ (উম্মাহ) গড়ে তোলেন।',
+    impactOnHumanityEn:
+      'Physically healed humanity’s post-Babel fragmentation by uniting three continental branches in one universal brotherhood.',
+    referenceBn: 'মুসনাদে আহমাদ হা/২৩৭৩৭ (হাসান) · সহীহ মুসলিম · আল-বিদায়াহ ওয়ান-নিহায়াহ (সালমান রা. অধ্যায়)',
+    referenceEn: 'Musnad Ahmad 23737 (Hasan) · Sahih Muslim · Al-Bidayah wan-Nihayah',
+  },
+  {
+    id: 'event-15-bengal-china-maritime',
+    order: 15,
+    category: 'ummah_bengal',
+    categoryLabelBn: 'বিশ্ব-উম্মাহ ও বাংলা',
+    categoryLabelEn: 'Global Ummah & Bengal',
+    eraContextBn: '১ম হিজরি শতাব্দী – ১৪শ শতক',
+    eraContextEn: '1st Century AH – 14th Century CE',
+    titleBn: 'সমুদ্রপথে বাংলা-চট্টগ্রাম ও চীনে ইসলাম: আরব বণিক, শাহজালাল (রহ.) এবং ইবনে বতুতার বাংলা সফর!',
+    titleEn: 'Early Maritime Islam to Bengal & China: Arab Sailors, Shah Jalal & Ibn Battuta in Chittagong',
+    titleAr: 'سَدْكَاوَانُ (شَاتْغَامُ) وَسِلْهَتْ وَبَنْغَالَا',
+    hookBn: 'বাংলার উপকূল চট্টগ্রাম ও দূরপ্রাচ্যের চীন—ইসলামের প্রাথমিক শতাব্দী থেকেই আরব সমুদ্রবণিকদের প্রধান নদীবন্দর ও শান্তিপূর্ণ দাওয়াতের কেন্দ্র ছিল!',
+    hookEn: 'From early Abbasid and Umayyad maritime centuries, Arab navigators connected Chittagong’s coast ("Samandar") and Canton, culminating in Bengal’s vibrant Islamic heritage.',
+    storyBn:
+      'ইবনে খুরদাদবেহ, আল-মাস‘ঊদী (মুরূজুয যাহাব) ও আল-ইদরীসী প্রমুখ প্রাচীন মুসলিম ভূগোলবিদদের গ্রন্থে নবম-দশম শতাব্দীতেই বাংলার সমুদ্রবন্দর "সামান্দার" (চট্টগ্রাম)-এর প্রাণবন্ত আরব-পারসিক সমুদ্রবাণিজ্যের বিবরণ পাওয়া যায়—যে পথ ধরেই আরব-বণিকেরা চীনের ক্যান্টন ও মালয় দ্বীপপুঞ্জে যেতেন। পরবর্তীতে ইয়েমেনের হযরত শাহজালাল মুজাররাদে ইয়েমেনী (রহ.) ও তাঁর ৩৬০ আউলিয়া ১৩০৩ খ্রিষ্টাব্দে সিলেটে তাওহীদের আলো জ্বালান। ১৩৪৫-৪৬ খ্রিষ্টাব্দে বিশ্বপরিব্রাজক ইবনে বতুতা তাঁর "রিহলাহ" গ্রন্থে চট্টগ্রাম (সাদকাওয়ান), কামরূপ-সিলেটে শাহজালাল (রহ.)-এর সাথে সাক্ষাৎ এবং সোনারগাঁওয়ের প্রাচুর্য ও মুসলিম সমাজের বিস্ময়কর আতিথেয়তার প্রত্যক্ষ বিবরণ লিখে গেছেন!',
+    storyEn:
+      'Early Muslim geographers including Ibn Khordadbeh, Al-Mas‘udi (Muruj adh-Dhahab), and Al-Idrisi documented brisk Arab-Persian maritime trade through Bengal’s great port "Samandar" (Chattogram) en route to Canton and Southeast Asia. Later, Hazrat Shah Jalal of Yemen (RA) and his 360 companions illuminated Sylhet in 1303 CE, and in 1345–46 CE world traveler Ibn Battuta documented Chittagong ("Sadkawan"), Sonargaon, and his personal meeting with Hazrat Shah Jalal in his Rihlah.',
+    impactOnHumanityBn:
+      'আজকের বিশ্বের প্রায় ৬০+ কোটি দক্ষিণ এশীয় ও ২৪+ কোটি ইন্দোনেশীয় মুসলিম—অর্থাৎ সমগ্র উম্মাহর অর্ধেকেরও বেশি মানুষ এই সমুদ্রপথ ও সুফি-দাওয়াতের ফসল!',
+    impactOnHumanityEn:
+      'This peaceful maritime and scholarly outreach across the Bay of Bengal and Indian Ocean eventually produced more than half of the global Muslim population today.',
+    referenceBn: 'মুরূজুয যাহাব (আল-মাস‘ঊদী) · ফুতূহুল বুলদান · তুহফাতুন নুযযার / রিহলাহ ইবনে বতুতা (বাঙ্গালাহ অধ্যায়)',
+    referenceEn: 'Muruj adh-Dhahab (Al-Mas‘udi) · Futuh al-Buldan · Rihlah Ibn Battuta (Bengal Chapter)',
+  },
+  {
+    id: 'event-16-farewell-dna-unity',
+    order: 16,
+    category: 'ummah_bengal',
+    categoryLabelBn: 'বিশ্ব-উম্মাহ ও বাংলা',
+    categoryLabelEn: 'Global Ummah & Bengal',
+    eraContextBn: 'বিদায় হজ্জ ১০ হিজরি – আজকের ৮০০+ কোটি মানুষ',
+    eraContextEn: '10 AH Farewell Sermon – Today’s 8+ Billion',
+    titleBn: 'বিদায় হজ্জের বিশ্বসনদ ও আধুনিক মানব-জিনোম: ৮০০+ কোটি মানুষই যে একই পিতা-মাতার সন্তান তার প্রমাণ!',
+    titleEn: 'The Farewell Sermon & Modern Genomics: Scientific Echo of One Human Family',
+    titleAr: 'كُلُّكُمْ لِآدَمَ وَآدَمُ مِنْ تُرَابٍ',
+    hookBn: '১,৪০০ বছর আগে আরাফাতের ময়দানে ঘোষিত মানবজাতির অভিন্ন উৎপত্তির বাণী আজ আধুনিক ডিএনএ (DNA) বিজ্ঞানেও বিস্ময়করভাবে প্রতিধ্বনিত হচ্ছে!',
+    hookEn: 'Fourteen centuries after the Farewell Sermon proclaimed every human descends from Adam, modern genetics confirms that all 8+ billion humans share common ancestral lineages.',
+    storyBn:
+      '১০ম হিজরিতে (৬৩২ খ্রি.) বিদায় হজ্জের ঐতিহাসিক ভাষণে ১ লাখ ২৪ হাজার সাহাবীর সামনে রাসূলুল্লাহ (ﷺ) মানবজাতির সর্বশ্রেষ্ঠ সাম্যের সনদ ঘোষণা করেন: "হে মানুষ! তোমাদের রব এক, তোমাদের পিতা (আদম) এক। কোনো অনারবের ওপর আরবের কিংবা আরবের ওপর অনারবের, কালোর ওপর সাদার বা সাদার ওপর কালোর কোনো শ্রেষ্ঠত্ব নেই—তাকওয়া ছাড়া।" (মুসনাদে আহমাদ ২৩৪৮৯)। শতাব্দী পর আজ আধুনিক জনসংখ্যা-জেনেটিক্স (Y-Chromosomal ও Mitochondrial DNA গবেষণা) দেখাচ্ছে, বিশ্বের ভিন্ন ভিন্ন মহাদেশের মানুষের জিনগত পার্থক্য মাত্র ০.১%-এরও কম এবং সমগ্র মানবজাতি অত্যন্ত অভিন্ন প্রাচীন পিতৃ-মাতৃ ধারা থেকেই পৃথিবীময় ছড়িয়ে পড়েছে।',
+    storyEn:
+      'At Arafat in 10 AH (632 CE), Prophet Muhammad (SAW) delivered humanity’s timeless charter of equality: "O people, your Lord is One and your father is one. An Arab has no superiority over a non-Arab, nor white over black, except through righteousness." Over 1,400 years later, modern population genomics confirms over 99.9% DNA similarity across all ethnicities and traces humanity’s Y-chromosomal and mitochondrial lineages back to common primordial roots.',
+    impactOnHumanityBn:
+      'সমগ্র মানবজাতির মূল শাখা-ট্রি আমাদের শেখায়: ভাষা, দেশ ও বর্ণ যত ভিন্নই হোক, আমরা আদম ও নূহ (আ.)-এর একই ঘরের সন্তান—এবং একমাত্র তাকওয়া ও মানবিক ন্যায়বিচারই প্রকৃত মর্যাদার মাপকাঠি।',
+    impactOnHumanityEn:
+      'Crowns the entire tree of humanity: regardless of nation or tongue, every person on Earth is family from Adam and Nuh (AS), judged solely by character and righteousness.',
+    referenceBn: 'সূরা আল-হুজুরাত ৪৯:১৩ · মুসনাদে আহমাদ হা/২৩৪৮৯ (সহীহ) · সহীহ মুসলিম (বিদায় হজ্জ)',
+    referenceEn: 'Surah Al-Hujurat 49:13 · Musnad Ahmad 23489 (Sahih) · Sahih Muslim',
   },
 ];
 
