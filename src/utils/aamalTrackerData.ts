@@ -1059,29 +1059,44 @@ export function createInitialDayLog(dateKey: string = getTodayDateKey()): AamalD
   };
 }
 
+export function normalizeAamalDayLog(dateKey: string, raw: any): AamalDayLog {
+  if (!raw || typeof raw !== 'object') {
+    return createInitialDayLog(dateKey);
+  }
+  const existingMap = new Map<string, boolean>(
+    Array.isArray(raw.items) ? raw.items.map((i: any) => [i.id, !!i.completed]) : []
+  );
+  // Support legacy format where prayers object might exist
+  if (raw.prayers && typeof raw.prayers === 'object') {
+    ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'].forEach((pId) => {
+      if (raw.prayers[pId]?.offered) existingMap.set(pId, true);
+    });
+  }
+  const mergedItems: AamalCheckItem[] = DEFAULT_AAMAL_ITEMS.map((def) => ({
+    ...def,
+    completed: Boolean(existingMap.get(def.id)),
+  }));
+  const completedCount = mergedItems.filter((i) => i.completed).length;
+  const computedRatio = mergedItems.length > 0 ? completedCount / mergedItems.length : 0;
+
+  return {
+    dateKey: raw.dateKey || dateKey,
+    items: mergedItems,
+    quranPagesRead: typeof raw.quranPagesRead === 'number' ? raw.quranPagesRead : 0,
+    dhikrCount: typeof raw.dhikrCount === 'number' ? raw.dhikrCount : 0,
+    zikrBreakdown: Array.isArray(raw.zikrBreakdown) ? raw.zikrBreakdown : undefined,
+    reflectionNotes: typeof raw.reflectionNotes === 'string' ? raw.reflectionNotes : '',
+    completedRatio: typeof raw.completedRatio === 'number' && raw.completedRatio > 0 ? Math.max(raw.completedRatio, computedRatio) : computedRatio,
+  };
+}
+
 export function getAamalLogForDate(dateKey: string): AamalDayLog {
   try {
     const raw = localStorage.getItem(`zikrmate_aamal_${dateKey}`);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.items)) {
-        // Merge with DEFAULT_AAMAL_ITEMS to ensure all new categories and items exist
-        const existingMap = new Map<string, boolean>(
-          parsed.items.map((i: AamalCheckItem) => [i.id, !!i.completed])
-        );
-        const mergedItems: AamalCheckItem[] = DEFAULT_AAMAL_ITEMS.map((def) => ({
-          ...def,
-          completed: Boolean(existingMap.get(def.id)),
-        }));
-
-        const completedCount = mergedItems.filter((i) => i.completed).length;
-        const completedRatio = mergedItems.length > 0 ? completedCount / mergedItems.length : 0;
-
-        return {
-          ...parsed,
-          items: mergedItems,
-          completedRatio,
-        };
+        return normalizeAamalDayLog(dateKey, parsed);
       }
     }
   } catch (e) {
@@ -1093,6 +1108,9 @@ export function getAamalLogForDate(dateKey: string): AamalDayLog {
 export function saveAamalLogForDate(dateKey: string, log: AamalDayLog): void {
   try {
     localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(log));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('zikrplus-aamal-updated', { detail: { dateKey } }));
+    }
   } catch (e: any) {
     try {
       const keysToRemove: string[] = [];
@@ -1104,6 +1122,9 @@ export function saveAamalLogForDate(dateKey: string, log: AamalDayLog): void {
       }
       keysToRemove.forEach((k) => localStorage.removeItem(k));
       localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(log));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('zikrplus-aamal-updated', { detail: { dateKey } }));
+      }
     } catch (retryErr) {
       console.warn('Quota exceeded retry failed silently:', retryErr);
     }
@@ -1274,6 +1295,35 @@ export function clearAllAamalLogs(): void {
     saveAamalLogForDate(today, createInitialDayLog(today));
   } catch (e) {
     console.error('Failed to clear aamal logs', e);
+  }
+}
+
+export function replaceAllAamalLogs(incomingLogs?: Record<string, any>): void {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('zikrmate_aamal_')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+    if (incomingLogs && typeof incomingLogs === 'object' && Object.keys(incomingLogs).length > 0) {
+      for (const [dateKey, logData] of Object.entries(incomingLogs)) {
+        const normalized = normalizeAamalDayLog(dateKey, logData);
+        localStorage.setItem(`zikrmate_aamal_${dateKey}`, JSON.stringify(normalized));
+      }
+    } else {
+      const today = getTodayDateKey();
+      localStorage.setItem(`zikrmate_aamal_${today}`, JSON.stringify(createInitialDayLog(today)));
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('zikrplus-aamal-updated'));
+    }
+  } catch (e) {
+    console.error('Failed to replace aamal logs', e);
   }
 }
 

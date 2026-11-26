@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   X,
   ChevronLeft,
@@ -46,8 +46,12 @@ import {
   Palette,
   Play,
   Square,
+  BarChart3,
+  FileSpreadsheet,
+  Image as ImageIcon,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import html2canvas from 'html2canvas';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings, AppTheme } from '../types';
 import { APP_LIGHT_THEMES } from '../utils/appThemes';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
@@ -55,6 +59,14 @@ import { findSavedAccount, saveAccountToRegistry, updateAccountPassword, normali
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { SETTINGS_UI } from '../utils/appTranslations';
 import { getDetectedDeviceInfo } from '../utils/deviceInfo';
+import { HistoryChartsDashboard } from './HistoryChartsDashboard';
+import {
+  HistoryPeriodRange,
+  compileAggregatedReport,
+  generateComprehensiveHistoryPdfReport,
+} from '../utils/exportPdf';
+import { getAllAamalLogs, exportAamalHistoryToCsv } from '../utils/aamalTrackerData';
+import { sanitizeClonedDocForHtml2Canvas } from '../utils/html2canvasSanitizer';
 
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { InstallAppModal } from './InstallAppModal';
@@ -65,7 +77,6 @@ import {
   verifySubmittedOtp,
   getPendingOtp,
   loadUserDataFromCloud,
-  saveUserDataToCloud,
   updateCloudUserPassword,
   generateAndSendPasswordResetCode,
   verifyPasswordResetCode,
@@ -276,6 +287,82 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   };
 
   const appearanceThemes = APP_LIGHT_THEMES;
+
+  // Per-User Account Visual Report & Charts State
+  const [accountReportRange, setAccountReportRange] = useState<HistoryPeriodRange>('1month');
+  const [aamalRefreshTick, setAamalRefreshTick] = useState(0);
+  const [isGeneratingAccountPdf, setIsGeneratingAccountPdf] = useState(false);
+  const [isCapturingAccountPng, setIsCapturingAccountPng] = useState(false);
+  const [accountReportToast, setAccountReportToast] = useState<string | null>(null);
+  const accountChartsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleAamalChange = () => setAamalRefreshTick((prev) => prev + 1);
+    window.addEventListener('zikrplus-aamal-updated', handleAamalChange);
+    return () => window.removeEventListener('zikrplus-aamal-updated', handleAamalChange);
+  }, []);
+
+  const accountAllLogs = useMemo(
+    () => getAllAamalLogs(),
+    [isOpen, embedded, userProfile.emailOrPhone, userProfile.isSignedIn, aamalRefreshTick, lifetimeTotalCount, dailyTotal]
+  );
+
+  const accountReportData = useMemo(
+    () => compileAggregatedReport(accountAllLogs, accountReportRange, undefined, zikrs),
+    [accountAllLogs, accountReportRange, zikrs]
+  );
+
+  const handleAccountDownloadPdf = async () => {
+    try {
+      setIsGeneratingAccountPdf(true);
+      if (soundEnabled) soundHaptics.playMilestone();
+      await generateComprehensiveHistoryPdfReport(accountReportData, userProfile);
+      setAccountReportToast(
+        t('অ্যাকাউন্ট পিডিএফ রিপোর্ট ডাউনলোড হয়েছে!', 'تم تحميل تقرير PDF للحساب!', 'Account PDF Report downloaded!')
+      );
+      setTimeout(() => setAccountReportToast(null), 3500);
+    } catch (e) {
+      console.error('Account PDF error', e);
+    } finally {
+      setIsGeneratingAccountPdf(false);
+    }
+  };
+
+  const handleAccountDownloadPng = async () => {
+    if (!accountChartsRef.current) return;
+    try {
+      setIsCapturingAccountPng(true);
+      if (soundEnabled) soundHaptics.playMilestone();
+      const canvas = await html2canvas(accountChartsRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: isDay ? '#f4f7f6' : '#051619',
+        onclone: (doc) => sanitizeClonedDocForHtml2Canvas(doc),
+      });
+      const link = document.createElement('a');
+      const safeUser = (userProfile.name || 'user').replace(/[^a-zA-Z0-9]/g, '_');
+      link.download = `ZikrPlus_${safeUser}_Report_${accountReportRange}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      setAccountReportToast(
+        t('অ্যাকাউন্ট চার্ট ইমেজ (.png) ডাউনলোড হয়েছে!', 'تم تحميل صورة الرسم البياني (.png)!', 'Account Charts Snapshot (.png) downloaded!')
+      );
+      setTimeout(() => setAccountReportToast(null), 3500);
+    } catch (e) {
+      console.error('Account PNG error', e);
+    } finally {
+      setIsCapturingAccountPng(false);
+    }
+  };
+
+  const handleAccountDownloadCsv = () => {
+    exportAamalHistoryToCsv(accountReportRange === '1month' ? accountReportData.startDate.slice(0, 7) : undefined);
+    if (soundEnabled) soundHaptics.playMilestone();
+    setAccountReportToast(
+      t('এক্সেল স্প্রেডশিট (.csv) ডাউনলোড হয়েছে!', 'تم تحميل جدول البيانات (.csv)!', 'Excel Spreadsheet (.csv) downloaded!')
+    );
+    setTimeout(() => setAccountReportToast(null), 3500);
+  };
 
   // PWA Install capabilities inside Settings
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -592,32 +679,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     if (verifyResult.exists) {
       setCloudSyncMessage(
         t(
-          'লগইন সফল! ক্লাউড থেকে আপনার আমল ও হিস্ট্রি লোড হচ্ছে...',
+          'লগইন সফল! ক্লাউড থেকে শুধুমাত্র আপনার আমল ও হিস্ট্রি লোড হচ্ছে...',
           'تم تسجيل الدخول بنجاح! جارٍ تحميل أذكارك وسجلك من السحابة...',
-          'Sign-in successful! Loading your Zikr & history from the cloud...'
+          'Sign-in successful! Loading your separate Zikr & history from the cloud...'
         )
       );
     } else {
       setCloudSyncMessage(
         t(
-          'নতুন অ্যাকাউন্ট তৈরি হয়েছে! ক্লাউড সিঙ্ক চালু করা হয়েছে।',
+          'নতুন অ্যাকাউন্ট তৈরি হয়েছে! আলাদা প্রোফাইল ও ০ থেকে হিসাব শুরু হয়েছে।',
           'تم إنشاء حساب جديد! تم تفعيل المزامنة السحابية.',
-          'New account created! Cloud sync is now active.'
+          'New account created! Separate profile initialized cleanly.'
         )
       );
-    }
-
-    if (cloudData && cloudData.foundInCloud) {
-      if (onCloudDataLoaded) {
-        onCloudDataLoaded(cloudData, targetKey);
-      }
-    } else {
-      const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-      if (localSum > 0 || lifetimeTotalCount > 0) {
-        saveUserDataToCloud(targetKey, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
-      } else if (onCloudDataLoaded) {
-        onCloudDataLoaded({ foundInCloud: false }, targetKey);
-      }
     }
 
     setVerificationStep('success');
@@ -719,19 +793,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
 
-    if (cloudData && cloudData.foundInCloud) {
-      if (onCloudDataLoaded) {
-        onCloudDataLoaded(cloudData, emailClean);
-      }
-    } else {
-      const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-      if (localSum > 0 || lifetimeTotalCount > 0) {
-        saveUserDataToCloud(emailClean, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
-      } else if (onCloudDataLoaded) {
-        onCloudDataLoaded({ foundInCloud: false }, emailClean);
-      }
-    }
-
     setVerificationStep('success');
     setCloudSyncMessage(
       t(
@@ -780,19 +841,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
         saveAccountToRegistry(updated);
         onUpdateProfile(updated);
-
-        if (cloudData && cloudData.foundInCloud) {
-          if (onCloudDataLoaded) {
-            onCloudDataLoaded(cloudData, targetEmail);
-          }
-        } else {
-          const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-          if (localSum > 0 || lifetimeTotalCount > 0) {
-            saveUserDataToCloud(targetEmail, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
-          } else if (onCloudDataLoaded) {
-            onCloudDataLoaded({ foundInCloud: false }, targetEmail);
-          }
-        }
 
         setIsVerifying(false);
         setActiveSubModal('none');
@@ -1276,6 +1324,190 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* PER-USER ACCOUNT HISTORY & AAMAL VISUAL REPORT + CHARTS (Matches History Analytics View) */}
+              <div
+                className={`p-4 sm:p-5 rounded-2xl border shadow-sm space-y-4 ${
+                  isDay
+                    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
+                }`}
+              >
+                {/* Section Header + Active User Isolation Badge */}
+                <div className="flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-[var(--app-primary,#006A4E)]/12 text-[var(--app-primary,#006A4E)] dark:text-emerald-300 flex items-center justify-center shrink-0">
+                      <BarChart3 className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-black text-sm sm:text-base leading-tight">
+                        {t(
+                          'আপনার অ্যাকাউন্টের আমল ও জিকির চার্ট রিপোর্ট',
+                          'تقرير الرسوم البيانية للأذكار والأعمال',
+                          'Personal Aamal & Zikr Charts Report'
+                        )}
+                      </h4>
+                      <p className={`text-[11px] truncate ${isDay ? 'text-slate-600' : 'text-emerald-300/80'}`}>
+                        {userProfile.isSignedIn && userProfile.emailOrPhone
+                          ? `${userProfile.name} • ${userProfile.emailOrPhone}`
+                          : t('বর্তমান ডিভাইস গেস্ট অ্যাকাউন্ট (সাইন ইন করলে আলাদা প্রোফাইল রিপোর্ট সংরক্ষিত হবে)', 'حساب الزائر الحالي', 'Active Guest Session (Sign in for separate cloud profile reports)')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {onExportPdf && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        onExportPdf();
+                      }}
+                      className="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-[var(--app-surface-soft,#e9f6ef)] dark:bg-[#082024] text-[var(--app-primary,#006A4E)] dark:text-emerald-300 border border-[var(--app-border,#cbe6d8)] dark:border-[#1c5763] hover:opacity-90 transition cursor-pointer shrink-0"
+                    >
+                      {t('পূর্ণাঙ্গ টেবিল রিপোর্ট', 'التقرير الكامل', 'Full Ledger View')}
+                    </button>
+                  )}
+                </div>
+
+                {accountReportToast && (
+                  <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{accountReportToast}</span>
+                  </div>
+                )}
+
+                {/* Period Filter Buttons (1 Day / 1 Month / 4 Months / 1 Year / 10 Years) */}
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                  {(
+                    [
+                      { id: '1day', bn: '১ দিন', ar: 'يوم', en: '1 Day' },
+                      { id: '1month', bn: '১ মাস', ar: 'شهر', en: '1 Month' },
+                      { id: '4months', bn: '৪ মাস', ar: '٤ أشهر', en: '4 Months' },
+                      { id: '1year', bn: '১ বছর', ar: 'سنة', en: '1 Year' },
+                      { id: '10years', bn: '১০ বছর', ar: '١٠ سنوات', en: '10 Years' },
+                    ] as const
+                  ).map((rng) => {
+                    const active = accountReportRange === rng.id;
+                    return (
+                      <button
+                        key={rng.id}
+                        type="button"
+                        onClick={() => {
+                          setAccountReportRange(rng.id);
+                          if (soundEnabled) soundHaptics.playTap();
+                        }}
+                        className={`py-2 px-2.5 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                          active
+                            ? 'bg-[var(--app-primary,#006A4E)] text-white border-[var(--app-primary,#006A4E)] shadow-sm'
+                            : isDay
+                            ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                            : 'bg-[#082024] hover:bg-[#0e3036] border-[#153e46] text-emerald-300'
+                        }`}
+                      >
+                        {t(rng.bn, rng.ar, rng.en)}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 4 KPI Summary Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className={`p-3 rounded-xl border text-center ${isDay ? 'bg-white border-slate-200' : 'bg-[#082024] border-[#153e46]'}`}>
+                    <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300 uppercase">
+                      {t('সর্বমোট জিকির', 'إجمالي الذكر', 'Total Dhikr')}
+                    </div>
+                    <div className="text-xl font-black font-mono tabular-nums text-[var(--app-primary,#006A4E)] dark:text-amber-300 mt-0.5">
+                      {formatNum(
+                        accountReportRange === '10years'
+                          ? Math.max(lifetimeTotalCount, accountReportData.totalDhikrSum)
+                          : accountReportData.totalDhikrSum
+                      )}
+                    </div>
+                  </div>
+                  <div className={`p-3 rounded-xl border text-center ${isDay ? 'bg-white border-slate-200' : 'bg-[#082024] border-[#153e46]'}`}>
+                    <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300 uppercase">
+                      {t('ফরজ নামাজ', 'الصلوات المفروضة', 'Fardh Salah')}
+                    </div>
+                    <div className="text-xl font-black font-mono tabular-nums text-teal-600 dark:text-emerald-400 mt-0.5">
+                      {formatNum(accountReportData.prayerStats.fardhTotal)}
+                    </div>
+                  </div>
+                  <div className={`p-3 rounded-xl border text-center ${isDay ? 'bg-white border-slate-200' : 'bg-[#082024] border-[#153e46]'}`}>
+                    <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300 uppercase">
+                      {t('কুরআন তিলাওয়াত', 'تلاوة القرآن', 'Quran Pages')}
+                    </div>
+                    <div className="text-xl font-black font-mono tabular-nums text-blue-600 dark:text-blue-400 mt-0.5">
+                      {formatNum(accountReportData.totalQuranPagesSum)}
+                    </div>
+                  </div>
+                  <div className={`p-3 rounded-xl border text-center ${isDay ? 'bg-white border-slate-200' : 'bg-[#082024] border-[#153e46]'}`}>
+                    <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300 uppercase">
+                      {t('গড় আমল স্কোর', 'معدل الإنجاز', 'Avg Score')}
+                    </div>
+                    <div className="text-xl font-black font-mono tabular-nums text-purple-600 dark:text-purple-400 mt-0.5">
+                      {formatNum(accountReportData.avgCompletionRate)}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Embedded Visual Charts Dashboard */}
+                <div ref={accountChartsRef} className="space-y-4">
+                  <HistoryChartsDashboard
+                    reportData={accountReportData}
+                    allLogs={accountAllLogs}
+                    selectedRange={accountReportRange}
+                    themeMode={themeMode}
+                    selectedLanguage={selectedLanguage}
+                    liveZikrs={zikrs}
+                    historySessions={historySessions}
+                    masterTotal={lifetimeTotalCount}
+                  />
+                </div>
+
+                {/* Export Controls (PNG / CSV / PDF) */}
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleAccountDownloadPng}
+                    disabled={isCapturingAccountPng}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 disabled:opacity-50 ${
+                      isDay
+                        ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                        : 'bg-[#082024] hover:bg-[#0d2d34] border-[#153e46] text-emerald-300'
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span className="truncate">
+                      {isCapturingAccountPng ? t('তৈরি হচ্ছে...', 'جاري...', 'Saving...') : t('চার্ট PNG', 'صورة PNG', 'Chart PNG')}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAccountDownloadCsv}
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                      isDay
+                        ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                        : 'bg-[#082024] hover:bg-[#0d2d34] border-[#153e46] text-emerald-300'
+                    }`}
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-teal-500 shrink-0" />
+                    <span className="truncate">{t('CSV ডাটা', 'ملف CSV', 'Export CSV')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAccountDownloadPdf}
+                    disabled={isGeneratingAccountPdf}
+                    className="py-2.5 px-3 rounded-xl bg-[var(--app-primary,#006A4E)] hover:opacity-95 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer active:scale-95 disabled:opacity-50"
+                  >
+                    <Download className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      {isGeneratingAccountPdf ? t('তৈরি হচ্ছে...', 'جاري...', 'PDF...') : t('PDF রিপোর্ট', 'تقرير PDF', 'PDF Report')}
+                    </span>
+                  </button>
+                </div>
+              </div>
 
               {/* MENU OPTIONS LIST */}
               <div

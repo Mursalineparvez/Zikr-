@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ShieldAlert,
   X,
@@ -22,6 +22,7 @@ import {
   User,
   ExternalLink,
   MessageSquarePlus,
+  BarChart3,
 } from 'lucide-react';
 import {
   fetchAllUsersForAdmin,
@@ -34,9 +35,12 @@ import {
   deleteInfoRequestForAdmin,
   InfoRequestRecord,
 } from '../services/firebase';
-import { HistorySession, UserProfile, ZikrLanguage } from '../types';
+import { AamalDayLog, HistorySession, UserProfile, ZikrItem, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
 import { getAllSavedAccounts } from '../utils/accountRegistry';
+import { HistoryChartsDashboard } from './HistoryChartsDashboard';
+import { HistoryPeriodRange, compileAggregatedReport } from '../utils/exportPdf';
+import { normalizeAamalDayLog, getAllAamalLogs } from '../utils/aamalTrackerData';
 
 interface AdminPanelModalProps {
   isOpen: boolean;
@@ -94,6 +98,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     aamalLogs: Record<string, any>;
   } | null>(null);
   const [isLoadingUserDetail, setIsLoadingUserDetail] = useState<boolean>(false);
+  const [adminReportRange, setAdminReportRange] = useState<HistoryPeriodRange>('1month');
 
   // Confirm delete modal
   const [userToDelete, setUserToDelete] = useState<AdminUserRecord | null>(null);
@@ -129,24 +134,27 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       const existing = userMap.get(uk) || userMap.get(em);
       const localTime = p.lastSyncedAt || (acc.savedAt ? new Date(acc.savedAt).getTime() : Date.now());
 
+      // Strictly apply browser active localStorage lifetime ONLY to the currently signed-in account (never leak into other users!)
+      const isCurrentActiveBrowserUser = Boolean(currentEmail && em === currentEmail);
       let localLifetime = 0;
-      try {
-        const s = localStorage.getItem('zikrmate_lifetime_total_count');
-        if (s) localLifetime = parseInt(s, 10) || 0;
-      } catch {}
+      if (isCurrentActiveBrowserUser) {
+        try {
+          const s = localStorage.getItem('zikrmate_lifetime_total_count');
+          if (s) localLifetime = parseInt(s, 10) || 0;
+        } catch {}
+      }
 
       if (existing) {
-        // Upgrade existing with recent local session data
         if (localTime > existing.lastSyncedAt) {
           existing.lastSyncedAt = localTime;
         }
-        if (localLifetime > existing.lifetimeTotalCount) {
+        if (isCurrentActiveBrowserUser && localLifetime > existing.lifetimeTotalCount) {
           existing.lifetimeTotalCount = localLifetime;
         }
-        if (currentEmail && em === currentEmail && currentMasterTotal !== undefined && currentMasterTotal > existing.lifetimeTotalCount) {
+        if (isCurrentActiveBrowserUser && currentMasterTotal !== undefined && currentMasterTotal > existing.lifetimeTotalCount) {
           existing.lifetimeTotalCount = currentMasterTotal;
         }
-        if (currentEmail && em === currentEmail && currentZikrs && currentZikrs.length > 0) {
+        if (isCurrentActiveBrowserUser && currentZikrs && currentZikrs.length > 0) {
           existing.activeZikrs = currentZikrs.map((z) => ({
             id: z.id,
             name: z.name,
@@ -173,11 +181,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           existing.hasPassword = true;
         }
       } else {
-        const liveCount = currentEmail && em === currentEmail && currentMasterTotal !== undefined
+        const liveCount = isCurrentActiveBrowserUser && currentMasterTotal !== undefined
           ? Math.max(localLifetime, currentMasterTotal)
           : localLifetime;
 
-        const liveZikrs = currentEmail && em === currentEmail && currentZikrs && currentZikrs.length > 0
+        const liveZikrs = isCurrentActiveBrowserUser && currentZikrs && currentZikrs.length > 0
           ? currentZikrs.map((z) => ({
               id: z.id,
               name: z.name,
@@ -303,21 +311,60 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
-  // Inspect specific user for detailed history & aamal logs
+  // Compute normalized per-user report data strictly for the currently inspected user
+  const selectedUserNormalizedLogs = useMemo<Record<string, AamalDayLog>>(() => {
+    const out: Record<string, AamalDayLog> = {};
+    if (!selectedUserDetail?.aamalLogs) return out;
+    for (const [dateKey, raw] of Object.entries(selectedUserDetail.aamalLogs)) {
+      if (raw && typeof raw === 'object') {
+        out[dateKey] = normalizeAamalDayLog(dateKey, raw);
+      }
+    }
+    return out;
+  }, [selectedUserDetail?.aamalLogs]);
+
+  const selectedUserLiveZikrs = useMemo<ZikrItem[]>(() => {
+    if (!selectedUser?.activeZikrs) return [];
+    const fallbackTs = selectedUser.lastSyncedAt || selectedUser.createdAtMs || 0;
+    return selectedUser.activeZikrs.map((z) => ({
+      id: z.id,
+      name: z.name,
+      arabic: '',
+      count: z.count || 0,
+      target: z.target || 33,
+      createdAt: selectedUser.createdAtMs || fallbackTs,
+      updatedAt: fallbackTs,
+    }));
+  }, [selectedUser?.activeZikrs, selectedUser?.createdAtMs, selectedUser?.lastSyncedAt]);
+
+  const selectedUserReportData = useMemo(() => {
+    return compileAggregatedReport(
+      selectedUserNormalizedLogs,
+      adminReportRange,
+      undefined,
+      selectedUserLiveZikrs
+    );
+  }, [selectedUserNormalizedLogs, adminReportRange, selectedUserLiveZikrs]);
+
+  // Inspect specific user for detailed history & aamal logs (strictly isolated per user)
   const handleInspectUser = async (user: AdminUserRecord) => {
     setSelectedUser(user);
+    setAdminReportRange('1month');
     setIsLoadingUserDetail(true);
     setSelectedUserDetail(null);
     if (soundEnabled) soundHaptics.playTap();
 
     const detail = await fetchUserDetailForAdmin(user.userKey);
-    if (
-      (user.emailOrPhone || '').toLowerCase() === currentEmail &&
-      currentHistorySessions &&
-      currentHistorySessions.length > 0 &&
-      (!detail.historySessions || detail.historySessions.length === 0)
-    ) {
-      detail.historySessions = currentHistorySessions;
+    const isInspectingSelf = Boolean(
+      currentEmail && (user.emailOrPhone || user.email || '').toLowerCase().trim() === currentEmail
+    );
+    if (isInspectingSelf) {
+      if (currentHistorySessions && currentHistorySessions.length > 0 && (!detail.historySessions || detail.historySessions.length === 0)) {
+        detail.historySessions = currentHistorySessions;
+      }
+      if (!detail.aamalLogs || Object.keys(detail.aamalLogs).length === 0) {
+        detail.aamalLogs = getAllAamalLogs();
+      }
     }
     setSelectedUserDetail(detail);
     setIsLoadingUserDetail(false);
@@ -1200,16 +1247,129 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 </div>
               </div>
 
-              {/* HISTORICAL SESSIONS & AAMAL LOGS */}
+              {/* HISTORICAL SESSIONS, VISUAL CHARTS REPORT & AAMAL LOGS (Strictly for Selected User) */}
               {isLoadingUserDetail ? (
                 <div className="p-8 text-center space-y-2">
                   <RefreshCw className="w-6 h-6 text-emerald-500 animate-spin mx-auto" />
                   <p className="text-xs font-bold text-slate-500 dark:text-emerald-300">
-                    {isBn ? 'ইউজারের আর্কাইভ ইতিহাস লোড হচ্ছে...' : 'Loading archived user history...'}
+                    {isBn ? 'ইউজারের আর্কাইভ ইতিহাস ও চার্ট লোড হচ্ছে...' : 'Loading archived user history & charts...'}
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4 pt-2">
+                <div className="space-y-5 pt-2">
+                  {/* Per-User Visual History Charts & Report */}
+                  {(() => {
+                    const activeSum = selectedUser.activeZikrs.reduce((acc, z) => acc + (z.count || 0), 0);
+                    const aamalSum = Object.values(selectedUserNormalizedLogs).reduce(
+                      (acc, l) => acc + (l.dhikrCount || 0),
+                      0
+                    );
+                    const historySum = selectedUserDetail?.historySessions
+                      ? selectedUserDetail.historySessions.reduce((acc: number, s: any) => acc + (s.totalCount || 0), 0)
+                      : 0;
+                    const userGrandTotal = Math.max(selectedUser.lifetimeTotalCount || 0, activeSum, aamalSum, historySum);
+
+                    return (
+                      <div
+                        className={`p-3.5 sm:p-4 rounded-2xl border space-y-3.5 ${
+                          isDayTheme ? 'bg-slate-50/70 border-slate-200' : 'bg-[#061c21] border-[#154650]'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4 text-emerald-500" />
+                            <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
+                              {isBn
+                                ? `${selectedUser.name}-এর পূর্ণাঙ্গ হিস্ট্রি ও আমল চার্ট`
+                                : `${selectedUser.name}'s History & Aamal Charts`}
+                            </h4>
+                          </div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                            {selectedUser.emailOrPhone || selectedUser.userKey}
+                          </span>
+                        </div>
+
+                        {/* Period Filter */}
+                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                          {(
+                            [
+                              { id: '1day', bn: '১ দিন', en: '1 Day' },
+                              { id: '1month', bn: '১ মাস', en: '1 Month' },
+                              { id: '4months', bn: '৪ মাস', en: '4 Months' },
+                              { id: '1year', bn: '১ বছর', en: '1 Year' },
+                              { id: '10years', bn: '১০ বছর', en: '10 Years' },
+                            ] as const
+                          ).map((rng) => (
+                            <button
+                              key={rng.id}
+                              type="button"
+                              onClick={() => {
+                                setAdminReportRange(rng.id);
+                                if (soundEnabled) soundHaptics.playTap();
+                              }}
+                              className={`py-1.5 px-2 rounded-xl border text-[11px] font-bold transition cursor-pointer ${
+                                adminReportRange === rng.id
+                                  ? 'bg-[var(--app-primary,#006A4E)] text-white border-[var(--app-primary,#006A4E)]'
+                                  : isDayTheme
+                                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                                  : 'bg-[#081d22] border-[#154650] text-emerald-300 hover:bg-[#0d2d34]'
+                              }`}
+                            >
+                              {isBn ? rng.bn : rng.en}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* 4 User-Specific KPI Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                          <div className={`p-2.5 rounded-xl border ${isDayTheme ? 'bg-white border-slate-200' : 'bg-[#081d22] border-[#154650]'}`}>
+                            <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300">
+                              {isBn ? 'সর্বমোট জিকির' : 'Total Dhikr'}
+                            </div>
+                            <div className="text-base font-black font-mono text-emerald-600 dark:text-amber-300 mt-0.5">
+                              {(adminReportRange === '10years' ? userGrandTotal : selectedUserReportData.totalDhikrSum).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className={`p-2.5 rounded-xl border ${isDayTheme ? 'bg-white border-slate-200' : 'bg-[#081d22] border-[#154650]'}`}>
+                            <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300">
+                              {isBn ? 'ফরজ নামাজ' : 'Fardh Salah'}
+                            </div>
+                            <div className="text-base font-black font-mono text-teal-600 dark:text-emerald-400 mt-0.5">
+                              {selectedUserReportData.prayerStats.fardhTotal.toLocaleString()}
+                            </div>
+                          </div>
+                          <div className={`p-2.5 rounded-xl border ${isDayTheme ? 'bg-white border-slate-200' : 'bg-[#081d22] border-[#154650]'}`}>
+                            <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300">
+                              {isBn ? 'কুরআন তিলাওয়াত' : 'Quran Pages'}
+                            </div>
+                            <div className="text-base font-black font-mono text-blue-600 dark:text-blue-400 mt-0.5">
+                              {selectedUserReportData.totalQuranPagesSum.toLocaleString()}
+                            </div>
+                          </div>
+                          <div className={`p-2.5 rounded-xl border ${isDayTheme ? 'bg-white border-slate-200' : 'bg-[#081d22] border-[#154650]'}`}>
+                            <div className="text-[10px] font-bold text-slate-500 dark:text-emerald-300">
+                              {isBn ? 'গড় আমল স্কোর' : 'Avg Score'}
+                            </div>
+                            <div className="text-base font-black font-mono text-purple-600 dark:text-purple-400 mt-0.5">
+                              {selectedUserReportData.avgCompletionRate}%
+                            </div>
+                          </div>
+                        </div>
+
+                        <HistoryChartsDashboard
+                          reportData={selectedUserReportData}
+                          allLogs={selectedUserNormalizedLogs}
+                          selectedRange={adminReportRange}
+                          themeMode={isDayTheme ? 'day' : 'night'}
+                          selectedLanguage={selectedLanguage}
+                          liveZikrs={selectedUserLiveZikrs}
+                          historySessions={selectedUserDetail?.historySessions || []}
+                          masterTotal={userGrandTotal}
+                        />
+                      </div>
+                    );
+                  })()}
+
                   {/* History Sessions List */}
                   <div className="space-y-2">
                     <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 dark:text-emerald-300 flex items-center gap-1.5">
@@ -1251,38 +1411,46 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     )}
                   </div>
 
-                  {/* Daily Aamal Logs Summary */}
+                  {/* Daily Aamal Logs Summary (Normalized against AamalDayLog schema) */}
                   <div className="space-y-2">
                     <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-500 dark:text-emerald-300 flex items-center gap-1.5">
                       <BookOpen className="w-3.5 h-3.5 text-amber-500" />
                       <span>{isBn ? 'দৈনিক আমল ট্র্যাকার ইতিহাস' : 'Daily Aamal Tracker History'}</span>
                     </h4>
 
-                    {selectedUserDetail?.aamalLogs && Object.keys(selectedUserDetail.aamalLogs).length > 0 ? (
+                    {Object.keys(selectedUserNormalizedLogs).length > 0 ? (
                       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {Object.keys(selectedUserDetail.aamalLogs).map((dateKey) => {
-                          const log = selectedUserDetail.aamalLogs[dateKey];
-                          return (
-                            <div
-                              key={dateKey}
-                              className={`p-3 rounded-xl border text-xs space-y-1 ${
-                                isDayTheme ? 'bg-white border-slate-200' : 'bg-[#081d22] border-[#154650]'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white">
-                                <span>{isBn ? 'তারিখ:' : 'Date:'} {dateKey}</span>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold">
-                                  Score: {log.scorePercentage || 0}%
-                                </span>
+                        {Object.keys(selectedUserNormalizedLogs)
+                          .sort((a, b) => b.localeCompare(a))
+                          .map((dateKey) => {
+                            const log = selectedUserNormalizedLogs[dateKey];
+                            const fardhIds = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+                            const fardhDone = (log.items || []).filter(
+                              (it) => fardhIds.includes(it.id) && it.completed
+                            ).length;
+                            const completedDeeds = (log.items || []).filter((it) => it.completed).length;
+
+                            return (
+                              <div
+                                key={dateKey}
+                                className={`p-3 rounded-xl border text-xs space-y-1 ${
+                                  isDayTheme ? 'bg-white border-slate-200' : 'bg-[#081d22] border-[#154650]'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+                                  <span>{isBn ? 'তারিখ:' : 'Date:'} {dateKey}</span>
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold">
+                                    {isBn ? 'স্কোর:' : 'Score:'} {log.completedRatio || 0}%
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 dark:text-emerald-300/80 font-mono">
+                                  {isBn
+                                    ? `ফরজ নামাজ: ${fardhDone}/৫ | সম্পন্ন আমল: ${completedDeeds}/${(log.items || []).length} | জিকির: ${(log.dhikrCount || 0).toLocaleString()} | কুরআন: ${log.quranPagesRead || 0} পৃ.`
+                                    : `Fardh Salah: ${fardhDone}/5 | Deeds: ${completedDeeds}/${(log.items || []).length} | Dhikr: ${(log.dhikrCount || 0).toLocaleString()} | Quran: ${log.quranPagesRead || 0}p`}
+                                </div>
                               </div>
-                              <div className="text-[11px] text-slate-500 dark:text-emerald-300/80 font-mono">
-                                {isBn
-                                  ? `পাঁচ ওয়াক্ত নামাজ: ${log.prayers ? Object.values(log.prayers).filter((v: any) => v && v.offered).length : 0} / ৫ | সূরা মুলক: ${log.surahMulk ? 'হ্যাঁ ✓' : 'না'} | আয়াতুল কুরসি: ${log.ayatulKursi ? 'হ্যাঁ ✓' : 'না'}`
-                                  : `5 Daily Prayers: ${log.prayers ? Object.values(log.prayers).filter((v: any) => v && v.offered).length : 0} / 5 | Surah Mulk: ${log.surahMulk ? 'Yes ✓' : 'No'} | Ayatul Kursi: ${log.ayatulKursi ? 'Yes ✓' : 'No'}`}
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
                       </div>
                     ) : (
                       <p className="text-xs text-slate-400 dark:text-teal-400/60 italic">

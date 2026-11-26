@@ -1590,25 +1590,53 @@ export async function fetchUserDetailForAdmin(userKey: string): Promise<{
   let aamalLogs: Record<string, any> = {};
 
   try {
-    // 1. Fetch History sub-document
+    const userDocRef = doc(db, 'users', userKey);
     const historyDocRef = doc(db, 'users', userKey, 'data', 'historyDoc');
-    const historySnap = await getDoc(historyDocRef);
-    if (historySnap.exists() && historySnap.data().historyJson) {
+    const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
+
+    const [userSnap, historySnap, aamalSnap] = await Promise.all([
+      getDoc(userDocRef).catch(() => null),
+      getDoc(historyDocRef).catch(() => null),
+      getDoc(aamalDocRef).catch(() => null),
+    ]);
+
+    const historyMap = new Map<string, HistorySession>();
+
+    if (userSnap && userSnap.exists()) {
+      const uData = userSnap.data();
+      if (uData.historyJson) {
+        try {
+          const parsed = JSON.parse(uData.historyJson);
+          if (Array.isArray(parsed)) parsed.forEach((s: any) => historyMap.set(s.id, s));
+        } catch {}
+      }
+      if (uData.aamalLogsJson) {
+        try {
+          const parsed = JSON.parse(uData.aamalLogsJson);
+          if (parsed && typeof parsed === 'object') {
+            aamalLogs = { ...aamalLogs, ...parsed };
+          }
+        } catch {}
+      }
+    }
+
+    if (historySnap && historySnap.exists() && historySnap.data().historyJson) {
       try {
         const parsed = JSON.parse(historySnap.data().historyJson);
-        if (Array.isArray(parsed)) historySessions = parsed;
+        if (Array.isArray(parsed)) parsed.forEach((s: any) => historyMap.set(s.id, s));
       } catch {}
     }
 
-    // 2. Fetch Aamal sub-document
-    const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
-    const aamalSnap = await getDoc(aamalDocRef);
-    if (aamalSnap.exists() && aamalSnap.data().aamalLogsJson) {
+    if (aamalSnap && aamalSnap.exists() && aamalSnap.data().aamalLogsJson) {
       try {
         const parsed = JSON.parse(aamalSnap.data().aamalLogsJson);
-        if (parsed && typeof parsed === 'object') aamalLogs = parsed;
+        if (parsed && typeof parsed === 'object') {
+          aamalLogs = { ...aamalLogs, ...parsed };
+        }
       } catch {}
     }
+
+    historySessions = Array.from(historyMap.values()).sort((a, b) => b.timestamp - a.timestamp);
   } catch (err) {
     console.warn('Error fetching user details for admin:', err);
   }
