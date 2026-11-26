@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import {
+  AR_RAHEEQ_GENEALOGY_TRACKS,
+  AR_RAHEEQ_HISTORY_SECTIONS,
+  ArRaheeqCategory,
   CLASSICAL_SOURCE_BOOKS,
   HUMANITY_CANVAS_HEIGHT,
   HUMANITY_CANVAS_WIDTH,
@@ -203,6 +206,11 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
 
   const [eraFilter, setEraFilter] = useState<EraFilterKey>('all');
   const [rootLineFilter, setRootLineFilter] = useState<RootLineFilter>('all');
+  const [raheeqCategory, setRaheeqCategory] = useState<ArRaheeqCategory>('all');
+  const [activeTrackStep, setActiveTrackStep] = useState<Record<string, number>>({
+    'track-qahtan': 3,
+    'track-adnan': 3,
+  });
   const [directoryMode, setDirectoryMode] = useState<DirectoryDisplayMode>('cards');
   const [selectedNode, setSelectedNode] = useState<HumanityTreeNode | null>(null);
   const [zoom, setZoom] = useState<number>(() => {
@@ -297,6 +305,37 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
     });
   }, [eraFilter, searchQuery]);
 
+  const filteredRaheeqSections = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return AR_RAHEEQ_HISTORY_SECTIONS.filter((sec) => {
+      if (raheeqCategory !== 'all' && sec.category !== raheeqCategory) return false;
+      if (!q) return true;
+      return [
+        sec.titleBn,
+        sec.titleEn,
+        sec.summaryBn,
+        sec.summaryEn,
+        sec.howSplitBn,
+        sec.howSplitEn,
+        sec.turningPointBn,
+        sec.turningPointEn,
+        ...sec.subBranches.flatMap((b) => [
+          b.nameBn,
+          b.nameEn,
+          b.lineageBn,
+          b.lineageEn,
+          b.settlementBn,
+          b.settlementEn,
+          b.keyFactsBn,
+          b.keyFactsEn,
+        ]),
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [raheeqCategory, searchQuery]);
+
   const handleZoomChange = (next: number) => {
     if (soundEnabled) soundHaptics.playTap();
     setZoom(Math.min(1.25, Math.max(0.3, Number(next.toFixed(2)))));
@@ -317,6 +356,15 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
     { key: 'prophetic_ummahs', bn: 'নবীগণের উম্মত ও সভ্যতা', en: 'Prophetic Ummahs' },
     { key: 'final_ummah', bn: 'শেষ নবী (ﷺ)-এর উম্মত', en: 'Final Prophet’s Ummah' },
     { key: 'modern_world', bn: 'আজকের বিশ্ব (কোথায় কোন জাতি)', en: 'Today’s World Map' },
+  ];
+
+  const raheeqFilterTabs: Array<{ key: ArRaheeqCategory; bn: string; en: string }> = [
+    { key: 'all', bn: 'সকল অধ্যায় (৫)', en: 'All Chapters (5)' },
+    { key: 'baidah', bn: '১. আরবে বায়দা', en: '1. Al-Ba’idah' },
+    { key: 'aribah_qahtan', bn: '২. কাহতান ও কাহলান', en: '2. Qahtan & Kahlan' },
+    { key: 'mustaribah_adnan', bn: '৩. আদনান ও কুরাইশ', en: '3. Adnan & Quraysh' },
+    { key: 'governance_kabah', bn: '৪. শাসন ও কাবার সেবা', en: '4. Rule & Ka‘bah' },
+    { key: 'religion_world', bn: '৫. ধর্মীয় অবস্থা ও বিশ্ব', en: '5. Religion & World' },
   ];
 
   const totalCountBn = toBnDigits(HUMANITY_PERSON_TO_NATION_LIST.length);
@@ -358,8 +406,8 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
         </div>
         <span className={`text-[11px] font-bold ${isDay ? 'text-amber-700' : 'text-amber-300'}`}>
           {isBn
-            ? 'সূত্র: তাফসীরে ইবনে কাসীর · তারীখে তাবারী · ইবনে খালদুন · আল-মাস‘ঊদী'
-            : 'Sources: Ibn Kathir · Al-Tabari · Ibn Khaldun · Al-Mas‘udi'}
+            ? 'সূত্র: আর-রাহীকুল মাখতূম · তাফসীরে ইবনে কাসীর · তারীখে তাবারী · ইবনে খালদুন'
+            : 'Sources: Ar-Raheeq al-Makhtum · Ibn Kathir · Al-Tabari · Ibn Khaldun'}
         </span>
       </div>
 
@@ -664,7 +712,376 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
         </div>
       </div>
 
-      {/* SECTION 2: PERSON-TO-NATION & WHERE THEY LIVE TODAY DIRECTORY */}
+      {/* SECTION 2: AR-RAHEEQ AL-MAKHTUM DETAILED LINEAGE & HISTORICAL CHAPTERS */}
+      <section
+        className={`rounded-3xl border overflow-hidden ${
+          isDay ? 'bg-white border-amber-300/80' : 'bg-[#082026] border-amber-700/45'
+        }`}
+      >
+        <div
+          className={`px-4 sm:px-5 py-4 border-b space-y-3 ${
+            isDay
+              ? 'bg-gradient-to-r from-[#fffaf0] to-[#f4faf7] border-amber-200/80'
+              : 'bg-gradient-to-r from-[#1a180d] to-[#071a20] border-amber-900/45'
+          }`}
+        >
+          <div className="flex items-start sm:items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <BookMarked className={`w-4 h-4 shrink-0 ${isDay ? 'text-amber-700' : 'text-amber-300'}`} />
+              <div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <h2
+                    className={`text-sm sm:text-base font-black ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                    }`}
+                  >
+                    {isBn
+                      ? 'আর-রাহীকুল মাখতূম থেকে বিস্তারিত ধারা ও ইতিহাস'
+                      : 'Detailed Lineage & History from Ar-Raheeq al-Makhtum'}
+                  </h2>
+                  <span
+                    dir="rtl"
+                    className={`font-arabic text-sm font-bold ${
+                      isDay ? 'text-amber-700' : 'text-amber-300'
+                    }`}
+                  >
+                    الرَّحِيقُ الْمَخْتُومُ
+                  </span>
+                </div>
+                <p className={`text-[11px] font-medium ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
+                  {isBn
+                    ? 'আল্লামা সফিউর রহমান মুবারকপুরী (রহ.)-এর প্রামাণ্য সীরাতগ্রন্থ অনুযায়ী আরবের ৩ জাতি, কাহতানী ও আদনানী-কুরাইশ বংশধারা, শাসন ও ধর্মীয় পটভূমি'
+                    : 'Three Arab divisions, Qahtani & Adnani-Quraysh genealogies, political governance & religious landscape from The Sealed Nectar'}
+                </p>
+              </div>
+            </div>
+
+            <span
+              className={`text-xs font-black tabular-nums shrink-0 ${
+                isDay ? 'text-amber-700' : 'text-amber-300'
+              }`}
+            >
+              {isBn
+                ? `${toBnDigits(filteredRaheeqSections.length)}টি প্রামাণ্য অধ্যায়`
+                : `${filteredRaheeqSections.length} Chapters`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {raheeqFilterTabs.map((tab) => {
+              const active = raheeqCategory === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setRaheeqCategory(tab.key);
+                  }}
+                  className={`min-h-[34px] px-3 rounded-lg border text-[11px] font-bold whitespace-nowrap shrink-0 transition cursor-pointer ${
+                    active
+                      ? isDay
+                        ? 'bg-amber-700 text-white border-amber-700'
+                        : 'bg-amber-600 text-white border-amber-500'
+                      : isDay
+                      ? 'bg-white border-slate-200 text-slate-700 hover:border-amber-500'
+                      : 'bg-[#0c262d] border-teal-800/60 text-slate-300 hover:border-amber-400/60'
+                  }`}
+                >
+                  {isBn ? tab.bn : tab.en}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Dual Interactive Genealogy Strip: Qahtani vs Adnani (Ar-Raheeq) */}
+        <div
+          className={`p-4 sm:p-5 border-b space-y-4 ${
+            isDay ? 'bg-[#fcfdfc] border-slate-200/80' : 'bg-[#06181d] border-teal-900/55'
+          }`}
+        >
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {AR_RAHEEQ_GENEALOGY_TRACKS.map((track) => {
+              const selectedIdx = activeTrackStep[track.id] ?? track.steps.length - 1;
+              const currentStep = track.steps[selectedIdx] || track.steps[track.steps.length - 1];
+              const isQahtan = track.trackType === 'qahtan';
+
+              return (
+                <div
+                  key={track.id}
+                  className={`rounded-2xl border p-3.5 sm:p-4 space-y-3 ${
+                    isDay
+                      ? isQahtan
+                        ? 'bg-amber-50/45 border-amber-200/80'
+                        : 'bg-emerald-50/45 border-emerald-200/80'
+                      : isQahtan
+                      ? 'bg-[#1a180d]/70 border-amber-800/45'
+                      : 'bg-[#082620]/75 border-emerald-800/50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3
+                        className={`text-xs sm:text-sm font-black ${
+                          isDay
+                            ? isQahtan
+                              ? 'text-amber-900'
+                              : 'text-[#006A4E]'
+                            : isQahtan
+                            ? 'text-amber-300'
+                            : 'text-emerald-300'
+                        }`}
+                      >
+                        {isBn ? track.titleBn : track.titleEn}
+                      </h3>
+                      <p className={`text-[11px] font-medium mt-0.5 ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
+                        {isBn ? track.subtitleBn : track.subtitleEn}
+                      </p>
+                    </div>
+                    <span
+                      dir="rtl"
+                      className={`font-arabic text-xs font-bold shrink-0 ${
+                        isDay
+                          ? isQahtan
+                            ? 'text-amber-800'
+                            : 'text-[#006A4E]'
+                          : isQahtan
+                          ? 'text-amber-300'
+                          : 'text-emerald-300'
+                      }`}
+                    >
+                      {track.titleAr}
+                    </span>
+                  </div>
+
+                  {/* 4-Step Connected Chain */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                    {track.steps.map((step, idx) => {
+                      const isStepActive = selectedIdx === idx;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            if (soundEnabled) soundHaptics.playTap();
+                            setActiveTrackStep((prev) => ({ ...prev, [track.id]: idx }));
+                          }}
+                          className={`rounded-xl border p-2.5 text-left transition cursor-pointer flex flex-col justify-between ${
+                            isStepActive
+                              ? isDay
+                                ? isQahtan
+                                  ? 'bg-amber-700 border-amber-700 text-white shadow-sm'
+                                  : 'bg-[#006A4E] border-[#006A4E] text-white shadow-sm'
+                                : isQahtan
+                                ? 'bg-amber-600 border-amber-400 text-white shadow-sm'
+                                : 'bg-emerald-700 border-emerald-400 text-white shadow-sm'
+                              : isDay
+                              ? 'bg-white border-slate-200/90 text-slate-800 hover:border-emerald-400'
+                              : 'bg-[#0a2329] border-teal-900/60 text-slate-200 hover:border-emerald-500/60'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1 text-[10px] font-black tabular-nums opacity-85">
+                            <span>{isBn ? `ধাপ ${toBnDigits(idx + 1)}` : `Step ${idx + 1}`}</span>
+                            {idx < track.steps.length - 1 && <ChevronRight className="w-3 h-3 shrink-0" />}
+                          </div>
+                          <div className="mt-1 text-[11px] font-black leading-snug">
+                            {isBn ? step.nameBn : step.nameEn}
+                          </div>
+                          <div
+                            dir="rtl"
+                            className={`font-arabic text-[10px] font-bold mt-1 truncate ${
+                              isStepActive
+                                ? 'text-white/90'
+                                : isDay
+                                ? 'text-[#006A4E]'
+                                : 'text-emerald-300'
+                            }`}
+                          >
+                            {step.nameAr}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Selected Step Note */}
+                  <div
+                    className={`rounded-xl border px-3 py-2 text-xs leading-relaxed ${
+                      isDay
+                        ? 'bg-white border-slate-200/80 text-slate-700'
+                        : 'bg-[#071a20] border-teal-900/50 text-slate-200'
+                    }`}
+                  >
+                    <span className="font-black">
+                      {isBn ? currentStep.nameBn : currentStep.nameEn}:{' '}
+                    </span>
+                    <span>{isBn ? currentStep.noteBn : currentStep.noteEn}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Ar-Raheeq Chapter Cards */}
+        <div className="p-4 sm:p-5 space-y-4">
+          {filteredRaheeqSections.length === 0 ? (
+            <div
+              className={`p-6 text-center text-sm font-bold ${
+                isDay ? 'text-slate-500' : 'text-slate-400'
+              }`}
+            >
+              {isBn ? 'আর-রাহীকুল মাখতূমের এই অংশে কোনো মিল পাওয়া যায়নি।' : 'No matching Ar-Raheeq chapters found.'}
+            </div>
+          ) : (
+            filteredRaheeqSections.map((sec) => (
+              <article
+                key={sec.id}
+                className={`rounded-2xl border p-4 sm:p-5 space-y-3.5 ${
+                  isDay
+                    ? 'bg-[#f9fcfa] border-slate-200/90'
+                    : 'bg-[#0a2329] border-teal-900/60'
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <div
+                      className={`text-[11px] font-black tabular-nums ${
+                        isDay ? 'text-amber-700' : 'text-amber-300'
+                      }`}
+                    >
+                      {isBn ? sec.chapterTagBn : sec.chapterTagEn}
+                    </div>
+                    <h3
+                      className={`text-sm sm:text-base font-black leading-snug ${
+                        isDay ? 'text-slate-900' : 'text-white'
+                      }`}
+                    >
+                      {isBn ? sec.titleBn : sec.titleEn}
+                    </h3>
+                  </div>
+                  <div
+                    dir="rtl"
+                    className={`font-arabic text-sm font-bold ${
+                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                    }`}
+                  >
+                    {sec.titleAr}
+                  </div>
+                </div>
+
+                <p className={`text-xs sm:text-[13px] leading-relaxed ${isDay ? 'text-slate-700' : 'text-slate-200'}`}>
+                  {isBn ? sec.summaryBn : sec.summaryEn}
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div
+                    className={`rounded-xl border p-3 space-y-1 ${
+                      isDay
+                        ? 'bg-white border-emerald-200/75 text-slate-700'
+                        : 'bg-[#071b20] border-teal-900/55 text-slate-200'
+                    }`}
+                  >
+                    <div className={`font-black text-[11px] ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}>
+                      {isBn ? 'ধারা ও বিভাজনের প্রক্রিয়া:' : 'How Lineage Divided:'}
+                    </div>
+                    <p className="leading-relaxed">{isBn ? sec.howSplitBn : sec.howSplitEn}</p>
+                  </div>
+
+                  <div
+                    className={`rounded-xl border p-3 space-y-1 ${
+                      isDay
+                        ? 'bg-amber-50/55 border-amber-200/80 text-slate-800'
+                        : 'bg-amber-950/20 border-amber-800/40 text-amber-100'
+                    }`}
+                  >
+                    <div className={`font-black text-[11px] ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
+                      {isBn ? 'প্রধান ঐতিহাসিক মোড়:' : 'Key Historical Turning Point:'}
+                    </div>
+                    <p className="leading-relaxed">{isBn ? sec.turningPointBn : sec.turningPointEn}</p>
+                  </div>
+                </div>
+
+                {/* Sub-tribes / Historical Pillars Matrix */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  {sec.subBranches.map((sub, idx) => (
+                    <div
+                      key={idx}
+                      className={`rounded-xl border p-3 space-y-1.5 flex flex-col justify-between ${
+                        isDay
+                          ? 'bg-white border-slate-200/85'
+                          : 'bg-[#06181d] border-teal-900/55'
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4
+                            className={`text-xs sm:text-[13px] font-black leading-snug ${
+                              isDay ? 'text-slate-900' : 'text-white'
+                            }`}
+                          >
+                            {isBn ? sub.nameBn : sub.nameEn}
+                          </h4>
+                          <span
+                            dir="rtl"
+                            className={`font-arabic text-[11px] font-bold shrink-0 ${
+                              isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                            }`}
+                          >
+                            {sub.nameAr}
+                          </span>
+                        </div>
+
+                        <div
+                          className={`text-[11px] font-bold flex items-start gap-1.5 ${
+                            isDay ? 'text-slate-600' : 'text-slate-300'
+                          }`}
+                        >
+                          <GitBranch className="w-3.5 h-3.5 shrink-0 mt-0.5 opacity-75" />
+                          <span>{isBn ? sub.lineageBn : sub.lineageEn}</span>
+                        </div>
+
+                        <div
+                          className={`text-[11px] font-bold flex items-start gap-1.5 ${
+                            isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                          }`}
+                        >
+                          <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          <span>{isBn ? sub.settlementBn : sub.settlementEn}</span>
+                        </div>
+                      </div>
+
+                      <p
+                        className={`text-[11.5px] leading-relaxed pt-1.5 border-t ${
+                          isDay
+                            ? 'border-slate-100 text-slate-700'
+                            : 'border-teal-900/45 text-slate-300'
+                        }`}
+                      >
+                        {isBn ? sub.keyFactsBn : sub.keyFactsEn}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  className={`pt-2 border-t text-[11px] font-bold flex items-center gap-1.5 ${
+                    isDay
+                      ? 'border-slate-200/80 text-amber-700'
+                      : 'border-teal-900/50 text-amber-300'
+                  }`}
+                >
+                  <ScrollText className="w-3.5 h-3.5 shrink-0" />
+                  <span>{isBn ? sec.sourceChapterBn : sec.sourceChapterEn}</span>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* SECTION 3: PERSON-TO-NATION & WHERE THEY LIVE TODAY DIRECTORY */}
       <div
         className={`rounded-3xl border overflow-hidden ${
           isDay ? 'bg-white border-emerald-200/85' : 'bg-[#082026] border-teal-900/65'
@@ -692,8 +1109,8 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
                 </h2>
                 <p className={`text-[11px] font-medium ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                   {isBn
-                    ? 'তারীখে তাবারী, আল-বিদায়া ওয়ান নিহায়া, ইবনে খালদুন ও মুরূজুয যাহাব অবলম্বনে ১৮টি জাতিশাখার বিস্তারিত তথ্য'
-                    : '18 detailed branches compiled from Al-Tabari, Al-Bidayah, Ibn Khaldun & Al-Mas‘udi'}
+                    ? `আর-রাহীকুল মাখতূম, তারীখে তাবারী, আল-বিদায়া, ইবনে খালদুন ও মুরূজুয যাহাব অবলম্বনে ${totalCountBn}টি জাতিশাখার বিস্তারিত তথ্য`
+                    : `${HUMANITY_PERSON_TO_NATION_LIST.length} detailed branches from Ar-Raheeq al-Makhtum, Al-Tabari, Al-Bidayah, Ibn Khaldun & Al-Mas‘udi`}
                 </p>
               </div>
             </div>

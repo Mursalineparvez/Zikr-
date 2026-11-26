@@ -105,6 +105,65 @@ export interface ClassicalSourceBook {
   contributionEn: string;
 }
 
+export type ArRaheeqCategory =
+  | 'all'
+  | 'baidah'
+  | 'aribah_qahtan'
+  | 'mustaribah_adnan'
+  | 'governance_kabah'
+  | 'religion_world';
+
+export interface ArRaheeqTribeBranch {
+  nameBn: string;
+  nameEn: string;
+  nameAr: string;
+  lineageBn: string;
+  lineageEn: string;
+  settlementBn: string;
+  settlementEn: string;
+  keyFactsBn: string;
+  keyFactsEn: string;
+}
+
+export interface ArRaheeqChapterSection {
+  id: string;
+  order: number;
+  category: Exclude<ArRaheeqCategory, 'all'>;
+  chapterTagBn: string;
+  chapterTagEn: string;
+  titleBn: string;
+  titleEn: string;
+  titleAr: string;
+  summaryBn: string;
+  summaryEn: string;
+  howSplitBn: string;
+  howSplitEn: string;
+  turningPointBn: string;
+  turningPointEn: string;
+  subBranches: ArRaheeqTribeBranch[];
+  sourceChapterBn: string;
+  sourceChapterEn: string;
+}
+
+export interface ArRaheeqGenealogyStep {
+  nameBn: string;
+  nameEn: string;
+  nameAr: string;
+  noteBn: string;
+  noteEn: string;
+}
+
+export interface ArRaheeqGenealogyTrack {
+  id: string;
+  trackType: 'qahtan' | 'adnan';
+  titleBn: string;
+  titleEn: string;
+  titleAr: string;
+  subtitleBn: string;
+  subtitleEn: string;
+  steps: ArRaheeqGenealogyStep[];
+}
+
 export const HUMANITY_CANVAS_WIDTH = 1520;
 export const HUMANITY_CANVAS_HEIGHT = 1750;
 
@@ -471,25 +530,25 @@ export const HUMANITY_TREE_NODES: HumanityTreeNode[] = [
     id: 'hum_qahtan_adnan',
     eraGroup: 'prophetic_ummahs',
     rootLine: 'sam',
-    stepBadgeBn: 'যুগ ০৪ · আরব জাতির ২ ধারা',
-    stepBadgeEn: 'Era 04 · Arab Branches',
-    titleBn: 'ইসমাঈল (আ.) → আদনান ও কাহতান',
-    titleEn: 'Ismail (AS) → Adnan & Qahtan',
-    titleAr: 'إِسْمَاعِيلُ وَعَدْنَانُ وَقَحْطَانُ',
-    subtitleBn: 'মুসতা‘রিবা (আদনানী) ও ‘আরিবা (কাহতানী) আরব',
-    subtitleEn: 'Adnani (Northern) & Qahtani (Southern) Arabs',
-    howSplitBn: 'ইসমাঈল (আ.)-এর ১২ পুত্র থেকে মক্কায় আদনানী ধারা; অন্যদিকে কাহতানের পুত্ররা ইয়েমেন থেকে আরবে ছড়ান।',
-    howSplitEn: 'Ismail’s 12 sons formed Northern Adnani Arabs; Qahtan’s descendants formed Southern Arabs.',
-    keyBranchesBn: 'কুরাইশ · বনু হাশেম · তামীম · গাতাফান · আউস-খাযরাজ · আজদ',
-    keyBranchesEn: 'Quraysh · Banu Hashim · Tamim · Aws-Khazraj · Azd',
-    modernLocationBn: 'সৌদি আরব, ইয়েমেন, উপসাগরীয় দেশসমূহ, ইরাক, শাম ও উত্তর আফ্রিকার আরব অংশ',
-    modernLocationEn: 'Saudi Arabia, Yemen, Gulf States, Levant, Iraq & North Africa',
+    stepBadgeBn: 'যুগ ০৪ · আর-রাহীকুল মাখতূম',
+    stepBadgeEn: 'Era 04 · Ar-Raheeq Arab Branches',
+    titleBn: 'আরবের ৩ ধারা: বায়দা, কাহতানী (আরিবা) ও আদনানী (মুসতা‘রিবা)',
+    titleEn: '3 Arab Divisions: Ba’idah, Qahtani & Adnani',
+    titleAr: 'الْبَائِدَةُ وَالْعَارِبَةُ وَالْمُسْتَعْرِبَةُ',
+    subtitleBn: 'আদ-সামূদ-তাসম · কাহতান (হিমইয়ার ও কাহলান) · ইসমাঈল → আদনান → কুরাইশ',
+    subtitleEn: 'Ad-Thamud · Qahtan (Himyar & Kahlan) · Ismail → Adnan → Quraysh',
+    howSplitBn: 'আর-রাহীকুল মাখতূম অনুযায়ী প্রথম ধারা (আরবে বায়দা) বিলুপ্ত হয়; দ্বিতীয় ধারা (কাহতান) মা‘রিব বাঁধ ধ্বংসের পর আযদ, লাখম, তাই ও কিন্দায় ভাগ হয়; আর তৃতীয় ধারা ইসমাঈল (আ.) ও জুরহুমের মেলবন্ধনে আদনান → রাবী‘আহ ও মুদার → কুরাইশে বিস্তার পায়।',
+    howSplitEn: 'Per Ar-Raheeq al-Makhtum: Ba’idah vanished; Qahtan split after Ma’rib Dam into Azd, Lakhm, Tayy & Kindah; Ismail → Adnan branched into Rabiah, Mudhar & Quraysh.',
+    keyBranchesBn: 'হিমইয়ার · আযদ (আউস-খাযরাজ, গাসসান, খুযা‘আহ) · লাখম · তাই · রাবী‘আহ · মুদার · কুরাইশ',
+    keyBranchesEn: 'Himyar · Azd (Ansar, Ghassan, Khuza‘ah) · Lakhm · Tayy · Rabiah · Mudhar · Quraysh',
+    modernLocationBn: 'সৌদি আরব (মক্কা, মদীনা, তায়েফ, নজদ), ইয়েমেন, ওমান, উপসাগর, ইরাক ও শাম',
+    modernLocationEn: 'Saudi Arabia (Makkah, Madinah, Ta’if, Najd), Yemen, Oman, Gulf, Iraq & Levant',
     detailBn:
-      'ইসমাঈল (আ.)-এর পুত্র কায়দার ও নাবিতের ধারায় ২০ প্রজন্ম পর কুরাইশ বংশ প্রতিষ্ঠিত হয়, যে বংশে জন্মগ্রহণ করেন শেষ নবী (ﷺ)।',
+      'সফিউর রহমান মুবারকপুরী (রহ.) আর-রাহীকুল মাখতূমে ব্যাখ্যা করেছেন: ইসমাঈল (আ.) জুরহুম গোত্রের নিকট আরবি শিখে মক্কায় বসতি গড়েন; তাঁর বংশে আদনান → ফিহর (কুরাইশ) → কুসাই ইবনে কিলাব কাবার সেবা ও মক্কার নেতৃত্ব সুসংগঠিত করেন এবং তাঁরই বংশে শেষ নবী (ﷺ) জন্মগ্রহণ করেন।',
     detailEn:
-      'Through Qaydar and Nabit came Adnan and 20 generations later the Quraysh tribe of Makkah.',
-    referenceBn: 'আর-রাহীকুল মাখতূম · সহীহ মুসলিম',
-    referenceEn: 'Ar-Raheeq al-Makhtum · Sahih Muslim',
+      'Al-Mubarakpuri details how Ismail learned Arabic from Jurhum in Makkah; through Adnan and Qusay ibn Kilab, Quraysh united Makkah’s custodianship leading to Prophet Muhammad (SAW).',
+    referenceBn: 'আর-রাহীকুল মাখতূম · অধ্যায়: আরবের ভৌগোলিক অবস্থান ও জাতিসমূহ',
+    referenceEn: 'Ar-Raheeq al-Makhtum · Tribes & Nations of Arabia',
     x: 140,
     y: 995,
     width: 215,
@@ -942,36 +1001,87 @@ export const HUMANITY_PERSON_TO_NATION_LIST: PersonToNationEntry[] = [
   {
     id: 'pn-qahtan',
     rootLine: 'sam',
-    ancestorPersonBn: 'কাহতান ইবনে আবির',
-    ancestorPersonEn: 'Qahtan ibn Abir',
-    ancestorAr: 'قَحْطَانُ بْنُ عَابِرٍ',
-    parentLineBn: 'সাম → আরফাকশাদ → শালেখ → আবির (হূদ আ.) → কাহতান',
-    parentLineEn: 'Sam → Arfakhshad → Shalikh → Abir → Qahtan',
-    howDividedBn: 'আবির (হূদ আ.)-এর পর তাঁর বংশ দুই ভাগে ভাগ হয়: একদিকে কাহতান (দক্ষিণ আরবে হিজরত করেন), অন্যদিকে ফালিখ। কাহতানের পুত্র ইয়া‘রুব → সাবা → হিমইয়ার ও কাহলান থেকে মূল ইয়েমেনী গোত্রগুলো বিভক্ত হয়।',
-    howDividedEn: 'Abir’s line split into Qahtan (who migrated south to Yemen) and Falikh. Qahtan branched via Saba into Himyar and Kahlan.',
-    nationsFormedBn: '‘আরিবা বা খাঁটি আরব, সাবা ও হিমইয়ার জাতি, মদীনার আনসার (আউস ও খাযরাজ), গাসসানী, লাখমী, আজদ ও কিন্দা গোত্র',
-    nationsFormedEn: 'Southern Qahtani Arabs: Saba, Himyar, Aws & Khazraj (Ansar), Azd, Kindah, Ghassanids',
-    whereTodayBn: 'ইয়েমেন, ওমান, সৌদি আরব (মদীনা, আসির ও নাজরান), সংযুক্ত আরব আমিরাত, কাতার, বাহরাইন, জর্ডান ও সিরিয়া',
-    whereTodayEn: 'Yemen, Oman, Saudi Arabia (Madinah/Asir), UAE, Qatar, Jordan & Syria',
-    sourceNoteBn: 'তারিখে তাবারী · আর-রাহীকুল মাখতূম',
-    sourceNoteEn: 'Tarikh al-Tabari · Ar-Raheeq al-Makhtum',
+    ancestorPersonBn: 'কাহতান → সাবা → হিমইয়ার (আরবে আরিবা)',
+    ancestorPersonEn: 'Qahtan → Saba → Himyar (Al-Arab al-‘Aribah)',
+    ancestorAr: 'قَحْطَانُ ← سَبَأٌ ← حِمْيَرُ',
+    parentLineBn: 'সাম → আরফাকশাদ → শালেখ → আবির → কাহতান → ইয়া‘রুব → ইয়াশজুব → সাবা → হিমইয়ার',
+    parentLineEn: 'Sam → Arfakhshad → Shalikh → Abir → Qahtan → Ya‘rub → Yashjub → Saba → Himyar',
+    howDividedBn: 'আর-রাহীকুল মাখতূম মতে খাঁটি বা আরবে ‘আরিবা জাতির মূল কেন্দ্র ছিল ইয়েমেন। কাহতানের প্রপৌত্র সাবার দুই পুত্র হিমইয়ার ও কাহলান থেকে মূল বিভাজন ঘটে। হিমইয়ার থেকে যায়দুল জুমহূর, কুদা‘আহ ও সাকাসিক শাখা বের হয়ে ইয়েমেন ও দক্ষিণ-পশ্চিম আরবে শাসন কায়েম করে।',
+    howDividedEn: 'Per Ar-Raheeq al-Makhtum, pure Qahtani Arabs centered in Yemen divided via Saba into Himyar and Kahlan; Himyar branched into Zayd al-Jumhur, Quda‘ah, and Sakasik.',
+    nationsFormedBn: '‘আরিবা বা খাঁটি আরব, সাবা ও হিমইয়ার রাজবংশ (তুব্বা শাসকগণ), কুদা‘আহ, কালব, জুহাইনা ও সাকাসিক',
+    nationsFormedEn: 'Pure Qahtani Arabs: Saba, Himyarite Kingdom (Tubba‘), Quda‘ah, Kalb, Juhaynah & Sakasik',
+    whereTodayBn: 'ইয়েমেন, দক্ষিণ সৌদি আরব (আসির ও নাজরান), ওমান, জর্ডান ও সিরিয়ার দক্ষিণ অংশ',
+    whereTodayEn: 'Yemen, Southern Saudi Arabia (Asir/Najran), Oman, Jordan & Southern Syria',
+    sourceNoteBn: 'আর-রাহীকুল মাখতূম · তারীখে তাবারী',
+    sourceNoteEn: 'Ar-Raheeq al-Makhtum · Tarikh al-Tabari',
+  },
+  {
+    id: 'pn-kahlan-azd',
+    rootLine: 'sam',
+    ancestorPersonBn: 'কাহলান ইবনে সাবা ও মা‘রিব বাঁধ-পরবর্তী দেশান্তর',
+    ancestorPersonEn: 'Kahlan ibn Saba & Post-Ma’rib Migrations',
+    ancestorAr: 'كَهْلَانُ بْنُ سَبَأٍ وَالْأَزْدُ',
+    parentLineBn: 'কাহতান → সাবা → কাহলান → আযদ, লাখম ও জুযাম, বনু তাই, কিন্দাহ, হামদান ও মাযহিজ',
+    parentLineEn: 'Qahtan → Saba → Kahlan → Azd, Lakhm, Tayy, Kindah, Hamdan & Madhhij',
+    howDividedBn: 'ইয়েমেনের বিখ্যাত মা‘রিব বাঁধ ভেঙে (সাইলুল আরিম) কৃষিব্যবস্থা বিপর্যস্ত হলে কাহলানের গোত্রগুলো আরব জুড়ে ছড়িয়ে পড়ে: আযদের এক শাখা মদীনায় (আউস ও খাযরাজ/আনসার), এক শাখা মক্কায় (খুযা‘আহ), এক শাখা শামে (গাসসানী), ওমান ও তিহামায় যায়; লাখম ইরাকের হীরাহয়; বনু তাই নজদে এবং কিন্দাহ মধ্য আরবে রাজ্য গড়ে।',
+    howDividedEn: 'After the Great Ma’rib Dam collapse (Sayl al-‘Arim), Kahlan dispersed across Arabia: Azd formed Ansar (Aws & Khazraj) in Madinah, Khuza‘ah in Makkah, Ghassanids in Sham, and Azd Oman; Lakhm founded Al-Hirah; Tayy and Kindah settled Najd.',
+    nationsFormedBn: 'মদীনার আনসার (আউস ও খাযরাজ), মক্কার খুযা‘আহ, শামের গাসসানী, ইরাকের লাখমী (হীরাহ), বনু তাই, কিন্দাহ, হামদান ও মাযহিজ',
+    nationsFormedEn: 'Aws & Khazraj (Ansar), Khuza‘ah, Ghassanids, Lakhmids of Al-Hirah, Banu Tayy, Kindah, Hamdan & Madhhij',
+    whereTodayBn: 'মদীনা, মক্কা ও হেজায, ইয়েমেন, ওমান, সংযুক্ত আরব আমিরাত, ইরাক (হীরাহ/কুফা অঞ্চল), জর্ডান ও সিরিয়া',
+    whereTodayEn: 'Madinah, Makkah, Yemen, Oman, UAE, Iraq (Al-Hirah/Kufa), Jordan & Syria',
+    sourceNoteBn: 'আর-রাহীকুল মাখতূম (কাহতানীদের দেশান্তর) · সূরা সাবা ৩৪:১৫-১৬',
+    sourceNoteEn: 'Ar-Raheeq al-Makhtum (Emigration of Kahlan) · Surah Saba 34:15-16',
   },
   {
     id: 'pn-ismail',
     rootLine: 'sam',
-    ancestorPersonBn: 'হযরত ইসমাঈল (আ.) → আদনান',
-    ancestorPersonEn: 'Prophet Ismail (AS) → Adnan',
-    ancestorAr: 'إِسْمَاعِيلُ وَعَدْنَانُ',
-    parentLineBn: 'সাম → ফালিখ → ইবরাহীম (আ.) → ইসমাঈল (আ.) → কায়দার/নাবিত → আদনান',
-    parentLineEn: 'Sam → Falikh → Ibrahim (AS) → Ismail (AS) → Adnan',
-    howDividedBn: 'ইসমাঈল (আ.)-এর ১২ পুত্র থেকে হেজায ও উত্তর আরবে ১২টি মূল ধারা তৈরি হয়। তাঁর পুত্র কায়দার ও নাবিতের মাধ্যমে আদনান → মুদার ও রাবী‘আ → কুরাইশ বংশের বিস্তার ঘটে।',
-    howDividedEn: 'Ismail (AS) had 12 sons who settled Makkah and Hijaz; through Qaydar and Nabit emerged Adnan, Mudhar, Rabiah, and Quraysh.',
-    nationsFormedBn: 'মুসতা‘রিবা / আদনানী আরব, কুরাইশ (বনু হাশেম, বনু উমাইয়া), বনু তামীম, বনু বকর, তাগলিব ও হাওয়াযিন',
-    nationsFormedEn: 'Adnani / Northern Arabs, Quraysh (Banu Hashim, Umayyah), Tamim, Bakr, Hawazin',
-    whereTodayBn: 'সৌদি আরব (মক্কা ও নজদ), কুয়েত, ইরাক, জর্ডান, সিরিয়া এবং ইসলামের পর মিসর ও উত্তর আফ্রিকার আরব-অংশ',
-    whereTodayEn: 'Saudi Arabia (Makkah/Najd), Kuwait, Iraq, Jordan, Syria & Arab communities across Egypt/Maghreb',
-    sourceNoteBn: 'সূরা আল-বাকারাহ ২:১২৭ · সীরাত ইবনে হিশাম',
-    sourceNoteEn: 'Surah Al-Baqarah 2:127 · Sirah Ibn Hisham',
+    ancestorPersonBn: 'হযরত ইসমাঈল (আ.) → আদনান (আরবে মুসতা‘রিবা)',
+    ancestorPersonEn: 'Prophet Ismail (AS) → Adnan (Al-Arab al-Musta‘ribah)',
+    ancestorAr: 'إِسْمَاعِيلُ وَعَدْنَانُ عَلَيْهِ السَّلَام',
+    parentLineBn: 'সাম → ফালিখ → ইবরাহীম (আ.) → ইসমাঈল (আ.) [১২ পুত্র: নাবিত, কায়দার প্রমুখ] → আদনান → মা‘আদ → নিযার',
+    parentLineEn: 'Sam → Falikh → Ibrahim (AS) → Ismail (AS) [12 Sons: Nabit, Qaydar] → Adnan → Ma‘add → Nizar',
+    howDividedBn: 'আর-রাহীকুল মাখতূম অনুসারে ইবরাহীম (আ.) ইসমাঈল ও হাজেরাকে মক্কায় রাখলে ইয়েমেনী জুরহুম গোত্র সেখানে বসতি গড়ে। ইসমাঈল (আ.) জুরহুমদের কাছ থেকে বিশুদ্ধ আরবি শেখেন এবং তাঁর ১২ পুত্রের (বিশেষত নাবিত ও কায়দার) বংশে আদনান জন্মগ্রহণ করেন। নবী করীম (ﷺ) বংশলতিকায় আদনান পর্যন্তই গ্রহণ করতেন।',
+    howDividedEn: 'Per Ar-Raheeq al-Makhtum, Ismail (AS) learned pure Arabic from Yemen’s Jurhum tribe in Makkah; his 12 sons (chiefly Nabit and Qaydar) spread across Hijaz, leading to Adnan, Ma‘add, and Nizar.',
+    nationsFormedBn: 'মুসতা‘রিবা বা আরবায়িত আরব: আদনানী সকল গোত্র (নিযারের দুই প্রধান ধারা: রাবী‘আহ ও মুদার, সাথে আনমার ও ইয়াদ)',
+    nationsFormedEn: 'Arabized (Musta‘ribah) Arabs: All Adnanite tribes branching from Nizar into Rabiah and Mudhar',
+    whereTodayBn: 'সৌদি আরব (মক্কা, তায়েফ, নজদ ও পূর্বাঞ্চল), বাহরাইন, কুয়েত, ইরাক, জর্ডান, সিরিয়া ও মিসর',
+    whereTodayEn: 'Saudi Arabia, Bahrain, Kuwait, Iraq, Jordan, Syria & Egypt',
+    sourceNoteBn: 'আর-রাহীকুল মাখতূম · সূরা আল-বাকারাহ ২:১২৭ · সীরাত ইবনে হিশাম',
+    sourceNoteEn: 'Ar-Raheeq al-Makhtum · Surah Al-Baqarah 2:127 · Sirah Ibn Hisham',
+  },
+  {
+    id: 'pn-rabiah',
+    rootLine: 'sam',
+    ancestorPersonBn: 'রাবী‘আহ ইবনে নিযার ইবনে মা‘আদ ইবনে আদনান',
+    ancestorPersonEn: 'Rabiah ibn Nizar ibn Ma‘add ibn Adnan',
+    ancestorAr: 'رَبِيعَةُ بْنُ نِزَارِ بْنِ مَعَدٍّ',
+    parentLineBn: 'ইসমাঈল (আ.) → আদনান → মা‘আদ → নিযার → রাবী‘আহ → আসাদ, আনযাহ, আব্দুল কায়েস ও ওয়াইল',
+    parentLineEn: 'Ismail (AS) → Adnan → Ma‘add → Nizar → Rabiah → Asad, Anazah, Abdul Qays & Wa’il',
+    howDividedBn: 'নিযার ইবনে মা‘আদের দুই প্রধান শাখার প্রথমটি রাবী‘আহ। রাবী‘আহ থেকে আসাদ, আনযাহ ও আব্দুল কায়েস পূর্ব আরবে যায়; আর ওয়াইল থেকে জন্ম নেওয়া বকর ও তাগলিব গোত্র ফোরাত তীর ও জাযীরাহ অঞ্চলে বিস্তার পায় (প্রসিদ্ধ বাসূস যুদ্ধ এ দুই গোত্রের মধ্যে হয়)। বনু হানীফাহ ইয়ামামায় বসে।',
+    howDividedEn: 'Rabiah (brother of Mudhar) split into Abdul Qays (East Arabia/Bahrain), Banu Hanifah (Yamamah), Anazah, and Wa’il → Bakr & Taghlib (Upper Mesopotamia/Euphrates).',
+    nationsFormedBn: 'আব্দুল কায়েস (দ্বিতীয় বৃহৎ জামা‘আতে জুমুআহ), বনু বকর ইবনে ওয়াইল, বনু তাগলিব, বনু শায়বান, আনযাহ ও বনু হানীফাহ',
+    nationsFormedEn: 'Abdul Qays, Bakr ibn Wa’il, Taghlib, Shayban, Anazah & Banu Hanifah',
+    whereTodayBn: 'বাহরাইন, সৌদি আরবের পূর্বাঞ্চল (কাতীফ-আহসা ও রিয়াদ-ইয়ামামা), উত্তর ইরাক ও পূর্বাঞ্চলীয় সিরিয়া (দিয়ার রাবী‘আহ)',
+    whereTodayEn: 'Bahrain, Eastern Saudi Arabia & Riyadh (Yamamah), Northern Iraq & Eastern Syria',
+    sourceNoteBn: 'আর-রাহীকুল মাখতূম (আদনানী গোত্রের শাখা) · আল-কামিল (ইবনুল আসীর)',
+    sourceNoteEn: 'Ar-Raheeq al-Makhtum · Al-Kamil fi al-Tarikh',
+  },
+  {
+    id: 'pn-mudar-quraysh',
+    rootLine: 'sam',
+    ancestorPersonBn: 'মুদার ইবনে নিযার → কিনানাহ → কুরাইশ (নবী ﷺ-এর বংশ)',
+    ancestorPersonEn: 'Mudhar ibn Nizar → Kinanah → Quraysh (Prophet’s Lineage)',
+    ancestorAr: 'مُضَرُ ← كِنَانَةُ ← قُرَيْشٌ ← بَنُو هَاشِمٍ',
+    parentLineBn: 'আদনান → নিযার → মুদার → (১) কায়েস আয়লান ও (২) ইলইয়াস → কিনানাহ → ফিহর (কুরাইশ) → কুসাই → হাশেম → মুহাম্মাদ (ﷺ)',
+    parentLineEn: 'Adnan → Nizar → Mudhar → Qays ‘Aylan & Ilyas → Kinanah → Fihr (Quraysh) → Qusay → Hashim → Muhammad (SAW)',
+    howDividedBn: 'মুদার দুটি মহাশাখায় ভাগ হয়: (১) কায়েস আয়লান — যা থেকে হাওয়াযিন (মক্কার পূর্বে আওতাস), সাক্বীফ (তায়েফ), বনু সুলাইম ও গাতাফান (আবস, যুবইয়ান, আশজা‘); (২) ইলইয়াস ইবনে মুদার — যা থেকে বনু তামীম (নজদ-বসরা), হুযাইল (হেজায পর্বত), বনু আসাদ এবং কিনানাহ → ফিহর (কুরাইশ)। কুসাই ইবনে কিলাব বিচ্ছিন্ন কুরাইশদের মক্কায় ঐক্যবদ্ধ করেন।',
+    howDividedEn: 'Mudhar divided into Qays ‘Aylan (Hawazin, Thaqif in Ta’if, Sulaym, Ghatafan) and Ilyas (Tamim in Najd, Hudhayl near Makkah, Kinanah → Fihr/Quraysh). Qusay ibn Kilab consolidated Quraysh around the Ka‘bah.',
+    nationsFormedBn: 'কুরাইশ (বনু হাশেম, বনু উমাইয়া, বনু তাইম, বনু আদী, বনু মাখযূম, বনু যুহরা), কিনানাহ, তামীম, হুযাইল, হাওয়াযিন, সাক্বীফ ও গাতাফান',
+    nationsFormedEn: 'Quraysh (Hashim, Umayyah, Taym, Adi, Makhzum, Zuhrah), Kinanah, Tamim, Hudhayl, Hawazin, Thaqif & Ghatafan',
+    whereTodayBn: 'মক্কা, তায়েফ ও হেজায, নজদ-রিয়াদ, কাতার (তামীম), জর্ডান, ফিলিস্তিন, সিরিয়া, ইরাক, মিসর ও সমগ্র মুসলিম বিশ্ব (আহলে বাইত ও আশরাফগণ)',
+    whereTodayEn: 'Makkah, Ta’if, Najd, Qatar, Levant, Iraq, Egypt & Ahl al-Bayt descendants worldwide',
+    sourceNoteBn: 'আর-রাহীকুল মাখতূম (মুদার শাখা, কুসাই ও কুরাইশের গোত্রসমূহ)',
+    sourceNoteEn: 'Ar-Raheeq al-Makhtum (Mudhar, Qusay & Quraysh Clans)',
   },
   {
     id: 'pn-yaqub',
@@ -1451,37 +1561,37 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
     id: 'era-4',
     order: 4,
     eraGroup: 'prophetic_ummahs',
-    eraTagBn: 'যুগ ৪ · প্রাচীন আরব ও ইবরাহীমী যুগ',
-    eraTagEn: 'Era 4 · Ancient Arab & Abrahamic Era',
-    titleBn: 'হূদ (আ.), ছালেহ (আ.) ও আবুল আম্বিয়া ইবরাহীম (আ.)-এর যুগ',
-    titleEn: 'Hud, Salih & Father of Prophets Ibrahim (AS)',
-    titleAr: 'عَصْرُ هُودٍ وَصَالِحٍ وَإِبْرَاهِيمَ',
-    rootOrProphetBn: 'ইবরাহীম (আ.) → ইসমাঈল (আ.), ইসহাক্ব (আ.) ও মাদইয়ান',
-    rootOrProphetEn: 'Ibrahim (AS) → Ismail, Ishaq & Madyan',
-    howSplitBn: 'আদ ও সামূদের অবাধ্য অংশ ধ্বংস হলেও কাহতানী আরবরা ইয়েমেনে টিকে থাকে। অন্যদিকে ইবরাহীম (আ.)-এর এক পুত্র ইসমাঈল মক্কায়, ইসহাক্ব শাম-ফিলিস্তিনে এবং মাদইয়ান উত্তর-পশ্চিম আরবে পৃথক জাতি গড়েন।',
-    howSplitEn: 'While Qahtanis thrived in Yemen, Ibrahim’s sons founded distinct nations in Makkah (Ismail), Canaan (Ishaq), and Midian.',
-    whereTodayBn: 'সৌদি আরব, ইয়েমেন, ওমান, ফিলিস্তিন, জর্ডান, সিরিয়া ও ইরাক।',
-    whereTodayEn: 'Saudi Arabia, Yemen, Oman, Palestine, Jordan, Syria & Iraq.',
+    eraTagBn: 'যুগ ৪ · আর-রাহীকুল মাখতূম ও প্রাচীন আরব',
+    eraTagEn: 'Era 4 · Ar-Raheeq & Abrahamic Era',
+    titleBn: 'হূদ (আ.), ছালেহ (আ.), ইবরাহীম (আ.) ও আরব জাতির তিন ধারা',
+    titleEn: 'Hud, Salih, Ibrahim (AS) & Three Divisions of Arabia',
+    titleAr: 'عَصْرُ إِبْرَاهِيمَ وَالْعَرَبِ الثَّلَاثَةِ',
+    rootOrProphetBn: 'ইবরাহীম (আ.) → ইসমাঈল (আ.), ইসহাক্ব (আ.) · কাহতান (আরিবা)',
+    rootOrProphetEn: 'Ibrahim (AS) → Ismail, Ishaq · Qahtan (‘Aribah)',
+    howSplitBn: 'আর-রাহীকুল মাখতূম অনুযায়ী: (১) আদ, সামূদ, তাসম, জাদীস ও আমালিকাহ "আরবে বায়দা" হিসেবে বিলুপ্ত হয়; (২) কাহতানী (আরিবা) আরব ইয়েমেন থেকে মা‘রিব বাঁধ ধ্বংসের পর আযদ, লাখম, তাই ও কিন্দায় ভাগ হয়; (৩) ইসমাঈল (আ.) ও জুরহুম থেকে আদনান → রাবী‘আহ ও মুদার → কুরাইশ বংশ গড়ে ওঠে।',
+    howSplitEn: 'Per Ar-Raheeq al-Makhtum: (1) Al-Arab al-Ba’idah perished; (2) Qahtanites dispersed after Ma’rib Dam collapse; (3) Ismail (AS) & Jurhum formed Adnan → Rabiah, Mudhar & Quraysh.',
+    whereTodayBn: 'মক্কা, মদীনা, তায়েফ, নজদ, ইয়েমেন, ওমান, বাহরাইন, ফিলিস্তিন, জর্ডান, সিরিয়া ও ইরাক।',
+    whereTodayEn: 'Makkah, Madinah, Ta’if, Najd, Yemen, Oman, Bahrain, Levant & Iraq.',
     summaryBn:
-      'আবুল আম্বিয়া ইবরাহীম (আ.)-এর মাধ্যমে তাওহীদ মধ্যপ্রাচ্য ও হেজাযে পুনঃপ্রতিষ্ঠিত হয় এবং তাঁর বংশধর থেকেই আরব ও বনী ইসরাঈলের দুটি মহাধারার জন্ম হয়।',
+      'আবুল আম্বিয়া ইবরাহীম (আ.)-এর মাধ্যমে তাওহীদ মধ্যপ্রাচ্য ও হেজাযে পুনঃপ্রতিষ্ঠিত হয়। পরবর্তীতে খুযা‘আহ নেতা আমর ইবনে লুহাইয়ের মাধ্যমে মূর্তিপূজার বিকৃতি ঘটলেও কুসাই ইবনে কিলাব কাবার সেবা ও কুরাইশের নেতৃত্ব সুসংগঠিত করেন।',
     summaryEn:
-      'Through Ibrahim (AS), monotheism anchored in Hijaz and Sham, branching into the Ishmaelite Arabs and the Israelites.',
+      'Ibrahim (AS) anchored monotheism in Makkah and Sham. Later, though ‘Amr ibn Luhayy introduced idols, Qusay ibn Kilab unified Quraysh around the Ka‘bah.',
     branchesBn: [
-      'ইসমাঈলী/আদনানী ধারা: মক্কা ও নজদ → কুরাইশ বংশ',
-      'কাহতানী ধারা: ইয়েমেন থেকে মদীনা (আউস-খাযরাজ), সিরিয়া (গাসসানী) ও ইরাক (লাখমী)',
-      'ইসহাক্বী ধারা: ইয়াকূব (আ.) → ১২ গোত্র ও ঈসু → শাম ও জর্ডান',
+      'আরবে বায়দা (বিলুপ্ত): আদ, সামূদ, তাসম, জাদীস, আমালিকাহ, জুরহুম-১ ও উমাইম',
+      'আরবে আরিবা (কাহতানী): হিমইয়ার ও কাহলান (মদীনার আউস-খাযরাজ, খুযা‘আহ, গাসসান, লাখম, তাই ও কিন্দাহ)',
+      'আরবে মুসতা‘রিবা (আদনানী): ইসমাঈল → আদনান → রাবী‘আহ (বকর, তাগলিব, আব্দুল কায়েস) ও মুদার (হাওয়াযিন, সাক্বীফ, তামীম, হুযাইল, কিনানাহ → কুরাইশ)',
     ],
     branchesEn: [
-      'Ishmaelite/Adnani line: Makkah & Najd → Quraysh',
-      'Qahtani line: Yemen → Madinah (Ansar), Syria & Iraq',
-      'Ishaqite line: Yaqub (12 Tribes) & Esu in Sham & Jordan',
+      'Al-Arab al-Ba’idah: Ad, Thamud, Tasm, Jadis, Amaliqah & Jurhum I',
+      'Al-Arab al-‘Aribah (Qahtan): Himyar & Kahlan (Ansar, Khuza‘ah, Ghassan, Lakhm, Tayy, Kindah)',
+      'Al-Arab al-Musta‘ribah (Adnan): Rabiah (Bakr, Taghlib, Abdul Qays) & Mudhar (Hawazin, Thaqif, Tamim, Quraysh)',
     ],
     scholarlyNoteBn:
-      'ইসমাঈল ও কাহতানের এই দুই ধারায় বিভক্ত হয়েই সমগ্র আরব উপদ্বীপের মানুষ গড়ে উঠেছিল।',
+      'আর-রাহীকুল মাখতূম: "হিজায স্বাধীন ছিল—বাইজেন্টাইন বা পারস্য কোনো সম্রাটই মক্কা-মদীনাকে করদ রাজ্যে পরিণত করতে পারেনি; কুসাই ইবনে কিলাব কাবার হিজাবাহ, সিক্বায়াহ, রিফাদাহ, নদওয়া ও লিওয়া প্রতিষ্ঠা করেন।"',
     scholarlyNoteEn:
-      'Together, Adnani and Qahtani lineages constituted the classical Arab peoples.',
-    referenceBn: 'সূরা আল-বাকারাহ ২:১২৪-১২৯ · সীরাত ইবনে হিশাম',
-    referenceEn: 'Surah Al-Baqarah 2:124-129',
+      'Ar-Raheeq al-Makhtum: Hijaz remained independent of Rome and Persia while Qusay ibn Kilab institutionalized Ka‘bah custodianship in Makkah.',
+    referenceBn: 'সূরা আল-বাকারাহ ২:১২৪-১২৯ · আর-রাহীকুল মাখতূম',
+    referenceEn: 'Surah Al-Baqarah 2:124-129 · Ar-Raheeq al-Makhtum',
   },
   {
     id: 'era-5',
@@ -1598,3 +1708,411 @@ export const HUMANITY_ERAS_LIST: HumanityEraListItem[] = [
     referenceEn: 'Surah Al-Hujurat 49:13 · Musnad Ahmad 23489',
   },
 ];
+
+// ============================================================================
+// AR-RAHEEQ AL-MAKHTUM (আর-রাহীকুল মাখতূম) DEDICATED HISTORICAL LINEAGE & CONTEXT
+// ============================================================================
+
+export const AR_RAHEEQ_GENEALOGY_TRACKS: ArRaheeqGenealogyTrack[] = [
+  {
+    id: 'track-qahtan',
+    trackType: 'qahtan',
+    titleBn: 'কাহতানী (আরবে আরিবা) মূল ধারা: ইয়েমেন থেকে আরব জুড়ে বিস্তার',
+    titleEn: 'Qahtani (‘Aribah) Line: From Yemen Across Arabia',
+    titleAr: 'سِلْسِلَةُ الْعَرَبِ الْعَارِبَةِ (قَحْطَانُ)',
+    subtitleBn: 'আর-রাহীকুল মাখতূম অনুযায়ী মা‘রিব বাঁধের বিপর্যয়ের পর দক্ষিণ আরব থেকে উত্তর-পূর্ব ও হেজাযে ছড়িয়ে পড়া ধারা',
+    subtitleEn: 'Southern Arab dispersion from Yemen across Hijaz, Sham & Iraq after Ma’rib Dam collapse',
+    steps: [
+      {
+        nameBn: 'সাম → আবির → কাহতান',
+        nameEn: 'Sam → Abir → Qahtan',
+        nameAr: 'قَحْطَانُ بْنُ عَابِرٍ',
+        noteBn: 'দক্ষিণ আরবের ইয়েমেন অঞ্চলে খাঁটি আরবে আরিবা জাতির আদি পিতা।',
+        noteEn: 'Patriarch of pure Southern Arabs settled in Yemen.',
+      },
+      {
+        nameBn: 'ইয়া‘রুব → ইয়াশজুব → সাবা',
+        nameEn: 'Ya‘rub → Yashjub → Saba',
+        nameAr: 'يَعْرُبُ ← يَشْجُبُ ← سَبَأٌ',
+        noteBn: 'সাবার নামানুসারে ঐতিহাসিক সাবা সভ্যতা ও মা‘রিব বাঁধ গড়ে ওঠে।',
+        noteEn: 'Saba gave name to the Sabaean realm & Ma’rib civilization.',
+      },
+      {
+        nameBn: 'হিমইয়ার ও কাহলান',
+        nameEn: 'Himyar & Kahlan',
+        nameAr: 'حِمْيَرُ وَكَهْلَانُ',
+        noteBn: 'হিমইয়ার ইয়েমেনে থাকে (তুব্বা, কুদা‘আহ); কাহলান মা‘রিব বাঁধ ভাঙার পর দেশান্তর হয়।',
+        noteEn: 'Himyar ruled Yemen; Kahlan migrated after Ma’rib Dam broke.',
+      },
+      {
+        nameBn: 'আযদ · লাখম · তাই · কিন্দাহ',
+        nameEn: 'Azd · Lakhm · Tayy · Kindah',
+        nameAr: 'الْأَزْدُ · لَخْمٌ · طَيِّئٌ · كِنْدَةُ',
+        noteBn: 'আযদ → আউস-খাযরাজ (মদীনা), খুযা‘আহ (মক্কা), গাসসান (শাম), ওমান; লাখম → হীরাহ (ইরাক); তাই → নজদ।',
+        noteEn: 'Azd formed Ansar, Khuza‘ah & Ghassan; Lakhm formed Al-Hirah; Tayy & Kindah settled Najd.',
+      },
+    ],
+  },
+  {
+    id: 'track-adnan',
+    trackType: 'adnan',
+    titleBn: 'আদনানী (আরবে মুসতা‘রিবা) মূল ধারা: ইসমাঈল (আ.) থেকে শেষ নবী (ﷺ)',
+    titleEn: 'Adnani (Musta‘ribah) Line: From Ismail (AS) to Prophet Muhammad (SAW)',
+    titleAr: 'سِلْسِلَةُ الْعَرَبِ الْمُسْتَعْرِبَةِ (إِسْمَاعِيلُ ← عَدْنَانُ ← مُحَمَّدٌ ﷺ)',
+    subtitleBn: 'আর-রাহীকুল মাখতূম: আদনান পর্যন্ত প্রামাণ্য বংশপরম্পরা — কুরাইশের একত্রীকরণ ও পবিত্র রিসালাতের ধারা',
+    subtitleEn: 'Verified Prophetic genealogy from Ibrahim & Ismail (AS) via Adnan and Quraysh',
+    steps: [
+      {
+        nameBn: 'ইবরাহীম (আ.) → ইসমাঈল (আ.)',
+        nameEn: 'Ibrahim → Ismail (AS)',
+        nameAr: 'إِبْرَاهِيمُ ← إِسْمَاعِيلُ',
+        noteBn: 'মক্কায় জুরহুম গোত্রের সাথে মিলন ও বিশুদ্ধ আরবি ভাষার সূচনা; ১২ পুত্র (নাবিত ও কায়দার প্রধান)।',
+        noteEn: 'Settled Makkah alongside Jurhum; 12 sons led by Nabit and Qaydar.',
+      },
+      {
+        nameBn: 'আদনান → মা‘আদ → নিযার',
+        nameEn: 'Adnan → Ma‘add → Nizar',
+        nameAr: 'عَدْنَانُ ← مَعَدٌّ ← نِزَارٌ',
+        noteBn: 'নবী করীম (ﷺ) আদনান পর্যন্ত বংশলতিকা বিশুদ্ধ বলে ঘোষণা করতেন এবং এর ওপরে যেতেন না।',
+        noteEn: 'Prophet (SAW) stopped reciting genealogy at Adnan as the undisputed anchor.',
+      },
+      {
+        nameBn: 'রাবী‘আহ ও মুদার',
+        nameEn: 'Rabiah & Mudhar',
+        nameAr: 'رَبِيعَةُ وَمُضَرُ',
+        noteBn: 'রাবী‘আহ → আব্দুল কায়েস, বকর, তাগলিব, হানীফাহ; মুদার → কায়েস আয়লান (হাওয়াযিন, সাক্বীফ) ও ইলইয়াস (তামীম, হুযাইল, কিনানাহ)।',
+        noteEn: 'Rabiah (Abdul Qays, Bakr, Taghlib) & Mudhar (Qays ‘Aylan: Hawazin, Thaqif; Ilyas: Tamim, Kinanah).',
+      },
+      {
+        nameBn: 'ফিহর (কুরাইশ) → কুসাই → হাশেম → মুহাম্মাদ (ﷺ)',
+        nameEn: 'Fihr (Quraysh) → Qusay → Hashim → Muhammad (SAW)',
+        nameAr: 'فِهْرٌ (قُرَيْشٌ) ← قُصَيٌّ ← هَاشِمٌ ← مُحَمَّدٌ ﷺ',
+        noteBn: 'কুসাই ইবনে কিলাব কুরাইশকে মক্কায় ঐক্যবদ্ধ করেন → আব্দ মানাফ → হাশেম → আব্দুল মুত্তালিব → আব্দুল্লাহ → মুহাম্মাদ (ﷺ)।',
+        noteEn: 'Qusay united Quraysh in Makkah → Abd Manaf → Hashim → Abd al-Muttalib → Abdullah → Muhammad (SAW).',
+      },
+    ],
+  },
+];
+
+export const AR_RAHEEQ_HISTORY_SECTIONS: ArRaheeqChapterSection[] = [
+  {
+    id: 'raheeq-1-baidah',
+    order: 1,
+    category: 'baidah',
+    chapterTagBn: 'আর-রাহীকুল মাখতূম · ধারা ১',
+    chapterTagEn: 'Ar-Raheeq · Arab Category 1',
+    titleBn: 'আরবে বায়দা (العرب البائدة) — বিলুপ্ত হয়ে যাওয়া আদি আরব জাতিসমূহ',
+    titleEn: 'Al-Arab al-Ba’idah — Primordial & Extinct Arab Tribes',
+    titleAr: 'الْعَرَبُ الْبَائِدَةُ: عَادٌ وَثَمُودُ وَطَسْمٌ وَجَدِيسُ',
+    summaryBn:
+      'আর-রাহীকুল মাখতূমের প্রারম্ভিক অধ্যায়ে আরব জাতিকে বংশগত দিক থেকে তিন ভাগে ভাগ করা হয়েছে। প্রথম ভাগ হলো "আরবে বায়দা"—অর্থাৎ সেসব প্রাচীন আরব জাতি, যাদের অস্তিত্ব ও নিদর্শন কালের প্রবাহে ও আল্লাহর আযাবে সম্পূর্ণ বিলুপ্ত হয়ে গেছে অথবা পরবর্তী গোত্রের মাঝে মিশে গেছে।',
+    summaryEn:
+      'The opening chapter of Ar-Raheeq al-Makhtum classifies Arabs into three historical branches. First are Al-Arab al-Ba’idah—ancient Arab tribes that vanished completely before the Islamic era.',
+    howSplitBn: 'নূহ (আ.)-এর পুত্র সামের সন্তানেরা (বিশেষত ইরাম ও লাউযের ধারা) প্লাবন-পরবর্তী আরব উপদ্বীপের দক্ষিণ, উত্তর ও মধ্যভাগে প্রথম জনপদ গড়ে তোলে।',
+    howSplitEn: 'Descendants of Sam ibn Nuh (notably via Eram and Lawidh) established the earliest Arabian settlements across southern, northern, and central deserts.',
+    turningPointBn: 'অহংকার, মূর্তিপূজা ও নবীদের অবাধ্যতার কারণে আদ ও সামূদ ধ্বংস হয়; আর তাসম ও জাদীস অভ্যন্তরীণ রক্তক্ষয়ী যুদ্ধে নির্মূল হয়।',
+    turningPointEn: '‘Ad and Thamud perished by divine punishment after rejecting Hud & Salih (AS), while Tasm and Jadis destroyed each other in civil war.',
+    sourceChapterBn: 'আর-রাহীকুল মাখতূম · অধ্যায় ১: আরবদের বংশপরিচয় ও জাতিসমূহ',
+    sourceChapterEn: 'Ar-Raheeq al-Makhtum · Chapter 1: Origin of the Arabs',
+    subBranches: [
+      {
+        nameBn: 'আদ জাতি (হূদ আ.-এর কওম)',
+        nameEn: 'Tribe of ‘Ad (Nation of Hud AS)',
+        nameAr: 'قَوْمُ عَادٍ',
+        lineageBn: 'সাম → ইরাম → আওস → আদ',
+        lineageEn: 'Sam → Eram → Aws → ‘Ad',
+        settlementBn: 'দক্ষিণ আরবের "আহকাফ" (ইয়েমেন ও ওমানের মধ্যবর্তী বিশাল বালুকাভূমি)',
+        settlementEn: 'Al-Ahqaf (sandy dunes between Hadramaut/Yemen and Oman)',
+        keyFactsBn: 'সুউচ্চ স্তম্ভবিশিষ্ট ইরাম নগরী নির্মাণ করেছিল; অবাধ্যতায় ৭ রাত ৮ দিন প্রবল ঝড়ে ধ্বংস হয়।',
+        keyFactsEn: 'Built towering stone cities; perished in a furious 7-night storm for rejecting Hud (AS).',
+      },
+      {
+        nameBn: 'সামূদ জাতি (ছালেহ আ.-এর কওম)',
+        nameEn: 'Tribe of Thamud (Nation of Salih AS)',
+        nameAr: 'قَوْمُ ثَمُودَ',
+        lineageBn: 'সাম → ইরাম → গাসির → সামূদ',
+        lineageEn: 'Sam → Eram → Gathir → Thamud',
+        settlementBn: 'উত্তর-পশ্চিম সৌদি আরবের "আল-হিজর" (বর্তমান মাদায়েন ছালেহ, মদীনা-তাবুকের মাঝে)',
+        settlementEn: 'Al-Hijr / Mada’in Salih (NW Saudi Arabia between Madinah and Tabuk)',
+        keyFactsBn: 'পাহাড় কেটে বিশাল প্রাসাদ তৈরি করত; মুজিযা-স্বরূপ উটনীকে হত্যা করায় বজ্রনিনাদে ধ্বংস হয়।',
+        keyFactsEn: 'Carved dwellings in sandstone cliffs; destroyed by a thunderous blast after slaughtering the she-camel.',
+      },
+      {
+        nameBn: 'তাসম ও জাদীস',
+        nameEn: 'Tasm & Jadis',
+        nameAr: 'طَسْمٌ وَجَدِيسُ',
+        lineageBn: 'সাম → লাউয → তাসম ও জাদীস',
+        lineageEn: 'Sam → Lawidh → Tasm & Jadis',
+        settlementBn: 'মধ্য আরবের "ইয়ামামা" (বর্তমান রিয়াদ ও আল-খারজ অঞ্চল, নজদ)',
+        settlementEn: 'Al-Yamamah (Central Najd / modern Riyadh & Al-Kharj region)',
+        keyFactsBn: 'তাসমের অত্যাচারী শাসকের বিরুদ্ধে জাদীসের বিদ্রোহ ও ইয়েমেনী হিমইয়ার রাজা হাসসান তুব্বার আক্রমণে উভয় গোত্র নিশ্চিহ্ন হয়।',
+        keyFactsEn: 'Decimated through internal tyranny, revolt, and intervention by Himyarite king Hassan.',
+      },
+      {
+        nameBn: 'আমালিকাহ, জুরহুম আল-ঊলা ও উমাইম',
+        nameEn: 'Amaliqah, Early Jurhum & Umaym',
+        nameAr: 'الْعَمَالِقَةُ وَجُرْهُمُ الْأُولَى وَأُمَيْمٌ',
+        lineageBn: 'সাম → লাউয → ইমলীক / উমাইম (এবং ওয়াবার, আবীল)',
+        lineageEn: 'Sam → Lawidh → Imliq / Umaym (plus Wabar & Abil)',
+        settlementBn: 'হেজায, ফিলিস্তিন-শাম ও মিসর (আমালিকাহ); পূর্ব আরব ও ইয়েমেন',
+        settlementEn: 'Hijaz, Palestine-Levant & Egypt (Amaliqah); Oman & Yemen',
+        keyFactsBn: 'প্রাচীন জুরহুমের পরবর্তী এক অংশ মক্কায় ইসমাঈল (আ.)-এর সাথে আত্মীয়তায় আবদ্ধ হয়ে টিকে ছিল; বাকিরা বিলীন হয়ে যায়।',
+        keyFactsEn: 'Later Jurhumites allied with Ismail (AS) in Makkah; the earlier branch vanished.',
+      },
+    ],
+  },
+  {
+    id: 'raheeq-2-aribah',
+    order: 2,
+    category: 'aribah_qahtan',
+    chapterTagBn: 'আর-রাহীকুল মাখতূম · ধারা ২',
+    chapterTagEn: 'Ar-Raheeq · Arab Category 2',
+    titleBn: 'আরবে আরিবা (العرب العاربة) — কাহতান, মা‘রিব বাঁধ ও কাহলানের দেশান্তর',
+    titleEn: 'Al-Arab al-‘Aribah — Qahtan & Great Dispersal After Ma’rib Dam',
+    titleAr: 'الْعَرَبُ الْعَارِبَةُ: قَحْطَانُ وَحِمْيَرُ وَكَهْلَانُ',
+    summaryBn:
+      'আরবে ‘আরিবা বা খাঁটি আরব বলতে ইয়াশজুব ইবনে ইয়া‘রুব ইবনে কাহতানের বংশধরদের বোঝায়। এদের আদি আবাস ছিল ইয়েমেন। কাহতানের প্রপৌত্র সাবার দুটি প্রধান শাখা—"হিমইয়ার" ও "কাহলান"—সমগ্র দক্ষিণ, মধ্য ও উত্তর আরবের ইতিহাস বদলে দেয়।',
+    summaryEn:
+      'Al-Arab al-‘Aribah (pure Arabs) descend from Qahtan in Yemen. Qahtan’s descendant Saba split into two massive branches—Himyar and Kahlan—whose migrations reshaped the entire peninsula.',
+    howSplitBn: 'হিমইয়ার ইয়েমেনে থেকে যায় এবং শক্তিশালী রাজত্ব গড়ে তোলে (যায়দুল জুমহূর, কুদা‘আহ, সাকাসিক)। আর কাহলানের সন্তানেরা মা‘রিব বাঁধ ধসের (সাইলুল আরিম) আগে ও পরে ইয়েমেন ছেড়ে আরব-ইরাক-শামে ছড়িয়ে পড়ে।',
+    howSplitEn: 'Himyar stayed in Yemen (Zayd al-Jumhur, Quda‘ah, Sakasik), while Kahlan migrated northward across Arabia before and after the collapse of the Great Ma’rib Dam.',
+    turningPointBn: 'সাবা নগরীর মা‘রিব বাঁধ ভেঙে (সাইলুল আরিম) প্রলয়ংকরী বন্যা হলে কাহলান বংশের আযদ, লাখম, তাই ও কিন্দাহ চারদিকে ছড়িয়ে পড়ে—যা আজকের মদীনা, মক্কা, ওমান, সিরিয়া ও ইরাকের জনবিন্যাস তৈরি করে।',
+    turningPointEn: 'The Great Flood of Ma’rib (Sayl al-‘Arim) drove Azd, Lakhm, Tayy, and Kindah outward—forming Madinah’s Ansar, Makkah’s Khuza‘ah, Oman, Sham’s Ghassanids & Iraq’s Lakhmids.',
+    sourceChapterBn: 'আর-রাহীকুল মাখতূম · অধ্যায় ১: আরবে ‘আরিবা ও কাহতানীদের দেশান্তর',
+    sourceChapterEn: 'Ar-Raheeq al-Makhtum · Chapter 1: Al-Arab al-‘Aribah & Migrations',
+    subBranches: [
+      {
+        nameBn: 'আযদ (مদীনার আনসার, খুযা‘আহ, গাসসান, ওমান)',
+        nameEn: 'Al-Azd (Ansar, Khuza‘ah, Ghassan & Oman)',
+        nameAr: 'الْأَزْدُ (الْأَوْسُ وَالْخَزْرَجُ · خُزَاعَةُ · غَسَّانُ)',
+        lineageBn: 'কাহলান → নাছর/মাযিন → আযদ (নেতৃত্ব: ইমরান ইবনে আমর মুযাইক্বিয়া)',
+        lineageEn: 'Kahlan → Azd (led north by ‘Imran ibn ‘Amr Muzayqiya)',
+        settlementBn: 'মদীনা (আউস ও খাযরাজ), মক্কা-মাররুয যাহরান (খুযা‘আহ), শাম/সিরিয়া (গাসসান), আসির-তিহামা (শানূ‘আহ) ও ওমান (আযদ ওমান)',
+        settlementEn: 'Madinah (Aws & Khazraj), Makkah (Khuza‘ah), Syria/Jordan (Ghassan), Asir (Shanu’ah) & Oman',
+        keyFactsBn: 'রাসূলুল্লাহ (ﷺ)-কে মদীনায় আশ্রয়দাতা "আনসার" সাহাবীরা (আউস ও খাযরাজ) ছিলেন এই কাহতানী-আযদ বংশের এবং শামের গাসসানী রাজারাও এ শাখার।',
+        keyFactsEn: 'Madinah’s Ansar (Aws & Khazraj), Makkah’s Khuza‘ah custodians, and Syria’s Ghassanids all branched from Azd.',
+      },
+      {
+        nameBn: 'লাখম ও জুযাম (ইরাকের হীরাহ রাজ্য)',
+        nameEn: 'Lakhm & Judham (Kingdom of Al-Hirah)',
+        nameAr: 'لَخْمٌ وَجُذَامُ (آلُ الْمُنْذِرِ بِالْحِيرَةِ)',
+        lineageBn: 'সাবা → কাহলান → উদাদ → লাখম ও জুযাম',
+        lineageEn: 'Saba → Kahlan → Udad → Lakhm & Judham',
+        settlementBn: 'দক্ষিণ ইরাকের ফোরাত তীরে "আল-হীরাহ" ও আনবার অঞ্চল (জুযাম উত্তর-পশ্চিম আরবে)',
+        settlementEn: 'Al-Hirah along the Euphrates in Iraq (and Judham in NW Arabia)',
+        keyFactsBn: 'লাখম গোত্রের "নাসর ইবনে রাবী‘আহ"-র বংশ থেকেই হীরাহ-র বিখ্যাত মুনযিরী রাজবংশের (নু‘মান ইবনুল মুনযির) জন্ম হয়।',
+        keyFactsEn: 'Progenitors of the Lakhmid Dynasty (House of Munzir) ruling Al-Hirah under Sassanid Persia.',
+      },
+      {
+        nameBn: 'বনু তাই (حاتم الطائي-এর গোত্র)',
+        nameEn: 'Banu Tayy',
+        nameAr: 'بَنُو طَيِّئٍ',
+        lineageBn: 'সাবা → কাহলান → উদাদ → তাই',
+        lineageEn: 'Saba → Kahlan → Udad → Tayy',
+        settlementBn: 'উত্তর নজদের "আজা ও সালমা" (জাবাল শাম্মার / হাইল অঞ্চল) এবং তাইমা-কুফার মধ্যবর্তী অঞ্চল',
+        settlementEn: 'Jabal Aja & Salma (Ha’il region, North Najd) between Banu Asad and Tayma',
+        keyFactsBn: 'দানশীলতায় প্রসিদ্ধ হাতেম তাই ও সাহাবী আদী ইবনে হাতেম (রা.) এই গোত্রের; আজকের হাইল-শাম্মার অঞ্চলে বসতি রয়েছে।',
+        keyFactsEn: 'Renowned tribe of Hatim al-Ta’i and Companion ‘Adi ibn Hatim (RA); today centered in Ha’il.',
+      },
+      {
+        nameBn: 'কিন্দাহ, হিমইয়ার, হামদান ও মাযহিজ',
+        nameEn: 'Kindah, Himyar, Hamdan & Madhhij',
+        nameAr: 'كِنْدَةُ وَحِمْيَرُ وَهَمْدَانُ وَمَذْحِجُ',
+        lineageBn: 'কাহতান → সাবা → হিমইয়ার ও কাহলান (কিন্দাহ, হামদান, মাযহিজ)',
+        lineageEn: 'Qahtan → Saba → Himyar & Kahlan (Kindah, Hamdan, Madhhij)',
+        settlementBn: 'বাহরাইন → হাদরামাউত → মধ্য নজদ (কিন্দাহ); ইয়েমেন ও দক্ষিণ আরব (হামদান ও হিমইয়ার)',
+        settlementEn: 'Bahrain → Hadramaut → Central Najd (Kindah); Yemen highlands (Hamdan, Himyar)',
+        keyFactsBn: 'কিন্দাহ গোত্র বাহরাইন থেকে হাদরামাউত হয়ে নজদে শক্তিশালী কিন্দাহ রাজত্ব প্রতিষ্ঠা করে; হিমইয়ার ইয়েমেনে "তুব্বা" সাম্রাজ্য গড়ে।',
+        keyFactsEn: 'Kindah built a major central Arabian kingdom before returning to Hadramaut; Himyar ruled Yemen.',
+      },
+    ],
+  },
+  {
+    id: 'raheeq-3-mustaribah',
+    order: 3,
+    category: 'mustaribah_adnan',
+    chapterTagBn: 'আর-রাহীকুল মাখতূম · ধারা ৩',
+    chapterTagEn: 'Ar-Raheeq · Arab Category 3',
+    titleBn: 'আরবে মুসতা‘রিবা (العرب المستعربة) — ইসমাঈল (আ.), আদনান ও কুরাইশ',
+    titleEn: 'Al-Arab al-Musta‘ribah — Ismail (AS), Adnan, Rabiah, Mudhar & Quraysh',
+    titleAr: 'الْعَرَبُ الْمُسْتَعْرِبَةُ: عَدْنَانُ ← مُضَرُ وَرَبِيعَةُ ← قُرَيْشٌ',
+    summaryBn:
+      'ইবরাহীম (আ.) আল্লাহর নির্দেশে মা হাজেরা ও শিশু ইসমাঈল (আ.)-কে জনমানবহীন মক্কায় রেখে আসেন। যমযম কূপের আশেপাশে ইয়েমেনী জুরহুম গোত্র বসতি স্থাপন করলে ইসমাঈল (আ.) তাদের কাছে আরবি ভাষা শেখেন ও বিবাহ করেন। তাঁর বংশেই আদনান ও শেষ নবী মুহাম্মাদ (ﷺ)-এর জন্ম হয়।',
+    summaryEn:
+      'Ibrahim (AS) settled Hajar and Ismail (AS) by Zamzam in Makkah, where Yemen’s Jurhum tribe arrived. Ismail learned Arabic from them; through his son Qaydar/Nabit came Adnan, leading to Quraysh and Prophet Muhammad (SAW).',
+    howSplitBn: 'আদনানের নাতি নিযার ইবনে মা‘আদ থেকে চার পুত্র (রাবী‘আহ, মুদার, আনমার ও ইয়াদ) জন্ম নেয়। তবে মূল আরব জনসংখ্যা রাবী‘আহ ও মুদার এই দুই মহাশাখায় বিভক্ত হয়ে মধ্য, পশ্চিম ও পূর্ব আরবে ছড়িয়ে পড়ে।',
+    howSplitEn: 'Nizar ibn Ma‘add divided primarily into two colossal confederations: Rabiah (eastern & northern Arabia) and Mudhar (split into Qays ‘Aylan and Ilyas → Quraysh).',
+    turningPointBn: 'মক্কার আশেপাশে বিচ্ছিন্ন থাকা কিনানাহ-কুরাইশ গোত্রগুলোকে কুসাই ইবনে কিলাব একত্রিত করে মক্কা ও কাবা শরীফের একচ্ছত্র নেতৃত্ব প্রতিষ্ঠা করেন।',
+    turningPointEn: 'Qusay ibn Kilab united scattered Quraysh clans into Makkah, organizing civic governance and Ka‘bah administration.',
+    sourceChapterBn: 'আর-রাহীকুল মাখতূম · অধ্যায় ১: ইবরাহীম ও ইসমাঈল (আ.)-এর বংশধর ও আদনানী শাখা',
+    sourceChapterEn: 'Ar-Raheeq al-Makhtum · Chapter 1: Descendants of Ismail & Adnanite Tribes',
+    subBranches: [
+      {
+        nameBn: 'রাবী‘আহ ইবনে নিযার (আব্দুল কায়েস, বকর, তাগলিব, হানীফাহ)',
+        nameEn: 'Rabiah ibn Nizar (Abdul Qays, Bakr, Taghlib, Hanifah)',
+        nameAr: 'رَبِيعَةُ: عَبْدُ الْقَيْسِ · بَكْرٌ · تَغْلِبُ · بَنُو حَنِيفَةَ',
+        lineageBn: 'আদনান → মা‘আদ → নিযার → রাবী‘আহ → আসাদ, ওয়াইল, আব্দুল কায়েস',
+        lineageEn: 'Adnan → Ma‘add → Nizar → Rabiah → Asad, Wa’il, Abdul Qays',
+        settlementBn: 'বাহরাইন ও পূর্ব আরব (আব্দুল কায়েস), ইয়ামামা/রিয়াদ (বনু হানীফাহ) এবং ফোরাত তীর ও জাযীরাহ (বকর ও তাগলিব)',
+        settlementEn: 'Bahrain & Al-Ahsa (Abdul Qays), Yamamah (Hanifah), Euphrates/Jazirah (Bakr & Taghlib)',
+        keyFactsBn: 'মদীনার মসজিদে নববীর পর দ্বিতীয় জুমা অনুষ্ঠিত হয়েছিল বাহরাইনের জাওয়াছায় আব্দুল কায়েস গোত্রে; ওয়াইলের বকর-তাগলিবের মধ্যে ৪০ বছরের বাসূস যুদ্ধ হয়।',
+        keyFactsEn: 'Abdul Qays held Islam’s second Friday prayer in Bahrain; Bakr & Taghlib fought the famous 40-year Basus War.',
+      },
+      {
+        nameBn: 'মুদার — ১ম ধারা: কায়েস আয়লান (হাওয়াযিন, সাক্বীফ, গাতাফান)',
+        nameEn: 'Mudhar Branch 1: Qays ‘Aylan (Hawazin, Thaqif, Ghatafan)',
+        nameAr: 'قَيْسُ عَيْلَانَ: هَوَازِنُ · ثَقِيفٌ · غَطَفَانُ · سُلَيْمٌ',
+        lineageBn: 'আদনান → নিযার → মুদার → কায়েস আয়লান → খাসাফাহ, সা‘দ (হাওয়াযিন/সাক্বীফ, গাতাফান, সুলাইম)',
+        lineageEn: 'Adnan → Nizar → Mudhar → Qays ‘Aylan',
+        settlementBn: 'মক্কার পূর্বে আওতাস-হুনাইন (হাওয়াযিন), উর্বর তায়েফ নগরী (সাক্বীফ), নজদ-খায়বার সংলগ্ন অঞ্চল (গাতাফান ও সুলাইম)',
+        settlementEn: 'Awtas/Hunayn east of Makkah (Hawazin), Ta’if (Thaqif), Najd (Ghatafan & Sulaym)',
+        keyFactsBn: 'সাক্বীফ তায়েফের প্রাচীরঘেরা নগরী ও আল-লাত মূর্তির কেন্দ্র গড়ে তোলে; গাতাফান আবস, যুবইয়ান ও ফাযারাহ শাখায় বিভক্ত ছিল (দাহিস-গাবরা যুদ্ধ)।',
+        keyFactsEn: 'Thaqif fortified Ta’if; Ghatafan split into ‘Abs and Dhubyan (famous for the Dahiis-Ghabra war).',
+      },
+      {
+        nameBn: 'মুদার — ২য় ধারা: ইলইয়াস (তামীম, হুযাইল, আসাদ, কিনানাহ)',
+        nameEn: 'Mudhar Branch 2: Ilyas ibn Mudhar (Tamim, Hudhayl, Kinanah)',
+        nameAr: 'إِلْيَاسُ بْنُ مُضَرَ: تَمِيمٌ · هُذَيْلٌ · أَسَدٌ · كِنَانَةُ',
+        lineageBn: 'মুদার → ইলইয়াস → তাবিকাহ (তামীম), মুদরিকাহ (হুযাইল, খুজাইমাহ → আসাদ ও কিনানাহ)',
+        lineageEn: 'Mudhar → Ilyas → Tamim, Hudhayl, Asad & Kinanah',
+        settlementBn: 'নজদ থেকে বসরা মরুভূমি (বনু তামীম), মক্কার নিকটবর্তী পর্বত-উপত্যকা (হুযাইল), হেজায উপকূল (কিনানাহ)',
+        settlementEn: 'Najd to Basra (Tamim), mountains near Makkah (Hudhayl), Hijaz coast (Kinanah)',
+        keyFactsBn: 'কুরআনের প্রখ্যাত ক্বারী ও সাহাবী আব্দুল্লাহ ইবনে মাসউদ (রা.) ছিলেন হুযাইল গোত্রের; আর ফিহরের মাধ্যমে কিনানাহ থেকেই কুরাইশের জন্ম।',
+        keyFactsEn: 'Sahabi Abdullah ibn Mas‘ud (RA) hailed from Hudhayl; Kinanah directly fathered Fihr (Quraysh).',
+      },
+      {
+        nameBn: 'কুরাইশ বংশ ও তার ১০টি প্রধান গোত্র',
+        nameEn: 'Quraysh & Its Leading Clans',
+        nameAr: 'قُرَيْشٌ: بَنُو هَاشِمٍ · بَنُو أُمَيَّةَ · بَنُو تَيْمٍ · بَنُو عَدِيٍّ',
+        lineageBn: 'কিনানাহ → আন-নদর → মালিক → ফিহর (কুরাইশ) → গালিব → লুআই → কা‘ব → মুররাহ → কিলাব → কুসাই',
+        lineageEn: 'Kinanah → Al-Nadr → Malik → Fihr (Quraysh) → Kilab → Qusay → Abd Manaf → Hashim',
+        settlementBn: 'মক্কা নগরী (কাবা শরীফের কেন্দ্র: বাতহা ও জাওয়াহির অঞ্চল)',
+        settlementEn: 'City of Makkah (central Bat’ha & surrounding quarters)',
+        keyFactsBn: 'কুসাই ইবনে কিলাব কুরাইশকে একত্র করেন; প্রধান গোত্র: বনু হাশেম, বনু মুত্তালিব, বনু আব্দ শামস (উমাইয়া), বনু নাওফাল, আসাদ, তাইম (আবু বকর রা.), আদী (উমর রা.), মাখযূম, জুমাহ ও সাহম।',
+        keyFactsEn: 'Qusay’s descendants formed Banu Hashim, Abd Shams (Umayyah), Nawfal & Asad; earlier lineages formed Taym (Abu Bakr), Adi (Umar), Makhzum, etc.',
+      },
+    ],
+  },
+  {
+    id: 'raheeq-4-governance',
+    order: 4,
+    category: 'governance_kabah',
+    chapterTagBn: 'আর-রাহীকুল মাখতূম · ধারা ৪',
+    chapterTagEn: 'Ar-Raheeq · Rule & Custodianship',
+    titleBn: 'আরবের শাসনব্যবস্থা, সাম্রাজ্যের প্রভাব ও কাবা শরীফের নেতৃত্বের ইতিহাস',
+    titleEn: 'Arabian Rulership, Foreign Powers & Custody of the Ka‘bah',
+    titleAr: 'الْحُكْمُ وَالْإِمَارَةُ وَسِدَانَةُ الْكَعْبَةِ',
+    summaryBn:
+      'আর-রাহীকুল মাখতূমে ইসলাম-পূর্ব আরবের রাজনৈতিক চিত্র দুটি স্পষ্ট ভাগে দেখানো হয়েছে: (১) মুকুটধারী রাজা ও পরাশক্তির করদ রাজ্য (ইয়েমেন, হীরাহ ও গাসসান-শাম), এবং (২) বিদেশি শাসনমুক্ত স্বাধীন গোত্রীয় হেজায ও মক্কা।',
+    summaryEn:
+      'Ar-Raheeq al-Makhtum divides pre-Islamic Arabia politically into two zones: (1) Crowned monarchies entangled with Persia/Byzantium (Yemen, Al-Hirah, Sham), and (2) Independent tribal Hijaz & Makkah.',
+    howSplitBn: 'কাবার তত্ত্বাবধান ধারাবাহিকভাবে ৫টি হাতে বদলায়: ইসমাঈল (আ.) → পুত্র নাবিত → শ্বশুরগোষ্ঠী জুরহুম → কাহতানী খুযা‘আহ (হারিসা ইবনে আমর) → কুসাই ইবনে কিলাব (কুরাইশ)।',
+    howSplitEn: 'Custodianship of the Ka‘bah passed across five eras: Ismail (AS) → Nabit → Jurhum → Khuza‘ah → Qusay ibn Kilab (Quraysh).',
+    turningPointBn: 'ইয়েমেনের খ্রিষ্টান গভর্নর আবরাহা ৫৭০/৫৭১ খ্রিষ্টাব্দে হস্তীবাহিনী নিয়ে কাবা ধ্বংস করতে এলে আল্লাহ আবাবীল পাখির মাধ্যমে মক্কা রক্ষা করেন—সেই বছরই রাসূলুল্লাহ (ﷺ)-এর জন্ম হয়।',
+    turningPointEn: 'Abraha’s Elephant expedition (570–571 CE) to destroy the Ka‘bah was miraculously annihilated in the very year Prophet Muhammad (SAW) was born.',
+    sourceChapterBn: 'আর-রাহীকুল মাখতূম · অধ্যায় ২: আরবে শাসন ও নেতৃত্ব',
+    sourceChapterEn: 'Ar-Raheeq al-Makhtum · Chapter 2: Rulership & Presidency among the Arabs',
+    subBranches: [
+      {
+        nameBn: 'ইয়েমেনের রাজত্ব (সাবা, হিমইয়ার, হাবশা ও পারস্য)',
+        nameEn: 'Kingdom of Yemen (Saba, Himyar, Abyssinia & Persia)',
+        nameAr: 'مُلْكُ الْيَمَنِ وَسَيْفُ بْنُ ذِي يَزَنَ',
+        lineageBn: 'সাবা → হিমইয়ারী "তুব্বা" রাজবংশ → যূ নুওয়াস → আবরাহা (হাবশা) → পারস্য গভর্নর (বাযান)',
+        lineageEn: 'Sabaeans → Himyarite Tubba‘ → Dhu Nuwas → Abyssinian Abraha → Persian Governors',
+        settlementBn: 'সমগ্র ইয়েমেন, সান‘আ, মা‘রিব ও দক্ষিণ আরব উপকূল',
+        settlementEn: 'Yemen, San‘a, Ma’rib & Southern Coast',
+        keyFactsBn: 'আসহাবুল উখদূদের ঘটনার পর হাবশা ইয়েমেন দখল করে (৭২ বছর); এরপর সাইফ ইবনে যী ইয়াযানের মাধ্যমে পারস্যের অধীনে যায় এবং শেষ গভর্নর বাযান ইসলাম গ্রহণ করেন।',
+        keyFactsEn: 'After Dhu Nuwas persecuted Najran Christians, Abyssinia ruled Yemen for 72 years until Persia intervened; its last governor Badhan embraced Islam.',
+      },
+      {
+        nameBn: 'হীরাহ-র মুনযিরী (লাখমী) ও শামের গাসসানী রাজ্য',
+        nameEn: 'Lakhmids of Al-Hirah & Ghassanids of Sham',
+        nameAr: 'مُلُوكُ الْحِيرَةِ وَآلُ غَسَّانَ',
+        lineageBn: 'কাহলান → লাখম (পারস্য মিত্র) · কাহলান → আযদ → গাসসান (বাইজেন্টাইন মিত্র)',
+        lineageEn: 'Kahlan → Lakhm (Persian ally) · Kahlan → Azd → Ghassan (Byzantine ally)',
+        settlementBn: 'হীরাহ (ইরাক-কুফা অঞ্চল) ও শাম-বসরা-দামেস্ক-জর্ডান সীমান্ত',
+        settlementEn: 'Al-Hirah (Iraq) & Bosra/Damascus/Jordan frontier (Sham)',
+        keyFactsBn: 'সাসানী পারস্য হীরাহর লাখমী রাজাদের এবং রোম-বাইজেন্টাইন শামের গাসসানী রাজাদের সীমান্ত-প্রাচীর হিসেবে ব্যবহার করত।',
+        keyFactsEn: 'Sassanids used Al-Hirah and Byzantines used Ghassanids as desert buffer kingdoms.',
+      },
+      {
+        nameBn: 'স্বাধীন হেজায, ইয়াসরিব (মদীনা) ও কুসাইয়ের মক্কা',
+        nameEn: 'Independent Hijaz, Yathrib & Qusay’s Makkah',
+        nameAr: 'الْحِجَازُ الْحُرُّ وَمَكَّةُ (قُصَيُّ بْنُ كِلَابٍ)',
+        lineageBn: 'কুরাইশ (কুসাই ইবনে কিলাব) · মদীনায় আউস-খাযরাজ ও বনু কুরাইযা-নাদীর-কাইনুকা',
+        lineageEn: 'Quraysh in Makkah · Aws-Khazraj & 3 Jewish tribes in Yathrib',
+        settlementBn: 'মক্কা, মদীনা, তায়েফ ও পশ্চিম হেজায উপত্যকা',
+        settlementEn: 'Makkah, Madinah (Yathrib) & Ta’if',
+        keyFactsBn: 'হেজায কখনো কোনো সম্রাটকে কর দেয়নি। খুযা‘আহকে সরিয়ে কুসাই মক্কায় শাসন কায়েম করেন ও হিজাবাহ, সিক্বায়াহ, রিফাদাহ, নদওয়া এবং লিওয়া পদ প্রবর্তন করেন।',
+        keyFactsEn: 'Qusay took Ka‘bah authority from Khuza‘ah and founded Dar an-Nadwah (council), Hijabah, Siqayah, Rifadah & Liwa.',
+      },
+      {
+        nameBn: 'জাহেলী আরবের ৫টি কাবা-দায়িত্ব ও ওকায মেলা',
+        nameEn: '5 Ka‘bah Offices & Cultural Markets (Ukaz)',
+        nameAr: 'الْحِجَابَةُ وَالسِّقَايَةُ وَالرِّفَادَةُ وَالنَّدْوَةُ وَاللِّوَاءُ',
+        lineageBn: 'কুসাই ইবনে কিলাবের পুত্রদের মধ্যে বণ্টন (আব্দুদ্দার ও আব্দ মানাফ → হাশেম)',
+        lineageEn: 'Divided among Qusay’s sons (Abd al-Dar & Abd Manaf → Hashim)',
+        settlementBn: 'কাবা প্রাঙ্গণ, দারুন নদওয়া এবং মক্কা-তায়েফের মাঝখানে উকায, মাজান্নাহ ও যুল-মাজায বাজার',
+        settlementEn: 'Ka‘bah sanctuary, Dar an-Nadwah & seasonal fairs (Ukaz, Majannah, Dhu al-Majaz)',
+        keyFactsBn: 'হাশেম ইবনে আব্দ মানাফ হাজীদের আহারের (রিফাদাহ) উন্নত ব্যবস্থা ও গ্রীষ্ম-শীতের বাণিজ্যিক চুক্তি (ইল্লাফ: ইয়েমেন ও শাম) চালু করেন।',
+        keyFactsEn: 'Hashim organized annual pilgrimage hospitality and established seasonal winter/summer trade caravans to Yemen and Syria.',
+      },
+    ],
+  },
+  {
+    id: 'raheeq-5-religion',
+    order: 5,
+    category: 'religion_world',
+    chapterTagBn: 'আর-রাহীকুল মাখতূম · ধারা ৫',
+    chapterTagEn: 'Ar-Raheeq · Religion & World',
+    titleBn: 'হানীফিয়্যাত থেকে মূর্তিপূজা, তাওহীদপন্থী হানীফগণ ও ৬ষ্ঠ শতাব্দীর বিশ্ব',
+    titleEn: 'Origins of Idolatry, Monotheist Hunafa & The World Before Islam',
+    titleAr: 'دِيَانَاتُ الْعَرَبِ وَعَمْرُو بْنُ لُحَيٍّ وَالْعَالَمُ',
+    summaryBn:
+      'ইসমাঈল (আ.)-এর সন্তান ও মক্কাবাসীরা দীর্ঘকাল খাঁটি "হানীফিয়্যাত" (ইবরাহীমী তাওহীদ)-এর ওপর প্রতিষ্ঠিত ছিল। আর-রাহীকুল মাখতূম বিস্তারিত বর্ণনা করে যে কীভাবে সামান্য কিছু লোকের বিকৃতি ও কাবার প্রতি অন্ধ আনুগত্য থেকে সমগ্র আরব মূর্তিপূজায় ডুবে যায় এবং সমকালীন বিশ্বে অন্ধকার নেমে আসে।',
+    summaryEn:
+      'Makkah long upheld pure Abrahamic monotheism (Hanifiyyah). Ar-Raheeq al-Makhtum traces exactly how idol worship entered Arabia through ‘Amr ibn Luhayy and surveys the moral collapse of surrounding empires.',
+    howSplitBn: 'খুযা‘আহ গোত্রের দানশীল নেতা আমর ইবনে লুহাই শামের বালকা অঞ্চল থেকে "হুবাল" মূর্তি এনে কাবায় স্থাপন করে এবং নূহ (আ.)-এর যুগের ৫ মূর্তি (ওয়াদ্দ, সুওয়া‘, ইয়াগূস, ইয়া‘ঊক, নাসর) বিভিন্ন গোত্রে বণ্টন করে।',
+    howSplitEn: '‘Amr ibn Luhayy (Khuza‘ah chief) imported Hubal from Sham into the Ka‘bah and revived Nuh-era idols across Arabian tribes.',
+    turningPointBn: 'তাওহীদে বিশ্বাসী মুষ্টিমেয় "হানীফ" (ওয়ারাকা ইবনে নওফেল, যায়েদ ইবনে আমর, কুস ইবনে সা‘ইদাহ) সত্যের সন্ধান করছিলেন—ঠিক সেই সংকটময় মুহূর্তে ৫৭১ খ্রিষ্টাব্দে জন্ম ও ৬১০ খ্রিষ্টাব্দে নবুওয়াত লাভ করেন মুহাম্মাদ (ﷺ)।',
+    turningPointEn: 'A tiny circle of monotheist Hunafa awaited truth amid global darkness—setting the stage for the birth (571 CE) and revelation (610 CE) of Prophet Muhammad (SAW).',
+    sourceChapterBn: 'আর-রাহীকুল মাখতূম · অধ্যায় ৩ ও ৪: আরবের ধর্ম ও সমকালীন বিশ্ব',
+    sourceChapterEn: 'Ar-Raheeq al-Makhtum · Chapters 3–4: Religions of the Arabs & World Context',
+    subBranches: [
+      {
+        nameBn: 'আমর ইবনে লুহাই ও ৪ প্রধান মূর্তি (হুবাল, মানাত, লাত, উযযা)',
+        nameEn: '‘Amr ibn Luhayy & Major Idols (Hubal, Manat, Lat, ‘Uzza)',
+        nameAr: 'عَمْرُو بْنُ لُحَيٍّ: هُبَلُ · مَنَاةُ · اللَّاتُ · الْعُزَّى',
+        lineageBn: 'খুযা‘আহ গোত্রের শাসক (কাবার কুরাইশ-পূর্ব তত্ত্বাবধায়ক) → সমগ্র আরবে বিস্তার',
+        lineageEn: 'Introduced by ‘Amr ibn Luhayy of Khuza‘ah, adopted across Hijaz & Najd',
+        settlementBn: 'হুবাল (কাবায়), মানাত (কুদাইদ-মুশাল্লাল/মদীনা পথ), আল-লাত (তায়েফ/সাক্বীফ), আল-উযযা (নাখলা উপত্যকা)',
+        settlementEn: 'Hubal (Ka‘bah), Manat (Red Sea/Qudayd), Al-Lat (Ta’if) & Al-‘Uzza (Nakhlah)',
+        keyFactsBn: 'ফাতহে মক্কা (৮ম হিজরি)-তে কাবার ভেতর ও চারপাশে থাকা ৩৬০টি মূর্তিই রাসূলুল্লাহ (ﷺ) চিরতরে ভেঙে ফেলেন।',
+        keyFactsEn: 'By the Conquest of Makkah (8 AH), 360 idols stood around the Ka‘bah until Prophet (SAW) cleared them all.',
+      },
+      {
+        nameBn: 'অন্যান্য ধর্ম ও সত্যসন্ধানী হানীফগণ',
+        nameEn: 'Judaism, Christianity, Sabians & The Hunafa',
+        nameAr: 'الْحُنَفَاءُ: زَيْدُ بْنُ عَمْرٍو · وَرَقَةُ · قُسُّ بْنُ سَاعِدَةَ',
+        lineageBn: 'ইয়াসরিব-খায়বারে ইহুদী (কুরাইযা, নাদীর, কাইনুকা), নাজরানে খ্রিষ্টান ও মক্কায় হানীফগণ',
+        lineageEn: 'Jews in Yathrib/Khaybar, Christians in Najran & Damascus road, Hunafa in Makkah',
+        settlementBn: 'মদীনা, খায়বার, তাইমা, নাজরান এবং মক্কা ও ওকায প্রান্তর',
+        settlementEn: 'Madinah, Khaybar, Tayma, Najran & Makkah',
+        keyFactsBn: 'যায়েদ ইবনে আমর ইবনে নুফাইল, কুস ইবনে সা‘ইদাহ ও উমাইয়াহ ইবনুস সালত মূর্তি ও কন্যাশিশু হত্যা পরিহার করে এক আল্লাহর ইবাদত করতেন।',
+        keyFactsEn: 'Seekers like Zayd ibn ‘Amr rejected idols and female infanticide, praying directly to the Lord of Ibrahim.',
+      },
+      {
+        nameBn: 'সমকালীন পারস্য, রোম ও বিশ্ব সাম্রাজ্যের অবস্থা',
+        nameEn: 'Sassanid Persia, Byzantine Rome & Global Empires',
+        nameAr: 'فَارِسُ وَالرُّومُ وَالْهِنْدُ قَبْلَ الْإِسْلَامِ',
+        lineageBn: 'সাসানী সাম্রাজ্য (ইরান-ইরাক) · বাইজেন্টাইন সাম্রাজ্য (শাম-মিসর-ইউরোপ) · ভারত ও চীন',
+        lineageEn: 'Sassanid Empire · Byzantine Empire · South Asia & East Asia',
+        settlementBn: 'মাদায়েন (ইরাক-ইরান), কনস্টান্টিনোপল (তুরস্ক-শাম-মিসর) ও সমগ্র পুরাতন বিশ্ব',
+        settlementEn: 'Ctesiphon/Persia, Constantinople/Levant-Egypt & Wider Eurasia',
+        keyFactsBn: 'অগ্নি-উপাসনা ও শাসকদের বিলাসিতা (পারস্য), ত্রিত্ববাদ ও ধর্মযুদ্ধ (বাইজেন্টাইন) এবং জাতিভেদ-সংকট দূর করতেই সমগ্র মানবতার জন্য ইসলাম আসে।',
+        keyFactsEn: 'Moral and spiritual decay across Persia, Byzantium, and Eurasia cried out for the final universal revelation.',
+      },
+    ],
+  },
+];
+
