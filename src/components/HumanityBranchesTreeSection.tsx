@@ -1,0 +1,1122 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useMemo, useRef, useState } from 'react';
+import { ThemeMode, ZikrLanguage } from '../types';
+import {
+  ChevronRight,
+  Compass,
+  GitBranch,
+  Globe2,
+  Layers,
+  MapPin,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  ScrollText,
+  Users,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
+import { soundHaptics } from '../utils/audioHaptics';
+import {
+  HUMANITY_CANVAS_HEIGHT,
+  HUMANITY_CANVAS_WIDTH,
+  HUMANITY_ERAS_LIST,
+  HUMANITY_PERSON_TO_NATION_LIST,
+  HUMANITY_TREE_EDGES,
+  HUMANITY_TREE_NODES,
+  HumanityEraGroup,
+  HumanityTreeEdge,
+  HumanityTreeNode,
+  RootLineFilter,
+} from '../data/humanityBranchesData';
+
+interface HumanityBranchesTreeSectionProps {
+  themeMode: ThemeMode;
+  selectedLanguage: ZikrLanguage;
+  soundEnabled: boolean;
+  searchQuery: string;
+}
+
+type EraFilterKey = 'all' | HumanityEraGroup;
+
+const toBnDigits = (val: number | string): string =>
+  String(val).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+
+function getEraStyles(group: HumanityEraGroup, isDay: boolean) {
+  switch (group) {
+    case 'origin':
+      return isDay
+        ? {
+            card: 'bg-gradient-to-b from-[#f3fbf7] to-[#e6f6ee] border-emerald-600/80 text-slate-900 hover:border-[#006A4E] shadow-[0_4px_14px_rgba(5,150,105,0.12)]',
+            badge: 'text-[#006A4E]',
+            arabic: 'text-[#006A4E]',
+            stroke: '#059669',
+          }
+        : {
+            card: 'bg-gradient-to-b from-[#0d332c] to-[#08241f] border-emerald-400/70 text-white hover:border-emerald-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'text-emerald-300',
+            arabic: 'text-emerald-300',
+            stroke: '#34d399',
+          };
+    case 'flood_reset':
+      return isDay
+        ? {
+            card: 'bg-gradient-to-b from-[#f0f7fe] to-[#e0eefd] border-sky-600/80 text-slate-900 hover:border-sky-800 shadow-[0_4px_14px_rgba(2,132,199,0.12)]',
+            badge: 'text-sky-800',
+            arabic: 'text-sky-800',
+            stroke: '#0284c7',
+          }
+        : {
+            card: 'bg-gradient-to-b from-[#0c2d42] to-[#081f2e] border-sky-400/75 text-white hover:border-sky-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'text-sky-300',
+            arabic: 'text-sky-300',
+            stroke: '#38bdf8',
+          };
+    case 'three_sons':
+      return isDay
+        ? {
+            card: 'bg-gradient-to-b from-[#fffaf0] to-[#fdf0d5] border-amber-500/85 text-slate-900 hover:border-amber-700 shadow-[0_4px_14px_rgba(180,83,9,0.12)]',
+            badge: 'text-amber-800',
+            arabic: 'text-amber-800',
+            stroke: '#d97706',
+          }
+        : {
+            card: 'bg-gradient-to-b from-[#31250e] to-[#211909] border-amber-400/70 text-white hover:border-amber-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'text-amber-300',
+            arabic: 'text-amber-300',
+            stroke: '#fbbf24',
+          };
+    case 'prophetic_ummahs':
+      return isDay
+        ? {
+            card: 'bg-gradient-to-b from-[#fef7f4] to-[#fbece5] border-rose-500/80 text-slate-900 hover:border-rose-700 shadow-[0_4px_14px_rgba(190,18,60,0.10)]',
+            badge: 'text-rose-800',
+            arabic: 'text-rose-800',
+            stroke: '#be123c',
+          }
+        : {
+            card: 'bg-gradient-to-b from-[#331920] to-[#231015] border-rose-400/70 text-white hover:border-rose-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'text-rose-300',
+            arabic: 'text-rose-300',
+            stroke: '#fb7185',
+          };
+    case 'final_ummah':
+      return isDay
+        ? {
+            card: 'bg-gradient-to-b from-[#ebfaf2] to-[#d6f3e3] border-[#006A4E] text-slate-900 hover:border-emerald-900 shadow-[0_6px_18px_rgba(0,106,78,0.18)] ring-2 ring-amber-400/45',
+            badge: 'text-[#005a42]',
+            arabic: 'text-[#005a42]',
+            stroke: '#006A4E',
+          }
+        : {
+            card: 'bg-gradient-to-b from-[#0b3b30] to-[#072820] border-emerald-400/85 text-white hover:border-emerald-300 shadow-[0_8px_22px_rgba(0,0,0,0.5)] ring-2 ring-amber-400/40',
+            badge: 'text-emerald-300',
+            arabic: 'text-emerald-300',
+            stroke: '#10b981',
+          };
+    case 'modern_world':
+    default:
+      return isDay
+        ? {
+            card: 'bg-gradient-to-b from-[#f8fbfa] to-[#edf4f1] border-teal-600/75 text-slate-900 hover:border-[#006A4E] shadow-[0_4px_14px_rgba(15,118,110,0.10)]',
+            badge: 'text-teal-800',
+            arabic: 'text-teal-800',
+            stroke: '#0d9488',
+          }
+        : {
+            card: 'bg-gradient-to-b from-[#0b272d] to-[#071b20] border-teal-400/70 text-white hover:border-teal-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'text-teal-300',
+            arabic: 'text-teal-300',
+            stroke: '#2dd4bf',
+          };
+  }
+}
+
+function getRootLineAccent(line: Exclude<RootLineFilter, 'all'>, isDay: boolean) {
+  switch (line) {
+    case 'sam':
+      return {
+        labelBn: 'সাম ইবনে নূহ (আ.) · সামি ধারা',
+        labelEn: 'Sam ibn Nuh · Semitic Line',
+        textClass: isDay ? 'text-[#006A4E]' : 'text-emerald-300',
+      };
+    case 'ham':
+      return {
+        labelBn: 'হাম ইবনে নূহ (আ.) · আফ্রিকান/হামিটিক ধারা',
+        labelEn: 'Ham ibn Nuh · African/Hamitic Line',
+        textClass: isDay ? 'text-amber-700' : 'text-amber-300',
+      };
+    case 'yafith':
+    default:
+      return {
+        labelBn: 'ইয়াফিস ইবনে নূহ (আ.) · ইউরেশীয়/এশীয় ধারা',
+        labelEn: 'Yafith ibn Nuh · Eurasian/Asian Line',
+        textClass: isDay ? 'text-sky-700' : 'text-sky-300',
+      };
+  }
+}
+
+function buildHumanityConnector(from: HumanityTreeNode, to: HumanityTreeNode): {
+  d: string;
+  labelX: number;
+  labelY: number;
+} {
+  const halfH = 44;
+  const startY = from.y + halfH;
+  const endY = to.y - halfH;
+  const dx = Math.abs(to.x - from.x);
+
+  if (dx <= 6) {
+    return {
+      d: `M ${from.x} ${startY} L ${to.x} ${endY}`,
+      labelX: from.x + 8,
+      labelY: (startY + endY) / 2,
+    };
+  }
+
+  const midY = startY + (endY - startY) * 0.5;
+  return {
+    d: `M ${from.x} ${startY} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
+    labelX: (from.x + to.x) / 2,
+    labelY: midY - 6,
+  };
+}
+
+export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionProps> = ({
+  themeMode,
+  selectedLanguage,
+  soundEnabled,
+  searchQuery,
+}) => {
+  const isDay = themeMode === 'day';
+  const isBn = selectedLanguage === 'bn';
+
+  const [eraFilter, setEraFilter] = useState<EraFilterKey>('all');
+  const [rootLineFilter, setRootLineFilter] = useState<RootLineFilter>('all');
+  const [selectedNode, setSelectedNode] = useState<HumanityTreeNode | null>(null);
+  const [zoom, setZoom] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 640) return 0.42;
+      if (window.innerWidth < 1024) return 0.62;
+      if (window.innerWidth < 1280) return 0.74;
+    }
+    return 0.85;
+  });
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const nodeMap = useMemo(() => {
+    const map = new Map<string, HumanityTreeNode>();
+    HUMANITY_TREE_NODES.forEach((n) => map.set(n.id, n));
+    return map;
+  }, []);
+
+  const nodeMatches = (node: HumanityTreeNode): boolean => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      const hay = [
+        node.titleBn,
+        node.titleEn,
+        node.titleAr,
+        node.subtitleBn,
+        node.subtitleEn,
+        node.howSplitBn,
+        node.howSplitEn,
+        node.keyBranchesBn,
+        node.keyBranchesEn,
+        node.modernLocationBn,
+        node.modernLocationEn,
+        node.detailBn,
+        node.detailEn,
+      ]
+        .join(' ')
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (eraFilter !== 'all' && node.eraGroup !== eraFilter) return false;
+    return true;
+  };
+
+  const filteredPersonToNations = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return HUMANITY_PERSON_TO_NATION_LIST.filter((entry) => {
+      if (rootLineFilter !== 'all' && entry.rootLine !== rootLineFilter) return false;
+      if (!q) return true;
+      return [
+        entry.ancestorPersonBn,
+        entry.ancestorPersonEn,
+        entry.parentLineBn,
+        entry.parentLineEn,
+        entry.howDividedBn,
+        entry.howDividedEn,
+        entry.nationsFormedBn,
+        entry.nationsFormedEn,
+        entry.whereTodayBn,
+        entry.whereTodayEn,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [rootLineFilter, searchQuery]);
+
+  const filteredEras = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return HUMANITY_ERAS_LIST.filter((item) => {
+      if (eraFilter !== 'all' && item.eraGroup !== eraFilter) return false;
+      if (!q) return true;
+      return [
+        item.titleBn,
+        item.titleEn,
+        item.rootOrProphetBn,
+        item.rootOrProphetEn,
+        item.howSplitBn,
+        item.howSplitEn,
+        item.whereTodayBn,
+        item.whereTodayEn,
+        item.summaryBn,
+        item.summaryEn,
+        ...item.branchesBn,
+        ...item.branchesEn,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [eraFilter, searchQuery]);
+
+  const handleZoomChange = (next: number) => {
+    if (soundEnabled) soundHaptics.playTap();
+    setZoom(Math.min(1.25, Math.max(0.3, Number(next.toFixed(2)))));
+  };
+
+  const handleFitScreen = () => {
+    if (soundEnabled) soundHaptics.playTap();
+    const width = scrollRef.current?.clientWidth || 960;
+    const fitted = Math.min(1.0, Math.max(0.3, (width - 24) / HUMANITY_CANVAS_WIDTH));
+    setZoom(Number(fitted.toFixed(2)));
+  };
+
+  const filterOptions: Array<{ key: EraFilterKey; bn: string; en: string }> = [
+    { key: 'all', bn: 'সকল যুগ (আদম → আজ)', en: 'All Eras (Adam → Today)' },
+    { key: 'origin', bn: 'আদম থেকে প্রাক-প্লাবন', en: 'Adam to Pre-Flood' },
+    { key: 'flood_reset', bn: 'নূহ (আ.) ও ~৮০ মুমিন', en: 'Nuh & ~80 Believers' },
+    { key: 'three_sons', bn: '৩ মূল শাখা ও ১৬ পুত্র-শাখা', en: '3 Roots & Sons' },
+    { key: 'prophetic_ummahs', bn: 'নবীগণের উম্মত ও সভ্যতা', en: 'Prophetic Ummahs' },
+    { key: 'final_ummah', bn: 'শেষ নবী (ﷺ)-এর উম্মত', en: 'Final Prophet’s Ummah' },
+    { key: 'modern_world', bn: 'আজকের বিশ্ব (কোথায় কোন জাতি)', en: 'Today’s World Map' },
+  ];
+
+  const rootTabs: Array<{ key: RootLineFilter; bn: string; en: string }> = [
+    { key: 'all', bn: 'সকল শাখা (১৫)', en: 'All Roots (15)' },
+    { key: 'sam', bn: 'সাম ইবনে নূহ (আরব/ইসরাঈল/ইরাক)', en: 'Sam (Arab/Israelite)' },
+    { key: 'ham', bn: 'হাম ইবনে নূহ (মিসর/আফ্রিকা)', en: 'Ham (Egypt/Africa)' },
+    { key: 'yafith', bn: 'ইয়াফিস ইবনে নূহ (ইউরোপ/তুর্কি/এশিয়া)', en: 'Yafith (Eurasia/Asia)' },
+  ];
+
+  return (
+    <div className="space-y-5 lg:w-[min(calc(100vw-40px),1420px)] lg:relative lg:left-1/2 lg:-translate-x-1/2">
+      {/* Era Filter + Zoom Toolbar */}
+      <div
+        className={`rounded-2xl border px-3 py-2.5 flex flex-wrap items-center justify-between gap-2.5 ${
+          isDay ? 'bg-white border-emerald-200/85' : 'bg-[#082026] border-teal-900/60'
+        }`}
+      >
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full">
+          {filterOptions.map((opt) => {
+            const active = eraFilter === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setEraFilter(opt.key);
+                }}
+                className={`min-h-[34px] px-2.5 rounded-lg border text-[11px] font-bold whitespace-nowrap shrink-0 transition cursor-pointer ${
+                  active
+                    ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                    : isDay
+                    ? 'bg-[#f8fcfa] border-slate-200 text-slate-700 hover:border-emerald-400'
+                    : 'bg-[#0a2329] border-teal-900/60 text-slate-300 hover:border-emerald-500/50'
+                }`}
+              >
+                {isBn ? opt.bn : opt.en}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => handleZoomChange(zoom - 0.1)}
+            aria-label={isBn ? 'ছোট করুন' : 'Zoom out'}
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition cursor-pointer ${
+              isDay
+                ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#006A4E]'
+                : 'bg-[#0c262d] border-teal-800/70 text-emerald-200 hover:border-emerald-400'
+            }`}
+          >
+            <ZoomOut className="w-3.5 h-3.5" />
+          </button>
+          <span
+            className={`px-1.5 text-xs font-extrabold tabular-nums min-w-[44px] text-center ${
+              isDay ? 'text-slate-700' : 'text-emerald-200'
+            }`}
+          >
+            {isBn ? toBnDigits(Math.round(zoom * 100)) : Math.round(zoom * 100)}%
+          </span>
+          <button
+            type="button"
+            onClick={() => handleZoomChange(zoom + 0.1)}
+            aria-label={isBn ? 'বড় করুন' : 'Zoom in'}
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition cursor-pointer ${
+              isDay
+                ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#006A4E]'
+                : 'bg-[#0c262d] border-teal-800/70 text-emerald-200 hover:border-emerald-400'
+            }`}
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleFitScreen}
+            className={`h-8 px-2.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
+              isDay
+                ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#006A4E]'
+                : 'bg-[#0c262d] border-teal-800/70 text-emerald-200 hover:border-emerald-400'
+            }`}
+          >
+            {zoom < 0.75 ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+            <span>{isBn ? 'ফিট' : 'Fit'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              handleZoomChange(0.85);
+              setEraFilter('all');
+              setRootLineFilter('all');
+              setSelectedNode(null);
+            }}
+            aria-label={isBn ? 'রিসেট' : 'Reset'}
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center transition cursor-pointer ${
+              isDay
+                ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#006A4E]'
+                : 'bg-[#0c262d] border-teal-800/70 text-emerald-200 hover:border-emerald-400'
+            }`}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* SECTION 1: INTERACTIVE EXPANDED HUMANITY LINEAGE TREE */}
+      <div
+        ref={scrollRef}
+        style={{
+          backgroundImage: isDay
+            ? 'radial-gradient(rgba(0, 106, 78, 0.11) 1px, transparent 1px)'
+            : 'radial-gradient(rgba(52, 211, 153, 0.10) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+        className={`rounded-3xl border overflow-auto max-h-[80vh] min-h-[500px] sm:min-h-[580px] relative shadow-sm ${
+          isDay ? 'bg-[#f6fbf8] border-emerald-200/90' : 'bg-[#041318] border-teal-900/70'
+        }`}
+      >
+        <div
+          style={{
+            width: `${HUMANITY_CANVAS_WIDTH * zoom}px`,
+            height: `${HUMANITY_CANVAS_HEIGHT * zoom}px`,
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              width: `${HUMANITY_CANVAS_WIDTH}px`,
+              height: `${HUMANITY_CANVAS_HEIGHT}px`,
+              transform: `scale(${zoom})`,
+              transformOrigin: 'top left',
+              position: 'relative',
+            }}
+          >
+            {/* Top-Left Title Card */}
+            <div
+              className={`absolute left-[28px] top-[20px] w-[445px] rounded-2xl border px-4 py-3 pointer-events-none ${
+                isDay
+                  ? 'bg-white/90 border-emerald-200/80 text-slate-800'
+                  : 'bg-[#072027]/90 border-teal-800/60 text-slate-100'
+              }`}
+            >
+              <div
+                dir="rtl"
+                className={`font-arabic text-base font-bold ${
+                  isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                }`}
+              >
+                وَجَعَلْنَا ذُرِّيَّتَهُ هُمُ الْبَاقِينَ
+              </div>
+              <div className={`text-sm font-black mt-0.5 ${isDay ? 'text-[#006A4E]' : 'text-white'}`}>
+                {isBn
+                  ? 'মানবজাতির মূল শাখা-ট্রি: কোন ব্যক্তি → কোন জাতি → আজ কোথায় বাস'
+                  : 'Humanity Tree: Which Ancestor → Which Nation → Where They Live Today'}
+              </div>
+              <div
+                className={`text-[10.5px] font-semibold mt-0.5 leading-snug ${
+                  isDay ? 'text-slate-600' : 'text-slate-300'
+                }`}
+              >
+                {isBn
+                  ? '২২টি বিস্তারিত ধাপ · যেকোনো কার্ডে ক্লিক করলে বিভাজন ও বর্তমান বাসস্থানের পূর্ণ বিবরণ খুলবে'
+                  : '22 interactive stages · Tap any card to inspect exact split & modern settlement'}
+              </div>
+            </div>
+
+            {/* Top-Right Historical Note */}
+            <div
+              className={`absolute right-[28px] top-[20px] w-[445px] rounded-2xl border px-4 py-3 pointer-events-none ${
+                isDay
+                  ? 'bg-white/90 border-amber-200/80 text-slate-800'
+                  : 'bg-[#072027]/90 border-teal-800/60 text-slate-100'
+              }`}
+            >
+              <div className={`text-xs font-black ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
+                {isBn
+                  ? 'নূহের কিস্তি (~৮০ জন) ও ৩ পুত্র থেকে পৃথিবী বিভক্ত হওয়ার মূলনীতি'
+                  : 'The Ark (~80 Believers) & How Nations Divided From Nuh’s 3 Sons'}
+              </div>
+              <div
+                className={`text-[10.5px] font-medium mt-1 leading-snug ${
+                  isDay ? 'text-slate-600' : 'text-slate-300'
+                }`}
+              >
+                {isBn
+                  ? 'তাফসীর: কিস্তিতে ~৮০ মুমিন ছিলেন; সূরা ৩৭:৭৭ অনুযায়ী নূহের ৩ পুত্র (সাম·হাম·ইয়াফিস) থেকে ১৬টি মূল উপশাখায় পুরো পৃথিবীর জাতিগোষ্ঠী ভাগ হয়ে যায়।'
+                  : 'Around 80 believers survived the Flood; Quran 37:77 notes all lasting nations branched out from Sam, Ham & Yafith.'}
+              </div>
+            </div>
+
+            {/* SVG Connectors Layer */}
+            <svg
+              viewBox={`0 0 ${HUMANITY_CANVAS_WIDTH} ${HUMANITY_CANVAS_HEIGHT}`}
+              width={HUMANITY_CANVAS_WIDTH}
+              height={HUMANITY_CANVAS_HEIGHT}
+              className="absolute inset-0 pointer-events-none"
+            >
+              {HUMANITY_TREE_EDGES.map((edge: HumanityTreeEdge) => {
+                const fromNode = nodeMap.get(edge.from);
+                const toNode = nodeMap.get(edge.to);
+                if (!fromNode || !toNode) return null;
+
+                const { d, labelX, labelY } = buildHumanityConnector(fromNode, toNode);
+                const style = getEraStyles(edge.eraGroup, isDay);
+                const active = nodeMatches(fromNode) || nodeMatches(toNode);
+                const isFiltering = eraFilter !== 'all' || searchQuery.trim().length > 0;
+                const opacity = isFiltering ? (active ? 0.95 : 0.14) : 0.78;
+                const dashArray =
+                  edge.kind === 'descent' ? '6 4' : edge.kind === 'global' ? '2.5 4' : undefined;
+                const labelText = isBn ? edge.labelBn : edge.labelEn;
+
+                return (
+                  <g key={edge.id} style={{ opacity, transition: 'opacity 180ms ease' }}>
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={style.stroke}
+                      strokeWidth={edge.kind === 'direct' ? 2.3 : 1.8}
+                      strokeDasharray={dashArray}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {labelText && (
+                      <g transform={`translate(${labelX}, ${labelY})`}>
+                        <rect
+                          x={-48}
+                          y={-9}
+                          width={96}
+                          height={16}
+                          rx={6}
+                          fill={isDay ? '#f6fbf8' : '#041318'}
+                          fillOpacity={0.94}
+                        />
+                        <text
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize="9.5"
+                          fontWeight="700"
+                          fill={isDay ? '#334155' : '#cbd5e1'}
+                        >
+                          {labelText}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+
+            {/* Interactive Nodes */}
+            {HUMANITY_TREE_NODES.map((node) => {
+              const matched = nodeMatches(node);
+              const isFiltering = eraFilter !== 'all' || searchQuery.trim().length > 0;
+              const opacity = isFiltering ? (matched ? 1 : 0.22) : 1;
+              const isSelected = selectedNode?.id === node.id;
+              const st = getEraStyles(node.eraGroup, isDay);
+
+              return (
+                <button
+                  key={node.id}
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setSelectedNode(node);
+                  }}
+                  style={{
+                    left: `${node.x}px`,
+                    top: `${node.y}px`,
+                    width: `${node.width}px`,
+                    transform: 'translate(-50%, -50%)',
+                    opacity,
+                  }}
+                  className={`absolute rounded-2xl border-[1.5px] px-3 py-2 text-left transition-all duration-150 cursor-pointer hover:shadow-md active:scale-[0.98] ${
+                    st.card
+                  } ${isSelected ? 'ring-4 ring-amber-400/75 z-20 scale-[1.03]' : 'z-10'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-[9.5px] font-black truncate ${st.badge}`}>
+                      {isBn ? node.stepBadgeBn : node.stepBadgeEn}
+                    </span>
+                    <span
+                      dir="rtl"
+                      className={`font-arabic text-[10px] font-bold truncate max-w-[100px] ${st.arabic}`}
+                    >
+                      {node.titleAr}
+                    </span>
+                  </div>
+
+                  <div className="mt-0.5 text-[11.5px] font-black leading-snug line-clamp-1">
+                    {isBn ? node.titleBn : node.titleEn}
+                  </div>
+
+                  <div className="mt-0.5 text-[9.5px] font-semibold leading-tight line-clamp-1 opacity-85">
+                    {isBn ? node.subtitleBn : node.subtitleEn}
+                  </div>
+
+                  <div
+                    className={`mt-1 pt-1 border-t border-current/10 flex items-center gap-1 text-[9px] font-bold truncate ${st.badge}`}
+                  >
+                    <MapPin className="w-2.5 h-2.5 shrink-0" />
+                    <span className="truncate">
+                      {isBn ? node.modernLocationBn : node.modernLocationEn}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 2: PERSON-TO-NATION & WHERE THEY LIVE TODAY DIRECTORY */}
+      <div
+        className={`rounded-3xl border overflow-hidden ${
+          isDay ? 'bg-white border-emerald-200/85' : 'bg-[#082026] border-teal-900/65'
+        }`}
+      >
+        <div
+          className={`px-4 sm:px-5 py-3.5 border-b space-y-3 ${
+            isDay
+              ? 'bg-[#f4faf7] border-emerald-200/70'
+              : 'bg-[#071a20] border-teal-900/50'
+          }`}
+        >
+          <div className="flex items-start sm:items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
+              <Users className={`w-4 h-4 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
+              <div>
+                <h2
+                  className={`text-sm sm:text-base font-black ${
+                    isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                  }`}
+                >
+                  {isBn
+                    ? 'কোন ব্যক্তি থেকে কোন জাতি হয়েছে · কীভাবে ভাগ হলো · এখন কোথায় বসবাস করছে'
+                    : 'Which Person Formed Which Nation · How They Divided · Where They Live Today'}
+                </h2>
+                <p className={`text-[11px] font-medium ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {isBn
+                    ? 'হযরত নূহ (আ.)-এর তিন পুত্র (সাম, হাম, ইয়াফিস) থেকে ১৫টি মূল ব্যক্তি-ভিত্তিক জাতিশাখার সম্পূর্ণ তথ্য'
+                    : 'Detailed 15-branch breakdown from Sam, Ham & Yafith to modern countries worldwide'}
+                </p>
+              </div>
+            </div>
+            <span
+              className={`text-xs font-black tabular-nums shrink-0 ${
+                isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+              }`}
+            >
+              {isBn
+                ? `${toBnDigits(filteredPersonToNations.length)}টি জাতি-ধারা`
+                : `${filteredPersonToNations.length} Branches`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {rootTabs.map((tab) => {
+              const active = rootLineFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setRootLineFilter(tab.key);
+                  }}
+                  className={`min-h-[34px] px-3 rounded-lg border text-[11px] font-bold whitespace-nowrap shrink-0 transition cursor-pointer ${
+                    active
+                      ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                      : isDay
+                      ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400'
+                      : 'bg-[#0c262d] border-teal-800/60 text-slate-300 hover:border-emerald-500/50'
+                  }`}
+                >
+                  {isBn ? tab.bn : tab.en}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {filteredPersonToNations.length === 0 ? (
+          <div
+            className={`p-8 text-center text-sm font-bold ${
+              isDay ? 'text-slate-500' : 'text-slate-400'
+            }`}
+          >
+            {isBn ? 'এই ফিল্টারে কোনো শাখা পাওয়া যায়নি।' : 'No branch entries match your search.'}
+          </div>
+        ) : (
+          <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {filteredPersonToNations.map((entry) => {
+              const rootMeta = getRootLineAccent(entry.rootLine, isDay);
+              return (
+                <article
+                  key={entry.id}
+                  className={`rounded-2xl border p-4 space-y-2.5 flex flex-col justify-between ${
+                    isDay
+                      ? 'bg-[#f8fcfa] border-slate-200/85'
+                      : 'bg-[#0a2329] border-teal-900/60'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[10.5px] font-black ${rootMeta.textClass}`}>
+                        {isBn ? rootMeta.labelBn : rootMeta.labelEn}
+                      </span>
+                      <span
+                        dir="rtl"
+                        className={`font-arabic text-xs font-bold shrink-0 ${
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                        }`}
+                      >
+                        {entry.ancestorAr}
+                      </span>
+                    </div>
+
+                    <h3
+                      className={`text-sm sm:text-base font-black leading-snug ${
+                        isDay ? 'text-slate-900' : 'text-white'
+                      }`}
+                    >
+                      {isBn ? entry.ancestorPersonBn : entry.ancestorPersonEn}
+                    </h3>
+
+                    <div
+                      className={`text-[11px] font-bold flex items-center gap-1.5 ${
+                        isDay ? 'text-slate-600' : 'text-slate-300'
+                      }`}
+                    >
+                      <GitBranch className="w-3.5 h-3.5 shrink-0 opacity-75" />
+                      <span>{isBn ? entry.parentLineBn : entry.parentLineEn}</span>
+                    </div>
+
+                    <div
+                      className={`rounded-xl border p-2.5 space-y-1 text-xs ${
+                        isDay
+                          ? 'bg-white border-slate-200/80 text-slate-700'
+                          : 'bg-[#071b20] border-teal-900/50 text-slate-200'
+                      }`}
+                    >
+                      <div className="font-black text-[11px] opacity-80">
+                        {isBn ? 'কীভাবে ভাগ হয়েছে:' : 'How It Branched:'}
+                      </div>
+                      <p className="leading-relaxed">
+                        {isBn ? entry.howDividedBn : entry.howDividedEn}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1 text-xs">
+                      <div
+                        className={`font-black text-[11px] flex items-center gap-1 ${
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                        }`}
+                      >
+                        <Compass className="w-3.5 h-3.5 shrink-0" />
+                        <span>{isBn ? 'যেসব জাতি সৃষ্টি হয়েছে:' : 'Nations Formed:'}</span>
+                      </div>
+                      <p className={`leading-relaxed ${isDay ? 'text-slate-800' : 'text-slate-200'}`}>
+                        {isBn ? entry.nationsFormedBn : entry.nationsFormedEn}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1 text-xs">
+                      <div
+                        className={`font-black text-[11px] flex items-center gap-1 ${
+                          isDay ? 'text-amber-700' : 'text-amber-300'
+                        }`}
+                      >
+                        <MapPin className="w-3.5 h-3.5 shrink-0" />
+                        <span>{isBn ? 'এখন কোথায় বসবাস করছে:' : 'Where They Live Today:'}</span>
+                      </div>
+                      <p className={`font-semibold leading-relaxed ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                        {isBn ? entry.whereTodayBn : entry.whereTodayEn}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`pt-2 border-t text-[10.5px] font-bold ${
+                      isDay
+                        ? 'border-slate-200/80 text-slate-500'
+                        : 'border-teal-900/50 text-slate-400'
+                    }`}
+                  >
+                    {isBn ? entry.sourceNoteBn : entry.sourceNoteEn}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 3: DETAILED ERA-BY-ERA HUMAN LINEAGE LIST */}
+      <div
+        className={`rounded-3xl border overflow-hidden ${
+          isDay ? 'bg-white border-emerald-200/85' : 'bg-[#082026] border-teal-900/65'
+        }`}
+      >
+        <div
+          className={`px-4 sm:px-5 py-3.5 border-b flex items-center justify-between gap-2 ${
+            isDay
+              ? 'bg-[#f4faf7] border-emerald-200/70'
+              : 'bg-[#071a20] border-teal-900/50'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Globe2 className={`w-4 h-4 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
+            <div>
+              <h2
+                className={`text-sm sm:text-base font-black ${
+                  isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                }`}
+              >
+                {isBn
+                  ? 'আদম (আ.) থেকে আজকের পৃথিবী: সকল যুগের ধারাবাহিক তালিকা'
+                  : 'Complete Chronological Era List: Adam (AS) Through All Ages to Today'}
+              </h2>
+              <p className={`text-[11px] font-medium ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                {isBn
+                  ? 'নূহ (আ.)-এর মহাপ্লাবন ও ~৮০ মুমিন · সাম-হাম-ইয়াফিস · শেষ নবীর উম্মত ও বর্তমান বিশ্বমানবতা'
+                  : 'Flood & ~80 Ark believers · Three Root Branches · Final Prophet’s Ummah · All Continents Today'}
+              </p>
+            </div>
+          </div>
+          <span
+            className={`text-xs font-black tabular-nums shrink-0 ${
+              isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+            }`}
+          >
+            {isBn ? `${toBnDigits(filteredEras.length)}টি যুগ` : `${filteredEras.length} Eras`}
+          </span>
+        </div>
+
+        {filteredEras.length === 0 ? (
+          <div
+            className={`p-8 text-center text-sm font-bold ${
+              isDay ? 'text-slate-500' : 'text-slate-400'
+            }`}
+          >
+            {isBn ? 'এই ফিল্টারে কোনো যুগ পাওয়া যায়নি।' : 'No eras match the current filter.'}
+          </div>
+        ) : (
+          <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {filteredEras.map((era) => {
+              const st = getEraStyles(era.eraGroup, isDay);
+              const branches = isBn ? era.branchesBn : era.branchesEn;
+
+              return (
+                <article
+                  key={era.id}
+                  className={`rounded-2xl border p-4 space-y-2.5 flex flex-col justify-between ${
+                    isDay
+                      ? 'bg-[#f8fcfa] border-slate-200/85'
+                      : 'bg-[#0a2329] border-teal-900/60'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[11px] font-black tabular-nums ${st.badge}`}>
+                        {isBn ? era.eraTagBn : era.eraTagEn}
+                      </span>
+                      <span dir="rtl" className={`font-arabic text-xs font-bold ${st.arabic}`}>
+                        {era.titleAr}
+                      </span>
+                    </div>
+
+                    <h3
+                      className={`text-sm sm:text-base font-black leading-snug ${
+                        isDay ? 'text-slate-900' : 'text-white'
+                      }`}
+                    >
+                      {isBn ? era.titleBn : era.titleEn}
+                    </h3>
+
+                    <div
+                      className={`text-[11.5px] font-bold ${
+                        isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+                      {isBn ? era.rootOrProphetBn : era.rootOrProphetEn}
+                    </div>
+
+                    <p
+                      className={`text-xs leading-relaxed ${
+                        isDay ? 'text-slate-700' : 'text-slate-300'
+                      }`}
+                    >
+                      {isBn ? era.summaryBn : era.summaryEn}
+                    </p>
+
+                    <div
+                      className={`rounded-xl border p-2.5 space-y-1 text-xs ${
+                        isDay
+                          ? 'bg-white border-slate-200/80 text-slate-700'
+                          : 'bg-[#071b20] border-teal-900/50 text-slate-200'
+                      }`}
+                    >
+                      <div>
+                        <span className="font-black">
+                          {isBn ? 'কীভাবে বিভক্ত হলো: ' : 'How It Split: '}
+                        </span>
+                        <span>{isBn ? era.howSplitBn : era.howSplitEn}</span>
+                      </div>
+                      <div className={isDay ? 'text-[#006A4E] font-semibold' : 'text-emerald-300 font-semibold'}>
+                        <MapPin className="w-3 h-3 inline mr-1 -mt-0.5" />
+                        <span>{isBn ? era.whereTodayBn : era.whereTodayEn}</span>
+                      </div>
+                    </div>
+
+                    <ul className="space-y-1.5 pt-1">
+                      {branches.map((branch, idx) => (
+                        <li
+                          key={idx}
+                          className={`text-xs leading-relaxed flex items-start gap-2 ${
+                            isDay ? 'text-slate-700' : 'text-slate-200'
+                          }`}
+                        >
+                          <ChevronRight
+                            className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+                              isDay ? 'text-[#006A4E]' : 'text-emerald-400'
+                            }`}
+                          />
+                          <span>{branch}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div
+                    className={`pt-2.5 mt-1 border-t space-y-1 ${
+                      isDay ? 'border-slate-200/80' : 'border-teal-900/50'
+                    }`}
+                  >
+                    <p
+                      className={`text-[11px] leading-relaxed ${
+                        isDay ? 'text-slate-600' : 'text-slate-300'
+                      }`}
+                    >
+                      {isBn ? era.scholarlyNoteBn : era.scholarlyNoteEn}
+                    </p>
+                    <div
+                      className={`text-[10.5px] font-bold ${
+                        isDay ? 'text-amber-700' : 'text-amber-300'
+                      }`}
+                    >
+                      {isBn ? era.referenceBn : era.referenceEn}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Node Inspector Modal */}
+      {selectedNode && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/55 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setSelectedNode(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl border shadow-2xl overflow-hidden max-h-[88vh] flex flex-col ${
+              isDay
+                ? 'bg-white border-emerald-200 text-slate-900'
+                : 'bg-[#082026] border-teal-800/80 text-white'
+            }`}
+          >
+            <div
+              className={`px-5 py-4 border-b flex items-start justify-between gap-3 ${
+                isDay
+                  ? 'bg-[#f4faf7] border-emerald-200/80'
+                  : 'bg-[#071a20] border-teal-900/60'
+              }`}
+            >
+              <div className="min-w-0 space-y-1">
+                <div
+                  className={`text-[11px] font-extrabold ${
+                    isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                  }`}
+                >
+                  {isBn ? selectedNode.stepBadgeBn : selectedNode.stepBadgeEn}
+                </div>
+                <h3 className="text-lg font-black leading-tight">
+                  {isBn ? selectedNode.titleBn : selectedNode.titleEn}
+                </h3>
+                <div
+                  dir="rtl"
+                  className={`font-arabic text-base font-bold ${
+                    isDay ? 'text-[#006A4E]' : 'text-amber-300'
+                  }`}
+                >
+                  {selectedNode.titleAr}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedNode(null)}
+                aria-label="Close"
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer ${
+                  isDay
+                    ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
+                    : 'bg-[#0c262d] border-teal-800/70 text-slate-300 hover:text-white'
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3 overflow-y-auto">
+              <div
+                className={`rounded-2xl border p-3.5 space-y-1 ${
+                  isDay
+                    ? 'bg-[#f8fcfa] border-emerald-200/75 text-slate-800'
+                    : 'bg-[#06181d] border-teal-900/60 text-slate-200'
+                }`}
+              >
+                <div
+                  className={`text-[11px] font-black ${
+                    isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                  }`}
+                >
+                  {isBn ? 'কীভাবে বিভক্ত হলো' : 'How This Branch Divided'}
+                </div>
+                <p className="text-xs sm:text-sm font-medium leading-relaxed">
+                  {isBn ? selectedNode.howSplitBn : selectedNode.howSplitEn}
+                </p>
+              </div>
+
+              <div
+                className={`rounded-2xl border p-3.5 space-y-1 ${
+                  isDay
+                    ? 'bg-amber-50/55 border-amber-200/75 text-slate-800'
+                    : 'bg-amber-950/20 border-amber-800/40 text-amber-100'
+                }`}
+              >
+                <div
+                  className={`text-[11px] font-black flex items-center gap-1 ${
+                    isDay ? 'text-amber-800' : 'text-amber-300'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span>{isBn ? 'এখন কোথায় বসবাস করছে' : 'Where They Live Today'}</span>
+                </div>
+                <p className="text-xs sm:text-sm font-bold leading-relaxed">
+                  {isBn ? selectedNode.modernLocationBn : selectedNode.modernLocationEn}
+                </p>
+              </div>
+
+              <div
+                className={`rounded-2xl border p-3.5 space-y-1 ${
+                  isDay
+                    ? 'bg-slate-50 border-slate-200/80 text-slate-800'
+                    : 'bg-[#071d23] border-teal-900/50 text-slate-200'
+                }`}
+              >
+                <div className="text-[11px] font-black opacity-75">
+                  {isBn ? 'সৃষ্ট মূল শাখা ও জাতিগোষ্ঠী' : 'Key Lineages & Peoples'}
+                </div>
+                <p className="text-xs sm:text-sm font-semibold leading-relaxed">
+                  {isBn ? selectedNode.keyBranchesBn : selectedNode.keyBranchesEn}
+                </p>
+              </div>
+
+              <p
+                className={`text-sm leading-relaxed ${
+                  isDay ? 'text-slate-700' : 'text-slate-200'
+                }`}
+              >
+                {isBn ? selectedNode.detailBn : selectedNode.detailEn}
+              </p>
+
+              <div
+                className={`pt-2 border-t text-xs font-bold flex items-center gap-1.5 ${
+                  isDay
+                    ? 'border-slate-200/80 text-amber-700'
+                    : 'border-teal-900/50 text-amber-300'
+                }`}
+              >
+                <ScrollText className="w-3.5 h-3.5 shrink-0" />
+                <span>{isBn ? selectedNode.referenceBn : selectedNode.referenceEn}</span>
+              </div>
+            </div>
+
+            <div
+              className={`px-5 py-3.5 border-t flex items-center justify-end ${
+                isDay
+                  ? 'bg-slate-50 border-slate-200/80'
+                  : 'bg-[#071a20] border-teal-900/60'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedNode(null)}
+                className="min-h-[42px] px-5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs sm:text-sm font-black transition cursor-pointer active:scale-95"
+              >
+                {isBn ? 'বন্ধ করুন' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

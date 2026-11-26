@@ -11,14 +11,16 @@ import {
   CheckCircle2,
   ChevronRight,
   GitBranch,
+  Globe2,
   Layers,
   ListChecks,
   Maximize2,
   Minimize2,
+  PanelRightClose,
+  PanelRightOpen,
   RotateCcw,
   ScrollText,
   Search,
-  Sparkles,
   Star,
   Users,
   X,
@@ -39,6 +41,7 @@ import {
   TREE_CANVAS_WIDTH,
   TreeLineageGroup,
 } from '../data/prophetsFamilyTreeData';
+import { HumanityBranchesTreeSection } from './HumanityBranchesTreeSection';
 
 interface ProphetsFamilyTreeViewProps {
   themeMode?: ThemeMode;
@@ -50,7 +53,7 @@ interface ProphetsFamilyTreeViewProps {
   onSwitchToBiographies: () => void;
 }
 
-type TreeViewMode = 'tree' | 'branches' | 'list';
+type TreeViewMode = 'tree' | 'humanity' | 'branches' | 'list';
 type TreeFilterKey =
   | 'all'
   | 'ulul_azm'
@@ -77,16 +80,16 @@ function getLineageStyles(lineage: TreeLineageGroup, isDay: boolean, isProphet25
   if (!isProphet25) {
     return isDay
       ? {
-          card: 'bg-[#f4f8f6] border-slate-300/90 text-slate-800 hover:border-[#006A4E]',
-          badge: 'bg-slate-200 text-slate-700',
+          card: 'bg-[#f8fbfa]/95 border-slate-300/80 text-slate-800 hover:border-[#006A4E] shadow-[0_1px_4px_rgba(15,23,42,0.05)]',
+          badge: 'bg-slate-200/90 text-slate-700',
           arabic: 'text-slate-600',
-          stroke: '#64748b',
+          stroke: '#94a3b8',
         }
       : {
-          card: 'bg-[#0b2026] border-teal-800/70 text-slate-200 hover:border-emerald-400',
+          card: 'bg-[#091c22]/95 border-teal-800/60 text-slate-200 hover:border-emerald-400 shadow-[0_2px_8px_rgba(0,0,0,0.3)]',
           badge: 'bg-teal-900/70 text-teal-200',
           arabic: 'text-teal-300/80',
-          stroke: '#5eead4',
+          stroke: '#2dd4bf',
         };
   }
 
@@ -94,56 +97,56 @@ function getLineageStyles(lineage: TreeLineageGroup, isDay: boolean, isProphet25
     case 'early':
       return isDay
         ? {
-            card: 'bg-[#eef8f4] border-emerald-500/70 text-slate-900 hover:border-[#006A4E]',
+            card: 'bg-gradient-to-b from-[#f3fbf7] to-[#e6f6ee] border-emerald-600/80 text-slate-900 hover:border-[#006A4E] shadow-[0_4px_14px_rgba(5,150,105,0.12)]',
             badge: 'bg-[#006A4E] text-white',
             arabic: 'text-[#006A4E]',
             stroke: '#059669',
           }
         : {
-            card: 'bg-[#0a2b25] border-emerald-500/60 text-white hover:border-emerald-300',
-            badge: 'bg-emerald-600 text-white',
+            card: 'bg-gradient-to-b from-[#0d332c] to-[#08241f] border-emerald-400/70 text-white hover:border-emerald-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'bg-emerald-500 text-slate-950',
             arabic: 'text-emerald-300',
             stroke: '#34d399',
           };
     case 'abrahamic':
       return isDay
         ? {
-            card: 'bg-[#fdf3ee] border-rose-500/70 text-slate-900 hover:border-rose-700',
+            card: 'bg-gradient-to-b from-[#fef7f4] to-[#fbece5] border-rose-500/80 text-slate-900 hover:border-rose-700 shadow-[0_4px_14px_rgba(190,18,60,0.10)]',
             badge: 'bg-rose-700 text-white',
             arabic: 'text-rose-800',
             stroke: '#be123c',
           }
         : {
-            card: 'bg-[#2a151b] border-rose-500/60 text-white hover:border-rose-300',
-            badge: 'bg-rose-600 text-white',
+            card: 'bg-gradient-to-b from-[#331920] to-[#231015] border-rose-400/70 text-white hover:border-rose-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'bg-rose-500 text-white',
             arabic: 'text-rose-300',
             stroke: '#fb7185',
           };
     case 'ishmaelite':
       return isDay
         ? {
-            card: 'bg-[#e8f6ef] border-[#006A4E] text-slate-900 hover:border-emerald-800',
+            card: 'bg-gradient-to-b from-[#effaf4] to-[#ddf3e7] border-[#006A4E] text-slate-900 hover:border-emerald-800 shadow-[0_5px_16px_rgba(0,106,78,0.15)]',
             badge: 'bg-[#005a42] text-white',
             arabic: 'text-[#005a42]',
             stroke: '#006A4E',
           }
         : {
-            card: 'bg-[#092e26] border-emerald-400/70 text-white hover:border-emerald-300',
-            badge: 'bg-emerald-500 text-slate-950',
+            card: 'bg-gradient-to-b from-[#0b382e] to-[#072620] border-emerald-400/80 text-white hover:border-emerald-300 shadow-[0_6px_20px_rgba(0,0,0,0.5)]',
+            badge: 'bg-emerald-400 text-slate-950',
             arabic: 'text-emerald-300',
             stroke: '#10b981',
           };
     case 'israelite':
       return isDay
         ? {
-            card: 'bg-[#eef5fc] border-sky-600/70 text-slate-900 hover:border-sky-800',
+            card: 'bg-gradient-to-b from-[#f3f8fe] to-[#e4effc] border-sky-600/75 text-slate-900 hover:border-sky-800 shadow-[0_4px_14px_rgba(3,105,161,0.11)]',
             badge: 'bg-sky-700 text-white',
             arabic: 'text-sky-800',
-            stroke: '#0369a1',
+            stroke: '#0284c7',
           }
         : {
-            card: 'bg-[#0b2333] border-sky-500/60 text-white hover:border-sky-300',
-            badge: 'bg-sky-600 text-white',
+            card: 'bg-gradient-to-b from-[#0d2a3d] to-[#081d2b] border-sky-400/70 text-white hover:border-sky-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'bg-sky-500 text-slate-950',
             arabic: 'text-sky-300',
             stroke: '#38bdf8',
           };
@@ -151,14 +154,14 @@ function getLineageStyles(lineage: TreeLineageGroup, isDay: boolean, isProphet25
     default:
       return isDay
         ? {
-            card: 'bg-[#fef8eb] border-amber-500/80 text-slate-900 hover:border-amber-700',
+            card: 'bg-gradient-to-b from-[#fffaf0] to-[#fdf0d5] border-amber-500/85 text-slate-900 hover:border-amber-700 shadow-[0_4px_14px_rgba(180,83,9,0.11)]',
             badge: 'bg-amber-700 text-white',
             arabic: 'text-amber-800',
-            stroke: '#b45309',
+            stroke: '#d97706',
           }
         : {
-            card: 'bg-[#27200d] border-amber-500/60 text-white hover:border-amber-300',
-            badge: 'bg-amber-500 text-slate-950',
+            card: 'bg-gradient-to-b from-[#2f250e] to-[#211a09] border-amber-400/70 text-white hover:border-amber-300 shadow-[0_6px_18px_rgba(0,0,0,0.45)]',
+            badge: 'bg-amber-400 text-slate-950',
             arabic: 'text-amber-300',
             stroke: '#fbbf24',
           };
@@ -209,10 +212,10 @@ function buildConnectorPath(from: ProphetTreeNode, to: ProphetTreeNode): {
   const dy = Math.abs(to.y - from.y);
   const dx = Math.abs(to.x - from.x);
 
-  // Horizontal kinship connector (same row, e.g., Adam <-> Hawwa, Ibrahim <-> Hajar/Sarah/Lut)
+  // Horizontal kinship/direct connector (same row)
   if (dy <= 18) {
-    const startX = from.x < to.x ? from.x + (from.size === 'lg' ? 78 : 58) : from.x - (from.size === 'lg' ? 78 : 58);
-    const endX = from.x < to.x ? to.x - (to.size === 'lg' ? 78 : 58) : to.x + (to.size === 'lg' ? 78 : 58);
+    const startX = from.x < to.x ? from.x + (from.size === 'lg' ? 84 : 64) : from.x - (from.size === 'lg' ? 84 : 64);
+    const endX = from.x < to.x ? to.x - (to.size === 'lg' ? 84 : 64) : to.x + (to.size === 'lg' ? 84 : 64);
     return {
       d: `M ${startX} ${from.y} L ${endX} ${to.y}`,
       labelX: (startX + endX) / 2,
@@ -262,13 +265,17 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [zoom, setZoom] = useState<number>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 640) return 0.56;
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) return 0.72;
-    return 0.85;
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 640) return 0.48;
+      if (window.innerWidth < 1024) return 0.64;
+      if (window.innerWidth < 1280) return 0.74;
+    }
+    return 0.84;
   });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [sideTierFilter, setSideTierFilter] = useState<'all' | SideProphetEvidenceTier>('all');
   const [selectedSideProphet, setSelectedSideProphet] = useState<SidePanelProphet | null>(null);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const nodeMap = useMemo(() => {
@@ -364,13 +371,13 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
 
   const handleZoomChange = (nextZoom: number) => {
     if (soundEnabled) soundHaptics.playTap();
-    setZoom(Math.min(1.25, Math.max(0.42, Number(nextZoom.toFixed(2)))));
+    setZoom(Math.min(1.25, Math.max(0.3, Number(nextZoom.toFixed(2)))));
   };
 
   const handleFitScreen = () => {
     if (soundEnabled) soundHaptics.playTap();
     const containerWidth = scrollRef.current?.clientWidth || 900;
-    const fitted = Math.min(1.0, Math.max(0.42, (containerWidth - 24) / TREE_CANVAS_WIDTH));
+    const fitted = Math.min(1.0, Math.max(0.3, (containerWidth - 24) / TREE_CANVAS_WIDTH));
     setZoom(Number(fitted.toFixed(2)));
   };
 
@@ -395,43 +402,63 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
     }> = [
       {
         id: 'bg-early',
-        titleBn: '১. মানবজাতির সূচনা ও প্রাচীন নবীগণ',
-        titleEn: '1. Dawn of Humanity & Ancient Prophets',
-        subtitleBn: 'আদম (আ.) → শীস (আ.) → ইদরীস (আ.) → নূহ (আ.) → হূদ ও ছালেহ (আ.)',
-        subtitleEn: 'Adam → Shayth → Idris → Nuh → Hud & Salih (AS)',
-        nodeIds: ['adam', 'hawwa', 'qabil', 'habil', 'shayth', 'idris', 'nuh', 'sam', 'ham', 'yafith', 'yam', 'hud', 'salih'],
+        titleBn: '১. মানবজাতির সূচনা ও প্রাচীন নবীগণ (আদম → ইদরীস → নূহ → হূদ ও ছালেহ)',
+        titleEn: '1. Dawn of Humanity & Ancient Prophets (Adam → Idris → Nuh → Hud & Salih)',
+        subtitleBn: 'আদম, হাওয়া, কাবীল, হাবীল, শীস → আনূশ, কাইনান, মাহলাঈল, আল-ইয়ারাদ → ইদরীস → মাতূশালাখ, লামিক → নূহ → সাম, হাম, ইয়াফিস, ইয়াম → হূদ ও ছালেহ (আ.)',
+        subtitleEn: 'Adam, Hawwa, Qabil, Habil, Shayth → Anoush..Al-Yarad → Idris → Mattushalah, Lamick → Nuh → Sons → Hud & Salih (AS)',
+        nodeIds: [
+          'adam', 'hawwa', 'qabil', 'habil', 'shayth',
+          'anoush', 'qinan', 'mahalalel', 'al_yarad', 'idris',
+          'mattushalah', 'lamick', 'nuh',
+          'sam', 'ham', 'yafith', 'yam',
+          'arfakhshad', 'shalikh', 'eram', 'owa', 'aad_nation', 'kasir', 'thamud_nation',
+          'hud', 'salih',
+        ],
       },
       {
         id: 'bg-abrahamic',
-        titleBn: '২. আবুল আম্বিয়া ইবরাহীম (আ.) ও সমসাময়িক',
-        titleEn: '2. Father of Prophets Ibrahim (AS) & Family',
-        subtitleBn: 'আযরের বংশ থেকে খলীলুল্লাহ ইবরাহীম (আ.), স্ত্রীদ্বয় ও ভ্রাতুষ্পুত্র লূত (আ.)',
-        subtitleEn: 'Ibrahim (AS), wives Hajar & Sarah, and nephew Prophet Lut (AS)',
-        nodeIds: ['ibrahim', 'hajar', 'sarah', 'lut', 'shuayb'],
+        titleBn: '২. হূদ থেকে ইবরাহীম (আ.), লূত (আ.) ও শো‘আয়েব (আ.)',
+        titleEn: '2. Hud to Ibrahim (AS), Lut (AS) & Shu‘ayb (AS)',
+        subtitleBn: 'ফালিখ → রাউ → সারূখ → নাহূর → আযর ও হারান → খলীলুল্লাহ ইবরাহীম (আ.), হাজেরা, সারা, লূত (আ.), মাদইয়ান ও শো‘আয়েব (আ.)',
+        subtitleEn: 'Falikh → Rau → Sarukh → Nahur → Aazar & Haran → Ibrahim (AS), Hajar, Sarah, Lut (AS), Madyan & Shu‘ayb (AS)',
+        nodeIds: ['falikh', 'rau', 'sarukh', 'nahur', 'azar', 'haran', 'ibrahim', 'hajar', 'sarah', 'lut', 'madyan', 'shuayb'],
       },
       {
         id: 'bg-ishmaelite',
-        titleBn: '৩. ইসমাঈলী ও কুরাইশ ধারা → শেষনবী মুহাম্মাদ (ﷺ)',
-        titleEn: '3. Ishmaelite & Quraysh Lineage → Prophet Muhammad (SAW)',
-        subtitleBn: 'ইসমাঈল (আ.) → আদনান → কুরাইশ → হাশিম → আব্দুল্লাহ → মুহাম্মাদ (ﷺ) ও আহলে বাইত',
-        subtitleEn: 'Ismail → Adnan → Quraysh → Hashim → Muhammad (SAW) & Companions',
-        nodeIds: ['ismail', 'adnan', 'quraysh_fihr', 'qusay_hashim', 'abd_muttalib_parents', 'muhammad', 'abubakr_umar', 'uthman', 'ali_fatimah', 'hasan_husayn'],
+        titleBn: '৩. ইসমাঈলী ও কুরাইশের সম্পূর্ণ ২০ ধাপ → শেষনবী (ﷺ), আহলে বাইত ও ৪ খলীফা',
+        titleEn: '3. Full Ishmaelite & 20-Step Quraysh Lineage → Muhammad (SAW) & 4 Caliphs',
+        subtitleBn: 'ইসমাঈল (আ.) → আদনান..আব্দুল মুত্তালিব (২০ ধাপ) → ৬ চাচা-পিতা ও আমিনা → মুহাম্মাদ (ﷺ), ৪ স্ত্রী, ৭ সন্তান ও খোলাফায়ে রাশেদীন',
+        subtitleEn: 'Ismail → Adnan to Abd al-Muttalib (20 steps) → Uncles & Parents → Muhammad (SAW), Wives, 7 Children & 4 Caliphs',
+        nodeIds: [
+          'ismail',
+          'adnan', 'maad', 'nizar', 'mudhar', 'ilyas_mudhar', 'mudrikah', 'khuzaimah', 'kinanah', 'al_nazr', 'malik_quraysh',
+          'fihr', 'ghalib', 'luay', 'kab_quraysh', 'murrah', 'kilab', 'qusay', 'abd_manaf', 'hashim', 'abd_muttalib',
+          'abu_talib', 'abdullah_father', 'aminah', 'al_zubayr', 'hamza', 'al_abbas', 'abu_lahab',
+          'khadijah', 'muhammad', 'aisha', 'hafsa', 'maria_qibtiyya',
+          'fatimah', 'zainab_bint_muhammad', 'ruqayyah', 'umme_kulthum', 'qasim', 'abdullah_ibn_muhammad', 'ibrahim_ibn_muhammad',
+          'abu_bakr', 'umar', 'uthman', 'ali', 'hasan_husayn',
+        ],
       },
       {
         id: 'bg-israelite',
         titleBn: '৪. বনী ইসরাঈল নবুয়তী ধারা (ইসহাক্ব ও ইয়াকূব আ.)',
         titleEn: '4. Banu Israil Prophetic Lineage (Ishaq & Yaqub AS)',
-        subtitleBn: 'ইসহাক্ব → ইয়াকূব → ইউসুফ, মূসা, যূশা‘, হারূন, শামউইল, দাঊদ, সুলায়মান, ইলিয়াস, আল-ইয়াসা, যাকারিয়া, ইয়াহইয়া ও ঈসা (আ.)',
-        subtitleEn: 'Ishaq → Yaqub → Yusuf, Musa, Yusha, Harun, Shamwil, Dawud, Sulayman, Ilyas, Al-Yasa, Zakariyya, Yahya & Isa (AS)',
-        nodeIds: ['ishaq', 'yaqub', 'yusuf', 'yahuda', 'lawi', 'musa', 'yusha', 'harun', 'shamwil', 'dawud', 'sulayman', 'ilyas', 'al_yasa', 'zakariyya', 'yahya', 'maryam', 'isa'],
+        subtitleBn: 'ইসহাক্ব → ইয়াকূব → ইউসুফ, লাভী (কাহাত→ইমরান→মূসা, হারূন, মারইয়াম), যূশা‘, ইয়াহুদা (শামউইল→দাঊদ→সুলায়মান→ফাকূয), যাকারিয়া, ইয়াহইয়া, মারইয়াম ও ঈসা (আ.)',
+        subtitleEn: 'Ishaq → Yaqub → Yusuf, Lawi (Kehath→Imran→Musa, Harun), Yusha, Yahuda (Shamwil→Dawud→Sulayman→Faqud), Zakariyya, Yahya, Maryam & Isa (AS)',
+        nodeIds: [
+          'ishaq', 'yaqub', 'yusuf',
+          'lawi', 'kehath', 'imran_musa', 'asiya', 'saffurah', 'harun', 'maryam_sister_musa', 'musa', 'yusha',
+          'yahuda', 'shamwil', 'dawud', 'sulayman', 'ilyas', 'al_yasa',
+          'faqud', 'al_isabat', 'hannah', 'imran_maryam', 'zakariyya', 'yahya', 'maryam', 'isa',
+        ],
       },
       {
         id: 'bg-other',
-        titleBn: '৫. সমান্তরাল ও বিশেষ অঞ্চলের নবীগণ',
-        titleEn: '5. Parallel & Regional Prophets',
-        subtitleBn: 'আইয়ূব (আ.), যুল-কিফল (আ.) ও ইউনুস (আ.)',
-        subtitleEn: 'Ayyub (AS), Dhul-Kifl (AS), and Yunus (AS)',
-        nodeIds: ['ayyub', 'dhul_kifl', 'yunus'],
+        titleBn: '৫. সমান্তরাল ধারা (ঈসু ও বিনইয়ামীন শাখা)',
+        titleEn: '5. Parallel Branches (Esu & Benyamin Lines)',
+        subtitleBn: 'ঈসু → আইয়ূব (আ.) ও যুল-কিফল (আ.) এবং বিনইয়ামীন → মাত্তা → ইউনুস (আ.)',
+        subtitleEn: 'Esu → Ayyub (AS) & Dhul-Kifl (AS), and Benyamin → Amittai (Matta) → Yunus (AS)',
+        nodeIds: ['esu', 'ayyub', 'dhul_kifl', 'benyamin', 'amittai_matta', 'yunus'],
       },
     ];
 
@@ -677,7 +704,8 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
         >
           {(
             [
-              { id: 'tree', icon: GitBranch, bn: 'ট্রি চার্ট', en: 'Visual Tree' },
+              { id: 'tree', icon: GitBranch, bn: 'নবী-ট্রি চার্ট', en: 'Prophets Tree' },
+              { id: 'humanity', icon: Globe2, bn: 'মানবজাতির মূল শাখা', en: 'Humanity Tree' },
               { id: 'branches', icon: Layers, bn: 'বংশধারা', en: 'Lineages' },
               { id: 'list', icon: ListChecks, bn: '২৫ নবী ও অন্যান্য', en: 'Table & Figures' },
             ] as const
@@ -707,7 +735,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
           })}
         </div>
 
-        {viewMode !== 'list' && (
+        {viewMode !== 'list' && viewMode !== 'humanity' && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             {filterChips.map((chip) => {
               const active = activeFilter === chip.key;
@@ -739,31 +767,31 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
       {/* MODE 1: INTERACTIVE VISUAL TREE CHART                               */}
       {/* =================================================================== */}
       {viewMode === 'tree' && (
-        <div className="space-y-3">
-          {/* Toolbar: Zoom + Legend */}
+        <div className="space-y-2.5 lg:w-[min(calc(100vw-40px),1420px)] lg:relative lg:left-1/2 lg:-translate-x-1/2">
+          {/* Sleek Toolbar: Legend + Zoom + Side Panel Toggle */}
           <div
-            className={`rounded-2xl border px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2.5 ${
+            className={`rounded-2xl border px-3 py-2 flex flex-wrap items-center justify-between gap-2 ${
               isDay
                 ? 'bg-white border-emerald-200/80'
                 : 'bg-[#082026] border-teal-900/60'
             }`}
           >
             {/* Legend */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] font-bold">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px] font-bold">
               <span className="flex items-center gap-1.5">
-                <span className="w-5 h-0.5 bg-emerald-500 inline-block rounded-full" />
+                <span className="w-4 h-0.5 bg-emerald-500 inline-block rounded-full" />
                 <span className={isDay ? 'text-slate-600' : 'text-slate-300'}>
                   {isBn ? 'সরাসরি প্রজন্ম' : 'Direct'}
                 </span>
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-5 border-t-2 border-dashed border-sky-500 inline-block" />
+                <span className="w-4 border-t-2 border-dashed border-sky-500 inline-block" />
                 <span className={isDay ? 'text-slate-600' : 'text-slate-300'}>
                   {isBn ? 'বহু প্রজন্ম' : 'Generations'}
                 </span>
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-5 border-t-2 border-dotted border-amber-500 inline-block" />
+                <span className="w-4 border-t-2 border-dotted border-amber-500 inline-block" />
                 <span className={isDay ? 'text-slate-600' : 'text-slate-300'}>
                   {isBn ? 'বৈবাহিক / আত্মীয়তা' : 'Kinship'}
                 </span>
@@ -776,22 +804,22 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
               </span>
             </div>
 
-            {/* Zoom Controls */}
-            <div className="flex items-center gap-1 shrink-0">
+            {/* Zoom + Side Panel Toggle Controls */}
+            <div className="flex items-center gap-1 shrink-0 flex-wrap">
               <button
                 type="button"
-                onClick={() => handleZoomChange(zoom - 0.12)}
+                onClick={() => handleZoomChange(zoom - 0.1)}
                 aria-label={isBn ? 'ছোট করুন' : 'Zoom out'}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer ${
+                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition cursor-pointer ${
                   isDay
                     ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#006A4E]'
                     : 'bg-[#0c262d] border-teal-800/70 text-emerald-200 hover:border-emerald-400'
                 }`}
               >
-                <ZoomOut className="w-4 h-4" />
+                <ZoomOut className="w-3.5 h-3.5" />
               </button>
               <span
-                className={`px-2 text-xs font-extrabold tabular-nums min-w-[48px] text-center ${
+                className={`px-1.5 text-xs font-extrabold tabular-nums min-w-[44px] text-center ${
                   isDay ? 'text-slate-700' : 'text-emerald-200'
                 }`}
               >
@@ -799,21 +827,21 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
               </span>
               <button
                 type="button"
-                onClick={() => handleZoomChange(zoom + 0.12)}
+                onClick={() => handleZoomChange(zoom + 0.1)}
                 aria-label={isBn ? 'বড় করুন' : 'Zoom in'}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer ${
+                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition cursor-pointer ${
                   isDay
                     ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#006A4E]'
                     : 'bg-[#0c262d] border-teal-800/70 text-emerald-200 hover:border-emerald-400'
                 }`}
               >
-                <ZoomIn className="w-4 h-4" />
+                <ZoomIn className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={handleFitScreen}
                 title={isBn ? 'স্ক্রিনে ফিট করুন' : 'Fit to screen'}
-                className={`h-9 px-2.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
+                className={`h-8 px-2.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
                   isDay
                     ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#006A4E]'
                     : 'bg-[#0c262d] border-teal-800/70 text-emerald-200 hover:border-emerald-400'
@@ -825,13 +853,13 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  handleZoomChange(1.0);
+                  handleZoomChange(0.84);
                   setActiveFilter('all');
                   setSearchQuery('');
                   setSelectedNodeId(null);
                 }}
                 title={isBn ? 'রিসেট' : 'Reset'}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition cursor-pointer ${
+                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition cursor-pointer ${
                   isDay
                     ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-[#006A4E]'
                     : 'bg-[#0c262d] border-teal-800/70 text-emerald-200 hover:border-emerald-400'
@@ -839,19 +867,58 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (soundEnabled) soundHaptics.playTap();
+                  setIsSidePanelOpen((prev) => !prev);
+                }}
+                className={`h-8 px-2.5 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                  isSidePanelOpen
+                    ? isDay
+                      ? 'bg-[#eef8f4] border-emerald-300 text-[#006A4E]'
+                      : 'bg-[#0d2d34] border-emerald-500/50 text-emerald-300'
+                    : 'bg-[#006A4E] border-[#006A4E] text-white'
+                }`}
+                title={isBn ? 'পার্শ্ব-তালিকা দেখুন বা লুকান' : 'Toggle side prophets panel'}
+              >
+                {isSidePanelOpen ? (
+                  <PanelRightClose className="w-3.5 h-3.5 shrink-0" />
+                ) : (
+                  <PanelRightOpen className="w-3.5 h-3.5 shrink-0" />
+                )}
+                <span className="whitespace-nowrap">
+                  {isBn
+                    ? `বাইরের নবী (${formatNum(SIDE_PANEL_PROPHETS.length, true)})`
+                    : `Beside (${SIDE_PANEL_PROPHETS.length})`}
+                </span>
+              </button>
             </div>
           </div>
 
-          {/* Two-Column Interactive Workspace: Tree Canvas + Side Panel */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_335px] xl:grid-cols-[1fr_365px] gap-4 items-start">
-            {/* Left Column: Scrollable / Pannable Tree Viewport */}
-            <div className="min-w-0 space-y-2.5">
+          {/* Wide Hero Tree Workspace + Slim Compact Side Rail */}
+          <div
+            className={
+              isSidePanelOpen
+                ? 'grid grid-cols-1 lg:grid-cols-[1fr_224px] xl:grid-cols-[1fr_242px] gap-3 items-start'
+                : 'grid grid-cols-1 items-start'
+            }
+          >
+            {/* Left Column: Expansive Scrollable / Pannable Tree Viewport */}
+            <div className="min-w-0 space-y-2">
               <div
                 ref={scrollRef}
-                className={`rounded-3xl border overflow-auto max-h-[76vh] relative shadow-sm ${
+                style={{
+                  backgroundImage: isDay
+                    ? 'radial-gradient(rgba(0, 106, 78, 0.11) 1px, transparent 1px)'
+                    : 'radial-gradient(rgba(52, 211, 153, 0.10) 1px, transparent 1px)',
+                  backgroundSize: '24px 24px',
+                }}
+                className={`rounded-3xl border overflow-auto max-h-[82vh] min-h-[540px] sm:min-h-[620px] relative shadow-sm ${
                   isDay
-                    ? 'bg-[#f4faf6] border-emerald-200/90'
-                    : 'bg-[#05151a] border-teal-900/70'
+                    ? 'bg-[#f6fbf8] border-emerald-200/90'
+                    : 'bg-[#041318] border-teal-900/70'
                 }`}
               >
                 {/* Scaled Dimension Wrapper */}
@@ -872,36 +939,100 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                       position: 'relative',
                     }}
                   >
+                    {/* Top-Left Ornamental Manuscript Title Block */}
+                    <div
+                      className={`absolute left-[36px] top-[24px] w-[385px] rounded-2xl border px-4 py-3 pointer-events-none ${
+                        isDay
+                          ? 'bg-white/85 border-emerald-200/80 text-slate-800'
+                          : 'bg-[#072027]/85 border-teal-800/60 text-slate-100'
+                      }`}
+                    >
+                      <div
+                        dir="rtl"
+                        className={`font-arabic text-base font-bold ${
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                        }`}
+                      >
+                        بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ
+                      </div>
+                      <div
+                        className={`text-sm font-black mt-0.5 ${
+                          isDay ? 'text-[#006A4E]' : 'text-white'
+                        }`}
+                      >
+                        {isBn
+                          ? 'নবী ও রাসূলগণের পবিত্র বংশলতিকা'
+                          : 'Sacred Family Tree of the Prophets'}
+                      </div>
+                      <div
+                        className={`text-[10.5px] font-semibold mt-0.5 leading-snug ${
+                          isDay ? 'text-slate-600' : 'text-slate-300'
+                        }`}
+                      >
+                        {isBn
+                          ? 'আদম (আ.) → ইদরীস ও নূহ (আ.) → ইবরাহীম (আ.) → ইসমাঈল ও ইসহাক্ব → মুহাম্মাদ (ﷺ)'
+                          : 'Adam (AS) → Idris & Nuh → Ibrahim → Ismail & Ishaq → Muhammad (SAW)'}
+                      </div>
+                    </div>
+
+                    {/* Top-Right Summary & Ruling Note */}
+                    <div
+                      className={`absolute right-[36px] top-[24px] w-[365px] rounded-2xl border px-4 py-3 pointer-events-none ${
+                        isDay
+                          ? 'bg-white/85 border-amber-200/80 text-slate-800'
+                          : 'bg-[#072027]/85 border-teal-800/60 text-slate-100'
+                      }`}
+                    >
+                      <div
+                        className={`text-xs font-black ${
+                          isDay ? 'text-amber-800' : 'text-amber-300'
+                        }`}
+                      >
+                        {isBn
+                          ? 'মোট ১১৫টি বংশলতিকা নোড · ১,২৪,০০০ নবী'
+                          : '115 Connected Lineage Nodes · 124k Prophets'}
+                      </div>
+                      <div
+                        className={`text-[10.5px] font-medium mt-1 leading-snug ${
+                          isDay ? 'text-slate-600' : 'text-slate-300'
+                        }`}
+                      >
+                        {isBn
+                          ? 'প্রত্যেক রাসূলই নবী, তবে প্রত্যেক নবী রাসূল নন। কুরআনে ২৫ জন নবীর নাম এসেছে; অন্যান্য প্রমাণিত ও মতভেদপূর্ণ নবীগণ ডানদিকের তালিকায়।'
+                          : 'Every Rasool is a Nabi, while not every Nabi is a Rasool. Click any card for full biography & lineage.'}
+                      </div>
+                    </div>
+
                     {/* Subtle Era / Branch Backdrop Regions */}
                     <div
-                      className={`absolute left-[115px] top-[890px] w-[180px] h-[595px] rounded-2xl border border-dashed pointer-events-none ${
+                      className={`absolute left-[35px] top-[1195px] w-[320px] h-[910px] rounded-3xl border border-dashed pointer-events-none ${
                         isDay
-                          ? 'bg-emerald-100/30 border-emerald-400/50'
+                          ? 'bg-emerald-100/25 border-emerald-400/55'
                           : 'bg-emerald-950/20 border-emerald-600/30'
                       }`}
                     >
                       <div
                         className={`text-center text-[11px] font-black tracking-wider pt-2 ${
-                          isDay ? 'text-[#006A4E]' : 'text-emerald-300/80'
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-300/85'
                         }`}
                       >
-                        {isBn ? 'কুরাইশ ও নবুয়তী ধারা' : 'QURAYSH LINEAGE'}
+                        {isBn ? 'কুরাইশ বংশলতিকা (২০ ধাপ)' : 'QURAYSH LINEAGE (20 STEPS)'}
                       </div>
                     </div>
 
                     <div
-                      className={`absolute left-[325px] top-[880px] w-[725px] h-[870px] rounded-2xl border border-dashed pointer-events-none ${
+                      className={`absolute left-[390px] top-[1185px] w-[945px] h-[885px] rounded-3xl border border-dashed pointer-events-none ${
                         isDay
-                          ? 'bg-sky-100/25 border-sky-400/45'
+                          ? 'bg-sky-100/20 border-sky-400/45'
                           : 'bg-sky-950/15 border-sky-600/25'
                       }`}
                     >
                       <div
                         className={`text-center text-[11px] font-black tracking-wider pt-2 ${
-                          isDay ? 'text-sky-800' : 'text-sky-300/80'
+                          isDay ? 'text-sky-800' : 'text-sky-300/85'
                         }`}
                       >
-                        {isBn ? 'বনী ইসরাঈল ধারা (১২ গোত্র)' : 'BANU ISRAIL (12 TRIBES)'}
+                        {isBn ? 'বনী ইসরাঈল ও সমান্তরাল ধারা' : 'BANU ISRAIL & PARALLEL BRANCHES'}
                       </div>
                     </div>
 
@@ -927,13 +1058,13 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                           ? connectedContext.edgeIds.has(edge.id)
                           : false;
 
-                        let opacity = 0.72;
+                        let opacity = 0.78;
                         let strokeWidth = 2;
                         if (selectedNodeId) {
-                          opacity = isHighlightedBySelection ? 1 : 0.16;
+                          opacity = isHighlightedBySelection ? 1 : 0.14;
                           strokeWidth = isHighlightedBySelection ? 3.2 : 1.5;
                         } else if (isFiltering) {
-                          opacity = fromMatches || toMatches ? 0.9 : 0.16;
+                          opacity = fromMatches || toMatches ? 0.92 : 0.14;
                         }
 
                         const dashArray =
@@ -964,8 +1095,8 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                                   width={76}
                                   height={16}
                                   rx={6}
-                                  fill={isDay ? '#f4faf6' : '#05151a'}
-                                  fillOpacity={0.92}
+                                  fill={isDay ? '#f6fbf8' : '#041318'}
+                                  fillOpacity={0.94}
                                 />
                                 <text
                                   textAnchor="middle"
@@ -997,14 +1128,14 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
 
                       let nodeOpacity = 1;
                       if (selectedNodeId) {
-                        nodeOpacity = isSelected || isNeighbor ? 1 : 0.34;
+                        nodeOpacity = isSelected || isNeighbor ? 1 : 0.32;
                       } else if (isFiltering) {
-                        nodeOpacity = matches ? 1 : 0.24;
+                        nodeOpacity = matches ? 1 : 0.22;
                       }
 
                       const isProphetStyled = Boolean(node.isProphet25 || node.isHadithProphet);
                       const st = getLineageStyles(node.lineage, isDay, isProphetStyled);
-                      const widthPx = node.size === 'lg' ? 168 : 132;
+                      const widthPx = node.size === 'lg' ? 168 : 128;
 
                       return (
                         <button
@@ -1018,13 +1149,17 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                             transform: 'translate(-50%, -50%)',
                             opacity: nodeOpacity,
                           }}
-                          className={`absolute rounded-2xl border-2 text-left transition-all duration-150 cursor-pointer shadow-xs hover:shadow-md active:scale-[0.98] ${
-                            node.size === 'lg' ? 'px-2.5 py-2' : 'px-2 py-1.5'
+                          className={`absolute text-left transition-all duration-150 cursor-pointer hover:shadow-md active:scale-[0.98] ${
+                            node.size === 'lg'
+                              ? 'rounded-2xl border-[1.5px] px-2.5 py-2'
+                              : 'rounded-xl border px-2 py-1.5'
                           } ${st.card} ${
                             isSelected
-                              ? 'ring-4 ring-amber-400/70 z-20 scale-[1.03]'
+                              ? 'ring-4 ring-amber-400/75 z-20 scale-[1.04]'
                               : isNeighbor
-                              ? 'ring-2 ring-emerald-400/60 z-10'
+                              ? 'ring-2 ring-emerald-400/70 z-10'
+                              : node.isUlulAzm
+                              ? 'ring-2 ring-amber-400/45 z-10'
                               : 'z-10'
                           }`}
                         >
@@ -1066,9 +1201,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                             {isBn ? node.nameBn : node.nameEn}
                           </div>
 
-                          <div
-                            className={`mt-0.5 text-[9.5px] font-semibold leading-tight line-clamp-1 opacity-80`}
-                          >
+                          <div className="mt-0.5 text-[9.5px] font-semibold leading-tight line-clamp-1 opacity-80">
                             {node.scriptureBn
                               ? isBn
                                 ? `📜 ${node.scriptureBn}`
@@ -1095,181 +1228,170 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
               </p>
             </div>
 
-            {/* Right Column: Prophets Outside Direct Tree (Side Panel) */}
-            <aside
-              aria-label={isBn ? 'ট্রি-র বাইরের ও স্বতন্ত্র নবীগণের তালিকা' : 'Prophets Outside Direct Tree'}
-              className={`lg:sticky lg:top-[76px] lg:max-h-[78vh] flex flex-col rounded-3xl border overflow-hidden shadow-xs ${
-                isDay
-                  ? 'bg-white border-emerald-200/90'
-                  : 'bg-[#082026] border-teal-900/70'
-              }`}
-            >
-              {/* Side Panel Header */}
-              <div
-                className={`px-4 py-3.5 border-b space-y-2.5 ${
+            {/* Right Column: Slim & Compact Rail for Prophets Outside Direct Tree */}
+            {isSidePanelOpen && (
+              <aside
+                aria-label={isBn ? 'ট্রি-র বাইরের ও স্বতন্ত্র নবীগণের তালিকা' : 'Prophets Outside Direct Tree'}
+                className={`lg:sticky lg:top-[76px] lg:max-h-[82vh] flex flex-col rounded-2xl border overflow-hidden shadow-xs ${
                   isDay
-                    ? 'bg-[#f4faf7] border-emerald-200/80'
-                    : 'bg-[#071a20] border-teal-900/60'
+                    ? 'bg-white border-emerald-200/90'
+                    : 'bg-[#082026] border-teal-900/70'
                 }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h2
-                      className={`text-sm font-black leading-snug ${
-                        isDay ? 'text-[#006A4E]' : 'text-emerald-300'
-                      }`}
-                    >
-                      {isBn
-                        ? 'ট্রি-র বাইরের ও স্বতন্ত্র নবীগণ'
-                        : 'Prophets Beside the Tree'}
-                    </h2>
-                    <p
-                      className={`text-[11px] font-medium mt-0.5 leading-snug ${
-                        isDay ? 'text-slate-600' : 'text-slate-300'
-                      }`}
-                    >
-                      {isBn
-                        ? 'যাঁদের বংশলতিকা অজ্ঞাত, পৃথক জাতি বা ১,২৪,০০০ নবীর অন্তর্ভুক্ত'
-                        : 'Prophets whose parent-child lineage is unrecorded or debated'}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-xs font-black tabular-nums shrink-0 ${
-                      isDay ? 'text-[#006A4E]' : 'text-emerald-300'
-                    }`}
-                  >
-                    {formatNum(filteredSideProphets.length, isBn)}
-                  </span>
-                </div>
-
-                {/* Tier Filter Tabs */}
+                {/* Compact Header */}
                 <div
-                  className={`flex items-center gap-1 p-1 rounded-xl border overflow-x-auto no-scrollbar ${
+                  className={`px-3 py-2.5 border-b space-y-2 ${
                     isDay
-                      ? 'bg-white border-slate-200/80'
-                      : 'bg-[#05151a] border-teal-900/60'
+                      ? 'bg-[#f4faf7] border-emerald-200/80'
+                      : 'bg-[#071a20] border-teal-900/60'
                   }`}
                 >
-                  {(
-                    [
-                      { key: 'all', bn: 'সকল', en: 'All' },
-                      { key: 'quran_hadith', bn: 'কুরআন/হাদীস', en: 'Quran/Hadith' },
-                      { key: 'tafsir_history', bn: 'তাফসীর', en: 'Tafsir' },
-                      { key: 'scholarly_debate', bn: 'মতভেদ', en: 'Debated' },
-                      { key: 'unspecified', bn: '১,২৪,০০০', en: '124k' },
-                    ] as const
-                  ).map((tierBtn) => {
-                    const active = sideTierFilter === tierBtn.key;
-                    return (
-                      <button
-                        key={tierBtn.key}
-                        type="button"
-                        onClick={() => {
-                          if (soundEnabled) soundHaptics.playTap();
-                          setSideTierFilter(tierBtn.key);
-                        }}
-                        className={`min-h-[32px] px-2.5 rounded-lg text-[11px] font-bold whitespace-nowrap shrink-0 transition cursor-pointer ${
-                          active
-                            ? 'bg-[#006A4E] text-white'
-                            : isDay
-                            ? 'text-slate-600 hover:text-[#006A4E]'
-                            : 'text-slate-300 hover:text-emerald-300'
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="min-w-0">
+                      <h2
+                        className={`text-xs font-black leading-tight truncate ${
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-300'
                         }`}
                       >
-                        {isBn ? tierBtn.bn : tierBtn.en}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Scrollable List of Side Prophets */}
-              <div className="p-3 space-y-2.5 overflow-y-auto flex-1">
-                {filteredSideProphets.length === 0 ? (
-                  <div
-                    className={`p-6 text-center text-xs font-semibold ${
-                      isDay ? 'text-slate-500' : 'text-slate-400'
-                    }`}
-                  >
-                    {isBn
-                      ? 'এই অনুসন্ধানে পার্শ্ব-তালিকায় কোনো নবী পাওয়া যায়নি।'
-                      : 'No side prophets match this filter.'}
-                  </div>
-                ) : (
-                  filteredSideProphets.map((sp) => (
+                        {isBn ? 'ট্রি-র বাইরের নবী' : 'Beside the Tree'}
+                        <span className="ml-1 opacity-75 tabular-nums">
+                          ({formatNum(filteredSideProphets.length, isBn)})
+                        </span>
+                      </h2>
+                      <p
+                        className={`text-[9.5px] font-medium mt-0.5 truncate ${
+                          isDay ? 'text-slate-500' : 'text-slate-400'
+                        }`}
+                      >
+                        {isBn
+                          ? 'মতভেদপূর্ণ, অজ্ঞাত বংশ ও ১,২৪,০০০ নবী'
+                          : 'Unlinked, debated & 124k prophets'}
+                      </p>
+                    </div>
                     <button
-                      key={sp.id}
                       type="button"
-                      onClick={() => handleSelectSideProphet(sp)}
-                      className={`w-full p-3 rounded-2xl border text-left transition cursor-pointer space-y-1.5 active:scale-[0.99] ${
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setIsSidePanelOpen(false);
+                      }}
+                      aria-label={isBn ? 'প্যানেল ছোট করুন' : 'Collapse panel'}
+                      className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 cursor-pointer transition ${
                         isDay
-                          ? 'bg-[#f8fcfa] border-slate-200/90 hover:border-[#006A4E] hover:bg-emerald-50/40'
-                          : 'bg-[#0a2329] border-teal-900/60 hover:border-emerald-400/70 hover:bg-[#0d2c33]'
+                          ? 'bg-white border-slate-200 text-slate-500 hover:text-[#006A4E]'
+                          : 'bg-[#0c262d] border-teal-800/70 text-slate-300 hover:text-white'
                       }`}
                     >
-                      {/* Clean Unboxed Metadata Kicker + Arabic */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 text-[10.5px] font-extrabold min-w-0 truncate">
-                          <span className={getSideTierAccentClass(sp.evidenceTier, isDay)}>
-                            {getSideTierLabel(sp.evidenceTier, isBn, isAr)}
-                          </span>
-                          <span aria-hidden="true" className="opacity-40">
-                            ·
-                          </span>
-                          <span
-                            className={`truncate ${
-                              isDay ? 'text-slate-500' : 'text-slate-400'
-                            }`}
-                          >
-                            {isBn ? sp.eraOrRegionBn : sp.eraOrRegionEn}
-                          </span>
-                        </div>
-                        <span
-                          dir="rtl"
-                          className={`font-arabic text-xs font-bold shrink-0 ${
-                            isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                      <PanelRightClose className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Ultra-Compact Tier Filter Tabs */}
+                  <div
+                    className={`flex items-center gap-0.5 p-0.5 rounded-lg border overflow-x-auto no-scrollbar ${
+                      isDay
+                        ? 'bg-white border-slate-200/80'
+                        : 'bg-[#05151a] border-teal-900/60'
+                    }`}
+                  >
+                    {(
+                      [
+                        { key: 'all', bn: 'সকল', en: 'All' },
+                        { key: 'quran_hadith', bn: 'হাদীস', en: 'Hadith' },
+                        { key: 'tafsir_history', bn: 'তাফসীর', en: 'Tafsir' },
+                        { key: 'scholarly_debate', bn: 'মতভেদ', en: 'Debated' },
+                        { key: 'unspecified', bn: '১,২৪হ.', en: '124k' },
+                      ] as const
+                    ).map((tierBtn) => {
+                      const active = sideTierFilter === tierBtn.key;
+                      return (
+                        <button
+                          key={tierBtn.key}
+                          type="button"
+                          onClick={() => {
+                            if (soundEnabled) soundHaptics.playTap();
+                            setSideTierFilter(tierBtn.key);
+                          }}
+                          className={`min-h-[26px] px-1.5 rounded-md text-[10px] font-bold whitespace-nowrap shrink-0 transition cursor-pointer ${
+                            active
+                              ? 'bg-[#006A4E] text-white'
+                              : isDay
+                              ? 'text-slate-600 hover:text-[#006A4E]'
+                              : 'text-slate-300 hover:text-emerald-300'
                           }`}
                         >
-                          {sp.nameAr}
-                        </span>
-                      </div>
+                          {isBn ? tierBtn.bn : tierBtn.en}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                      {/* Prophet Name */}
-                      <div
-                        className={`text-sm font-black leading-snug ${
-                          isDay ? 'text-slate-900' : 'text-white'
-                        }`}
-                      >
-                        {isBn ? sp.nameBn : sp.nameEn}
-                      </div>
-
-                      {/* Reason not in main tree */}
-                      <p
-                        className={`text-[11px] leading-relaxed line-clamp-2 ${
-                          isDay ? 'text-slate-600' : 'text-slate-300'
-                        }`}
-                      >
-                        {isBn ? sp.reasonNotInTreeBn : sp.reasonNotInTreeEn}
-                      </p>
-
-                      {/* Bottom Citation + Chevron */}
-                      <div
-                        className={`flex items-center justify-between gap-2 pt-1.5 border-t text-[10.5px] font-bold ${
+                {/* Slim Compact List */}
+                <div className="p-2 space-y-1.5 overflow-y-auto flex-1">
+                  {filteredSideProphets.length === 0 ? (
+                    <div
+                      className={`p-4 text-center text-[11px] font-semibold ${
+                        isDay ? 'text-slate-500' : 'text-slate-400'
+                      }`}
+                    >
+                      {isBn ? 'কোনো নবী পাওয়া যায়নি।' : 'No matches found.'}
+                    </div>
+                  ) : (
+                    filteredSideProphets.map((sp) => (
+                      <button
+                        key={sp.id}
+                        type="button"
+                        onClick={() => handleSelectSideProphet(sp)}
+                        className={`w-full px-2.5 py-2 rounded-xl border text-left transition cursor-pointer space-y-0.5 active:scale-[0.99] ${
                           isDay
-                            ? 'border-slate-200/70 text-[#006A4E]'
-                            : 'border-teal-900/50 text-emerald-300'
+                            ? 'bg-[#f8fcfa] border-slate-200/85 hover:border-[#006A4E] hover:bg-emerald-50/40'
+                            : 'bg-[#0a2329] border-teal-900/60 hover:border-emerald-400/70 hover:bg-[#0d2c33]'
                         }`}
                       >
-                        <span className="truncate">{isBn ? sp.refBn : sp.refEn}</span>
-                        <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            </aside>
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span
+                            className={`text-[11.5px] font-extrabold leading-snug truncate ${
+                              isDay ? 'text-slate-900' : 'text-white'
+                            }`}
+                          >
+                            {isBn ? sp.nameBn : sp.nameEn}
+                          </span>
+                          <ChevronRight className="w-3 h-3 shrink-0 opacity-55" />
+                        </div>
+
+                        <div className="flex items-center justify-between gap-1.5 text-[9.5px] font-bold">
+                          <span className={`truncate ${getSideTierAccentClass(sp.evidenceTier, isDay)}`}>
+                            {getSideTierLabel(sp.evidenceTier, isBn, isAr)}
+                          </span>
+                          <span
+                            dir="rtl"
+                            className={`font-arabic text-[10.5px] font-bold truncate shrink-0 max-w-[95px] ${
+                              isDay ? 'text-[#006A4E]/85' : 'text-emerald-300/85'
+                            }`}
+                          >
+                            {sp.nameAr}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </aside>
+            )}
           </div>
         </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* MODE 1B: HUMANITY MAIN BRANCHES TREE (ADAM -> NUH 80 -> TODAY)      */}
+      {/* =================================================================== */}
+      {viewMode === 'humanity' && (
+        <HumanityBranchesTreeSection
+          themeMode={themeMode}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={soundEnabled}
+          searchQuery={searchQuery}
+        />
       )}
 
       {/* =================================================================== */}
@@ -1426,8 +1548,8 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                     }`}
                   >
                     {isBn
-                      ? 'খিজির, হিযকীল, শা‘ইয়া, ইরমিয়া, দানিয়াল, উযায়র, কালীবে, আসহাবুল কারইয়ার রাসূল ও নাম না জানা ১,২৪,০০০ নবী'
-                      : 'Al-Khidr, Hizqil, Sha‘ya, Irmiya, Daniyal, Uzayr, Kaleeb, Antioch Messengers & 124,000 Unnamed Prophets'}
+                      ? 'খিজির, উযায়র, যুল-কারনাইন, তালূত, লুকমান, হিযকীল, ইরমিয়া, শা‘ইয়া, দানিয়াল, কালীবে ও ১,২৪,০০০ নবী'
+                      : 'Al-Khidr, Uzayr, Dhul-Qarnayn, Talut, Luqman, Hizqil, Irmiya, Sha‘ya, Daniyal, Kaleeb & 124,000 Prophets'}
                   </p>
                 </div>
 
