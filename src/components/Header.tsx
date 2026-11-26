@@ -37,8 +37,8 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 transition-all duration-300">
       {/* Compact Header Bar: User Profile Avatar + Salam & Name + Live Date */}
-      <div className="bg-white/95 backdrop-blur-md border-b border-[var(--app-border,#e2e8f0)] px-4 py-2 text-slate-700 shadow-xs transition-colors duration-300">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 text-xs">
+      <div className="bg-white/95 backdrop-blur-md border-b border-[var(--app-border,#e2e8f0)] px-3 sm:px-4 py-2 text-slate-700 shadow-xs transition-colors duration-300">
+        <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-2 text-xs">
           {/* Left User Profile Picture + Salam Greeting & User Name */}
           <div className="flex items-center gap-2.5 min-w-0">
             <button

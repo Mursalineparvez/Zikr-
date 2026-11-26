@@ -376,7 +376,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
   ];
 
   return (
-    <div className="space-y-5 lg:w-[min(calc(100vw-40px),1420px)] lg:relative lg:left-1/2 lg:-translate-x-1/2">
+    <div className="space-y-3 w-full">
       {/* Unboxed Scholarly Overview Line */}
       <div
         className={`flex flex-wrap items-center justify-between gap-2 px-1 text-xs font-semibold tabular-nums ${
@@ -515,7 +515,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             : 'radial-gradient(rgba(52, 211, 153, 0.10) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
         }}
-        className={`rounded-3xl border overflow-auto max-h-[80vh] min-h-[500px] sm:min-h-[580px] relative shadow-sm ${
+        className={`rounded-2xl border overflow-auto max-h-[80vh] min-h-[500px] sm:min-h-[580px] relative shadow-sm ${
           isDay ? 'bg-[#f6fbf8] border-emerald-200/90' : 'bg-[#041318] border-teal-900/70'
         }`}
       >
@@ -714,12 +714,12 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
 
       {/* SECTION 2: AR-RAHEEQ AL-MAKHTUM DETAILED LINEAGE & HISTORICAL CHAPTERS */}
       <section
-        className={`rounded-3xl border overflow-hidden ${
+        className={`rounded-2xl border overflow-hidden ${
           isDay ? 'bg-white border-amber-300/80' : 'bg-[#082026] border-amber-700/45'
         }`}
       >
         <div
-          className={`px-4 sm:px-5 py-4 border-b space-y-3 ${
+          className={`px-3 sm:px-4 py-2.5 sm:py-3 border-b space-y-2.5 ${
             isDay
               ? 'bg-gradient-to-r from-[#fffaf0] to-[#f4faf7] border-amber-200/80'
               : 'bg-gradient-to-r from-[#1a180d] to-[#071a20] border-amber-900/45'
@@ -797,11 +797,11 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
 
         {/* Dual Interactive Genealogy Strip: Qahtani vs Adnani (Ar-Raheeq) */}
         <div
-          className={`p-4 sm:p-5 border-b space-y-4 ${
+          className={`p-2 sm:p-2.5 border-b space-y-2.5 ${
             isDay ? 'bg-[#fcfdfc] border-slate-200/80' : 'bg-[#06181d] border-teal-900/55'
           }`}
         >
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5">
             {AR_RAHEEQ_GENEALOGY_TRACKS.map((track) => {
               const selectedIdx = activeTrackStep[track.id] ?? track.steps.length - 1;
               const currentStep = track.steps[selectedIdx] || track.steps[track.steps.length - 1];
@@ -810,7 +810,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
               return (
                 <div
                   key={track.id}
-                  className={`rounded-2xl border p-3.5 sm:p-4 space-y-3 ${
+                  className={`rounded-xl border p-2.5 sm:p-3 space-y-2.5 ${
                     isDay
                       ? isQahtan
                         ? 'bg-amber-50/45 border-amber-200/80'
@@ -925,10 +925,10 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
         </div>
 
         {/* Ar-Raheeq Chapter Cards */}
-        <div className="p-4 sm:p-5 space-y-4">
+        <div className="p-2 sm:p-2.5 space-y-2.5">
           {filteredRaheeqSections.length === 0 ? (
             <div
-              className={`p-6 text-center text-sm font-bold ${
+              className={`p-4 text-center text-sm font-bold ${
                 isDay ? 'text-slate-500' : 'text-slate-400'
               }`}
             >
@@ -938,7 +938,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             filteredRaheeqSections.map((sec) => (
               <article
                 key={sec.id}
-                className={`rounded-2xl border p-4 sm:p-5 space-y-3.5 ${
+                className={`rounded-xl border p-2.5 sm:p-3 space-y-2.5 ${
                   isDay
                     ? 'bg-[#f9fcfa] border-slate-200/90'
                     : 'bg-[#0a2329] border-teal-900/60'
@@ -975,9 +975,9 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
                   {isBn ? sec.summaryBn : sec.summaryEn}
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                   <div
-                    className={`rounded-xl border p-3 space-y-1 ${
+                    className={`rounded-lg border p-2.5 space-y-1 ${
                       isDay
                         ? 'bg-white border-emerald-200/75 text-slate-700'
                         : 'bg-[#071b20] border-teal-900/55 text-slate-200'
@@ -990,7 +990,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
                   </div>
 
                   <div
-                    className={`rounded-xl border p-3 space-y-1 ${
+                    className={`rounded-lg border p-2.5 space-y-1 ${
                       isDay
                         ? 'bg-amber-50/55 border-amber-200/80 text-slate-800'
                         : 'bg-amber-950/20 border-amber-800/40 text-amber-100'
@@ -1004,11 +1004,11 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
                 </div>
 
                 {/* Sub-tribes / Historical Pillars Matrix */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-0.5">
                   {sec.subBranches.map((sub, idx) => (
                     <div
                       key={idx}
-                      className={`rounded-xl border p-3 space-y-1.5 flex flex-col justify-between ${
+                      className={`rounded-lg border p-2.5 space-y-1.5 flex flex-col justify-between ${
                         isDay
                           ? 'bg-white border-slate-200/85'
                           : 'bg-[#06181d] border-teal-900/55'
@@ -1083,12 +1083,12 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
 
       {/* SECTION 3: PERSON-TO-NATION & WHERE THEY LIVE TODAY DIRECTORY */}
       <div
-        className={`rounded-3xl border overflow-hidden ${
+        className={`rounded-2xl border overflow-hidden ${
           isDay ? 'bg-white border-emerald-200/85' : 'bg-[#082026] border-teal-900/65'
         }`}
       >
         <div
-          className={`px-4 sm:px-5 py-3.5 border-b space-y-3 ${
+          className={`px-3 sm:px-4 py-2.5 sm:py-3 border-b space-y-2.5 ${
             isDay
               ? 'bg-[#f4faf7] border-emerald-200/70'
               : 'bg-[#071a20] border-teal-900/50'
@@ -1278,13 +1278,13 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             </table>
           </div>
         ) : (
-          <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <div className="p-2 sm:p-2.5 grid grid-cols-1 md:grid-cols-2 gap-2">
             {filteredPersonToNations.map((entry) => {
               const rootMeta = getRootLineAccent(entry.rootLine, isDay);
               return (
                 <article
                   key={entry.id}
-                  className={`rounded-2xl border p-4 space-y-2.5 flex flex-col justify-between ${
+                  className={`rounded-xl border p-2.5 sm:p-3 space-y-2 flex flex-col justify-between ${
                     isDay
                       ? 'bg-[#f8fcfa] border-slate-200/85'
                       : 'bg-[#0a2329] border-teal-900/60'
@@ -1384,12 +1384,12 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
 
       {/* SECTION 3: DETAILED ERA-BY-ERA HUMAN LINEAGE LIST */}
       <div
-        className={`rounded-3xl border overflow-hidden ${
+        className={`rounded-2xl border overflow-hidden ${
           isDay ? 'bg-white border-emerald-200/85' : 'bg-[#082026] border-teal-900/65'
         }`}
       >
         <div
-          className={`px-4 sm:px-5 py-3.5 border-b flex items-center justify-between gap-2 ${
+          className={`px-3 sm:px-4 py-2.5 sm:py-3 border-b flex items-center justify-between gap-2 ${
             isDay
               ? 'bg-[#f4faf7] border-emerald-200/70'
               : 'bg-[#071a20] border-teal-900/50'
@@ -1432,7 +1432,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             {isBn ? 'এই ফিল্টারে কোনো যুগ পাওয়া যায়নি।' : 'No eras match the current filter.'}
           </div>
         ) : (
-          <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          <div className="p-2 sm:p-2.5 grid grid-cols-1 md:grid-cols-2 gap-2">
             {filteredEras.map((era) => {
               const st = getEraStyles(era.eraGroup, isDay);
               const branches = isBn ? era.branchesBn : era.branchesEn;
@@ -1440,7 +1440,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
               return (
                 <article
                   key={era.id}
-                  className={`rounded-2xl border p-4 space-y-2.5 flex flex-col justify-between ${
+                  className={`rounded-xl border p-2.5 sm:p-3 space-y-2 flex flex-col justify-between ${
                     isDay
                       ? 'bg-[#f8fcfa] border-slate-200/85'
                       : 'bg-[#0a2329] border-teal-900/60'
@@ -1548,12 +1548,12 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
 
       {/* SECTION 4: CLASSICAL BOOKS & SCHOLARLY SOURCES BIBLIOGRAPHY */}
       <div
-        className={`rounded-3xl border overflow-hidden ${
+        className={`rounded-2xl border overflow-hidden ${
           isDay ? 'bg-white border-emerald-200/85' : 'bg-[#082026] border-teal-900/65'
         }`}
       >
         <div
-          className={`px-4 sm:px-5 py-3.5 border-b flex items-center justify-between gap-2 ${
+          className={`px-3 sm:px-4 py-2.5 sm:py-3 border-b flex items-center justify-between gap-2 ${
             isDay
               ? 'bg-[#f4faf7] border-emerald-200/70'
               : 'bg-[#071a20] border-teal-900/50'
@@ -1589,11 +1589,11 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
           </span>
         </div>
 
-        <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="p-2 sm:p-2.5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {CLASSICAL_SOURCE_BOOKS.map((book) => (
             <div
               key={book.id}
-              className={`rounded-2xl border p-3.5 space-y-1.5 flex flex-col justify-between ${
+              className={`rounded-xl border p-2.5 sm:p-3 space-y-1.5 flex flex-col justify-between ${
                 isDay
                   ? 'bg-[#f8fcfa] border-slate-200/85'
                   : 'bg-[#0a2329] border-teal-900/60'
@@ -1645,19 +1645,19 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
       {/* Node Inspector Modal */}
       {selectedNode && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/55 backdrop-blur-xs animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-3 bg-black/55 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={() => setSelectedNode(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className={`w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl border shadow-2xl overflow-hidden max-h-[88vh] flex flex-col ${
+            className={`w-full sm:max-w-2xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
               isDay
                 ? 'bg-white border-emerald-200 text-slate-900'
                 : 'bg-[#082026] border-teal-800/80 text-white'
             }`}
           >
             <div
-              className={`px-5 py-4 border-b flex items-start justify-between gap-3 ${
+              className={`px-3.5 sm:px-4 py-2.5 sm:py-3 border-b flex items-start justify-between gap-2.5 ${
                 isDay
                   ? 'bg-[#f4faf7] border-emerald-200/80'
                   : 'bg-[#071a20] border-teal-900/60'
@@ -1671,16 +1671,18 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
                 >
                   {isBn ? selectedNode.stepBadgeBn : selectedNode.stepBadgeEn}
                 </div>
-                <h3 className="text-lg font-black leading-tight">
-                  {isBn ? selectedNode.titleBn : selectedNode.titleEn}
-                </h3>
-                <div
-                  dir="rtl"
-                  className={`font-arabic text-base font-bold ${
-                    isDay ? 'text-[#006A4E]' : 'text-amber-300'
-                  }`}
-                >
-                  {selectedNode.titleAr}
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-black leading-tight">
+                    {isBn ? selectedNode.titleBn : selectedNode.titleEn}
+                  </h3>
+                  <span
+                    dir="rtl"
+                    className={`font-arabic text-sm sm:text-base font-bold ${
+                      isDay ? 'text-[#006A4E]' : 'text-amber-300'
+                    }`}
+                  >
+                    {selectedNode.titleAr}
+                  </span>
                 </div>
               </div>
 
@@ -1698,9 +1700,9 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
               </button>
             </div>
 
-            <div className="p-5 space-y-3 overflow-y-auto">
+            <div className="p-3 sm:p-4 space-y-2.5 overflow-y-auto">
               <div
-                className={`rounded-2xl border p-3.5 space-y-1 ${
+                className={`rounded-xl border p-2.5 space-y-1 ${
                   isDay
                     ? 'bg-[#f8fcfa] border-emerald-200/75 text-slate-800'
                     : 'bg-[#06181d] border-teal-900/60 text-slate-200'
@@ -1719,7 +1721,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
               </div>
 
               <div
-                className={`rounded-2xl border p-3.5 space-y-1 ${
+                className={`rounded-xl border p-2.5 space-y-1 ${
                   isDay
                     ? 'bg-amber-50/55 border-amber-200/75 text-slate-800'
                     : 'bg-amber-950/20 border-amber-800/40 text-amber-100'
@@ -1739,7 +1741,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
               </div>
 
               <div
-                className={`rounded-2xl border p-3.5 space-y-1 ${
+                className={`rounded-xl border p-2.5 space-y-1 ${
                   isDay
                     ? 'bg-slate-50 border-slate-200/80 text-slate-800'
                     : 'bg-[#071d23] border-teal-900/50 text-slate-200'
@@ -1774,7 +1776,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             </div>
 
             <div
-              className={`px-5 py-3.5 border-t flex items-center justify-end ${
+              className={`px-3.5 sm:px-4 py-2.5 border-t flex items-center justify-end ${
                 isDay
                   ? 'bg-slate-50 border-slate-200/80'
                   : 'bg-[#071a20] border-teal-900/60'
@@ -1783,7 +1785,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
               <button
                 type="button"
                 onClick={() => setSelectedNode(null)}
-                className="min-h-[42px] px-5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs sm:text-sm font-black transition cursor-pointer active:scale-95"
+                className="min-h-[40px] px-4 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs sm:text-sm font-black transition cursor-pointer active:scale-95"
               >
                 {isBn ? 'বন্ধ করুন' : 'Close'}
               </button>

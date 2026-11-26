@@ -767,7 +767,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
       {/* MODE 1: INTERACTIVE VISUAL TREE CHART                               */}
       {/* =================================================================== */}
       {viewMode === 'tree' && (
-        <div className="space-y-2.5 lg:w-[min(calc(100vw-40px),1420px)] lg:relative lg:left-1/2 lg:-translate-x-1/2">
+        <div className="space-y-2 w-full">
           {/* Sleek Toolbar: Legend + Zoom + Side Panel Toggle */}
           <div
             className={`rounded-2xl border px-3 py-2 flex flex-wrap items-center justify-between gap-2 ${
@@ -1398,10 +1398,10 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
       {/* MODE 2: HIERARCHICAL LINEAGE BRANCHES (MOBILE-FRIENDLY)              */}
       {/* =================================================================== */}
       {viewMode === 'branches' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {branchGroups.length === 0 ? (
             <div
-              className={`p-8 rounded-2xl border text-center text-sm font-bold ${
+              className={`p-5 rounded-2xl border text-center text-sm font-bold ${
                 isDay
                   ? 'bg-white border-slate-200 text-slate-600'
                   : 'bg-[#082026] border-teal-900/60 text-slate-300'
@@ -1420,7 +1420,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                 }`}
               >
                 <div
-                  className={`px-4 py-3.5 border-b ${
+                  className={`px-3 sm:px-4 py-2.5 border-b ${
                     isDay
                       ? 'bg-[#f4faf7] border-emerald-200/70'
                       : 'bg-[#071a20] border-teal-900/50'
@@ -1442,7 +1442,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                   </p>
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                <div className="p-2 sm:p-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {group.nodes.map((node) => {
                     const st = getLineageStyles(
                       node.lineage,
@@ -1527,7 +1527,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                 }`}
               >
                 <div
-                  className={`px-4 py-3.5 border-b ${
+                  className={`px-3 sm:px-4 py-2.5 border-b ${
                     isDay
                       ? 'bg-[#f4faf7] border-emerald-200/70'
                       : 'bg-[#071a20] border-teal-900/50'
@@ -1553,7 +1553,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                   </p>
                 </div>
 
-                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                <div className="p-2 sm:p-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {branchSideProphets.map((sp) => (
                     <button
                       key={sp.id}
@@ -1839,11 +1839,11 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
               </div>
             </div>
 
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-2 sm:p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
               {filteredOtherFigures.map((fig) => (
                 <div
                   key={fig.id}
-                  className={`p-3.5 rounded-xl border space-y-1.5 ${
+                  className={`p-2.5 sm:p-3 rounded-xl border space-y-1.5 ${
                     isDay
                       ? 'bg-[#f8fcfa] border-slate-200/80'
                       : 'bg-[#0a2329] border-teal-900/60'
@@ -1892,12 +1892,12 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
       {/* =================================================================== */}
       {selectedNode && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/55 backdrop-blur-xs animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-3 bg-black/55 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={() => setSelectedNodeId(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className={`w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl border shadow-2xl overflow-hidden max-h-[88vh] flex flex-col ${
+            className={`w-full sm:max-w-2xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
               isDay
                 ? 'bg-white border-emerald-200 text-slate-900'
                 : 'bg-[#082026] border-teal-800/80 text-white'
@@ -1905,7 +1905,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
           >
             {/* Header */}
             <div
-              className={`px-5 py-4 border-b flex items-start justify-between gap-3 ${
+              className={`px-3.5 sm:px-4 py-2.5 sm:py-3 border-b flex items-start justify-between gap-2.5 ${
                 isDay
                   ? 'bg-[#f4faf7] border-emerald-200/80'
                   : 'bg-[#071a20] border-teal-900/60'
@@ -1968,7 +1968,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
             </div>
 
             {/* Body */}
-            <div className="p-5 space-y-4 overflow-y-auto">
+            <div className="p-3 sm:p-4 space-y-2.5 overflow-y-auto">
               <div
                 className={`text-xs font-bold flex flex-wrap gap-x-4 gap-y-1 ${
                   isDay ? 'text-slate-600' : 'text-slate-300'
@@ -2100,7 +2100,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
 
             {/* Footer CTA */}
             <div
-              className={`px-5 py-3.5 border-t flex items-center justify-end gap-2 ${
+              className={`px-3.5 sm:px-4 py-2.5 border-t flex items-center justify-end gap-2 ${
                 isDay
                   ? 'bg-slate-50 border-slate-200/80'
                   : 'bg-[#071a20] border-teal-900/60'
@@ -2143,12 +2143,12 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
       {/* =================================================================== */}
       {selectedSideProphet && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/55 backdrop-blur-xs animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-3 bg-black/55 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={() => setSelectedSideProphet(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className={`w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl border shadow-2xl overflow-hidden max-h-[88vh] flex flex-col ${
+            className={`w-full sm:max-w-2xl rounded-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
               isDay
                 ? 'bg-white border-emerald-200 text-slate-900'
                 : 'bg-[#082026] border-teal-800/80 text-white'
@@ -2156,7 +2156,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
           >
             {/* Header */}
             <div
-              className={`px-5 py-4 border-b flex items-start justify-between gap-3 ${
+              className={`px-3.5 sm:px-4 py-2.5 sm:py-3 border-b flex items-start justify-between gap-2.5 ${
                 isDay
                   ? 'bg-[#f4faf7] border-emerald-200/80'
                   : 'bg-[#071a20] border-teal-900/60'
@@ -2200,7 +2200,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
                 type="button"
                 onClick={() => setSelectedSideProphet(null)}
                 aria-label="Close"
-                className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer ${
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 cursor-pointer ${
                   isDay
                     ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-900'
                     : 'bg-[#0c262d] border-teal-800/70 text-slate-300 hover:text-white'
@@ -2211,9 +2211,9 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
             </div>
 
             {/* Body */}
-            <div className="p-5 space-y-4 overflow-y-auto">
+            <div className="p-3 sm:p-4 space-y-2.5 overflow-y-auto">
               <div
-                className={`rounded-2xl border p-3.5 space-y-1 ${
+                className={`rounded-xl border p-2.5 space-y-1 ${
                   isDay
                     ? 'bg-amber-50/60 border-amber-200/80 text-slate-800'
                     : 'bg-amber-950/20 border-amber-700/40 text-amber-100'
@@ -2257,7 +2257,7 @@ export const ProphetsFamilyTreeView: React.FC<ProphetsFamilyTreeViewProps> = ({
 
             {/* Footer */}
             <div
-              className={`px-5 py-3.5 border-t flex items-center justify-end gap-2 ${
+              className={`px-3.5 sm:px-4 py-2.5 border-t flex items-center justify-end gap-2 ${
                 isDay
                   ? 'bg-slate-50 border-slate-200/80'
                   : 'bg-[#071a20] border-teal-900/60'

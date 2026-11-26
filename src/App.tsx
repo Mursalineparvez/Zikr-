@@ -2151,7 +2151,7 @@ export default function App() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-28 sm:pb-24 space-y-6">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-2 sm:px-3.5 py-2.5 sm:py-3.5 pb-24 sm:pb-20 space-y-4">
 
         {/* Offline Status Reassurance Banner */}
         {!isOnline && (

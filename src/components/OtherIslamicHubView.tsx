@@ -487,7 +487,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           </div>
 
           {/* Feature Cards Grid matching user uploaded reference image */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3">
             {hubItems.map((item) => {
               const actionText =
                 item.id === 'nobi_24_hours'
@@ -579,7 +579,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                       handleSelectSub(item.id);
                     }
                   }}
-                  className={`p-4 sm:p-5 rounded-[26px] border shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col items-center justify-between text-center min-h-[175px] cursor-pointer group ${
+                  className={`p-3 sm:p-3.5 rounded-2xl border shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col items-center justify-between text-center min-h-[155px] cursor-pointer group ${
                     isDay
                       ? 'bg-white border-slate-200/90 hover:border-emerald-400'
                       : 'bg-[#0a2026] border-[#143b44] hover:border-emerald-500/50'

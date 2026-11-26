@@ -812,7 +812,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
               return (
                 <div
                   key={row.label}
-                  className={`p-4 sm:p-5 flex items-start gap-3 ${
+                  className={`p-3 sm:p-3.5 flex items-start gap-2.5 ${
                     idx % 2 === 1
                       ? isDay
                         ? 'sm:border-l sm:border-slate-200/80'
@@ -853,11 +853,11 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
           </div>
 
           {/* Reading Body */}
-          <div className="p-5 sm:p-8 space-y-8">
+          <div className="p-3 sm:p-5 space-y-5">
             {/* Quranic Coverage Note */}
             {selectedProphet.quranStats && (
               <div
-                className={`rounded-2xl border p-4 sm:p-5 flex items-start gap-3 ${
+                className={`rounded-2xl border p-3 sm:p-3.5 flex items-start gap-2.5 ${
                   isDay
                     ? 'bg-emerald-50/50 border-emerald-200/80'
                     : 'bg-[#0b252b] border-emerald-500/25'
@@ -919,7 +919,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
 
               {dawahThemes && dawahThemes.length > 0 && (
                 <div
-                  className={`mt-4 rounded-2xl border p-4 sm:p-5 space-y-2.5 ${
+                  className={`mt-3 rounded-2xl border p-3 sm:p-4 space-y-2 ${
                     isDay
                       ? 'bg-[#f8fcfa] border-emerald-200/70'
                       : 'bg-[#0a2329] border-teal-900/60'
@@ -975,11 +975,11 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                 </h2>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {selectedProphet.timelineEvents.map((ev, idx) => (
                   <div
                     key={idx}
-                    className={`p-4 rounded-2xl border flex items-start gap-3.5 ${
+                    className={`p-3 sm:p-3.5 rounded-xl border flex items-start gap-3 ${
                       isDay
                         ? 'bg-[#f8fcfa] border-emerald-200/70'
                         : 'bg-[#0b262d] border-teal-900/60'
@@ -1065,7 +1065,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   return (
                     <div
                       key={duaKey}
-                      className={`rounded-2xl border p-5 sm:p-6 space-y-4 ${
+                      className={`rounded-2xl border p-3.5 sm:p-4 space-y-3 ${
                         isDay
                           ? 'bg-[#f4faf7] border-emerald-300/70'
                           : 'bg-[#0b272e] border-emerald-500/30'
@@ -1155,7 +1155,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             {selectedProphet.clarifications && selectedProphet.clarifications.length > 0 && (
               <section
                 id="sec-tahqiq"
-                className={`scroll-mt-32 rounded-2xl border p-5 sm:p-6 space-y-4 ${
+                className={`scroll-mt-32 rounded-2xl border p-3.5 sm:p-4 space-y-3 ${
                   isDay
                     ? 'bg-amber-50/55 border-amber-300/70'
                     : 'bg-[#12262b] border-amber-400/25'
@@ -1189,11 +1189,11 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                   </div>
                 </div>
 
-                <div className="space-y-3.5">
+                <div className="space-y-2.5">
                   {selectedProphet.clarifications.map((item, cIdx) => (
                     <div
                       key={cIdx}
-                      className={`p-4 rounded-xl border space-y-1.5 ${
+                      className={`p-3 rounded-xl border space-y-1.5 ${
                         isDay
                           ? 'bg-white/90 border-amber-200/80'
                           : 'bg-[#091c22] border-amber-500/20'
@@ -1229,9 +1229,9 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
             )}
 
             {/* 6. Trials & Patience + Lessons */}
-            <div id="sec-lessons" className="scroll-mt-32 grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+            <div id="sec-lessons" className="scroll-mt-32 grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
               <section
-                className={`p-5 rounded-2xl border space-y-2.5 ${
+                className={`p-3.5 rounded-2xl border space-y-2 ${
                   isDay
                     ? 'bg-slate-50/80 border-slate-200/90'
                     : 'bg-[#0c2329] border-teal-800/50'
@@ -1261,7 +1261,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
               </section>
 
               <section
-                className={`p-5 rounded-2xl border space-y-2.5 ${
+                className={`p-3.5 rounded-2xl border space-y-2 ${
                   isDay
                     ? 'bg-emerald-50/45 border-emerald-200/80'
                     : 'bg-[#0b252b] border-emerald-500/25'
@@ -1568,7 +1568,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
         </div>
 
         {/* Two Sub-Pages Hub Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Sub-Page 1 Card: 25 Prophets & Messengers Biographies */}
           <div
             role="button"
@@ -1580,7 +1580,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                 openSubPage('biographies');
               }
             }}
-            className={`group rounded-3xl border p-5 sm:p-6 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
+            className={`group rounded-2xl border p-3.5 sm:p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 ${
               isDay
                 ? 'bg-white border-emerald-200/90 hover:border-[#006A4E] hover:shadow-md'
                 : 'bg-[#082026] border-teal-900/70 hover:border-emerald-400/60 hover:bg-[#0a262e]'
@@ -1676,7 +1676,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                 openSubPage('tree');
               }
             }}
-            className={`group rounded-3xl border p-5 sm:p-6 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 ${
+            className={`group rounded-2xl border p-3.5 sm:p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 ${
               isDay
                 ? 'bg-white border-amber-300/80 hover:border-amber-600 hover:shadow-md'
                 : 'bg-[#082026] border-amber-500/35 hover:border-amber-400 hover:bg-[#0c272f]'
@@ -2230,7 +2230,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
           {filteredProphets.map((p) => {
             const isRead = readIds.includes(p.id);
             const isBookmarked = bookmarkedIds.includes(p.id);
@@ -2271,7 +2271,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
                     openProphetDetail(p.id);
                   }
                 }}
-                className={`group rounded-2xl border p-4 sm:p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 ${
+                className={`group rounded-2xl border p-3 sm:p-3.5 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-2.5 ${
                   isDay
                     ? 'bg-white border-slate-200/90 hover:border-[#006A4E]/60 hover:shadow-md'
                     : 'bg-[#082026] border-teal-900/60 hover:border-emerald-500/50 hover:bg-[#0b272f]'
@@ -2409,7 +2409,7 @@ export const Prophets25View: React.FC<Prophets25ViewProps> = ({
 
       {/* Quranic Note Footer */}
       <div
-        className={`rounded-2xl border p-4 sm:p-5 text-xs sm:text-sm leading-relaxed space-y-1.5 ${
+        className={`rounded-2xl border p-3 sm:p-4 text-xs sm:text-sm leading-relaxed space-y-1.5 ${
           isDay
             ? 'bg-white border-emerald-200/80 text-slate-600'
             : 'bg-[#082026] border-teal-900/60 text-slate-300'
