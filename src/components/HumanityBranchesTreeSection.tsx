@@ -6,16 +6,19 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { ThemeMode, ZikrLanguage } from '../types';
 import {
+  BookMarked,
   ChevronRight,
   Compass,
   GitBranch,
   Globe2,
   Layers,
+  LayoutGrid,
   MapPin,
   Maximize2,
   Minimize2,
   RotateCcw,
   ScrollText,
+  Table2,
   Users,
   X,
   ZoomIn,
@@ -23,6 +26,7 @@ import {
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import {
+  CLASSICAL_SOURCE_BOOKS,
   HUMANITY_CANVAS_HEIGHT,
   HUMANITY_CANVAS_WIDTH,
   HUMANITY_ERAS_LIST,
@@ -43,6 +47,7 @@ interface HumanityBranchesTreeSectionProps {
 }
 
 type EraFilterKey = 'all' | HumanityEraGroup;
+type DirectoryDisplayMode = 'cards' | 'table';
 
 const toBnDigits = (val: number | string): string =>
   String(val).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
@@ -198,6 +203,7 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
 
   const [eraFilter, setEraFilter] = useState<EraFilterKey>('all');
   const [rootLineFilter, setRootLineFilter] = useState<RootLineFilter>('all');
+  const [directoryMode, setDirectoryMode] = useState<DirectoryDisplayMode>('cards');
   const [selectedNode, setSelectedNode] = useState<HumanityTreeNode | null>(null);
   const [zoom, setZoom] = useState<number>(() => {
     if (typeof window !== 'undefined') {
@@ -257,6 +263,8 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
         entry.nationsFormedEn,
         entry.whereTodayBn,
         entry.whereTodayEn,
+        entry.sourceNoteBn,
+        entry.sourceNoteEn,
       ]
         .join(' ')
         .toLowerCase()
@@ -311,8 +319,9 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
     { key: 'modern_world', bn: 'আজকের বিশ্ব (কোথায় কোন জাতি)', en: 'Today’s World Map' },
   ];
 
+  const totalCountBn = toBnDigits(HUMANITY_PERSON_TO_NATION_LIST.length);
   const rootTabs: Array<{ key: RootLineFilter; bn: string; en: string }> = [
-    { key: 'all', bn: 'সকল শাখা (১৫)', en: 'All Roots (15)' },
+    { key: 'all', bn: `সকল শাখা (${totalCountBn})`, en: `All Roots (${HUMANITY_PERSON_TO_NATION_LIST.length})` },
     { key: 'sam', bn: 'সাম ইবনে নূহ (আরব/ইসরাঈল/ইরাক)', en: 'Sam (Arab/Israelite)' },
     { key: 'ham', bn: 'হাম ইবনে নূহ (মিসর/আফ্রিকা)', en: 'Ham (Egypt/Africa)' },
     { key: 'yafith', bn: 'ইয়াফিস ইবনে নূহ (ইউরোপ/তুর্কি/এশিয়া)', en: 'Yafith (Eurasia/Asia)' },
@@ -320,6 +329,40 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
 
   return (
     <div className="space-y-5 lg:w-[min(calc(100vw-40px),1420px)] lg:relative lg:left-1/2 lg:-translate-x-1/2">
+      {/* Unboxed Scholarly Overview Line */}
+      <div
+        className={`flex flex-wrap items-center justify-between gap-2 px-1 text-xs font-semibold tabular-nums ${
+          isDay ? 'text-slate-600' : 'text-slate-300'
+        }`}
+      >
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className={isDay ? 'text-[#006A4E] font-extrabold' : 'text-emerald-300 font-extrabold'}>
+            {isBn ? '১ আদি পিতা-মাতা (আদম-হাওয়া আ.)' : '1 Original Pair (Adam & Hawwa)'}
+          </span>
+          <span aria-hidden="true" className="opacity-40">
+            ·
+          </span>
+          <span>{isBn ? '~৮০ কিস্তির মুমিন (সুক সামানীন)' : '~80 Ark Survivors (Thamanin)'}</span>
+          <span aria-hidden="true" className="opacity-40">
+            ·
+          </span>
+          <span>{isBn ? '৩ মূল বিশ্বশাখা (সাম · হাম · ইয়াফিস)' : '3 Global Roots (Sam · Ham · Yafith)'}</span>
+          <span aria-hidden="true" className="opacity-40">
+            ·
+          </span>
+          <span>
+            {isBn
+              ? `${totalCountBn} ব্যক্তি-জাতি শাখা ও ১৯৫+ দেশ`
+              : `${HUMANITY_PERSON_TO_NATION_LIST.length} Ancestral Lines & 195+ Nations`}
+          </span>
+        </div>
+        <span className={`text-[11px] font-bold ${isDay ? 'text-amber-700' : 'text-amber-300'}`}>
+          {isBn
+            ? 'সূত্র: তাফসীরে ইবনে কাসীর · তারীখে তাবারী · ইবনে খালদুন · আল-মাস‘ঊদী'
+            : 'Sources: Ibn Kathir · Al-Tabari · Ibn Khaldun · Al-Mas‘udi'}
+        </span>
+      </div>
+
       {/* Era Filter + Zoom Toolbar */}
       <div
         className={`rounded-2xl border px-3 py-2.5 flex flex-wrap items-center justify-between gap-2.5 ${
@@ -486,8 +529,8 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             >
               <div className={`text-xs font-black ${isDay ? 'text-amber-800' : 'text-amber-300'}`}>
                 {isBn
-                  ? 'নূহের কিস্তি (~৮০ জন) ও ৩ পুত্র থেকে পৃথিবী বিভক্ত হওয়ার মূলনীতি'
-                  : 'The Ark (~80 Believers) & How Nations Divided From Nuh’s 3 Sons'}
+                  ? 'নূহের কিস্তি (~৮০ জন · সুকে সামানীন) ও ১৬ উপশাখার বিভাজন'
+                  : 'The Ark (~80 Believers · Thamanin) & 16 Sub-Branches of Mankind'}
               </div>
               <div
                 className={`text-[10.5px] font-medium mt-1 leading-snug ${
@@ -495,8 +538,8 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
                 }`}
               >
                 {isBn
-                  ? 'তাফসীর: কিস্তিতে ~৮০ মুমিন ছিলেন; সূরা ৩৭:৭৭ অনুযায়ী নূহের ৩ পুত্র (সাম·হাম·ইয়াফিস) থেকে ১৬টি মূল উপশাখায় পুরো পৃথিবীর জাতিগোষ্ঠী ভাগ হয়ে যায়।'
-                  : 'Around 80 believers survived the Flood; Quran 37:77 notes all lasting nations branched out from Sam, Ham & Yafith.'}
+                  ? 'তারীখে তাবারী ও ইবনে কাসীর: জুদী পাহাড়ে কিস্তির ~৮০ মুমিন "সামানীন" গ্রাম গড়েন; তবে সূরা ৩৭:৭৭ মতে সাম, হাম ও ইয়াফিসের বংশধর থেকেই পৃথিবী পূর্ণ হয়।'
+                  : 'Al-Tabari & Ibn Kathir note ~80 Ark survivors settled Qaryat al-Thamanin, while Quran 37:77 confirms humanity multiplied solely through Nuh’s 3 sons.'}
               </div>
             </div>
 
@@ -649,20 +692,66 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
                 </h2>
                 <p className={`text-[11px] font-medium ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                   {isBn
-                    ? 'হযরত নূহ (আ.)-এর তিন পুত্র (সাম, হাম, ইয়াফিস) থেকে ১৫টি মূল ব্যক্তি-ভিত্তিক জাতিশাখার সম্পূর্ণ তথ্য'
-                    : 'Detailed 15-branch breakdown from Sam, Ham & Yafith to modern countries worldwide'}
+                    ? 'তারীখে তাবারী, আল-বিদায়া ওয়ান নিহায়া, ইবনে খালদুন ও মুরূজুয যাহাব অবলম্বনে ১৮টি জাতিশাখার বিস্তারিত তথ্য'
+                    : '18 detailed branches compiled from Al-Tabari, Al-Bidayah, Ibn Khaldun & Al-Mas‘udi'}
                 </p>
               </div>
             </div>
-            <span
-              className={`text-xs font-black tabular-nums shrink-0 ${
-                isDay ? 'text-[#006A4E]' : 'text-emerald-300'
-              }`}
-            >
-              {isBn
-                ? `${toBnDigits(filteredPersonToNations.length)}টি জাতি-ধারা`
-                : `${filteredPersonToNations.length} Branches`}
-            </span>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <span
+                className={`text-xs font-black tabular-nums ${
+                  isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                }`}
+              >
+                {isBn
+                  ? `${toBnDigits(filteredPersonToNations.length)}টি জাতি-ধারা`
+                  : `${filteredPersonToNations.length} Branches`}
+              </span>
+
+              <div
+                className={`inline-flex p-0.5 rounded-lg border ${
+                  isDay
+                    ? 'bg-white border-slate-200'
+                    : 'bg-[#05151a] border-teal-900/60'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setDirectoryMode('cards');
+                  }}
+                  className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition ${
+                    directoryMode === 'cards'
+                      ? 'bg-[#006A4E] text-white'
+                      : isDay
+                      ? 'text-slate-600 hover:text-[#006A4E]'
+                      : 'text-slate-300 hover:text-emerald-300'
+                  }`}
+                >
+                  <LayoutGrid className="w-3 h-3" />
+                  <span>{isBn ? 'কার্ড' : 'Cards'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setDirectoryMode('table');
+                  }}
+                  className={`px-2 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 cursor-pointer transition ${
+                    directoryMode === 'table'
+                      ? 'bg-[#006A4E] text-white'
+                      : isDay
+                      ? 'text-slate-600 hover:text-[#006A4E]'
+                      : 'text-slate-300 hover:text-emerald-300'
+                  }`}
+                >
+                  <Table2 className="w-3 h-3" />
+                  <span>{isBn ? 'সারণি' : 'Table'}</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -698,6 +787,78 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             }`}
           >
             {isBn ? 'এই ফিল্টারে কোনো শাখা পাওয়া যায়নি।' : 'No branch entries match your search.'}
+          </div>
+        ) : directoryMode === 'table' ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr
+                  className={`border-b text-[11px] font-black uppercase tracking-wider ${
+                    isDay
+                      ? 'bg-slate-50 border-slate-200 text-slate-600'
+                      : 'bg-[#06181d] border-teal-900/60 text-emerald-300/80'
+                  }`}
+                >
+                  <th className="py-2.5 px-3.5">{isBn ? 'মূল ব্যক্তি / ধারা' : 'Ancestor Person'}</th>
+                  <th className="py-2.5 px-3.5">{isBn ? 'কীভাবে বিভক্ত হলো' : 'How Divided'}</th>
+                  <th className="py-2.5 px-3.5">{isBn ? 'সৃষ্ট জাতিসমূহ' : 'Nations Formed'}</th>
+                  <th className="py-2.5 px-3.5">{isBn ? 'এখন কোথায় বসবাস করছে' : 'Where Today'}</th>
+                  <th className="py-2.5 px-3.5">{isBn ? 'কিতাব ও সূত্র' : 'Source'}</th>
+                </tr>
+              </thead>
+              <tbody
+                className={`divide-y text-xs align-top ${
+                  isDay ? 'divide-slate-100 text-slate-800' : 'divide-teal-900/40 text-slate-200'
+                }`}
+              >
+                {filteredPersonToNations.map((entry) => {
+                  const rootMeta = getRootLineAccent(entry.rootLine, isDay);
+                  return (
+                    <tr
+                      key={entry.id}
+                      className={isDay ? 'hover:bg-emerald-50/45' : 'hover:bg-teal-950/35'}
+                    >
+                      <td className="py-3 px-3.5 min-w-[190px]">
+                        <div className={`text-[10px] font-black ${rootMeta.textClass}`}>
+                          {isBn ? rootMeta.labelBn : rootMeta.labelEn}
+                        </div>
+                        <div className="font-black text-xs mt-0.5">
+                          {isBn ? entry.ancestorPersonBn : entry.ancestorPersonEn}
+                        </div>
+                        <div
+                          dir="rtl"
+                          className={`font-arabic text-xs font-bold mt-0.5 ${
+                            isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                          }`}
+                        >
+                          {entry.ancestorAr}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3.5 min-w-[220px] leading-relaxed">
+                        {isBn ? entry.howDividedBn : entry.howDividedEn}
+                      </td>
+                      <td className="py-3 px-3.5 min-w-[190px] leading-relaxed font-semibold">
+                        {isBn ? entry.nationsFormedBn : entry.nationsFormedEn}
+                      </td>
+                      <td
+                        className={`py-3 px-3.5 min-w-[200px] leading-relaxed font-bold ${
+                          isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                        }`}
+                      >
+                        {isBn ? entry.whereTodayBn : entry.whereTodayEn}
+                      </td>
+                      <td
+                        className={`py-3 px-3.5 min-w-[140px] text-[11px] font-semibold ${
+                          isDay ? 'text-amber-700' : 'text-amber-300'
+                        }`}
+                      >
+                        {isBn ? entry.sourceNoteBn : entry.sourceNoteEn}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -966,6 +1127,102 @@ export const HumanityBranchesTreeSection: React.FC<HumanityBranchesTreeSectionPr
             })}
           </div>
         )}
+      </div>
+
+      {/* SECTION 4: CLASSICAL BOOKS & SCHOLARLY SOURCES BIBLIOGRAPHY */}
+      <div
+        className={`rounded-3xl border overflow-hidden ${
+          isDay ? 'bg-white border-emerald-200/85' : 'bg-[#082026] border-teal-900/65'
+        }`}
+      >
+        <div
+          className={`px-4 sm:px-5 py-3.5 border-b flex items-center justify-between gap-2 ${
+            isDay
+              ? 'bg-[#f4faf7] border-emerald-200/70'
+              : 'bg-[#071a20] border-teal-900/50'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <BookMarked className={`w-4 h-4 shrink-0 ${isDay ? 'text-[#006A4E]' : 'text-emerald-400'}`} />
+            <div>
+              <h2
+                className={`text-sm sm:text-base font-black ${
+                  isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                }`}
+              >
+                {isBn
+                  ? 'প্রামাণ্য কিতাব ও ঐতিহাসিক গ্রন্থপঞ্জি (Classical Books & Sources)'
+                  : 'Classical Islamic History & Tafsir Sources Consulted'}
+              </h2>
+              <p className={`text-[11px] font-medium ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                {isBn
+                  ? 'এই সম্পূর্ণ শাখা-ট্রি ও জাতি-তালিকা নিচের মূল কিতাবসমূহের তথ্যের ভিত্তিতে প্রস্তুত করা হয়েছে'
+                  : 'Foundational Tafsir, Hadith & Universal History books behind this genealogy'}
+              </p>
+            </div>
+          </div>
+          <span
+            className={`text-xs font-black tabular-nums shrink-0 ${
+              isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+            }`}
+          >
+            {isBn
+              ? `${toBnDigits(CLASSICAL_SOURCE_BOOKS.length)}টি প্রামাণ্য গ্রন্থ`
+              : `${CLASSICAL_SOURCE_BOOKS.length} Classical Works`}
+          </span>
+        </div>
+
+        <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {CLASSICAL_SOURCE_BOOKS.map((book) => (
+            <div
+              key={book.id}
+              className={`rounded-2xl border p-3.5 space-y-1.5 flex flex-col justify-between ${
+                isDay
+                  ? 'bg-[#f8fcfa] border-slate-200/85'
+                  : 'bg-[#0a2329] border-teal-900/60'
+              }`}
+            >
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-2 text-[10.5px] font-bold">
+                  <span className={isDay ? 'text-amber-700' : 'text-amber-300'}>
+                    {isBn ? book.eraBn : book.eraEn}
+                  </span>
+                </div>
+                <h3
+                  className={`text-xs sm:text-sm font-black leading-snug ${
+                    isDay ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {isBn ? book.titleBn : book.titleEn}
+                </h3>
+                <div
+                  dir="rtl"
+                  className={`font-arabic text-xs font-bold ${
+                    isDay ? 'text-[#006A4E]' : 'text-emerald-300'
+                  }`}
+                >
+                  {book.titleAr}
+                </div>
+                <div
+                  className={`text-[11px] font-bold ${
+                    isDay ? 'text-slate-600' : 'text-slate-300'
+                  }`}
+                >
+                  {isBn ? book.authorBn : book.authorEn}
+                </div>
+              </div>
+              <p
+                className={`text-[11.5px] leading-relaxed pt-1 border-t ${
+                  isDay
+                    ? 'border-slate-200/75 text-slate-600'
+                    : 'border-teal-900/50 text-slate-300'
+                }`}
+              >
+                {isBn ? book.contributionBn : book.contributionEn}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Node Inspector Modal */}
