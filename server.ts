@@ -4,6 +4,7 @@ import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
+import zlib from 'zlib';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { HADIS_LIBRARY_BOOKS, translateChapterNameBn } from './src/data/hadisCatalog';
 
@@ -944,11 +945,16 @@ app.delete('/api/admin/info-requests/:id', (req, res) => {
 
 // ============================================================================
 // 6. AL-HADIS COMPLETE 17-BOOK LIBRARY ROUTES (/api/hadis/*)
+//    Self-Hosted Local Archive FIRST (immune to external website deletion)
 // ============================================================================
 const FAWAZ_CDN_BASE = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1';
 const FAWAZ_RAW_BASE = 'https://raw.githubusercontent.com/fawazahmed0/hadith-api/1';
 const AHMED_CDN_BASE = 'https://cdn.jsdelivr.net/gh/AhmedBaset/hadith-json@main/db/by_book';
 const AHMED_RAW_BASE = 'https://raw.githubusercontent.com/AhmedBaset/hadith-json/main/db/by_book';
+
+const HADIS_ARCHIVE_DIR = path.join(process.cwd(), 'data', 'hadis-archive');
+const HADIS_FAWAZ_DIR = path.join(HADIS_ARCHIVE_DIR, 'fawaz');
+const HADIS_AHMED_DIR = path.join(HADIS_ARCHIVE_DIR, 'ahmedbaset');
 
 let fawazInfoCache: Record<string, any> | null = null;
 const hadisChapterCache = new Map<string, any>();
@@ -962,6 +968,18 @@ function setBoundedMap<K, V>(map: Map<K, V>, key: K, val: V, maxSize: number) {
   if (map.size > maxSize) {
     const oldestKey = map.keys().next().value;
     if (oldestKey !== undefined) map.delete(oldestKey);
+  }
+}
+
+function readLocalGzippedJson(filePath: string): any | null {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const raw = fs.readFileSync(filePath);
+    const jsonText = zlib.gunzipSync(raw).toString('utf8');
+    return JSON.parse(jsonText);
+  } catch (err) {
+    console.warn(`[HadisArchive] Failed reading local archive ${filePath}:`, err);
+    return null;
   }
 }
 
@@ -986,15 +1004,79 @@ async function fetchJsonWithMirror(primaryUrl: string, fallbackUrl: string, time
 
 async function getFawazInfo(): Promise<Record<string, any>> {
   if (fawazInfoCache) return fawazInfoCache;
+  const localInfo = readLocalGzippedJson(path.join(HADIS_FAWAZ_DIR, 'info.json.gz'));
+  if (localInfo) {
+    fawazInfoCache = localInfo;
+    return localInfo;
+  }
   const info = await fetchJsonWithMirror(`${FAWAZ_CDN_BASE}/info.json`, `${FAWAZ_RAW_BASE}/info.json`, 15000);
   fawazInfoCache = info;
   return info;
 }
 
+async function getFawazFullEdition(edName: string): Promise<any> {
+  if (fawazFullEditionCache.has(edName)) return fawazFullEditionCache.get(edName);
+  const localEditionPath = path.join(HADIS_FAWAZ_DIR, 'editions', `${edName}.min.json.gz`);
+  const localData = readLocalGzippedJson(localEditionPath);
+  if (localData) {
+    setBoundedMap(fawazFullEditionCache, edName, localData, 10);
+    return localData;
+  }
+  const data = await fetchJsonWithMirror(
+    `${FAWAZ_CDN_BASE}/editions/${edName}.min.json`,
+    `${FAWAZ_RAW_BASE}/editions/${edName}.min.json`,
+    25000
+  );
+  setBoundedMap(fawazFullEditionCache, edName, data, 10);
+  return data;
+}
+
+async function getFawazSection(edName: string, chapterId: string): Promise<any | null> {
+  const localEditionPath = path.join(HADIS_FAWAZ_DIR, 'editions', `${edName}.min.json.gz`);
+  if (fawazFullEditionCache.has(edName) || fs.existsSync(localEditionPath)) {
+    const full = await getFawazFullEdition(edName);
+    const list: any[] = Array.isArray(full?.hadiths) ? full.hadiths : [];
+    const targetSec = String(chapterId);
+    let sliced = list.filter((h: any) => String(h?.reference?.book ?? '') === targetSec);
+    if (sliced.length === 0) {
+      const det = full?.metadata?.section_details?.[targetSec];
+      if (det && Number(det.hadithnumber_last || 0) > 0) {
+        const first = Number(det.hadithnumber_first || 0);
+        const last = Number(det.hadithnumber_last || 0);
+        sliced = list.filter((h: any) => {
+          const n = Number(h?.hadithnumber || 0);
+          return n >= first && n <= last;
+        });
+      }
+    }
+    return {
+      metadata: {
+        name: full?.metadata?.name || edName,
+        section: {
+          [targetSec]: full?.metadata?.sections?.[targetSec] || (targetSec === '0' ? 'Introduction' : `Chapter ${targetSec}`),
+        },
+      },
+      hadiths: sliced,
+    };
+  }
+
+  return fetchJsonWithMirror(
+    `${FAWAZ_CDN_BASE}/editions/${edName}/sections/${chapterId}.min.json`,
+    `${FAWAZ_RAW_BASE}/editions/${edName}/sections/${chapterId}.min.json`,
+    18000
+  ).catch(() => null);
+}
+
 async function getAhmedBook(ahmedPath: string): Promise<any> {
   if (ahmedBookCache.has(ahmedPath)) return ahmedBookCache.get(ahmedPath);
+  const localPath = path.join(HADIS_AHMED_DIR, `${ahmedPath}.gz`);
+  const localData = readLocalGzippedJson(localPath);
+  if (localData) {
+    setBoundedMap(ahmedBookCache, ahmedPath, localData, 7);
+    return localData;
+  }
   const data = await fetchJsonWithMirror(`${AHMED_CDN_BASE}/${ahmedPath}`, `${AHMED_RAW_BASE}/${ahmedPath}`, 25000);
-  setBoundedMap(ahmedBookCache, ahmedPath, data, 5);
+  setBoundedMap(ahmedBookCache, ahmedPath, data, 7);
   return data;
 }
 
@@ -1155,29 +1237,15 @@ app.get('/api/hadis/books/:bookId/chapters/:chapterId', async (req, res) => {
       const langCode = resolveFawazEditionCode(bookDef, uiLang);
       const bookKey = bookDef.fawazKey;
 
-      const araPromise = fetchJsonWithMirror(
-        `${FAWAZ_CDN_BASE}/editions/ara-${bookKey}/sections/${chapterId}.min.json`,
-        `${FAWAZ_RAW_BASE}/editions/ara-${bookKey}/sections/${chapterId}.min.json`,
-        18000
-      ).catch(() => null);
-
+      const araPromise = getFawazSection(`ara-${bookKey}`, chapterId).catch(() => null);
       const transPromise =
         langCode === 'ara'
           ? Promise.resolve(null)
-          : fetchJsonWithMirror(
-              `${FAWAZ_CDN_BASE}/editions/${langCode}-${bookKey}/sections/${chapterId}.min.json`,
-              `${FAWAZ_RAW_BASE}/editions/${langCode}-${bookKey}/sections/${chapterId}.min.json`,
-              18000
-            ).catch(() => null);
-
+          : getFawazSection(`${langCode}-${bookKey}`, chapterId).catch(() => null);
       const engPromise =
         langCode === 'eng'
           ? Promise.resolve(null)
-          : fetchJsonWithMirror(
-              `${FAWAZ_CDN_BASE}/editions/eng-${bookKey}/sections/${chapterId}.min.json`,
-              `${FAWAZ_RAW_BASE}/editions/eng-${bookKey}/sections/${chapterId}.min.json`,
-              18000
-            ).catch(() => null);
+          : getFawazSection(`eng-${bookKey}`, chapterId).catch(() => null);
 
       const [araJson, transJson, engJson] = await Promise.all([araPromise, transPromise, engPromise]);
 
@@ -1334,16 +1402,10 @@ app.get('/api/hadis/books/:bookId/search', async (req, res) => {
         const matchedResults: any[] = [];
         for (const secId of matchingSections.slice(0, 2)) {
           const [araJson, transJson] = await Promise.all([
-            fetchJsonWithMirror(
-              `${FAWAZ_CDN_BASE}/editions/ara-${bookKey}/sections/${secId}.min.json`,
-              `${FAWAZ_RAW_BASE}/editions/ara-${bookKey}/sections/${secId}.min.json`,
-              15000
-            ).catch(() => null),
-            fetchJsonWithMirror(
-              `${FAWAZ_CDN_BASE}/editions/${langCode}-${bookKey}/sections/${secId}.min.json`,
-              `${FAWAZ_RAW_BASE}/editions/${langCode}-${bookKey}/sections/${secId}.min.json`,
-              15000
-            ).catch(() => null),
+            getFawazSection(`ara-${bookKey}`, secId).catch(() => null),
+            getFawazSection(`${langCode}-${bookKey}`, secId)
+              .catch(() => null)
+              .then((res) => res ?? getFawazSection(`eng-${bookKey}`, secId).catch(() => null)),
           ]);
           const list = Array.isArray(transJson?.hadiths) ? transJson.hadiths : Array.isArray(araJson?.hadiths) ? araJson.hadiths : [];
           const araMap = new Map<string, any>((araJson?.hadiths || []).map((x: any) => [String(x.hadithnumber), x]));
@@ -1371,23 +1433,14 @@ app.get('/api/hadis/books/:bookId/search', async (req, res) => {
         return res.json({ results: matchedResults, totalMatches: matchedResults.length });
       }
 
-      // Full-book keyword search (cached full book edition in RAM)
+      // Full-book keyword search (local archive first + cached in RAM)
       const transKey = `${langCode}-${bookKey}`;
       const araKey = `ara-${bookKey}`;
-      const getFullEdition = async (edName: string) => {
-        if (fawazFullEditionCache.has(edName)) return fawazFullEditionCache.get(edName);
-        const data = await fetchJsonWithMirror(
-          `${FAWAZ_CDN_BASE}/editions/${edName}.min.json`,
-          `${FAWAZ_RAW_BASE}/editions/${edName}.min.json`,
-          25000
-        );
-        setBoundedMap(fawazFullEditionCache, edName, data, 6);
-        return data;
-      };
+      const engKey = `eng-${bookKey}`;
 
       const [transFull, araFull] = await Promise.all([
-        getFullEdition(transKey),
-        getFullEdition(araKey).catch(() => null),
+        getFawazFullEdition(transKey).catch(() => getFawazFullEdition(engKey)),
+        getFawazFullEdition(araKey).catch(() => null),
       ]);
 
       const lowerQ = q.toLowerCase();

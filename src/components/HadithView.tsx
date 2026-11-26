@@ -69,7 +69,7 @@ interface LastReadBookmark {
 const SAVED_FULL_HADITHS_KEY = 'zikrmate_hadis_saved_full_v1';
 const RECENT_FULL_HADITHS_KEY = 'zikrmate_hadis_recent_full_v1';
 const LAST_READ_KEY = 'zikrmate_hadis_last_read_v1';
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 10;
 
 function toBnNum(val: number | string | undefined | null): string {
   if (val === undefined || val === null) return '';
@@ -79,6 +79,20 @@ function toBnNum(val: number | string | undefined | null): string {
 
 function formatNum(val: number | string, isBn: boolean): string {
   return isBn ? toBnNum(val) : String(val);
+}
+
+function getPaginationTokens(current: number, total: number): Array<number | 'ellipsis'> {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  const tokens: Array<number | 'ellipsis'> = [1];
+  const left = Math.max(2, current - 1);
+  const right = Math.min(total - 1, current + 1);
+  if (left > 2) tokens.push('ellipsis');
+  for (let p = left; p <= right; p++) tokens.push(p);
+  if (right < total - 1) tokens.push('ellipsis');
+  tokens.push(total);
+  return tokens;
 }
 
 export const HadithView: React.FC<HadithViewProps> = ({
@@ -584,8 +598,12 @@ export const HadithView: React.FC<HadithViewProps> = ({
       ? chapters[currentChapterIdx + 1]
       : null;
 
-  // Render helper for Full Canonical Hadith Card (used in Chapter Reader, Search Results, Saved & Recent)
-  const renderFullHadithCard = (entry: FullHadithEntry, showBookBreadcrumb = false) => {
+  // Render helper for Full Canonical Hadith (supports both standalone 'card' and 'book-page' folio layout)
+  const renderFullHadithCard = (
+    entry: FullHadithEntry,
+    showBookBreadcrumb = false,
+    variant: 'card' | 'book-page' = 'card'
+  ) => {
     const bookDef = HADIS_LIBRARY_BOOKS.find((b) => b.id === entry.bookId);
     const bookTitle = bookDef
       ? isBn
@@ -606,8 +624,8 @@ export const HadithView: React.FC<HadithViewProps> = ({
     const hlStyle = hl ? HIGHLIGHT_COLOR_STYLES[hl.color] : null;
     const sourceLabel = `${bookTitle} #${entry.hadithNumber}`;
 
-    const arabicFontPx = Math.round(20 * fontScale);
-    const transFontPx = Math.round(15 * fontScale);
+    const arabicFontPx = Math.round(21 * fontScale);
+    const transFontPx = Math.round(15.5 * fontScale);
 
     const gradeColorClass =
       entry.gradeType === 'weak'
@@ -622,25 +640,38 @@ export const HadithView: React.FC<HadithViewProps> = ({
         ? 'text-emerald-800'
         : 'text-emerald-300';
 
+    const containerClass =
+      variant === 'book-page'
+        ? `px-4 sm:px-8 py-5 sm:py-6 transition-colors duration-200 ${
+            hlStyle
+              ? `${isDay ? hlStyle.cardDayClass : hlStyle.cardNightClass} rounded-2xl mx-2 sm:mx-4 my-2 border`
+              : isSaved
+              ? `${
+                  isDay ? 'bg-amber-50/45 border border-amber-200/80' : 'bg-amber-950/20 border border-amber-500/30'
+                } rounded-2xl mx-2 sm:mx-4 my-2`
+              : ''
+          }`
+        : `rounded-3xl border p-5 sm:p-6 transition-colors duration-200 ${
+            hlStyle
+              ? isDay
+                ? hlStyle.cardDayClass
+                : hlStyle.cardNightClass
+              : isSaved
+              ? isDay
+                ? 'bg-[#fffdf6] border-amber-300'
+                : 'bg-[#0c2628] border-amber-500/45'
+              : isDay
+              ? 'bg-white border-slate-200 hover:border-emerald-300'
+              : 'bg-[#0a2329] border-[#16444e] hover:border-emerald-500/50'
+          }`;
+
     return (
       <article
         key={entry.uid}
         onClick={() => addFullHadithToRecent(entry)}
         data-highlight-section="hadith"
         data-highlight-source={sourceLabel}
-        className={`rounded-3xl border p-5 sm:p-6 transition-colors duration-200 ${
-          hlStyle
-            ? isDay
-              ? hlStyle.cardDayClass
-              : hlStyle.cardNightClass
-            : isSaved
-            ? isDay
-              ? 'bg-[#fffdf6] border-amber-300'
-              : 'bg-[#0c2628] border-amber-500/45'
-            : isDay
-            ? 'bg-white border-slate-200 hover:border-emerald-300'
-            : 'bg-[#0a2329] border-[#16444e] hover:border-emerald-500/50'
-        }`}
+        className={containerClass}
       >
         {/* Clean Zero-Pill Header Metadata + Action Buttons */}
         <div
@@ -1023,7 +1054,9 @@ export const HadithView: React.FC<HadithViewProps> = ({
                     isDay ? 'text-slate-500' : 'text-slate-400'
                   }`}
                 >
-                  {isBn ? '১৭টি কিতাব • ৫৩,০০০+ হাদিস' : '17 Books • 53,000+ Hadiths'}
+                  {isBn
+                    ? '১৭টি কিতাব • ৫৩,০০০+ হাদিস • স্থায়ীভাবে সংরক্ষিত'
+                    : '17 Books • 53,000+ Hadiths • Permanently Archived'}
                 </p>
               </div>
             </div>
@@ -1433,178 +1466,208 @@ export const HadithView: React.FC<HadithViewProps> = ({
       )}
 
       {/* =================================================================== */}
-      {/* VIEW 2: SELECTED BOOK — CHAPTER LIST & BOOK SEARCH                  */}
+      {/* VIEW 2: SELECTED BOOK — KITAB COVER & PRINTED FIHRIST (BOOK INDEX)  */}
       {/* =================================================================== */}
       {selectedBookId && selectedBookDef && !selectedChapterId && (
-        <div className="space-y-4">
-          {/* Flat Book Header Bar */}
-          <div
-            className={`pb-3.5 border-b space-y-3 ${
-              isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
-            }`}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Compact Top Action Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                stepBackOr(() => setSelectedBookId(null));
+              }}
+              className={`min-h-[40px] px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
+                isDay
+                  ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                  : 'bg-[#0e1c26] hover:bg-[#132634] border-[#1a3342] text-emerald-200'
+              }`}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>{isBn ? 'সকল কিতাব' : 'All Books'}</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              {downloadingBookId === selectedBookId ? (
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-bold text-emerald-700 dark:text-emerald-300 tabular-nums">
+                    {isBn
+                      ? `ডাউনলোড: ${formatNum(downloadProgress.done, true)}/${formatNum(downloadProgress.total, true)} অধ্যায়`
+                      : `Saving ${downloadProgress.done}/${downloadProgress.total} chapters`}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => downloadAbortRef.current?.abort()}
+                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-300 text-xs font-bold cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    {isBn ? 'বাতিল' : 'Cancel'}
+                  </button>
+                </div>
+              ) : offlineStatuses[selectedBookId]?.completed ? (
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">{isBn ? 'ডিভাইসে সংরক্ষিত' : 'Saved on Device'}</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void handleDownloadBookOffline(selectedBookId)}
+                  className={`min-h-[40px] px-3 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
+                    isDay
+                      ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800'
+                      : 'bg-emerald-950/60 hover:bg-emerald-900/60 border-emerald-700/60 text-emerald-300'
+                  }`}
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">{isBn ? 'অফলাইন সেভ' : 'Save Offline'}</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => {
                   if (soundEnabled) soundHaptics.playTap();
-                  stepBackOr(() => setSelectedBookId(null));
+                  setIsBookSearchOpen((prev) => {
+                    if (prev) {
+                      setBookSearchQuery('');
+                      setChapterFilterQuery('');
+                    }
+                    return !prev;
+                  });
                 }}
-                className={`min-h-[40px] px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
-                  isDay
-                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
-                    : 'bg-[#0e1c26] hover:bg-[#132634] border-[#1a3342] text-emerald-200'
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 shrink-0 ${
+                  isBookSearchOpen || bookSearchQuery || chapterFilterQuery
+                    ? 'bg-emerald-700 border-emerald-700 text-white'
+                    : isDay
+                    ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-emerald-800'
+                    : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
                 }`}
+                title={isBn ? 'কিতাবে খুঁজুন' : 'Search in book'}
+                aria-label={isBn ? 'কিতাবে খুঁজুন' : 'Search in book'}
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{isBn ? 'সকল কিতাব' : 'All Books'}</span>
+                {isBookSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
               </button>
-
-              <div className="flex items-center gap-2">
-                {/* Save Entire Book Offline Button */}
-                {downloadingBookId === selectedBookId ? (
-                  <div className="flex items-center gap-2">
-                    <div className="text-xs font-bold text-[#006A4E] dark:text-emerald-300 tabular-nums">
-                      {isBn
-                        ? `ডাউনলোড হচ্ছে: ${formatNum(downloadProgress.done, true)}/${formatNum(downloadProgress.total, true)} অধ্যায়`
-                        : `Saving ${downloadProgress.done}/${downloadProgress.total} chapters`}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => downloadAbortRef.current?.abort()}
-                      className="min-h-[38px] px-3 py-1.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-300 text-xs font-bold cursor-pointer"
-                    >
-                      {isBn ? 'বাতিল' : 'Cancel'}
-                    </button>
-                  </div>
-                ) : offlineStatuses[selectedBookId]?.completed ? (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">{isBn ? 'অফলাইনে সেভ করা আছে' : 'Saved Offline'}</span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => void handleDownloadBookOffline(selectedBookId)}
-                    className={`min-h-[40px] px-3 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
-                      isDay
-                        ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-[#006A4E]'
-                        : 'bg-emerald-950/60 hover:bg-emerald-900/60 border-emerald-700/60 text-emerald-300'
-                    }`}
-                  >
-                    <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">{isBn ? 'অফলাইন সেভ' : 'Save Offline'}</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (soundEnabled) soundHaptics.playTap();
-                    setIsBookSearchOpen((prev) => {
-                      if (prev) {
-                        setBookSearchQuery('');
-                        setChapterFilterQuery('');
-                      }
-                      return !prev;
-                    });
-                  }}
-                  className={`w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer active:scale-95 ${
-                    isBookSearchOpen || bookSearchQuery || chapterFilterQuery
-                      ? isDay
-                        ? 'bg-[#006A4E] border-[#006A4E] text-white'
-                        : 'bg-emerald-600 border-emerald-500 text-white'
-                      : isDay
-                      ? 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-[#006A4E]'
-                      : 'bg-[#0e1c26] border-[#1a3342] text-emerald-300 hover:border-emerald-500'
-                  }`}
-                  title={isBn ? 'কিতাবে খুঁজুন' : 'Search in book'}
-                  aria-label={isBn ? 'কিতাবে খুঁজুন' : 'Search in book'}
-                >
-                  {isBookSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
-                </button>
-              </div>
             </div>
+          </div>
 
-            <div className="flex flex-wrap items-baseline justify-between gap-2 pt-0.5">
-              <div>
-                <h2 className={`text-lg sm:text-xl font-extrabold ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                  {isBn ? selectedBookDef.bnName : selectedBookDef.titles[selectedLanguage] || selectedBookDef.enName}
-                </h2>
-                <p className={`text-xs mt-0.5 ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
-                  {isBn ? selectedBookDef.compilerBn : selectedBookDef.compilerEn}
-                  <span aria-hidden="true"> · </span>
-                  <span className="tabular-nums font-bold">
-                    {isBn
-                      ? `${formatNum(selectedBookDef.chaptersCount, true)} অধ্যায় · ${formatNum(selectedBookDef.hadithCount.toLocaleString('en-US'), true)} হাদিস`
-                      : `${selectedBookDef.chaptersCount} Chapters · ${selectedBookDef.hadithCount.toLocaleString()} Hadiths`}
+          {/* Kitab Inner Title Cover Page (মলাট / গ্রন্থ পরিচিতি পৃষ্ঠা) */}
+          <section
+            className={`rounded-3xl border shadow-sm p-3 sm:p-4 ${
+              isDay
+                ? 'bg-[#fffdf7] border-[#dfd6be]'
+                : 'bg-[#071f24] border-[#194650]'
+            }`}
+          >
+            <div
+              className={`rounded-2xl border px-4 py-6 sm:px-8 sm:py-7 text-center space-y-2.5 ${
+                isDay ? 'border-[#ebe4d0]' : 'border-[#143a42]'
+              }`}
+            >
+              <div className="flex justify-center">
+                <div
+                  className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${selectedBookDef.accentGradient} text-white flex items-center justify-center shadow-sm border border-white/20`}
+                >
+                  <span dir="rtl" className="font-arabic text-2xl font-bold leading-none">
+                    {selectedBookDef.monogram}
                   </span>
-                </p>
+                </div>
               </div>
-              <div dir="rtl" className="font-arabic text-lg sm:text-xl font-bold text-[#006A4E] dark:text-emerald-300">
+
+              <div dir="rtl" className="font-arabic text-2xl sm:text-3xl font-bold text-emerald-800 dark:text-emerald-300 leading-snug pt-0.5">
                 {selectedBookDef.arabicName}
               </div>
+
+              <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                {isBn ? selectedBookDef.bnName : selectedBookDef.titles[selectedLanguage] || selectedBookDef.enName}
+              </h2>
+
+              <p className={`text-xs sm:text-sm font-semibold ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
+                {isBn ? `সংকলক: ${selectedBookDef.compilerBn}` : `Compiled by ${selectedBookDef.compilerEn}`}
+              </p>
+
+              <div
+                className={`flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-xs font-bold tabular-nums pt-1 ${
+                  isDay ? 'text-emerald-800' : 'text-emerald-300'
+                }`}
+              >
+                <span>
+                  {isBn ? `${formatNum(selectedBookDef.chaptersCount, true)}টি অধ্যায়` : `${selectedBookDef.chaptersCount} Chapters`}
+                </span>
+                <span aria-hidden="true" className="opacity-40">·</span>
+                <span>
+                  {isBn
+                    ? `${formatNum(selectedBookDef.hadithCount.toLocaleString('en-US'), true)}টি হাদিস`
+                    : `${selectedBookDef.hadithCount.toLocaleString()} Hadiths`}
+                </span>
+                <span aria-hidden="true" className="opacity-40">·</span>
+                <span>{isBn ? 'স্থায়ী সংরক্ষিত কিতাব' : 'Permanently Archived'}</span>
+              </div>
+
+              <p className={`max-w-2xl mx-auto text-xs leading-relaxed pt-1 ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                {isBn ? selectedBookDef.shortDescBn : selectedBookDef.shortDescEn}
+              </p>
             </div>
+          </section>
 
-            {/* Expandable Book-Wide Search & Chapter Filter Controls */}
-            {(isBookSearchOpen || bookSearchQuery.trim().length > 0 || chapterFilterQuery.trim().length > 0) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1 animate-in fade-in duration-150">
-                <form onSubmit={handleBookSearchSubmit} className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      autoFocus={isBookSearchOpen}
-                      value={bookSearchQuery}
-                      onChange={(e) => setBookSearchQuery(e.target.value)}
-                      placeholder={
-                        isBn
-                          ? `এই কিতাবে হাদিস নং বা শব্দ খুঁজুন...`
-                          : `Search Hadith # or text in this book...`
-                      }
-                      className={`w-full min-h-[42px] rounded-xl pl-9 pr-3 py-2 border text-xs sm:text-sm focus:outline-none ${
-                        isDay
-                          ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]'
-                          : 'bg-[#0e1c26] border-[#1a3342] text-white focus:border-emerald-400'
-                      }`}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={!bookSearchQuery.trim() || isSearchingBook}
-                    className="min-h-[42px] px-4 rounded-xl bg-[#006A4E] hover:bg-[#005740] text-white text-xs font-extrabold transition active:scale-95 disabled:opacity-50 cursor-pointer shrink-0 whitespace-nowrap"
-                  >
-                    {isSearchingBook ? <Loader2 className="w-4 h-4 animate-spin" /> : isBn ? 'খুঁজুন' : 'Search'}
-                  </button>
-                </form>
-
-                <div className="relative">
-                  <SlidersHorizontal className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          {/* Expandable Book-Wide Search & Chapter Filter Controls */}
+          {(isBookSearchOpen || bookSearchQuery.trim().length > 0 || chapterFilterQuery.trim().length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 animate-in fade-in duration-150">
+              <form onSubmit={handleBookSearchSubmit} className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
-                    value={chapterFilterQuery}
-                    onChange={(e) => setChapterFilterQuery(e.target.value)}
-                    placeholder={isBn ? 'অধ্যায়ের নাম দিয়ে ফিল্টার করুন...' : 'Filter chapters by title or #...'}
-                    className={`w-full min-h-[42px] rounded-xl pl-9 pr-9 py-2 border text-xs sm:text-sm focus:outline-none ${
+                    autoFocus={isBookSearchOpen}
+                    value={bookSearchQuery}
+                    onChange={(e) => setBookSearchQuery(e.target.value)}
+                    placeholder={
+                      isBn
+                        ? `এই কিতাবে হাদিস নং বা শব্দ খুঁজুন...`
+                        : `Search Hadith # or text in this book...`
+                    }
+                    className={`w-full min-h-[42px] rounded-xl pl-9 pr-3 py-2 border text-xs sm:text-sm focus:outline-none ${
                       isDay
-                        ? 'bg-white border-slate-200 text-slate-900 focus:border-[#006A4E]'
+                        ? 'bg-white border-slate-200 text-slate-900 focus:border-emerald-700'
                         : 'bg-[#0e1c26] border-[#1a3342] text-white focus:border-emerald-400'
                     }`}
                   />
-                  {chapterFilterQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setChapterFilterQuery('')}
-                      aria-label={isBn ? 'মুছুন' : 'Clear'}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
                 </div>
+                <button
+                  type="submit"
+                  disabled={!bookSearchQuery.trim() || isSearchingBook}
+                  className="min-h-[42px] px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold transition active:scale-95 disabled:opacity-50 cursor-pointer shrink-0 whitespace-nowrap"
+                >
+                  {isSearchingBook ? <Loader2 className="w-4 h-4 animate-spin" /> : isBn ? 'খুঁজুন' : 'Search'}
+                </button>
+              </form>
+
+              <div className="relative">
+                <SlidersHorizontal className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={chapterFilterQuery}
+                  onChange={(e) => setChapterFilterQuery(e.target.value)}
+                  placeholder={isBn ? 'অধ্যায়ের নাম দিয়ে সূচিপত্রে খুঁজুন...' : 'Filter table of contents by title or #...'}
+                  className={`w-full min-h-[42px] rounded-xl pl-9 pr-9 py-2 border text-xs sm:text-sm focus:outline-none ${
+                    isDay
+                      ? 'bg-white border-slate-200 text-slate-900 focus:border-emerald-700'
+                      : 'bg-[#0e1c26] border-[#1a3342] text-white focus:border-emerald-400'
+                  }`}
+                />
+                {chapterFilterQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setChapterFilterQuery('')}
+                    aria-label={isBn ? 'মুছুন' : 'Clear'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Book Search Results */}
           {bookSearchResults !== null && (
@@ -1621,9 +1684,9 @@ export const HadithView: React.FC<HadithViewProps> = ({
                     setBookSearchResults(null);
                     setBookSearchError(null);
                   }}
-                  className="text-xs font-bold text-[#006A4E] dark:text-emerald-300 underline cursor-pointer"
+                  className="text-xs font-bold text-emerald-700 dark:text-emerald-300 underline cursor-pointer"
                 >
-                  {isBn ? 'অধ্যায়ের তালিকায় ফিরুন' : 'Back to chapter list'}
+                  {isBn ? 'সূচিপত্রে ফিরুন' : 'Back to Table of Contents'}
                 </button>
               </div>
               {bookSearchError && (
@@ -1635,20 +1698,20 @@ export const HadithView: React.FC<HadithViewProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3.5">
-                  {bookSearchResults.map((entry) => renderFullHadithCard(entry, false))}
+                  {bookSearchResults.map((entry) => renderFullHadithCard(entry, false, 'card'))}
                 </div>
               )}
             </div>
           )}
 
-          {/* Chapters Index List */}
+          {/* Printed Kitab Fihrist / Table of Contents Page (সূচিপত্র পৃষ্ঠা) */}
           {bookSearchResults === null && (
             <>
               {isLoadingChapters ? (
-                <div className={`p-10 rounded-3xl border text-center space-y-2 ${isDay ? 'bg-white border-slate-200' : 'bg-[#0a2329] border-[#16444e]'}`}>
-                  <Loader2 className="w-7 h-7 animate-spin mx-auto text-[#006A4E] dark:text-emerald-400" />
+                <div className={`p-10 rounded-3xl border text-center space-y-2 ${isDay ? 'bg-[#fffdf7] border-[#dfd6be]' : 'bg-[#071f24] border-[#194650]'}`}>
+                  <Loader2 className="w-7 h-7 animate-spin mx-auto text-emerald-700 dark:text-emerald-400" />
                   <p className="text-xs font-bold">
-                    {isBn ? 'সকল অধ্যায়ের সূচিপত্র লোড হচ্ছে...' : 'Loading complete chapter index...'}
+                    {isBn ? 'কিতাবের সূচিপত্র খোলা হচ্ছে...' : 'Opening book table of contents...'}
                   </p>
                 </div>
               ) : chaptersError ? (
@@ -1662,57 +1725,151 @@ export const HadithView: React.FC<HadithViewProps> = ({
                       setSelectedBookId(null);
                       setTimeout(() => setSelectedBookId(id), 10);
                     }}
-                    className="px-4 py-2 rounded-xl bg-[#006A4E] text-white text-xs font-bold cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold cursor-pointer"
                   >
                     {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                  {filteredChapters.map((ch) => (
-                    <button
-                      key={ch.chapterId}
-                      type="button"
-                      onClick={() => {
-                        if (soundEnabled) soundHaptics.playTap();
-                        setSelectedChapterId(ch.chapterId);
-                      }}
-                      className={`w-full text-left p-4 rounded-2xl border transition flex items-center justify-between gap-3 cursor-pointer group ${
-                        isDay
-                          ? 'bg-white hover:bg-emerald-50/50 border-slate-200 hover:border-[#006A4E]'
-                          : 'bg-[#0a2329] hover:bg-[#10323a] border-[#16444e] hover:border-emerald-400/60'
+                <section
+                  className={`rounded-3xl border shadow-sm overflow-hidden ${
+                    isDay
+                      ? 'bg-[#fffdf7] border-[#dfd6be]'
+                      : 'bg-[#071f24] border-[#194650]'
+                  }`}
+                >
+                  {/* Fihrist Header Rule */}
+                  <div
+                    className={`px-5 sm:px-7 py-3.5 border-b-2 flex items-center justify-between gap-3 ${
+                      isDay
+                        ? 'bg-[#faf4e4]/70 border-[#e4dbc3] text-slate-800'
+                        : 'bg-[#0b272d] border-[#1a4952] text-emerald-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-emerald-700 dark:text-emerald-300" />
+                      <h3 className="text-sm font-black tracking-tight">
+                        {isBn ? 'সূচিপত্র · অধ্যায়সমূহ' : 'Table of Contents · Chapters'}
+                      </h3>
+                    </div>
+                    <span className={`text-[11px] font-bold tabular-nums ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {isBn
+                        ? `মোট ${formatNum(filteredChapters.length, true)} অধ্যায়`
+                        : `${filteredChapters.length} Chapters`}
+                    </span>
+                  </div>
+
+                  {/* Quick Inline Filter when user hasn't opened top search */}
+                  {chapters.length > 12 && !isBookSearchOpen && !chapterFilterQuery && (
+                    <div
+                      className={`px-5 sm:px-7 py-2.5 border-b ${
+                        isDay ? 'border-[#efe9d8] bg-[#fffef9]' : 'border-[#12373e] bg-[#082227]'
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center font-mono text-xs font-extrabold tabular-nums ${
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={chapterFilterQuery}
+                          onChange={(e) => setChapterFilterQuery(e.target.value)}
+                          placeholder={isBn ? 'অধ্যায়ের নাম বা হাদিস নম্বর দিয়ে সূচিপত্র ফিল্টার করুন...' : 'Filter chapters by title or hadith #...'}
+                          className={`w-full min-h-[36px] rounded-xl pl-8 pr-3 py-1.5 border text-xs focus:outline-none ${
                             isDay
-                              ? 'bg-emerald-50 text-[#006A4E]'
-                              : 'bg-[#06181c] text-emerald-300'
+                              ? 'bg-white border-[#e5dec9] text-slate-800 focus:border-emerald-700'
+                              : 'bg-[#06181c] border-[#18444d] text-white focus:border-emerald-400'
                           }`}
-                        >
-                          {formatNum(ch.chapterId, isBn)}
-                        </div>
-                        <div className="min-w-0">
-                          <div className={`text-xs sm:text-sm font-extrabold truncate ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                            {isBn ? ch.titleBn : ch.titleEn}
-                          </div>
-                          {isBn && ch.titleBn !== ch.titleEn && (
-                            <div className={`text-[11px] truncate ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                              {ch.titleEn}
-                            </div>
-                          )}
-                          <div className={`text-[11px] font-semibold tabular-nums mt-0.5 ${isDay ? 'text-[#006A4E]' : 'text-emerald-300/90'}`}>
-                            {isBn
-                              ? `হাদিস ${formatNum(ch.hadithFirst, true)}–${formatNum(ch.hadithLast, true)} · ${formatNum(ch.count, true)}টি`
-                              : `Hadith ${ch.hadithFirst}–${ch.hadithLast} · ${ch.count}`}
-                          </div>
-                        </div>
+                        />
                       </div>
-                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#006A4E] shrink-0" />
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                  )}
+
+                  {/* Book Index Ledger Rows */}
+                  {filteredChapters.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                      {isBn ? 'এই নামে কোনো অধ্যায় পাওয়া যায়নি।' : 'No matching chapters found.'}
+                    </div>
+                  ) : (
+                    <div className={`divide-y divide-dashed ${isDay ? 'divide-[#e6dec8]' : 'divide-[#153f48]'}`}>
+                      {filteredChapters.map((ch) => {
+                        const estPages = Math.max(1, Math.ceil(ch.count / PAGE_SIZE));
+                        return (
+                          <button
+                            key={ch.chapterId}
+                            type="button"
+                            onClick={() => {
+                              if (soundEnabled) soundHaptics.playTap();
+                              setSelectedChapterId(ch.chapterId);
+                            }}
+                            className={`w-full text-left px-4 sm:px-7 py-3.5 sm:py-4 transition flex items-center justify-between gap-3 cursor-pointer group ${
+                              isDay
+                                ? 'hover:bg-emerald-50/55'
+                                : 'hover:bg-[#0d2d34]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                              <div
+                                className={`w-9 h-9 rounded-xl shrink-0 border flex items-center justify-center font-mono text-xs font-extrabold tabular-nums transition ${
+                                  isDay
+                                    ? 'bg-[#faf5e6] border-[#e4dbc2] text-emerald-800 group-hover:bg-emerald-700 group-hover:text-white group-hover:border-emerald-700'
+                                    : 'bg-[#06181c] border-[#1a4b54] text-emerald-300 group-hover:bg-emerald-600 group-hover:text-white'
+                                }`}
+                              >
+                                {formatNum(ch.chapterId, isBn)}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+                                  <span className={`text-sm font-extrabold leading-snug ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                                    {isBn ? ch.titleBn : ch.titleEn}
+                                  </span>
+                                  {ch.titleAr && (
+                                    <span dir="rtl" className="font-arabic text-sm font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
+                                      {ch.titleAr}
+                                    </span>
+                                  )}
+                                </div>
+                                {isBn && ch.titleBn !== ch.titleEn && (
+                                  <div className={`text-[11px] truncate mt-0.5 ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    {ch.titleEn}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 shrink-0 text-right">
+                              <div className="tabular-nums">
+                                <div className={`text-[11px] sm:text-xs font-extrabold ${isDay ? 'text-emerald-800' : 'text-emerald-300'}`}>
+                                  {isBn
+                                    ? `হাদিস ${formatNum(ch.hadithFirst, true)}–${formatNum(ch.hadithLast, true)}`
+                                    : `#${ch.hadithFirst}–${ch.hadithLast}`}
+                                </div>
+                                <div className={`text-[10px] font-semibold ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                                  {isBn
+                                    ? `${formatNum(ch.count, true)}টি · ${formatNum(estPages, true)} পৃষ্ঠা`
+                                    : `${ch.count} hadiths · ${estPages} pg`}
+                                </div>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Fihrist Bottom Folio Rule */}
+                  <div
+                    className={`px-6 py-3 border-t text-center text-[11px] font-semibold ${
+                      isDay
+                        ? 'bg-[#faf4e4]/50 border-[#ebe4d0] text-slate-500'
+                        : 'bg-[#06191d] border-[#143a42] text-slate-400'
+                    }`}
+                  >
+                    {isBn
+                      ? 'যেকোনো অধ্যায়ে ক্লিক করে কিতাবের পৃষ্ঠা খুলুন'
+                      : 'Select any chapter row to open its book pages'}
+                  </div>
+                </section>
               )}
             </>
           )}
@@ -1720,118 +1877,87 @@ export const HadithView: React.FC<HadithViewProps> = ({
       )}
 
       {/* =================================================================== */}
-      {/* VIEW 3: SELECTED CHAPTER — SERENE HADITH READER                     */}
+      {/* VIEW 3: SELECTED CHAPTER — BOOK-PAGE HADITH READER ("কিতাবের পৃষ্ঠা") */}
       {/* =================================================================== */}
       {selectedBookId && selectedBookDef && selectedChapterId && (
-        <div className="space-y-4">
-          {/* Flat Reader Top Navigation & Settings Bar */}
-          <div
-            className={`pb-3.5 border-b space-y-3 ${
-              isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
-            }`}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (soundEnabled) soundHaptics.playTap();
-                  stepBackOr(() => setSelectedChapterId(null));
-                }}
-                className={`min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer ${
-                  isDay
-                    ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
-                    : 'bg-[#06181c] hover:bg-[#0e3038] border-[#1a4c56] text-emerald-200'
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Top Reader Utility Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (soundEnabled) soundHaptics.playTap();
+                stepBackOr(() => setSelectedChapterId(null));
+              }}
+              className={`min-h-[40px] px-3.5 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
+                isDay
+                  ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                  : 'bg-[#0a2329] hover:bg-[#0e3038] border-[#1a4c56] text-emerald-200'
+              }`}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>{chapters.length <= 1 ? (isBn ? 'সকল কিতাব' : 'All Books') : (isBn ? 'সূচিপত্র' : 'Contents')}</span>
+            </button>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <div
+                className={`flex items-center p-1 rounded-xl border ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#06181c] border-[#174650]'
                 }`}
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{chapters.length <= 1 ? (isBn ? 'সকল কিতাব' : 'All Books') : (isBn ? 'অধ্যায় তালিকা' : 'Chapters')}</span>
-              </button>
-
-              {/* Font Scale & Display Mode Segmented Controls */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <div
-                  className={`flex items-center p-1 rounded-xl border ${
-                    isDay ? 'bg-slate-100 border-slate-200' : 'bg-[#06181c] border-[#174650]'
-                  }`}
-                >
-                  {[
-                    { id: 'both' as ReaderDisplayMode, bn: 'আরবি + অনুবাদ', en: 'Both' },
-                    { id: 'translation' as ReaderDisplayMode, bn: 'শুধু অনুবাদ', en: 'Text' },
-                    { id: 'arabic' as ReaderDisplayMode, bn: 'আরবি', en: 'Arabic' },
-                  ].map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setDisplayMode(m.id)}
-                      className={`min-h-[34px] px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
-                        displayMode === m.id
-                          ? 'bg-[#006A4E] text-white shadow-xs'
-                          : isDay
-                          ? 'text-slate-600 hover:text-slate-900'
-                          : 'text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      {isBn ? m.bn : m.en}
-                    </button>
-                  ))}
-                </div>
-
-                <div
-                  className={`flex items-center gap-1 p-1 rounded-xl border ${
-                    isDay ? 'bg-slate-100 border-slate-200' : 'bg-[#06181c] border-[#174650]'
-                  }`}
-                >
+                {[
+                  { id: 'both' as ReaderDisplayMode, bn: 'আরবি + অনুবাদ', en: 'Both' },
+                  { id: 'translation' as ReaderDisplayMode, bn: 'শুধু অনুবাদ', en: 'Text' },
+                  { id: 'arabic' as ReaderDisplayMode, bn: 'আরবি', en: 'Arabic' },
+                ].map((m) => (
                   <button
+                    key={m.id}
                     type="button"
-                    onClick={() => setFontScale((s) => Math.max(0.85, Number((s - 0.1).toFixed(2))))}
-                    className="min-h-[34px] min-w-[34px] px-2 rounded-lg text-xs font-extrabold hover:bg-white/60 dark:hover:bg-white/10 cursor-pointer"
-                    aria-label="Decrease font size"
+                    onClick={() => setDisplayMode(m.id)}
+                    className={`min-h-[32px] px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap shrink-0 ${
+                      displayMode === m.id
+                        ? 'bg-emerald-700 text-white shadow-xs'
+                        : isDay
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
                   >
-                    A-
+                    {isBn ? m.bn : m.en}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setFontScale((s) => Math.min(1.45, Number((s + 0.1).toFixed(2))))}
-                    className="min-h-[34px] min-w-[34px] px-2 rounded-lg text-xs font-extrabold hover:bg-white/60 dark:hover:bg-white/10 cursor-pointer"
-                    aria-label="Increase font size"
-                  >
-                    A+
-                  </button>
-                </div>
+                ))}
               </div>
-            </div>
 
-            <div>
-              <div className={`text-xs font-bold ${isDay ? 'text-[#006A4E]' : 'text-emerald-300'}`}>
-                {isBn ? selectedBookDef.bnName : selectedBookDef.enName}
-                <span aria-hidden="true"> · </span>
-                <span>{isBn ? `অধ্যায় ${formatNum(selectedChapterId, true)}` : `Chapter ${selectedChapterId}`}</span>
+              <div
+                className={`flex items-center gap-0.5 p-1 rounded-xl border ${
+                  isDay ? 'bg-white border-slate-200' : 'bg-[#06181c] border-[#174650]'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setFontScale((s) => Math.max(0.85, Number((s - 0.1).toFixed(2))))}
+                  className="min-h-[32px] min-w-[32px] px-2 rounded-lg text-xs font-extrabold hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
+                  aria-label="Decrease font size"
+                >
+                  A-
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFontScale((s) => Math.min(1.45, Number((s + 0.1).toFixed(2))))}
+                  className="min-h-[32px] min-w-[32px] px-2 rounded-lg text-xs font-extrabold hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer"
+                  aria-label="Increase font size"
+                >
+                  A+
+                </button>
               </div>
-              <h2 className={`text-base sm:text-xl font-extrabold mt-0.5 ${isDay ? 'text-slate-900' : 'text-white'}`}>
-                {chapterData
-                  ? isBn
-                    ? chapterData.titleBn
-                    : chapterData.titleEn
-                  : isBn
-                  ? 'হাদিস লোড হচ্ছে...'
-                  : 'Loading chapter...'}
-              </h2>
-              {chapterData && (
-                <p className={`text-xs tabular-nums mt-0.5 ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
-                  {isBn
-                    ? `এই অধ্যায়ে মোট ${formatNum(chapterHadiths.length, true)}টি হাদিস রয়েছে`
-                    : `${chapterHadiths.length} total hadiths in this chapter`}
-                </p>
-              )}
             </div>
           </div>
 
-          {/* Chapter Hadiths List */}
+          {/* Physical Kitab Page Sheet */}
           {isLoadingHadiths ? (
-            <div className={`p-12 rounded-3xl border text-center space-y-2 ${isDay ? 'bg-white border-slate-200' : 'bg-[#0a2329] border-[#16444e]'}`}>
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#006A4E] dark:text-emerald-400" />
+            <div className={`p-12 rounded-3xl border text-center space-y-2.5 shadow-sm ${isDay ? 'bg-[#fffdf7] border-[#dfd6be]' : 'bg-[#071f24] border-[#194650]'}`}>
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-emerald-700 dark:text-emerald-400" />
               <p className="text-xs font-bold">
-                {isBn ? 'অধ্যায়ের সকল হাদিস লোড হচ্ছে...' : 'Loading complete chapter hadiths...'}
+                {isBn ? 'কিতাবের পৃষ্ঠা ও হাদিসসমূহ খোলা হচ্ছে...' : 'Opening book pages...'}
               </p>
             </div>
           ) : hadithsError ? (
@@ -1845,92 +1971,244 @@ export const HadithView: React.FC<HadithViewProps> = ({
                   setSelectedChapterId(null);
                   setTimeout(() => setSelectedChapterId(cid), 10);
                 }}
-                className="px-4 py-2 rounded-xl bg-[#006A4E] text-white text-xs font-bold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold cursor-pointer"
               >
                 {isBn ? 'পুনরায় লোড করুন' : 'Reload Chapter'}
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {paginatedHadiths.map((entry) => renderFullHadithCard(entry, false))}
+            <div
+              className={`rounded-3xl border shadow-sm overflow-hidden ${
+                isDay
+                  ? 'bg-[#fffdf7] border-[#dfd6be]'
+                  : 'bg-[#071f24] border-[#194650]'
+              }`}
+            >
+              {/* Running Book Page Top Header (কিতাবের উপরের শিরোনাম ও পৃষ্ঠা নং) */}
+              <div
+                className={`px-5 sm:px-8 py-3 border-b flex flex-wrap items-center justify-between gap-2 text-xs font-bold ${
+                  isDay
+                    ? 'bg-[#faf4e4]/75 border-[#e6dec8] text-slate-700'
+                    : 'bg-[#0b272d] border-[#184650] text-emerald-200'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-extrabold text-emerald-800 dark:text-emerald-300 truncate">
+                    {isBn ? selectedBookDef.bnName : selectedBookDef.enName}
+                  </span>
+                  <span aria-hidden="true" className="opacity-40">·</span>
+                  <span className="tabular-nums truncate">
+                    {isBn ? `অধ্যায় ${formatNum(selectedChapterId, true)}` : `Chapter ${selectedChapterId}`}
+                  </span>
+                </div>
 
-              {/* Pagination Controls for Large Chapters */}
-              {totalPages > 1 && (
-                <div
-                  className={`p-3.5 rounded-2xl border flex flex-wrap items-center justify-between gap-2 ${
-                    isDay ? 'bg-white border-slate-200' : 'bg-[#0a2329] border-[#16444e]'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    disabled={chapterPage <= 1}
-                    onClick={() => setChapterPage((p) => Math.max(1, p - 1))}
-                    className="min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#1a4c56] text-xs font-bold disabled:opacity-40 flex items-center gap-1 cursor-pointer"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    <span>{isBn ? 'পূর্ববর্তী পৃষ্ঠা' : 'Prev Page'}</span>
-                  </button>
+                <div className="tabular-nums font-extrabold text-emerald-800 dark:text-emerald-300 shrink-0">
+                  {isBn
+                    ? `পৃষ্ঠা ${formatNum(chapterPage, true)} / ${formatNum(totalPages, true)}`
+                    : `Page ${chapterPage} of ${totalPages}`}
+                </div>
+              </div>
 
-                  <span className="text-xs font-bold tabular-nums">
+              {/* Centered Classical Chapter Title Heading */}
+              <div
+                className={`px-5 sm:px-8 py-5 border-b text-center space-y-1 ${
+                  isDay ? 'border-[#ebe4d0]' : 'border-[#153f48]'
+                }`}
+              >
+                {chapterData?.titleAr && (
+                  <div dir="rtl" className="font-arabic text-xl font-bold text-emerald-800 dark:text-emerald-300">
+                    {chapterData.titleAr}
+                  </div>
+                )}
+                <h2 className={`text-lg sm:text-xl font-black tracking-tight ${isDay ? 'text-slate-900' : 'text-white'}`}>
+                  {chapterData
+                    ? isBn
+                      ? chapterData.titleBn
+                      : chapterData.titleEn
+                    : isBn
+                    ? 'অধ্যায় লোড হচ্ছে...'
+                    : 'Loading chapter...'}
+                </h2>
+                {chapterData && isBn && chapterData.titleBn !== chapterData.titleEn && (
+                  <div className={`text-xs ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {chapterData.titleEn}
+                  </div>
+                )}
+                {chapterData && (
+                  <div className={`text-[11px] font-bold tabular-nums pt-0.5 ${isDay ? 'text-emerald-800/80' : 'text-emerald-300/80'}`}>
+                    {isBn
+                      ? `মোট ${formatNum(chapterHadiths.length, true)}টি হাদিস · এই পৃষ্ঠায় ${formatNum(
+                          (chapterPage - 1) * PAGE_SIZE + 1,
+                          true
+                        )}–${formatNum(Math.min(chapterPage * PAGE_SIZE, chapterHadiths.length), true)} নং ক্রম`
+                      : `${chapterHadiths.length} hadiths total · Showing ${(chapterPage - 1) * PAGE_SIZE + 1}–${Math.min(
+                          chapterPage * PAGE_SIZE,
+                          chapterHadiths.length
+                        )}`}
+                  </div>
+                )}
+              </div>
+
+              {/* Flowing Printed Book Hadith Entries with Ornamental Hairline Dividers */}
+              <div className="py-1">
+                {paginatedHadiths.map((entry, idx) => (
+                  <React.Fragment key={entry.uid}>
+                    {idx > 0 && (
+                      <div className="px-6 sm:px-10 flex items-center gap-3" aria-hidden="true">
+                        <div className={`h-px flex-1 ${isDay ? 'bg-[#ebe4d0]' : 'bg-[#143c44]'}`} />
+                        <span className={`text-xs select-none ${isDay ? 'text-emerald-700/50' : 'text-emerald-400/50'}`}>
+                          ❖
+                        </span>
+                        <div className={`h-px flex-1 ${isDay ? 'bg-[#ebe4d0]' : 'bg-[#143c44]'}`} />
+                      </div>
+                    )}
+                    {renderFullHadithCard(entry, false, 'book-page')}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Running Book Page Footer & Interactive Page-Number Flip Controls */}
+              <div
+                className={`px-4 sm:px-8 py-4 border-t space-y-3 ${
+                  isDay
+                    ? 'bg-[#faf4e4]/70 border-[#e6dec8]'
+                    : 'bg-[#0b272d] border-[#184650]'
+                }`}
+              >
+                {/* Classic Centered Folio Marker */}
+                <div className="flex items-center justify-center gap-3">
+                  <div className={`h-px w-12 sm:w-20 ${isDay ? 'bg-[#d8ceb2]' : 'bg-[#1d545e]'}`} />
+                  <span className={`text-xs font-extrabold tabular-nums ${isDay ? 'text-slate-600' : 'text-emerald-200'}`}>
                     {isBn
                       ? `পৃষ্ঠা ${formatNum(chapterPage, true)} / ${formatNum(totalPages, true)}`
                       : `Page ${chapterPage} of ${totalPages}`}
                   </span>
-
-                  <button
-                    type="button"
-                    disabled={chapterPage >= totalPages}
-                    onClick={() => setChapterPage((p) => Math.min(totalPages, p + 1))}
-                    className="min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-[#1a4c56] text-xs font-bold disabled:opacity-40 flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>{isBn ? 'পরবর্তী পৃষ্ঠা' : 'Next Page'}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  <div className={`h-px w-12 sm:w-20 ${isDay ? 'bg-[#d8ceb2]' : 'bg-[#1d545e]'}`} />
                 </div>
-              )}
 
-              {/* Previous / Next Chapter Navigation Bar */}
-              {(prevChapter || nextChapter) && (
-                <div className="grid grid-cols-2 gap-2.5 pt-1">
-                  <button
-                    type="button"
-                    disabled={!prevChapter}
-                    onClick={() => prevChapter && setSelectedChapterId(prevChapter.chapterId)}
-                    className={`min-h-[52px] p-3 rounded-2xl border text-left transition flex items-center gap-2 disabled:opacity-35 cursor-pointer ${
-                      isDay
-                        ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
-                        : 'bg-[#0a2329] hover:bg-[#10323a] border-[#16444e] text-white'
-                    }`}
-                  >
-                    <ChevronLeft className="w-4 h-4 shrink-0" />
-                    <div className="min-w-0">
-                      <div className="text-[10px] opacity-70">{isBn ? 'পূর্ববর্তী অধ্যায়' : 'Previous Chapter'}</div>
-                      <div className="text-xs font-extrabold truncate">
-                        {prevChapter ? (isBn ? prevChapter.titleBn : prevChapter.titleEn) : '—'}
-                      </div>
-                    </div>
-                  </button>
+                {totalPages > 1 && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      disabled={chapterPage <= 1}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setChapterPage((p) => Math.max(1, p - 1));
+                      }}
+                      className={`min-h-[40px] px-3.5 py-1.5 rounded-xl border text-xs font-extrabold disabled:opacity-40 flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0 transition ${
+                        isDay
+                          ? 'bg-white hover:bg-slate-50 border-[#dcd3ba] text-slate-800'
+                          : 'bg-[#071f24] hover:bg-[#10363e] border-[#1d545e] text-emerald-200'
+                      }`}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>{isBn ? 'আগের পৃষ্ঠা' : 'Prev Page'}</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    disabled={!nextChapter}
-                    onClick={() => nextChapter && setSelectedChapterId(nextChapter.chapterId)}
-                    className={`min-h-[52px] p-3 rounded-2xl border text-right transition flex items-center justify-end gap-2 disabled:opacity-35 cursor-pointer ${
-                      isDay
-                        ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
-                        : 'bg-[#0a2329] hover:bg-[#10323a] border-[#16444e] text-white'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <div className="text-[10px] opacity-70">{isBn ? 'পরবর্তী অধ্যায়' : 'Next Chapter'}</div>
-                      <div className="text-xs font-extrabold truncate">
-                        {nextChapter ? (isBn ? nextChapter.titleBn : nextChapter.titleEn) : '—'}
-                      </div>
+                    {/* Clickable Book Page Numbers */}
+                    <div className="flex flex-wrap items-center justify-center gap-1">
+                      {getPaginationTokens(chapterPage, totalPages).map((token, tIdx) =>
+                        token === 'ellipsis' ? (
+                          <span
+                            key={`el-${tIdx}`}
+                            className={`px-1.5 text-xs font-bold ${isDay ? 'text-slate-400' : 'text-slate-500'}`}
+                          >
+                            …
+                          </span>
+                        ) : (
+                          <button
+                            key={token}
+                            type="button"
+                            onClick={() => {
+                              if (soundEnabled) soundHaptics.playTap();
+                              setChapterPage(token);
+                            }}
+                            className={`min-w-[34px] h-[34px] px-2 rounded-lg text-xs font-extrabold tabular-nums transition cursor-pointer ${
+                              chapterPage === token
+                                ? 'bg-emerald-700 text-white shadow-xs'
+                                : isDay
+                                ? 'bg-white/90 hover:bg-emerald-50 border border-[#e3dac1] text-slate-700'
+                                : 'bg-[#071f24] hover:bg-[#10363e] border border-[#1a4a54] text-slate-200'
+                            }`}
+                          >
+                            {formatNum(token, isBn)}
+                          </button>
+                        )
+                      )}
                     </div>
-                    <ChevronRight className="w-4 h-4 shrink-0" />
-                  </button>
+
+                    <button
+                      type="button"
+                      disabled={chapterPage >= totalPages}
+                      onClick={() => {
+                        if (soundEnabled) soundHaptics.playTap();
+                        setChapterPage((p) => Math.min(totalPages, p + 1));
+                      }}
+                      className={`min-h-[40px] px-3.5 py-1.5 rounded-xl border text-xs font-extrabold disabled:opacity-40 flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0 transition ${
+                        isDay
+                          ? 'bg-white hover:bg-slate-50 border-[#dcd3ba] text-slate-800'
+                          : 'bg-[#071f24] hover:bg-[#10363e] border-[#1d545e] text-emerald-200'
+                      }`}
+                    >
+                      <span>{isBn ? 'পরের পৃষ্ঠা' : 'Next Page'}</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Previous / Next Chapter Navigation Bar */}
+          {!isLoadingHadiths && !hadithsError && (prevChapter || nextChapter) && (
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
+              <button
+                type="button"
+                disabled={!prevChapter}
+                onClick={() => {
+                  if (prevChapter) {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setSelectedChapterId(prevChapter.chapterId);
+                  }
+                }}
+                className={`min-h-[54px] p-3.5 rounded-2xl border text-left transition flex items-center gap-2 disabled:opacity-35 cursor-pointer ${
+                  isDay
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                    : 'bg-[#0a2329] hover:bg-[#10323a] border-[#16444e] text-white'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4 shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-[10px] font-semibold opacity-70">{isBn ? 'পূর্ববর্তী অধ্যায়' : 'Previous Chapter'}</div>
+                  <div className="text-xs font-extrabold truncate">
+                    {prevChapter ? (isBn ? prevChapter.titleBn : prevChapter.titleEn) : '—'}
+                  </div>
                 </div>
-              )}
+              </button>
+
+              <button
+                type="button"
+                disabled={!nextChapter}
+                onClick={() => {
+                  if (nextChapter) {
+                    if (soundEnabled) soundHaptics.playTap();
+                    setSelectedChapterId(nextChapter.chapterId);
+                  }
+                }}
+                className={`min-h-[54px] p-3.5 rounded-2xl border text-right transition flex items-center justify-end gap-2 disabled:opacity-35 cursor-pointer ${
+                  isDay
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                    : 'bg-[#0a2329] hover:bg-[#10323a] border-[#16444e] text-white'
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="text-[10px] font-semibold opacity-70">{isBn ? 'পরবর্তী অধ্যায়' : 'Next Chapter'}</div>
+                  <div className="text-xs font-extrabold truncate">
+                    {nextChapter ? (isBn ? nextChapter.titleBn : nextChapter.titleEn) : '—'}
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 shrink-0" />
+              </button>
             </div>
           )}
         </div>
