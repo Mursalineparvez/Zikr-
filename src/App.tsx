@@ -296,7 +296,7 @@ export default function App() {
     if (metaThemeColor) {
       metaThemeColor.setAttribute(
         'content',
-        settings.themeMode === 'day' ? palette.primary : '#03171b'
+        settings.themeMode === 'day' ? palette.primary : palette.darkCanvas
       );
     }
     if (settings.themeMode === 'day') {
@@ -2112,7 +2112,7 @@ export default function App() {
   return (
     <div
       className={`min-h-screen flex flex-col font-sans transition-colors duration-300 pb-8 selection:bg-[var(--app-primary,#006A4E)] selection:text-white ${
-        isDay ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-900' : 'bg-[#03171b] text-[#e6f4f2]'
+        isDay ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-900' : 'bg-[var(--app-dark-canvas,#03171b)] text-[#e6f4f2]'
       }`}
     >
       {/* Top Header */}
@@ -2142,7 +2142,7 @@ export default function App() {
           className={`fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 border ${
             isDay
               ? 'bg-[var(--app-primary,#006A4E)] text-white border-white/25'
-              : 'bg-[#061f24] text-emerald-300 border-emerald-800/60 shadow-black/80'
+              : 'bg-[var(--app-dark-surface,#061f24)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)] shadow-black/80'
           }`}
         >
           <BookmarkCheck className="w-4 h-4 text-[var(--app-primary-light,#6ee7b7)]" />

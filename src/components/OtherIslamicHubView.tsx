@@ -41,10 +41,10 @@ const toBnDigits = (num: number | string) =>
 const SubViewFallback: React.FC<{ isDay: boolean; selectedLanguage?: ZikrLanguage }> = ({ isDay, selectedLanguage = 'bn' }) => (
   <div className="flex flex-col items-center justify-center min-h-[320px] py-16 space-y-3">
     <div className={`w-8 h-8 border-3 rounded-full animate-spin ${
-      isDay ? 'border-teal-600/30 border-t-teal-600' : 'border-emerald-500/30 border-t-emerald-400'
+      isDay ? 'border-[var(--app-primary,#006A4E)]/30 border-t-[var(--app-primary,#006A4E)]' : 'border-[var(--app-primary-light,#6ee7b7)]/30 border-t-[var(--app-primary-light,#6ee7b7)]'
     }`} />
     <span className={`text-xs font-bold animate-pulse ${
-      isDay ? 'text-teal-800' : 'text-emerald-400'
+      isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-[var(--app-primary-light,#6ee7b7)]'
     }`}>
       {selectedLanguage === 'bn' ? 'লোড হচ্ছে...' : selectedLanguage === 'ar' ? 'جارٍ التحميل...' : 'Loading...'}
     </span>
@@ -286,7 +286,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
       title: NAV_TRANSLATIONS.history_timeline[selectedLanguage] || 'ইতিহাসের পাতা',
       arabic: 'خريطة التاريخ الإسلامي',
       desc: selectedLanguage === 'bn' ? '৫৭০ খ্রি. থেকে ২০২৬ খ্রি. পর্যন্ত সকল ঐতিহাসিক ঘটনা, অবস্থান ও ইন্টারঅ্যাক্টিভ মানচিত্র' : 'Interactive history map & events from 570 AD to 2026 AD.',
-      icon: <Compass className="w-6 h-6 text-amber-400 animate-pulse" />,
+      icon: <Compass className="w-6 h-6 text-amber-400" />,
       color: 'from-amber-500/15 to-emerald-500/10 border-amber-500/30',
       badge: selectedLanguage === 'bn' ? 'ইন্টারেক্টিভ ম্যাপ' : 'History Map',
     },
@@ -463,10 +463,10 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
           {/* Simple Flat Header */}
           <div
             className={`pb-3.5 border-b ${
-              isDay ? 'border-[#dcebe8]' : 'border-[#163640]'
+              isDay ? 'border-[var(--app-border,#cbe6d8)]' : 'border-[var(--app-dark-border,#184850)]'
             }`}
           >
-            <div className={`flex items-center gap-2 text-xs font-bold mb-1 ${isDay ? 'text-emerald-700' : 'text-emerald-300'}`}>
+            <div className={`flex items-center gap-2 text-xs font-bold mb-1 ${isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-[var(--app-primary-light,#6ee7b7)]'}`}>
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>
                 {selectedLanguage === 'bn'
@@ -478,7 +478,7 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   : 'Comprehensive Islamic Suite'}
               </span>
             </div>
-            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[#006747]' : 'text-white'}`}>
+            <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-white'}`}>
               {OTHER_HUB_UI.bannerTitle[selectedLanguage] || OTHER_HUB_UI.bannerTitle.en}
             </h2>
             <p className={`text-xs sm:text-sm mt-1 max-w-xl ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
@@ -581,14 +581,16 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   }}
                   className={`p-3 sm:p-3.5 rounded-2xl border shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col items-center justify-between text-center min-h-[155px] cursor-pointer group ${
                     isDay
-                      ? 'bg-white border-slate-200/90 hover:border-emerald-400'
-                      : 'bg-[#0a2026] border-[#143b44] hover:border-emerald-500/50'
+                      ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] hover:border-[var(--app-primary,#006A4E)]'
+                      : 'bg-[var(--app-dark-surface,#062024)] border-[var(--app-dark-border,#184850)] hover:border-[var(--app-primary-light,#6ee7b7)]/50'
                   }`}
                 >
                   {/* Centered Top Icon */}
                   <div
                     className={`w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center text-2xl mb-1.5 transition-transform group-hover:scale-105 shadow-2xs ${
-                      isDay ? 'bg-[#f0f7f4] text-[#005a3e]' : 'bg-[#123138] text-emerald-300'
+                      isDay
+                        ? 'bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)]'
+                        : 'bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)]'
                     }`}
                   >
                     {item.icon}
@@ -600,12 +602,14 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                       className={`text-sm sm:text-base font-black transition-colors ${
                         item.id === 'prophets_25' ? 'line-clamp-2 leading-snug' : 'line-clamp-1'
                       } ${
-                        isDay ? 'text-slate-900 group-hover:text-[#005a3e]' : 'text-white group-hover:text-emerald-400'
+                        isDay
+                          ? 'text-slate-900 group-hover:text-[var(--app-primary,#006A4E)]'
+                          : 'text-white group-hover:text-[var(--app-primary-light,#6ee7b7)]'
                       }`}
                     >
                       {item.title}
                     </h3>
-                    <p className={`text-[11px] font-medium line-clamp-1 ${isDay ? 'text-slate-400' : 'text-slate-400'}`}>
+                    <p className="text-[11px] font-medium line-clamp-1 text-slate-400">
                       {subText}
                     </p>
                   </div>
@@ -614,8 +618,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
                   <div
                     className={`mt-2.5 px-4 py-1.5 rounded-full border text-xs font-bold flex items-center justify-center gap-1 shadow-2xs transition-all ${
                       isDay
-                        ? 'border-slate-200 bg-white group-hover:bg-[#edf7f4] text-[#005a3e]'
-                        : 'border-[#1c4750] bg-[#07171c] group-hover:bg-[#102d35] text-emerald-400'
+                        ? 'border-[var(--app-border,#cbe6d8)] bg-[var(--app-surface,#fafdfb)] group-hover:bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)]'
+                        : 'border-[var(--app-dark-border,#184850)] bg-[var(--app-dark-canvas,#03171b)] group-hover:bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)]'
                     }`}
                   >
                     <span>{actionText}</span>

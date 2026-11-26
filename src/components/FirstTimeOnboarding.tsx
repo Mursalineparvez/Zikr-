@@ -271,7 +271,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
     } catch {}
   };
 
-  const cardBaseClass = 'bg-white border-[var(--app-border,#e2e8f0)] text-slate-900';
+  const cardBaseClass = 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#e2e8f0)] text-slate-900';
 
   const cardActiveClass =
     'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-primary,#006A4E)] ring-1 ring-[var(--app-primary,#006A4E)]/30 text-slate-900';
@@ -532,7 +532,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       }}
                       className="w-full text-left rounded-2xl border px-4 py-3.5 flex items-center gap-3.5 transition-all cursor-pointer active:scale-[0.99] shadow-2xs"
                       style={{
-                        backgroundColor: active ? t.softBg : '#ffffff',
+                        backgroundColor: active ? t.softBg : t.cardBg,
                         borderColor: active ? t.primary : t.border,
                         boxShadow: active ? `0 0 0 1px ${t.primary}40` : undefined,
                       }}
@@ -733,10 +733,10 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                               }}
                               className={`px-2.5 py-1.5 rounded-xl text-left text-xs font-bold border transition cursor-pointer truncate ${
                                 isChosen
-                                  ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                                  ? 'bg-[var(--app-primary,#006A4E)] text-white border-[var(--app-primary,#006A4E)]'
                                   : isDarkCanvas
                                   ? 'bg-white/5 border-white/10 text-slate-200 hover:bg-white/10'
-                                  : 'bg-white border-slate-200 text-slate-700 hover:bg-amber-50'
+                                  : 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-700 hover:bg-[var(--app-surface-soft,#e9f6ef)]'
                               }`}
                             >
                               {city.name}
@@ -760,7 +760,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     locationMode === 'skip'
                       ? isDarkCanvas
                         ? 'bg-[#0f2f36] border-slate-400 text-white'
-                        : 'bg-[#eef1f3] border-slate-600 text-slate-900'
+                        : 'bg-[var(--app-surface-tray,#dff2e8)] border-[var(--app-primary,#006A4E)] text-slate-900'
                       : cardBaseClass
                   }`}
                 >
@@ -866,7 +866,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     notificationsMode === 'later'
                       ? isDarkCanvas
                         ? 'bg-[#0f2f36] border-slate-400 text-white'
-                        : 'bg-[#eef1f3] border-slate-600 text-slate-900'
+                        : 'bg-[var(--app-surface-tray,#dff2e8)] border-[var(--app-primary,#006A4E)] text-slate-900'
                       : cardBaseClass
                   }`}
                 >
@@ -981,9 +981,9 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                   return (
                     <div
                       key={idx}
-                      className="rounded-2xl border border-slate-200/85 bg-[#f6f7f9] dark:bg-slate-900/50 dark:border-slate-800 px-4 py-3 flex items-center gap-3.5 shadow-2xs transition-all"
+                      className="rounded-2xl border border-[var(--app-border,#cbe6d8)] bg-[var(--app-surface,#fafdfb)] px-4 py-3 flex items-center gap-3.5 shadow-2xs transition-all"
                     >
-                      <div className="w-9 h-9 rounded-xl bg-[#eef1f6] border border-[#dce2ec] text-[#006A4E] dark:bg-slate-800 dark:border-slate-700 dark:text-emerald-300 flex items-center justify-center shrink-0 shadow-2xs">
+                      <div className="w-9 h-9 rounded-xl bg-[var(--app-surface-soft,#e9f6ef)] border border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)] flex items-center justify-center shrink-0 shadow-2xs">
                         <IconComp className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1230,7 +1230,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     startPreset === 'custom_270' ? cardActiveClass : cardBaseClass
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-[var(--app-surface-soft,#e9f6ef)] border border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)] flex items-center justify-center shrink-0">
                     <BookOpen className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1260,15 +1260,15 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
 
         {/* 270+ Zikr / Dua Custom Picker Modal */}
         {isDuaPickerOpen && (
-          <div className="fixed inset-0 z-[150] w-full h-[100dvh] bg-white text-slate-900 flex flex-col overflow-hidden animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-[150] w-full h-[100dvh] bg-[var(--app-canvas,#f3faf6)] text-slate-900 flex flex-col overflow-hidden animate-in fade-in duration-200">
             <div className="w-full h-full flex flex-col overflow-hidden">
               {/* Modal Header */}
-              <div className="px-4 py-3.5 sm:px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+              <div className="px-4 py-3.5 sm:px-6 border-b border-[var(--app-border,#cbe6d8)] flex items-center justify-between bg-[var(--app-surface,#fafdfb)] shrink-0">
                 <div>
                   <h3 className="text-base font-black text-slate-900">
                     {isBn ? '২৭০+ জিকির ও দোয়া থেকে বাছাই করুন' : 'Choose from 270+ Zikrs & Duas'}
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  <p className="text-xs text-slate-600 font-medium mt-0.5">
                     {isBn
                       ? `${toBnDigits(selectedCustomZikrs.length)}টি জিকির নির্বাচিত হয়েছে (প্রয়োজনমতো সিলেক্ট/আনসিলেক্ট করুন)`
                       : `${selectedCustomZikrs.length} Zikrs selected (select or deselect as needed)`}
@@ -1277,7 +1277,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsDuaPickerOpen(false)}
-                  className="w-10 h-10 rounded-full bg-slate-200/70 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition cursor-pointer shrink-0"
+                  className="w-11 h-11 rounded-full bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-slate-700 flex items-center justify-center transition cursor-pointer shrink-0"
                   aria-label="Close"
                 >
                   <X className="w-5 h-5" />
@@ -1285,7 +1285,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
               </div>
 
               {/* Search Input */}
-              <div className="px-4 py-3 sm:px-6 border-b border-slate-100 bg-white shrink-0">
+              <div className="px-4 py-3 sm:px-6 border-b border-[var(--app-border,#cbe6d8)] bg-[var(--app-surface,#fafdfb)] shrink-0">
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
@@ -1293,7 +1293,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     value={duaSearchQuery}
                     onChange={(e) => setDuaSearchQuery(e.target.value)}
                     placeholder={isBn ? 'নাম বা অর্থ দিয়ে খুঁজুন (যেমন: সুবহানাল্লাহ, ইস্তিগফার)...' : 'Search by name or translation...'}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs outline-none bg-slate-50 text-slate-900 focus:bg-white focus:border-[#006A4E]"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--app-border,#cbe6d8)] text-xs outline-none bg-[var(--app-canvas,#f3faf6)] text-slate-900 focus:bg-[var(--app-surface,#fafdfb)] focus:border-[var(--app-primary,#006A4E)]"
                   />
                 </div>
               </div>
@@ -1319,13 +1319,13 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                       onClick={() => handleToggleDuaSelection(dua)}
                       className={`w-full text-left rounded-2xl border p-3.5 flex items-start gap-3.5 transition cursor-pointer ${
                         isSelected
-                          ? 'bg-[#e9f6ef] border-[#006A4E] ring-1 ring-[#006A4E]/30 shadow-2xs'
-                          : 'bg-white border-slate-200 hover:border-slate-300'
+                          ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-primary,#006A4E)] ring-1 ring-[var(--app-primary,#006A4E)]/30 shadow-2xs'
+                          : 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] hover:border-[var(--app-primary-light,#6ee7b7)]'
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition ${
-                          isSelected ? 'bg-[#006A4E] border-[#006A4E] text-white' : 'border-slate-300 bg-white'
+                          isSelected ? 'bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white' : 'border-[var(--app-border,#cbe6d8)] bg-white'
                         }`}
                       >
                         {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -1335,7 +1335,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                           <span className="text-xs sm:text-sm font-black text-slate-900">
                             {isBn ? dua.translations?.bn?.title || dua.title : dua.title}
                           </span>
-                          <span className="font-arabic text-sm text-[#006A4E] shrink-0 font-bold" dir="rtl">
+                          <span className="font-arabic text-sm text-[var(--app-primary,#006A4E)] shrink-0 font-bold" dir="rtl">
                             {dua.arabic}
                           </span>
                         </div>
@@ -1343,7 +1343,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                           {isBn ? dua.translations?.bn?.translation || dua.translation : dua.translation}
                         </p>
                         {dua.reference && (
-                          <span className="inline-block text-[10px] text-slate-400 font-semibold mt-1">
+                          <span className="inline-block text-[10px] text-slate-500 font-semibold mt-1">
                             {dua.reference}
                           </span>
                         )}
@@ -1354,7 +1354,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
               </div>
 
               {/* Modal Footer */}
-              <div className="px-4 py-3 sm:px-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
+              <div className="px-4 py-3 sm:px-6 border-t border-[var(--app-border,#cbe6d8)] bg-[var(--app-surface,#fafdfb)] flex items-center justify-between gap-3 shrink-0">
                 <span className="text-xs font-bold text-slate-600">
                   {isBn ? `${toBnDigits(selectedCustomZikrs.length)}টি জিকির নির্বাচিত` : `${selectedCustomZikrs.length} Zikrs selected`}
                 </span>
@@ -1364,7 +1364,7 @@ export const FirstTimeOnboarding: React.FC<FirstTimeOnboardingProps> = ({
                     if (soundEnabled) soundHaptics.playTap();
                     setIsDuaPickerOpen(false);
                   }}
-                  className="px-6 py-2.5 rounded-full bg-[#006A4E] text-white text-xs font-extrabold shadow-md hover:bg-[#005840] transition cursor-pointer"
+                  className="min-h-[44px] px-6 py-2.5 rounded-full bg-[var(--app-primary,#006A4E)] text-white text-xs font-extrabold shadow-md hover:bg-[var(--app-primary-dark,#005840)] transition cursor-pointer"
                 >
                   {isBn ? 'নিশ্চিত করুন' : 'Confirm'}
                 </button>
@@ -1519,7 +1519,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
     <div className="fixed inset-0 z-[115] bg-black/70 backdrop-blur-[2px] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-sm space-y-3.5">
         {/* SPOTLIGHT PREVIEW CARD (Mirrors Screenshots 10 & 11) */}
-        <div className="rounded-3xl bg-[#fafaf4] border border-[#e7e2cc] p-4 shadow-2xl text-slate-900 overflow-hidden">
+        <div className="rounded-3xl bg-[var(--app-surface,#fafdfb)] border border-[var(--app-border,#cbe6d8)] p-4 shadow-2xl text-slate-900 overflow-hidden">
           {current.id === 'amal' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs font-bold tabular-nums">
@@ -1536,7 +1536,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                   <path
                     d="M 28 84 Q 150 -8 292 84"
                     fill="none"
-                    stroke="#e2dfd0"
+                    stroke="var(--app-border, #cbe6d8)"
                     strokeWidth="2.5"
                     strokeDasharray="5 5"
                   />
@@ -1557,7 +1557,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                     { x: 292, y: 84, label: isBn ? 'ইশা' : 'Isha', val: isBn ? '০/৮' : '0/8' },
                   ].map((p) => (
                     <g key={p.label}>
-                      <circle cx={p.x} cy={p.y} r="17" fill="#ffffff" stroke="#e5e1d2" strokeWidth="2.5" />
+                      <circle cx={p.x} cy={p.y} r="17" fill="#ffffff" stroke="var(--app-border, #cbe6d8)" strokeWidth="2.5" />
                       <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="9.5" fontWeight="700" fill="#1e293b">
                         {p.val}
                       </text>
@@ -1573,7 +1573,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                   <ListChecks className="w-3.5 h-3.5" />
                   <span>{isBn ? 'সব আমল' : 'All amal'}</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 text-[11px] font-bold">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[var(--app-border,#cbe6d8)] text-slate-700 text-[11px] font-bold">
                   <InfinityIcon className="w-3.5 h-3.5" />
                   <span>{isBn ? 'যেকোনো সময় · ০/৩২' : 'Any time · 0/32'}</span>
                 </span>
@@ -1583,27 +1583,27 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
 
           {current.id === 'tasbih' && (
             <div className="space-y-4 py-1 text-center">
-              <div className="inline-block px-5 py-2 rounded-2xl bg-white border border-[#ece6d2] shadow-2xs">
+              <div className="inline-block px-5 py-2 rounded-2xl bg-white border border-[var(--app-border,#cbe6d8)] shadow-2xs">
                 <div className="text-xs font-extrabold">{isBn ? 'সুবহানাল্লাহ' : 'SubhanAllah'}</div>
                 <div className="text-[10px] text-slate-500 font-semibold">{isBn ? '১২টি মাসনুন জিকির' : '12 Daily Zikrs'}</div>
               </div>
               <div className="relative w-40 h-40 mx-auto flex items-center justify-center">
                 <svg viewBox="0 0 180 180" className="w-full h-full">
-                  <circle cx="90" cy="90" r="82" fill="none" stroke="#f0ebd8" strokeWidth="2" />
+                  <circle cx="90" cy="90" r="82" fill="none" stroke="var(--app-border, #cbe6d8)" strokeWidth="2" />
                   <circle
                     cx="90"
                     cy="90"
                     r="72"
                     fill="none"
-                    stroke="#e3c05e"
+                    stroke="var(--app-primary-mid, #059669)"
                     strokeWidth="2.5"
                     strokeDasharray="2 9.5"
                     strokeLinecap="round"
                   />
-                  <circle cx="90" cy="90" r="56" fill="#ffffff" stroke="#ede7d3" strokeWidth="1.5" />
+                  <circle cx="90" cy="90" r="56" fill="#ffffff" stroke="var(--app-border, #cbe6d8)" strokeWidth="1.5" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-black tabular-nums text-[#d9a20b]">
+                  <span className="text-3xl font-black tabular-nums text-[var(--app-primary,#006A4E)]">
                     {isBn ? '০' : '0'}
                   </span>
                   <span className="text-[11px] font-bold text-slate-500">
@@ -1612,10 +1612,10 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                 </div>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <div className="flex-1 px-3 py-2 rounded-full bg-white border border-[#e7e2cc] text-[11px] text-slate-500 text-left font-semibold">
+                <div className="flex-1 px-3 py-2 rounded-full bg-white border border-[var(--app-border,#cbe6d8)] text-[11px] text-slate-500 text-left font-semibold">
                   {isBn ? 'লক্ষ্য: ১০০ · ৫০০ · ১০০০' : 'Targets: 100 · 500 · 1000'}
                 </div>
-                <div className="px-3 py-2 rounded-full bg-white border border-slate-200 text-[11px] font-bold text-slate-700 inline-flex items-center gap-1">
+                <div className="px-3 py-2 rounded-full bg-white border border-[var(--app-border,#cbe6d8)] text-[11px] font-bold text-slate-700 inline-flex items-center gap-1">
                   <RotateCcw className="w-3 h-3" />
                   <span>{isBn ? 'রিসেট' : 'Reset'}</span>
                 </div>
@@ -1625,10 +1625,10 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
 
           {current.id === 'quran' && (
             <div className="space-y-3 py-2 text-center">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 text-[#006A4E] flex items-center justify-center">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-[var(--app-surface-soft,#e9f6ef)] border border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)] flex items-center justify-center">
                 <BookOpen className="w-6 h-6" />
               </div>
-              <div className="font-arabic text-xl font-bold text-[#006A4E]">
+              <div className="font-arabic text-xl font-bold text-[var(--app-primary,#006A4E)]">
                 بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
               </div>
               <p className="text-xs text-slate-600 font-semibold">
@@ -1636,7 +1636,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
                   ? 'পরম করুণাময় অসীম দয়ালু আল্লাহর নামে শুরু করছি'
                   : 'In the name of Allah, the Entirely Merciful, the Especially Merciful'}
               </p>
-              <div className="flex items-center justify-center gap-2 text-[11px] font-bold text-emerald-700">
+              <div className="flex items-center justify-center gap-2 text-[11px] font-bold text-[var(--app-primary,#006A4E)]">
                 <span>{isBn ? '১১৪ সূরা' : '114 Surahs'}</span>
                 <span>·</span>
                 <span>{isBn ? 'তাজবীদ' : 'Tajweed'}</span>
@@ -1664,7 +1664,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
 
           {current.id === 'ready' && (
             <div className="space-y-3 py-2 text-center">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-[var(--app-surface-soft,#e9f6ef)] border border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)] flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="text-sm font-black text-slate-900">
@@ -1680,7 +1680,7 @@ export const GuidedAppTour: React.FC<GuidedAppTourProps> = ({
         </div>
 
         {/* BOTTOM TOOLTIP DIALOG (Mirrors Screenshots 10 & 11) */}
-        <div className="rounded-3xl bg-white p-5 shadow-2xl text-slate-900 space-y-3.5 border border-[var(--app-border,#e2e8f0)]">
+        <div className="rounded-3xl bg-[var(--app-surface,#fafdfb)] p-5 shadow-2xl text-slate-900 space-y-3.5 border border-[var(--app-border,#e2e8f0)]">
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-sm sm:text-base font-extrabold text-[var(--app-primary,#006A4E)]">
               {current.title}

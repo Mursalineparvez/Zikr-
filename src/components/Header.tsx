@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 transition-all duration-300">
       {/* Compact Header Bar: User Profile Avatar + Salam & Name + Live Date */}
-      <div className="bg-white/95 backdrop-blur-md border-b border-[var(--app-border,#e2e8f0)] px-3 sm:px-4 py-2 text-slate-700 shadow-xs transition-colors duration-300">
+      <div className="bg-[var(--app-surface,#fafdfb)]/95 dark:bg-[var(--app-dark-surface,#062024)]/95 backdrop-blur-md border-b border-[var(--app-border,#cbe6d8)] dark:border-[var(--app-dark-border,#184850)] px-3 sm:px-4 py-2 text-slate-700 dark:text-slate-200 shadow-xs transition-colors duration-300">
         <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-2 text-xs">
           {/* Left User Profile Picture + Salam Greeting & User Name */}
           <div className="flex items-center gap-2.5 min-w-0">
@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
                   ? 'عرض جميع تفاصيل الحساب'
                   : 'View full account details'
               }
-              className="w-9 h-9 rounded-full border border-[var(--app-primary,#006A4E)]/30 bg-emerald-50 flex items-center justify-center shadow-sm transition transform hover:scale-105 active:scale-95 overflow-hidden shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--app-primary,#006A4E)]/40"
+              className="w-9 h-9 rounded-full border border-[var(--app-primary,#006A4E)]/30 bg-[var(--app-surface-soft,#e9f6ef)] dark:bg-[var(--app-dark-surface-soft,#0c3138)] flex items-center justify-center shadow-sm transition transform hover:scale-105 active:scale-95 overflow-hidden shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--app-primary,#006A4E)]/40"
             >
               {hasProfilePhoto ? (
                 <img
@@ -68,12 +68,12 @@ export const Header: React.FC<HeaderProps> = ({
                   onError={() => setPhotoLoadError(true)}
                 />
               ) : (
-                <User className="w-5 h-5 text-[var(--app-primary,#006A4E)]" />
+                <User className="w-5 h-5 text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)]" />
               )}
             </button>
 
             <div className="flex flex-col min-w-0">
-              <span className="text-sm sm:text-base text-[var(--app-primary,#006A4E)] font-extrabold leading-tight select-none truncate">
+              <span className="text-sm sm:text-base text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] font-extrabold leading-tight select-none truncate">
                 {selectedLanguage === 'bn'
                   ? 'আসসালামু আলাইকুম'
                   : selectedLanguage === 'ar' || selectedLanguage === 'ur'
@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
                   : 'Assalamu Alaikum'}
               </span>
               {userProfile?.isSignedIn && userProfile?.name?.trim() && (
-                <span className="text-[11px] sm:text-xs font-bold text-slate-700 leading-tight truncate">
+                <span className="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200 leading-tight truncate">
                   {userProfile.name.trim()}
                 </span>
               )}
@@ -94,16 +94,16 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
             {!isOnline && (
               <div
-                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-amber-700 text-[10px] font-bold"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-amber-700 dark:text-amber-300 text-[10px] font-bold"
                 title={selectedLanguage === 'bn' ? 'অফলাইন মোড সক্রিয়' : 'Offline mode active'}
               >
-                <WifiOff className="w-3 h-3 text-amber-600" />
+                <WifiOff className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                 <span className="hidden sm:inline">
                   {selectedLanguage === 'bn' ? 'অফলাইন' : selectedLanguage === 'ar' ? 'غير متصل' : 'Offline'}
                 </span>
               </div>
             )}
-            <div className="text-slate-500 font-semibold text-xs">
+            <div className="text-slate-500 dark:text-slate-300 font-semibold text-xs">
               {new Date().toLocaleDateString(
                 selectedLanguage === 'bn'
                   ? 'bn-BD'

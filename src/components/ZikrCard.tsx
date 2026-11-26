@@ -210,11 +210,11 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
       className={`relative rounded-[26px] border transition-all duration-200 p-4 sm:p-5 shadow-sm flex flex-col justify-between overflow-hidden cursor-pointer select-none active:scale-[0.99] group ${
         isDay
           ? isGoalMet
-            ? 'bg-white border-amber-300 shadow-md ring-2 ring-amber-400/20'
-            : 'bg-white border-slate-100/90 hover:border-teal-200 shadow-sm hover:shadow-md'
+            ? 'bg-[var(--app-surface,#fafdfb)] border-amber-300 shadow-md ring-2 ring-amber-400/20'
+            : 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] hover:border-[var(--app-primary,#006A4E)]/50 shadow-sm hover:shadow-md'
           : isGoalMet
-          ? 'bg-[#062024] border-amber-500/80 ring-2 ring-amber-500/25'
-          : 'bg-[#062024] border-teal-800/40 hover:border-teal-600/60 shadow-black/60'
+          ? 'bg-[var(--app-dark-surface,#062024)] border-amber-500/80 ring-2 ring-amber-500/25'
+          : 'bg-[var(--app-dark-surface,#062024)] border-[var(--app-dark-border,#184850)] hover:border-[var(--app-primary-mid,#059669)]/60 shadow-black/60'
       }`}
     >
       {/* Tap Ripple Effect Layers */}
@@ -222,7 +222,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         <span
           key={ripple.id}
           style={{ left: ripple.x, top: ripple.y }}
-          className="absolute -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full bg-teal-500/20 pointer-events-none animate-ripple"
+          className="absolute -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full bg-[var(--app-primary-mid,#059669)]/20 pointer-events-none animate-ripple"
         />
       ))}
 
@@ -231,7 +231,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         <span
           key={p.id}
           style={{ left: p.x, top: p.y - 12 }}
-          className="absolute font-black text-sm text-[#007e8a] drop-shadow-sm pointer-events-none z-20 animate-out fade-out slide-out-to-top duration-500 select-none"
+          className="absolute font-black text-sm text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] drop-shadow-sm pointer-events-none z-20 animate-out fade-out slide-out-to-top duration-500 select-none"
         >
           +1
         </span>
@@ -247,8 +247,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
               isDay
-                ? 'bg-teal-50 text-[#007e8a] border-teal-200/60'
-                : 'bg-teal-900/50 text-teal-200 border-teal-700/50'
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
             }`}
           >
             #{String(index + 1).padStart(2, '0')}
@@ -260,21 +260,21 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                 isDay ? 'text-slate-600' : 'text-slate-300'
               }`}
             >
-              {getTargetLabel(currentLang)} <span className="font-bold text-[#007e8a]">{target}</span>
+              {getTargetLabel(currentLang)} <span className="font-bold text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)]">{target}</span>
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-          {/* Status pill matching • Online from screenshot */}
+          {/* Status pill */}
           {isGoalMet ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#e6f9f0] text-[#059669] border border-emerald-200/80 shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] border border-[var(--app-border,#cbe6d8)] dark:bg-[var(--app-dark-surface-soft,#0c3138)] dark:text-[var(--app-primary-light,#6ee7b7)] dark:border-[var(--app-dark-border,#184850)] shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-primary-mid,#059669)]" />
               <span>{getCompletedLabel(currentLang)}</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-teal-50 text-[#007e8a] border border-teal-200/60">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#007e8a] animate-pulse" />
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] border border-[var(--app-border,#cbe6d8)] dark:bg-[var(--app-dark-surface-soft,#0c3138)] dark:text-[var(--app-primary-light,#6ee7b7)] dark:border-[var(--app-dark-border,#184850)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-primary,#006A4E)] dark:bg-[var(--app-primary-light,#6ee7b7)]" />
               <span>{currentLang === 'bn' ? 'সক্রিয়' : currentLang === 'ar' ? 'نشط' : 'Active'}</span>
             </span>
           )}
@@ -288,8 +288,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             }}
             className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium transition active:scale-95 cursor-pointer border ${
               isDay
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'
-                : 'bg-teal-950/60 hover:bg-teal-900 text-teal-200 border-teal-800'
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-slate-700 border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-surface-soft,#0c3138)] hover:bg-[var(--app-dark-border,#184850)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
             }`}
             title={`${getResetLabel(currentLang)} (0)`}
           >
@@ -307,8 +307,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
               }}
               className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold transition active:scale-95 cursor-pointer border ${
                 isDay
-                  ? 'bg-emerald-50 hover:bg-emerald-100 text-[#006747] border-emerald-200'
-                  : 'bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border-emerald-700/60'
+                  ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                  : 'bg-[var(--app-dark-surface-soft,#0c3138)] hover:bg-[var(--app-dark-border,#184850)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
               }`}
               title={currentLang === 'bn' ? 'ফোকাস মোডে এক নজরে পড়ুন' : 'View in Focus Mode'}
             >
@@ -339,7 +339,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
                 ? 'text-lg sm:text-xl'
                 : 'text-xl sm:text-2xl'
             } ${
-              isDay ? 'text-[#0a3328]' : 'text-emerald-300'
+              isDay ? 'text-[var(--app-ink,#0d2e24)]' : 'text-[var(--app-primary-light,#6ee7b7)]'
             }`}
           >
             {displayArabic}
@@ -364,7 +364,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
               isDay ? 'text-slate-700 font-medium' : 'text-slate-200'
             }`}
           >
-            <span className="font-bold text-[#007e8a] dark:text-teal-400">
+            <span className="font-bold text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)]">
               {getMeaningLabel(currentLang)}
             </span>
             <span>{displayMeaning}</span>
@@ -372,12 +372,12 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         )}
       </div>
 
-      {/* Counter Inset Box matching soft mint card from reference image: */}
+      {/* Counter Inset Box */}
       <div
         className={`my-2 p-3 sm:p-4 rounded-2xl border transition-colors ${
           isDay
-            ? 'bg-[#e7f6f5] border-teal-100/80'
-            : 'bg-[#042026] border-teal-800/50'
+            ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)]'
+            : 'bg-[var(--app-dark-canvas,#03171b)] border-[var(--app-dark-border,#184850)]'
         }`}
       >
         <div className="flex items-center justify-between mb-1.5 text-xs font-bold">
@@ -385,7 +385,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             {getCountLabel(currentLang)}
           </span>
           {hasTarget && (
-            <span className={isGoalMet ? 'text-amber-500 font-bold' : isDay ? 'text-[#007e8a] font-extrabold' : 'text-teal-300'}>
+            <span className={isGoalMet ? 'text-amber-500 font-bold' : isDay ? 'text-[var(--app-primary,#006A4E)] font-extrabold' : 'text-[var(--app-primary-light,#6ee7b7)]'}>
               {isGoalMet ? `${getCompletedLabel(currentLang)} (100%)` : `${progressPercent}%`}
             </span>
           )}
@@ -396,7 +396,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
           <div
             className={`text-3xl sm:text-4xl font-extrabold tracking-tight font-sans select-none drop-shadow-xs transition-all duration-150 ${
               isBumping
-                ? 'scale-110 text-[#007e8a]'
+                ? 'scale-110 text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)]'
                 : isDay
                 ? 'text-slate-900'
                 : 'text-white'
@@ -408,8 +408,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
           <div
             className={`text-xs font-bold px-2.5 py-1 rounded-xl border ${
               isDay
-                ? 'bg-white border-teal-200/80 text-[#007e8a] shadow-xs'
-                : 'bg-[#0c3138] border-teal-700/60 text-teal-200'
+                ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)] shadow-xs'
+                : 'bg-[var(--app-dark-surface-soft,#0c3138)] border-[var(--app-dark-border,#184850)] text-[var(--app-primary-light,#6ee7b7)]'
             }`}
           >
             {hasTarget ? `${zikr.count} / ${target}` : `${zikr.count}`}
@@ -420,14 +420,14 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
         {hasTarget && (
           <div
             className={`w-full h-2 rounded-full overflow-hidden mt-2.5 ${
-              isDay ? 'bg-teal-100/60' : 'bg-[#0c3138]'
+              isDay ? 'bg-[var(--app-surface-tray,#dff2e8)]' : 'bg-[var(--app-dark-surface-soft,#0c3138)]'
             }`}
           >
             <div
               className={`h-full transition-all duration-300 ${
                 isGoalMet
                   ? 'bg-gradient-to-r from-amber-500 to-amber-300'
-                  : 'bg-[#007e8a]'
+                  : 'bg-[var(--app-primary,#006A4E)] dark:bg-[var(--app-primary-mid,#059669)]'
               }`}
               style={{ width: `${progressPercent}%` }}
             />
@@ -442,7 +442,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
           e.stopPropagation();
           onIncrement(zikr.id);
         }}
-        className="w-full py-3 sm:py-3.5 mt-1 rounded-xl text-sm font-bold shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-[#006747] hover:bg-[#005439] text-white border-none"
+        className="w-full py-3 sm:py-3.5 mt-1 rounded-xl text-sm font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#00523c)] text-white border-none"
       >
         <Plus className="w-4 h-4 stroke-[3]" />
         <span>+1 {getCountLabel(currentLang)} ({displayPronunciation})</span>
@@ -451,7 +451,7 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
       {/* Secondary Controls Bar */}
       <div
         className={`flex items-center justify-between gap-1.5 mt-3 pt-2.5 border-t border-dashed ${
-          isDay ? 'border-[#d2ece9]' : 'border-[#144349]'
+          isDay ? 'border-[var(--app-border,#cbe6d8)]' : 'border-[var(--app-dark-border,#184850)]'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -466,8 +466,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             disabled={zikr.count <= 0}
             className={`px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 disabled:opacity-40 cursor-pointer border ${
               isDay
-                ? 'bg-[#e6f7f2] hover:bg-[#d5f2e8] text-[#006747] border-[#c3edd9]'
-                : 'bg-[#0a262c] hover:bg-[#10343c] text-emerald-300 border-[#184850]'
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-canvas,#03171b)] hover:bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
             }`}
             title={currentLang === 'bn' ? '১ কমান (-১)' : 'Decrease (-1)'}
           >
@@ -483,8 +483,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             }}
             className={`p-1.5 rounded-xl transition active:scale-95 cursor-pointer border ${
               isDay
-                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-slate-600 hover:text-[#006747] border-[#d0e6e3]'
-                : 'bg-[#0a262c] hover:bg-[#10343c] text-slate-300 hover:text-white border-[#184850]'
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-slate-600 hover:text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-canvas,#03171b)] hover:bg-[var(--app-dark-surface-soft,#0c3138)] text-slate-300 hover:text-white border-[var(--app-dark-border,#184850)]'
             }`}
             title={currentLang === 'bn' ? 'রিসেট (০)' : 'Reset (0)'}
           >
@@ -503,8 +503,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             disabled={index === 0}
             className={`p-1.5 rounded-xl transition active:scale-95 disabled:opacity-30 cursor-pointer border ${
               isDay
-                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] border-[#d0e6e3]'
-                : 'bg-[#0a262c] text-[#94a3b8] border-[#184850]'
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-[var(--app-ink,#0d2e24)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-canvas,#03171b)] text-slate-300 border-[var(--app-dark-border,#184850)]'
             }`}
             title={currentLang === 'bn' ? 'উপরে নিন' : 'Move Up'}
           >
@@ -521,8 +521,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             disabled={index === totalCards - 1}
             className={`p-1.5 rounded-xl transition active:scale-95 disabled:opacity-30 cursor-pointer border ${
               isDay
-                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] border-[#d0e6e3]'
-                : 'bg-[#0a262c] text-[#94a3b8] border-[#184850]'
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-[var(--app-ink,#0d2e24)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-canvas,#03171b)] text-slate-300 border-[var(--app-dark-border,#184850)]'
             }`}
             title={currentLang === 'bn' ? 'নিচে নিন' : 'Move Down'}
           >
@@ -538,8 +538,8 @@ export const ZikrCard: React.FC<ZikrCardProps> = React.memo(({
             }}
             className={`p-1.5 rounded-xl transition active:scale-95 cursor-pointer border ${
               isDay
-                ? 'bg-[#eef7f6] hover:bg-[#e2f1f0] text-[#507579] hover:text-[#006747] border-[#d0e6e3]'
-                : 'bg-[#0a262c] hover:bg-[#10343c] text-[#94a3b8] hover:text-white border-[#184850]'
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-[var(--app-ink,#0d2e24)] hover:text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-canvas,#03171b)] hover:bg-[var(--app-dark-surface-soft,#0c3138)] text-slate-300 hover:text-white border-[var(--app-dark-border,#184850)]'
             }`}
             title={currentLang === 'bn' ? 'সম্পাদনা' : 'Edit'}
           >

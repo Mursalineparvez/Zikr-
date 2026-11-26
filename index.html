@@ -156,6 +156,20 @@
           window.__pwaInstallPrompt = e;
           window.dispatchEvent(new CustomEvent('pwa-prompt-ready', { detail: e }));
         });
+
+        // 4. Hydrate saved app color theme immediately to avoid any visual flash
+        try {
+          var rawSettings = localStorage.getItem('noor_zikr_settings');
+          if (rawSettings) {
+            var parsedSettings = JSON.parse(rawSettings);
+            if (parsedSettings && parsedSettings.theme) {
+              document.documentElement.dataset.appTheme = parsedSettings.theme;
+            }
+            if (parsedSettings && parsedSettings.themeMode === 'night') {
+              document.documentElement.classList.add('dark');
+            }
+          }
+        } catch (_) {}
       })();
     </script>
     <title>Zikr+ - Digital Zikr PWA</title>

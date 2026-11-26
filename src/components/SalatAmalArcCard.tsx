@@ -475,31 +475,31 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
     ? `أي وقت - ${formatLocalizedNumber(stats.anytimeDone, lang)}/${formatLocalizedNumber(stats.anytimeTotal, lang)}`
     : `Any time - ${stats.anytimeDone}/${stats.anytimeTotal}`;
 
-  // Theme colors crafted to harmonize with the selected light color palette in Day mode and deep emerald in Night mode
+  // Theme colors crafted to harmonize with the selected color palette in Day and Night modes
   const cardBg = isDay
-    ? 'bg-white border-emerald-900/12 text-[#1F2421] shadow-[0_14px_34px_-18px_rgba(4,59,44,0.28)]'
-    : 'bg-[#08201b] border-emerald-700/45 text-emerald-50 shadow-[0_16px_38px_-16px_rgba(0,0,0,0.65)]';
+    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900 shadow-sm'
+    : 'bg-[var(--app-dark-surface,#08201b)] border-[var(--app-dark-border,#184850)] text-emerald-50 shadow-[0_16px_38px_-16px_rgba(0,0,0,0.65)]';
   const trayFill = isDay ? 'url(#salatNightBandDay)' : 'url(#salatNightBandNight)';
-  const horizonStroke = isDay ? '#b8d8cb' : '#1e5446';
-  const dottedArcStroke = isDay ? '#c2ddd2' : '#245e4f';
-  const nodeFill = isDay ? '#FFFFFF' : '#0b2b24';
-  const nodeRingDefault = isDay ? '#c6dfd4' : '#205749';
-  const nodeTextColor = isDay ? '#132a22' : '#F1F5F9';
-  const nodeLabelColor = isDay ? '#1d3b31' : '#D1FAE5';
-  const labelPillFill = isDay ? '#f4fbf8' : '#08211b';
-  const labelPillTrayFill = isDay ? '#e4f3ec' : '#071b16';
+  const horizonStroke = isDay ? 'var(--app-border, #b8d8cb)' : 'var(--app-dark-border, #1e5446)';
+  const dottedArcStroke = isDay ? 'var(--app-border, #c2ddd2)' : 'var(--app-dark-border, #245e4f)';
+  const nodeFill = isDay ? 'var(--app-surface, #FFFFFF)' : 'var(--app-dark-surface-soft, #0b2b24)';
+  const nodeRingDefault = isDay ? 'var(--app-border, #c6dfd4)' : 'var(--app-dark-border, #205749)';
+  const nodeTextColor = isDay ? 'var(--app-ink, #132a22)' : '#F1F5F9';
+  const nodeLabelColor = isDay ? 'var(--app-ink, #1d3b31)' : '#E2E8F0';
+  const labelPillFill = isDay ? 'var(--app-surface, #f4fbf8)' : 'var(--app-dark-surface, #08211b)';
+  const labelPillTrayFill = isDay ? 'var(--app-surface-soft, #e4f3ec)' : 'var(--app-dark-canvas, #071b16)';
 
   return (
     <section
       aria-label={isBn ? 'সালাত ও আমল সূর্য-কক্ষপথ' : 'Salat Time and Amal Arc'}
       className={`rounded-[26px] border transition-colors overflow-hidden ${cardBg}`}
     >
-      {/* 1. Rich Emerald-Gold Hero Header: Amal Progress, Active Waqt, Live Countdown & Adhan */}
+      {/* 1. Rich Theme-Matched Hero Header: Amal Progress, Active Waqt, Live Countdown & Adhan */}
       <div
         className={`relative overflow-hidden px-4 sm:px-5 pt-3.5 pb-3.5 text-white ${
           isDay
-            ? 'bg-gradient-to-br from-[#043b2c] via-[#06523d] to-[#08674c]'
-            : 'bg-gradient-to-br from-[#03261c] via-[#06382a] to-[#084c39]'
+            ? 'bg-gradient-to-br from-[var(--app-primary-dark,#043b2c)] via-[var(--app-primary,#06523d)] to-[var(--app-primary-mid,#08674c)]'
+            : 'bg-gradient-to-br from-[var(--app-dark-canvas,#03261c)] via-[var(--app-dark-surface,#06382a)] to-[var(--app-dark-surface-soft,#084c39)]'
         }`}
       >
         {/* Subtle Top Golden Specular Hairline */}
@@ -612,8 +612,8 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
       <div
         className={`relative px-2 sm:px-3 pt-2 pb-1.5 ${
           isDay
-            ? 'bg-gradient-to-b from-[#f0faf5] via-[#f7fcfa] to-white'
-            : 'bg-gradient-to-b from-[#071f1a] via-[#08221c] to-[#08201b]'
+            ? 'bg-gradient-to-b from-[var(--app-surface-soft,#f0faf5)] via-[var(--app-surface,#f7fcfa)] to-[var(--app-surface,#ffffff)]'
+            : 'bg-gradient-to-b from-[var(--app-dark-surface-soft,#071f1a)] via-[var(--app-dark-surface,#08221c)] to-[var(--app-dark-surface,#08201b)]'
         }`}
       >
         <svg
@@ -640,38 +640,38 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
                 dx="0"
                 dy="3"
                 stdDeviation="3"
-                floodColor={isDay ? '#054a37' : '#000000'}
+                floodColor={isDay ? 'var(--app-primary-dark, #054a37)' : '#000000'}
                 floodOpacity={isDay ? '0.12' : '0.42'}
               />
             </filter>
 
             {/* UI-Harmonized Sky Glow under the Solar Arc */}
             <radialGradient id="arcAmbientGlow" cx="50%" cy="62%" r="52%">
-              <stop offset="0%" stopColor={isDay ? '#f59e0b' : '#34d399'} stopOpacity={isDay ? '0.13' : '0.14'} />
-              <stop offset="60%" stopColor={isDay ? '#10b981' : '#059669'} stopOpacity={isDay ? '0.06' : '0.07'} />
-              <stop offset="100%" stopColor={isDay ? '#ffffff' : '#08201b'} stopOpacity="0" />
+              <stop offset="0%" stopColor={isDay ? '#f59e0b' : 'var(--app-primary-light, #34d399)'} stopOpacity={isDay ? '0.13' : '0.14'} />
+              <stop offset="60%" stopColor="var(--app-primary-mid, #10b981)" stopOpacity={isDay ? '0.07' : '0.08'} />
+              <stop offset="100%" stopColor={isDay ? 'var(--app-surface, #ffffff)' : 'var(--app-dark-surface, #08201b)'} stopOpacity="0" />
             </radialGradient>
 
-            {/* Harmonious Emerald Mosque Skyline Fill (Clearly Visible in Day & Night!) */}
+            {/* Harmonious Theme Mosque Skyline Fill (Clearly Visible in Day & Night!) */}
             <linearGradient id="mosqueSkylineFill" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={isDay ? '#06664b' : '#34d399'} stopOpacity={isDay ? '0.26' : '0.28'} />
-              <stop offset="100%" stopColor={isDay ? '#0a7d5d' : '#10b981'} stopOpacity={isDay ? '0.10' : '0.10'} />
+              <stop offset="0%" stopColor={isDay ? 'var(--app-primary, #06664b)' : 'var(--app-primary-light, #34d399)'} stopOpacity={isDay ? '0.26' : '0.28'} />
+              <stop offset="100%" stopColor={isDay ? 'var(--app-primary-mid, #0a7d5d)' : 'var(--app-primary-mid, #10b981)'} stopOpacity={isDay ? '0.10' : '0.10'} />
             </linearGradient>
 
             {/* Subtle Secondary Distant Mosque Layer */}
             <linearGradient id="mosqueDistantFill" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={isDay ? '#0d8a68' : '#6ee7b7'} stopOpacity={isDay ? '0.13' : '0.13'} />
-              <stop offset="100%" stopColor={isDay ? '#0d8a68' : '#10b981'} stopOpacity="0.03" />
+              <stop offset="0%" stopColor={isDay ? 'var(--app-primary-mid, #0d8a68)' : 'var(--app-primary-light, #6ee7b7)'} stopOpacity={isDay ? '0.13' : '0.13'} />
+              <stop offset="100%" stopColor={isDay ? 'var(--app-primary-mid, #0d8a68)' : 'var(--app-primary-mid, #10b981)'} stopOpacity="0.03" />
             </linearGradient>
 
             {/* Below-Horizon Soft Tinted Night Band */}
             <linearGradient id="salatNightBandDay" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#dff3ea" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="#eef8f3" stopOpacity="0.7" />
+              <stop offset="0%" stopColor="var(--app-surface-tray, #dff3ea)" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="var(--app-surface-soft, #eef8f3)" stopOpacity="0.7" />
             </linearGradient>
             <linearGradient id="salatNightBandNight" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#041511" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="#061c17" stopOpacity="0.85" />
+              <stop offset="0%" stopColor="var(--app-dark-canvas, #041511)" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="var(--app-dark-surface, #061c17)" stopOpacity="0.85" />
             </linearGradient>
 
             {/* Golden Progress Arc Gradient */}
@@ -709,7 +709,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
             <path
               d="M 12,118 L 12,108 L 28,108 Q 42,95 56,108 L 70,108 L 70,74 L 72.5,64 L 75,74 L 75,108 L 94,108 Q 112,86 130,108 L 146,108 L 146,60 L 149.5,46 L 153,60 L 153,108 L 168,108 Q 210,48 252,108 L 267,108 L 267,60 L 270.5,46 L 274,60 L 274,108 L 290,108 Q 308,86 326,108 L 345,108 L 345,74 L 347.5,64 L 350,74 L 350,108 L 364,108 Q 378,95 392,108 L 408,108 L 408,118 Z"
               fill="url(#mosqueSkylineFill)"
-              stroke={isDay ? '#06664b' : '#34d399'}
+              stroke={isDay ? 'var(--app-primary, #06664b)' : 'var(--app-primary-light, #34d399)'}
               strokeOpacity={isDay ? '0.24' : '0.28'}
               strokeWidth="0.8"
             />
@@ -733,7 +733,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
             <circle cx="149.5" cy="43.5" r="1.5" fill={isDay ? '#d97706' : '#fcd34d'} fillOpacity="0.6" />
             <circle cx="270.5" cy="43.5" r="1.5" fill={isDay ? '#d97706' : '#fcd34d'} fillOpacity="0.6" />
             {/* Subtle Architectural Arch Windows on Central Mosque Facade */}
-            <g fill={isDay ? '#ffffff' : '#051612'} fillOpacity={isDay ? '0.55' : '0.45'}>
+            <g fill={isDay ? 'var(--app-surface, #ffffff)' : 'var(--app-dark-canvas, #051612)'} fillOpacity={isDay ? '0.55' : '0.45'}>
               <path d="M 196,118 L 196,107 Q 200,101 204,107 L 204,118 Z" />
               <path d="M 206,118 L 206,104 Q 210,97 214,104 L 214,118 Z" />
               <path d="M 216,118 L 216,107 Q 220,101 224,107 L 224,118 Z" />
@@ -748,14 +748,14 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
             height="78"
             rx="18"
             fill={trayFill}
-            stroke={isDay ? '#cde6da' : '#133a30'}
+            stroke={isDay ? 'var(--app-border, #cde6da)' : 'var(--app-dark-border, #133a30)'}
             strokeWidth="0.9"
           />
 
           {/* Subtle Inverted Mosque Water Reflection inside Below-Horizon Band */}
           <path
             d="M 168,120 Q 210,148 252,120 Z"
-            fill={isDay ? '#06664b' : '#34d399'}
+            fill={isDay ? 'var(--app-primary, #06664b)' : 'var(--app-primary-light, #34d399)'}
             fillOpacity={isDay ? '0.07' : '0.08'}
           />
 
@@ -821,7 +821,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
             const ringColor = isSelected
               ? '#E5A900'
               : node.isAllDone
-              ? '#10B981'
+              ? 'var(--app-primary-mid, #10B981)'
               : node.isCurrent
               ? '#E5A900'
               : nodeRingDefault;
@@ -874,7 +874,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
                     cx="15"
                     cy="-15"
                     r="6"
-                    fill="#10B981"
+                    fill="var(--app-primary-mid, #10B981)"
                     stroke={nodeFill}
                     strokeWidth="1.5"
                   />
@@ -885,7 +885,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
                   x="0"
                   y="4.5"
                   textAnchor="middle"
-                  fill={node.isAllDone ? '#059669' : nodeTextColor}
+                  fill={node.isAllDone ? 'var(--app-primary, #059669)' : nodeTextColor}
                   fontSize="12.5"
                   fontWeight="800"
                   style={{ fontVariantNumeric: 'tabular-nums' }}
@@ -926,8 +926,8 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
         <div
           className={`grid grid-cols-4 divide-x rounded-2xl border py-2.5 px-1 text-center tabular-nums ${
             isDay
-              ? 'bg-[#f1faf6] border-emerald-900/10 divide-emerald-900/10'
-              : 'bg-[#051713]/85 border-emerald-800/50 divide-emerald-800/45'
+              ? 'bg-[var(--app-surface-soft,#f1faf6)] border-[var(--app-border,#cbe6d8)] divide-[var(--app-border,#cbe6d8)]'
+              : 'bg-[var(--app-dark-canvas,#051713)]/85 border-[var(--app-dark-border,#184850)] divide-[var(--app-dark-border,#184850)]'
           }`}
         >
           <div className="px-1 flex flex-col items-center justify-center">
@@ -982,8 +982,8 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
               activeFilter === 'all'
                 ? 'bg-gradient-to-r from-[#d99700] to-[#eab308] text-white shadow-sm shadow-amber-600/25'
                 : isDay
-                ? 'bg-[#f1f8f4] text-[#054a37] border border-emerald-900/12 hover:border-amber-500/60'
-                : 'bg-[#0e2d26] text-emerald-100 border border-emerald-800/70 hover:border-amber-400/50'
+                ? 'bg-[var(--app-surface-soft,#f1f8f4)] text-[var(--app-primary,#054a37)] border border-[var(--app-border,#cbe6d8)] hover:border-amber-500/60'
+                : 'bg-[var(--app-dark-surface-soft,#0e2d26)] text-emerald-100 border border-[var(--app-dark-border,#184850)] hover:border-amber-400/50'
             }`}
           >
             <List className="w-4 h-4 shrink-0" />
@@ -997,11 +997,11 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
               activeFilter === 'anytime'
                 ? 'bg-gradient-to-r from-[#d99700] to-[#eab308] text-white shadow-sm shadow-amber-600/25'
                 : isDay
-                ? 'bg-[#f1f8f4] text-[#143d30] border border-emerald-900/12 hover:border-amber-500/60'
-                : 'bg-[#0e2d26] text-emerald-100 border border-emerald-800/70 hover:border-amber-400/50'
+                ? 'bg-[var(--app-surface-soft,#f1f8f4)] text-[var(--app-ink,#143d30)] border border-[var(--app-border,#cbe6d8)] hover:border-amber-500/60'
+                : 'bg-[var(--app-dark-surface-soft,#0e2d26)] text-emerald-100 border border-[var(--app-dark-border,#184850)] hover:border-amber-400/50'
             }`}
           >
-            <InfinityIcon className="w-4 h-4 shrink-0 text-emerald-700 dark:text-amber-300" />
+            <InfinityIcon className="w-4 h-4 shrink-0 text-[var(--app-primary,#006A4E)] dark:text-amber-300" />
             <span>{anyTimeLabel}</span>
           </button>
         </div>
@@ -1015,10 +1015,10 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
           }}
           aria-expanded={drawerOpen}
           aria-label={drawerOpen ? 'Collapse amals' : 'Expand amals'}
-          className={`min-h-[40px] min-w-[40px] rounded-full flex items-center justify-center border transition cursor-pointer ${
+          className={`min-h-[44px] min-w-[44px] rounded-full flex items-center justify-center border transition cursor-pointer ${
             isDay
-              ? 'bg-[#f1f8f4] border-emerald-900/12 text-[#054a37] hover:border-amber-500/70'
-              : 'bg-[#0d2a23] border-emerald-800/60 text-emerald-200 hover:border-amber-400/60'
+              ? 'bg-[var(--app-surface-soft,#f1f8f4)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#054a37)] hover:border-amber-500/70'
+              : 'bg-[var(--app-dark-surface-soft,#0d2a23)] border-[var(--app-dark-border,#184850)] text-emerald-200 hover:border-amber-400/60'
           }`}
         >
           {drawerOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -1029,7 +1029,9 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
       {drawerOpen && (
         <div
           className={`border-t px-4 sm:px-5 py-3.5 space-y-3 animate-in fade-in duration-200 ${
-            isDay ? 'border-[#E7E5DA] bg-[#F4F3EC]/70' : 'border-emerald-800/50 bg-[#061814]/80'
+            isDay
+              ? 'border-[var(--app-border,#cbe6d8)] bg-[var(--app-canvas,#f3faf6)]/70'
+              : 'border-[var(--app-dark-border,#184850)] bg-[var(--app-dark-canvas,#061814)]/80'
           }`}
         >
           <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1041,7 +1043,7 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
               <span
                 className={`text-[11px] font-bold px-2 py-0.5 rounded-full tabular-nums ${
                   isDay
-                    ? 'bg-[#E9E7DC] text-[#39403C]'
+                    ? 'bg-[var(--app-surface-tray,#dff2e8)] text-[var(--app-ink,#39403C)]'
                     : 'bg-emerald-900/60 text-emerald-200'
                 }`}
               >
@@ -1097,20 +1099,20 @@ export const SalatAmalArcCard: React.FC<SalatAmalArcCardProps> = ({
                 className={`w-full min-h-[44px] px-3 py-2 rounded-2xl border text-left flex items-center gap-3 transition-all active:scale-[0.99] cursor-pointer ${
                   item.completed
                     ? isDay
-                      ? 'bg-emerald-50/90 border-emerald-300/80 text-emerald-950'
+                      ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-primary-light,#6ee7b7)] text-slate-900'
                       : 'bg-emerald-950/60 border-emerald-500/40 text-emerald-100'
                     : isDay
-                    ? 'bg-white border-[#E6E4DA] text-[#242926] hover:border-[#E5A900]/70'
-                    : 'bg-[#0a241e] border-emerald-900/60 text-emerald-50 hover:border-amber-400/50'
+                    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-800 hover:border-[#E5A900]/70'
+                    : 'bg-[var(--app-dark-surface,#0a241e)] border-[var(--app-dark-border,#184850)] text-emerald-50 hover:border-amber-400/50'
                 }`}
               >
                 <span
                   className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors ${
                     item.completed
-                      ? 'bg-emerald-500 border-emerald-500 text-white'
+                      ? 'bg-[var(--app-primary,#006A4E)] border-[var(--app-primary,#006A4E)] text-white'
                       : isDay
-                      ? 'border-[#CFCDBE] bg-[#FAF9F3]'
-                      : 'border-emerald-700 bg-[#071b16]'
+                      ? 'border-[var(--app-border,#cbe6d8)] bg-[var(--app-canvas,#f3faf6)]'
+                      : 'border-emerald-700 bg-[var(--app-dark-canvas,#071b16)]'
                   }`}
                 >
                   {item.completed && <Check className="w-3 h-3 stroke-[3]" />}

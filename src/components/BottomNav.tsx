@@ -74,7 +74,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         <Home
           className={`w-5 h-5 sm:w-[22px] sm:h-[22px] transition-all duration-200 ${
             isActive
-              ? 'fill-[var(--app-primary,#006A4E)] text-[var(--app-primary,#006A4E)] stroke-[2.2]'
+              ? 'fill-[var(--app-primary,#006A4E)] text-[var(--app-primary,#006A4E)] dark:fill-[var(--app-primary-light,#6ee7b7)] dark:text-[var(--app-primary-light,#6ee7b7)] stroke-[2.2]'
               : 'text-gray-500 dark:text-gray-400 stroke-[1.8]'
           }`}
         />
@@ -89,7 +89,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         <BookOpen
           className={`w-5 h-5 sm:w-[22px] sm:h-[22px] transition-all duration-200 ${
             isActive
-              ? 'text-[var(--app-primary,#006A4E)] stroke-[2.4]'
+              ? 'text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] stroke-[2.4]'
               : 'text-gray-500 dark:text-gray-400 stroke-[1.8]'
           }`}
         />
@@ -103,7 +103,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         <Clock
           className={`w-5 h-5 sm:w-[22px] sm:h-[22px] transition-all duration-200 ${
             isActive
-              ? 'text-[var(--app-primary,#006A4E)] stroke-[2.4]'
+              ? 'text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] stroke-[2.4]'
               : 'text-gray-500 dark:text-gray-400 stroke-[1.8]'
           }`}
         />
@@ -117,7 +117,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         <ClipboardCheck
           className={`w-5 h-5 sm:w-[22px] sm:h-[22px] transition-all duration-200 ${
             isActive
-              ? 'text-[var(--app-primary,#006A4E)] stroke-[2.4]'
+              ? 'text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] stroke-[2.4]'
               : 'text-gray-500 dark:text-gray-400 stroke-[1.8]'
           }`}
         />
@@ -146,8 +146,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         aria-label={isBn ? 'মূল নেভিগেশন' : 'Main Navigation'}
         className={`fixed bottom-0 left-0 right-0 z-[65] transition-colors duration-200 border-t ${
           isDay
-            ? 'bg-white/95 backdrop-blur-md border-[var(--app-border,#e2e8f0)] shadow-[0_-4px_20px_rgba(0,0,0,0.06)]'
-            : 'bg-[#0b1e22]/95 backdrop-blur-md border-[#14373e] shadow-[0_-6px_24px_rgba(0,0,0,0.45)]'
+            ? 'bg-[var(--app-surface,#fafdfb)]/95 backdrop-blur-md border-[var(--app-border,#cbe6d8)] shadow-[0_-4px_20px_rgba(0,0,0,0.06)]'
+            : 'bg-[var(--app-dark-surface,#062024)]/95 backdrop-blur-md border-[var(--app-dark-border,#184850)] shadow-[0_-6px_24px_rgba(0,0,0,0.45)]'
         }`}
       >
         <div className="max-w-2xl mx-auto grid grid-cols-5 items-center px-2 pt-1 pb-1.5 pb-safe select-none">
@@ -160,7 +160,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 onClick={() => navigateToModule(item.id)}
                 className={`min-h-[48px] flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer relative ${
                   isActive
-                    ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 font-bold'
+                    ? 'text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] font-bold'
                     : isDay
                     ? 'text-gray-500 hover:text-gray-800 font-medium'
                     : 'text-gray-400 hover:text-gray-100 font-medium'
@@ -177,7 +177,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 <span
                   className={`text-[11px] sm:text-xs mt-1 leading-none tracking-tight text-center whitespace-nowrap truncate max-w-full px-0.5 ${
                     isActive
-                      ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 font-bold'
+                      ? 'text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] font-bold'
                       : isDay
                       ? 'text-gray-600'
                       : 'text-gray-400'
@@ -195,7 +195,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             onClick={() => navigateToModule('other')}
             className={`min-h-[48px] flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 cursor-pointer relative ${
               isOtherActive
-                ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 font-bold'
+                ? 'text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] font-bold'
                 : isDay
                 ? 'text-gray-500 hover:text-gray-800 font-medium'
                 : 'text-gray-400 hover:text-gray-100 font-medium'
@@ -206,7 +206,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               <LayoutGrid
                 className={`w-5 h-5 sm:w-[22px] sm:h-[22px] transition-all duration-200 ${
                   isOtherActive
-                    ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 stroke-[2.4]'
+                    ? 'text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] stroke-[2.4]'
                     : 'text-gray-500 dark:text-gray-400 stroke-[1.9]'
                 }`}
               />
@@ -214,7 +214,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <span
               className={`text-[11px] sm:text-xs mt-1 leading-none tracking-tight text-center whitespace-nowrap truncate max-w-full px-0.5 ${
                 isOtherActive
-                  ? 'text-[var(--app-primary,#006A4E)] dark:text-emerald-400 font-bold'
+                  ? 'text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] font-bold'
                   : isDay
                   ? 'text-gray-600'
                   : 'text-gray-400'

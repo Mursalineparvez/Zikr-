@@ -936,10 +936,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         className={
           embedded
             ? `w-full rounded-3xl border shadow-sm flex flex-col overflow-hidden ${
-                isDay ? 'bg-[#fcfaf5] text-[#103e42] border-stone-200/90' : 'bg-[#071c21] text-white border-[#143b44]'
+                isDay
+                  ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-900 border-[var(--app-border,#cbe6d8)]'
+                  : 'bg-[var(--app-dark-canvas,#071c21)] text-white border-[var(--app-dark-border,#143b44)]'
               }`
             : `w-full h-full flex flex-col overflow-hidden ${
-                isDay ? 'bg-[#f6f9f8] text-[#103e42]' : 'bg-[#0a2328] text-white'
+                isDay ? 'bg-[var(--app-canvas,#f6f9f8)] text-slate-900' : 'bg-[var(--app-dark-canvas,#0a2328)] text-white'
               }`
         }
       >
@@ -948,9 +950,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           className={`px-4 py-3.5 flex items-center justify-between select-none shrink-0 ${
             embedded
               ? isDay
-                ? 'bg-white border-b border-stone-200/80 text-slate-900'
-                : 'bg-[#0a262c] border-b border-[#143b44] text-white'
-              : 'bg-[#2d7d4f] text-white shadow-md'
+                ? 'bg-[var(--app-surface,#fafdfb)] border-b border-[var(--app-border,#cbe6d8)] text-slate-900'
+                : 'bg-[var(--app-dark-surface,#0a262c)] border-b border-[var(--app-dark-border,#143b44)] text-white'
+              : 'bg-[var(--app-primary,#006A4E)] text-white shadow-md'
           }`}
         >
           <div className="flex items-center gap-3">
@@ -958,10 +960,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <button
                 type="button"
                 onClick={embedded ? onBackToHub : onClose}
-                className={`min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center transition active:scale-95 cursor-pointer ${
+                className={`min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition active:scale-95 cursor-pointer ${
                   embedded
                     ? isDay
-                      ? 'hover:bg-slate-100 text-slate-700'
+                      ? 'hover:bg-[var(--app-surface-soft,#e9f6ef)] text-slate-700'
                       : 'hover:bg-white/10 text-emerald-300'
                     : 'hover:bg-white/20 text-white'
                 }`}
@@ -985,7 +987,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-white/20 transition active:scale-95 cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/20 transition active:scale-95 cursor-pointer"
               title={t('বন্ধ করুন', 'إغلاق', 'Close')}
             >
               <X className="w-5 h-5" />
@@ -998,17 +1000,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           className={`px-4 py-2.5 flex items-center justify-center shrink-0 border-b ${
             embedded
               ? isDay
-                ? 'bg-stone-50/70 border-stone-200/70'
-                : 'bg-[#06181c] border-[#133841]'
-              : 'bg-[#236841] border-emerald-600/30'
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)]/70 border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-canvas,#06181c)] border-[var(--app-dark-border,#133841)]'
+              : 'bg-[var(--app-primary-dark,#00523c)] border-white/15'
           }`}
         >
           <div
             className={`w-full max-w-md grid grid-cols-2 p-1 rounded-full border text-xs font-bold ${
               embedded
                 ? isDay
-                  ? 'bg-stone-200/70 border-stone-200 text-stone-700'
-                  : 'bg-[#0b262d] border-[#17444e] text-slate-300'
+                  ? 'bg-[var(--app-surface-tray,#dff2e8)] border-[var(--app-border,#cbe6d8)] text-slate-700'
+                  : 'bg-[var(--app-dark-surface,#0b262d)] border-[var(--app-dark-border,#17444e)] text-slate-300'
                 : 'bg-black/25 backdrop-blur-md border-white/10 text-white shadow-inner'
             }`}
           >
@@ -1021,13 +1023,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               className={`min-h-[40px] py-2 px-3 rounded-full flex items-center justify-center gap-2 transition cursor-pointer ${
                 activeTab === 'profile'
                   ? embedded
-                    ? 'bg-[#006A4E] text-white shadow-sm font-extrabold'
-                    : 'bg-white text-[#1a5530] shadow-md font-extrabold'
+                    ? 'bg-[var(--app-primary,#006A4E)] text-white shadow-sm font-extrabold'
+                    : 'bg-white text-[var(--app-primary,#006A4E)] shadow-md font-extrabold'
                   : embedded
                   ? isDay
-                    ? 'text-stone-700 hover:text-stone-900'
+                    ? 'text-slate-700 hover:text-slate-900'
                     : 'text-slate-300 hover:text-white'
-                  : 'text-emerald-100 hover:text-white hover:bg-white/10'
+                  : 'text-white/85 hover:text-white hover:bg-white/10'
               }`}
             >
               <User className="w-3.5 h-3.5" />
@@ -1043,13 +1045,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               className={`min-h-[40px] py-2 px-3 rounded-full flex items-center justify-center gap-2 transition cursor-pointer ${
                 activeTab === 'settings'
                   ? embedded
-                    ? 'bg-[#006A4E] text-white shadow-sm font-extrabold'
-                    : 'bg-white text-[#1a5530] shadow-md font-extrabold'
+                    ? 'bg-[var(--app-primary,#006A4E)] text-white shadow-sm font-extrabold'
+                    : 'bg-white text-[var(--app-primary,#006A4E)] shadow-md font-extrabold'
                   : embedded
                   ? isDay
-                    ? 'text-stone-700 hover:text-stone-900'
+                    ? 'text-slate-700 hover:text-slate-900'
                     : 'text-slate-300 hover:text-white'
-                  : 'text-emerald-100 hover:text-white hover:bg-white/10'
+                  : 'text-white/85 hover:text-white hover:bg-white/10'
               }`}
             >
               <Settings className="w-3.5 h-3.5" />
@@ -1067,8 +1069,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div
                 className={`p-6 sm:p-7 rounded-3xl border text-center flex flex-col items-center space-y-3 transition-all ${
                   isDay
-                    ? 'bg-gradient-to-b from-[#faf6ef] to-white border-stone-200/80 text-slate-900 shadow-2xs'
-                    : 'bg-gradient-to-b from-[#0b272e] to-[#081f25] border-[#1a4b56] text-white shadow-md'
+                    ? 'bg-gradient-to-b from-[var(--app-surface-soft,#e9f6ef)] to-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900 shadow-2xs'
+                    : 'bg-gradient-to-b from-[var(--app-dark-surface-soft,#0b272e)] to-[var(--app-dark-surface,#081f25)] border-[var(--app-dark-border,#1a4b56)] text-white shadow-md'
                 }`}
               >
                 {/* Centered Avatar with Floating Edit Pencil Badge */}
@@ -1076,8 +1078,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div
                     className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 shadow-lg flex items-center justify-center ${
                       isDay
-                        ? 'border-white bg-emerald-100 ring-1 ring-stone-200'
-                        : 'border-[#154550] bg-emerald-950 ring-1 ring-emerald-500/30'
+                        ? 'border-white bg-[var(--app-surface-soft,#e9f6ef)] ring-1 ring-[var(--app-border,#cbe6d8)]'
+                        : 'border-[var(--app-dark-border,#154550)] bg-[var(--app-dark-canvas)] ring-1 ring-emerald-500/30'
                     }`}
                   >
                     {userProfile.isSignedIn && userProfile.photoUrl ? (
@@ -1093,7 +1095,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         className="w-full h-full object-cover opacity-90"
                       />
                     ) : (
-                      <User className="w-11 h-11 text-[#006A4E] dark:text-emerald-300" />
+                      <User className="w-11 h-11 text-[var(--app-primary,#006A4E)] dark:text-emerald-300" />
                     )}
                   </div>
 
@@ -1108,7 +1110,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       }
                       if (soundEnabled) soundHaptics.playTap();
                     }}
-                    className="absolute -bottom-0.5 -right-0.5 w-9 h-9 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white border-2 border-white dark:border-[#0a2328] shadow-md flex items-center justify-center transition active:scale-95 cursor-pointer"
+                    className="absolute -bottom-0.5 -right-0.5 w-9 h-9 rounded-full bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#005740)] text-white border-2 border-white dark:border-[var(--app-dark-canvas,#0a2328)] shadow-md flex items-center justify-center transition active:scale-95 cursor-pointer"
                     title={
                       userProfile.isSignedIn
                         ? t('প্রোফাইল ও ছবি সম্পাদনা করুন', 'تعديل الملف الشخصي والصورة', 'Edit Profile & Photo')
@@ -1206,11 +1208,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {userProfile.isSignedIn && userProfile.name && (
                 <div
                   className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
-                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                    isDay
+                      ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                      : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="font-extrabold text-xs flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                    <div className="font-extrabold text-xs flex items-center gap-1.5 text-[var(--app-primary,#006A4E)] dark:text-emerald-400">
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                       <span>
                         {t(
@@ -1220,18 +1224,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         )}
                       </span>
                     </div>
-                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                    <span className="text-[11px] font-bold text-[var(--app-primary,#006A4E)] dark:text-emerald-300 flex items-center gap-1">
                       <Cloud className="w-3.5 h-3.5" />
                       <span>{t('সিঙ্কড', 'تمت المزامنة', 'Synced')}</span>
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">
-                    <div className={`p-3 rounded-xl border ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
+                    <div className={`p-3 rounded-xl border ${isDay ? 'bg-[var(--app-surface-soft,#e9f6ef)]/60 border-[var(--app-border,#cbe6d8)]' : 'bg-[var(--app-dark-canvas,#05161a)] border-[var(--app-dark-border,#184850)]'}`}>
                       <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                         {t('সর্বমোট পুঞ্জীভূত জিকির', 'إجمالي الأذكار المتراكمة', 'Total Cumulative Zikr')}
                       </div>
-                      <div className="text-xl font-black font-mono tabular-nums text-[#006A4E] dark:text-amber-300 mt-0.5">
+                      <div className="text-xl font-black font-mono tabular-nums text-[var(--app-primary,#006A4E)] dark:text-amber-300 mt-0.5">
                         {formatNum(lifetimeTotalCount)}
                       </div>
                       <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
@@ -1239,11 +1243,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </div>
                     </div>
 
-                    <div className={`p-3 rounded-xl border ${isDay ? 'bg-emerald-50/60 border-emerald-200' : 'bg-[#05161a] border-emerald-900/40'}`}>
+                    <div className={`p-3 rounded-xl border ${isDay ? 'bg-[var(--app-surface-soft,#e9f6ef)]/60 border-[var(--app-border,#cbe6d8)]' : 'bg-[var(--app-dark-canvas,#05161a)] border-[var(--app-dark-border,#184850)]'}`}>
                       <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                         {t('আজকের দৈনন্দিন গণনা', 'إجمالي الذكر اليومي', "Today's Daily Count")}
                       </div>
-                      <div className="text-xl font-black font-mono tabular-nums text-teal-600 dark:text-emerald-400 mt-0.5">
+                      <div className="text-xl font-black font-mono tabular-nums text-[var(--app-primary-mid,#059669)] dark:text-emerald-400 mt-0.5">
                         {formatNum(dailyTotal || 0)}
                       </div>
                       <div className="text-[10px] text-slate-400 dark:text-teal-400/80 mt-0.5">
@@ -1277,8 +1281,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div
                 className={`rounded-2xl border shadow-sm divide-y overflow-hidden ${
                   isDay
-                    ? 'bg-white border-slate-200 divide-slate-100 text-slate-900'
-                    : 'bg-[#0f343c] border-[#1c5763] divide-teal-900/40 text-white'
+                    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] divide-[var(--app-border,#cbe6d8)]/70 text-slate-900'
+                    : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] divide-[var(--app-dark-border,#184850)] text-white'
                 }`}
               >
                 {/* App Settings Quick Entry inside Profile List */}
@@ -1289,7 +1293,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     if (soundEnabled) soundHaptics.playTap();
                   }}
                   className={`w-full p-3.5 flex items-center justify-between text-left transition cursor-pointer ${
-                    isDay ? 'hover:bg-slate-50' : 'hover:bg-teal-950/40'
+                    isDay ? 'hover:bg-[var(--app-surface-soft,#e9f6ef)]/60' : 'hover:bg-[var(--app-dark-surface-soft,#0c3138)]/60'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -1487,16 +1491,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 }}
                 className={`w-full p-4 rounded-2xl border shadow-sm flex items-center justify-between gap-3 text-left transition active:scale-[0.99] cursor-pointer ${
                   isDay
-                    ? 'bg-white hover:bg-emerald-50/60 border-slate-200 text-slate-900'
-                    : 'bg-[#0f343c] hover:bg-[#13404a] border-[#1c5763] text-white'
+                    ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)]/60 border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-[var(--app-dark-surface,#0f343c)] hover:bg-[var(--app-dark-surface-soft,#13404a)] border-[var(--app-dark-border,#1c5763)] text-white'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-emerald-500 shadow-xs shrink-0 bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
+                  <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-[var(--app-primary,#006A4E)] shadow-xs shrink-0 bg-[var(--app-surface-soft,#e9f6ef)] dark:bg-emerald-950 flex items-center justify-center">
                     {userProfile?.isSignedIn && userProfile?.photoUrl ? (
                       <img src={userProfile.photoUrl} alt={userProfile.name} className="w-full h-full object-cover" />
                     ) : (
-                      <User className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
+                      <User className="w-5 h-5 text-[var(--app-primary,#006A4E)] dark:text-emerald-300" />
                     )}
                   </div>
                   <div className="min-w-0">
@@ -1505,7 +1509,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         {userProfile?.isSignedIn ? (userProfile.name || t('ব্যবহারকারী', 'مستخدم', 'User')) : t('প্রোফাইল ও অ্যাকাউন্ট', 'الملف الشخصي والحساب', 'Profile & Account')}
                       </span>
                       {userProfile?.isSignedIn && (
-                        <span className="p-0.5 rounded-full bg-emerald-600 text-white shrink-0">
+                        <span className="p-0.5 rounded-full bg-[var(--app-primary,#006A4E)] text-white shrink-0">
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
                         </span>
                       )}
@@ -1517,7 +1521,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                <div className="flex items-center gap-1 text-xs font-bold text-[var(--app-primary,#006A4E)] dark:text-emerald-400 shrink-0">
                   <span>{userProfile?.isSignedIn ? t('প্রোফাইল', 'الملف الشخصي', 'Profile') : t('সাইন ইন', 'تسجيل الدخول', 'Sign In')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </div>
@@ -1526,24 +1530,26 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {/* 1. Language Selection (14 World Languages) */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
-                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                  isDay
+                    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <Globe className="w-4 h-4 text-[var(--app-primary,#006A4E)] dark:text-emerald-400" />
                     <span>{SETTINGS_UI.appLanguage[selectedLanguage] || 'App Language'}</span>
                   </span>
                   <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                     isDay 
-                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-extrabold'
+                      ? 'bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)] font-extrabold'
                       : 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30'
                   }`}>
                     {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.nativeName || selectedLanguage}
                   </span>
                 </div>
                 <p className={`text-xs font-bold leading-relaxed ${
-                  isDay ? 'text-[#005e3f]' : 'text-emerald-200/90'
+                  isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-emerald-200/90'
                 }`}>
                   {SETTINGS_UI.languageDesc[selectedLanguage] ||
                     'আরবি হরফ ব্যতীত সকল মেনু, অনুবাদ ও নির্দেশিকা স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে'}
@@ -1562,10 +1568,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         }}
                         className={`p-2.5 rounded-xl border text-left transition active:scale-95 cursor-pointer flex items-center justify-between gap-1.5 ${
                           isSelected
-                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50 font-bold'
+                            ? 'bg-[var(--app-primary,#006A4E)] text-white border-[var(--app-primary-dark,#00523c)] shadow-md ring-2 ring-[var(--app-primary-light,#6ee7b7)]/50 font-bold'
                             : isDay
-                            ? 'bg-slate-50 hover:bg-emerald-50/90 border-slate-300 text-slate-900 font-bold'
-                            : 'bg-[#092226] hover:bg-[#133941] border-[#184850] text-emerald-300'
+                            ? 'bg-[var(--app-canvas,#f3faf6)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-900 font-bold'
+                            : 'bg-[var(--app-dark-canvas,#092226)] hover:bg-[var(--app-dark-surface-soft,#133941)] border-[var(--app-dark-border,#184850)] text-emerald-300'
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
@@ -1580,7 +1586,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           </div>
                         </div>
                         {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-white text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
+                          <div className="w-4 h-4 rounded-full bg-white text-[var(--app-primary,#006A4E)] flex items-center justify-center shrink-0 shadow-xs">
                             <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                         )}
@@ -1594,19 +1600,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <div
                 className={`p-4 rounded-2xl border shadow-md space-y-3 ${
                   isDay
-                    ? 'bg-emerald-50/90 border-emerald-300 text-slate-900'
-                    : 'bg-gradient-to-r from-[#07242a] via-[#0c333a] to-[#0f3d46] border-[#1f5c68] text-white'
+                    ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-gradient-to-r from-[var(--app-dark-canvas,#07242a)] via-[var(--app-dark-surface,#0c333a)] to-[var(--app-dark-surface-soft,#0f3d46)] border-[var(--app-dark-border,#1f5c68)] text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0 shadow-sm">
                     <Smartphone className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className={`font-extrabold text-sm ${isDay ? 'text-slate-900' : 'text-white'}`}>
                       {t('মোবাইলে Zikr+ অ্যাপ ইনস্টল', 'تثبيت تطبيق Zikr+ على الهاتف', 'Install Zikr+ App on Mobile')}
                     </h4>
-                    <p className={`text-[11px] font-semibold ${isDay ? 'text-emerald-950' : 'text-emerald-200/90'}`}>
+                    <p className={`text-[11px] font-semibold ${isDay ? 'text-[var(--app-ink,#0d2e24)]' : 'text-emerald-200/90'}`}>
                       {t(
                         'আলাদা কোনো APK ডাউনলোড ছাড়াই Chrome থেকে ১-ক্লিকে ইনস্টল হয়।',
                         'ثبّته بنقرة واحدة من Chrome دون تنزيل APK خارجي.',
@@ -1620,7 +1626,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   type="button"
                   onClick={handleInstallApp}
                   disabled={isInstalling}
-                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-98"
+                  className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#00523c)] text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-98"
                 >
                   <Download className="w-4 h-4" />
                   <span>{isInstalled
@@ -1634,8 +1640,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onClick={onOpenStandaloneModal}
                     className={`w-full py-2 px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
                       isDay
-                        ? 'border-emerald-300 text-emerald-800 hover:bg-emerald-100/50'
-                        : 'border-[#1f5c68] text-emerald-300 hover:bg-white/5'
+                        ? 'border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)] hover:bg-[var(--app-surface,#fafdfb)]'
+                        : 'border-[var(--app-dark-border,#1f5c68)] text-emerald-300 hover:bg-white/5'
                     }`}
                   >
                     <span>
@@ -1658,7 +1664,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {/* Theme Switcher */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-2.5 ${
-                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                  isDay
+                    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -1677,8 +1685,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onClick={() => {
                       if (!isDay && onToggleThemeMode) onToggleThemeMode();
                     }}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                      isDay ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm font-black' : 'bg-[#092226] text-slate-300 border-[#184850]'
+                    className={`min-h-[42px] py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      isDay
+                        ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm font-black'
+                        : 'bg-[var(--app-dark-canvas,#092226)] text-slate-300 border-[var(--app-dark-border,#184850)]'
                     }`}
                   >
                     {SETTINGS_UI.dayMode[selectedLanguage] || '☀️ Day Mode'}
@@ -1688,8 +1698,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onClick={() => {
                       if (isDay && onToggleThemeMode) onToggleThemeMode();
                     }}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                      !isDay ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm font-black' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                    className={`min-h-[42px] py-2 px-3 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      !isDay
+                        ? 'bg-[var(--app-primary,#006A4E)] text-white border-[var(--app-primary-light,#6ee7b7)] shadow-sm font-black'
+                        : 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] text-slate-800 border-[var(--app-border,#cbe6d8)]'
                     }`}
                   >
                     {SETTINGS_UI.nightMode[selectedLanguage] || '🌙 Night Mode'}
@@ -1700,7 +1712,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {/* Voice Reciter Selection */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
-                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                  isDay
+                    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -1784,15 +1798,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
               </div>
 
-              {/* Appearance Theme Selection (Moved from Other Hub Settings) */}
+              {/* Appearance Theme Selection (Syncs Entire App Day + Night Colors) */}
               {onUpdateSettings && (
                 <div
                   className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
-                    isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                    isDay
+                      ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                      : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2 font-bold text-sm">
-                    <Palette className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <Palette className="w-4 h-4 text-[var(--app-primary,#006A4E)] dark:text-emerald-400" />
                     <span>{SETTINGS_UI.themeTitle[selectedLanguage] || 'Appearance Theme'}</span>
                   </div>
 
@@ -1804,13 +1820,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           key={th.id}
                           type="button"
                           onClick={() => {
-                            onUpdateSettings({ theme: th.id, themeMode: 'day' });
+                            onUpdateSettings({ theme: th.id });
                             if (soundEnabled) soundHaptics.playTap();
                           }}
                           className="p-3 rounded-2xl border text-left transition flex items-center gap-3 cursor-pointer active:scale-[0.98]"
                           style={{
-                            backgroundColor: isSelected ? th.softBg : th.canvasBg,
-                            borderColor: isSelected ? th.primary : th.border,
+                            backgroundColor: isDay
+                              ? isSelected
+                                ? th.softBg
+                                : th.cardBg
+                              : isSelected
+                              ? th.darkSurfaceSoft
+                              : th.darkSurface,
+                            borderColor: isDay
+                              ? isSelected
+                                ? th.primary
+                                : th.border
+                              : isSelected
+                              ? th.primaryLight
+                              : th.darkBorder,
                             boxShadow: isSelected ? `0 0 0 2px ${th.primary}35` : undefined,
                           }}
                         >
@@ -1821,10 +1849,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             {isSelected && <Check className="w-4 h-4 text-white stroke-[2.8]" />}
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs font-extrabold truncate" style={{ color: th.ink }}>
+                            <div
+                              className="text-xs font-extrabold truncate"
+                              style={{ color: isDay ? th.ink : '#f8fafc' }}
+                            >
                               {selectedLanguage === 'bn' ? th.nameBn : th.nameEn}
                             </div>
-                            <div className="text-[10px] text-slate-600 leading-tight line-clamp-1">
+                            <div
+                              className={`text-[10px] leading-tight line-clamp-1 ${
+                                isDay ? 'text-slate-600' : 'text-slate-300'
+                              }`}
+                            >
                               {selectedLanguage === 'bn' ? th.descBn : th.descEn}
                             </div>
                           </div>
@@ -1838,15 +1873,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {/* Feedback & Sensory Controls (Audio, Haptics, Screen Wake Lock) */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
-                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                  isDay
+                    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
                 }`}
               >
                 <div className="flex items-center gap-2 font-bold text-sm">
-                  <SlidersHorizontal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <SlidersHorizontal className="w-4 h-4 text-[var(--app-primary,#006A4E)] dark:text-emerald-400" />
                   <span>{SETTINGS_UI.audioHaptics[selectedLanguage] || 'Feedback & Sensory Controls'}</span>
                 </div>
 
-                <div className={`divide-y text-xs ${isDay ? 'divide-slate-100' : 'divide-teal-900/40'}`}>
+                <div className={`divide-y text-xs ${isDay ? 'divide-[var(--app-border,#cbe6d8)]/60' : 'divide-[var(--app-dark-border,#184850)]'}`}>
                   {/* Bead Click Audio Toggle */}
                   {onToggleSound && (
                     <div className="py-2.5 flex items-center justify-between gap-3">
@@ -1862,7 +1899,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         type="button"
                         onClick={onToggleSound}
                         className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer shrink-0 ${
-                          soundEnabled ? 'bg-emerald-600' : 'bg-slate-400 dark:bg-slate-700'
+                          soundEnabled ? 'bg-[var(--app-primary,#006A4E)]' : 'bg-slate-400 dark:bg-slate-700'
                         }`}
                       >
                         <div
@@ -1889,7 +1926,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         type="button"
                         onClick={onToggleVibration}
                         className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer shrink-0 ${
-                          vibrationEnabled ? 'bg-emerald-600' : 'bg-slate-400 dark:bg-slate-700'
+                          vibrationEnabled ? 'bg-[var(--app-primary,#006A4E)]' : 'bg-slate-400 dark:bg-slate-700'
                         }`}
                       >
                         <div
@@ -1916,7 +1953,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         type="button"
                         onClick={() => onUpdateSettings({ screenAwake: !(appSettings?.screenAwake) })}
                         className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer shrink-0 ${
-                          appSettings?.screenAwake ? 'bg-emerald-600' : 'bg-slate-400 dark:bg-slate-700'
+                          appSettings?.screenAwake ? 'bg-[var(--app-primary,#006A4E)]' : 'bg-slate-400 dark:bg-slate-700'
                         }`}
                       >
                         <div
@@ -1933,11 +1970,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {/* Export & Data Backup (PDF Report, Backup JSON, Restore JSON) */}
               <div
                 className={`p-4 rounded-2xl border shadow-sm space-y-3 ${
-                  isDay ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#0f343c] border-[#1c5763] text-white'
+                  isDay
+                    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
                 }`}
               >
                 <div className="flex items-center gap-2 font-bold text-sm">
-                  <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <FileText className="w-4 h-4 text-[var(--app-primary,#006A4E)] dark:text-emerald-400" />
                   <span>{SETTINGS_UI.dataBackup[selectedLanguage] || 'Export & Data Backup'}</span>
                 </div>
 
@@ -1948,8 +1987,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       onClick={onExportPdf}
                       className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
                         isDay
-                          ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900'
-                          : 'bg-emerald-950/70 hover:bg-emerald-900 border-emerald-600/50 text-emerald-200'
+                          ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]'
+                          : 'bg-[var(--app-dark-surface-soft,#0c3138)] hover:bg-[var(--app-dark-border)]/40 border-[var(--app-dark-border,#184850)] text-emerald-200'
                       }`}
                     >
                       <FileText className="w-4 h-4 text-amber-500" />
@@ -1962,22 +2001,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onClick={onExportBackupJson || handleDefaultExportBackup}
                     className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
                       isDay
-                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
-                        : 'bg-[#092226] hover:bg-[#123840] border-[#184850] text-slate-200'
+                        ? 'bg-[var(--app-canvas,#f3faf6)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-800'
+                        : 'bg-[var(--app-dark-canvas,#092226)] hover:bg-[var(--app-dark-surface-soft,#123840)] border-[var(--app-dark-border,#184850)] text-slate-200'
                     }`}
                   >
-                    <Download className="w-4 h-4 text-teal-500" />
+                    <Download className="w-4 h-4 text-[var(--app-primary-mid,#059669)]" />
                     <span>{SETTINGS_UI.backupJson[selectedLanguage] || 'Backup JSON'}</span>
                   </button>
 
                   <label
                     className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
                       isDay
-                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-300 text-slate-800'
-                        : 'bg-[#092226] hover:bg-[#123840] border-[#184850] text-slate-200'
+                        ? 'bg-[var(--app-canvas,#f3faf6)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-800'
+                        : 'bg-[var(--app-dark-canvas,#092226)] hover:bg-[var(--app-dark-surface-soft,#123840)] border-[var(--app-dark-border,#184850)] text-slate-200'
                     }`}
                   >
-                    <Upload className="w-4 h-4 text-emerald-500" />
+                    <Upload className="w-4 h-4 text-[var(--app-primary,#006A4E)]" />
                     <span>{SETTINGS_UI.restoreJson[selectedLanguage] || 'Restore JSON'}</span>
                     <input
                       type="file"
@@ -2029,7 +2068,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         onClick={onRestoreDefaults}
                         className={`px-3.5 py-2 rounded-xl border text-xs font-semibold transition active:scale-95 cursor-pointer ${
                           isDay
-                            ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800'
+                            ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-800'
                             : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
                         }`}
                       >
@@ -2043,7 +2082,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {/* System Info */}
               <div
                 className={`p-4 rounded-2xl border text-xs space-y-2 ${
-                  isDay ? 'bg-slate-100/90 border-slate-300 text-slate-900' : 'bg-[#071f25] border-[#174853] text-white'
+                  isDay
+                    ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                    : 'bg-[var(--app-dark-canvas,#071f25)] border-[var(--app-dark-border,#174853)] text-white'
                 }`}
               >
                 <div className={`font-black text-xs ${isDay ? 'text-slate-900' : 'text-emerald-300'}`}>
@@ -2052,10 +2093,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className={`grid grid-cols-2 gap-1.5 text-[11px] font-mono ${
                   isDay ? 'text-slate-800 font-medium' : 'text-emerald-200/90'
                 }`}>
-                  <div>{t('মডেল:', 'الطراز:', 'Model:')} <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.deviceModel || 'Android Phone'}</span></div>
-                  <div>{t('ওএস:', 'النظام:', 'OS:')} <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.osVersion || 'Android 10'}</span></div>
-                  <div>{t('অ্যাপ:', 'التطبيق:', 'App:')} <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>v411_38.1</span></div>
-                  <div>{t('অবস্থান:', 'الموقع:', 'Location:')} <span className={isDay ? 'text-emerald-950 font-bold' : 'text-emerald-300 font-bold'}>{userProfile.location || 'Asia/Dhaka'}</span></div>
+                  <div>{t('মডেল:', 'الطراز:', 'Model:')} <span className={isDay ? 'text-[var(--app-ink,#0d2e24)] font-bold' : 'text-emerald-300 font-bold'}>{userProfile.deviceModel || 'Android Phone'}</span></div>
+                  <div>{t('ওএস:', 'النظام:', 'OS:')} <span className={isDay ? 'text-[var(--app-ink,#0d2e24)] font-bold' : 'text-emerald-300 font-bold'}>{userProfile.osVersion || 'Android 10'}</span></div>
+                  <div>{t('অ্যাপ:', 'التطبيق:', 'App:')} <span className={isDay ? 'text-[var(--app-ink,#0d2e24)] font-bold' : 'text-emerald-300 font-bold'}>v411_38.1</span></div>
+                  <div>{t('অবস্থান:', 'الموقع:', 'Location:')} <span className={isDay ? 'text-[var(--app-ink,#0d2e24)] font-bold' : 'text-emerald-300 font-bold'}>{userProfile.location || 'Asia/Dhaka'}</span></div>
                 </div>
               </div>
 
@@ -2063,12 +2104,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               {onOpenWelcomeScreen && (
                 <div
                   className={`p-4 rounded-2xl border text-xs space-y-2 ${
-                    isDay ? 'bg-emerald-50/70 border-emerald-200 text-slate-900' : 'bg-[#082830] border-emerald-700/40 text-white'
+                    isDay
+                      ? 'bg-[var(--app-surface-soft,#e9f6ef)]/70 border-[var(--app-border,#cbe6d8)] text-slate-900'
+                      : 'bg-[var(--app-dark-surface,#082830)] border-[var(--app-dark-border,#184850)] text-white'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div>
-                      <div className="font-extrabold text-xs text-emerald-600 dark:text-emerald-300 flex items-center gap-1.5">
+                      <div className="font-extrabold text-xs text-[var(--app-primary,#006A4E)] dark:text-emerald-300 flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5" />
                         <span>{t('প্রথম ডাউনলোড ওয়েলকাম স্ক্রিন', 'شاشة الترحيب الأولى', 'First Download Welcome Screen')}</span>
                       </div>
@@ -2086,7 +2129,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         onClose();
                         onOpenWelcomeScreen();
                       }}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+                      className="px-3 py-1.5 rounded-xl bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#00523c)] text-white font-bold text-xs shadow-xs transition active:scale-95 cursor-pointer shrink-0"
                     >
                       {t('স্ক্রিন দেখুন', 'معاينة', 'Preview')}
                     </button>
@@ -2102,8 +2145,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           <div
             className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
               isDay
-                ? 'bg-white text-slate-800'
-                : 'bg-[#071a1e] text-white'
+                ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-800'
+                : 'bg-[var(--app-dark-canvas,#071a1e)] text-white'
             }`}
           >
             <div className="w-full h-full flex flex-col overflow-hidden">
@@ -2479,13 +2522,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {activeSubModal === 'edit_profile' && (
           <div
             className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
-              isDay ? 'bg-white text-slate-800' : 'bg-[#0f343c] text-white'
+              isDay
+                ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-800'
+                : 'bg-[var(--app-dark-canvas,#0f343c)] text-white'
             }`}
           >
             <div className="w-full h-full flex flex-col overflow-hidden">
-              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-[var(--app-border,#cbe6d8)] dark:border-[var(--app-dark-border,#184850)] bg-[var(--app-surface,#fafdfb)] dark:bg-[var(--app-dark-surface,#062024)] shrink-0">
                 <h3 className="font-bold text-base flex items-center gap-2">
-                  <User className="w-4 h-4 text-emerald-600" />
+                  <User className="w-4 h-4 text-[var(--app-primary,#006A4E)]" />
                   <span>{t('প্রোফাইল সম্পাদনা করুন', 'تعديل الملف الشخصي', 'Edit Account Profile')}</span>
                 </h3>
                 <button
@@ -2510,8 +2555,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onChange={(e) => setEditName(e.target.value)}
                     className={`w-full rounded-xl px-3 py-2 border font-semibold focus:outline-none ${
                       isDay
-                        ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                        : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                        ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900 focus:border-[var(--app-primary,#006A4E)]'
+                        : 'bg-[var(--app-dark-surface,#092226)] border-[var(--app-dark-border,#184850)] text-white focus:border-emerald-500'
                     }`}
                   />
                 </div>
@@ -2527,8 +2572,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onChange={(e) => setEditEmailOrPhone(e.target.value)}
                     className={`w-full rounded-xl px-3 py-2 border font-semibold focus:outline-none ${
                       isDay
-                        ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                        : 'bg-[#092226] border-[#184850] text-white focus:border-emerald-500'
+                        ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900 focus:border-[var(--app-primary,#006A4E)]'
+                        : 'bg-[var(--app-dark-surface,#092226)] border-[var(--app-dark-border,#184850)] text-white focus:border-emerald-500'
                     }`}
                   />
                 </div>
@@ -2537,13 +2582,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveSubModal('none')}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-300 font-bold hover:bg-slate-100 transition"
+                    className="flex-1 py-2.5 rounded-xl border border-[var(--app-border,#cbe6d8)] dark:border-[var(--app-dark-border)] font-bold hover:bg-[var(--app-surface-soft)] transition"
                   >
                     {t('বাতিল', 'إلغاء', 'Cancel')}
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-md active:scale-95"
+                    className="flex-1 py-2.5 rounded-xl bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#00523c)] text-white font-bold transition shadow-md active:scale-95"
                   >
                     {t('পরিবর্তন সংরক্ষণ করুন', 'حفظ التغييرات', 'Save Changes')}
                   </button>
@@ -2558,13 +2603,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {activeSubModal === 'feedback' && (
           <div
             className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
-              isDay ? 'bg-white text-slate-800' : 'bg-[#0f343c] text-white'
+              isDay
+                ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-800'
+                : 'bg-[var(--app-dark-canvas,#0f343c)] text-white'
             }`}
           >
             <div className="w-full h-full flex flex-col overflow-hidden">
-              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-[var(--app-border,#cbe6d8)] dark:border-[var(--app-dark-border,#184850)] bg-[var(--app-surface,#fafdfb)] dark:bg-[var(--app-dark-surface,#062024)] shrink-0">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-emerald-600" />
+                  <MessageSquare className="w-5 h-5 text-[var(--app-primary,#006A4E)]" />
                   <h3 className="font-bold text-base">{t('মতামত পাঠান', 'إرسال الملاحظات', 'Send Feedback')}</h3>
                 </div>
                 <button
@@ -2586,7 +2633,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       type="button"
                       onClick={() => setFeedbackChannel('whatsapp')}
                       className={`py-2 px-3 rounded-xl border font-bold flex items-center justify-center gap-1.5 ${
-                        feedbackChannel === 'whatsapp' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-700' : 'bg-slate-100'
+                        feedbackChannel === 'whatsapp'
+                          ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-primary,#006A4E)] text-[var(--app-primary,#006A4E)]'
+                          : 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)]'
                       }`}
                     >
                       <span>{t('💬 হোয়াটসঅ্যাপ', '💬 واتساب', '💬 WhatsApp')}</span>
@@ -2595,7 +2644,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       type="button"
                       onClick={() => setFeedbackChannel('email')}
                       className={`py-2 px-3 rounded-xl border font-bold flex items-center justify-center gap-1.5 ${
-                        feedbackChannel === 'email' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-700' : 'bg-slate-100'
+                        feedbackChannel === 'email'
+                          ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-primary,#006A4E)] text-[var(--app-primary,#006A4E)]'
+                          : 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)]'
                       }`}
                     >
                       <Mail className="w-4 h-4 text-rose-500" />
@@ -2613,7 +2664,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     value={feedbackUserEmail}
                     onChange={(e) => setFeedbackUserEmail(e.target.value)}
                     className={`w-full rounded-xl px-3 py-2 border font-medium ${
-                      isDay ? 'bg-slate-50 border-slate-300' : 'bg-[#092226] border-[#184850] text-white'
+                      isDay
+                        ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)]'
+                        : 'bg-[var(--app-dark-surface,#092226)] border-[var(--app-dark-border,#184850)] text-white'
                     }`}
                   />
                 </div>
@@ -2628,7 +2681,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     onChange={(e) => setFeedbackMessage(e.target.value)}
                     placeholder={t('এখানে আপনার মতামত বা পরামর্শ লিখুন...', 'اكتب رسالتك هنا...', 'Type your message here...')}
                     className={`w-full rounded-xl p-3 border ${
-                      isDay ? 'bg-slate-50 border-slate-300' : 'bg-[#092226] border-[#184850] text-white'
+                      isDay
+                        ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)]'
+                        : 'bg-[var(--app-dark-surface,#092226)] border-[var(--app-dark-border,#184850)] text-white'
                     }`}
                   />
                 </div>
@@ -2637,14 +2692,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveSubModal('none')}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-300 font-bold hover:bg-slate-100"
+                    className="flex-1 py-2.5 rounded-xl border border-[var(--app-border,#cbe6d8)] dark:border-[var(--app-dark-border)] font-bold hover:bg-[var(--app-surface-soft)]"
                   >
                     {t('বাতিল', 'إلغاء', 'Cancel')}
                   </button>
                   <button
                     type="button"
                     onClick={handleSendFeedback}
-                    className="flex-1 py-2.5 rounded-xl bg-[#2d7d4f] hover:bg-[#256a42] text-white font-bold flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#00523c)] text-white font-bold flex items-center justify-center gap-2"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>{t('বার্তা পাঠান', 'إرسال', 'Send Message')}</span>
@@ -2659,13 +2714,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {activeSubModal === 'bookmarks' && (
           <div
             className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
-              isDay ? 'bg-white text-slate-800' : 'bg-[#0f343c] text-white'
+              isDay
+                ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-800'
+                : 'bg-[var(--app-dark-canvas,#0f343c)] text-white'
             }`}
           >
             <div className="w-full h-full flex flex-col overflow-hidden">
-              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-[var(--app-border,#cbe6d8)] dark:border-[var(--app-dark-border,#184850)] bg-[var(--app-surface,#fafdfb)] dark:bg-[var(--app-dark-surface,#062024)] shrink-0">
                 <div className="flex items-center gap-2">
-                  <Bookmark className="w-4 h-4 text-emerald-600 fill-current" />
+                  <Bookmark className="w-4 h-4 text-[var(--app-primary,#006A4E)] fill-current" />
                   <h3 className="font-bold text-base">{t('আপনার বুকমার্কসমূহ', 'علاماتك المرجعية', 'Your Bookmarks')}</h3>
                 </div>
                 <button
@@ -2682,12 +2739,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div
                     key={idx}
                     className={`p-3 rounded-2xl border flex items-center justify-between gap-2 ${
-                      isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#092226] border-[#184850]'
+                      isDay
+                        ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)]'
+                        : 'bg-[var(--app-dark-surface,#092226)] border-[var(--app-dark-border,#184850)]'
                     }`}
                   >
                     <div>
                       <div className="text-xs font-bold">{item.title}</div>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 font-semibold">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] font-semibold">
                         {item.category}
                       </span>
                     </div>
@@ -2697,7 +2756,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         setActiveSubModal('none');
                         onClose();
                       }}
-                      className="px-2.5 py-1 rounded-xl bg-emerald-600 text-white text-[10px] font-bold"
+                      className="px-2.5 py-1 rounded-xl bg-[var(--app-primary,#006A4E)] text-white text-[10px] font-bold"
                     >
                       {t('খুলুন →', 'فتح ←', 'Open →')}
                     </button>
@@ -2712,13 +2771,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {activeSubModal === 'downloads' && (
           <div
             className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in ${
-              isDay ? 'bg-white text-slate-800' : 'bg-[#0f343c] text-white'
+              isDay
+                ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-800'
+                : 'bg-[var(--app-dark-canvas,#0f343c)] text-white'
             }`}
           >
             <div className="w-full h-full flex flex-col overflow-hidden">
-              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
+              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-[var(--app-border,#cbe6d8)] dark:border-[var(--app-dark-border,#184850)] bg-[var(--app-surface,#fafdfb)] dark:bg-[var(--app-dark-surface,#062024)] shrink-0">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-blue-600" />
+                  <BookOpen className="w-4 h-4 text-[var(--app-primary,#006A4E)]" />
                   <h3 className="font-bold text-base">{t('ডাউনলোডকৃত কিতাব', 'الكتب المحملة', 'Downloaded Books')}</h3>
                 </div>
                 <button
@@ -2735,14 +2796,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div
                     key={idx}
                     className={`p-3 rounded-2xl border flex items-center justify-between gap-2 ${
-                      isDay ? 'bg-slate-50 border-slate-200' : 'bg-[#092226] border-[#184850]'
+                      isDay
+                        ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)]'
+                        : 'bg-[var(--app-dark-surface,#092226)] border-[var(--app-dark-border,#184850)]'
                     }`}
                   >
                     <div>
                       <div className="text-xs font-bold">{item.title}</div>
                       <span className="text-[10px] text-slate-400 font-mono">{item.size}</span>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 font-bold">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] font-bold">
                       {item.status} ✓
                     </span>
                   </div>
@@ -2757,7 +2820,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
             <div
               className={`w-full max-w-xs rounded-3xl border p-5 shadow-2xl text-center space-y-3 ${
-                isDay ? 'bg-white text-slate-800 border-slate-200' : 'bg-[#0f343c] text-white border-[#1c5763]'
+                isDay
+                  ? 'bg-[var(--app-surface,#fafdfb)] text-slate-800 border-[var(--app-border,#cbe6d8)]'
+                  : 'bg-[var(--app-dark-surface,#0f343c)] text-white border-[var(--app-dark-border,#1c5763)]'
               }`}
             >
               <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-600 mx-auto flex items-center justify-center border border-rose-500/30">

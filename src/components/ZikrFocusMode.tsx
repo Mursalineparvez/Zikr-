@@ -333,8 +333,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
       onTouchEnd={handleTouchEnd}
       className={`fixed inset-0 z-[9999] w-full h-[100dvh] flex flex-col justify-between overflow-hidden select-none ${
         isDay
-          ? 'bg-gradient-to-b from-[#f9fbfb] via-[#eef6f4] to-[#e4f1ed] text-slate-800'
-          : 'bg-gradient-to-b from-[#061e23] via-[#09292f] to-[#04161a] text-white'
+          ? 'bg-gradient-to-b from-[var(--app-surface,#fafdfb)] via-[var(--app-canvas,#f3faf6)] to-[var(--app-surface-soft,#e9f6ef)] text-slate-800'
+          : 'bg-gradient-to-b from-[var(--app-dark-canvas,#03171b)] via-[var(--app-dark-surface,#062024)] to-[var(--app-dark-canvas,#03171b)] text-white'
       }`}
     >
       {/* Floating Micro Particle +1 */}
@@ -354,8 +354,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
           isGoalMet
             ? 'bg-amber-400'
             : isDay
-            ? 'bg-emerald-300'
-            : 'bg-teal-500'
+            ? 'bg-[var(--app-primary-light,#6ee7b7)]'
+            : 'bg-[var(--app-primary-mid,#059669)]'
         }`}
       />
 
@@ -384,7 +384,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               isLocked
                 ? 'opacity-40 cursor-not-allowed bg-black/20 border-white/5 text-slate-400'
                 : isDay
-                ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 shadow-xs'
+                ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-700 shadow-xs'
                 : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
             }`}
             title={isLocked ? (selectedLanguage === 'bn' ? 'লক করা আছে' : 'Screen Locked') : (selectedLanguage === 'bn' ? 'ফোকাস মোড থেকে বের হন' : 'Exit Focus Mode')}
@@ -393,16 +393,20 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
           </button>
 
           {/* Center: Index pill & quick sound/vib controls */}
-          <div className="flex items-center gap-1.5 bg-black/15 px-2.5 py-1 rounded-full border border-white/10">
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
+            isDay
+              ? 'bg-[var(--app-surface,#fafdfb)]/80 border-[var(--app-border,#cbe6d8)]'
+              : 'bg-black/15 border-white/10'
+          }`}>
             <span
               className={`text-[11px] font-black tracking-wider uppercase font-mono ${
-                isDay ? 'text-emerald-800' : 'text-emerald-300'
+                isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-[var(--app-primary-light,#6ee7b7)]'
               }`}
             >
               #{String(currentIndex + 1).padStart(2, '0')} / {String(zikrs.length).padStart(2, '0')}
             </span>
 
-            <span className="w-1 h-1 rounded-full bg-white/20" />
+            <span className={`w-1 h-1 rounded-full ${isDay ? 'bg-[var(--app-border,#cbe6d8)]' : 'bg-white/20'}`} />
 
             {/* Sound Mute/Unmute */}
             <button
@@ -418,7 +422,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               className={`p-1 rounded-md transition-colors ${
                 isLocked ? 'opacity-30 cursor-not-allowed' : ''
               } ${
-                soundActive ? 'text-emerald-400' : 'text-slate-400 opacity-60'
+                soundActive ? 'text-[var(--app-primary-mid,#059669)]' : 'text-slate-400 opacity-60'
               }`}
               title={isLocked ? (selectedLanguage === 'bn' ? 'লক করা আছে' : 'Screen Locked') : soundActive ? (selectedLanguage === 'bn' ? 'শব্দ বন্ধ করুন' : 'Mute Sound') : (selectedLanguage === 'bn' ? 'শব্দ চালু করুন' : 'Enable Sound')}
             >
@@ -439,7 +443,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               className={`p-1 rounded-md transition-colors ${
                 isLocked ? 'opacity-30 cursor-not-allowed' : ''
               } ${
-                vibrationActive ? 'text-amber-400' : 'text-slate-400 opacity-60'
+                vibrationActive ? 'text-amber-500' : 'text-slate-400 opacity-60'
               }`}
               title={isLocked ? (selectedLanguage === 'bn' ? 'লক করা আছে' : 'Screen Locked') : vibrationActive ? (selectedLanguage === 'bn' ? 'ভাইব্রেশন বন্ধ করুন' : 'Disable Vibration') : (selectedLanguage === 'bn' ? 'ভাইব্রেশন চালু করুন' : 'Enable Vibration')}
             >
@@ -464,7 +468,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                 isLocked
                   ? 'opacity-30 cursor-not-allowed bg-black/20 border-white/5 text-slate-400'
                   : isDay
-                  ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700 shadow-xs'
+                  ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-700 shadow-xs'
                   : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
               }`}
               title={isLocked ? (selectedLanguage === 'bn' ? 'লক করা আছে' : 'Screen Locked') : (selectedLanguage === 'bn' ? 'কাউন্টার রিসেট (০ করুন)' : 'Reset Counter (0)')}
@@ -491,7 +495,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                 isLocked
                   ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-amber-500/40 ring-2 ring-amber-400/40 animate-pulse'
                   : isDay
-                  ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                  ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-700'
                   : 'bg-white/10 hover:bg-white/15 border-white/10 text-white'
               }`}
               title={isLocked ? (selectedLanguage === 'bn' ? 'আনলক করতে চাপুন' : 'Tap to Unlock') : (selectedLanguage === 'bn' ? 'স্ক্রিন লক করুন' : 'Lock Screen')}
@@ -544,7 +548,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
           >
             <div
               className={`p-5 rounded-3xl max-w-xs w-full text-center border shadow-2xl space-y-3.5 ${
-                isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#09292f] border-teal-700/60 text-white'
+                isDay ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-800' : 'bg-[var(--app-dark-surface,#062024)] border-[var(--app-dark-border,#184850)] text-white'
               }`}
             >
               <div className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-red-500/15 text-red-500 border border-red-500/30">
@@ -563,7 +567,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   type="button"
                   onClick={() => setShowResetConfirm(false)}
                   className={`flex-1 py-2.5 rounded-xl font-bold text-xs border ${
-                    isDay ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-white/10 text-white border-white/10'
+                    isDay ? 'bg-[var(--app-surface-soft,#e9f6ef)] text-slate-700 border-[var(--app-border,#cbe6d8)]' : 'bg-white/10 text-white border-white/10'
                   }`}
                 >
                   {selectedLanguage === 'bn' ? 'বাতিল' : 'Cancel'}
@@ -592,7 +596,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                   : (zikr.arabic || '').length > 35
                   ? 'text-2xl sm:text-3xl'
                   : 'text-3xl sm:text-4xl'
-              } ${isDay ? 'text-[#063e32]' : 'text-emerald-100'}`}
+              } ${isDay ? 'text-[var(--app-ink,#0d2e24)]' : 'text-[var(--app-primary-light,#6ee7b7)]'}`}
             >
               {zikr.arabic || zikr.name}
             </h2>
@@ -605,8 +609,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                 voicePlaying
                   ? 'bg-amber-500 text-slate-950 border-amber-400 animate-pulse'
                   : isDay
-                  ? 'bg-emerald-50 text-[#006747] border-emerald-200'
-                  : 'bg-white/10 text-emerald-300 border-white/10'
+                  ? 'bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                  : 'bg-white/10 text-[var(--app-primary-light,#6ee7b7)] border-white/10'
               }`}
               title={selectedLanguage === 'bn' ? 'আরবি তিলাওয়াত শুনুন' : 'Listen to Arabic Recitation'}
             >
@@ -622,7 +626,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
           {/* Full Meaning (No Truncation) */}
           {displayMeaning && (
             <p className="text-[11px] sm:text-xs leading-snug opacity-90 px-2 max-w-md break-words pt-0.5">
-              <span className="font-bold text-[#007e8a] dark:text-teal-300">
+              <span className="font-bold text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)]">
                 {selectedLanguage === 'bn' ? 'অর্থ: ' : 'Meaning: '}
               </span>
               <span>{displayMeaning}</span>
@@ -638,7 +642,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               triggerIncrement(e.clientX, e.clientY);
             }}
             className={`relative w-[260px] h-[260px] sm:w-[285px] sm:h-[285px] rounded-full flex flex-col items-center justify-center cursor-pointer transition-transform duration-100 active:scale-[0.97] group ${
-              isDay ? 'bg-white shadow-xl shadow-emerald-900/10' : 'bg-[#06242a] shadow-2xl shadow-black/70'
+              isDay ? 'bg-[var(--app-surface,#fafdfb)] shadow-xl' : 'bg-[var(--app-dark-surface,#062024)] shadow-2xl shadow-black/70'
             }`}
           >
             {/* SVG Circular Dial Arc */}
@@ -650,8 +654,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                 {/* Arc Gradient */}
                 <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#F59E0B" />
-                  <stop offset="50%" stopColor="#10B981" />
-                  <stop offset="100%" stopColor="#059669" />
+                  <stop offset="50%" stopColor="var(--app-primary-mid, #10B981)" />
+                  <stop offset="100%" stopColor="var(--app-primary, #059669)" />
                 </linearGradient>
                 {/* Knob Glow Filter */}
                 <filter id="knobGlow" x="-30%" y="-30%" width="160%" height="160%">
@@ -666,7 +670,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                 cy={center}
                 r={radius}
                 fill="none"
-                stroke={isDay ? '#e2ece8' : 'rgba(20, 184, 166, 0.14)'}
+                stroke={isDay ? 'var(--app-border, #e2ece8)' : 'color-mix(in srgb, var(--app-primary-light, #14b8a6) 20%, transparent)'}
                 strokeWidth={strokeWidth}
               />
 
@@ -714,8 +718,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               {/* Round / Cycle badge */}
               <div className="flex items-center gap-1">
                 {isGoalMet ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.2 text-[9px] font-black rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                  <span className="inline-flex items-center gap-1 px-2 py-0.2 text-[9px] font-black rounded-full bg-[var(--app-primary-mid,#059669)]/20 text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)] border border-[var(--app-primary-mid,#059669)]/40">
+                    <CheckCircle2 className="w-2.5 h-2.5" />
                     <span>{selectedLanguage === 'bn' ? 'সম্পন্ন' : 'Completed'}</span>
                   </span>
                 ) : (
@@ -744,8 +748,8 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               <div
                 className={`text-[10px] font-bold px-2 py-0.2 rounded-full border ${
                   isDay
-                    ? 'bg-slate-100 text-slate-600 border-slate-200'
-                    : 'bg-black/30 text-teal-200 border-teal-800/60'
+                    ? 'bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-ink,#0d2e24)] border-[var(--app-border,#cbe6d8)]'
+                    : 'bg-black/30 text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
                 }`}
               >
                 {hasTarget ? `${zikr.count} / ${target}` : `${progressPercent}%`}
@@ -757,7 +761,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               <span
                 key={ripple.id}
                 style={{ left: ripple.x, top: ripple.y }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-teal-400/20 pointer-events-none animate-ripple"
+                className="absolute -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-[var(--app-primary-mid,#059669)]/20 pointer-events-none animate-ripple"
               />
             ))}
           </div>
@@ -785,7 +789,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               disabled={zikr.count <= 0 || isLocked}
               className={`p-3 rounded-xl font-bold transition active:scale-95 disabled:opacity-30 cursor-pointer border flex items-center justify-center shrink-0 ${
                 isDay
-                  ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-xs'
+                  ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)] text-slate-700 border-[var(--app-border,#cbe6d8)] shadow-xs'
                   : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
               }`}
               title={selectedLanguage === 'bn' ? '১ কমান (-১)' : 'Decrease (-1)'}
@@ -800,7 +804,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
                 e.stopPropagation();
                 triggerIncrement(e.clientX, e.clientY);
               }}
-              className="flex-1 py-3 rounded-xl font-black text-sm tracking-wide shadow-lg shadow-emerald-900/30 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#006747] via-[#007a52] to-[#008763] hover:from-[#005439] hover:to-[#006e4c] text-white border-none"
+              className="flex-1 py-3 rounded-xl font-black text-sm tracking-wide shadow-lg transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 bg-gradient-to-r from-[var(--app-primary,#006A4E)] to-[var(--app-primary-mid,#059669)] hover:from-[var(--app-primary-dark,#00523c)] hover:to-[var(--app-primary,#006A4E)] text-white border-none"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               <span>
@@ -821,7 +825,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               disabled={currentIndex === 0 || isLocked}
               className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1 transition active:scale-95 disabled:opacity-30 cursor-pointer border ${
                 isDay
-                  ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                  ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)] text-slate-700 border-[var(--app-border,#cbe6d8)]'
                   : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
               }`}
               title={currentIndex > 0 ? ((selectedLanguage === 'bn' ? zikrs[currentIndex - 1]?.pronunciationBn : (zikrs[currentIndex - 1]?.translations?.[selectedLanguage]?.pronunciation || zikrs[currentIndex - 1]?.transliteration || zikrs[currentIndex - 1]?.name)) || 'Previous') : ''}
@@ -851,7 +855,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
               disabled={currentIndex === zikrs.length - 1 || isLocked}
               className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1 transition active:scale-95 disabled:opacity-30 cursor-pointer border ${
                 isDay
-                  ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                  ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)] text-slate-700 border-[var(--app-border,#cbe6d8)]'
                   : 'bg-white/10 hover:bg-white/15 text-white border-white/10'
               }`}
               title={currentIndex < zikrs.length - 1 ? ((selectedLanguage === 'bn' ? zikrs[currentIndex + 1]?.pronunciationBn : (zikrs[currentIndex + 1]?.translations?.[selectedLanguage]?.pronunciation || zikrs[currentIndex + 1]?.transliteration || zikrs[currentIndex + 1]?.name)) || 'Next') : ''}
@@ -863,7 +867,7 @@ export const ZikrFocusMode: React.FC<ZikrFocusModeProps> = ({
 
           {/* Grand Cumulative Total Dhikr Status Bar */}
           <div className="flex items-center justify-between text-[11px] font-bold pt-1 px-1 opacity-75 border-t border-white/5">
-            <span className={isDay ? 'text-slate-600' : 'text-emerald-200/90'}>
+            <span className={isDay ? 'text-slate-600' : 'text-[var(--app-primary-light,#6ee7b7)]/90'}>
               {selectedLanguage === 'bn' ? '📊 মোট সর্বমোট জিকির:' : '📊 Grand Total Dhikr:'}
             </span>
             <span className="font-mono font-black text-amber-400">

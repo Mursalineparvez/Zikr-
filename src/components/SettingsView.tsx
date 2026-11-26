@@ -12,7 +12,8 @@ import {
   Play,
   Square,
 } from 'lucide-react';
-import { AppTheme, AppSettings, ZikrLanguage } from '../types';
+import { AppSettings, ZikrLanguage } from '../types';
+import { APP_LIGHT_THEMES } from '../utils/appThemes';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { SETTINGS_UI } from '../utils/appTranslations';
 import { playArabicVoice, soundHaptics } from '../utils/audioHaptics';
@@ -45,6 +46,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isPlayingSample, setIsPlayingSample] = useState(false);
   const { isInstallable, isInstalled, install } = usePWAInstall();
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const isDay = settings.themeMode === 'day';
 
   const handlePlayVoiceSample = () => {
     if (isPlayingSample) {
@@ -96,63 +98,56 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     reader.readAsText(file);
   };
 
-  const themes: Array<{ id: AppTheme; name: string; desc: string; previewClass: string }> = [
-    {
-      id: 'emerald',
-      name: SETTINGS_UI.themeEmeraldName[selectedLanguage] || 'Serene Emerald',
-      desc: SETTINGS_UI.themeEmeraldDesc[selectedLanguage] || 'Classic Islamic Emerald Green with Gold accents',
-      previewClass: 'from-emerald-900 to-emerald-950 border-emerald-500',
-    },
-    {
-      id: 'midnight',
-      name: SETTINGS_UI.themeMidnightName[selectedLanguage] || 'Midnight Slate',
-      desc: SETTINGS_UI.themeMidnightDesc[selectedLanguage] || 'Deep obsidian night with cool slate accents',
-      previewClass: 'from-slate-900 to-black border-slate-600',
-    },
-    {
-      id: 'teal',
-      name: SETTINGS_UI.themeTealName[selectedLanguage] || 'Ocean Teal',
-      desc: SETTINGS_UI.themeTealDesc[selectedLanguage] || 'Calming Mediterranean deep teal and turquoise',
-      previewClass: 'from-teal-900 to-cyan-950 border-teal-500',
-    },
-    {
-      id: 'gold',
-      name: SETTINGS_UI.themeGoldName[selectedLanguage] || 'Medina Gold',
-      desc: SETTINGS_UI.themeGoldDesc[selectedLanguage] || 'Warm sacred desert gold and amber tones',
-      previewClass: 'from-amber-950 to-yellow-950 border-amber-500',
-    },
-  ];
+  const cardShellClass = isDay
+    ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900 shadow-sm'
+    : 'bg-[var(--app-dark-surface,#062024)] border-[var(--app-dark-border,#184850)] text-white shadow-lg';
+
+  const sectionTitleClass = `flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+    isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-[var(--app-primary-light,#6ee7b7)]'
+  }`;
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
-      <div className="pb-3 border-b border-slate-200 dark:border-emerald-900/40">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+      <div className={`pb-3 border-b ${isDay ? 'border-[var(--app-border,#cbe6d8)]' : 'border-[var(--app-dark-border,#184850)]'}`}>
+        <h2 className={`text-xl font-bold flex items-center gap-2 ${isDay ? 'text-slate-900' : 'text-white'}`}>
           <span>{SETTINGS_UI.title[selectedLanguage] || 'App Settings & Preferences'}</span>
         </h2>
-        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+        <p className={`text-xs mt-1 ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
           {SETTINGS_UI.subtitle[selectedLanguage] ||
             'Customize language, themes, haptics, audio, and data backups.'}
         </p>
       </div>
 
       {/* App Install & Offline Card */}
-      <div className="bg-gradient-to-r from-emerald-950/70 via-teal-950/60 to-slate-900 p-5 rounded-3xl border border-emerald-500/30 space-y-3 shadow-lg">
+      <div
+        className={`p-5 rounded-3xl border space-y-3 ${
+          isDay
+            ? 'bg-gradient-to-r from-[var(--app-surface-soft,#e9f6ef)] via-[var(--app-canvas,#f3faf6)] to-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900 shadow-sm'
+            : 'bg-gradient-to-r from-[var(--app-dark-surface,#062024)] via-[var(--app-dark-surface-soft,#0c3138)] to-[var(--app-dark-canvas,#03171b)] border-[var(--app-dark-border,#184850)] text-white shadow-lg'
+        }`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
+            <div className="w-10 h-10 rounded-2xl bg-[var(--app-primary,#006A4E)] text-white flex items-center justify-center shrink-0 shadow-md">
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-sm text-white">
+              <h3 className={`font-extrabold text-sm ${isDay ? 'text-slate-900' : 'text-white'}`}>
                 {selectedLanguage === 'bn' ? 'হোম স্ক্রিনে Zikr+ অ্যাপ ইনস্টল' : 'Install Zikr+ App on Device'}
               </h3>
-              <p className="text-xs text-emerald-300/90 font-medium">
+              <p className={`text-xs font-medium ${isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-[var(--app-primary-light,#6ee7b7)]'}`}>
                 {selectedLanguage === 'bn' ? 'সম্পূর্ণ অফলাইনে নেট ছাড়া দ্রুততম স্পিডে রান করুন' : 'Run 100% offline at ultra-fast speeds'}
               </p>
             </div>
           </div>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hidden sm:inline">
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border hidden sm:inline ${
+              isDay
+                ? 'bg-[var(--app-surface,#fafdfb)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
+            }`}
+          >
             PWA
           </span>
         </div>
@@ -168,7 +163,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               setShowInstallModal(true);
             }
           }}
-          className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-xl bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#00523c)] text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
         >
           <Download className="w-4 h-4 stroke-[2.5]" />
           <span>
@@ -180,17 +175,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* 0. Language Configuration (14 Supported World Languages) */}
-      <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
+      <div className={`p-5 rounded-3xl border space-y-4 ${cardShellClass}`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+          <div className={sectionTitleClass}>
             <Globe className="w-4 h-4" />
             <span>{SETTINGS_UI.appLanguage[selectedLanguage] || 'App Language'}</span>
           </div>
-          <span className="text-xs font-bold text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+          <span
+            className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+              isDay
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
+            }`}
+          >
             {SUPPORTED_LANGUAGES.find((l) => l.code === selectedLanguage)?.nativeName || selectedLanguage}
           </span>
         </div>
-        <p className="text-xs font-bold text-[#005e3f] dark:text-emerald-300">
+        <p className={`text-xs font-bold ${isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-[var(--app-primary-light,#6ee7b7)]'}`}>
           {SETTINGS_UI.languageDesc[selectedLanguage] ||
             'All menus, translations, and guides will update instantly (Sacred Arabic remains intact)'}
         </p>
@@ -205,8 +206,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => onSelectLanguage && onSelectLanguage(langItem.code)}
                 className={`p-3 rounded-2xl border text-left transition active:scale-95 cursor-pointer flex items-center justify-between gap-2 ${
                   isSelected
-                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-md ring-2 ring-emerald-400/50 font-bold'
-                    : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-700 text-slate-200'
+                    ? 'bg-[var(--app-primary,#006A4E)] text-white border-[var(--app-primary,#006A4E)] shadow-md font-bold'
+                    : isDay
+                    ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] border-[var(--app-border,#cbe6d8)] text-slate-800'
+                    : 'bg-[var(--app-dark-canvas,#03171b)] hover:bg-[var(--app-dark-surface-soft,#0c3138)] border-[var(--app-dark-border,#184850)] text-slate-200'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -219,7 +222,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                 </div>
                 {isSelected && (
-                  <div className="w-4 h-4 rounded-full bg-white text-emerald-700 flex items-center justify-center shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-white text-[var(--app-primary,#006A4E)] flex items-center justify-center shrink-0">
                     <Check className="w-2.5 h-2.5 stroke-[3]" />
                   </div>
                 )}
@@ -229,32 +232,57 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 1. Theme Configuration */}
-      <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+      {/* 1. Appearance Theme Configuration (All 6 Unified App Themes) */}
+      <div className={`p-5 rounded-3xl border space-y-4 ${cardShellClass}`}>
+        <div className={sectionTitleClass}>
           <Palette className="w-4 h-4" />
           <span>{SETTINGS_UI.themeTitle[selectedLanguage] || 'Appearance Theme'}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {themes.map((th) => {
-            const isSelected = settings.theme === th.id;
+          {APP_LIGHT_THEMES.map((th) => {
+            const isSelected = (settings.theme || 'emerald') === th.id;
             return (
               <button
                 key={th.id}
+                type="button"
                 onClick={() => onUpdateSettings({ theme: th.id })}
-                className={`p-4 rounded-2xl border text-left transition flex items-center gap-3 bg-gradient-to-br ${th.previewClass} ${
-                  isSelected
-                    ? 'ring-2 ring-emerald-400 shadow-lg shadow-emerald-950/60'
-                    : 'opacity-75 hover:opacity-100 border-slate-700'
-                }`}
+                className="p-3.5 rounded-2xl border text-left transition flex items-center gap-3 cursor-pointer active:scale-[0.98]"
+                style={{
+                  backgroundColor: isDay
+                    ? isSelected
+                      ? th.softBg
+                      : th.cardBg
+                    : isSelected
+                    ? th.darkSurfaceSoft
+                    : th.darkCanvas,
+                  borderColor: isSelected ? th.primary : isDay ? th.border : th.darkBorder,
+                  boxShadow: isSelected ? `0 0 0 2px ${th.primary}35` : undefined,
+                }}
               >
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-emerald-300 bg-emerald-500' : 'border-slate-500'}`}>
-                  {isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
+                <div
+                  className="w-9 h-9 rounded-xl shrink-0 border flex items-center justify-center"
+                  style={{
+                    backgroundColor: th.primary,
+                    borderColor: th.primaryDark,
+                  }}
+                >
+                  {isSelected && <Check className="w-4 h-4 text-white stroke-[2.8]" />}
                 </div>
-                <div>
-                  <div className="text-sm font-bold text-white">{th.name}</div>
-                  <div className="text-[11px] text-slate-300 leading-tight">{th.desc}</div>
+                <div className="min-w-0">
+                  <div
+                    className="text-sm font-extrabold truncate"
+                    style={{ color: isDay ? th.ink : '#ffffff' }}
+                  >
+                    {selectedLanguage === 'bn' ? th.nameBn : th.nameEn}
+                  </div>
+                  <div
+                    className={`text-[11px] leading-tight line-clamp-1 ${
+                      isDay ? 'text-slate-600' : 'text-slate-300'
+                    }`}
+                  >
+                    {selectedLanguage === 'bn' ? th.descBn : th.descEn}
+                  </div>
                 </div>
               </button>
             );
@@ -262,14 +290,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Audio Reciter Voice Selection (ভয়েস তেলাওয়াত নির্বাচন) */}
-      <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
+      {/* 2. Audio Reciter Voice Selection */}
+      <div className={`p-5 rounded-3xl border space-y-4 ${cardShellClass}`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+          <div className={sectionTitleClass}>
             <Volume2 className="w-4 h-4" />
             <span>{selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ সেটিংস' : 'Voice Recitation Settings'}</span>
           </div>
-          <span className="text-xs font-bold text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+          <span
+            className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+              isDay
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
+            }`}
+          >
             {settings.voiceGender === 'female'
               ? selectedLanguage === 'bn'
                 ? '👩 নারী কণ্ঠ'
@@ -284,23 +318,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </span>
         </div>
 
-        {/* The Exact User Requested Voice Reciter Card */}
-        <div className="p-4 sm:p-5 rounded-3xl border border-emerald-500/30 bg-[#092226] text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div
+          className={`p-4 sm:p-5 rounded-3xl border shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 ${
+            isDay
+              ? 'bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+              : 'bg-[var(--app-dark-canvas,#03171b)] border-[var(--app-dark-border,#184850)] text-white'
+          }`}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+            <div
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${
+                isDay
+                  ? 'bg-[var(--app-surface,#fafdfb)] text-[var(--app-primary,#006A4E)] border-[var(--app-border,#cbe6d8)]'
+                  : 'bg-[var(--app-dark-surface-soft,#0c3138)] text-[var(--app-primary-light,#6ee7b7)] border-[var(--app-dark-border,#184850)]'
+              }`}
+            >
               <Volume2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">
+              <h3 className={`text-sm font-bold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                 {selectedLanguage === 'bn' ? 'অডিও তেলাওয়াত কণ্ঠ নির্বাচন' : 'Voice Recitation Gender'}
               </h3>
-              <p className="text-xs text-emerald-300/80">
+              <p className={`text-xs ${isDay ? 'text-[var(--app-primary,#006A4E)]' : 'text-[var(--app-primary-light,#6ee7b7)]'}`}>
                 {selectedLanguage === 'bn' ? 'পুরুষ কণ্ঠ (গভীর) বা নারী কণ্ঠ (সুমধুর) তেলাওয়াত নির্বাচন করুন' : 'Choose Male baritone or Female melodious voice'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-700 shrink-0">
+          <div
+            className={`flex items-center gap-2 p-1.5 rounded-2xl border shrink-0 ${
+              isDay
+                ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)]'
+                : 'bg-[var(--app-dark-surface,#062024)] border-[var(--app-dark-border,#184850)]'
+            }`}
+          >
             <button
               type="button"
               onClick={() => {
@@ -309,7 +360,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               }}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 (settings?.voiceGender || 'male') === 'male'
-                  ? 'bg-emerald-600 text-white shadow ring-1 ring-emerald-400'
+                  ? 'bg-[var(--app-primary,#006A4E)] text-white shadow'
+                  : isDay
+                  ? 'text-slate-600 hover:text-slate-900'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -324,7 +377,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               }}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 settings?.voiceGender === 'female'
-                  ? 'bg-teal-600 text-white shadow ring-1 ring-teal-400'
+                  ? 'bg-[var(--app-primary,#006A4E)] text-white shadow'
+                  : isDay
+                  ? 'text-slate-600 hover:text-slate-900'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -335,12 +390,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         {/* Audio Test Sample Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 bg-slate-800/40 p-3.5 rounded-2xl border border-slate-800">
+        <div
+          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 p-3.5 rounded-2xl border ${
+            isDay
+              ? 'bg-[var(--app-canvas,#f3faf6)] border-[var(--app-border,#cbe6d8)]'
+              : 'bg-[var(--app-dark-canvas,#03171b)] border-[var(--app-dark-border,#184850)]'
+          }`}
+        >
           <div>
-            <div className="text-xs font-bold text-slate-200">
+            <div className={`text-xs font-bold ${isDay ? 'text-slate-800' : 'text-slate-200'}`}>
               {selectedLanguage === 'bn' ? 'কণ্ঠের নমুনা অডিও পরীক্ষা করুন' : 'Listen to Voice Sample'}
             </div>
-            <div className="text-[11px] text-slate-400">
+            <div className={`text-[11px] ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
               {selectedLanguage === 'bn' ? 'দোআ ও আজকার তেলাওয়াতের অডিও উচ্চারণ যাচাই করুন' : 'Preview how the selected voice sounds during recitation'}
             </div>
           </div>
@@ -351,7 +412,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-md ${
               isPlayingSample
                 ? 'bg-amber-600 text-white animate-pulse'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                : 'bg-[var(--app-primary,#006A4E)] hover:bg-[var(--app-primary-dark,#00523c)] text-white'
             }`}
           >
             {isPlayingSample ? (
@@ -370,27 +431,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* 3. Audio & Haptics Toggles */}
-      <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+      <div className={`p-5 rounded-3xl border space-y-4 ${cardShellClass}`}>
+        <div className={sectionTitleClass}>
           <Smartphone className="w-4 h-4" />
           <span>{SETTINGS_UI.audioHaptics[selectedLanguage] || 'Feedback & Sensory Controls'}</span>
         </div>
 
-        <div className="divide-y divide-slate-800/80 text-sm">
+        <div className={`divide-y text-sm ${isDay ? 'divide-[var(--app-border,#cbe6d8)]' : 'divide-[var(--app-dark-border,#184850)]'}`}>
           {/* Sound Toggle */}
           <div className="py-3 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-white">
+              <div className={`font-semibold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                 {SETTINGS_UI.soundLabel[selectedLanguage] || 'Bead Click Audio'}
               </div>
-              <div className="text-xs text-slate-400">
+              <div className={`text-xs ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                 {SETTINGS_UI.soundDesc[selectedLanguage] || 'Synthesized acoustic wooden bead click on every count'}
               </div>
             </div>
             <button
               onClick={() => onUpdateSettings({ soundEnabled: !settings.soundEnabled })}
               className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer ${
-                settings.soundEnabled ? 'bg-emerald-600' : 'bg-slate-700'
+                settings.soundEnabled ? 'bg-[var(--app-primary,#006A4E)]' : 'bg-slate-400 dark:bg-slate-700'
               }`}
             >
               <div
@@ -404,17 +465,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* Vibration Toggle */}
           <div className="py-3 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-white">
+              <div className={`font-semibold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                 {SETTINGS_UI.vibrationLabel[selectedLanguage] || 'Tactile Vibration Haptics'}
               </div>
-              <div className="text-xs text-slate-400">
+              <div className={`text-xs ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                 {SETTINGS_UI.vibrationDesc[selectedLanguage] || 'Soft pulse feedback on tap, milestone chords for targets'}
               </div>
             </div>
             <button
               onClick={() => onUpdateSettings({ vibrationEnabled: !settings.vibrationEnabled })}
               className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer ${
-                settings.vibrationEnabled ? 'bg-emerald-600' : 'bg-slate-700'
+                settings.vibrationEnabled ? 'bg-[var(--app-primary,#006A4E)]' : 'bg-slate-400 dark:bg-slate-700'
               }`}
             >
               <div
@@ -428,17 +489,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* Screen Wake Lock */}
           <div className="py-3 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-white">
+              <div className={`font-semibold ${isDay ? 'text-slate-900' : 'text-white'}`}>
                 {SETTINGS_UI.wakeLockLabel[selectedLanguage] || 'Keep Screen Awake (Wake Lock)'}
               </div>
-              <div className="text-xs text-slate-400">
+              <div className={`text-xs ${isDay ? 'text-slate-500' : 'text-slate-400'}`}>
                 {SETTINGS_UI.wakeLockDesc[selectedLanguage] || 'Prevents phone display from sleeping while reciting'}
               </div>
             </div>
             <button
               onClick={() => onUpdateSettings({ screenAwake: !settings.screenAwake })}
               className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer ${
-                settings.screenAwake ? 'bg-emerald-600' : 'bg-slate-700'
+                settings.screenAwake ? 'bg-[var(--app-primary,#006A4E)]' : 'bg-slate-400 dark:bg-slate-700'
               }`}
             >
               <div
@@ -452,8 +513,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* 4. Data Backup & PDF Report */}
-      <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800 space-y-4">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+      <div className={`p-5 rounded-3xl border space-y-4 ${cardShellClass}`}>
+        <div className={sectionTitleClass}>
           <FileText className="w-4 h-4" />
           <span>{SETTINGS_UI.dataBackup[selectedLanguage] || 'Export & Data Backup'}</span>
         </div>
@@ -461,22 +522,36 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             onClick={onExportPdf}
-            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-600/50 text-emerald-200 text-xs font-bold transition active:scale-95 cursor-pointer"
+            className={`flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
+              isDay
+                ? 'bg-[var(--app-surface-soft,#e9f6ef)] hover:bg-[var(--app-surface-tray,#dff2e8)] border-[var(--app-border,#cbe6d8)] text-[var(--app-primary,#006A4E)]'
+                : 'bg-[var(--app-dark-surface-soft,#0c3138)] hover:bg-[var(--app-dark-border,#184850)] border-[var(--app-dark-border,#184850)] text-[var(--app-primary-light,#6ee7b7)]'
+            }`}
           >
-            <FileText className="w-4 h-4 text-amber-300" />
+            <FileText className="w-4 h-4 text-amber-500" />
             <span>{SETTINGS_UI.exportPdf[selectedLanguage] || 'Export PDF Report'}</span>
           </button>
 
           <button
             onClick={onExportBackupJson || handleDefaultExportBackup}
-            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition active:scale-95 cursor-pointer"
+            className={`flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
+              isDay
+                ? 'bg-[var(--app-canvas,#f3faf6)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-800'
+                : 'bg-[var(--app-dark-canvas,#03171b)] hover:bg-[var(--app-dark-surface-soft,#0c3138)] border-[var(--app-dark-border,#184850)] text-slate-200'
+            }`}
           >
-            <Download className="w-4 h-4 text-teal-400" />
+            <Download className="w-4 h-4 text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)]" />
             <span>{SETTINGS_UI.backupJson[selectedLanguage] || 'Backup JSON'}</span>
           </button>
 
-          <label className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition active:scale-95 cursor-pointer">
-            <Upload className="w-4 h-4 text-emerald-400" />
+          <label
+            className={`flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition active:scale-95 cursor-pointer ${
+              isDay
+                ? 'bg-[var(--app-canvas,#f3faf6)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-800'
+                : 'bg-[var(--app-dark-canvas,#03171b)] hover:bg-[var(--app-dark-surface-soft,#0c3138)] border-[var(--app-dark-border,#184850)] text-slate-200'
+            }`}
+          >
+            <Upload className="w-4 h-4 text-[var(--app-primary,#006A4E)] dark:text-[var(--app-primary-light,#6ee7b7)]" />
             <span>{SETTINGS_UI.restoreJson[selectedLanguage] || 'Restore JSON'}</span>
             <input
               type="file"
@@ -494,9 +569,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 4. Danger Zone */}
-      <div className="bg-slate-900/80 p-5 rounded-3xl border border-red-900/40 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-400">
+      {/* 5. Danger Zone */}
+      <div
+        className={`p-5 rounded-3xl border space-y-3 ${
+          isDay
+            ? 'bg-rose-50/70 border-rose-200 text-slate-900'
+            : 'bg-[var(--app-dark-surface,#062024)] border-red-900/50 text-white'
+        }`}
+      >
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-red-400">
           <ShieldAlert className="w-4 h-4" />
           <span>{SETTINGS_UI.dangerZone[selectedLanguage] || 'Data Reset Controls'}</span>
         </div>
@@ -504,14 +585,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={onGlobalReset}
-            className="px-4 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900 border border-red-800/60 text-red-200 text-xs font-bold transition active:scale-95 cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition active:scale-95 cursor-pointer"
           >
             {SETTINGS_UI.resetCounters[selectedLanguage] || 'Reset All Counters to 0'}
           </button>
 
           <button
             onClick={onRestoreDefaults}
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition active:scale-95 cursor-pointer"
+            className={`px-4 py-2.5 rounded-xl border text-xs font-semibold transition active:scale-95 cursor-pointer ${
+              isDay
+                ? 'bg-[var(--app-surface,#fafdfb)] hover:bg-[var(--app-surface-soft,#e9f6ef)] border-[var(--app-border,#cbe6d8)] text-slate-700'
+                : 'bg-[var(--app-dark-canvas,#03171b)] hover:bg-[var(--app-dark-surface-soft,#0c3138)] border-[var(--app-dark-border,#184850)] text-slate-300'
+            }`}
           >
             {SETTINGS_UI.restoreAzkar[selectedLanguage] || 'Restore Default Azkar'}
           </button>
