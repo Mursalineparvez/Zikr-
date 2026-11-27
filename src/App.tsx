@@ -53,7 +53,7 @@ const AppViewLoadingFallback: React.FC<{ isDay: boolean; isBn?: boolean }> = ({ 
     </span>
   </div>
 );
-import { saveAccountToRegistry } from './utils/accountRegistry';
+import { findSavedAccount, saveAccountToRegistry } from './utils/accountRegistry';
 import {
   createInitialDayLog,
   recordZikrIncrementInAamal,
@@ -77,7 +77,15 @@ import {
   signOutFirebaseUser,
   saveLibraryHighlightsToCloud,
   loadLibraryHighlightsFromCloud,
+  testFirestoreConnection,
 } from './services/firebaseLazy';
+import {
+  restoreServerSession,
+  loginWithGoogleTokenSession,
+  logoutServerSession,
+  saveServerUserData,
+  saveServerProfile,
+} from './services/authClient';
 import type { CloudZikrState } from './services/firebase';
 import { BookmarkCheck, Sparkles, WifiOff, Plus, Bot, MessageCircle } from 'lucide-react';
 import { getDetectedDeviceInfo, getDeviceId } from './utils/deviceInfo';
@@ -533,6 +541,7 @@ export default function App() {
   });
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [autoOpenAuthModal, setAutoOpenAuthModal] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [showFirstDownloadWelcome, setShowFirstDownloadWelcome] = useState<boolean>(() => {
@@ -626,7 +635,7 @@ export default function App() {
     try {
       const zikrSummary = (currentZikrs || []).map((z) => `${z.id}:${z.count}:${z.target || 0}`).join('|');
       const histSummary = (currentHistory || []).length;
-      const profSummary = `${currentProfile.name || ''}:${currentProfile.photoUrl || ''}:${currentProfile.password || ''}`;
+      const profSummary = `${currentProfile.name || ''}:${currentProfile.photoUrl || ''}`;
       const setSummary = `${currentSettings.themeMode}:${currentSettings.soundEnabled}:${currentSettings.vibrationEnabled}`;
       const todayKey = getTodayDateKey();
       const todayLog = getAamalLogForDate(todayKey);
@@ -777,11 +786,10 @@ export default function App() {
       } catch {}
     }
 
-    // 1. Synchronize Profile (photoUrl, password, name, location) for this user
+    // 1. Synchronize Profile (photoUrl, name, location) for this user
     let mergedProfile = userProfile;
     if (cloudData.profile) {
       const incomingPhoto = cloudData.profile.photoUrl;
-      const incomingPass = cloudData.profile.password;
       const incomingName = cloudData.profile.name;
       const incomingLoc = cloudData.profile.location;
 
@@ -790,7 +798,6 @@ export default function App() {
           ...prev,
           name: incomingName || prev.name,
           photoUrl: incomingPhoto !== undefined ? incomingPhoto : prev.photoUrl,
-          password: incomingPass !== undefined && incomingPass ? incomingPass : prev.password,
           location: incomingLoc || prev.location,
           isSignedIn: true,
           emailOrPhone: incomingOwner || prev.emailOrPhone || '',
@@ -987,6 +994,21 @@ export default function App() {
     );
   };
 
+  // Detect ?open_auth=1 (from standalone new-tab launcher) and open Sign-In modal immediately
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('open_auth') === '1') {
+        url.searchParams.delete('open_auth');
+        window.history.replaceState(window.history.state, '', url.toString());
+        setShowFirstDownloadWelcome(false);
+        setAutoOpenAuthModal(true);
+        navigateToMyAccount('profile');
+      }
+    } catch {}
+  }, []);
+
   // Google Redirect Login Result Check & Firebase Auth State Listener (Deferred to protect cold startup speed)
   useEffect(() => {
     let unsubAuth: (() => void) | null = null;
@@ -996,7 +1018,7 @@ export default function App() {
       typeof sessionStorage !== 'undefined' &&
       sessionStorage.getItem('zikrmate_google_redirect_in_progress') === 'true';
 
-    const delayMs = isRedirectPending ? 600 : 4500;
+    const delayMs = isRedirectPending ? 250 : 1200;
 
     const startupTimer = setTimeout(() => {
       if (isCancelled) return;
@@ -1008,44 +1030,98 @@ export default function App() {
         try {
           sessionStorage.removeItem('zikrmate_google_redirect_in_progress');
         } catch {}
-        checkGoogleRedirectResult()
-          .then(async (result) => {
-            if (isCancelled) return;
-            if (result && result.success && result.user && result.user.email) {
-              const targetEmail = result.user.email.toLowerCase().trim();
-              const detected = getDetectedDeviceInfo();
-              const cloudData = await loadUserDataFromCloud(targetEmail);
-              const updated: UserProfile = {
-                ...userProfile,
-                name: result.user.name || cloudData?.profile?.name || targetEmail.split('@')[0],
-                emailOrPhone: targetEmail,
-                photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || '',
-                location: userProfile.location || 'Bangladesh',
-                deviceModel: detected.model,
-                osVersion: detected.osVersion,
-                isSignedIn: true,
-                isVerified: true,
-                verificationMethod: 'google',
-                verificationDate: new Date().toISOString(),
-                authProvider: 'google',
-                lastSyncedAt: Date.now(),
-              };
-              saveAccountToRegistry(updated);
-              setUserProfile(updated);
-              try {
-                localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
-                localStorage.setItem('zikrmate_active_data_owner', targetEmail);
-                localStorage.removeItem('zikrmate_explicitly_logged_out');
-              } catch {}
-              if (cloudData && cloudData.foundInCloud) {
-                applyCloudDataToState(cloudData, true, true, true);
-              } else {
-                await initializeFreshZeroUserState(updated);
-              }
+      }
+
+      // Non-blocking startup Firestore connectivity verification + Session Store restore
+      testFirestoreConnection().catch(() => {});
+
+      const explicitlyLoggedOut = (() => {
+        try {
+          return localStorage.getItem('zikrmate_explicitly_logged_out') === 'true';
+        } catch {
+          return false;
+        }
+      })();
+
+      if (!explicitlyLoggedOut) {
+        restoreServerSession()
+          .then((sess) => {
+            if (isCancelled || !sess.authenticated || !sess.user) return;
+            const targetEmail = sess.user.email.toLowerCase().trim();
+            const detected = getDetectedDeviceInfo();
+            const existing = findSavedAccount(targetEmail);
+            const restoredProfile: UserProfile = {
+              name: sess.user.name || existing?.name || targetEmail.split('@')[0],
+              emailOrPhone: targetEmail,
+              photoUrl: sess.profile?.photo || existing?.photoUrl || '',
+              location: sess.profile?.preferences?.location || existing?.location || userProfileRef.current.location || 'Bangladesh',
+              deviceModel: detected.model,
+              osVersion: detected.osVersion,
+              isSignedIn: true,
+              isVerified: true,
+              verificationMethod: sess.user.auth_provider === 'google' ? 'google' : 'email',
+              verificationDate: sess.user.created_at || new Date().toISOString(),
+              authProvider: sess.user.auth_provider === 'google' ? 'google' : 'email',
+              lastSyncedAt: sess.userData?.activity?.lastSyncedAt || Date.now(),
+            };
+            saveAccountToRegistry(restoredProfile);
+            if (sess.userData?.saved_items?.libraryHighlights?.length) {
+              mergeSavedHighlights(sess.userData.saved_items.libraryHighlights);
             }
+            applyCloudDataToState(
+              {
+                foundInCloud: true,
+                hasZikrData: Boolean(sess.userData?.saved_items?.zikrs?.length),
+                profile: restoredProfile,
+                zikrs: sess.userData?.saved_items?.zikrs || [],
+                history: sess.userData?.saved_items?.historySessions || [],
+                settings: sess.userData?.settings as any,
+                lifetimeTotalCount: sess.userData?.activity?.lifetimeTotalCount || 0,
+                aamalLogs: sess.userData?.activity?.aamalLogs || {},
+                lastSyncedAt: sess.userData?.activity?.lastSyncedAt || Date.now(),
+              },
+              false,
+              true,
+              true
+            );
           })
           .catch(() => {});
       }
+
+      checkGoogleRedirectResult()
+        .then(async (result) => {
+          if (isCancelled) return;
+          if (result && result.success && result.user && result.user.email) {
+            const targetEmail = result.user.email.toLowerCase().trim();
+            const detected = getDetectedDeviceInfo();
+            const existing = findSavedAccount(targetEmail);
+            const loc = existing?.location || userProfileRef.current.location || 'Bangladesh';
+            if (result.user.idToken) {
+              await loginWithGoogleTokenSession({
+                idToken: result.user.idToken,
+                device: detected.model,
+                location: loc,
+              }).catch(() => null);
+            }
+            const updated: UserProfile = {
+              name: result.user.name || existing?.name || targetEmail.split('@')[0],
+              emailOrPhone: targetEmail,
+              photoUrl: result.user.photoUrl || existing?.photoUrl || '',
+              location: loc,
+              deviceModel: detected.model,
+              osVersion: detected.osVersion,
+              isSignedIn: true,
+              isVerified: true,
+              verificationMethod: 'google',
+              verificationDate: new Date().toISOString(),
+              authProvider: 'google',
+              lastSyncedAt: Date.now(),
+            };
+            saveAccountToRegistry(updated);
+            await handleUpdateProfileRef.current(updated);
+          }
+        })
+        .catch(() => {});
 
       // Listen to Firebase Auth persistence state changes gently in the background
       listenToAuthChanges(async (authUser) => {
@@ -1057,28 +1133,31 @@ export default function App() {
             }
           } catch {}
           const targetEmail = authUser.email.toLowerCase().trim();
-          setUserProfile((prev) => {
-            if (prev.isSignedIn) {
-              return prev;
-            }
-            const updated: UserProfile = {
-              ...prev,
-              name: authUser.name || prev.name || targetEmail.split('@')[0],
-              emailOrPhone: targetEmail,
-              photoUrl: authUser.photoUrl || prev.photoUrl || '',
-              isSignedIn: true,
-              isVerified: true,
-              verificationMethod: 'google',
-              verificationDate: prev.verificationDate || new Date().toISOString(),
-              authProvider: 'google',
-              lastSyncedAt: Date.now(),
-            };
-            saveAccountToRegistry(updated);
-            try {
-              localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
-            } catch {}
-            return updated;
-          });
+          const current = userProfileRef.current;
+          if (current.isSignedIn && (current.emailOrPhone || '').toLowerCase().trim() === targetEmail) {
+            return;
+          }
+          if (current.isSignedIn) {
+            return;
+          }
+          const detected = getDetectedDeviceInfo();
+          const existing = findSavedAccount(targetEmail);
+          const updated: UserProfile = {
+            name: authUser.name || existing?.name || targetEmail.split('@')[0],
+            emailOrPhone: targetEmail,
+            photoUrl: authUser.photoUrl || existing?.photoUrl || '',
+            location: existing?.location || current.location || 'Bangladesh',
+            deviceModel: detected.model,
+            osVersion: detected.osVersion,
+            isSignedIn: true,
+            isVerified: true,
+            verificationMethod: 'google',
+            verificationDate: new Date().toISOString(),
+            authProvider: 'google',
+            lastSyncedAt: Date.now(),
+          };
+          saveAccountToRegistry(updated);
+          handleUpdateProfileRef.current(updated).catch(() => {});
         }
       })
         .then((unsub) => {
@@ -1247,16 +1326,32 @@ export default function App() {
 
       const allAamal = getAllAamalLogs();
       const trueLifetime = Math.max(lifetimeTotalCount, masterGrandTotal);
-      const ok = await saveUserDataToCloud(
-        targetKey,
-        activeProfile,
-        zikrs,
-        historySessions,
-        trueLifetime,
-        settings,
-        allAamal
-      );
-      if (ok) {
+      const [cloudOk, srvRes] = await Promise.all([
+        saveUserDataToCloud(
+          targetKey,
+          activeProfile,
+          zikrs,
+          historySessions,
+          trueLifetime,
+          settings,
+          allAamal
+        ),
+        userProfile.isSignedIn
+          ? saveServerUserData({
+              saved_items: {
+                zikrs,
+                historySessions,
+                libraryHighlights: getSavedHighlights().slice(0, 500),
+              },
+              settings,
+              activity: {
+                lifetimeTotalCount: trueLifetime,
+                aamalLogs: allAamal,
+              },
+            })
+          : Promise.resolve({ ok: false }),
+      ]);
+      if (cloudOk || srvRes.ok) {
         lastSyncedSignatureRef.current = getStateSignature(zikrs, historySessions, trueLifetime, userProfile, settings);
         const now = Date.now();
         setLastCloudSyncTimestamp(now);
@@ -1293,15 +1388,30 @@ export default function App() {
     setIsSyncingCloud(true);
     const allAamal = getAllAamalLogs();
     const trueLifetime = Math.max(lifetimeTotalCount, masterGrandTotal);
-    const ok = await saveUserDataToCloud(
-      userProfile.emailOrPhone,
-      userProfile,
-      zikrs,
-      historySessions,
-      trueLifetime,
-      settings,
-      allAamal
-    );
+    const [cloudOk, srvRes] = await Promise.all([
+      saveUserDataToCloud(
+        userProfile.emailOrPhone,
+        userProfile,
+        zikrs,
+        historySessions,
+        trueLifetime,
+        settings,
+        allAamal
+      ),
+      saveServerUserData({
+        saved_items: {
+          zikrs,
+          historySessions,
+          libraryHighlights: getSavedHighlights().slice(0, 500),
+        },
+        settings,
+        activity: {
+          lifetimeTotalCount: trueLifetime,
+          aamalLogs: allAamal,
+        },
+      }),
+    ]);
+    const ok = cloudOk || srvRes.ok;
     setIsSyncingCloud(false);
 
     if (ok) {
@@ -1354,7 +1464,12 @@ export default function App() {
             allAamal
           ).catch(() => {});
         }
+        logoutServerSession().catch(() => {});
         signOutFirebaseUser().catch(() => {});
+        try {
+          sessionStorage.removeItem('zikrmate_admin_session_auth');
+          localStorage.removeItem('zikrmate_admin_session_auth');
+        } catch {}
 
         setUserProfile(updated);
         const freshZikrs = DEFAULT_ZIKRS.map((item, idx) => ({
@@ -1464,18 +1579,25 @@ export default function App() {
         localStorage.setItem('zikrmate_user_profile', JSON.stringify(updated));
       } catch {}
 
-      // 3. Same user profile edits (e.g. updating name, avatar photo, password, settings)
+      // 3. Same user profile edits (e.g. updating name, avatar photo, settings)
       if (updated.isSignedIn && newEmail) {
         saveAccountToRegistry(updated);
-        await saveUserDataToCloud(
-          newEmail,
-          updated,
-          zikrs,
-          historySessions,
-          lifetimeTotalCount,
-          settings,
-          getAllAamalLogs()
-        );
+        await Promise.all([
+          saveServerProfile({
+            name: updated.name,
+            photo: updated.photoUrl,
+            preferences: { location: updated.location },
+          }).catch(() => {}),
+          saveUserDataToCloud(
+            newEmail,
+            updated,
+            zikrs,
+            historySessions,
+            lifetimeTotalCount,
+            settings,
+            getAllAamalLogs()
+          ).catch(() => {}),
+        ]);
         showToast(
           selectedLanguage === 'bn'
             ? '✓ প্রোফাইল তথ্য ক্লাউডে সফলভাবে সংরক্ষিত হয়েছে!'
@@ -1486,6 +1608,13 @@ export default function App() {
       console.error('Error in handleUpdateProfile:', e);
     }
   };
+
+  const userProfileRef = useRef(userProfile);
+  const handleUpdateProfileRef = useRef(handleUpdateProfile);
+  useEffect(() => {
+    userProfileRef.current = userProfile;
+    handleUpdateProfileRef.current = handleUpdateProfile;
+  });
 
   useEffect(() => {
     try {
@@ -2483,6 +2612,8 @@ export default function App() {
                 onOpenWelcomeScreen={() => setShowFirstDownloadWelcome(true)}
                 onOpenAssistant={() => setIsAssistantOpen(true)}
                 onActiveSubChange={setCurrentOtherSub}
+                autoOpenAuth={autoOpenAuthModal}
+                onAutoOpenAuthHandled={() => setAutoOpenAuthModal(false)}
                 subSectionSyncKey={otherNavTick}
                 initialAccountTab={otherAccountTab}
                 initialSubSection={
@@ -2624,6 +2755,8 @@ export default function App() {
             userProfile={userProfile}
             onUpdateProfile={handleUpdateProfile}
             onNavigateModule={setActiveModule}
+            autoOpenAuth={autoOpenAuthModal}
+            onAutoOpenAuthHandled={() => setAutoOpenAuthModal(false)}
             themeMode={settings.themeMode}
             onToggleThemeMode={handleToggleThemeMode}
             selectedLanguage={selectedLanguage}

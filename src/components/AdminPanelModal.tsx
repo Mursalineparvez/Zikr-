@@ -34,9 +34,16 @@ import {
   updateInfoRequestStatusForAdmin,
   deleteInfoRequestForAdmin,
   InfoRequestRecord,
+  signInWithGoogleAuth,
 } from '../services/firebase';
+import {
+  restoreServerSession,
+  loginWithEmailSession,
+  loginWithGoogleTokenSession,
+} from '../services/authClient';
 import { AamalDayLog, HistorySession, UserProfile, ZikrItem, ZikrLanguage } from '../types';
 import { soundHaptics } from '../utils/audioHaptics';
+import { getDetectedDeviceInfo } from '../utils/deviceInfo';
 import { getAllSavedAccounts } from '../utils/accountRegistry';
 import { HistoryChartsDashboard } from './HistoryChartsDashboard';
 import { HistoryPeriodRange, compileAggregatedReport } from '../utils/exportPdf';
@@ -71,15 +78,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const currentEmail = (currentUserProfile.emailOrPhone || '').toLowerCase().trim();
   const isOwner = Boolean(currentUserProfile.isSignedIn && currentEmail === 'mdmursalineparvez@gmail.com');
 
-  // Admin Authentication State (Strictly only for signed-in mdmursalineparvez@gmail.com with verified session)
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    try {
-      if (!isOwner) return false;
-      return sessionStorage.getItem('zikrmate_admin_session_auth') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
 
   const [adminPinInput, setAdminPinInput] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
@@ -262,53 +261,82 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   useEffect(() => {
     if (!isOpen || !isOwner) return;
 
-    if (isAdminAuthenticated) {
-      loadUsersData();
-      loadInfoRequests();
-      const unsubscribe = subscribeToAllUsersForAdmin((data) => {
-        const merged = mergeCloudAndVaultUsers(data);
-        setUsers(merged);
-        setIsLoading(false);
+    let cancelled = false;
+    if (!isAdminAuthenticated) {
+      restoreServerSession().then((sess) => {
+        if (!cancelled && sess.authenticated && sess.user?.role === 'admin' && sess.user.email.toLowerCase() === currentEmail) {
+          setIsAdminAuthenticated(true);
+        }
       });
       return () => {
-        unsubscribe();
+        cancelled = true;
       };
     }
+
+    loadUsersData();
+    loadInfoRequests();
+    const unsubscribe = subscribeToAllUsersForAdmin((data) => {
+      const merged = mergeCloudAndVaultUsers(data);
+      setUsers(merged);
+      setIsLoading(false);
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [isOpen, isOwner, isAdminAuthenticated]);
 
   // Strictly block any non-owner access
   if (!isOpen || !isOwner) return null;
 
-  // Handle Admin PIN / Password Login
-  const handleAdminPinSubmit = (e: React.FormEvent) => {
+  // Handle Admin Password or Google Session Verification (server-side scrypt / Google ID Token)
+  const handleAdminPinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPinError(null);
     const cleanPin = adminPinInput.trim();
-    const currentPass = (currentUserProfile.password || '').trim();
+    if (!cleanPin) {
+      setPinError(isBn ? 'আপনার অ্যাকাউন্টের পাসওয়ার্ড দিন।' : 'Please enter your account password.');
+      return;
+    }
 
-    // Accept account password OR master PIN 786786 / 123456
-    const isPinMatch =
-      cleanPin === '786786' ||
-      cleanPin === '123456' ||
-      cleanPin === '786' ||
-      (currentPass && cleanPin === currentPass);
+    const res = await loginWithEmailSession({
+      email: currentEmail,
+      password: cleanPin,
+      device: getDetectedDeviceInfo().model,
+    });
 
-    if (isPinMatch) {
+    if (res.ok && res.data.authenticated && res.data.user?.role === 'admin') {
       setIsAdminAuthenticated(true);
-      try {
-        sessionStorage.setItem('zikrmate_admin_session_auth', 'true');
-        localStorage.setItem('zikrmate_admin_session_auth', 'true');
-      } catch {}
       if (soundEnabled) soundHaptics.playMilestone();
       loadUsersData();
-    } else {
-      setPinError(
-        isBn
-          ? 'ভুল পাসওয়ার্ড বা অ্যাডমিন পিন! সঠিক পাসওয়ার্ড বা পিন কোড দিন।'
-          : 'Incorrect password or Admin PIN! Please enter a valid password or PIN.'
-      );
-      if (soundEnabled) soundHaptics.playTap();
+      loadInfoRequests();
+      return;
     }
+
+    if (res.data.errorCode === 'GOOGLE_ONLY_ACCOUNT') {
+      const gRes = await signInWithGoogleAuth();
+      if (gRes.success && gRes.user?.idToken && gRes.user.email.toLowerCase() === currentEmail) {
+        const gSess = await loginWithGoogleTokenSession({
+          idToken: gRes.user.idToken,
+          device: getDetectedDeviceInfo().model,
+        });
+        if (gSess.ok && gSess.data.authenticated && gSess.data.user?.role === 'admin') {
+          setIsAdminAuthenticated(true);
+          if (soundEnabled) soundHaptics.playMilestone();
+          loadUsersData();
+          loadInfoRequests();
+          return;
+        }
+      }
+    }
+
+    setPinError(
+      res.data.error ||
+        (isBn
+          ? 'ভুল পাসওয়ার্ড! সঠিক অ্যাকাউন্ট পাসওয়ার্ড দিন।'
+          : 'Incorrect password! Please enter your verified account password.')
+    );
+    if (soundEnabled) soundHaptics.playTap();
   };
 
   // Compute normalized per-user report data strictly for the currently inspected user

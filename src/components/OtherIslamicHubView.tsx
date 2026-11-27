@@ -116,6 +116,8 @@ interface OtherIslamicHubViewProps {
   onOpenWelcomeScreen?: () => void;
   onOpenAssistant?: () => void;
   onActiveSubChange?: (sub: OtherSubSection) => void;
+  autoOpenAuth?: boolean;
+  onAutoOpenAuthHandled?: () => void;
 }
 
 const FALLBACK_GUEST_PROFILE: UserProfile = {
@@ -165,6 +167,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
   onOpenWelcomeScreen,
   onOpenAssistant,
   onActiveSubChange,
+  autoOpenAuth,
+  onAutoOpenAuthHandled,
 }) => {
   const isDay = themeMode === 'day';
   const [activeSub, setActiveSub] = useState<OtherSubSection>(initialSubSection);
@@ -838,6 +842,8 @@ export const OtherIslamicHubView: React.FC<OtherIslamicHubViewProps> = ({
             onUpdateVoiceGender={(gender) => onUpdateSettings?.({ voiceGender: gender })}
             onOpenWelcomeScreen={onOpenWelcomeScreen}
             appSettings={settings}
+            autoOpenAuth={autoOpenAuth}
+            onAutoOpenAuthHandled={onAutoOpenAuthHandled}
             onUpdateSettings={onUpdateSettings}
             onRestoreDefaults={onRestoreDefaults}
             onExportBackupJson={onExportBackupJson}

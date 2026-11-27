@@ -7,6 +7,22 @@ import fs from 'fs';
 import zlib from 'zlib';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { HADIS_LIBRARY_BOOKS, translateChapterNameBn } from './src/data/hadisCatalog';
+import {
+  getDatabase,
+  saveDatabase,
+  sanitizeUserId,
+  hashPassword,
+  verifyPassword,
+  findUserByEmail,
+  ensureUserBundle,
+  createUserAccount,
+  createSessionForUser,
+  verifySessionByRawToken,
+  revokeSessionByRawToken,
+  revokeSessionById,
+  listSessionsForUser,
+  toPublicUser,
+} from './server/database';
 
 const app = express();
 const PORT = 3000;
@@ -35,233 +51,669 @@ function getGeminiClient(): GoogleGenAI | null {
 }
 
 
-const USERS_STORE_FILE = path.join(process.cwd(), 'users_registry_store.json');
+// Initialize normalized database (users, profiles, sessions, user_data) on boot
+getDatabase();
 
-function loadServerUsers(): Record<string, any> {
+const SESSION_COOKIE_NAME = 'zikr_sid';
+const SUPER_ADMIN_EMAIL = 'mdmursalineparvez@gmail.com';
+
+function getFirebaseWebApiKey(): string {
+  if (process.env.FIREBASE_API_KEY?.trim()) {
+    return process.env.FIREBASE_API_KEY.trim();
+  }
   try {
-    if (fs.existsSync(USERS_STORE_FILE)) {
-      const content = fs.readFileSync(USERS_STORE_FILE, 'utf8');
-      return JSON.parse(content);
+    const cfgPath = path.join(process.cwd(), 'firebase-applet-config.json');
+    if (fs.existsSync(cfgPath)) {
+      const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+      if (typeof cfg?.apiKey === 'string') return cfg.apiKey.trim();
     }
-  } catch (err) {
-    console.warn('Failed reading users_registry_store.json:', err);
-  }
-  return {};
+  } catch {}
+  return '';
 }
 
-function saveServerUsers(data: Record<string, any>) {
+function parseCookies(req: express.Request): Record<string, string> {
+  const header = req.headers.cookie;
+  const out: Record<string, string> = {};
+  if (!header) return out;
+  for (const part of header.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    const k = part.slice(0, idx).trim();
+    const v = part.slice(idx + 1).trim();
+    if (k) {
+      try {
+        out[k] = decodeURIComponent(v);
+      } catch {
+        out[k] = v;
+      }
+    }
+  }
+  return out;
+}
+
+function setSessionCookie(res: express.Response, rawToken: string) {
+  res.setHeader(
+    'Set-Cookie',
+    `${SESSION_COOKIE_NAME}=${encodeURIComponent(rawToken)}; Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=${30 * 24 * 60 * 60}`
+  );
+}
+
+function clearSessionCookie(res: express.Response) {
+  res.setHeader(
+    'Set-Cookie',
+    `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=0`
+  );
+}
+
+function extractSessionToken(req: express.Request): { token: string; source: 'bearer' | 'cookie' | 'none' } {
+  const authHeader = String(req.headers.authorization || '');
+  if (authHeader.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim();
+    if (token) return { token, source: 'bearer' };
+  }
+  const cookies = parseCookies(req);
+  if (cookies[SESSION_COOKIE_NAME]) {
+    return { token: cookies[SESSION_COOKIE_NAME], source: 'cookie' };
+  }
+  return { token: '', source: 'none' };
+}
+
+function isSameOriginOrCustomHeader(req: express.Request): boolean {
+  const customHeader = String(req.headers['x-requested-with'] || '');
+  if (customHeader === 'ZikrPlus' || customHeader === 'XMLHttpRequest') {
+    return true;
+  }
+  const origin = req.headers.origin;
+  if (!origin) return true;
   try {
-    fs.writeFileSync(USERS_STORE_FILE, JSON.stringify(data, null, 2), 'utf8');
-  } catch (err) {
-    console.error('Failed writing users_registry_store.json:', err);
+    const originHost = new URL(origin).host.toLowerCase();
+    const fwdHost = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim().toLowerCase();
+    const host = String(req.headers.host || '').trim().toLowerCase();
+    return originHost === fwdHost || originHost === host;
+  } catch {
+    return false;
   }
 }
 
-// Pre-seed known users from Firestore if store does not exist
-if (!fs.existsSync(USERS_STORE_FILE)) {
-  const initialSeed: Record<string, any> = {
-    u_mdmursalineparvez_gmail_com: {
-      userKey: 'u_mdmursalineparvez_gmail_com',
-      name: 'Md. Mursaline Parvez',
-      email: 'mdmursalineparvez@gmail.com',
-      emailOrPhone: 'mdmursalineparvez@gmail.com',
-      phone: '',
-      photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      location: 'Dhaka, Bangladesh',
-      deviceModel: 'Android Phone / Desktop',
-      osVersion: 'Android / Windows',
-      verificationMethod: 'Google Sign-In',
-      lastSyncedAt: Date.now(),
-      createdAtMs: Date.now() - 172800000,
-      lifetimeTotalCount: 4098,
-      activeZikrs: [],
-      hasPassword: true,
+interface AuthenticatedRequest extends express.Request {
+  authContext?: NonNullable<ReturnType<typeof verifySessionByRawToken>>;
+}
+
+function requireAuthSession(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) {
+  const { token, source } = extractSessionToken(req);
+  if (!token) {
+    return res.status(401).json({ authenticated: false, error: 'Authentication required' });
+  }
+  if (source === 'cookie' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
+    if (!isSameOriginOrCustomHeader(req)) {
+      return res.status(403).json({ authenticated: false, error: 'CSRF check failed' });
+    }
+  }
+  const verified = verifySessionByRawToken(token);
+  if (!verified) {
+    if (source === 'cookie') clearSessionCookie(res);
+    return res.status(401).json({ authenticated: false, error: 'Session expired or invalid' });
+  }
+  req.authContext = verified;
+  return next();
+}
+
+function requireAdminSession(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) {
+  return requireAuthSession(req, res, () => {
+    const user = req.authContext?.user;
+    if (!user || user.email.toLowerCase() !== SUPER_ADMIN_EMAIL || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin authorization required' });
+    }
+    return next();
+  });
+}
+
+function formatSessionResponse(bundle: {
+  user: ReturnType<typeof getDatabase>['users'][string];
+  profile: ReturnType<typeof getDatabase>['profiles'][string];
+  userData: ReturnType<typeof getDatabase>['user_data'][string];
+  session: ReturnType<typeof getDatabase>['sessions'][string];
+}, rawToken?: string) {
+  return {
+    authenticated: true,
+    user: toPublicUser(bundle.user),
+    profile: bundle.profile,
+    userData: bundle.userData,
+    session: {
+      id: bundle.session.id,
+      user_id: bundle.session.user_id,
+      expires_at: bundle.session.expires_at,
+      device: bundle.session.device,
+      created_at: bundle.session.created_at,
+      last_seen_at: bundle.session.last_seen_at,
     },
-    u_karim_gmail_com: {
-      userKey: 'u_karim_gmail_com',
-      name: 'Rahim',
-      email: 'karim@gmail.com',
-      emailOrPhone: 'karim@gmail.com',
-      phone: '',
-      photoUrl: '',
-      location: 'Bangladesh',
-      deviceModel: 'Android Phone',
-      osVersion: 'Android',
-      verificationMethod: 'Google Sign-In',
-      lastSyncedAt: Date.now() - 7200000,
-      createdAtMs: Date.now() - 86400000,
-      lifetimeTotalCount: 150,
-      activeZikrs: [],
-      hasPassword: true,
-    },
-    u_mdmursalineparvezpersonal_gmail_com: {
-      userKey: 'u_mdmursalineparvezpersonal_gmail_com',
-      name: 'mdmursalineparvezpersonal',
-      email: 'mdmursalineparvezpersonal@gmail.com',
-      emailOrPhone: 'mdmursalineparvezpersonal@gmail.com',
-      phone: '',
-      photoUrl: '',
-      location: 'Bangladesh',
-      deviceModel: 'Android Phone',
-      osVersion: 'Android',
-      verificationMethod: 'Google Sign-In',
-      lastSyncedAt: Date.now() - 14400000,
-      createdAtMs: Date.now() - 172800000,
-      lifetimeTotalCount: 33,
-      activeZikrs: [],
-      hasPassword: true,
-    },
-    u_mursalineparvez_gmail_com: {
-      userKey: 'u_mursalineparvez_gmail_com',
-      name: 'Parvez',
-      email: 'mursalineparvez@gmail.com',
-      emailOrPhone: 'mursalineparvez@gmail.com',
-      phone: '',
-      photoUrl: '',
-      location: 'Bangladesh',
-      deviceModel: 'Android Phone',
-      osVersion: 'Android',
-      verificationMethod: 'Google Sign-In',
-      lastSyncedAt: Date.now() - 28800000,
-      createdAtMs: Date.now() - 172800000,
-      lifetimeTotalCount: 99,
-      activeZikrs: [],
-      hasPassword: true,
-    },
+    ...(rawToken ? { sessionToken: rawToken } : {}),
   };
-  saveServerUsers(initialSeed);
 }
 
-// 1. POST /api/sync-user: Registers or updates any user instantly across all devices
-app.post('/api/sync-user', (req, res) => {
+// ============================================================================
+// 1. AUTHENTICATION & SESSION MANAGEMENT ROUTES (/api/auth/*)
+// ============================================================================
+
+// POST /api/auth/signup — Creates users + profiles + user_data + session (scrypt hashed password)
+app.post('/api/auth/signup', (req, res) => {
   try {
-    const { userKey, profile, zikrs, lifetimeTotalCount, historySessions, aamalLogs, settings } = req.body;
-    if (!userKey) {
-      return res.status(400).json({ error: 'Missing userKey' });
+    if (!isSameOriginOrCustomHeader(req)) {
+      return res.status(403).json({ error: 'Origin check failed' });
+    }
+    const { name, email, password, phone, photo, preferences, device } = req.body || {};
+    const emailClean = typeof email === 'string' ? email.toLowerCase().trim() : '';
+    const passwordClean = typeof password === 'string' ? password.trim() : '';
+
+    if (!emailClean || !emailClean.includes('@') || !emailClean.includes('.') || emailClean.length > 200) {
+      return res.status(400).json({ error: 'সঠিক ইমেইল বা জিমেইল অ্যাড্রেস দিন।' });
+    }
+    if (passwordClean.length < 4 || passwordClean.length > 128) {
+      return res.status(400).json({ error: 'পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে।' });
     }
 
-    const currentUsers = loadServerUsers();
-    const rawEmail = (profile?.emailOrPhone || profile?.email || '').toLowerCase().trim();
-    const displayName = profile?.name || (rawEmail.includes('@') ? rawEmail.split('@')[0] : 'User');
-    const existing = currentUsers[userKey] || {};
+    const existing = findUserByEmail(emailClean);
+    if (existing) {
+      return res.status(409).json({
+        errorCode: 'EMAIL_EXISTS',
+        error: 'এই ইমেইলে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে। অনুগ্রহ করে লগইন বা Google দিয়ে প্রবেশ করুন।',
+      });
+    }
+
+    const bundle = createUserAccount({
+      name: typeof name === 'string' ? name.slice(0, 120) : emailClean.split('@')[0],
+      email: emailClean,
+      password: passwordClean,
+      auth_provider: 'email',
+      email_verified: false,
+      photo: typeof photo === 'string' && photo.length <= 60000 ? photo : '',
+      phone: typeof phone === 'string' ? phone.slice(0, 40) : '',
+      preferences: preferences && typeof preferences === 'object' ? preferences : {},
+    });
+
+    const deviceLabel = typeof device === 'string' && device.trim()
+      ? device.trim()
+      : String(req.headers['user-agent'] || 'Web Browser').slice(0, 120);
+
+    const { rawToken, session } = createSessionForUser(bundle.user.id, deviceLabel);
+    setSessionCookie(res, rawToken);
+
+    return res.status(201).json(formatSessionResponse({ ...bundle, session }, rawToken));
+  } catch (err: any) {
+    console.error('[API /api/auth/signup] Error:', err);
+    return res.status(500).json({ error: err?.message || 'Signup failed' });
+  }
+});
+
+// POST /api/auth/login — Verifies password_hash via scrypt + creates session in Session Store
+app.post('/api/auth/login', (req, res) => {
+  try {
+    if (!isSameOriginOrCustomHeader(req)) {
+      return res.status(403).json({ error: 'Origin check failed' });
+    }
+    const { email, password, device } = req.body || {};
+    const emailClean = typeof email === 'string' ? email.toLowerCase().trim() : '';
+    const passwordClean = typeof password === 'string' ? password.trim() : '';
+
+    if (!emailClean || !passwordClean) {
+      return res.status(400).json({ error: 'ইমেইল এবং পাসওয়ার্ড দিন।' });
+    }
+
+    const user = findUserByEmail(emailClean);
+    if (!user) {
+      return res.status(401).json({ errorCode: 'INVALID_CREDENTIALS', error: 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।' });
+    }
+
+    if (!user.password_hash) {
+      return res.status(401).json({
+        errorCode: 'GOOGLE_ONLY_ACCOUNT',
+        error: 'এই অ্যাকাউন্টে পাসওয়ার্ড সেট করা নেই। অনুগ্রহ করে "গুগল দিয়ে চালিয়ে যান" বা OTP দিয়ে লগইন করুন।',
+      });
+    }
+
+    if (!verifyPassword(passwordClean, user.password_hash)) {
+      return res.status(401).json({ errorCode: 'INVALID_CREDENTIALS', error: 'ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন।' });
+    }
+
+    const bundle = ensureUserBundle(user.id);
+    if (!bundle) {
+      return res.status(500).json({ error: 'Account bundle missing' });
+    }
+
+    const deviceLabel = typeof device === 'string' && device.trim()
+      ? device.trim()
+      : String(req.headers['user-agent'] || 'Web Browser').slice(0, 120);
+
+    const { rawToken, session } = createSessionForUser(user.id, deviceLabel);
+    setSessionCookie(res, rawToken);
+
+    return res.json(formatSessionResponse({ ...bundle, session }, rawToken));
+  } catch (err: any) {
+    console.error('[API /api/auth/login] Error:', err);
+    return res.status(500).json({ error: err?.message || 'Login failed' });
+  }
+});
+
+// POST /api/auth/google — Verifies Firebase Google ID token via Google Identity Toolkit & issues session
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    if (!isSameOriginOrCustomHeader(req)) {
+      return res.status(403).json({ error: 'Origin check failed' });
+    }
+    const { idToken, device, location } = req.body || {};
+    if (typeof idToken !== 'string' || idToken.length < 20) {
+      return res.status(400).json({ error: 'Valid Google idToken is required' });
+    }
+
+    const firebaseApiKey = getFirebaseWebApiKey();
+    if (!firebaseApiKey) {
+      return res.status(500).json({ error: 'Firebase API key not configured' });
+    }
+
+    const verifyRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseApiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      }
+    );
+
+    if (!verifyRes.ok) {
+      return res.status(401).json({ error: 'Google ID token verification failed' });
+    }
+
+    const verifyJson: any = await verifyRes.json();
+    const gUser = Array.isArray(verifyJson?.users) ? verifyJson.users[0] : null;
+    const emailClean = typeof gUser?.email === 'string' ? gUser.email.toLowerCase().trim() : '';
+    const emailVerified = Boolean(gUser?.emailVerified);
+
+    if (!emailClean || !emailVerified) {
+      return res.status(401).json({ error: 'Verified Gmail account required' });
+    }
+
+    let user = findUserByEmail(emailClean);
+    let bundle;
+    const displayName = typeof gUser?.displayName === 'string' && gUser.displayName.trim()
+      ? gUser.displayName.trim().slice(0, 120)
+      : emailClean.split('@')[0];
+    const photoUrl = typeof gUser?.photoUrl === 'string' ? gUser.photoUrl.slice(0, 2000) : '';
+
+    if (!user) {
+      bundle = createUserAccount({
+        name: displayName,
+        email: emailClean,
+        auth_provider: 'google',
+        email_verified: true,
+        photo: photoUrl,
+        preferences: {
+          location: typeof location === 'string' && location ? location.slice(0, 120) : 'Dhaka, Bangladesh',
+        },
+      });
+    } else {
+      user.email_verified = true;
+      if (!user.name && displayName) user.name = displayName;
+      bundle = ensureUserBundle(user.id)!;
+      if (!bundle.profile.photo && photoUrl) {
+        bundle.profile.photo = photoUrl;
+        bundle.profile.updated_at = new Date().toISOString();
+      }
+      saveDatabase();
+    }
+
+    const deviceLabel = typeof device === 'string' && device.trim()
+      ? device.trim()
+      : String(req.headers['user-agent'] || 'Web Browser').slice(0, 120);
+
+    const { rawToken, session } = createSessionForUser(bundle.user.id, deviceLabel);
+    setSessionCookie(res, rawToken);
+
+    return res.json(formatSessionResponse({ ...bundle, session }, rawToken));
+  } catch (err: any) {
+    console.error('[API /api/auth/google] Error:', err);
+    return res.status(500).json({ error: err?.message || 'Google auth failed' });
+  }
+});
+
+// GET /api/auth/session — Restores current session & user_data on App startup
+app.get('/api/auth/session', (req, res) => {
+  const { token, source } = extractSessionToken(req);
+  if (!token) {
+    return res.json({ authenticated: false });
+  }
+  const verified = verifySessionByRawToken(token);
+  if (!verified) {
+    if (source === 'cookie') clearSessionCookie(res);
+    return res.json({ authenticated: false });
+  }
+  return res.json(formatSessionResponse(verified));
+});
+
+// POST /api/auth/logout — Revokes active session in Session Store & clears HttpOnly cookie
+app.post('/api/auth/logout', (req, res) => {
+  if (!isSameOriginOrCustomHeader(req)) {
+    return res.status(403).json({ error: 'Origin check failed' });
+  }
+  const { token } = extractSessionToken(req);
+  if (token) {
+    revokeSessionByRawToken(token);
+  }
+  clearSessionCookie(res);
+  return res.json({ success: true, authenticated: false });
+});
+
+// GET /api/auth/sessions — Lists all active device sessions for the signed-in user
+app.get('/api/auth/sessions', requireAuthSession, (req: AuthenticatedRequest, res) => {
+  const ctx = req.authContext!;
+  return res.json({
+    sessions: listSessionsForUser(ctx.user.id, ctx.session.id),
+  });
+});
+
+// DELETE /api/auth/sessions/:sessionId — Revokes a specific session belonging to the signed-in user
+app.delete('/api/auth/sessions/:sessionId', requireAuthSession, (req: AuthenticatedRequest, res) => {
+  const ctx = req.authContext!;
+  const ok = revokeSessionById(req.params.sessionId, ctx.user.id);
+  if (!ok) {
+    return res.status(404).json({ error: 'Session not found' });
+  }
+  return res.json({ success: true });
+});
+
+// POST /api/auth/set-password — Authenticated user sets or changes their scrypt password_hash
+app.post('/api/auth/set-password', requireAuthSession, (req: AuthenticatedRequest, res) => {
+  try {
+    const ctx = req.authContext!;
+    const { currentPassword, newPassword } = req.body || {};
+    const newPassClean = typeof newPassword === 'string' ? newPassword.trim() : '';
+    if (newPassClean.length < 4 || newPassClean.length > 128) {
+      return res.status(400).json({ error: 'নতুন পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে।' });
+    }
+    if (ctx.user.password_hash) {
+      const curClean = typeof currentPassword === 'string' ? currentPassword.trim() : '';
+      if (!verifyPassword(curClean, ctx.user.password_hash)) {
+        return res.status(401).json({ error: 'বর্তমান পাসওয়ার্ড সঠিক নয়।' });
+      }
+    }
+    ctx.user.password_hash = hashPassword(newPassClean);
+    saveDatabase();
+    return res.json({ success: true, user: toPublicUser(ctx.user) });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed updating password' });
+  }
+});
+
+// ============================================================================
+// 2. PROTECTED PROFILE & USER_DATA ROUTES (/api/profile & /api/user-data)
+// ============================================================================
+
+app.put('/api/profile', requireAuthSession, (req: AuthenticatedRequest, res) => {
+  try {
+    const ctx = req.authContext!;
+    const { name, photo, phone, preferences } = req.body || {};
+
+    if (typeof name === 'string' && name.trim()) {
+      ctx.user.name = name.trim().slice(0, 120);
+    }
+    if (typeof photo === 'string' && photo.length <= 60000) {
+      ctx.profile.photo = photo;
+    }
+    if (typeof phone === 'string') {
+      ctx.profile.phone = phone.trim().slice(0, 40);
+    }
+    if (preferences && typeof preferences === 'object' && !Array.isArray(preferences)) {
+      ctx.profile.preferences = {
+        ...ctx.profile.preferences,
+        ...(typeof preferences.location === 'string' ? { location: preferences.location.slice(0, 120) } : {}),
+        ...(typeof preferences.gender === 'string' ? { gender: preferences.gender.slice(0, 32) } : {}),
+        ...(typeof preferences.dob === 'string' ? { dob: preferences.dob.slice(0, 32) } : {}),
+        ...(typeof preferences.language === 'string' ? { language: preferences.language.slice(0, 16) } : {}),
+        ...(typeof preferences.themeMode === 'string' ? { themeMode: preferences.themeMode.slice(0, 16) } : {}),
+        ...(typeof preferences.theme === 'string' ? { theme: preferences.theme.slice(0, 32) } : {}),
+        ...(typeof preferences.voiceGender === 'string' ? { voiceGender: preferences.voiceGender.slice(0, 16) } : {}),
+      };
+    }
+    ctx.profile.updated_at = new Date().toISOString();
+    saveDatabase();
+
+    return res.json({
+      success: true,
+      user: toPublicUser(ctx.user),
+      profile: ctx.profile,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed saving profile' });
+  }
+});
+
+app.get('/api/user-data', requireAuthSession, (req: AuthenticatedRequest, res) => {
+  const ctx = req.authContext!;
+  return res.json({
+    success: true,
+    userData: ctx.userData,
+  });
+});
+
+app.put('/api/user-data', requireAuthSession, (req: AuthenticatedRequest, res) => {
+  try {
+    const ctx = req.authContext!;
+    const { saved_items, settings, activity } = req.body || {};
+
+    if (saved_items && typeof saved_items === 'object') {
+      ctx.userData.saved_items = {
+        zikrs: Array.isArray(saved_items.zikrs) ? saved_items.zikrs.slice(0, 200) : ctx.userData.saved_items.zikrs,
+        historySessions: Array.isArray(saved_items.historySessions)
+          ? saved_items.historySessions.slice(0, 200)
+          : ctx.userData.saved_items.historySessions,
+        libraryHighlights: Array.isArray(saved_items.libraryHighlights)
+          ? saved_items.libraryHighlights.slice(0, 500)
+          : ctx.userData.saved_items.libraryHighlights,
+      };
+    }
+    if (settings && typeof settings === 'object' && !Array.isArray(settings)) {
+      ctx.userData.settings = { ...ctx.userData.settings, ...settings };
+    }
+    if (activity && typeof activity === 'object') {
+      const incomingLifetime = typeof activity.lifetimeTotalCount === 'number'
+        ? Math.max(0, activity.lifetimeTotalCount)
+        : ctx.userData.activity.lifetimeTotalCount;
+      ctx.userData.activity = {
+        lifetimeTotalCount: Math.max(incomingLifetime, ctx.userData.activity.lifetimeTotalCount || 0),
+        aamalLogs: activity.aamalLogs && typeof activity.aamalLogs === 'object'
+          ? activity.aamalLogs
+          : ctx.userData.activity.aamalLogs,
+        lastSyncedAt: Date.now(),
+      };
+    }
+    ctx.userData.updated_at = new Date().toISOString();
+    saveDatabase();
+
+    return res.json({
+      success: true,
+      userData: ctx.userData,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Failed saving user data' });
+  }
+});
+
+// ============================================================================
+// 3. COMPATIBILITY & ADMIN ROUTES (Backed by Normalized DB & Session Checks)
+// ============================================================================
+
+// POST /api/sync-user: Syncs authenticated user's Zikr/Aamal/Profile into normalized DB
+app.post('/api/sync-user', requireAuthSession, (req: AuthenticatedRequest, res) => {
+  try {
+    const ctx = req.authContext!;
+    const { userKey, profile, zikrs, lifetimeTotalCount, historySessions, aamalLogs, settings } = req.body || {};
+    const targetId = typeof userKey === 'string' && userKey.trim() ? userKey.trim() : ctx.user.id;
+    if (targetId !== ctx.user.id && ctx.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Cannot sync data for another user' });
+    }
+
+    const bundle = ensureUserBundle(targetId);
+    if (!bundle) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (profile && typeof profile === 'object') {
+      if (typeof profile.name === 'string' && profile.name.trim()) {
+        bundle.user.name = profile.name.trim().slice(0, 120);
+      }
+      if (typeof profile.photoUrl === 'string' && profile.photoUrl.length <= 60000) {
+        bundle.profile.photo = profile.photoUrl;
+      }
+      if (typeof profile.location === 'string') {
+        bundle.profile.preferences = { ...bundle.profile.preferences, location: profile.location.slice(0, 120) };
+      }
+      bundle.profile.updated_at = new Date().toISOString();
+    }
 
     const incomingLifetime = typeof lifetimeTotalCount === 'number' ? lifetimeTotalCount : 0;
-    const existingLifetime = typeof existing.lifetimeTotalCount === 'number' ? existing.lifetimeTotalCount : 0;
     const activeZikrSum = Array.isArray(zikrs) ? zikrs.reduce((acc: number, z: any) => acc + (z.count || 0), 0) : 0;
-    const resolvedLifetime = Math.max(incomingLifetime, existingLifetime, activeZikrSum);
+    const resolvedLifetime = Math.max(
+      incomingLifetime,
+      bundle.userData.activity.lifetimeTotalCount || 0,
+      activeZikrSum
+    );
 
-    const cleanUser = {
-      ...existing,
-      userKey,
-      name: displayName,
-      email: rawEmail.includes('@') ? rawEmail : existing.email || '',
-      phone: !rawEmail.includes('@') ? rawEmail : existing.phone || '',
-      emailOrPhone: rawEmail || existing.emailOrPhone || '',
-      photoUrl: profile?.photoUrl || existing.photoUrl || '',
-      location: profile?.location || existing.location || 'Dhaka, Bangladesh',
-      deviceModel: profile?.deviceModel || existing.deviceModel || 'Mobile Device',
-      osVersion: profile?.osVersion || existing.osVersion || 'Android',
-      verificationMethod:
-        profile?.authProvider === 'google' || rawEmail.endsWith('@gmail.com')
-          ? 'Google Sign-In'
-          : profile?.verificationMethod || existing.verificationMethod || 'Verified Account',
-      lastSyncedAt: Date.now(),
-      createdAtMs: existing.createdAtMs || Date.now(),
-      lifetimeTotalCount: resolvedLifetime,
-      activeZikrs: Array.isArray(zikrs) && zikrs.length > 0 ? zikrs : existing.activeZikrs || [],
-      historySessions: Array.isArray(historySessions) ? historySessions : existing.historySessions || [],
-      aamalLogs: aamalLogs && typeof aamalLogs === 'object' ? aamalLogs : existing.aamalLogs || {},
-      settings: settings && typeof settings === 'object' ? settings : existing.settings || {},
-      hasPassword: !!(profile?.password || existing.hasPassword),
-      password: profile?.password || existing.password || '',
-    };
+    if (Array.isArray(zikrs) && zikrs.length > 0) {
+      bundle.userData.saved_items.zikrs = zikrs.slice(0, 200);
+    }
+    if (Array.isArray(historySessions)) {
+      bundle.userData.saved_items.historySessions = historySessions.slice(0, 200);
+    }
+    if (aamalLogs && typeof aamalLogs === 'object') {
+      bundle.userData.activity.aamalLogs = aamalLogs;
+    }
+    if (settings && typeof settings === 'object') {
+      bundle.userData.settings = settings;
+    }
+    bundle.userData.activity.lifetimeTotalCount = resolvedLifetime;
+    bundle.userData.activity.lastSyncedAt = Date.now();
+    bundle.userData.updated_at = new Date().toISOString();
+    saveDatabase();
 
-    currentUsers[userKey] = cleanUser;
-    saveServerUsers(currentUsers);
-
-    console.log(`[API /api/sync-user] Registered/Updated user: ${rawEmail || userKey} (Lifetime: ${resolvedLifetime})`);
-    const { password: _p, ...safeUser } = cleanUser;
-    return res.json({ success: true, user: safeUser });
+    return res.json({
+      success: true,
+      user: {
+        userKey: bundle.user.id,
+        name: bundle.user.name,
+        email: bundle.user.email,
+        emailOrPhone: bundle.user.email,
+        phone: bundle.profile.phone,
+        photoUrl: bundle.profile.photo,
+        location: bundle.profile.preferences?.location || 'Dhaka, Bangladesh',
+        lastSyncedAt: bundle.userData.activity.lastSyncedAt,
+        createdAtMs: new Date(bundle.user.created_at).getTime(),
+        lifetimeTotalCount: bundle.userData.activity.lifetimeTotalCount,
+        activeZikrs: bundle.userData.saved_items.zikrs,
+        historySessions: bundle.userData.saved_items.historySessions,
+        aamalLogs: bundle.userData.activity.aamalLogs,
+        settings: bundle.userData.settings,
+        hasPassword: Boolean(bundle.user.password_hash),
+      },
+    });
   } catch (err: any) {
     console.error('Error in /api/sync-user:', err);
     return res.status(500).json({ error: err?.message || 'Server error' });
   }
 });
 
-// 1.1 POST /api/verify-password: Check account password securely
+// POST /api/verify-password: Check account password securely via scrypt hash
 app.post('/api/verify-password', (req, res) => {
   try {
-    const { emailOrPhone, password } = req.body;
+    const { emailOrPhone, password } = req.body || {};
     if (!emailOrPhone) {
       return res.status(400).json({ error: 'Missing emailOrPhone' });
     }
-    const target = (emailOrPhone || '').toLowerCase().trim();
-    const cleanInput = (password || '').trim();
-    const currentUsers = loadServerUsers();
+    const target = String(emailOrPhone).toLowerCase().trim();
+    const cleanInput = String(password || '').trim();
+    const user = findUserByEmail(target);
 
-    let matchedUser: any = null;
-    for (const k of Object.keys(currentUsers)) {
-      const u = currentUsers[k];
-      const uEmail = (u.email || '').toLowerCase().trim();
-      const uEmailOrPhone = (u.emailOrPhone || '').toLowerCase().trim();
-      const uKey = k.toLowerCase().trim();
-
-      if (uKey === target || uEmail === target || uEmailOrPhone === target) {
-        matchedUser = u;
-        break;
-      }
-    }
-
-    if (!matchedUser) {
+    if (!user) {
       return res.json({ exists: false, passwordMatches: false });
     }
 
-    const savedPass = (matchedUser.password || '').trim();
-    const isSuperAdmin = target === 'mdmursalineparvez@gmail.com';
-
-    if (!savedPass) {
-      const isSuperAdminPin = cleanInput === '786786' || cleanInput === '123456' || cleanInput === '786';
+    if (!user.password_hash) {
       return res.json({
         exists: true,
-        passwordMatches: isSuperAdmin ? isSuperAdminPin : cleanInput.length >= 4,
+        passwordMatches: false,
         hasSetPassword: false,
       });
     }
 
-    const isSuperAdminPin = cleanInput === '786786' || cleanInput === '123456' || cleanInput === '786';
-    const isMatch = savedPass === cleanInput || (isSuperAdmin && isSuperAdminPin);
+    const isMatch = verifyPassword(cleanInput, user.password_hash);
     return res.json({ exists: true, passwordMatches: isMatch, hasSetPassword: true });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || 'Server error' });
   }
 });
 
-// 1.1 GET /api/sync-user/:userKey: Fetches user server registry record
-app.get('/api/sync-user/:userKey', (req, res) => {
+// GET /api/sync-user/:userKey: Fetches authenticated user's record
+app.get('/api/sync-user/:userKey', requireAuthSession, (req: AuthenticatedRequest, res) => {
   try {
+    const ctx = req.authContext!;
     const { userKey } = req.params;
-    const currentUsers = loadServerUsers();
-    const user = currentUsers[userKey];
-    if (user) {
-      const { password: _p, ...safeUser } = user;
-      return res.json({ success: true, user: safeUser });
+    if (userKey !== ctx.user.id && ctx.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
     }
-    return res.status(404).json({ error: 'User not found' });
+    const bundle = ensureUserBundle(userKey);
+    if (!bundle) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    return res.json({
+      success: true,
+      user: {
+        userKey: bundle.user.id,
+        name: bundle.user.name,
+        email: bundle.user.email,
+        emailOrPhone: bundle.user.email,
+        phone: bundle.profile.phone,
+        photoUrl: bundle.profile.photo,
+        location: bundle.profile.preferences?.location || 'Dhaka, Bangladesh',
+        lastSyncedAt: bundle.userData.activity.lastSyncedAt,
+        createdAtMs: new Date(bundle.user.created_at).getTime(),
+        lifetimeTotalCount: bundle.userData.activity.lifetimeTotalCount,
+        activeZikrs: bundle.userData.saved_items.zikrs,
+        historySessions: bundle.userData.saved_items.historySessions,
+        aamalLogs: bundle.userData.activity.aamalLogs,
+        settings: bundle.userData.settings,
+        hasPassword: Boolean(bundle.user.password_hash),
+      },
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || 'Server error' });
   }
 });
 
-// 2. GET /api/admin/users: Returns all registered users for Admin Dashboard
-app.get('/api/admin/users', (req, res) => {
+// GET /api/admin/users: Returns all registered users for Admin Dashboard (strict admin session check)
+app.get('/api/admin/users', requireAdminSession, (_req, res) => {
   try {
-    const currentUsers = loadServerUsers();
-    const list = Object.values(currentUsers).map((u: any) => {
-      const { password, ...safeUser } = u;
-      return safeUser;
-    }).sort(
-      (a: any, b: any) => (b.lastSyncedAt || 0) - (a.lastSyncedAt || 0)
-    );
+    const db = getDatabase();
+    const list = Object.values(db.users)
+      .map((u) => {
+        const prof = db.profiles[u.id];
+        const data = db.user_data[u.id];
+        return {
+          userKey: u.id,
+          name: u.name,
+          email: u.email,
+          emailOrPhone: u.email,
+          phone: prof?.phone || '',
+          photoUrl: prof?.photo || '',
+          location: prof?.preferences?.location || 'Bangladesh',
+          deviceModel: 'Synced Device',
+          osVersion: 'Web / Mobile',
+          verificationMethod: u.auth_provider === 'google' ? 'Google Sign-In' : 'Email & Password',
+          lastSyncedAt: data?.activity?.lastSyncedAt || new Date(u.created_at).getTime(),
+          createdAtMs: new Date(u.created_at).getTime(),
+          lifetimeTotalCount: data?.activity?.lifetimeTotalCount || 0,
+          activeZikrs: data?.saved_items?.zikrs || [],
+          hasPassword: Boolean(u.password_hash),
+        };
+      })
+      .sort((a, b) => (b.lastSyncedAt || 0) - (a.lastSyncedAt || 0));
     return res.json({ users: list });
   } catch (err: any) {
     console.error('Error in /api/admin/users:', err);
@@ -269,17 +721,22 @@ app.get('/api/admin/users', (req, res) => {
   }
 });
 
-// 3. DELETE /api/admin/users/:userKey: Remove a user from registry
-app.delete('/api/admin/users/:userKey', (req, res) => {
+// DELETE /api/admin/users/:userKey: Remove a user and all related records (users, profiles, sessions, user_data)
+app.delete('/api/admin/users/:userKey', requireAdminSession, (req, res) => {
   try {
     const { userKey } = req.params;
-    const currentUsers = loadServerUsers();
-    if (currentUsers[userKey]) {
-      delete currentUsers[userKey];
-      saveServerUsers(currentUsers);
-      return res.json({ success: true });
+    const db = getDatabase();
+    if (!db.users[userKey]) {
+      return res.status(404).json({ error: 'User not found' });
     }
-    return res.status(404).json({ error: 'User not found' });
+    delete db.users[userKey];
+    delete db.profiles[userKey];
+    delete db.user_data[userKey];
+    for (const [sid, sess] of Object.entries(db.sessions)) {
+      if (sess.user_id === userKey) delete db.sessions[sid];
+    }
+    saveDatabase();
+    return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || 'Server error' });
   }
@@ -887,12 +1344,8 @@ app.post('/api/info-requests', (req, res) => {
   }
 });
 
-app.get('/api/admin/info-requests', (req, res) => {
+app.get('/api/admin/info-requests', requireAdminSession, (_req, res) => {
   try {
-    const adminEmail = String(req.headers['x-admin-email'] || '').toLowerCase().trim();
-    if (adminEmail !== 'mdmursalineparvez@gmail.com') {
-      return res.status(403).json({ error: 'Admin authorization required' });
-    }
     const list = loadInfoRequests().sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
     return res.json({ requests: list });
   } catch (err: any) {
@@ -900,12 +1353,8 @@ app.get('/api/admin/info-requests', (req, res) => {
   }
 });
 
-app.patch('/api/admin/info-requests/:id', (req, res) => {
+app.patch('/api/admin/info-requests/:id', requireAdminSession, (req, res) => {
   try {
-    const adminEmail = String(req.headers['x-admin-email'] || '').toLowerCase().trim();
-    if (adminEmail !== 'mdmursalineparvez@gmail.com') {
-      return res.status(403).json({ error: 'Admin authorization required' });
-    }
     const { id } = req.params;
     const status = req.body?.status;
     if (!['pending', 'reviewed', 'resolved'].includes(status)) {
@@ -924,12 +1373,8 @@ app.patch('/api/admin/info-requests/:id', (req, res) => {
   }
 });
 
-app.delete('/api/admin/info-requests/:id', (req, res) => {
+app.delete('/api/admin/info-requests/:id', requireAdminSession, (req, res) => {
   try {
-    const adminEmail = String(req.headers['x-admin-email'] || '').toLowerCase().trim();
-    if (adminEmail !== 'mdmursalineparvez@gmail.com') {
-      return res.status(403).json({ error: 'Admin authorization required' });
-    }
     const { id } = req.params;
     const list = loadInfoRequests();
     const filtered = list.filter((r) => r.id !== id);

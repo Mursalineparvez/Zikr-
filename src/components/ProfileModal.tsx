@@ -71,21 +71,24 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
 import { InstallAppModal } from './InstallAppModal';
 import { useBackLayer } from '../utils/backNavigation';
 import {
-  checkUserExistsInCloud,
   generateAndSendVerificationOtp,
   verifySubmittedOtp,
   getPendingOtp,
   loadUserDataFromCloud,
-  updateCloudUserPassword,
-  generateAndSendPasswordResetCode,
-  verifyPasswordResetCode,
-  maskEmailOrPhone,
-  getTestingOtpCode,
-  verifyUserCloudPassword,
   signInWithGoogleAuth,
   CloudZikrState,
   getDeviceId,
 } from '../services/firebase';
+import {
+  signupWithEmailSession,
+  loginWithEmailSession,
+  loginWithGoogleTokenSession,
+  logoutServerSession,
+  fetchActiveDeviceSessions,
+  revokeDeviceSession,
+  saveServerProfile,
+  ServerSessionInfo,
+} from '../services/authClient';
 
 const COUNTRY_CODES = [
   { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
@@ -160,6 +163,8 @@ interface ProfileModalProps {
   embedded?: boolean;
   onBackToHub?: () => void;
   onOpenSaved?: () => void;
+  autoOpenAuth?: boolean;
+  onAutoOpenAuthHandled?: () => void;
 }
 
 const DEFAULT_AVATARS = [
@@ -210,6 +215,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   embedded = false,
   onBackToHub,
   onOpenSaved,
+  autoOpenAuth = false,
+  onAutoOpenAuthHandled,
 }) => {
   const isDay = themeMode === 'day';
   const isBn = selectedLanguage === 'bn';
@@ -464,9 +471,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [googleFallbackInfo, setGoogleFallbackInfo] = useState<{
     inIframe?: boolean;
     popupBlocked?: boolean;
+    errorCode?: string;
     message?: string;
   } | null>(null);
   const authEmailInputRef = useRef<HTMLInputElement | null>(null);
+  const [activeSessions, setActiveSessions] = useState<ServerSessionInfo[]>([]);
+  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
 
   const savedDeviceAccounts = useMemo(() => {
     try {
@@ -573,6 +583,33 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
   }, [isOpen, userProfile]);
 
+  useEffect(() => {
+    if (!(isOpen || embedded) || !userProfile.isSignedIn) {
+      setActiveSessions([]);
+      return;
+    }
+    let cancelled = false;
+    fetchActiveDeviceSessions().then((list) => {
+      if (!cancelled) setActiveSessions(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, embedded, userProfile.isSignedIn, userProfile.emailOrPhone]);
+
+  useEffect(() => {
+    if ((isOpen || embedded) && autoOpenAuth) {
+      setVerificationStep('input');
+      setAuthFlowMode('signin');
+      setOtpErrorMessage(null);
+      setGoogleFallbackInfo(null);
+      setOtpDigits(['', '', '', '', '', '']);
+      setCloudSyncMessage(null);
+      setActiveSubModal('verified_auth');
+      onAutoOpenAuthHandled?.();
+    }
+  }, [isOpen, embedded, autoOpenAuth, onAutoOpenAuthHandled]);
+
   if (!isOpen) return null;
 
   // Open Verified Auth Sub-modal
@@ -598,7 +635,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setActiveSubModal('verified_auth');
   };
 
-  // Process Instant Password Sign-In / Registration
+  // Process Server Session Sign-In / Sign-Up (scrypt + HttpOnly Cookie + Session Store)
   const handleInstantPasswordAuth = async () => {
     setOtpErrorMessage(null);
     const emailClean = inputEmail.trim().toLowerCase();
@@ -630,67 +667,59 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const targetKey = emailClean;
     const pass = inputPassword.trim();
     const detected = getDetectedDeviceInfo();
+    const fullPhone = phoneClean ? `${selectedCountryCode}${phoneClean.replace(/^0+/, '')}` : '';
+    const isSignupFlow = authFlowMode === 'signup' || authFlowMode === 'profile_setup';
 
-    // Check cloud & local vault
-    const verifyResult = await verifyUserCloudPassword(targetKey, pass);
-    const cloudData = await loadUserDataFromCloud(targetKey);
+    const authResult = isSignupFlow
+      ? await signupWithEmailSession({
+          name: inputName.trim() || emailClean.split('@')[0],
+          email: targetKey,
+          password: pass,
+          phone: fullPhone,
+          photo: editPhotoUrl && editPhotoUrl !== userProfile.photoUrl ? editPhotoUrl : '',
+          preferences: {
+            location: userProfile.location || detected.location || 'Dhaka, Bangladesh',
+            gender: profileGender,
+            dob: profileDob,
+          },
+          device: detected.model,
+        })
+      : await loginWithEmailSession({
+          email: targetKey,
+          password: pass,
+          device: detected.model,
+        });
+
+    if (!authResult.ok || !authResult.data?.authenticated || !authResult.data?.user) {
+      setIsVerifying(false);
+      setOtpErrorMessage(
+        authResult.data?.error ||
+          t(
+            'ভুল ইমেইল বা পাসওয়ার্ড! সঠিক তথ্য দিন।',
+            'بيانات الدخول غير صحيحة!',
+            'Invalid email or password. Please check your credentials.'
+          )
+      );
+      if (soundEnabled) soundHaptics.playTap();
+      return;
+    }
+
+    const srvUser = authResult.data.user;
+    const srvProfile = authResult.data.profile;
+    const srvData = authResult.data.userData;
     const existing = findSavedAccount(targetKey);
 
-    const isSuperAdminEmail = targetKey.toLowerCase() === 'mdmursalineparvez@gmail.com';
-
-    // Strictly enforce password check:
-    if (verifyResult.exists && verifyResult.savedPassword && !verifyResult.passwordMatches) {
-      setIsVerifying(false);
-      setOtpErrorMessage(
-        isSuperAdminEmail
-          ? t(
-              'ভুল পাসওয়ার্ড! mdmursalineparvez@gmail.com এর সঠিক পাসওয়ার্ড দিন।',
-              'كلمة مرور خاطئة! أدخل كلمة المرور الصحيحة لحساب mdmursalineparvez@gmail.com.',
-              'Incorrect password! Enter the correct password for mdmursalineparvez@gmail.com.'
-            )
-          : t(
-              'ভুল পাসওয়ার্ড! আপনার অ্যাকাউন্টের সঠিক পাসওয়ার্ড দিন।',
-              'كلمة مرور خاطئة! أدخل كلمة المرور الصحيحة لحسابك.',
-              'Incorrect password! Please enter the correct password for your account.'
-            )
-      );
-      if (soundEnabled) soundHaptics.playTap();
-      return;
-    }
-
-    if (isSuperAdminEmail && !verifyResult.passwordMatches) {
-      setIsVerifying(false);
-      setOtpErrorMessage(
-        t(
-          'ভুল পাসওয়ার্ড! mdmursalineparvez@gmail.com এর সঠিক পাসওয়ার্ড দিন।',
-          'كلمة مرور خاطئة! أدخل كلمة المرور الصحيحة لحساب mdmursalineparvez@gmail.com.',
-          'Incorrect password! Enter the correct password for mdmursalineparvez@gmail.com.'
-        )
-      );
-      if (soundEnabled) soundHaptics.playTap();
-      return;
-    }
-
-    const displayName =
-      inputName.trim() ||
-      cloudData?.profile?.name ||
-      existing?.name ||
-      emailClean.split('@')[0];
-
-    const fullPhone = phoneClean ? `${selectedCountryCode}${phoneClean.replace(/^0+/, '')}` : undefined;
-
     const updated: UserProfile = {
-      name: displayName,
+      name: srvUser.name || inputName.trim() || existing?.name || emailClean.split('@')[0],
       emailOrPhone: targetKey,
-      photoUrl: cloudData?.profile?.photoUrl || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
-      password: pass,
-      location: cloudData?.profile?.location || existing?.location || userProfile.location || 'Bangladesh',
+      photoUrl: srvProfile?.photo || existing?.photoUrl || DEFAULT_AVATARS[0],
+      location: srvProfile?.preferences?.location || existing?.location || userProfile.location || detected.location || 'Bangladesh',
       deviceModel: detected.model,
       osVersion: detected.osVersion,
       isSignedIn: true,
       isVerified: true,
       verificationMethod: 'email',
-      verificationDate: new Date().toISOString(),
+      verificationDate: srvUser.created_at || new Date().toISOString(),
       authProvider: 'email',
       lastSyncedAt: Date.now(),
     };
@@ -698,26 +727,36 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
 
-    if (isSuperAdminEmail) {
-      try {
-        localStorage.setItem('zikrmate_admin_session_auth', 'true');
-      } catch {}
+    if (!isSignupFlow && srvData && onCloudDataLoaded) {
+      onCloudDataLoaded(
+        {
+          profile: updated,
+          zikrs: srvData.saved_items?.zikrs || [],
+          history: srvData.saved_items?.historySessions || [],
+          settings: srvData.settings as any,
+          lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
+          aamalLogs: srvData.activity?.aamalLogs || {},
+          foundInCloud: true,
+          hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
+        },
+        targetKey
+      );
     }
 
-    if (verifyResult.exists) {
+    if (!isSignupFlow) {
       setCloudSyncMessage(
         t(
-          'লগইন সফল! ক্লাউড থেকে শুধুমাত্র আপনার আমল ও হিস্ট্রি লোড হচ্ছে...',
-          'تم تسجيل الدخول بنجاح! جارٍ تحميل أذكارك وسجلك من السحابة...',
-          'Sign-in successful! Loading your separate Zikr & history from the cloud...'
+          'লগইন সফল! আপনার সুরক্ষিত সেশন ও ডাটা লোড হচ্ছে...',
+          'تم تسجيل الدخول بنجاح! جارٍ تحميل بياناتك...',
+          'Sign-in successful! Loading your authenticated session & data...'
         )
       );
     } else {
       setCloudSyncMessage(
         t(
-          'নতুন অ্যাকাউন্ট তৈরি হয়েছে! আলাদা প্রোফাইল ও ০ থেকে হিসাব শুরু হয়েছে।',
-          'تم إنشاء حساب جديد! تم تفعيل المزامنة السحابية.',
-          'New account created! Separate profile initialized cleanly.'
+          'নতুন অ্যাকাউন্ট তৈরি হয়েছে! সেশন ও প্রোফাইল সংরক্ষিত হয়েছে।',
+          'تم إنشاء حساب جديد وتفعيل الجلسة بنجاح.',
+          'New account created! Secure session initialized.'
         )
       );
     }
@@ -726,6 +765,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
     if (soundEnabled) soundHaptics.playMilestone();
     setIsVerifying(false);
+
+    fetchActiveDeviceSessions().then(setActiveSessions).catch(() => {});
 
     setTimeout(() => {
       setActiveSubModal('none');
@@ -849,33 +890,57 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       const result = await signInWithGoogleAuth();
       if (result.success && result.user && result.user.email) {
         const targetEmail = result.user.email.toLowerCase().trim();
-        const cloudData = await loadUserDataFromCloud(targetEmail);
         const existing = findSavedAccount(targetEmail);
         const detected = getDetectedDeviceInfo();
 
+        let serverAuth: Awaited<ReturnType<typeof loginWithGoogleTokenSession>> | null = null;
+        if (result.user.idToken) {
+          serverAuth = await loginWithGoogleTokenSession({
+            idToken: result.user.idToken,
+            device: detected.model,
+            location: existing?.location || userProfile.location || detected.location,
+          });
+        }
+
+        const srvUser = serverAuth?.data?.user;
+        const srvProfile = serverAuth?.data?.profile;
+        const srvData = serverAuth?.data?.userData;
+
         const updated: UserProfile = {
-          name: result.user.name || cloudData?.profile?.name || existing?.name || targetEmail.split('@')[0],
+          name: srvUser?.name || result.user.name || existing?.name || targetEmail.split('@')[0],
           emailOrPhone: targetEmail,
-          photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
-          location: existing?.location || userProfile.location || 'Bangladesh',
+          photoUrl: srvProfile?.photo || result.user.photoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
+          location: srvProfile?.preferences?.location || existing?.location || userProfile.location || detected.location || 'Bangladesh',
           deviceModel: detected.model,
           osVersion: detected.osVersion,
           isSignedIn: true,
           isVerified: true,
           verificationMethod: 'google',
-          verificationDate: new Date().toISOString(),
+          verificationDate: srvUser?.created_at || new Date().toISOString(),
           authProvider: 'google',
           lastSyncedAt: Date.now(),
         };
 
-        if (targetEmail === 'mdmursalineparvez@gmail.com') {
-          try {
-            localStorage.setItem('zikrmate_admin_session_auth', 'true');
-          } catch {}
-        }
-
         saveAccountToRegistry(updated);
         onUpdateProfile(updated);
+
+        if (srvData && onCloudDataLoaded) {
+          onCloudDataLoaded(
+            {
+              profile: updated,
+              zikrs: srvData.saved_items?.zikrs || [],
+              history: srvData.saved_items?.historySessions || [],
+              settings: srvData.settings as any,
+              lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
+              aamalLogs: srvData.activity?.aamalLogs || {},
+              foundInCloud: true,
+              hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
+            },
+            targetEmail
+          );
+        }
+
+        fetchActiveDeviceSessions().then(setActiveSessions).catch(() => {});
 
         setIsVerifying(false);
         setActiveSubModal('none');
@@ -904,6 +969,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setGoogleFallbackInfo({
         inIframe: result.inIframe,
         popupBlocked: result.popupBlocked,
+        errorCode: result.errorCode,
         message: result.error,
       });
     } catch (err: any) {
@@ -911,41 +977,39 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setGoogleFallbackInfo({
         inIframe: typeof window !== 'undefined' && window.self !== window.top,
         popupBlocked: true,
+        errorCode: err?.code,
         message: err?.message,
       });
     }
   };
 
-  const handleQuickSwitchSavedAccount = async (record: SavedAccountRecord) => {
+  const handleQuickSwitchSavedAccount = (record: SavedAccountRecord) => {
     const targetEmail = (record.profile.emailOrPhone || '').toLowerCase().trim();
     if (!targetEmail) return;
     setIsVerifying(true);
     setOtpErrorMessage(null);
     setGoogleFallbackInfo(null);
-    const detected = getDetectedDeviceInfo();
-    const cloudData = await loadUserDataFromCloud(targetEmail);
-    const updated: UserProfile = {
-      ...record.profile,
-      name: cloudData?.profile?.name || record.profile.name || targetEmail.split('@')[0],
-      emailOrPhone: targetEmail,
-      photoUrl: cloudData?.profile?.photoUrl || record.profile.photoUrl || DEFAULT_AVATARS[0],
-      deviceModel: detected.model,
-      osVersion: detected.osVersion,
-      isSignedIn: true,
-      isVerified: true,
-      lastSyncedAt: Date.now(),
-    };
-    if (targetEmail === 'mdmursalineparvez@gmail.com') {
-      try {
-        localStorage.setItem('zikrmate_admin_session_auth', 'true');
-      } catch {}
+    try {
+      const detected = getDetectedDeviceInfo();
+      const updated: UserProfile = {
+        ...record.profile,
+        name: record.profile.name || targetEmail.split('@')[0],
+        emailOrPhone: targetEmail,
+        photoUrl: record.profile.photoUrl || DEFAULT_AVATARS[0],
+        deviceModel: detected.model,
+        osVersion: detected.osVersion,
+        isSignedIn: true,
+        isVerified: true,
+        lastSyncedAt: Date.now(),
+      };
+      saveAccountToRegistry(updated);
+      onUpdateProfile(updated);
+      setActiveSubModal('none');
+      confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
+      if (soundEnabled) soundHaptics.playMilestone();
+    } finally {
+      setIsVerifying(false);
     }
-    saveAccountToRegistry(updated);
-    onUpdateProfile(updated);
-    setIsVerifying(false);
-    setActiveSubModal('none');
-    confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
-    if (soundEnabled) soundHaptics.playMilestone();
   };
 
   // OTP digit keyboard handler
@@ -1010,6 +1074,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     };
     saveAccountToRegistry(updated);
     onUpdateProfile(updated);
+    saveServerProfile({
+      name: updated.name,
+      photo: updated.photoUrl,
+      preferences: { location: updated.location },
+    }).catch(() => {});
     setActiveSubModal('none');
     if (soundEnabled) soundHaptics.playMilestone();
   };
@@ -1336,6 +1405,23 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
+
+                    <button
+                      type="button"
+                      disabled={isVerifying}
+                      onClick={() => {
+                        handleOpenVerifiedAuth('signin');
+                        handleTriggerGoogleAuth();
+                      }}
+                      className={`min-h-[44px] px-4 py-2.5 rounded-full border font-bold text-xs sm:text-sm shadow-sm inline-flex items-center gap-2 transition active:scale-95 cursor-pointer disabled:opacity-60 ${
+                        isDay
+                          ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                          : 'bg-[#08242a] hover:bg-[#0e343c] border-[#1c5763] text-emerald-200'
+                      }`}
+                    >
+                      <GoogleIcon />
+                      <span>{t('Gmail দিয়ে লগইন', 'دخول عبر Google', 'Google Sign In')}</span>
+                    </button>
                   </div>
                 )}
 
@@ -1415,6 +1501,73 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           : `${historySessions.length} ${historySessions.length === 1 ? 'session' : 'sessions'}`}
                       </span>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ACTIVE LOGIN SESSIONS CARD (Normalized Session Store) */}
+              {userProfile.isSignedIn && activeSessions.length > 0 && (
+                <div
+                  className={`p-4 rounded-2xl border shadow-sm space-y-2.5 ${
+                    isDay
+                      ? 'bg-[var(--app-surface,#fafdfb)] border-[var(--app-border,#cbe6d8)] text-slate-900'
+                      : 'bg-[var(--app-dark-surface,#0f343c)] border-[var(--app-dark-border,#1c5763)] text-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="font-extrabold text-xs flex items-center gap-1.5 text-[var(--app-primary,#006A4E)] dark:text-emerald-400">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>{t('সক্রিয় ডিভাইস সেশনসমূহ', 'الجلسات النشطة', 'Active Device Sessions')}</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                      {formatNum(activeSessions.length)}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {activeSessions.slice(0, 5).map((sess) => (
+                      <div
+                        key={sess.id}
+                        className={`px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-xs ${
+                          isDay
+                            ? 'bg-white border-slate-200'
+                            : 'bg-[#072025] border-[#184850]'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="font-bold truncate flex items-center gap-1.5">
+                            <Smartphone className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                            <span className="truncate">{sess.device || 'Web Browser'}</span>
+                            {sess.is_current && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold shrink-0">
+                                {t('বর্তমান', 'الحالي', 'Current')}
+                              </span>
+                            )}
+                          </div>
+                          <div className={`text-[10px] mt-0.5 ${isDay ? 'text-slate-500' : 'text-emerald-200/70'}`}>
+                            {t('সর্বশেষ সক্রিয়:', 'آخر نشاط:', 'Last active:')}{' '}
+                            {new Date(sess.last_seen_at).toLocaleString()}
+                          </div>
+                        </div>
+                        {!sess.is_current && (
+                          <button
+                            type="button"
+                            disabled={revokingSessionId === sess.id}
+                            onClick={async () => {
+                              setRevokingSessionId(sess.id);
+                              const ok = await revokeDeviceSession(sess.id);
+                              setRevokingSessionId(null);
+                              if (ok) {
+                                setActiveSessions((prev) => prev.filter((x) => x.id !== sess.id));
+                                if (soundEnabled) soundHaptics.playTap();
+                              }
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-300 font-bold text-[10px] shrink-0 cursor-pointer"
+                          >
+                            {revokingSessionId === sess.id ? '...' : t('বাতিল', 'إنهاء', 'Revoke')}
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -2469,7 +2622,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {/* ----------------- SUB-MODAL: CREATIVE SIGN-IN & LOGIN FLOW (MATCHING REFERENCE UI) ----------------- */}
         {activeSubModal === 'verified_auth' && (
           <div
-            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-300 ${
+            className={`fixed inset-0 z-[120] w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-300 ${
               isDay
                 ? 'bg-gradient-to-br from-sky-100 via-teal-50 to-blue-100 text-slate-800'
                 : 'bg-gradient-to-br from-[#041014] via-[#07252c] to-[#051417] text-white'
@@ -2903,7 +3056,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                         {googleFallbackInfo.inIframe && typeof window !== 'undefined' && (
                           <a
-                            href={window.location.href}
+                            href={(() => {
+                              try {
+                                const u = new URL(window.location.href);
+                                u.searchParams.set('open_auth', '1');
+                                return u.toString();
+                              } catch {
+                                return window.location.href;
+                              }
+                            })()}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95"
@@ -2911,6 +3072,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             <ExternalLink className="w-4 h-4 shrink-0" />
                             <span>{t('নতুন ট্যাবে খুলুন (সব Gmail দেখাবে)', 'فتح في علامة تبويب جديدة', 'Open in Browser Tab (Show All Gmail)')}</span>
                           </a>
+                        )}
+
+                        {(googleFallbackInfo.errorCode || googleFallbackInfo.message) && !googleFallbackInfo.inIframe && (
+                          <div className="text-[11px] font-mono opacity-80 break-all px-1">
+                            {googleFallbackInfo.errorCode ? `${googleFallbackInfo.errorCode}: ` : ''}
+                            {googleFallbackInfo.message || ''}
+                          </div>
                         )}
 
                         {savedDeviceAccounts.length > 0 && (
@@ -3399,7 +3567,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
+                    await logoutServerSession();
                     const devId = getDeviceId();
                     const shortDevId = devId.replace(/[^a-z0-9]/g, '').slice(-6).toUpperCase();
                     const loggedOutProf: UserProfile = {
@@ -3421,6 +3590,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       localStorage.removeItem('zikrmate_guest_zero_initialized_v3');
                       localStorage.setItem('zikrmate_user_profile', JSON.stringify(loggedOutProf));
                     } catch {}
+                    setActiveSessions([]);
                     onUpdateProfile(loggedOutProf);
                     setActiveSubModal('none');
                     if (soundEnabled) soundHaptics.playMilestone();

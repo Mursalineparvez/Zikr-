@@ -72,10 +72,6 @@ export const saveAccountToRegistry = (profile: UserProfile): void => {
     const registry = getAllSavedAccounts();
     const key = normalizeIdentifier(targetId);
     const existing = registry[key];
-
-    // Preserve existing password if not provided in new profile
-    const finalPassword = profile.password || existing?.profile?.password || '';
-
     let serial = profile.userSerial || existing?.profile?.userSerial;
     if (!serial) {
       serial = Object.keys(registry).length + 1;
@@ -86,7 +82,7 @@ export const saveAccountToRegistry = (profile: UserProfile): void => {
       profile: {
         ...profile,
         photoUrl: safePhoto,
-        password: finalPassword,
+        password: '',
         isSignedIn: true,
         isVerified: true,
         userSerial: serial,
@@ -201,50 +197,7 @@ export const findSavedAccount = (emailOrPhoneOrName: string): UserProfile | null
   return null;
 };
 
-/**
- * Update password for an account in registry
- */
-export const updateAccountPassword = (emailOrPhone: string, newPassword: string): boolean => {
-  if (!emailOrPhone || !newPassword) return false;
-  const key = normalizeIdentifier(emailOrPhone);
-
-  try {
-    const registry = getAllSavedAccounts();
-    const existingProf = findSavedAccount(emailOrPhone);
-
-    if (existingProf) {
-      const existingKey = normalizeIdentifier(existingProf.emailOrPhone || emailOrPhone);
-      registry[existingKey] = {
-        profile: {
-          ...existingProf,
-          password: newPassword,
-        },
-        savedAt: new Date().toISOString(),
-      };
-      try {
-        localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(registry));
-      } catch {}
-      return true;
-    } else {
-      // Register new entry with new password
-      registry[key] = {
-        profile: {
-          name: key.includes('@') ? key.split('@')[0] : 'User',
-          emailOrPhone: emailOrPhone.trim(),
-          photoUrl: '',
-          isSignedIn: true,
-          isVerified: true,
-          password: newPassword,
-        },
-        savedAt: new Date().toISOString(),
-      };
-      try {
-        localStorage.setItem(ACCOUNTS_DB_KEY, JSON.stringify(registry));
-      } catch {}
-      return true;
-    }
-  } catch (e) {
-    console.warn('Notice: password registry storage skipped');
-  }
+export const updateAccountPassword = (_emailOrPhone: string, _newPassword: string): boolean => {
+  // Passwords are hashed and managed strictly on the server via /api/auth/set-password
   return false;
 };

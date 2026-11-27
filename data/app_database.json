@@ -1,0 +1,145 @@
+{
+  "users": {
+    "u_mdmursalineparvez_gmail_com": {
+      "id": "u_mdmursalineparvez_gmail_com",
+      "name": "mdmursalineparvez",
+      "email": "mdmursalineparvez@gmail.com",
+      "password_hash": "",
+      "auth_provider": "google",
+      "email_verified": true,
+      "role": "admin",
+      "created_at": "2026-10-08T01:47:40.468Z"
+    },
+    "u_karim_gmail_com": {
+      "id": "u_karim_gmail_com",
+      "name": "Rahim",
+      "email": "karim@gmail.com",
+      "password_hash": "",
+      "auth_provider": "google",
+      "email_verified": true,
+      "role": "user",
+      "created_at": "2026-10-09T01:47:40.468Z"
+    },
+    "u_mdmursalineparvezpersonal_gmail_com": {
+      "id": "u_mdmursalineparvezpersonal_gmail_com",
+      "name": "mdmursalineparvezpersonal",
+      "email": "mdmursalineparvezpersonal@gmail.com",
+      "password_hash": "",
+      "auth_provider": "google",
+      "email_verified": true,
+      "role": "user",
+      "created_at": "2026-10-08T01:47:40.468Z"
+    },
+    "u_mursalineparvez_gmail_com": {
+      "id": "u_mursalineparvez_gmail_com",
+      "name": "Parvez",
+      "email": "mursalineparvez@gmail.com",
+      "password_hash": "",
+      "auth_provider": "google",
+      "email_verified": true,
+      "role": "user",
+      "created_at": "2026-10-08T01:47:40.468Z"
+    }
+  },
+  "profiles": {
+    "u_mdmursalineparvez_gmail_com": {
+      "user_id": "u_mdmursalineparvez_gmail_com",
+      "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "phone": "",
+      "preferences": {
+        "location": "Dhaka, Bangladesh"
+      },
+      "updated_at": "2026-10-11T03:37:59.382Z"
+    },
+    "u_karim_gmail_com": {
+      "user_id": "u_karim_gmail_com",
+      "photo": "",
+      "phone": "",
+      "preferences": {
+        "location": "Bangladesh"
+      },
+      "updated_at": "2026-10-09T23:47:40.468Z"
+    },
+    "u_mdmursalineparvezpersonal_gmail_com": {
+      "user_id": "u_mdmursalineparvezpersonal_gmail_com",
+      "photo": "",
+      "phone": "",
+      "preferences": {
+        "location": "Bangladesh"
+      },
+      "updated_at": "2026-10-09T21:47:40.468Z"
+    },
+    "u_mursalineparvez_gmail_com": {
+      "user_id": "u_mursalineparvez_gmail_com",
+      "photo": "",
+      "phone": "",
+      "preferences": {
+        "location": "Bangladesh"
+      },
+      "updated_at": "2026-10-09T17:47:40.468Z"
+    }
+  },
+  "sessions": {},
+  "user_data": {
+    "u_mdmursalineparvez_gmail_com": {
+      "user_id": "u_mdmursalineparvez_gmail_com",
+      "saved_items": {
+        "zikrs": [],
+        "historySessions": [],
+        "libraryHighlights": []
+      },
+      "settings": {},
+      "activity": {
+        "lifetimeTotalCount": 4098,
+        "aamalLogs": {},
+        "lastSyncedAt": 1791689879382
+      },
+      "updated_at": "2026-10-11T03:37:59.382Z"
+    },
+    "u_karim_gmail_com": {
+      "user_id": "u_karim_gmail_com",
+      "saved_items": {
+        "zikrs": [],
+        "historySessions": [],
+        "libraryHighlights": []
+      },
+      "settings": {},
+      "activity": {
+        "lifetimeTotalCount": 150,
+        "aamalLogs": {},
+        "lastSyncedAt": 1791589660468
+      },
+      "updated_at": "2026-10-09T23:47:40.468Z"
+    },
+    "u_mdmursalineparvezpersonal_gmail_com": {
+      "user_id": "u_mdmursalineparvezpersonal_gmail_com",
+      "saved_items": {
+        "zikrs": [],
+        "historySessions": [],
+        "libraryHighlights": []
+      },
+      "settings": {},
+      "activity": {
+        "lifetimeTotalCount": 33,
+        "aamalLogs": {},
+        "lastSyncedAt": 1791582460468
+      },
+      "updated_at": "2026-10-09T21:47:40.468Z"
+    },
+    "u_mursalineparvez_gmail_com": {
+      "user_id": "u_mursalineparvez_gmail_com",
+      "saved_items": {
+        "zikrs": [],
+        "historySessions": [],
+        "libraryHighlights": []
+      },
+      "settings": {},
+      "activity": {
+        "lifetimeTotalCount": 99,
+        "aamalLogs": {},
+        "lastSyncedAt": 1791568060468
+      },
+      "updated_at": "2026-10-09T17:47:40.468Z"
+    }
+  }
+}

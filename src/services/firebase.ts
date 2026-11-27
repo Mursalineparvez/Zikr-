@@ -33,6 +33,7 @@ import {
 import firebaseConfig from '../../firebase-applet-config.json';
 import { UserProfile, ZikrItem, HistorySession, AppSettings } from '../types';
 import { getDetectedDeviceInfo } from '../utils/deviceInfo';
+import { authFetch, setServerAccountPassword } from './authClient';
 
 // Silence verbose internal warnings from internal Firestore logger
 try {
@@ -42,16 +43,16 @@ try {
 // 1. Initialize Firebase App
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// 2. Safely initialize Auth with persistence & popup resolver fallback
+// 2. Safely initialize Auth with default web persistence (IndexedDB + Local + Session) & popup resolver
 export const auth = (() => {
   try {
-    return initializeAuth(app, {
-      persistence: browserLocalPersistence,
-      popupRedirectResolver: browserPopupRedirectResolver,
-    });
+    return getAuth(app);
   } catch {
     try {
-      return getAuth(app);
+      return initializeAuth(app, {
+        persistence: browserLocalPersistence,
+        popupRedirectResolver: browserPopupRedirectResolver,
+      });
     } catch (err) {
       console.warn('Firebase auth initialization fallback notice:', err);
       return null;
@@ -61,7 +62,7 @@ export const auth = (() => {
 
 export interface GoogleAuthResult {
   success: boolean;
-  user?: { name: string; email: string; photoUrl: string; uid: string };
+  user?: { name: string; email: string; photoUrl: string; uid: string; idToken?: string };
   isRedirecting?: boolean;
   cancelled?: boolean;
   popupBlocked?: boolean;
@@ -105,9 +106,11 @@ export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
     googleProvider.addScope('email');
 
     // Primary: Popup sign-in (shows Google's native account picker with all phone/laptop Gmail accounts)
+    const popupStartMs = Date.now();
     try {
       const result = await signInWithPopup(authInstance, googleProvider);
       const user = result.user;
+      const idToken = await user.getIdToken().catch(() => '');
       return {
         success: true,
         user: {
@@ -115,17 +118,25 @@ export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
           email: user.email || '',
           photoUrl: user.photoURL || '',
           uid: user.uid,
+          idToken,
         },
       };
     } catch (popupError: any) {
+      const elapsed = Date.now() - popupStartMs;
       const code = String(popupError?.code || '');
       const inIframe = typeof window !== 'undefined' && window.self !== window.top;
-      console.warn('Google Sign-In popup notice:', code, popupError?.message);
+      console.warn('Google Sign-In popup notice:', code, popupError?.message, { inIframe, elapsed });
 
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      const isFastIframeClose =
+        inIframe &&
+        elapsed < 1500 &&
+        (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request');
+
+      if (!isFastIframeClose && (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request')) {
         return {
           success: false,
           cancelled: true,
+          inIframe,
           errorCode: code,
           error: 'Google sign-in popup was closed before selecting an account.',
         };
@@ -134,7 +145,10 @@ export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
       // On standalone mobile/desktop browser tabs (not inside an iframe), fall back to full-page redirect
       if (
         !inIframe &&
-        (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment')
+        (code === 'auth/popup-blocked' ||
+          code === 'auth/operation-not-supported-in-this-environment' ||
+          code === 'auth/internal-error' ||
+          code === 'auth/unauthorized-domain')
       ) {
         try {
           sessionStorage.setItem('zikrmate_google_redirect_in_progress', 'true');
@@ -149,7 +163,11 @@ export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
 
       return {
         success: false,
-        popupBlocked: code === 'auth/popup-blocked' || code === 'auth/internal-error',
+        popupBlocked:
+          isFastIframeClose ||
+          code === 'auth/popup-blocked' ||
+          code === 'auth/internal-error' ||
+          code === 'auth/operation-not-supported-in-this-environment',
         inIframe,
         errorCode: code,
         error: popupError?.message || 'Google Sign-In popup could not be opened.',
@@ -173,7 +191,7 @@ export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
  */
 export async function checkGoogleRedirectResult(): Promise<{
   success: boolean;
-  user?: { name: string; email: string; photoUrl: string; uid: string };
+  user?: { name: string; email: string; photoUrl: string; uid: string; idToken?: string };
   error?: string;
 } | null> {
   try {
@@ -182,6 +200,7 @@ export async function checkGoogleRedirectResult(): Promise<{
     const result = await getRedirectResult(authInstance);
     if (result && result.user) {
       const user = result.user;
+      const idToken = await user.getIdToken().catch(() => '');
       return {
         success: true,
         user: {
@@ -189,6 +208,7 @@ export async function checkGoogleRedirectResult(): Promise<{
           email: user.email || '',
           photoUrl: user.photoURL || '',
           uid: user.uid,
+          idToken,
         },
       };
     }
@@ -456,9 +476,6 @@ export async function saveUserDataToCloud(
       updatedAtMs: nowMs,
       senderDeviceId: currentDeviceId,
     };
-    if (profile.password) {
-      userDocPayload.password = profile.password;
-    }
     if (profile.verificationDate) {
       userDocPayload.createdAt = profile.verificationDate;
     }
@@ -493,17 +510,22 @@ export async function saveUserDataToCloud(
       setDoc(aamalDocRef, { aamalLogsJson: aamalLogsJsonStr, updatedAtMs: nowMs }, { merge: true }).catch(() => {});
     }
 
-    // Background sync to server fallback API so server registry and Admin panel always have latest data even if Firestore quota runs out
-    fetch('/api/sync-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userKey,
-        profile: safeProfile,
-        zikrs,
-        lifetimeTotalCount,
-      }),
-    }).catch(() => {});
+    // Background sync to authenticated normalized server database (users, profiles, user_data)
+    if (!userKey.startsWith('guest_')) {
+      authFetch('/api/sync-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userKey,
+          profile: safeProfile,
+          zikrs,
+          historySessions: minifiedHistory,
+          aamalLogs: minifiedAamal,
+          settings: settings || {},
+          lifetimeTotalCount,
+        }),
+      }).catch(() => {});
+    }
 
     // 4. Always update local cache & account record
     try {
@@ -544,14 +566,21 @@ export async function loadUserDataFromCloud(
     const aamalDocRef = doc(db, 'users', userKey, 'data', 'aamalDoc');
     const dataDocRef = doc(db, 'users', userKey, 'data', 'zikrState');
 
-    const [profileSnap, historySnap, aamalSnap, dataSnap] = await Promise.all([
-      getDoc(profileDocRef),
+    const fetchFirestoreDocs = Promise.all([
+      getDoc(profileDocRef).catch(() => null),
       getDoc(historyDocRef).catch(() => null),
       getDoc(aamalDocRef).catch(() => null),
       getDoc(dataDocRef).catch(() => null),
     ]);
+    const timeoutFallback = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000));
+    const snaps = await Promise.race([fetchFirestoreDocs, timeoutFallback]);
 
-    let rawData: any = profileSnap.exists() ? profileSnap.data() : null;
+    const profileSnap = snaps ? snaps[0] : null;
+    const historySnap = snaps ? snaps[1] : null;
+    const aamalSnap = snaps ? snaps[2] : null;
+    const dataSnap = snaps ? snaps[3] : null;
+
+    let rawData: any = profileSnap && profileSnap.exists() ? profileSnap.data() : null;
     if (dataSnap && dataSnap.exists()) {
       rawData = { ...(rawData || {}), ...dataSnap.data() };
     }
@@ -563,6 +592,38 @@ export async function loadUserDataFromCloud(
     }
 
     if (!rawData) {
+      // Try authenticated server DB (/api/sync-user/:userKey) before falling back to local offline cache
+      try {
+        const res = await Promise.race([
+          authFetch(`/api/sync-user/${encodeURIComponent(userKey)}`),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
+        ]);
+        if (res && res.ok) {
+          const json = await res.json();
+          if (json?.success && json?.user) {
+            const u = json.user;
+            return {
+              profile: {
+                name: u.name,
+                emailOrPhone: u.email || u.emailOrPhone || emailOrPhone,
+                photoUrl: u.photoUrl || '',
+                location: u.location || '',
+                deviceModel: u.deviceModel || '',
+                osVersion: u.osVersion || '',
+                isSignedIn: true,
+                isVerified: true,
+              },
+              zikrs: Array.isArray(u.activeZikrs) ? u.activeZikrs : [],
+              history: Array.isArray(u.historySessions) ? u.historySessions : [],
+              settings: u.settings,
+              lifetimeTotalCount: typeof u.lifetimeTotalCount === 'number' ? u.lifetimeTotalCount : 0,
+              aamalLogs: u.aamalLogs,
+              foundInCloud: true,
+              hasZikrData: Array.isArray(u.activeZikrs) && u.activeZikrs.length > 0,
+            };
+          }
+        }
+      } catch {}
       // Check offline backup cache if cloud has no record yet
       try {
         const cached = localStorage.getItem(`zikrmate_cloud_cache_${userKey}`);
@@ -604,7 +665,6 @@ export async function loadUserDataFromCloud(
     if (rawData.name) loadedProfile.name = rawData.name;
     if (rawData.email || rawData.phone) loadedProfile.emailOrPhone = rawData.email || rawData.phone;
     if (rawData.photoUrl) loadedProfile.photoUrl = rawData.photoUrl;
-    if (rawData.password) loadedProfile.password = rawData.password;
     if (rawData.location) loadedProfile.location = rawData.location;
     if (rawData.deviceModel) loadedProfile.deviceModel = rawData.deviceModel;
     if (rawData.osVersion) loadedProfile.osVersion = rawData.osVersion;
@@ -733,7 +793,6 @@ export function subscribeToUserDataInCloud(
     if (data.name) loadedProfile.name = data.name;
     if (data.email || data.phone) loadedProfile.emailOrPhone = data.email || data.phone;
     if (data.photoUrl) loadedProfile.photoUrl = data.photoUrl;
-    if (data.password) loadedProfile.password = data.password;
     if (data.location) loadedProfile.location = data.location;
     if (data.deviceModel) loadedProfile.deviceModel = data.deviceModel;
     if (data.osVersion) loadedProfile.osVersion = data.osVersion;
@@ -1204,28 +1263,18 @@ export function verifySubmittedOtp(
   };
 }
 
-// 6. Cloud Password Update & Forgot Password Service
+// 6. Server-side Password Update Service (never stores plaintext password in Firestore)
 export async function updateCloudUserPassword(
-  emailOrPhone: string,
-  newPassword: string
+  _emailOrPhone: string,
+  newPassword: string,
+  currentPassword?: string
 ): Promise<boolean> {
-  if (!emailOrPhone || !newPassword) return false;
-  const userKey = sanitizeUserKey(emailOrPhone);
-  try {
-    const userDocRef = doc(db, 'users', userKey);
-    await setDoc(
-      userDocRef,
-      {
-        password: newPassword,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    );
-    return true;
-  } catch (error) {
-    console.error('Failed to update user password in Firestore:', error);
-    return false;
-  }
+  if (!newPassword || newPassword.trim().length < 4) return false;
+  const res = await setServerAccountPassword({
+    currentPassword,
+    newPassword: newPassword.trim(),
+  });
+  return res.ok;
 }
 
 export interface PendingPasswordReset {
@@ -1354,7 +1403,7 @@ export function clearPendingPasswordReset(): void {
 }
 
 /**
- * Verify user password against Firebase Cloud Firestore and local storage vault
+ * Verify user password strictly via server scrypt hash verification (/api/verify-password)
  */
 export async function verifyUserCloudPassword(
   emailOrPhone: string,
@@ -1362,105 +1411,31 @@ export async function verifyUserCloudPassword(
 ): Promise<{
   exists: boolean;
   passwordMatches: boolean;
+  hasSetPassword?: boolean;
   cloudData?: CloudZikrState | null;
-  savedPassword?: string;
   userProfile?: Partial<UserProfile>;
 }> {
   if (!emailOrPhone) return { exists: false, passwordMatches: false };
   const target = emailOrPhone.trim();
   const cleanInput = inputPassword.trim();
 
-  // 1. Fetch from Firestore (try original and alternative formats if phone)
-  let cloudData = await loadUserDataFromCloud(target);
-  if (!cloudData?.foundInCloud && !target.includes('@')) {
-    const altTarget = target.startsWith('+') ? target.replace(/^\+/, '') : `+${target}`;
-    cloudData = await loadUserDataFromCloud(altTarget);
-  }
-  const cloudPass = cloudData?.profile?.password;
-
-  // 2. Fetch from local registry
-  const localRegistryRaw = localStorage.getItem('zikrmate_cloud_accounts_vault_v1');
-  let localPass = '';
-  let localProf: UserProfile | undefined = undefined;
-
-  if (localRegistryRaw) {
-    try {
-      const reg = JSON.parse(localRegistryRaw);
-      const cleanTarget = target.toLowerCase();
-      const altCleanTarget = cleanTarget.startsWith('+') ? cleanTarget.replace(/^\+/, '') : `+${cleanTarget}`;
-      for (const k of Object.keys(reg)) {
-        const item = reg[k];
-        const regKey = k.toLowerCase();
-        const regEmailPhone = item.profile?.emailOrPhone?.toLowerCase().trim() || '';
-        if (
-          regKey === cleanTarget ||
-          regKey === altCleanTarget ||
-          regEmailPhone === cleanTarget ||
-          regEmailPhone === altCleanTarget
-        ) {
-          localProf = item.profile;
-          localPass = item.profile?.password || '';
-          break;
-        }
-      }
-    } catch {}
-  }
-
-  const exists = !!(cloudData?.foundInCloud || localProf);
-  let effectivePassword = cloudPass || localPass || '';
-  const isSuperAdmin = target.toLowerCase() === 'mdmursalineparvez@gmail.com';
-
-  // Check server endpoint if available
   try {
-    const srvRes = await fetch('/api/verify-password', {
+    const srvRes = await authFetch('/api/verify-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ emailOrPhone: target, password: cleanInput }),
     });
     if (srvRes.ok) {
       const srvData = await srvRes.json();
-      if (srvData.exists) {
-        if (srvData.hasSetPassword) {
-          return {
-            exists: true,
-            passwordMatches: srvData.passwordMatches,
-            cloudData,
-            savedPassword: effectivePassword || '***',
-            userProfile: cloudData?.profile || localProf,
-          };
-        }
-      }
+      return {
+        exists: Boolean(srvData.exists),
+        passwordMatches: Boolean(srvData.passwordMatches),
+        hasSetPassword: Boolean(srvData.hasSetPassword),
+      };
     }
   } catch {}
 
-  if (!exists && !isSuperAdmin) {
-    return { exists: false, passwordMatches: false };
-  }
-
-  // If password exists, compare directly
-  if (effectivePassword) {
-    const isSuperAdminPin = cleanInput === '786786' || cleanInput === '123456' || cleanInput === '786';
-    const isMatch =
-      effectivePassword.trim() === cleanInput ||
-      (isSuperAdmin && isSuperAdminPin);
-    return {
-      exists: true,
-      passwordMatches: isMatch,
-      cloudData,
-      savedPassword: effectivePassword,
-      userProfile: cloudData?.profile || localProf,
-    };
-  }
-
-  // Account exists in cloud or local without a set password
-  const isSuperAdminPin = cleanInput === '786786' || cleanInput === '123456' || cleanInput === '786';
-  return {
-    exists: true,
-    passwordMatches: isSuperAdmin ? isSuperAdminPin : cleanInput.length >= 4,
-    cloudData,
-    savedPassword: isSuperAdmin ? '786786' : '',
-    userProfile: cloudData?.profile || localProf,
-  };
+  return { exists: false, passwordMatches: false };
 }
 
 // ================= ADMIN PANEL FIRESTORE HELPERS =================
@@ -1487,134 +1462,107 @@ export interface AdminUserRecord {
  * Fetch list of all registered users & active guest devices in Firestore for Admin Dashboard
  */
 export async function fetchAllUsersForAdmin(): Promise<AdminUserRecord[]> {
+  const mergedMap = new Map<string, AdminUserRecord>();
+
+  // 1. Fetch from authenticated server admin endpoint
+  try {
+    const res = await authFetch('/api/admin/users');
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.users)) {
+        json.users.forEach((u: AdminUserRecord) => {
+          if (u && u.userKey) mergedMap.set(u.userKey, u);
+        });
+      }
+    }
+  } catch {}
+
+  // 2. Also fetch from Firestore if Admin Firebase Auth session is active
   try {
     const usersCol = collection(db, 'users');
-    let snapshot: any;
-    try {
-      const getPromise = getDocs(usersCol);
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
-      snapshot = await Promise.race([getPromise, timeoutPromise]);
-    } catch {
-      snapshot = null;
-    }
+    const getPromise = getDocs(usersCol);
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+    const snapshot: any = await Promise.race([getPromise, timeoutPromise]);
 
-    if (!snapshot) {
-      return [];
-    }
+    if (snapshot) {
+      snapshot.forEach((docSnap: any) => {
+        const data = docSnap.data();
+        const userKey = docSnap.id;
 
-    const results: AdminUserRecord[] = [];
+        let prof: Partial<UserProfile> = {};
+        if (data.profileJson) {
+          try {
+            prof = JSON.parse(data.profileJson);
+          } catch {}
+        }
 
-    snapshot.forEach((docSnap: any) => {
-      const data = docSnap.data();
-      const userKey = docSnap.id;
+        let activeZikrsParsed: Array<{ id: string; name: string; count: number; target: number }> = [];
+        if (data.zikrsJson) {
+          try {
+            const zList = JSON.parse(data.zikrsJson);
+            if (Array.isArray(zList)) {
+              activeZikrsParsed = zList.map((z: any) => ({
+                id: z.id || '',
+                name: z.name || z.pronunciationBn || z.id || 'Zikr',
+                count: typeof z.count === 'number' ? z.count : 0,
+                target: typeof z.target === 'number' ? z.target : 33,
+              }));
+            }
+          } catch {}
+        }
 
-      let prof: Partial<UserProfile> = {};
-      if (data.profileJson) {
-        try {
-          prof = JSON.parse(data.profileJson);
-        } catch {}
-      }
+        const isGuestDevice = userKey.startsWith('guest_') || (!data.email && !data.phone && !prof.emailOrPhone);
+        let rawEmail = data.email || prof.emailOrPhone || '';
+        if (!rawEmail.includes('@') && userKey.startsWith('u_') && userKey.includes('_gmail_com')) {
+          rawEmail = userKey.replace(/^u_/, '').replace(/_gmail_com$/, '@gmail.com');
+        }
 
-      let activeZikrsParsed: Array<{ id: string; name: string; count: number; target: number }> = [];
-      if (data.zikrsJson) {
-        try {
-          const zList = JSON.parse(data.zikrsJson);
-          if (Array.isArray(zList)) {
-            activeZikrsParsed = zList.map((z: any) => ({
-              id: z.id || '',
-              name: z.name || z.pronunciationBn || z.id || 'Zikr',
-              count: typeof z.count === 'number' ? z.count : 0,
-              target: typeof z.target === 'number' ? z.target : 33,
-            }));
-          }
-        } catch {}
-      }
+        const emailOrPhone = isGuestDevice
+          ? `Guest Mobile (${userKey.replace(/^guest_/, '').slice(0, 10)})`
+          : (rawEmail || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
 
-      const isGuestDevice = userKey.startsWith('guest_') || (!data.email && !data.phone && !prof.emailOrPhone);
+        const displayName = isGuestDevice
+          ? (data.name && !data.name.includes('ZikrMate User') && !data.name.includes('Zikr+ User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
+          : (data.name || prof.name || (rawEmail ? rawEmail.split('@')[0] : 'Zikr+ User'));
 
-      let rawEmail = data.email || prof.emailOrPhone || '';
-      if (!rawEmail.includes('@') && userKey.startsWith('u_') && userKey.includes('_gmail_com')) {
-        rawEmail = userKey.replace(/^u_/, '').replace(/_gmail_com$/, '@gmail.com');
-      }
+        let method = isGuestDevice
+          ? 'Guest Device'
+          : (data.verificationMethod || prof.verificationMethod || (rawEmail.includes('@') ? 'Google / Email' : 'Verified Account'));
+        if (method === 'google' || rawEmail.endsWith('@gmail.com')) {
+          method = 'Google Sign-In';
+        }
 
-      const emailOrPhone = isGuestDevice
-        ? `Guest Mobile (${userKey.replace(/^guest_/, '').slice(0, 10)})`
-        : (rawEmail || data.phone || (userKey.startsWith('u_') ? userKey.replace(/^u_/, '') : userKey));
-
-      const displayName = isGuestDevice
-        ? (data.name && !data.name.includes('ZikrMate User') && !data.name.includes('Zikr+ User') ? data.name : `Guest (${data.deviceModel || prof.deviceModel || 'Mobile Device'})`)
-        : (data.name || prof.name || (rawEmail ? rawEmail.split('@')[0] : 'Zikr+ User'));
-
-      let method = isGuestDevice
-        ? 'Guest Device'
-        : (data.verificationMethod || prof.verificationMethod || (rawEmail.includes('@') ? 'Google / Email' : 'Verified Account'));
-      if (method === 'google' || rawEmail.endsWith('@gmail.com')) {
-        method = 'Google Sign-In';
-      }
-
-      results.push({
-        userKey,
-        name: displayName,
-        emailOrPhone,
-        email: rawEmail || (emailOrPhone.includes('@') ? emailOrPhone : ''),
-        phone: data.phone || (!emailOrPhone.includes('@') && !isGuestDevice ? emailOrPhone : ''),
-        photoUrl: data.photoUrl || prof.photoUrl || '',
-        location: data.location || prof.location || 'Asia/Dhaka (Network Timezone)',
-        deviceModel: data.deviceModel || prof.deviceModel || 'Android / Mobile Device',
-        osVersion: data.osVersion || prof.osVersion || 'Android',
-        verificationMethod: method,
-        lastSyncedAt: data.updatedAtMs || (data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()),
-        createdAtMs: data.createdAt ? new Date(data.createdAt).getTime() : (data.updatedAtMs || Date.now()),
-        lifetimeTotalCount: (() => {
-          let aamalSum = 0;
-          if (data.aamalLogsJson) {
-            try {
-              const pA = JSON.parse(data.aamalLogsJson);
-              if (pA && typeof pA === 'object') {
-                for (const d of Object.values(pA)) {
-                  if (d && typeof (d as any).dhikrCount === 'number') aamalSum += (d as any).dhikrCount;
-                }
-              }
-            } catch {}
-          }
-          let histSum = 0;
-          if (data.historyJson) {
-            try {
-              const pH = JSON.parse(data.historyJson);
-              if (Array.isArray(pH)) {
-                histSum = pH.reduce((acc: number, s: any) => acc + (s.totalCount || 0), 0);
-              }
-            } catch {}
-          }
-          const activeSum = activeZikrsParsed.reduce((acc, curr) => acc + (curr.count || 0), 0);
-          return Math.max(
+        const cloudRecord: AdminUserRecord = {
+          userKey,
+          name: displayName,
+          emailOrPhone,
+          email: rawEmail || (emailOrPhone.includes('@') ? emailOrPhone : ''),
+          phone: data.phone || (!emailOrPhone.includes('@') && !isGuestDevice ? emailOrPhone : ''),
+          photoUrl: data.photoUrl || prof.photoUrl || '',
+          location: data.location || prof.location || 'Asia/Dhaka (Network Timezone)',
+          deviceModel: data.deviceModel || prof.deviceModel || 'Android / Mobile Device',
+          osVersion: data.osVersion || prof.osVersion || 'Android',
+          verificationMethod: method,
+          lastSyncedAt: data.updatedAtMs || (data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()),
+          createdAtMs: data.createdAt ? new Date(data.createdAt).getTime() : (data.updatedAtMs || Date.now()),
+          lifetimeTotalCount: Math.max(
             typeof data.lifetimeTotalCount === 'number' ? data.lifetimeTotalCount : 0,
             typeof data.totalCount === 'number' ? data.totalCount : 0,
-            activeSum,
-            aamalSum,
-            histSum
-          );
-        })(),
-        activeZikrs: activeZikrsParsed,
-        hasPassword: !!(data.password || prof.password),
-      });
-    });
+            activeZikrsParsed.reduce((acc, curr) => acc + (curr.count || 0), 0)
+          ),
+          activeZikrs: activeZikrsParsed,
+          hasPassword: Boolean(mergedMap.get(userKey)?.hasPassword),
+        };
 
-    // Sort users by last synced / active time descending
-    return results.sort((a, b) => b.lastSyncedAt - a.lastSyncedAt);
-  } catch (error) {
-    console.warn('Error fetching users for admin, attempting server fallback:', error);
-    try {
-      const res = await fetch('/api/admin/users');
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json.users) && json.users.length > 0) {
-          return json.users;
+        const existing = mergedMap.get(userKey);
+        if (!existing || cloudRecord.lifetimeTotalCount > existing.lifetimeTotalCount) {
+          mergedMap.set(userKey, { ...(existing || {}), ...cloudRecord });
         }
-      }
-    } catch {}
-    return [];
-  }
+      });
+    }
+  } catch {}
+
+  return Array.from(mergedMap.values()).sort((a, b) => b.lastSyncedAt - a.lastSyncedAt);
 }
 
 /**
@@ -1760,7 +1708,7 @@ export function subscribeToAllUsersForAdmin(
           activeZikrsParsed.reduce((acc, curr) => acc + (curr.count || 0), 0)
         ),
           activeZikrs: activeZikrsParsed,
-          hasPassword: !!(data.password || prof.password),
+          hasPassword: false,
         });
       });
 
@@ -1776,13 +1724,19 @@ export function subscribeToAllUsersForAdmin(
  * Admin function to remove a user document
  */
 export async function deleteUserByAdmin(userKey: string): Promise<boolean> {
+  let deletedAny = false;
+  try {
+    const res = await authFetch(`/api/admin/users/${encodeURIComponent(userKey)}`, {
+      method: 'DELETE',
+    });
+    if (res.ok) deletedAny = true;
+  } catch {}
   try {
     const userDocRef = doc(db, 'users', userKey);
     await deleteDoc(userDocRef);
-    return true;
-  } catch {
-    return false;
-  }
+    deletedAny = true;
+  } catch {}
+  return deletedAny;
 }
 
 export interface LeaderboardUserEntry {
@@ -1977,9 +1931,9 @@ export async function submitMissingInfoRequest(input: {
 export async function fetchInfoRequestsForAdmin(adminEmail: string): Promise<InfoRequestRecord[]> {
   const map = new Map<string, InfoRequestRecord>();
 
-  // 1. Fetch from server API
+  // 1. Fetch from authenticated server API
   try {
-    const res = await fetch('/api/admin/info-requests', {
+    const res = await authFetch('/api/admin/info-requests', {
       headers: { 'X-Admin-Email': adminEmail },
     });
     if (res.ok) {
@@ -2025,7 +1979,7 @@ export async function updateInfoRequestStatusForAdmin(
 ): Promise<boolean> {
   let ok = false;
   try {
-    const res = await fetch(`/api/admin/info-requests/${encodeURIComponent(id)}`, {
+    const res = await authFetch(`/api/admin/info-requests/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -2060,7 +2014,7 @@ export async function deleteInfoRequestForAdmin(
 ): Promise<boolean> {
   let ok = false;
   try {
-    const res = await fetch(`/api/admin/info-requests/${encodeURIComponent(id)}`, {
+    const res = await authFetch(`/api/admin/info-requests/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: { 'X-Admin-Email': adminEmail },
     });

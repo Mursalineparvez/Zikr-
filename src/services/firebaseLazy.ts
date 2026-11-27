@@ -63,9 +63,18 @@ export async function updateDeviceTelemetry(userKey: string, detected: any): Pro
   } catch {}
 }
 
+export async function testFirestoreConnection(): Promise<boolean> {
+  try {
+    const fb = await loadFirebase();
+    return await fb.testFirestoreConnection();
+  } catch {
+    return false;
+  }
+}
+
 export async function checkGoogleRedirectResult(): Promise<{
   success: boolean;
-  user?: { name: string; email: string; photoUrl: string; uid: string };
+  user?: { name: string; email: string; photoUrl: string; uid: string; idToken?: string };
   error?: string;
 } | null> {
   try {

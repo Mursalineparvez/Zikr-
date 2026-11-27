@@ -29,11 +29,14 @@ import { soundHaptics } from '../utils/audioHaptics';
 import {
   signInWithGoogleAuth,
   loadUserDataFromCloud,
-  checkUserExistsInCloud,
-  verifyUserCloudPassword,
   saveUserDataToCloud,
   CloudZikrState,
 } from '../services/firebase';
+import {
+  signupWithEmailSession,
+  loginWithEmailSession,
+  loginWithGoogleTokenSession,
+} from '../services/authClient';
 import { findSavedAccount, saveAccountToRegistry } from '../utils/accountRegistry';
 import { getDetectedDeviceInfo } from '../utils/deviceInfo';
 
@@ -139,15 +142,23 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
       const result = await signInWithGoogleAuth();
       if (result.success && result.user && result.user.email) {
         const targetEmail = result.user.email.toLowerCase().trim();
+        const detected = getDetectedDeviceInfo();
+        let serverAuth: Awaited<ReturnType<typeof loginWithGoogleTokenSession>> | null = null;
+        if (result.user.idToken) {
+          serverAuth = await loginWithGoogleTokenSession({
+            idToken: result.user.idToken,
+            device: detected.model,
+            location: userProfile.location || detected.location,
+          });
+        }
         const cloudData = await loadUserDataFromCloud(targetEmail);
         const existing = findSavedAccount(targetEmail);
-        const detected = getDetectedDeviceInfo();
 
         const updated: UserProfile = {
-          name: result.user.name || cloudData?.profile?.name || existing?.name || targetEmail.split('@')[0],
+          name: serverAuth?.data?.user?.name || result.user.name || cloudData?.profile?.name || existing?.name || targetEmail.split('@')[0],
           emailOrPhone: targetEmail,
-          photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || '',
-          location: existing?.location || userProfile.location || 'Bangladesh',
+          photoUrl: serverAuth?.data?.profile?.photo || result.user.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || '',
+          location: serverAuth?.data?.profile?.preferences?.location || existing?.location || userProfile.location || detected.location || 'Bangladesh',
           deviceModel: detected.model,
           osVersion: detected.osVersion,
           isSignedIn: true,
@@ -158,17 +169,23 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
           lastSyncedAt: Date.now(),
         };
 
-        if (targetEmail === 'mdmursalineparvez@gmail.com') {
-          try {
-            localStorage.setItem('zikrmate_admin_session_auth', 'true');
-          } catch {}
-        }
-
         saveAccountToRegistry(updated);
         onUpdateProfile(updated);
 
         if (cloudData && cloudData.foundInCloud && onCloudDataLoaded) {
           onCloudDataLoaded(cloudData, targetEmail);
+        } else if (serverAuth?.ok && serverAuth.data?.userData && onCloudDataLoaded) {
+          const ud = serverAuth.data.userData;
+          onCloudDataLoaded({
+            profile: updated,
+            zikrs: ud.saved_items?.zikrs || [],
+            history: ud.saved_items?.historySessions || [],
+            settings: ud.settings as any,
+            lifetimeTotalCount: ud.activity?.lifetimeTotalCount || 0,
+            aamalLogs: ud.activity?.aamalLogs || {},
+            foundInCloud: true,
+            hasZikrData: Array.isArray(ud.saved_items?.zikrs) && ud.saved_items.zikrs.length > 0,
+          }, targetEmail);
         } else {
           const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
           if (localSum > 0 || lifetimeTotalCount > 0) {
@@ -226,43 +243,40 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
     setErrorMessage(null);
 
     const targetEmail = emailInput.trim().toLowerCase();
+    const detected = getDetectedDeviceInfo();
 
     try {
-      const cloudCheck = await verifyUserCloudPassword(targetEmail, passwordInput);
-      const existing = findSavedAccount(targetEmail);
+      const loginRes = await loginWithEmailSession({
+        email: targetEmail,
+        password: passwordInput.trim(),
+        device: detected.model,
+      });
 
-      let isSuccess = false;
-      let matchedName = targetEmail.split('@')[0];
-
-      if (cloudCheck.passwordMatches) {
-        isSuccess = true;
-        if (cloudCheck.userProfile?.name) matchedName = cloudCheck.userProfile.name;
-        else if (cloudCheck.cloudData?.profile?.name) matchedName = cloudCheck.cloudData.profile.name;
-      } else if (existing?.password && existing.password === passwordInput) {
-        isSuccess = true;
-        matchedName = existing.name || matchedName;
-      }
-
-      if (!isSuccess) {
-        setErrorMessage(isBn ? 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।' : 'Incorrect email or password.');
+      if (!loginRes.ok || !loginRes.data?.authenticated || !loginRes.data?.user) {
+        setErrorMessage(
+          loginRes.data?.error ||
+            (isBn ? 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।' : 'Incorrect email or password.')
+        );
         setIsSubmitting(false);
         return;
       }
 
-      const detected = getDetectedDeviceInfo();
-      const cloudData = await loadUserDataFromCloud(targetEmail);
+      const srvUser = loginRes.data.user;
+      const srvProfile = loginRes.data.profile;
+      const srvData = loginRes.data.userData;
+      const existing = findSavedAccount(targetEmail);
 
       const updated: UserProfile = {
-        name: matchedName,
+        name: srvUser.name || existing?.name || targetEmail.split('@')[0],
         emailOrPhone: targetEmail,
-        photoUrl: existing?.photoUrl || cloudData?.profile?.photoUrl || '',
-        location: existing?.location || userProfile.location || 'Bangladesh',
+        photoUrl: srvProfile?.photo || existing?.photoUrl || '',
+        location: srvProfile?.preferences?.location || existing?.location || userProfile.location || detected.location || 'Bangladesh',
         deviceModel: detected.model,
         osVersion: detected.osVersion,
         isSignedIn: true,
         isVerified: true,
         verificationMethod: 'email',
-        verificationDate: new Date().toISOString(),
+        verificationDate: srvUser.created_at || new Date().toISOString(),
         authProvider: 'email',
         lastSyncedAt: Date.now(),
       };
@@ -270,8 +284,20 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
       saveAccountToRegistry(updated);
       onUpdateProfile(updated);
 
-      if (cloudData && cloudData.foundInCloud && onCloudDataLoaded) {
-        onCloudDataLoaded(cloudData, targetEmail);
+      if (srvData && onCloudDataLoaded) {
+        onCloudDataLoaded(
+          {
+            profile: updated,
+            zikrs: srvData.saved_items?.zikrs || [],
+            history: srvData.saved_items?.historySessions || [],
+            settings: srvData.settings as any,
+            lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
+            aamalLogs: srvData.activity?.aamalLogs || {},
+            foundInCloud: true,
+            hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
+          },
+          targetEmail
+        );
       }
 
       try {
@@ -308,28 +334,49 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
     setErrorMessage(null);
 
     const targetEmail = emailInput.trim().toLowerCase();
+    const detected = getDetectedDeviceInfo();
+    const fullPhone = phoneInput.trim()
+      ? `${selectedCountryCode}${phoneInput.trim().replace(/^0+/, '')}`
+      : '';
 
     try {
-      const exists = await checkUserExistsInCloud(targetEmail);
-      if (exists) {
-        setErrorMessage(isBn ? 'এই ইমেইল দিয়ে ইতিপূর্বেই একাউন্ট আছে।' : 'An account with this email already exists.');
+      const signupRes = await signupWithEmailSession({
+        name: nameInput.trim(),
+        email: targetEmail,
+        password: passwordInput.trim(),
+        phone: fullPhone,
+        photo: photoUrlInput,
+        preferences: {
+          location: userProfile.location || detected.location || 'Bangladesh',
+          gender: profileGender,
+          dob: profileDob,
+        },
+        device: detected.model,
+      });
+
+      if (!signupRes.ok || !signupRes.data?.authenticated || !signupRes.data?.user) {
+        setErrorMessage(
+          signupRes.data?.error ||
+            (isBn ? 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।' : 'Could not create account.')
+        );
         setIsSubmitting(false);
         return;
       }
 
-      const detected = getDetectedDeviceInfo();
+      const srvUser = signupRes.data.user;
+      const srvProfile = signupRes.data.profile;
+
       const updated: UserProfile = {
-        name: nameInput.trim(),
+        name: srvUser.name || nameInput.trim(),
         emailOrPhone: targetEmail,
-        password: passwordInput,
-        photoUrl: photoUrlInput,
-        location: userProfile.location || 'Bangladesh',
+        photoUrl: srvProfile?.photo || photoUrlInput,
+        location: srvProfile?.preferences?.location || userProfile.location || 'Bangladesh',
         deviceModel: detected.model,
         osVersion: detected.osVersion,
         isSignedIn: true,
         isVerified: true,
         verificationMethod: 'email',
-        verificationDate: new Date().toISOString(),
+        verificationDate: srvUser.created_at || new Date().toISOString(),
         authProvider: 'email',
         lastSyncedAt: Date.now(),
       };

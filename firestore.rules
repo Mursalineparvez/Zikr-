@@ -1,14 +1,139 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Pillar 4.1: Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Pillar 3: Reusable hardened primitives
     function isValidId(id) {
       return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    function isOwnerAdmin() {
-      return request.auth != null
-        && request.auth.token.email == 'mdmursalineparvez@gmail.com'
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedEmail() {
+      return isSignedIn()
+        && request.auth.token.email is string
         && request.auth.token.email_verified == true;
+    }
+
+    function isOwnerAdmin() {
+      return isVerifiedEmail()
+        && request.auth.token.email.lower() == 'mdmursalineparvez@gmail.com';
+    }
+
+    function isUserDocOwner(userId) {
+      return isVerifiedEmail() && (
+        userId == request.auth.uid
+        || (existing().email is string && existing().email.lower() == request.auth.token.email.lower())
+      );
+    }
+
+    function isParentUserOwner(userId) {
+      return isVerifiedEmail()
+        && exists(/databases/$(database)/documents/users/$(userId))
+        && (
+          userId == request.auth.uid
+          || (
+            get(/databases/$(database)/documents/users/$(userId)).data.email is string
+            && get(/databases/$(database)/documents/users/$(userId)).data.email.lower() == request.auth.token.email.lower()
+          )
+        );
+    }
+
+    // Pillar 2: Validation Blueprint for /users/{userId}
+    function hasSafeUserShape(data) {
+      return !('password' in data)
+        && !('password_hash' in data)
+        && !('role' in data)
+        && !('isAdmin' in data)
+        && data.keys().hasOnly([
+          'uid', 'name', 'email', 'phone', 'isVerified', 'verificationMethod',
+          'photoUrl', 'location', 'deviceModel', 'osVersion', 'senderDeviceId',
+          'profileJson', 'zikrsJson', 'historyJson', 'aamalLogsJson', 'settingsJson',
+          'totalCount', 'lifetimeTotalCount', 'lastActiveAt', 'lastActiveAtMs',
+          'createdAt', 'updatedAt', 'updatedAtMs'
+        ])
+        && (!('uid' in data) || (data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')))
+        && (!('name' in data) || (data.name is string && data.name.size() <= 120))
+        && (!('email' in data) || (data.email is string && data.email.size() <= 200))
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 40))
+        && (!('isVerified' in data) || data.isVerified is bool)
+        && (!('verificationMethod' in data) || (data.verificationMethod is string && data.verificationMethod.size() <= 32))
+        && (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() <= 60000))
+        && (!('location' in data) || (data.location is string && data.location.size() <= 200))
+        && (!('deviceModel' in data) || (data.deviceModel is string && data.deviceModel.size() <= 120))
+        && (!('osVersion' in data) || (data.osVersion is string && data.osVersion.size() <= 64))
+        && (!('senderDeviceId' in data) || (data.senderDeviceId is string && data.senderDeviceId.size() <= 128))
+        && (!('profileJson' in data) || (data.profileJson is string && data.profileJson.size() <= 100000))
+        && (!('zikrsJson' in data) || (data.zikrsJson is string && data.zikrsJson.size() <= 250000))
+        && (!('historyJson' in data) || (data.historyJson is string && data.historyJson.size() <= 500000))
+        && (!('aamalLogsJson' in data) || (data.aamalLogsJson is string && data.aamalLogsJson.size() <= 300000))
+        && (!('settingsJson' in data) || (data.settingsJson is string && data.settingsJson.size() <= 20000))
+        && (!('totalCount' in data) || (data.totalCount is number && data.totalCount >= 0))
+        && (!('lifetimeTotalCount' in data) || (data.lifetimeTotalCount is number && data.lifetimeTotalCount >= 0))
+        && (!('lastActiveAt' in data) || (data.lastActiveAt is string && data.lastActiveAt.size() <= 64))
+        && (!('lastActiveAtMs' in data) || data.lastActiveAtMs is number)
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64))
+        && (!('updatedAtMs' in data) || data.updatedAtMs is number);
+    }
+
+    function isValidUserDocCreate(data, userId) {
+      return hasSafeUserShape(data)
+        && data.email is string
+        && data.email.size() > 0
+        && data.email.lower() == request.auth.token.email.lower()
+        && (!('uid' in data) || data.uid == userId);
+    }
+
+    function isValidUserDocUpdate(data, userId) {
+      return hasSafeUserShape(data)
+        && (!('uid' in existing()) || !('uid' in data) || data.uid == existing().uid)
+        && (!('createdAt' in existing()) || !('createdAt' in data) || data.createdAt == existing().createdAt)
+        && (!('email' in existing()) || !('email' in data) || data.email == existing().email || isOwnerAdmin())
+        && (userId == request.auth.uid || (data.email is string && data.email.lower() == request.auth.token.email.lower()) || isOwnerAdmin());
+    }
+
+    function isValidUserSubDoc(data) {
+      return !('password' in data)
+        && !('password_hash' in data)
+        && !('role' in data)
+        && !('isAdmin' in data)
+        && data.keys().hasOnly([
+          'userId', 'zikrsJson', 'historyJson', 'aamalLogsJson',
+          'streakJson', 'settingsJson', 'savedHighlightsJson',
+          'target', 'code', 'purpose', 'type', 'expiresAt',
+          'totalCount', 'createdAt', 'updatedAt', 'updatedAtMs'
+        ])
+        && (!('userId' in data) || (data.userId is string && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')))
+        && (!('zikrsJson' in data) || (data.zikrsJson is string && data.zikrsJson.size() <= 250000))
+        && (!('historyJson' in data) || (data.historyJson is string && data.historyJson.size() <= 500000))
+        && (!('aamalLogsJson' in data) || (data.aamalLogsJson is string && data.aamalLogsJson.size() <= 500000))
+        && (!('streakJson' in data) || (data.streakJson is string && data.streakJson.size() <= 50000))
+        && (!('settingsJson' in data) || (data.settingsJson is string && data.settingsJson.size() <= 20000))
+        && (!('savedHighlightsJson' in data) || (data.savedHighlightsJson is string && data.savedHighlightsJson.size() <= 500000))
+        && (!('target' in data) || (data.target is string && data.target.size() <= 200))
+        && (!('code' in data) || (data.code is string && data.code.size() <= 16))
+        && (!('purpose' in data) || (data.purpose is string && data.purpose.size() <= 32))
+        && (!('type' in data) || (data.type is string && data.type.size() <= 32))
+        && (!('expiresAt' in data) || data.expiresAt is number)
+        && (!('totalCount' in data) || (data.totalCount is number && data.totalCount >= 0))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64))
+        && (!('updatedAtMs' in data) || data.updatedAtMs is number);
     }
 
     function isValidInfoRequestCreate(data, reqId) {
@@ -32,26 +157,84 @@ service cloud.firestore {
         && (!('updatedAtMs' in data) || data.updatedAtMs is number);
     }
 
-    match /users/{userId} {
-      allow read, write: if true;
+    function isValidInfoRequestUpdate(data, reqId) {
+      return data.keys().hasAll(['id', 'question', 'status', 'createdAtMs'])
+        && data.keys().hasOnly([
+          'id', 'question', 'pageModule', 'pageTitle', 'userNote',
+          'senderName', 'senderContact', 'senderKey', 'language',
+          'status', 'createdAtMs', 'updatedAtMs'
+        ])
+        && data.id == reqId
+        && data.id == existing().id
+        && data.createdAtMs == existing().createdAtMs
+        && data.status in ['pending', 'reviewed', 'resolved']
+        && (!('updatedAtMs' in data) || data.updatedAtMs is number);
+    }
 
-      match /{allChildren=**} {
-        allow read, write: if true;
+    // Users collection (PII isolated strictly to verified owner or verified admin)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isUserDocOwner(userId) || isOwnerAdmin());
+      allow list: if isOwnerAdmin();
+      allow create: if isVerifiedEmail() && isValidId(userId) && isValidUserDocCreate(incoming(), userId);
+      allow update: if isVerifiedEmail()
+        && isValidId(userId)
+        && isValidUserDocUpdate(incoming(), userId)
+        && (isUserDocOwner(userId) || isOwnerAdmin())
+        && (
+          isOwnerAdmin()
+          || incoming().diff(existing()).affectedKeys().hasOnly([
+            'deviceModel', 'osVersion', 'location', 'lastActiveAt', 'lastActiveAtMs', 'senderDeviceId'
+          ])
+          || incoming().diff(existing()).affectedKeys().hasOnly([
+            'uid', 'name', 'email', 'phone', 'isVerified', 'verificationMethod',
+            'photoUrl', 'location', 'deviceModel', 'osVersion', 'senderDeviceId',
+            'profileJson', 'zikrsJson', 'historyJson', 'aamalLogsJson', 'settingsJson',
+            'totalCount', 'lifetimeTotalCount', 'updatedAt', 'updatedAtMs', 'createdAt'
+          ])
+        );
+      allow delete: if isValidId(userId) && isOwnerAdmin();
+
+      // Master Gate: Sub-documents require existing parent user owned by caller or admin
+      match /data/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && (isParentUserOwner(userId) || isOwnerAdmin());
+        allow list: if isOwnerAdmin();
+        allow create: if isVerifiedEmail()
+          && isValidId(userId)
+          && isValidId(docId)
+          && isValidUserSubDoc(incoming())
+          && (isParentUserOwner(userId) || isOwnerAdmin());
+        allow update: if isVerifiedEmail()
+          && isValidId(userId)
+          && isValidId(docId)
+          && isValidUserSubDoc(incoming())
+          && (isParentUserOwner(userId) || isOwnerAdmin())
+          && (
+            isOwnerAdmin()
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'userId', 'zikrsJson', 'historyJson', 'aamalLogsJson',
+              'streakJson', 'settingsJson', 'savedHighlightsJson',
+              'target', 'code', 'purpose', 'type', 'expiresAt',
+              'totalCount', 'createdAt', 'updatedAt', 'updatedAtMs'
+            ])
+          );
+        allow delete: if isValidId(userId) && isValidId(docId) && (isParentUserOwner(userId) || isOwnerAdmin());
       }
     }
 
+    // Missing info requests from AI assistant
     match /info_requests/{requestId} {
-      allow create: if isValidId(requestId) && isValidInfoRequestCreate(request.resource.data, requestId);
-      allow read, update, delete: if isOwnerAdmin();
+      allow create: if isValidId(requestId) && isValidInfoRequestCreate(incoming(), requestId);
+      allow get, list, delete: if isOwnerAdmin();
+      allow update: if isOwnerAdmin()
+        && isValidId(requestId)
+        && isValidInfoRequestUpdate(incoming(), requestId)
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAtMs']);
     }
 
+    // Read-only health check probe
     match /test/{testId} {
-      allow read, write: if true;
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
+      allow get: if isValidId(testId) && testId == 'connection';
+      allow list, write: if false;
     }
   }
 }
-

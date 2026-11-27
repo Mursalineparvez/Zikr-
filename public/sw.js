@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v41-flat-headers-icon-search
+// Version: zikrmate-v42-network-first-nav
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v41-flat-headers-icon-search';
+const CACHE_NAME = 'zikrmate-v42-network-first-nav';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
@@ -221,9 +221,12 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const requestUrl = new URL(event.request.url);
+  const isMedia = isAudioOrMedia(event.request);
 
-  // A. Skip backend API routes and Vite dev server internals from cache
+  // A. Skip cross-origin requests (except explicitly cached audio media), Firebase auth handlers, API routes, and Vite dev internals
   if (
+    (requestUrl.origin !== self.location.origin && !isMedia) ||
+    requestUrl.pathname.startsWith('/__/') ||
     requestUrl.pathname.startsWith('/api/') ||
     requestUrl.pathname.startsWith('/@') ||
     requestUrl.pathname.startsWith('/node_modules/') ||
@@ -258,50 +261,34 @@ self.addEventListener('fetch', (event) => {
   }
 
   // C. Navigation Requests (User opening app, refreshing, or WebAPK launch):
-  // Ultra-Fast App Open (< 50ms): Instant Cache-First with Background Revalidation
+  // Network-First with short timeout fallback to cache so new deployments apply immediately while preserving offline resilience
   if (event.request.mode === 'navigate' || requestUrl.pathname === '/' || requestUrl.pathname === '/index.html') {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE_NAME);
 
-        const cached =
-          (await cache.match('/index.html', { ignoreSearch: true })) ||
-          (await cache.match('/', { ignoreSearch: true })) ||
-          (await cache.match(event.request, { ignoreSearch: true }));
-
-        // 1. If cached, serve INSTANTLY (< 10ms from disk)
-        if (cached) {
-          // Revalidate in background when online so updates are ready for next visit
-          if (typeof navigator !== 'undefined' && navigator.onLine) {
-            fetch(event.request)
-              .then((networkResponse) => {
-                if (networkResponse && networkResponse.status === 200) {
-                  const copy = networkResponse.clone();
-                  cache.put('/index.html', copy.clone());
-                  cache.put('/', copy.clone());
-                  try { cache.put(event.request, copy); } catch {}
-                }
-              })
-              .catch(() => {});
-          }
-          return cached;
-        }
-
-        // 2. Uncached first launch: Fetch from network
         try {
-          const networkResponse = await fetch(event.request);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const networkResponse = await fetch(event.request, {
+            cache: 'no-cache',
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
           if (networkResponse && networkResponse.status === 200) {
             const copy = networkResponse.clone();
             cache.put('/index.html', copy.clone());
             cache.put('/', copy.clone());
             try { cache.put(event.request, copy); } catch {}
+            return networkResponse;
           }
-          return networkResponse;
+          throw new Error(`HTTP ${networkResponse?.status || 'invalid'}`);
         } catch (networkErr) {
-          console.warn('[SW] Offline navigation fallback engaged:', networkErr);
           const fallbackCached =
             (await cache.match('/index.html', { ignoreSearch: true })) ||
             (await cache.match('/', { ignoreSearch: true })) ||
+            (await cache.match(event.request, { ignoreSearch: true })) ||
             (await cache.match('/offline-emergency.html'));
 
           if (fallbackCached) return fallbackCached;

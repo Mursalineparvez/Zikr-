@@ -1,47 +1,122 @@
 {
   "entities": {
-    "UserProfile": {
-      "title": "UserProfile",
-      "description": "User profile with verification status",
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Normalized server users table record with scrypt password_hash",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string" },
-        "phone": { "type": "string" },
-        "isVerified": { "type": "boolean" },
-        "verificationMethod": { "type": "string" },
-        "photoUrl": { "type": "string" },
-        "deviceModel": { "type": "string" },
-        "osVersion": { "type": "string" },
-        "createdAt": { "type": "string" },
-        "updatedAt": { "type": "string" }
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 200 },
+        "password_hash": { "type": "string", "maxLength": 256 },
+        "auth_provider": { "type": "string", "enum": ["email", "google"] },
+        "email_verified": { "type": "boolean" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "created_at": { "type": "string", "maxLength": 64 }
       },
-      "required": ["uid", "name", "isVerified"]
+      "required": ["id", "name", "email", "created_at"]
+    },
+    "UserProfileRecord": {
+      "title": "UserProfileRecord",
+      "description": "Normalized server profiles table linked to users.id",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "photo": { "type": "string", "maxLength": 60000 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "preferences": { "type": "object" },
+        "updated_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["user_id", "updated_at"]
+    },
+    "UserSession": {
+      "title": "UserSession",
+      "description": "Normalized server sessions table storing SHA-256 session_token_hash and device metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "user_id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "session_token_hash": { "type": "string", "minLength": 64, "maxLength": 128 },
+        "expires_at": { "type": "number" },
+        "device": { "type": "string", "maxLength": 200 },
+        "created_at": { "type": "string", "maxLength": 64 },
+        "last_seen_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "user_id", "session_token_hash", "expires_at", "device"]
+    },
+    "UserDataRecord": {
+      "title": "UserDataRecord",
+      "description": "Normalized server user_data table storing saved_items, settings, and activity",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "saved_items": { "type": "object" },
+        "settings": { "type": "object" },
+        "activity": { "type": "object" },
+        "updated_at": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["user_id", "saved_items", "settings", "activity", "updated_at"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Firestore user document storing owner profile, telemetry, and synced counts",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 200 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "isVerified": { "type": "boolean" },
+        "verificationMethod": { "type": "string", "maxLength": 32 },
+        "photoUrl": { "type": "string", "maxLength": 60000 },
+        "location": { "type": "string", "maxLength": 200 },
+        "deviceModel": { "type": "string", "maxLength": 120 },
+        "osVersion": { "type": "string", "maxLength": 64 },
+        "senderDeviceId": { "type": "string", "maxLength": 128 },
+        "profileJson": { "type": "string", "maxLength": 100000 },
+        "zikrsJson": { "type": "string", "maxLength": 250000 },
+        "historyJson": { "type": "string", "maxLength": 500000 },
+        "aamalLogsJson": { "type": "string", "maxLength": 300000 },
+        "settingsJson": { "type": "string", "maxLength": 20000 },
+        "totalCount": { "type": "number" },
+        "lifetimeTotalCount": { "type": "number" },
+        "lastActiveAt": { "type": "string", "maxLength": 64 },
+        "lastActiveAtMs": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 },
+        "updatedAtMs": { "type": "number" }
+      }
     },
     "UserZikrData": {
       "title": "UserZikrData",
-      "description": "User zikr history, counts and synced data across devices",
+      "description": "User zikr history, aamal logs, and library highlights stored in subcollection",
       "type": "object",
       "properties": {
-        "userId": { "type": "string" },
-        "zikrsJson": { "type": "string" },
-        "historyJson": { "type": "string" },
-        "streakJson": { "type": "string" },
-        "settingsJson": { "type": "string" },
-        "savedHighlightsJson": { "type": "string" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "zikrsJson": { "type": "string", "maxLength": 250000 },
+        "historyJson": { "type": "string", "maxLength": 500000 },
+        "aamalLogsJson": { "type": "string", "maxLength": 500000 },
+        "streakJson": { "type": "string", "maxLength": 50000 },
+        "settingsJson": { "type": "string", "maxLength": 20000 },
+        "savedHighlightsJson": { "type": "string", "maxLength": 500000 },
+        "target": { "type": "string", "maxLength": 200 },
+        "code": { "type": "string", "maxLength": 16 },
+        "purpose": { "type": "string", "maxLength": 32 },
+        "type": { "type": "string", "maxLength": 32 },
+        "expiresAt": { "type": "number" },
         "totalCount": { "type": "number" },
-        "updatedAt": { "type": "string" }
-      },
-      "required": ["userId", "totalCount", "updatedAt"]
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 },
+        "updatedAtMs": { "type": "number" }
+      }
     },
     "ConnectionHealth": {
       "title": "ConnectionHealth",
       "description": "Document used to validate connectivity to Firestore backend",
       "type": "object",
       "properties": {
-        "status": { "type": "string" },
-        "timestamp": { "type": "string" }
+        "status": { "type": "string", "maxLength": 64 },
+        "timestamp": { "type": "string", "maxLength": 64 }
       }
     },
     "InfoRequest": {
@@ -49,7 +124,7 @@
       "description": "User submitted message requesting missing Islamic info or content updates from the AI assistant",
       "type": "object",
       "properties": {
-        "id": { "type": "string", "maxLength": 128 },
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "question": { "type": "string", "minLength": 1, "maxLength": 2000 },
         "pageModule": { "type": "string", "maxLength": 100 },
         "pageTitle": { "type": "string", "maxLength": 300 },
@@ -68,11 +143,11 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
-      "description": "Stores user profile and verification status"
+      "description": "Stores verified user profile and synced zikr counts (owner/admin access only)"
     },
     "/users/{userId}/data/{docId}": {
       "schema": "UserZikrData",
-      "description": "Stores user zikr history, streak, and synced counts across all devices"
+      "description": "Stores user zikr history, aamal logs, and highlights sub-documents (Master Gate via parent user doc)"
     },
     "/info_requests/{requestId}": {
       "schema": "InfoRequest",
@@ -80,7 +155,7 @@
     },
     "/test/{testId}": {
       "schema": "ConnectionHealth",
-      "description": "Health check connection test document"
+      "description": "Read-only health check connection test document"
     }
   }
 }
