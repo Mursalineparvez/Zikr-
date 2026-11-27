@@ -39,6 +39,16 @@
       "email_verified": true,
       "role": "user",
       "created_at": "2026-10-08T01:47:40.468Z"
+    },
+    "u_testuser_gmail_com": {
+      "id": "u_testuser_gmail_com",
+      "name": "Test User",
+      "email": "testuser@gmail.com",
+      "password_hash": "",
+      "auth_provider": "google",
+      "email_verified": true,
+      "role": "user",
+      "created_at": "2026-11-27T12:58:39.356Z"
     }
   },
   "profiles": {
@@ -77,9 +87,28 @@
         "location": "Bangladesh"
       },
       "updated_at": "2026-10-09T17:47:40.468Z"
+    },
+    "u_testuser_gmail_com": {
+      "user_id": "u_testuser_gmail_com",
+      "photo": "",
+      "phone": "",
+      "preferences": {
+        "location": "Dhaka, Bangladesh"
+      },
+      "updated_at": "2026-11-27T12:58:39.356Z"
     }
   },
-  "sessions": {},
+  "sessions": {
+    "sess_92c190439962ba7c70c3d443": {
+      "id": "sess_92c190439962ba7c70c3d443",
+      "user_id": "u_testuser_gmail_com",
+      "session_token_hash": "36292393a720bb164435c2378d81a2cf4d20d7f8d9a9ceb4f05e2751a3413c9a",
+      "expires_at": 1798376319357,
+      "device": "node",
+      "created_at": "2026-11-27T12:58:39.357Z",
+      "last_seen_at": "2026-11-27T12:58:39.357Z"
+    }
+  },
   "user_data": {
     "u_mdmursalineparvez_gmail_com": {
       "user_id": "u_mdmursalineparvez_gmail_com",
@@ -140,6 +169,21 @@
         "lastSyncedAt": 1791568060468
       },
       "updated_at": "2026-10-09T17:47:40.468Z"
+    },
+    "u_testuser_gmail_com": {
+      "user_id": "u_testuser_gmail_com",
+      "saved_items": {
+        "zikrs": [],
+        "historySessions": [],
+        "libraryHighlights": []
+      },
+      "settings": {},
+      "activity": {
+        "lifetimeTotalCount": 0,
+        "aamalLogs": {},
+        "lastSyncedAt": 1795784319356
+      },
+      "updated_at": "2026-11-27T12:58:39.356Z"
     }
   }
 }

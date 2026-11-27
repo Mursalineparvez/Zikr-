@@ -544,6 +544,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setGoogleFallbackInfo(null);
       confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
       if (soundEnabled) soundHaptics.playMilestone();
+      setTimeout(() => {
+        onClose();
+      }, 800);
     } catch (err: any) {
       setIsVerifying(false);
       setOtpErrorMessage(err?.message || 'Direct Google login error');
@@ -843,7 +846,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setTimeout(() => {
       setActiveSubModal('none');
       setVerificationStep('input');
-    }, 1500);
+      onClose();
+    }, 1200);
   };
 
   // Send Verification OTP to Gmail / Phone
@@ -1018,6 +1022,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         setActiveSubModal('none');
         confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
         if (soundEnabled) soundHaptics.playMilestone();
+        setTimeout(() => {
+          onClose();
+        }, 800);
         return;
       }
 
