@@ -1005,6 +1005,9 @@ export default function App() {
       warmupViewsIdle();
 
       if (isRedirectPending) {
+        try {
+          sessionStorage.removeItem('zikrmate_google_redirect_in_progress');
+        } catch {}
         checkGoogleRedirectResult()
           .then(async (result) => {
             if (isCancelled) return;

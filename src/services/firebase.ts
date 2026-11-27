@@ -45,13 +45,13 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // 2. Safely initialize Auth with persistence & popup resolver fallback
 export const auth = (() => {
   try {
-    return getAuth(app);
+    return initializeAuth(app, {
+      persistence: browserLocalPersistence,
+      popupRedirectResolver: browserPopupRedirectResolver,
+    });
   } catch {
     try {
-      return initializeAuth(app, {
-        persistence: browserLocalPersistence,
-        popupRedirectResolver: browserPopupRedirectResolver,
-      });
+      return getAuth(app);
     } catch (err) {
       console.warn('Firebase auth initialization fallback notice:', err);
       return null;
@@ -59,16 +59,22 @@ export const auth = (() => {
   }
 })();
 
-/**
- * Real Firebase Google Sign-In with popup and mobile redirect fallback
- * Ensures that both Phone (Mobile) and Laptop (Desktop) work reliably!
- */
-export async function signInWithGoogleAuth(): Promise<{
+export interface GoogleAuthResult {
   success: boolean;
   user?: { name: string; email: string; photoUrl: string; uid: string };
   isRedirecting?: boolean;
+  cancelled?: boolean;
+  popupBlocked?: boolean;
+  inIframe?: boolean;
+  errorCode?: string;
   error?: string;
-}> {
+}
+
+/**
+ * Real Firebase Google Sign-In with account chooser ('select_account')
+ * Shows all Gmail accounts logged into the user's phone or laptop browser.
+ */
+export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
   try {
     let authInstance = auth;
     if (!authInstance) {
@@ -87,18 +93,18 @@ export async function signInWithGoogleAuth(): Promise<{
     if (!authInstance) {
       return {
         success: false,
-        error: 'Google Sign-In is initializing. Please try again.',
+        error: 'Google Sign-In is initializing. Please try again in a moment.',
       };
     }
 
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({
-      prompt: 'select_account consent',
+      prompt: 'select_account',
     });
     googleProvider.addScope('profile');
     googleProvider.addScope('email');
 
-    // Try popup sign-in first
+    // Primary: Popup sign-in (shows Google's native account picker with all phone/laptop Gmail accounts)
     try {
       const result = await signInWithPopup(authInstance, googleProvider);
       const user = result.user;
@@ -112,28 +118,52 @@ export async function signInWithGoogleAuth(): Promise<{
         },
       };
     } catch (popupError: any) {
-      console.warn('Google Sign-In popup notice, using instant sandbox/iframe Google fallback:', popupError);
-      // Instant seamless Google sign-in fallback for preview / sandboxed iframe environments
+      const code = String(popupError?.code || '');
+      const inIframe = typeof window !== 'undefined' && window.self !== window.top;
+      console.warn('Google Sign-In popup notice:', code, popupError?.message);
+
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+        return {
+          success: false,
+          cancelled: true,
+          errorCode: code,
+          error: 'Google sign-in popup was closed before selecting an account.',
+        };
+      }
+
+      // On standalone mobile/desktop browser tabs (not inside an iframe), fall back to full-page redirect
+      if (
+        !inIframe &&
+        (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment')
+      ) {
+        try {
+          sessionStorage.setItem('zikrmate_google_redirect_in_progress', 'true');
+        } catch {}
+        await signInWithRedirect(authInstance, googleProvider);
+        return {
+          success: false,
+          isRedirecting: true,
+          error: 'Redirecting to Google Account Chooser...',
+        };
+      }
+
       return {
-        success: true,
-        user: {
-          name: 'Mursaline Parvez',
-          email: 'mdmursalineparvez@gmail.com',
-          photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-          uid: 'google_sandbox_user_123',
-        },
+        success: false,
+        popupBlocked: code === 'auth/popup-blocked' || code === 'auth/internal-error',
+        inIframe,
+        errorCode: code,
+        error: popupError?.message || 'Google Sign-In popup could not be opened.',
       };
     }
   } catch (error: any) {
-    console.warn('Google Sign-In fallback:', error);
+    const code = String(error?.code || '');
+    const inIframe = typeof window !== 'undefined' && window.self !== window.top;
+    console.warn('Google Sign-In error:', code, error);
     return {
-      success: true,
-      user: {
-        name: 'Mursaline Parvez',
-        email: 'mdmursalineparvez@gmail.com',
-        photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        uid: 'google_sandbox_user_123',
-      },
+      success: false,
+      inIframe,
+      errorCode: code,
+      error: error?.message || 'Google sign-in could not be completed.',
     };
   }
 }

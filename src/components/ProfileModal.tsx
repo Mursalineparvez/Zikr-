@@ -54,7 +54,7 @@ import confetti from 'canvas-confetti';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings, AppTheme } from '../types';
 import { APP_LIGHT_THEMES } from '../utils/appThemes';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
-import { findSavedAccount, saveAccountToRegistry, updateAccountPassword, normalizeIdentifier } from '../utils/accountRegistry';
+import { findSavedAccount, getAllSavedAccounts, saveAccountToRegistry, updateAccountPassword, normalizeIdentifier, SavedAccountRecord } from '../utils/accountRegistry';
 import { SUPPORTED_LANGUAGES } from '../utils/constants';
 import { SETTINGS_UI } from '../utils/appTranslations';
 import { getDetectedDeviceInfo } from '../utils/deviceInfo';
@@ -461,6 +461,23 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [profileSetupStep, setProfileSetupStep] = useState<1 | 2 | 3>(1);
   const [profileGender, setProfileGender] = useState('Male');
   const [profileDob, setProfileDob] = useState('1995-01-01');
+  const [googleFallbackInfo, setGoogleFallbackInfo] = useState<{
+    inIframe?: boolean;
+    popupBlocked?: boolean;
+    message?: string;
+  } | null>(null);
+  const authEmailInputRef = useRef<HTMLInputElement | null>(null);
+
+  const savedDeviceAccounts = useMemo(() => {
+    try {
+      const all = getAllSavedAccounts();
+      return Object.values(all)
+        .filter((rec) => rec?.profile?.emailOrPhone && rec.profile.emailOrPhone.includes('@'))
+        .sort((a, b) => new Date(b.savedAt || 0).getTime() - new Date(a.savedAt || 0).getTime());
+    } catch {
+      return [] as SavedAccountRecord[];
+    }
+  }, [activeSubModal, userProfile.emailOrPhone, userProfile.isSignedIn]);
 
   // OTP Countdown timer
   useEffect(() => {
@@ -559,9 +576,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   if (!isOpen) return null;
 
   // Open Verified Auth Sub-modal
-  const handleOpenVerifiedAuth = () => {
+  const handleOpenVerifiedAuth = (initialMode: 'signin' | 'signup' = 'signin') => {
     setVerificationStep('input');
+    setAuthFlowMode(initialMode);
     setOtpErrorMessage(null);
+    setGoogleFallbackInfo(null);
     setOtpDigits(['', '', '', '', '', '']);
     setCloudSyncMessage(null);
 
@@ -820,10 +839,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }, 1500);
   };
 
-  // Google One-Tap Trigger
+  // Google Account Chooser Trigger (shows all Gmail accounts signed into phone/laptop)
   const handleTriggerGoogleAuth = async () => {
     setIsVerifying(true);
     setOtpErrorMessage(null);
+    setGoogleFallbackInfo(null);
 
     try {
       const result = await signInWithGoogleAuth();
@@ -836,7 +856,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         const updated: UserProfile = {
           name: result.user.name || cloudData?.profile?.name || existing?.name || targetEmail.split('@')[0],
           emailOrPhone: targetEmail,
-          photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || DEFAULT_AVATARS[0],
+          photoUrl: result.user.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || DEFAULT_AVATARS[0],
           location: existing?.location || userProfile.location || 'Bangladesh',
           deviceModel: detected.model,
           osVersion: detected.osVersion,
@@ -848,6 +868,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           lastSyncedAt: Date.now(),
         };
 
+        if (targetEmail === 'mdmursalineparvez@gmail.com') {
+          try {
+            localStorage.setItem('zikrmate_admin_session_auth', 'true');
+          } catch {}
+        }
+
         saveAccountToRegistry(updated);
         onUpdateProfile(updated);
 
@@ -856,26 +882,70 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
         if (soundEnabled) soundHaptics.playMilestone();
         return;
-      } else {
-        setIsVerifying(false);
+      }
+
+      if (result.isRedirecting) {
+        return;
+      }
+
+      setIsVerifying(false);
+
+      if (result.cancelled) {
         setOtpErrorMessage(
           t(
-            'পপআপ খোলা না গেলে নিচে জিমেইল ও পাসওয়ার্ড দিয়ে খুব সহজেই ১-ক্লিকে সাইন-ইন করতে পারেন।',
-            'إذا لم تفتح النافذة المنبثقة، يمكنك تسجيل الدخول بنقرة واحدة عبر البريد وكلمة المرور أدناه.',
-            'If the popup did not open, you can easily sign in below with your email and password.'
+            'গুগল অ্যাকাউন্ট নির্বাচন বাতিল হয়েছে। পছন্দের Gmail বেছে নিতে আবার "গুগল দিয়ে চালিয়ে যান" চাপুন।',
+            'تم إلغاء اختيار حساب Google. اضغط مرة أخرى لاختيار بريدك.',
+            'Google account selection was cancelled. Tap "Continue With Google" again to pick a Gmail account.'
           )
         );
+        return;
       }
-    } catch (err) {
+
+      setGoogleFallbackInfo({
+        inIframe: result.inIframe,
+        popupBlocked: result.popupBlocked,
+        message: result.error,
+      });
+    } catch (err: any) {
       setIsVerifying(false);
-      setOtpErrorMessage(
-        t(
-          'নিচে জিমেইল ও পাসওয়ার্ড দিয়ে খুব সহজেই ১-ক্লিকে লগইন করতে পারেন।',
-          'يمكنك تسجيل الدخول بنقرة واحدة عبر البريد وكلمة المرور أدناه.',
-          'You can easily sign in below with your email and password.'
-        )
-      );
+      setGoogleFallbackInfo({
+        inIframe: typeof window !== 'undefined' && window.self !== window.top,
+        popupBlocked: true,
+        message: err?.message,
+      });
     }
+  };
+
+  const handleQuickSwitchSavedAccount = async (record: SavedAccountRecord) => {
+    const targetEmail = (record.profile.emailOrPhone || '').toLowerCase().trim();
+    if (!targetEmail) return;
+    setIsVerifying(true);
+    setOtpErrorMessage(null);
+    setGoogleFallbackInfo(null);
+    const detected = getDetectedDeviceInfo();
+    const cloudData = await loadUserDataFromCloud(targetEmail);
+    const updated: UserProfile = {
+      ...record.profile,
+      name: cloudData?.profile?.name || record.profile.name || targetEmail.split('@')[0],
+      emailOrPhone: targetEmail,
+      photoUrl: cloudData?.profile?.photoUrl || record.profile.photoUrl || DEFAULT_AVATARS[0],
+      deviceModel: detected.model,
+      osVersion: detected.osVersion,
+      isSignedIn: true,
+      isVerified: true,
+      lastSyncedAt: Date.now(),
+    };
+    if (targetEmail === 'mdmursalineparvez@gmail.com') {
+      try {
+        localStorage.setItem('zikrmate_admin_session_auth', 'true');
+      } catch {}
+    }
+    saveAccountToRegistry(updated);
+    onUpdateProfile(updated);
+    setIsVerifying(false);
+    setActiveSubModal('none');
+    confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
+    if (soundEnabled) soundHaptics.playMilestone();
   };
 
   // OTP digit keyboard handler
@@ -1208,7 +1278,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </p>
                 </div>
 
-                {/* Primary Centered Pill Action Button (Matching Reference Screenshot CTA) */}
+                {/* Primary Centered Pill Action Buttons */}
                 {userProfile.isSignedIn ? (
                   <div className="pt-1 flex flex-wrap items-center justify-center gap-2.5">
                     <button
@@ -1228,7 +1298,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         if (soundEnabled) soundHaptics.playMilestone();
                       }}
                       disabled={isSyncingCloud}
-                      className="min-h-[44px] px-6 py-2.5 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white font-bold text-xs sm:text-sm shadow-md inline-flex items-center gap-2 transition active:scale-95 cursor-pointer"
+                      className="min-h-[44px] px-5 py-2.5 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white font-bold text-xs sm:text-sm shadow-md inline-flex items-center gap-2 transition active:scale-95 cursor-pointer"
                     >
                       <RefreshCw className={`w-4 h-4 ${isSyncingCloud ? 'animate-spin' : ''}`} />
                       <span>
@@ -1236,14 +1306,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           ? t('সিঙ্ক হচ্ছে...', 'جارٍ المزامنة...', 'Syncing...')
                           : t('ক্লাউড সিঙ্ক করুন', 'المزامنة السحابية نشطة', 'Cloud Sync Active')}
                       </span>
-                      <ChevronRight className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleOpenVerifiedAuth('signin');
+                        if (soundEnabled) soundHaptics.playTap();
+                      }}
+                      className={`min-h-[44px] px-4 py-2.5 rounded-full border font-bold text-xs sm:text-sm shadow-sm inline-flex items-center gap-2 transition active:scale-95 cursor-pointer ${
+                        isDay
+                          ? 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
+                          : 'bg-[#08242a] hover:bg-[#0e343c] border-[#1c5763] text-emerald-200'
+                      }`}
+                    >
+                      <GoogleIcon />
+                      <span>{t('অন্য Gmail / অ্যাকাউন্ট', 'تبديل الحساب', 'Switch Gmail')}</span>
                     </button>
                   </div>
                 ) : (
-                  <div className="pt-1">
+                  <div className="pt-1 flex flex-wrap items-center justify-center gap-2.5">
                     <button
                       type="button"
-                      onClick={handleOpenVerifiedAuth}
+                      onClick={() => handleOpenVerifiedAuth('signin')}
                       className="min-h-[44px] px-6 py-2.5 rounded-full bg-[#006A4E] hover:bg-[#005740] text-white font-bold text-xs sm:text-sm shadow-md inline-flex items-center gap-2 transition active:scale-95 cursor-pointer"
                     >
                       <span>
@@ -2655,17 +2740,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                     <button
                       type="button"
+                      disabled={isVerifying}
                       onClick={() => {
-                        if (profileSetupStep < 3) {
-                          setProfileSetupStep((s) => (s + 1) as any);
-                        } else {
-                          handleInstantPasswordAuth();
-                        }
+                        handleInstantPasswordAuth();
                       }}
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer mt-4"
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer mt-4 disabled:opacity-50"
                     >
-                      <span>{profileSetupStep === 3 ? t('সম্পন্ন করুন', 'إنهاء', 'Complete') : t('পরবর্তী', 'التالي', 'Next')}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {isVerifying ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                      <span>{t('সম্পন্ন করুন (Complete)', 'إنهاء', 'Complete Setup')}</span>
                     </button>
                   </div>
                 ) : (
@@ -2677,8 +2759,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </h2>
                       <p className="text-xs sm:text-sm text-slate-600 dark:text-teal-200 font-medium">
                         {authFlowMode === 'signin'
-                          ? t('আপনার অ্যাকাউন্টে প্রবেশ করতে ইমেইল ও পাসওয়ার্ড দিন', 'أدخل بريدك وكلمة المرور لتسجيل الدخول', 'Please enter your email & password to access your account')
-                          : t('নতুন অ্যাকাউন্ট খুলতে ইমেইল ও পাসওয়ার্ড দিন', 'أدخل بريدك وكلمة المرور لإنشاء حساب', 'Please enter your email & password to register your account')}
+                          ? t('আপনার অ্যাকাউন্টে প্রবেশ করতে ইমেইল ও পাসওয়ার্ড দিন বা Google বেছে নিন', 'أدخل بريدك وكلمة المرور لتسجيل الدخول أو اختر Google', 'Please enter your email & password or choose a Gmail via Google')
+                          : t('নতুন অ্যাকাউন্ট খুলতে ইমেইল ও পাসওয়ার্ড দিন বা Google বেছে নিন', 'أدخل بريدك وكلمة المرور لإنشاء حساب أو اختر Google', 'Create an account with your email & password or choose a Gmail via Google')}
                       </p>
                     </div>
 
@@ -2689,14 +2771,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                         <input
+                          ref={authEmailInputRef}
                           type="email"
                           required
                           value={inputEmail}
                           onChange={(e) => setInputEmail(e.target.value)}
-                          placeholder="hello@designpicko.com"
+                          placeholder="name@gmail.com"
                           className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-10 py-3.5 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                         />
-                        <Check className="absolute right-3.5 top-3.5 w-4 h-4 text-sky-500" />
+                        {inputEmail.includes('@') && inputEmail.includes('.') && (
+                          <Check className="absolute right-3.5 top-3.5 w-4 h-4 text-sky-500" />
+                        )}
                       </div>
                     </div>
 
@@ -2712,7 +2797,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           value={inputPassword}
                           onChange={(e) => setInputPassword(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleInstantPasswordAuth();
+                            if (e.key === 'Enter' && authFlowMode === 'signin') handleInstantPasswordAuth();
                           }}
                           placeholder="••••••"
                           className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-10 py-3.5 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
@@ -2762,13 +2847,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           </label>
                           <button
                             type="button"
-                            onClick={() => {
-                              setActiveSubModal('none');
-                              setVerificationStep('input');
-                            }}
-                            className="font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+                            disabled={isSendingCode}
+                            onClick={handleSendOtp}
+                            className="font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer disabled:opacity-50"
                           >
-                            {t('পাসওয়ার্ড ভুলে গেছেন?', 'نسيت كلمة المرور؟', 'Forgot Password?')}
+                            {isSendingCode
+                              ? t('কোড পাঠানো হচ্ছে...', 'جارٍ الإرسال...', 'Sending OTP...')
+                              : t('OTP দিয়ে লগইন / ভুলে গেছেন?', 'تسجيل بالرمز / نسيت؟', 'Forgot Password / OTP')}
                           </button>
                         </>
                       ) : (
@@ -2781,9 +2866,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           />
                           <span className="font-bold text-slate-700 dark:text-teal-200 text-[11px]">
                             {t(
-                              'আমি উইম্বো পাবলিক এগ্রিমেন্ট ও প্রাইভেসি পলিসিতে সম্মত আছি',
+                              'আমি Zikr+ এর শর্তাবলি ও প্রাইভেসি পলিসিতে সম্মত আছি',
                               'أوافق على اتفاقية وشروط الاستخدام',
-                              'I agree to Wimbo Public Agreement, Terms & Privacy Policy'
+                              'I agree to Zikr+ Terms & Privacy Policy'
                             )}
                           </span>
                         </label>
@@ -2797,12 +2882,121 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </div>
                     )}
 
+                    {googleFallbackInfo && (
+                      <div className="p-3.5 rounded-2xl bg-sky-50 dark:bg-[#082229] border border-sky-200 dark:border-teal-700 text-slate-800 dark:text-sky-100 text-xs space-y-3 shadow-sm animate-in fade-in">
+                        <div className="flex items-start gap-2">
+                          <Info className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+                          <p className="font-bold leading-relaxed">
+                            {googleFallbackInfo.inIframe
+                              ? t(
+                                  'প্রিভিউ উইন্ডোতে ব্রাউজার গুগল পপআপ আটকে দিয়েছে। আপনার ফোন বা ল্যাপটপের সব Gmail অ্যাকাউন্ট সরাসরি দেখতে নিচের বাটনে ট্যাপ করে অ্যাপটি নতুন ব্রাউজার ট্যাবে খুলুন:',
+                                  'تم حظر نافذة Google المنبثقة داخل المعاينة. افتح التطبيق في علامة تبويب جديدة لعرض جميع حسابات Gmail على جهازك:',
+                                  'Your browser blocked the Google popup inside the preview frame. Open in a browser tab to view all Gmail accounts on your phone or laptop:'
+                                )
+                              : t(
+                                  'গুগল পপআপ ব্লক হয়েছে বা অনুমোদিত হয়নি। ব্রাউজার সেটিংস থেকে পপআপ চালু করে আবার চেষ্টা করুন, অথবা নিচে Gmail দিয়ে লগইন করুন:',
+                                  'تم حظر نافذة Google المنبثقة. اسمح بالنوافذ المنبثقة أو سجل الدخول ببريدك أدناه:',
+                                  'Google popup was blocked. Allow popups and try again, or sign in with your Gmail below:'
+                                )}
+                          </p>
+                        </div>
+
+                        {googleFallbackInfo.inIframe && typeof window !== 'undefined' && (
+                          <a
+                            href={window.location.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95"
+                          >
+                            <ExternalLink className="w-4 h-4 shrink-0" />
+                            <span>{t('নতুন ট্যাবে খুলুন (সব Gmail দেখাবে)', 'فتح في علامة تبويب جديدة', 'Open in Browser Tab (Show All Gmail)')}</span>
+                          </a>
+                        )}
+
+                        {savedDeviceAccounts.length > 0 && (
+                          <div className="space-y-1.5 pt-1 border-t border-sky-200/70 dark:border-teal-800">
+                            <div className="text-[11px] font-extrabold text-slate-600 dark:text-teal-300">
+                              {t('এই ডিভাইসে পূর্বে ব্যবহৃত অ্যাকাউন্ট (১-ক্লিকে বেছে নিন):', 'الحسابات المحفوظة على هذا الجهاز:', 'Saved accounts on this device (tap to switch):')}
+                            </div>
+                            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                              {savedDeviceAccounts.map((rec) => (
+                                <button
+                                  key={rec.profile.emailOrPhone}
+                                  type="button"
+                                  disabled={isVerifying}
+                                  onClick={() => handleQuickSwitchSavedAccount(rec)}
+                                  className="w-full p-2.5 rounded-xl bg-white dark:bg-[#05171c] hover:bg-sky-100/70 dark:hover:bg-[#0d2e36] border border-sky-200 dark:border-teal-800 flex items-center justify-between gap-2 text-left transition cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-7 h-7 rounded-full bg-sky-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                                      {(rec.profile.name || rec.profile.emailOrPhone || 'G').charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="font-bold text-xs truncate text-slate-900 dark:text-white">
+                                        {rec.profile.name || rec.profile.emailOrPhone.split('@')[0]}
+                                      </div>
+                                      <div className="text-[10px] text-slate-500 dark:text-teal-300 truncate">
+                                        {rec.profile.emailOrPhone}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <ChevronRight className="w-4 h-4 text-sky-500 shrink-0" />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="space-y-3 pt-2">
                       <button
                         type="button"
                         disabled={isVerifying}
                         onClick={() => {
                           if (authFlowMode === 'signup') {
+                            const emailClean = inputEmail.trim().toLowerCase();
+                            if (!emailClean || !emailClean.includes('@') || !emailClean.includes('.')) {
+                              setOtpErrorMessage(
+                                t(
+                                  'অনুগ্রহ করে সঠিক জিমেইল বা ইমেইল লিখুন (যেমন: name@gmail.com)',
+                                  'يرجى إدخال بريد إلكتروني صحيح',
+                                  'Please enter a valid email address (e.g. name@gmail.com)'
+                                )
+                              );
+                              return;
+                            }
+                            if (inputPassword.trim().length < 4) {
+                              setOtpErrorMessage(
+                                t(
+                                  'কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড দিন',
+                                  'يرجى إدخال كلمة مرور لا تقل عن ٤ أحرف',
+                                  'Please enter a password of at least 4 characters'
+                                )
+                              );
+                              return;
+                            }
+                            if (inputPassword.trim() !== confirmPasswordInput.trim()) {
+                              setOtpErrorMessage(
+                                t(
+                                  'পাসওয়ার্ড দুটি মিলছে না! একই পাসওয়ার্ড দিন।',
+                                  'كلمتا المرور غير متطابقتين!',
+                                  'Passwords do not match!'
+                                )
+                              );
+                              return;
+                            }
+                            if (!agreedTerms) {
+                              setOtpErrorMessage(
+                                t(
+                                  'অনুগ্রহ করে শর্তাবলিতে সম্মতি দিন',
+                                  'يرجى الموافقة على الشروط',
+                                  'Please agree to the terms and privacy policy'
+                                )
+                              );
+                              return;
+                            }
+                            setOtpErrorMessage(null);
                             setAuthFlowMode('profile_setup');
                           } else {
                             handleInstantPasswordAuth();
@@ -2828,23 +3022,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         type="button"
                         disabled={isVerifying}
                         onClick={handleTriggerGoogleAuth}
-                        className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-[#06191f] hover:bg-slate-50 text-slate-800 dark:text-white font-bold text-xs border border-sky-200 dark:border-teal-800 shadow-sm flex items-center justify-center gap-3 transition active:scale-95 cursor-pointer"
+                        className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-[#06191f] hover:bg-slate-50 text-slate-800 dark:text-white font-bold text-xs border border-sky-200 dark:border-teal-800 shadow-sm flex items-center justify-center gap-3 transition active:scale-95 cursor-pointer disabled:opacity-60"
                       >
-                        <GoogleIcon />
-                        <span>{t('গুগল দিয়ে চালিয়ে যান', 'المتابعة باستخدام Google', 'Continue With Google')}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleTriggerGoogleAuth();
-                        }}
-                        className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-[#06191f] hover:bg-slate-50 text-slate-800 dark:text-white font-bold text-xs border border-sky-200 dark:border-teal-800 shadow-sm flex items-center justify-center gap-3 transition active:scale-95 cursor-pointer"
-                      >
-                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.18c.65-.79 1.09-1.89.97-2.99-.96.04-2.13.64-2.82 1.43-.61.68-1.15 1.79-1 2.87 1.08.08 2.19-.52 2.85-1.31z"/>
-                        </svg>
-                        <span>{t('অ্যাপল দিয়ে চালিয়ে যান', 'المتابعة باستخدام Apple', 'Continue With Apple')}</span>
+                        {isVerifying ? <RefreshCw className="w-4 h-4 animate-spin text-sky-600" /> : <GoogleIcon />}
+                        <span>{t('গুগল দিয়ে চালিয়ে যান (সব Gmail দেখবে)', 'المتابعة باستخدام Google', 'Continue With Google')}</span>
                       </button>
                     </div>
 
@@ -2854,7 +3035,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           {t('নতুন অ্যাকাউন্ট?', 'جديد هنا؟', 'New here? ')}{' '}
                           <button
                             type="button"
-                            onClick={() => setAuthFlowMode('signup')}
+                            onClick={() => {
+                              setAuthFlowMode('signup');
+                              setOtpErrorMessage(null);
+                              setGoogleFallbackInfo(null);
+                            }}
                             className="text-sky-600 dark:text-sky-400 font-black hover:underline cursor-pointer"
                           >
                             {t('সাইন আপ করুন (Sign up)', 'إنشاء حساب', 'Create an account. Sign up')}
@@ -2865,7 +3050,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           {t('ইতিমধ্যে অ্যাকাউন্ট আছে?', 'لديك حساب بالفعل؟', 'Already have an account? ')}{' '}
                           <button
                             type="button"
-                            onClick={() => setAuthFlowMode('signin')}
+                            onClick={() => {
+                              setAuthFlowMode('signin');
+                              setOtpErrorMessage(null);
+                              setGoogleFallbackInfo(null);
+                            }}
                             className="text-sky-600 dark:text-sky-400 font-black hover:underline cursor-pointer"
                           >
                             {t('লগইন করুন (Login)', 'تسجيل الدخول', 'Login')}

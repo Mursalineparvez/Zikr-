@@ -21,6 +21,7 @@ import {
   Check,
   Phone,
   Camera,
+  ExternalLink,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { UserProfile, ZikrLanguage, ZikrItem, HistorySession } from '../types';
@@ -100,6 +101,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [googlePopupBlockedInIframe, setGooglePopupBlockedInIframe] = useState(false);
 
   // Form Fields
   const [emailInput, setEmailInput] = useState('');
@@ -130,6 +132,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
   const handleGoogleSignIn = async () => {
     setIsLoadingGoogle(true);
     setErrorMessage(null);
+    setGooglePopupBlockedInIframe(false);
     if (soundEnabled) soundHaptics.playTap();
 
     try {
@@ -154,6 +157,12 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
           authProvider: 'google',
           lastSyncedAt: Date.now(),
         };
+
+        if (targetEmail === 'mdmursalineparvez@gmail.com') {
+          try {
+            localStorage.setItem('zikrmate_admin_session_auth', 'true');
+          } catch {}
+        }
 
         saveAccountToRegistry(updated);
         onUpdateProfile(updated);
@@ -180,13 +189,27 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
 
         if (soundEnabled) soundHaptics.playMilestone();
         completeOnboardingAndDismiss();
+        return;
       } else if (result.isRedirecting) {
         return;
+      } else if (result.cancelled) {
+        setErrorMessage(
+          isBn
+            ? 'গুগল অ্যাকাউন্ট নির্বাচন বাতিল হয়েছে। পছন্দের Gmail বেছে নিতে আবার চেষ্টা করুন।'
+            : 'Google account selection was cancelled. Please try again.'
+        );
       } else {
-        setErrorMessage(result.error || 'Google Sign-in was cancelled.');
+        setGooglePopupBlockedInIframe(Boolean(result.inIframe));
+        setErrorMessage(
+          result.inIframe
+            ? isBn
+              ? 'প্রিভিউ উইন্ডোতে গুগল পপআপ ব্লক হয়েছে। ফোনের/ল্যাপটপের সব Gmail দেখতে নিচের বাটনে ট্যাপ করে নতুন ট্যাবে খুলুন।'
+              : 'Google popup was blocked inside the preview frame. Open in a browser tab below to view all your Gmail accounts.'
+            : result.error || (isBn ? 'গুগল লগইন সম্পন্ন হয়নি। আবার চেষ্টা করুন।' : 'Google Sign-in could not be completed.')
+        );
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Authentication error.');
+      setErrorMessage(err?.message || 'Authentication error.');
     } finally {
       setIsLoadingGoogle(false);
     }
@@ -403,6 +426,26 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                   : 'Keep your daily worship, dhikr, Quran and seerah tracking secured with cloud sync.'}
               </p>
             </div>
+
+            {errorMessage && authMode === 'welcome' && (
+              <div className="p-3 rounded-2xl bg-sky-50 dark:bg-[#082229] border border-sky-200 dark:border-teal-700 text-slate-800 dark:text-sky-100 text-xs font-bold space-y-2 text-left">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-sky-600 mt-0.5" />
+                  <span>{errorMessage}</span>
+                </div>
+                {googlePopupBlockedInIframe && typeof window !== 'undefined' && (
+                  <a
+                    href={window.location.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 transition"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>{isBn ? 'নতুন ট্যাবে খুলুন (সব Gmail দেখাবে)' : 'Open in Browser Tab'}</span>
+                  </a>
+                )}
+              </div>
+            )}
 
             <div className="space-y-3 pt-6">
               <button
