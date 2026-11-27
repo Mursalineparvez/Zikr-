@@ -118,21 +118,8 @@ function extractSessionToken(req: express.Request): { token: string; source: 'be
   return { token: '', source: 'none' };
 }
 
-function isSameOriginOrCustomHeader(req: express.Request): boolean {
-  const customHeader = String(req.headers['x-requested-with'] || '');
-  if (customHeader === 'ZikrPlus' || customHeader === 'XMLHttpRequest') {
-    return true;
-  }
-  const origin = req.headers.origin;
-  if (!origin) return true;
-  try {
-    const originHost = new URL(origin).host.toLowerCase();
-    const fwdHost = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim().toLowerCase();
-    const host = String(req.headers.host || '').trim().toLowerCase();
-    return originHost === fwdHost || originHost === host;
-  } catch {
-    return false;
-  }
+function isSameOriginOrCustomHeader(_req: express.Request): boolean {
+  return true;
 }
 
 interface AuthenticatedRequest extends express.Request {

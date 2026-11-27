@@ -1640,13 +1640,19 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem('noor_zikr_items', JSON.stringify(zikrs));
-      const activeSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
-      if (activeSum > 0) {
-        localStorage.setItem('zikrmate_active_zikrs_backup', JSON.stringify(zikrs));
-      }
       syncTodayAamalWithLiveZikrs(zikrs);
-    } catch (e) {
-      console.error('Failed to save zikrs to localStorage', e);
+    } catch (e: any) {
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith('zikrmate_cloud_cache_') || k.startsWith('noor_quran_cache_') || k.includes('backup'))) {
+            localStorage.removeItem(k);
+          }
+        }
+        localStorage.setItem('noor_zikr_items', JSON.stringify(zikrs));
+      } catch (inner) {
+        console.error('Failed to save zikrs to localStorage even after pruning', inner);
+      }
     }
   }, [zikrs]);
 
