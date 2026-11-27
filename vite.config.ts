@@ -37,6 +37,7 @@ export default defineConfig(() => {
   return {
     plugins: [patchFirestorePlugin(), react(), tailwindcss()],
     resolve: {
+      dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
       alias: {
         '@': path.resolve(import.meta.dirname || '.', '.'),
       },
@@ -112,7 +113,20 @@ export default defineConfig(() => {
       },
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'lucide-react', 'adhan', 'leaflet'],
+      include: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'lucide-react',
+        'adhan',
+        'leaflet',
+        'html2canvas',
+        'jspdf',
+        'canvas-confetti',
+        'motion',
+      ],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

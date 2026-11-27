@@ -33,6 +33,7 @@ import {
 import { LAST_10_DAYS_EVENTS, LAST_10_DAYS_PARTS } from '../data/prophetLast10DaysData';
 import { CHILDREN_EVENTS, CHILDREN_PARTS } from '../data/prophetChildrenData';
 import { FAMILY_EVENTS, FAMILY_PARTS } from '../data/prophetFamily47Data';
+import { ENEMY_PARTS, ENEMY_EVENTS } from '../data/prophetEnemiesData';
 import { copyToClipboard } from '../utils/clipboard';
 import { soundHaptics } from '../utils/audioHaptics';
 import { ShareDownloadButtons } from './ContentShareModal';
@@ -121,6 +122,16 @@ const getCollectionData = (
       events: FAMILY_EVENTS,
     };
   }
+  if (id === 'prophet-enemies') {
+    return {
+      parts: ENEMY_PARTS.map((p) => ({
+        ...p,
+        dayTagBn: p.enemyNameBn,
+        dayTagEn: p.enemyNameEn,
+      })),
+      events: ENEMY_EVENTS,
+    };
+  }
   return {
     parts: PASSING_40_PARTS,
     events: PASSING_40_EVENTS.map((ev) => {
@@ -177,6 +188,7 @@ export const ProphetPassing40HoursSection: React.FC<ProphetPassing40HoursSection
     'prophet-last-10-days': { 1: true },
     'prophet-children-biography': { 1: true },
     'prophet-family-47': { 1: true },
+    'prophet-enemies': { 1: true },
   });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 

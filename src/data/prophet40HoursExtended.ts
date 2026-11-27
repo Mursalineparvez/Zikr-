@@ -29,7 +29,8 @@ export type SpecialCollectionId =
   | 'prophet-40-hours'
   | 'prophet-last-10-days'
   | 'prophet-children-biography'
-  | 'prophet-family-47';
+  | 'prophet-family-47'
+  | 'prophet-enemies';
 
 export interface SeeratSpecialCollectionMeta {
   id: SpecialCollectionId;
@@ -65,7 +66,7 @@ export const SEERAT_SPECIAL_COLLECTIONS: SeeratSpecialCollectionMeta[] = [
     eraLabelBn: '১১ হিজরি · ১২– রবিউল আউয়াল',
     eraLabelEn: '11 AH · 12–14 Rabi al-Awwal',
     summaryBn:
-      'সোমবার দুপুরে আয়েশা (را.)-এর হুজরায় প্রিয় নবীর শেষ বিদায় থেকে শুরু করে আবু বকর (ਰਾ.)-এর অবিচল ভাষণ, সাকিফা বনু সাইদায় খিলাফত পরামর্শ, সাধারণ বাইয়াত, জামাসহ গোসল, দলে দলে জানাজা ও বুধবার রাতে রওজা শরিফে পবিত্র দাফন পর্যন্ত ৭টি পর্বে ৩২টি প্রামাণ্য ঘটনার পূর্ণাঙ্গ ঐতিহাসিক দলিল।',
+      'সোমবার দুপুরে আয়েশা (রা.)-এর হুজরায় প্রিয় নবীর শেষ বিদায় থেকে শুরু করে আবু বকর (রা.)-এর অবিচল ভাষণ, সাকিফা বনু সাইদায় খিলাফত পরামর্শ, সাধারণ বাইয়াত, জামাসহ গোসল, দলে দলে জানাজা ও বুধবার রাতে রওজা শরিফে পবিত্র দাফন পর্যন্ত ৭টি পর্বে ৩২টি প্রামাণ্য ঘটনার পূর্ণাঙ্গ ঐতিহাসিক দলিল।',
     summaryEn:
       'A complete chronological chronicle of 32 verified events across 7 parts—from the Prophet’s ﷺ final moments in Aisha’s (RA) chamber on Monday midday through Abu Bakr’s historic address, Saqifah, the general pledge, his Ghusl, funeral prayers, and sacred burial on Wednesday night.',
     partsCount: 7,
@@ -105,7 +106,7 @@ export const SEERAT_SPECIAL_COLLECTIONS: SeeratSpecialCollectionMeta[] = [
     eraLabelBn: 'মক্কা ও মদিনা · জন্ম, বিয়ে ও ইন্তেকাল',
     eraLabelEn: 'Makkah & Madinah · Birth, Marriage & Passing',
     summaryBn:
-      'রাসূলুল্লাহ ﷺ-এর ৭ জন সন্তান (কাসিম, যায়নাব, রুকাইয়া, উম্মে কুলসুম, ফাতিমা, আব্দুল্লাহ ও ইবরাহীম)-এর জন্ম, শৈশব, হিজরত, বদরের মুক্তিপণ, উসমান (ਰਾ.)-এর সঙ্গে দুই কন্যার বিবাহ, ফাতিমা (रा.)-এর জান্নাতের নেত্রী হওয়া এবং ইবরাহীমের বিদায় পর্যন্ত ১৪টি প্রামাণ্য ঐতিহাসিক ঘটনা।',
+      'রাসূলুল্লাহ ﷺ-এর ৭ জন সন্তান (কাসিম, যায়নাব, রুকাইয়া, উম্মে কুলসুম, ফাতিমা, আব্দুল্লাহ ও ইবরাহীম)-এর জন্ম, শৈশব, হিজরত, বদরের মুক্তিপণ, উসমান (রা.)-এর সঙ্গে দুই কন্যার বিবাহ, ফাতিমা (রা.)-এর জান্নাতের নেত্রী হওয়া এবং ইবরাহীমের বিদায় পর্যন্ত ১৪টি প্রামাণ্য ঐতিহাসিক ঘটনা।',
     summaryEn:
       'A comprehensive 7-part chronicle of all 7 children of Prophet Muhammad ﷺ (Qasim, Zaynab, Ruqayyah, Umm Kulthum, Fatimah, Abdullah, and Ibrahim)—covering their births, marriages, Hijrah, Badr ransom, Dhun-Nurayn, Fatimah as leader of women in Paradise, and Ibrahim’s passing with verified Hadith citations.',
     partsCount: 7,
@@ -119,7 +120,7 @@ export const SEERAT_SPECIAL_COLLECTIONS: SeeratSpecialCollectionMeta[] = [
     id: 'prophet-family-47',
     volumeNoBn: 'সংকলন ০৪',
     volumeNoEn: 'Collection 04',
-    titleBn: 'রাসূলুল্লাহ ﷺ-এর পরিবার ও নিকটজন (৪৯ জনের পরিচয়)',
+    titleBn: 'রাসূলুল্লাহ ﷺ-এর পরিবার ও নিকটজন (৪৭ জনের পরিচয়)',
     titleEn: 'The Close Family & Relatives of Prophet Muhammad ﷺ (47 Members)',
     arabicTitle: 'أهل بيت النبي ﷺ وأقاربه الكرام',
     eraLabelBn: 'মক্কা ও মদিনা · বাবা-মা, স্ত্রী, সন্তান, নাতি, জামাতা, চাচা ও ফুফু',
@@ -134,6 +135,26 @@ export const SEERAT_SPECIAL_COLLECTIONS: SeeratSpecialCollectionMeta[] = [
     durationEn: '8 Relations · 47 Members',
     primarySourcesBn: 'সহীহ বুখারী, সহীহ মুসলিম, সুনান আবু দাউদ, জামে আত-তিরমিযী, আল-ইসাবা ও ইবনে সা‘দের আত-তাবাকাতুল কুবরা',
     primarySourcesEn: 'Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, Jami‘ at-Tirmidhi, Al-Isaba & Ibn Sa‘d’s Tabaqat',
+  },
+  {
+    id: 'prophet-enemies',
+    volumeNoBn: 'সংকলন ০৫',
+    volumeNoEn: 'Collection 05',
+    titleBn: 'রাসূলুল্লাহ ﷺ-এর শত্রুদের জীবনকথা (১৮ জন শত্রুর জীবনকথা ও পরিণতি)',
+    titleEn: 'The Lives & Destinies of the Enemies of Prophet Muhammad ﷺ (18 Figures)',
+    arabicTitle: 'سيرة أعداء النبي ﷺ ومصارعهم في الإسلام',
+    eraLabelBn: 'মক্কা ও মদিনা · ১৮ জন প্রধান বিরোধী ও তাদের পরিণতির ইতিকথা',
+    eraLabelEn: 'Makkah & Madinah · 18 Prominent Adversaries and Their Destinies',
+    summaryBn:
+      'রাসূলুল্লাহ ﷺ ও ইসলামের বিরুদ্ধে সক্রিয় ১৮ জন প্রধান শত্রু (আবু জাহল, আবু লাহাব, উতবা, শায়বা, উমাইয়া, ওবায় ইবনে খালফ, আবু সুফিয়ানসহ ১৮ জন)-এর জীবনবৃত্তান্ত, নির্যাতন, কুচক্র, এবং বদর ও মক্কা বিজয়সহ বিভিন্ন ঐতিহাসিক পরিস্থিতিতে তাদের দুনিয়াবি ও আখিরাতের করুণ পরিণতির পূর্ণাঙ্গ প্রামাণ্য দলিল।',
+    summaryEn:
+      'A comprehensive historical chronicle of 18 prominent adversaries of Islam and Prophet Muhammad ﷺ (Abu Jahl, Abu Lahab, Utbah, Shaybah, Umayyah, Ubayy ibn Khalaf, etc.) detailing their persecutions, conspiracies, and ultimate destinies at Badr and the Conquest of Makkah.',
+    partsCount: 18,
+    eventsCount: 18,
+    durationBn: '১৮ জন শত্রু · ১৮টি ঘটনা',
+    durationEn: '18 Adversaries · 18 Events',
+    primarySourcesBn: 'সহীহ বুখারী, সহীহ মুসলিম, সিরাত ইবনে হিশাম, আল-বিদায়া ওয়ান নিহায়া ও তাফসির ইবনে কাছীর',
+    primarySourcesEn: 'Sahih al-Bukhari, Sahih Muslim, Ibn Hisham, Al-Bidayah wan-Nihayah & Tafsir Ibn Kathir',
   },
 ];
 

@@ -51,7 +51,6 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import html2canvas from 'html2canvas';
 import { UserProfile, ThemeMode, ZikrLanguage, NavModule, ZikrItem, HistorySession, AppSettings, AppTheme } from '../types';
 import { APP_LIGHT_THEMES } from '../utils/appThemes';
 import { soundHaptics, playArabicVoice, VoiceGender } from '../utils/audioHaptics';
@@ -333,7 +332,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     try {
       setIsCapturingAccountPng(true);
       if (soundEnabled) soundHaptics.playMilestone();
-      const canvas = await html2canvas(accountChartsRef.current, {
+      const { default: html2canvasFn } = await import('html2canvas');
+      const canvas = await html2canvasFn(accountChartsRef.current, {
         scale: 2,
         useCORS: true,
         backgroundColor: isDay ? '#f4f7f6' : '#051619',
@@ -452,6 +452,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showResetNewPassword, setShowResetNewPassword] = useState(false);
   const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
+
+  // Creative UI Flow state (matching reference design)
+  const [authFlowMode, setAuthFlowMode] = useState<'signin' | 'signup' | 'profile_setup'>('signin');
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [agreedTerms, setAgreedTerms] = useState(true);
+  const [profileSetupStep, setProfileSetupStep] = useState<1 | 2 | 3>(1);
+  const [profileGender, setProfileGender] = useState('Male');
+  const [profileDob, setProfileDob] = useState('1995-01-01');
 
   // OTP Countdown timer
   useEffect(() => {
@@ -2372,31 +2381,42 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           )}
         </div>
 
-        {/* ----------------- SUB-MODAL: UNIFIED AUTHENTICATION FORM ----------------- */}
+        {/* ----------------- SUB-MODAL: CREATIVE SIGN-IN & LOGIN FLOW (MATCHING REFERENCE UI) ----------------- */}
         {activeSubModal === 'verified_auth' && (
           <div
-            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-200 ${
+            className={`fixed inset-0 z-50 w-full h-[100dvh] flex flex-col overflow-hidden animate-in fade-in duration-300 ${
               isDay
-                ? 'bg-[var(--app-canvas,#f3faf6)] text-slate-800'
-                : 'bg-[var(--app-dark-canvas,#071a1e)] text-white'
+                ? 'bg-gradient-to-br from-sky-100 via-teal-50 to-blue-100 text-slate-800'
+                : 'bg-gradient-to-br from-[#041014] via-[#07252c] to-[#051417] text-white'
             }`}
           >
-            <div className="w-full h-full flex flex-col overflow-hidden">
-              {/* Header */}
-              <div className="px-4 py-3.5 sm:px-6 flex items-center justify-between border-b border-slate-100 dark:border-teal-900/40 shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                    <ShieldCheck className="w-5 h-5" />
+            <div className="w-full h-full flex flex-col overflow-hidden max-w-md mx-auto relative px-4 py-6">
+              {/* Top Bar with Back Arrow */}
+              <div className="flex items-center justify-between pb-4 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (verificationStep === 'otp') {
+                      setVerificationStep('input');
+                    } else if (authFlowMode === 'profile_setup' && profileSetupStep > 1) {
+                      setProfileSetupStep((s) => (s - 1) as any);
+                    } else {
+                      setActiveSubModal('none');
+                      setVerificationStep('input');
+                      setOtpErrorMessage(null);
+                    }
+                  }}
+                  className="w-10 h-10 rounded-full bg-white/80 dark:bg-white/10 hover:bg-white shadow-sm flex items-center justify-center text-slate-700 dark:text-white transition active:scale-95 cursor-pointer"
+                  aria-label="Back"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                {authFlowMode === 'profile_setup' && (
+                  <div className="text-xs font-bold px-3 py-1 rounded-full bg-sky-500/15 text-sky-600 dark:text-sky-300">
+                    {t(`০${profileSetupStep} অব ০৩`, `0${profileSetupStep} of 03`, `0${profileSetupStep} of 03`)}
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="font-black text-base text-slate-900 dark:text-white truncate">
-                      {t('Zikr+ লগইন / সাইন আপ', 'تسجيل الدخول / إنشاء حساب Zikr+', 'Zikr+ Login / Sign Up')}
-                    </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-emerald-300/80 truncate">
-                      {t('সহজ ও নিরাপদ ১-ক্লিক অ্যাকাউন্ট সাইন-ইন', 'تسجيل دخول آمن وسهل بنقرة واحدة', 'Easy & secure 1-click account sign-in')}
-                    </p>
-                  </div>
-                </div>
+                )}
 
                 <button
                   type="button"
@@ -2405,271 +2425,81 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     setVerificationStep('input');
                     setOtpErrorMessage(null);
                   }}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition cursor-pointer shrink-0"
+                  className="w-10 h-10 rounded-full bg-white/80 dark:bg-white/10 hover:bg-white shadow-sm flex items-center justify-center text-slate-700 dark:text-white transition active:scale-95 cursor-pointer"
                   aria-label="Close"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-
-              {/* STEP 1: INPUT FORM */}
-              {verificationStep === 'input' && (
-                <div className="space-y-3.5 animate-in fade-in">
-                  {/* Google One-Tap */}
-                  <button
-                    type="button"
-                    disabled={isVerifying}
-                    onClick={handleTriggerGoogleAuth}
-                    className="w-full p-3 rounded-2xl bg-white dark:bg-[#071f25] hover:bg-slate-50 dark:hover:bg-[#0a272f] text-slate-800 dark:text-white font-bold border border-slate-300 dark:border-teal-700/60 shadow-sm flex items-center justify-between transition active:scale-98 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <GoogleIcon />
-                      <div className="text-left">
-                        <div className="text-xs sm:text-sm font-extrabold">
-                          {t('গুগল দিয়ে চালিয়ে যান', 'المتابعة باستخدام Google', 'Continue with Google')}
-                        </div>
-                        <div className="text-[10px] text-slate-500 dark:text-emerald-300/70">
-                          {t('১-ক্লিকে সরাসরি গুগল সাইন-ইন', 'تسجيل دخول مباشر عبر Google بنقرة واحدة', 'Direct 1-click Google Sign-In')}
-                        </div>
-                      </div>
+              {/* Scrollable Form Body */}
+              <div className="flex-1 overflow-y-auto space-y-5 pb-8 pt-2">
+                {verificationStep === 'success' ? (
+                  <div className="text-center py-12 space-y-4 animate-in zoom-in-95">
+                    <div className="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center border-4 border-emerald-500 shadow-xl">
+                      <Check className="w-10 h-10 stroke-[3]" />
                     </div>
-                    <span className="text-[10px] px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-extrabold border border-emerald-500/30">
-                      {t('১-ক্লিক গুগল', 'نقرة واحدة', 'Google One-Tap')}
-                    </span>
-                  </button>
-
-                  <div className="flex items-center gap-3 text-[10px] font-extrabold text-slate-400 dark:text-teal-400/60 uppercase tracking-wider py-0.5">
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-teal-900/60" />
-                    <span>{t('অথবা জিমেইল ও ফোন দিয়ে', 'أو عبر البريد والهاتف', 'Or with Email & Phone')}</span>
-                    <div className="flex-1 h-px bg-slate-200 dark:bg-teal-900/60" />
-                  </div>
-
-                  {/* Gmail Input (Required) */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>{t('জিমেইল / ইমেইল অ্যাড্রেস *', 'البريد الإلكتروني *', 'Email Address *')}</span>
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={inputEmail}
-                      onChange={(e) => setInputEmail(e.target.value)}
-                      placeholder={t('যেমন: name@gmail.com', 'مثال: name@gmail.com', 'e.g. name@gmail.com')}
-                      className={`w-full rounded-2xl px-3.5 py-2.5 border text-xs font-semibold focus:outline-none transition ${
-                        isDay
-                          ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
-                          : 'bg-[#051417] border-[#184850] text-white focus:border-emerald-500'
-                      }`}
-                    />
-                  </div>
-
-                  {/* Optional Phone Number */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] font-bold text-slate-600 dark:text-emerald-300 flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                        <span>{t('মোবাইল নম্বর', 'رقم الهاتف', 'Phone Number')}</span>
-                      </label>
-                      <span className="text-[9px] text-slate-400 font-mono">{t('ঐচ্ছিক', 'اختياري', 'Optional')}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <select
-                        value={selectedCountryCode}
-                        onChange={(e) => setSelectedCountryCode(e.target.value)}
-                        className={`rounded-2xl px-2.5 py-2 border text-xs font-bold focus:outline-none cursor-pointer ${
-                          isDay
-                            ? 'bg-slate-50 border-slate-300 text-slate-900'
-                            : 'bg-[#051417] border-[#184850] text-white'
-                        }`}
-                      >
-                        {COUNTRY_CODES.map((c) => (
-                          <option key={c.code} value={c.code}>
-                            {c.flag} {c.code}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="tel"
-                        value={inputPhone}
-                        onChange={(e) => setInputPhone(e.target.value)}
-                        placeholder={t('০১৭১২৩৪৫৬৭৮ (ঐচ্ছিক)', '01712345678 (اختياري)', '01712345678 (Optional)')}
-                        className={`flex-1 rounded-2xl px-3.5 py-2.5 border text-xs font-semibold focus:outline-none transition ${
-                          isDay
-                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
-                            : 'bg-[#051417] border-[#184850] text-white focus:border-emerald-500'
-                        }`}
-                      />
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+                        {t('সফলভাবে লগইন হয়েছে!', 'تم تسجيل الدخول بنجاح!', 'Successfully Signed In!')}
+                      </h2>
+                      <p className="text-xs text-slate-600 dark:text-teal-200 mt-1">
+                        {cloudSyncMessage || t('আপনার অ্যাকাউন্ট সিঙ্ক করা হয়েছে...', 'تم مزامنة حسابك...', 'Your account is synced...')}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Full Name (Optional) */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>{t('আপনার নাম (ঐচ্ছিক)', 'الاسم الكامل (اختياري)', 'Your Name (Optional)')}</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={inputName}
-                      onChange={(e) => setInputName(e.target.value)}
-                      placeholder={t('আপনার পূর্ণ নাম লিখুন', 'اكتب اسمك الكامل', 'e.g. Mursaline Parvez')}
-                      className={`w-full rounded-2xl px-3.5 py-2.5 border text-xs font-semibold focus:outline-none transition ${
-                        isDay
-                          ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
-                          : 'bg-[#051417] border-[#184850] text-white focus:border-emerald-500'
-                      }`}
-                    />
-                  </div>
-
-                  {/* Password Input */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>{t('পাসওয়ার্ড *', 'كلمة المرور *', 'Password *')}</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={inputPassword}
-                        onChange={(e) => setInputPassword(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleInstantPasswordAuth();
-                        }}
-                        placeholder={t('কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড', '٤ أحرف على الأقل', 'At least 4 characters')}
-                        className={`w-full rounded-2xl pl-3.5 pr-10 py-2.5 border text-xs font-semibold focus:outline-none transition ${
-                          isDay
-                            ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600 focus:bg-white'
-                            : 'bg-[#051417] border-[#184850] text-white focus:border-emerald-500'
-                        }`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-emerald-300 cursor-pointer"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Error display */}
-                  {otpErrorMessage && (
-                    <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                      <ShieldAlert className="w-4 h-4 shrink-0 text-rose-500" />
-                      <span>{otpErrorMessage}</span>
-                    </div>
-                  )}
-
-                  {/* 2 ACTION BUTTONS */}
-                  <div className="space-y-2 pt-1">
-                    <button
-                      type="button"
-                      disabled={isVerifying}
-                      onClick={handleInstantPasswordAuth}
-                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-extrabold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-                    >
-                      {isVerifying ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4 h-4 text-amber-300" />
-                      )}
-                      <span>
+                ) : verificationStep === 'otp' ? (
+                  <div className="space-y-5">
+                    <div className="space-y-1.5">
+                      <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                        {t('সিকিউরিটি কোড দিন 🔐', 'أدخل رمز الأمان 🔐', 'Enter Security Code 🔐')}
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-teal-200">
                         {t(
-                          '⚡ ১-ক্লিকে সাইন-ইন / রেজিস্ট্রেশন করুন',
-                          '⚡ تسجيل الدخول / التسجيل بنقرة واحدة',
-                          '⚡ 1-Click Sign In / Register'
+                          `আপনার ইমেইলে (${maskedTargetDisplay || inputEmail}) প্রেরিত ৬-সংখ্যার কোডটি লিখুন।`,
+                          `أدخل رمز الـ ٦ أرقام المرسل إلى بريدك.`,
+                          `Enter the 6-digit code sent to your email.`
                         )}
-                      </span>
-                    </button>
+                      </p>
+                    </div>
 
-                    <button
-                      type="button"
-                      disabled={isSendingCode}
-                      onClick={handleSendOtp}
-                      className="w-full py-2.5 px-4 rounded-2xl bg-white dark:bg-[#092226] hover:bg-slate-50 text-slate-700 dark:text-emerald-300 font-bold text-xs border border-slate-300 dark:border-teal-800 shadow-sm flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-                    >
-                      {isSendingCode ? (
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Send className="w-3.5 h-3.5 text-emerald-600" />
-                      )}
-                      <span>
-                        {t(
-                          '📩 জিমেইলে ভেরিফিকেশন কোড পাঠান',
-                          '📩 إرسال رمز التحقق إلى البريد',
-                          '📩 Send Verification Code to Email'
-                        )}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 2: OTP ENTRY WITH INSTANT AUTO-FILL CODE BANNER */}
-              {verificationStep === 'otp' && (
-                <div className="space-y-4 animate-in fade-in">
-                  <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-1">
-                    <h4 className="font-extrabold text-sm text-emerald-800 dark:text-emerald-300">
-                      {t('ভেরিফিকেশন কোড পাঠানো হয়েছে', 'تم إرسال رمز التحقق', 'Verification Code Sent')}
-                    </h4>
-                    <p className="text-[11px] text-slate-600 dark:text-emerald-200/90">
-                      {t(
-                        `আপনার ইমেইলে (${maskedTargetDisplay || inputEmail}) ৬-সংখ্যার সিকিউরিটি কোড পাঠানো হয়েছে।`,
-                        `تم إرسال رمز أمان مكون من ٦ أرقام إلى بريدك (${maskedTargetDisplay || inputEmail}).`,
-                        `A 6-digit security code has been sent to your email (${maskedTargetDisplay || inputEmail}).`
-                      )}
-                    </p>
-                  </div>
-
-                  {/* INSTANT CODE HELPER BANNER */}
-                  {(() => {
-                    const pending = getPendingOtp();
-                    if (!pending || !pending.code) return null;
-                    return (
-                      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 border-2 border-amber-500/40 text-amber-950 dark:text-amber-100 text-xs font-bold space-y-2.5 shadow-md animate-in fade-in">
-                        <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200 font-black">
-                            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-                            <span>{t('ইমেইলে কোড আসতে দেরি হলে:', 'إذا تأخر وصول الرمز للبريد:', 'If email delivery is delayed:')}</span>
-                          </span>
-                          <span className="font-mono bg-amber-500 text-slate-950 px-3 py-1 rounded-xl font-black text-sm tracking-wider shadow-xs">
-                            {pending.code}
-                          </span>
+                    {/* Instant OTP autofill banner */}
+                    {(() => {
+                      const pending = getPendingOtp();
+                      if (!pending || !pending.code) return null;
+                      return (
+                        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 border-2 border-amber-500/50 text-amber-950 dark:text-amber-100 text-xs font-bold space-y-2.5 shadow-md">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 font-black">
+                              <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                              <span>{t('অটো-ফিল কোড:', 'رمز تعبئة تلقائي:', 'Auto-Fill Code:')}</span>
+                            </span>
+                            <span className="font-mono bg-amber-500 text-slate-950 px-3 py-1 rounded-xl font-black text-sm tracking-widest shadow-xs">
+                              {pending.code}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const digits = pending.code.split('');
+                              setOtpDigits(digits);
+                              if (soundEnabled) soundHaptics.playMilestone();
+                              setTimeout(() => {
+                                handleConfirmOtp();
+                              }, 50);
+                            }}
+                            className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>
+                              {t(`⚡ ১-ক্লিকে কোড বসান (${pending.code})`, `⚡ تعبئة الرمز بنقرة واحدة`, `⚡ 1-Click Auto-Fill Code`)}
+                            </span>
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const digits = pending.code.split('');
-                            setOtpDigits(digits);
-                            if (soundEnabled) soundHaptics.playMilestone();
-                            setTimeout(() => {
-                              handleConfirmOtp();
-                            }, 50);
-                          }}
-                          className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>
-                            {t(
-                              `⚡ ১-ক্লিকে কোড বসান ও ভেরিফাই করুন (${pending.code})`,
-                              `⚡ تعبئة الرمز والتحقق بنقرة واحدة (${pending.code})`,
-                              `⚡ 1-Click Auto-Fill & Verify (${pending.code})`
-                            )}
-                          </span>
-                        </button>
-                      </div>
-                    );
-                  })()}
+                      );
+                    })()}
 
-                  {/* 6-DIGIT OTP BOXES */}
-                  <div className="space-y-2">
-                    <label className="block text-center text-xs font-bold text-slate-600 dark:text-emerald-300">
-                      {t('৬-সংখ্যার সিকিউরিটি কোড দিন:', 'أدخل رمز الأمان المكون من ٦ أرقام:', 'Enter 6-digit security code:')}
-                    </label>
-                    <div className="flex justify-between gap-1.5">
+                    <div className="flex justify-between gap-2 pt-2">
                       {[0, 1, 2, 3, 4, 5].map((idx) => (
                         <input
                           key={idx}
@@ -2682,73 +2512,375 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           value={otpDigits[idx]}
                           onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                          className={`w-11 h-12 text-center text-xl font-mono font-black rounded-2xl border transition focus:outline-none ${
-                            otpDigits[idx]
-                              ? 'border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/40'
-                              : isDay
-                              ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-emerald-600'
-                              : 'bg-[#051417] border-[#184850] text-white focus:border-emerald-500'
-                          }`}
+                          className="w-12 h-14 text-center text-xl font-mono font-black rounded-2xl bg-white dark:bg-[#06191f] border-2 border-sky-300 dark:border-teal-700 text-slate-900 dark:text-white shadow-sm focus:outline-none focus:border-sky-500 transition"
                         />
                       ))}
                     </div>
-                  </div>
 
-                  {/* Error message */}
-                  {otpErrorMessage && (
-                    <div className="p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                      <ShieldAlert className="w-4 h-4 shrink-0 text-rose-500" />
-                      <span>{otpErrorMessage}</span>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setVerificationStep('input')}
-                      className="py-3 px-4 rounded-2xl border border-slate-300 dark:border-teal-900/60 font-bold text-xs hover:bg-slate-100 dark:hover:bg-teal-900/30 transition cursor-pointer"
-                    >
-                      {t('পিছনে', 'رجوع', 'Back')}
-                    </button>
+                    {otpErrorMessage && (
+                      <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold">
+                        {otpErrorMessage}
+                      </div>
+                    )}
 
                     <button
                       type="button"
                       disabled={isVerifying || otpDigits.join('').length < 6}
                       onClick={handleConfirmOtp}
-                      className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer disabled:opacity-50"
                     >
-                      {isVerifying ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="w-4 h-4" />
-                      )}
-                      <span>{t('কোড সাবমিট করুন', 'تأكيد الرمز', 'Verify Code')}</span>
+                      {isVerifying ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                      <span>{t('ভেরিফাই করুন', 'تحقق', 'Verify Code')}</span>
                     </button>
                   </div>
-                </div>
-              )}
+                ) : authFlowMode === 'profile_setup' ? (
+                  <div className="space-y-4 animate-in fade-in">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                        {t('প্রোফাইল সেটআপ ✨', 'إعداد الملف الشخصي ✨', 'Profile Setup ✨')}
+                      </h2>
+                      <p className="text-xs text-slate-600 dark:text-teal-200">
+                        {t('আপনার ব্যক্তিগত বিবরণ দিয়ে প্রোফাইল সাজান', 'أضف تفاصيلك الشخصية', 'Add your details to customize profile')}
+                      </p>
+                    </div>
 
-              {/* STEP 3: SUCCESS */}
-              {verificationStep === 'success' && (
-                <div className="p-6 text-center space-y-3 animate-in zoom-in-95 duration-200">
-                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 mx-auto flex items-center justify-center border-2 border-emerald-500 shadow-lg">
-                    <Check className="w-8 h-8 stroke-[3]" />
+                    <div className="flex flex-col items-center justify-center py-2">
+                      <div className="relative w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-sky-500 to-blue-600 shadow-lg">
+                        <img
+                          src={editPhotoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                          alt="Avatar"
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="absolute bottom-0 right-0 p-2 rounded-full bg-sky-600 text-white shadow-md hover:bg-sky-500 cursor-pointer"
+                        >
+                          <Camera className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (evt) => {
+                              if (evt.target?.result) setEditPhotoUrl(evt.target.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
+                        {t('পূর্ণ নাম *', 'الاسم الكامل *', 'Full Name *')}
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          value={inputName || editName}
+                          onChange={(e) => {
+                            setInputName(e.target.value);
+                            setEditName(e.target.value);
+                          }}
+                          placeholder={t('যেমন: Mursaline Parvez', 'مثل: Mursaline Parvez', 'e.g. Mursaline Parvez')}
+                          className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-4 py-3 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
+                        {t('মোবাইল নম্বর', 'رقم الهاتف', 'Phone Number')}
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          value={selectedCountryCode}
+                          onChange={(e) => setSelectedCountryCode(e.target.value)}
+                          className="rounded-2xl bg-white/90 dark:bg-[#06191f] px-3 py-3 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none"
+                        >
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.flag} {c.code}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="relative flex-1">
+                          <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                          <input
+                            type="tel"
+                            value={inputPhone}
+                            onChange={(e) => setInputPhone(e.target.value)}
+                            placeholder="01712345678"
+                            className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-4 py-3 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
+                          {t('লিঙ্গ', 'الجنس', 'Gender')}
+                        </label>
+                        <select
+                          value={profileGender}
+                          onChange={(e) => setProfileGender(e.target.value)}
+                          className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] px-3.5 py-3 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none cursor-pointer"
+                        >
+                          <option value="Male">{t('পুরুষ', 'ذكر', 'Male')}</option>
+                          <option value="Female">{t('মহিলা', 'أنثى', 'Female')}</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
+                          {t('জন্ম তারিখ', 'تاريخ الميلاد', 'Date of Birth')}
+                        </label>
+                        <input
+                          type="date"
+                          value={profileDob}
+                          onChange={(e) => setProfileDob(e.target.value)}
+                          className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] px-3.5 py-3 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (profileSetupStep < 3) {
+                          setProfileSetupStep((s) => (s + 1) as any);
+                        } else {
+                          handleInstantPasswordAuth();
+                        }
+                      }}
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer mt-4"
+                    >
+                      <span>{profileSetupStep === 3 ? t('সম্পন্ন করুন', 'إنهاء', 'Complete') : t('পরবর্তী', 'التالي', 'Next')}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
-                  <div>
-                    <h4 className="font-black text-base text-emerald-600 dark:text-emerald-400">
-                      {t('✓ সফলভাবে লগইন হয়েছে!', '✓ تم تسجيل الدخول بنجاح!', '✓ Signed In Successfully!')}
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-emerald-300 mt-1">
-                      {cloudSyncMessage || t('ক্লাউড সিঙ্ক চালু হয়েছে...', 'المزامنة السحابية مفعلة...', 'Cloud sync is active...')}
-                    </p>
+                ) : (
+                  <div className="space-y-4 animate-in fade-in">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>{t('Hello there', 'مرحباً', 'Hello there')}</span>
+                        <span className="inline-block animate-bounce">👋</span>
+                      </h2>
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-teal-200 font-medium">
+                        {authFlowMode === 'signin'
+                          ? t('আপনার অ্যাকাউন্টে প্রবেশ করতে ইমেইল ও পাসওয়ার্ড দিন', 'أدخل بريدك وكلمة المرور لتسجيل الدخول', 'Please enter your email & password to access your account')
+                          : t('নতুন অ্যাকাউন্ট খুলতে ইমেইল ও পাসওয়ার্ড দিন', 'أدخل بريدك وكلمة المرور لإنشاء حساب', 'Please enter your email & password to register your account')}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
+                        {t('ইমেইল অ্যাড্রেস', 'البريد الإلكتروني', 'Email Address')}
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                        <input
+                          type="email"
+                          required
+                          value={inputEmail}
+                          onChange={(e) => setInputEmail(e.target.value)}
+                          placeholder="hello@designpicko.com"
+                          className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-10 py-3.5 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                        />
+                        <Check className="absolute right-3.5 top-3.5 w-4 h-4 text-sky-500" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
+                        {t('পাসওয়ার্ড', 'كلمة المرور', 'Password')}
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          value={inputPassword}
+                          onChange={(e) => setInputPassword(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleInstantPasswordAuth();
+                          }}
+                          placeholder="••••••"
+                          className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-10 py-3.5 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {authFlowMode === 'signup' && (
+                      <div className="space-y-1 animate-in fade-in">
+                        <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
+                          {t('পাসওয়ার্ড নিশ্চিত করুন', 'تأكيد كلمة المرور', 'Confirm Password')}
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            value={confirmPasswordInput}
+                            onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                            placeholder="••••••"
+                            className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-10 py-3.5 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      {authFlowMode === 'signin' ? (
+                        <>
+                          <label className="flex items-center gap-2 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={rememberMe}
+                              onChange={(e) => setRememberMe(e.target.checked)}
+                              className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 cursor-pointer"
+                            />
+                            <span className="font-bold text-slate-700 dark:text-teal-200">
+                              {t('রিমেম্বার মি', 'تذكرني', 'Remember Me')}
+                            </span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveSubModal('none');
+                              setVerificationStep('input');
+                            }}
+                            className="font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+                          >
+                            {t('পাসওয়ার্ড ভুলে গেছেন?', 'نسيت كلمة المرور؟', 'Forgot Password?')}
+                          </button>
+                        </>
+                      ) : (
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={agreedTerms}
+                            onChange={(e) => setAgreedTerms(e.target.checked)}
+                            className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 cursor-pointer"
+                          />
+                          <span className="font-bold text-slate-700 dark:text-teal-200 text-[11px]">
+                            {t(
+                              'আমি উইম্বো পাবলিক এগ্রিমেন্ট ও প্রাইভেসি পলিসিতে সম্মত আছি',
+                              'أوافق على اتفاقية وشروط الاستخدام',
+                              'I agree to Wimbo Public Agreement, Terms & Privacy Policy'
+                            )}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
+                    {otpErrorMessage && (
+                      <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 shrink-0 text-rose-500" />
+                        <span>{otpErrorMessage}</span>
+                      </div>
+                    )}
+
+                    <div className="space-y-3 pt-2">
+                      <button
+                        type="button"
+                        disabled={isVerifying}
+                        onClick={() => {
+                          if (authFlowMode === 'signup') {
+                            setAuthFlowMode('profile_setup');
+                          } else {
+                            handleInstantPasswordAuth();
+                          }
+                        }}
+                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer disabled:opacity-50"
+                      >
+                        {isVerifying ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 text-amber-300" />}
+                        <span>
+                          {authFlowMode === 'signin'
+                            ? t('এগিয়ে চলুন (Continue)', 'متابعة', 'Continue')
+                            : t('অ্যাকাউন্ট তৈরি করুন', 'إنشاء حساب', 'Create Account')}
+                        </span>
+                      </button>
+
+                      <div className="flex items-center gap-3 text-xs font-bold text-slate-400 py-1">
+                        <div className="flex-1 h-px bg-slate-300 dark:bg-teal-800" />
+                        <span>{t('অথবা', 'أو', 'Or')}</span>
+                        <div className="flex-1 h-px bg-slate-300 dark:bg-teal-800" />
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={isVerifying}
+                        onClick={handleTriggerGoogleAuth}
+                        className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-[#06191f] hover:bg-slate-50 text-slate-800 dark:text-white font-bold text-xs border border-sky-200 dark:border-teal-800 shadow-sm flex items-center justify-center gap-3 transition active:scale-95 cursor-pointer"
+                      >
+                        <GoogleIcon />
+                        <span>{t('গুগল দিয়ে চালিয়ে যান', 'المتابعة باستخدام Google', 'Continue With Google')}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleTriggerGoogleAuth();
+                        }}
+                        className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-[#06191f] hover:bg-slate-50 text-slate-800 dark:text-white font-bold text-xs border border-sky-200 dark:border-teal-800 shadow-sm flex items-center justify-center gap-3 transition active:scale-95 cursor-pointer"
+                      >
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.18c.65-.79 1.09-1.89.97-2.99-.96.04-2.13.64-2.82 1.43-.61.68-1.15 1.79-1 2.87 1.08.08 2.19-.52 2.85-1.31z"/>
+                        </svg>
+                        <span>{t('অ্যাপল দিয়ে চালিয়ে যান', 'المتابعة باستخدام Apple', 'Continue With Apple')}</span>
+                      </button>
+                    </div>
+
+                    <div className="text-center pt-2 text-xs font-bold text-slate-600 dark:text-teal-200">
+                      {authFlowMode === 'signin' ? (
+                        <span>
+                          {t('নতুন অ্যাকাউন্ট?', 'جديد هنا؟', 'New here? ')}{' '}
+                          <button
+                            type="button"
+                            onClick={() => setAuthFlowMode('signup')}
+                            className="text-sky-600 dark:text-sky-400 font-black hover:underline cursor-pointer"
+                          >
+                            {t('সাইন আপ করুন (Sign up)', 'إنشاء حساب', 'Create an account. Sign up')}
+                          </button>
+                        </span>
+                      ) : (
+                        <span>
+                          {t('ইতিমধ্যে অ্যাকাউন্ট আছে?', 'لديك حساب بالفعل؟', 'Already have an account? ')}{' '}
+                          <button
+                            type="button"
+                            onClick={() => setAuthFlowMode('signin')}
+                            className="text-sky-600 dark:text-sky-400 font-black hover:underline cursor-pointer"
+                          >
+                            {t('লগইন করুন (Login)', 'تسجيل الدخول', 'Login')}
+                          </button>
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               </div>
             </div>
           </div>
         )}
+
+        {/* SUB-MODAL: EDIT PROFILE */}
 
         {/* SUB-MODAL: EDIT PROFILE */}
         {activeSubModal === 'edit_profile' && (
