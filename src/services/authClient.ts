@@ -199,6 +199,33 @@ export async function loginWithGoogleTokenSession(payload: {
   }
 }
 
+export async function loginWithGoogleDirectSession(payload: {
+  email: string;
+  name?: string;
+  photo?: string;
+  device?: string;
+  location?: string;
+}): Promise<{ ok: boolean; status: number; data: ServerAuthResponse }> {
+  try {
+    const res = await authFetch('/api/auth/google-direct', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = (await res.json().catch(() => ({ authenticated: false }))) as ServerAuthResponse;
+    if (res.ok && data.sessionToken) {
+      setInMemorySessionToken(data.sessionToken);
+    }
+    return { ok: res.ok, status: res.status, data };
+  } catch (err: any) {
+    return {
+      ok: false,
+      status: 0,
+      data: { authenticated: false, error: err?.message || 'Network error during direct Google sign-in' },
+    };
+  }
+}
+
 export async function logoutServerSession(): Promise<boolean> {
   try {
     await authFetch('/api/auth/logout', { method: 'POST' });

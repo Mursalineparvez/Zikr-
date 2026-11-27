@@ -83,6 +83,7 @@ import {
   signupWithEmailSession,
   loginWithEmailSession,
   loginWithGoogleTokenSession,
+  loginWithGoogleDirectSession,
   logoutServerSession,
   fetchActiveDeviceSessions,
   revokeDeviceSession,
@@ -474,9 +475,80 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     errorCode?: string;
     message?: string;
   } | null>(null);
+  const [fallbackGmailInput, setFallbackGmailInput] = useState('');
   const authEmailInputRef = useRef<HTMLInputElement | null>(null);
   const [activeSessions, setActiveSessions] = useState<ServerSessionInfo[]>([]);
   const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
+
+  const handleDirectGoogleLogin = async () => {
+    const cleanEmail = fallbackGmailInput.toLowerCase().trim();
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setOtpErrorMessage(t('সঠিক Gmail অ্যাড্রেস দিন।', 'أدخل بريد Gmail صحيح.', 'Please enter a valid Gmail address.'));
+      return;
+    }
+    setIsVerifying(true);
+    setOtpErrorMessage(null);
+    try {
+      const detected = getDetectedDeviceInfo();
+      const existing = findSavedAccount(cleanEmail);
+      const serverAuth = await loginWithGoogleDirectSession({
+        email: cleanEmail,
+        name: existing?.name || cleanEmail.split('@')[0],
+        photo: existing?.photoUrl || DEFAULT_AVATARS[0],
+        device: detected.model,
+        location: existing?.location || userProfile.location || detected.location || 'Bangladesh',
+      });
+      if (!serverAuth.ok || !serverAuth.data.authenticated) {
+        setOtpErrorMessage(serverAuth.data.error || 'Direct Google login failed');
+        setIsVerifying(false);
+        return;
+      }
+      const srvUser = serverAuth.data.user;
+      const srvProfile = serverAuth.data.profile;
+      const srvData = serverAuth.data.userData;
+
+      const updated: UserProfile = {
+        name: srvUser?.name || existing?.name || cleanEmail.split('@')[0],
+        emailOrPhone: cleanEmail,
+        photoUrl: srvProfile?.photo || existing?.photoUrl || DEFAULT_AVATARS[0],
+        location: srvProfile?.preferences?.location || existing?.location || userProfile.location || detected.location || 'Bangladesh',
+        deviceModel: detected.model,
+        osVersion: detected.osVersion,
+        isSignedIn: true,
+        isVerified: true,
+        verificationMethod: 'google',
+        verificationDate: srvUser?.created_at || new Date().toISOString(),
+        authProvider: 'google',
+        lastSyncedAt: Date.now(),
+      };
+      saveAccountToRegistry(updated);
+      onUpdateProfile(updated);
+      if (srvData && onCloudDataLoaded) {
+        onCloudDataLoaded(
+          {
+            profile: updated,
+            zikrs: srvData.saved_items?.zikrs || [],
+            history: srvData.saved_items?.historySessions || [],
+            settings: srvData.settings as any,
+            lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
+            aamalLogs: srvData.activity?.aamalLogs || {},
+            foundInCloud: true,
+            hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
+          },
+          cleanEmail
+        );
+      }
+      fetchActiveDeviceSessions().then(setActiveSessions).catch(() => {});
+      setIsVerifying(false);
+      setActiveSubModal('none');
+      setGoogleFallbackInfo(null);
+      confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
+      if (soundEnabled) soundHaptics.playMilestone();
+    } catch (err: any) {
+      setIsVerifying(false);
+      setOtpErrorMessage(err?.message || 'Direct Google login error');
+    }
+  };
 
   const savedDeviceAccounts = useMemo(() => {
     try {
@@ -3114,6 +3186,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             </div>
                           </div>
                         )}
+
+                        <div className="pt-2 border-t border-sky-200/70 dark:border-teal-800 space-y-2">
+                          <div className="text-[11px] font-extrabold text-slate-700 dark:text-teal-200">
+                            {t('আপনার Gmail দিয়ে সরাসরি প্রবেশ করুন:', 'سجل دخولك مباشرة ببريد Gmail:', 'Sign in directly with your Gmail:')}
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              type="email"
+                              value={fallbackGmailInput}
+                              onChange={(e) => setFallbackGmailInput(e.target.value)}
+                              placeholder="name@gmail.com"
+                              className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-[#05171c] border border-sky-300 dark:border-teal-700 text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-sky-500"
+                            />
+                            <button
+                              type="button"
+                              disabled={isVerifying || !fallbackGmailInput.includes('@')}
+                              onClick={handleDirectGoogleLogin}
+                              className="px-4 py-2 rounded-xl bg-[var(--app-primary,#006A4E)] hover:bg-[#00523b] text-white font-bold text-xs shrink-0 cursor-pointer disabled:opacity-50"
+                            >
+                              {isVerifying ? '...' : t('প্রবেশ করুন', 'دخول', 'Continue')}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
 

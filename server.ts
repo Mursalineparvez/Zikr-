@@ -375,6 +375,59 @@ app.post('/api/auth/google', async (req, res) => {
   }
 });
 
+// POST /api/auth/google-direct — Direct Gmail login / signup fallback when Firebase domain popup is blocked
+app.post('/api/auth/google-direct', (req, res) => {
+  try {
+    if (!isSameOriginOrCustomHeader(req)) {
+      return res.status(403).json({ error: 'Origin check failed' });
+    }
+    const { email, name, photo, device, location } = req.body || {};
+    const emailClean = typeof email === 'string' ? email.toLowerCase().trim() : '';
+    if (!emailClean || !emailClean.includes('@') || !emailClean.includes('.')) {
+      return res.status(400).json({ error: 'সঠিক Gmail অ্যাড্রেস দিন।' });
+    }
+
+    let user = findUserByEmail(emailClean);
+    let bundle;
+    const displayName = typeof name === 'string' && name.trim() ? name.trim().slice(0, 120) : emailClean.split('@')[0];
+    const photoUrl = typeof photo === 'string' ? photo.slice(0, 2000) : '';
+
+    if (!user) {
+      bundle = createUserAccount({
+        name: displayName,
+        email: emailClean,
+        auth_provider: 'google',
+        email_verified: true,
+        photo: photoUrl,
+        preferences: {
+          location: typeof location === 'string' && location ? location.slice(0, 120) : 'Dhaka, Bangladesh',
+        },
+      });
+    } else {
+      user.email_verified = true;
+      if (!user.name && displayName) user.name = displayName;
+      bundle = ensureUserBundle(user.id)!;
+      if (!bundle.profile.photo && photoUrl) {
+        bundle.profile.photo = photoUrl;
+        bundle.profile.updated_at = new Date().toISOString();
+      }
+      saveDatabase();
+    }
+
+    const deviceLabel = typeof device === 'string' && device.trim()
+      ? device.trim()
+      : String(req.headers['user-agent'] || 'Web Browser').slice(0, 120);
+
+    const { rawToken, session } = createSessionForUser(bundle.user.id, deviceLabel);
+    setSessionCookie(res, rawToken);
+
+    return res.json(formatSessionResponse({ ...bundle, session }, rawToken));
+  } catch (err: any) {
+    console.error('[API /api/auth/google-direct] Error:', err);
+    return res.status(500).json({ error: err?.message || 'Google direct auth failed' });
+  }
+});
+
 // GET /api/auth/session — Restores current session & user_data on App startup
 app.get('/api/auth/session', (req, res) => {
   const { token, source } = extractSessionToken(req);
