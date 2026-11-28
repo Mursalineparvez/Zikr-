@@ -71,7 +71,13 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
   const [filterMode, setFilterMode] = useState<'all' | 'targets' | 'completed'>('all');
   const [showFloatingCounter, setShowFloatingCounter] = useState(false);
   const [showFocusMode, setShowFocusMode] = useState<number | null>(null);
-  const [isRefreshSystemExpanded, setIsRefreshSystemExpanded] = useState<boolean>(false);
+  const [isRefreshSystemExpanded, setIsRefreshSystemExpanded] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('zikrmate_refresh_expanded');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true; // Default expanded so options are clearly visible
+  });
 
   // Monitor scroll position to show/hide portable floating popup
   useEffect(() => {
@@ -182,7 +188,9 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
         {/* Upper Header Part (Always Visible) */}
         <div
           onClick={() => {
-            setIsRefreshSystemExpanded(!isRefreshSystemExpanded);
+            const next = !isRefreshSystemExpanded;
+            setIsRefreshSystemExpanded(next);
+            try { localStorage.setItem('zikrmate_refresh_expanded', String(next)); } catch {}
             if (soundEnabled) soundHaptics.playTap();
           }}
           className={`flex items-center justify-between gap-3 cursor-pointer select-none ${
@@ -218,7 +226,9 @@ export const ZikirCounterView: React.FC<ZikirCounterViewProps> = ({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setIsRefreshSystemExpanded(!isRefreshSystemExpanded);
+                const next = !isRefreshSystemExpanded;
+                setIsRefreshSystemExpanded(next);
+                try { localStorage.setItem('zikrmate_refresh_expanded', String(next)); } catch {}
                 if (soundEnabled) soundHaptics.playTap();
               }}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all active:scale-95 cursor-pointer shadow-xs ${
