@@ -2538,7 +2538,21 @@ async function startServer() {
         immutable: true,
       })
     );
-    app.use(express.static(distDir));
+    app.get(['/', '/index.html'], (_req, res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.sendFile(path.join(distDir, 'index.html'));
+    });
+    app.get('/manifest.json', (_req, res, next) => {
+      const mPath = path.join(distDir, 'manifest.json');
+      if (fs.existsSync(mPath)) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return res.sendFile(mPath);
+      }
+      next();
+    });
+    app.use(express.static(distDir, { index: false }));
     app.get('*', (req, res) => {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');

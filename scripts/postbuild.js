@@ -17,10 +17,12 @@ try {
     '/pwa-512x512.png',
     '/pwa-maskable-512x512.png',
     '/apple-touch-icon.png',
+    '/offline-hadis/chapters-index.json',
+    '/offline-hadis/core-books.json',
     '/zikr-tasbeeh-standalone.html',
   ];
 
-  const secondaryUrls = [];
+  const secondaryUrls = ['/offline-hadis/starter-chapters.json'];
 
   if (fs.existsSync(assetsDir)) {
     function walkDir(dir, prefix = '/assets') {
@@ -57,7 +59,7 @@ try {
   console.log(`[PostBuild] Secondary on-demand assets: ${secondaryUrls.length} assets.`);
 
   const swSource = fs.readFileSync(publicSwPath, 'utf8');
-  const buildCacheName = `zikrmate-v17-${Date.now().toString(36)}`;
+  const buildCacheName = `zikrmate-v46-${Date.now().toString(36)}`;
 
   // Bump CACHE_NAME per build so browsers automatically purge stale cached bundles
   let updatedSw = swSource.replace(

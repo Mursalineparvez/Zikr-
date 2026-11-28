@@ -107,6 +107,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [googlePopupBlockedInIframe, setGooglePopupBlockedInIframe] = useState(false);
+  const [googleUnauthorizedHost, setGoogleUnauthorizedHost] = useState<string | null>(null);
 
   // Form Fields
   const [emailInput, setEmailInput] = useState('');
@@ -138,6 +139,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
     setIsLoadingGoogle(true);
     setErrorMessage(null);
     setGooglePopupBlockedInIframe(false);
+    setGoogleUnauthorizedHost(null);
     if (soundEnabled) soundHaptics.playTap();
 
     try {
@@ -239,12 +241,14 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
         );
       } else {
         const isUnauthorizedDomain = Boolean(result.unauthorizedDomain || result.errorCode === 'auth/unauthorized-domain');
+        const hostLabel = result.currentHostname || (typeof window !== 'undefined' ? window.location.hostname || window.location.protocol : '');
         setGooglePopupBlockedInIframe(Boolean(result.inIframe && !isUnauthorizedDomain));
+        setGoogleUnauthorizedHost(isUnauthorizedDomain ? hostLabel : null);
         setErrorMessage(
           isUnauthorizedDomain
             ? isBn
-              ? `এই ডোমেইন (${result.currentHostname || (typeof window !== 'undefined' ? window.location.hostname : '')}) Firebase-এ অনুমোদিত নয়। অনুগ্রহ করে ইমেইল ও পাসওয়ার্ড দিয়ে সাইন ইন বা সাইন আপ করুন।`
-              : `Domain "${result.currentHostname || ''}" is not authorized in Firebase. Please sign in or sign up with Email & Password below.`
+              ? `এই ডোমেইন (${hostLabel}) Firebase-এ অনুমোদিত নয়। অনুমোদিত ওয়েব লিংকে গুগল লগইন করুন অথবা নিচে ইমেইল ও পাসওয়ার্ড ব্যবহার করুন।`
+              : `Domain "${hostLabel}" is not authorized in Firebase. Open the authorized app URL for Google Sign-In or use Email & Password.`
             : result.inIframe
             ? isBn
               ? 'প্রিভিউ উইন্ডোতে গুগল পপআপ ব্লক হয়েছে। ফোনের/ল্যাপটপের সব Gmail দেখতে নিচের বাটনে ট্যাপ করে নতুন ট্যাবে খুলুন।'
@@ -526,6 +530,27 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                   <AlertCircle className="w-4 h-4 shrink-0 text-sky-600 mt-0.5" />
                   <span>{errorMessage}</span>
                 </div>
+                {googleUnauthorizedHost &&
+                  typeof window !== 'undefined' &&
+                  ![
+                    'ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
+                    'ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
+                    'tablig.vercel.app',
+                  ].includes(window.location.hostname) && (
+                    <a
+                      href={
+                        window.location.hostname.endsWith('.vercel.app')
+                          ? 'https://tablig.vercel.app/?open_auth=1'
+                          : 'https://ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1'
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 transition"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>{isBn ? 'অনুমোদিত অ্যাপ লিংকে গুগল লগইন করুন' : 'Open Authorized App URL for Google Sign-In'}</span>
+                    </a>
+                  )}
                 {googlePopupBlockedInIframe && typeof window !== 'undefined' && (
                   <a
                     href={(() => {

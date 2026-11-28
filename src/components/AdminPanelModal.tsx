@@ -314,7 +314,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
 
     if (res.data.errorCode === 'GOOGLE_ONLY_ACCOUNT') {
-      const gRes = await signInWithGoogleAuth();
+      const gRes = await signInWithGoogleAuth(currentEmail);
       if (gRes.success && gRes.user?.idToken && gRes.user.email.toLowerCase() === currentEmail) {
         const gSess = await loginWithGoogleTokenSession({
           idToken: gRes.user.idToken,
@@ -327,6 +327,17 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           loadInfoRequests();
           return;
         }
+      }
+      if (!gRes.success) {
+        setPinError(
+          gRes.unauthorizedDomain
+            ? isBn
+              ? `এই ডোমেইন (${gRes.currentHostname || ''}) Firebase-এ অনুমোদিত নয়। অনুমোদিত অ্যাপ লিংক থেকে গুগল দিয়ে লগইন করুন।`
+              : `Domain "${gRes.currentHostname || ''}" is not authorized in Firebase for Google Sign-In.`
+            : gRes.error || (isBn ? 'গুগল ভেরিফিকেশন সম্পন্ন হয়নি।' : 'Google verification could not be completed.')
+        );
+        if (soundEnabled) soundHaptics.playTap();
+        return;
       }
     }
 

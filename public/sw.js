@@ -1,9 +1,9 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v44-fast-offline-hadith
+// Version: zikrmate-v46-auth-sw-fix
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v44-fast-offline-hadith';
+const CACHE_NAME = 'zikrmate-v46-auth-sw-fix';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 const HADIS_OFFLINE_CACHE = 'zikrmate-hadis-static-v1';
 
@@ -161,6 +161,12 @@ self.addEventListener('install', (event) => {
       await self.skipWaiting();
     })()
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // 2. Activate Event: Clean up outdated caches, take control, and gently pre-warm secondary assets
@@ -325,7 +331,7 @@ self.addEventListener('fetch', (event) => {
 
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 1100);
+          const timeoutId = setTimeout(() => controller.abort(), 3500);
           const networkResponse = await fetch(event.request, {
             cache: 'no-cache',
             signal: controller.signal,
@@ -341,6 +347,16 @@ self.addEventListener('fetch', (event) => {
           }
           throw new Error(`HTTP ${networkResponse?.status || 'invalid'}`);
         } catch {
+          if (!isOffline) {
+            fetch('/index.html', { cache: 'no-store' })
+              .then((fresh) => {
+                if (fresh && fresh.status === 200) {
+                  cache.put('/index.html', fresh.clone());
+                  cache.put('/', fresh.clone());
+                }
+              })
+              .catch(() => {});
+          }
           const fallbackCached =
             (await cache.match('/index.html', { ignoreSearch: true })) ||
             (await cache.match('/', { ignoreSearch: true })) ||
@@ -411,7 +427,7 @@ self.addEventListener('fetch', (event) => {
         }
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 1100);
+          const timeoutId = setTimeout(() => controller.abort(), 3500);
           const networkResponse = await fetch(event.request, {
             cache: 'no-cache',
             signal: controller.signal,

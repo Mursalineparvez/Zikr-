@@ -78,7 +78,10 @@ export interface GoogleAuthResult {
  * Shows all Gmail accounts logged into the user's phone or laptop browser.
  */
 export async function signInWithGoogleAuth(loginHintEmail?: string): Promise<GoogleAuthResult> {
-  const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const currentHostname =
+    typeof window !== 'undefined'
+      ? window.location.hostname || window.location.origin || window.location.protocol
+      : '';
   try {
     let authInstance = auth;
     if (!authInstance) {

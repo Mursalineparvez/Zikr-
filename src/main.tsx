@@ -34,17 +34,46 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  // Register Service Worker non-blockingly during idle time to prevent network contention on launch
+  // Register Service Worker non-blockingly and auto-apply updates cleanly
   if ('serviceWorker' in navigator) {
     const registerSW = () => {
-      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
+      const hadController = Boolean(navigator.serviceWorker.controller);
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController || reloading) return;
+        try {
+          if (sessionStorage.getItem('zikrmate_sw_reloaded_v46') === '1') return;
+          sessionStorage.setItem('zikrmate_sw_reloaded_v46', '1');
+        } catch {}
+        reloading = true;
+        window.location.reload();
+      });
+
+      navigator.serviceWorker
+        .register('/sw.js', { updateViaCache: 'none' })
+        .then((reg) => {
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          reg.addEventListener('updatefound', () => {
+            const installing = reg.installing;
+            if (!installing) return;
+            installing.addEventListener('statechange', () => {
+              if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                installing.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+          reg.update().catch(() => {});
+        })
+        .catch(() => {});
     };
 
     window.addEventListener('load', () => {
       if (typeof (window as any).requestIdleCallback === 'function') {
         (window as any).requestIdleCallback(registerSW, { timeout: 2500 });
       } else {
-        setTimeout(registerSW, 1200);
+        setTimeout(registerSW, 800);
       }
     });
   }

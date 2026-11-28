@@ -3159,11 +3159,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                         {(googleFallbackInfo.unauthorizedDomain || googleFallbackInfo.errorCode === 'auth/unauthorized-domain') &&
                           typeof window !== 'undefined' &&
-                          !['ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app', 'ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app'].includes(
-                            window.location.hostname
-                          ) && (
+                          ![
+                            'ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
+                            'ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
+                            'tablig.vercel.app',
+                          ].includes(window.location.hostname) && (
                             <a
-                              href="https://ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1"
+                              href={
+                                window.location.hostname.endsWith('.vercel.app')
+                                  ? 'https://tablig.vercel.app/?open_auth=1'
+                                  : 'https://ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1'
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95"
