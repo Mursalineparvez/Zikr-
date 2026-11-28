@@ -30,6 +30,7 @@ import {
   signInWithGoogleAuth,
   loadUserDataFromCloud,
   saveUserDataToCloud,
+  mergeCloudZikrStates,
   CloudZikrState,
 } from '../services/firebase';
 import {
@@ -37,6 +38,7 @@ import {
   loginWithEmailSession,
   loginWithGoogleTokenSession,
 } from '../services/authClient';
+import { mergeSavedHighlights } from '../utils/savedItems';
 import { findSavedAccount, saveAccountToRegistry } from '../utils/accountRegistry';
 import { getDetectedDeviceInfo } from '../utils/deviceInfo';
 
@@ -76,7 +78,7 @@ interface FirstDownloadWelcomeViewProps {
   selectedLanguage: ZikrLanguage;
   onSelectLanguage: (lang: ZikrLanguage) => void;
   userProfile: UserProfile;
-  onUpdateProfile: (profile: UserProfile) => void;
+  onUpdateProfile: (profile: UserProfile, preloadedCloudData?: CloudZikrState) => void | Promise<void>;
   onCloudDataLoaded?: (data: CloudZikrState, emailKey: string) => void;
   zikrs: ZikrItem[];
   historySessions: HistorySession[];
@@ -154,46 +156,66 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
         const cloudData = await loadUserDataFromCloud(targetEmail);
         const existing = findSavedAccount(targetEmail);
 
+        const srvUser = serverAuth?.data?.user;
+        const srvProfile = serverAuth?.data?.profile;
+        const srvData = serverAuth?.data?.userData;
+
         const updated: UserProfile = {
-          name: serverAuth?.data?.user?.name || result.user.name || cloudData?.profile?.name || existing?.name || targetEmail.split('@')[0],
+          name: srvUser?.name || result.user.name || cloudData?.profile?.name || existing?.name || targetEmail.split('@')[0],
           emailOrPhone: targetEmail,
-          photoUrl: serverAuth?.data?.profile?.photo || result.user.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || '',
-          location: serverAuth?.data?.profile?.preferences?.location || existing?.location || userProfile.location || detected.location || 'Bangladesh',
+          photoUrl: srvProfile?.photo || result.user.photoUrl || cloudData?.profile?.photoUrl || existing?.photoUrl || '',
+          location: srvProfile?.preferences?.location || existing?.location || userProfile.location || detected.location || 'Bangladesh',
           deviceModel: detected.model,
           osVersion: detected.osVersion,
           isSignedIn: true,
           isVerified: true,
           verificationMethod: 'google',
-          verificationDate: new Date().toISOString(),
+          verificationDate: srvUser?.created_at || new Date().toISOString(),
           authProvider: 'google',
           lastSyncedAt: Date.now(),
         };
 
-        saveAccountToRegistry(updated);
-        onUpdateProfile(updated);
+        if (srvData?.saved_items?.libraryHighlights?.length) {
+          mergeSavedHighlights(srvData.saved_items.libraryHighlights);
+        }
 
-        if (cloudData && cloudData.foundInCloud && onCloudDataLoaded) {
-          onCloudDataLoaded(cloudData, targetEmail);
-        } else if (serverAuth?.ok && serverAuth.data?.userData && onCloudDataLoaded) {
-          const ud = serverAuth.data.userData;
-          onCloudDataLoaded({
-            profile: updated,
-            zikrs: ud.saved_items?.zikrs || [],
-            history: ud.saved_items?.historySessions || [],
-            settings: ud.settings as any,
-            lifetimeTotalCount: ud.activity?.lifetimeTotalCount || 0,
-            aamalLogs: ud.activity?.aamalLogs || {},
-            foundInCloud: true,
-            hasZikrData: Array.isArray(ud.saved_items?.zikrs) && ud.saved_items.zikrs.length > 0,
-          }, targetEmail);
-        } else {
+        const serverState: CloudZikrState | null = srvData
+          ? {
+              profile: updated,
+              zikrs: srvData.saved_items?.zikrs || [],
+              history: srvData.saved_items?.historySessions || [],
+              settings: srvData.settings as any,
+              lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
+              aamalLogs: srvData.activity?.aamalLogs || {},
+              lastSyncedAt: srvData.activity?.lastSyncedAt || Date.now(),
+              foundInCloud: true,
+              hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
+            }
+          : null;
+
+        let mergedState: CloudZikrState | undefined = serverState || undefined;
+        if (cloudData?.foundInCloud && serverState) {
+          mergedState = mergeCloudZikrStates(cloudData, serverState);
+        } else if (cloudData?.foundInCloud) {
+          mergedState = cloudData;
+        }
+
+        if (!mergedState?.foundInCloud) {
           const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
           if (localSum > 0 || lifetimeTotalCount > 0) {
-            saveUserDataToCloud(targetEmail, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
-          } else if (onCloudDataLoaded) {
-            onCloudDataLoaded({ foundInCloud: false }, targetEmail);
+            mergedState = {
+              profile: updated,
+              zikrs,
+              history: historySessions,
+              lifetimeTotalCount,
+              foundInCloud: true,
+              hasZikrData: zikrs.length > 0,
+            };
           }
         }
+
+        saveAccountToRegistry(updated);
+        await onUpdateProfile(updated, mergedState);
 
         try {
           confetti({
@@ -281,24 +303,26 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
         lastSyncedAt: Date.now(),
       };
 
-      saveAccountToRegistry(updated);
-      onUpdateProfile(updated);
+      if (srvData?.saved_items?.libraryHighlights?.length) {
+        mergeSavedHighlights(srvData.saved_items.libraryHighlights);
+      }
 
-      if (srvData && onCloudDataLoaded) {
-        onCloudDataLoaded(
-          {
+      const preloadedState: CloudZikrState | undefined = srvData
+        ? {
             profile: updated,
             zikrs: srvData.saved_items?.zikrs || [],
             history: srvData.saved_items?.historySessions || [],
             settings: srvData.settings as any,
             lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
             aamalLogs: srvData.activity?.aamalLogs || {},
+            lastSyncedAt: srvData.activity?.lastSyncedAt || Date.now(),
             foundInCloud: true,
             hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
-          },
-          targetEmail
-        );
-      }
+          }
+        : undefined;
+
+      saveAccountToRegistry(updated);
+      await onUpdateProfile(updated, preloadedState);
 
       try {
         confetti({
@@ -381,10 +405,21 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
         lastSyncedAt: Date.now(),
       };
 
-      saveAccountToRegistry(updated);
-      onUpdateProfile(updated);
+      const localSum = zikrs.reduce((acc, curr) => acc + (curr.count || 0), 0);
+      const preloadedState: CloudZikrState | undefined =
+        localSum > 0 || lifetimeTotalCount > 0
+          ? {
+              profile: updated,
+              zikrs,
+              history: historySessions,
+              lifetimeTotalCount,
+              foundInCloud: true,
+              hasZikrData: zikrs.length > 0,
+            }
+          : undefined;
 
-      saveUserDataToCloud(targetEmail, updated, zikrs, historySessions, lifetimeTotalCount, undefined, {}).catch(() => {});
+      saveAccountToRegistry(updated);
+      await onUpdateProfile(updated, preloadedState);
 
       try {
         confetti({
@@ -482,7 +517,15 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                 </div>
                 {googlePopupBlockedInIframe && typeof window !== 'undefined' && (
                   <a
-                    href={window.location.href}
+                    href={(() => {
+                      try {
+                        const u = new URL(window.location.href);
+                        u.searchParams.set('open_auth', '1');
+                        return u.toString();
+                      } catch {
+                        return window.location.href;
+                      }
+                    })()}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 transition"

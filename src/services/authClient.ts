@@ -199,15 +199,37 @@ export async function loginWithGoogleTokenSession(payload: {
   }
 }
 
-export async function loginWithGoogleDirectSession(payload: {
+export async function sendServerEmailOtp(payload: {
   email: string;
+  purpose?: 'login' | 'signup' | 'reset';
+}): Promise<{ ok: boolean; maskedTarget?: string; message?: string; error?: string }> {
+  try {
+    const res = await authFetch('/api/auth/otp/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    return {
+      ok: res.ok,
+      maskedTarget: data?.maskedTarget,
+      message: data?.message,
+      error: data?.error,
+    };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Network error while sending OTP' };
+  }
+}
+
+export async function verifyServerEmailOtp(payload: {
+  email: string;
+  code: string;
   name?: string;
-  photo?: string;
   device?: string;
   location?: string;
 }): Promise<{ ok: boolean; status: number; data: ServerAuthResponse }> {
   try {
-    const res = await authFetch('/api/auth/google-direct', {
+    const res = await authFetch('/api/auth/otp/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -221,7 +243,7 @@ export async function loginWithGoogleDirectSession(payload: {
     return {
       ok: false,
       status: 0,
-      data: { authenticated: false, error: err?.message || 'Network error during direct Google sign-in' },
+      data: { authenticated: false, error: err?.message || 'Network error during OTP verification' },
     };
   }
 }

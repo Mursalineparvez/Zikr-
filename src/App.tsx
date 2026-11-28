@@ -78,6 +78,7 @@ import {
   saveLibraryHighlightsToCloud,
   loadLibraryHighlightsFromCloud,
   testFirestoreConnection,
+  mergeCloudZikrStates,
 } from './services/firebaseLazy';
 import {
   restoreServerSession,
@@ -1065,6 +1066,9 @@ export default function App() {
               lastSyncedAt: sess.userData?.activity?.lastSyncedAt || Date.now(),
             };
             saveAccountToRegistry(restoredProfile);
+            try {
+              localStorage.setItem('zikrmate_active_data_owner', targetEmail);
+            } catch {}
             if (sess.userData?.saved_items?.libraryHighlights?.length) {
               mergeSavedHighlights(sess.userData.saved_items.libraryHighlights);
             }
@@ -1096,29 +1100,49 @@ export default function App() {
             const detected = getDetectedDeviceInfo();
             const existing = findSavedAccount(targetEmail);
             const loc = existing?.location || userProfileRef.current.location || 'Bangladesh';
+            let serverAuth: Awaited<ReturnType<typeof loginWithGoogleTokenSession>> | null = null;
             if (result.user.idToken) {
-              await loginWithGoogleTokenSession({
+              serverAuth = await loginWithGoogleTokenSession({
                 idToken: result.user.idToken,
                 device: detected.model,
                 location: loc,
               }).catch(() => null);
             }
+            const srvUser = serverAuth?.data?.user;
+            const srvProfile = serverAuth?.data?.profile;
+            const srvData = serverAuth?.data?.userData;
             const updated: UserProfile = {
-              name: result.user.name || existing?.name || targetEmail.split('@')[0],
+              name: srvUser?.name || result.user.name || existing?.name || targetEmail.split('@')[0],
               emailOrPhone: targetEmail,
-              photoUrl: result.user.photoUrl || existing?.photoUrl || '',
-              location: loc,
+              photoUrl: srvProfile?.photo || result.user.photoUrl || existing?.photoUrl || '',
+              location: srvProfile?.preferences?.location || loc,
               deviceModel: detected.model,
               osVersion: detected.osVersion,
               isSignedIn: true,
               isVerified: true,
               verificationMethod: 'google',
-              verificationDate: new Date().toISOString(),
+              verificationDate: srvUser?.created_at || new Date().toISOString(),
               authProvider: 'google',
               lastSyncedAt: Date.now(),
             };
+            if (srvData?.saved_items?.libraryHighlights?.length) {
+              mergeSavedHighlights(srvData.saved_items.libraryHighlights);
+            }
+            const preloadedCloudData: CloudZikrState | undefined = srvData
+              ? {
+                  profile: updated,
+                  zikrs: srvData.saved_items?.zikrs || [],
+                  history: srvData.saved_items?.historySessions || [],
+                  settings: srvData.settings as any,
+                  lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
+                  aamalLogs: srvData.activity?.aamalLogs || {},
+                  lastSyncedAt: srvData.activity?.lastSyncedAt || Date.now(),
+                  foundInCloud: true,
+                  hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
+                }
+              : undefined;
             saveAccountToRegistry(updated);
-            await handleUpdateProfileRef.current(updated);
+            await handleUpdateProfileRef.current(updated, preloadedCloudData);
           }
         })
         .catch(() => {});
@@ -1142,22 +1166,50 @@ export default function App() {
           }
           const detected = getDetectedDeviceInfo();
           const existing = findSavedAccount(targetEmail);
+          const loc = existing?.location || current.location || 'Bangladesh';
+          let serverAuth: Awaited<ReturnType<typeof loginWithGoogleTokenSession>> | null = null;
+          if (authUser.idToken) {
+            serverAuth = await loginWithGoogleTokenSession({
+              idToken: authUser.idToken,
+              device: detected.model,
+              location: loc,
+            }).catch(() => null);
+          }
+          const srvUser = serverAuth?.data?.user;
+          const srvProfile = serverAuth?.data?.profile;
+          const srvData = serverAuth?.data?.userData;
           const updated: UserProfile = {
-            name: authUser.name || existing?.name || targetEmail.split('@')[0],
+            name: srvUser?.name || authUser.name || existing?.name || targetEmail.split('@')[0],
             emailOrPhone: targetEmail,
-            photoUrl: authUser.photoUrl || existing?.photoUrl || '',
-            location: existing?.location || current.location || 'Bangladesh',
+            photoUrl: srvProfile?.photo || authUser.photoUrl || existing?.photoUrl || '',
+            location: srvProfile?.preferences?.location || loc,
             deviceModel: detected.model,
             osVersion: detected.osVersion,
             isSignedIn: true,
             isVerified: true,
             verificationMethod: 'google',
-            verificationDate: new Date().toISOString(),
+            verificationDate: srvUser?.created_at || new Date().toISOString(),
             authProvider: 'google',
             lastSyncedAt: Date.now(),
           };
+          if (srvData?.saved_items?.libraryHighlights?.length) {
+            mergeSavedHighlights(srvData.saved_items.libraryHighlights);
+          }
+          const preloadedCloudData: CloudZikrState | undefined = srvData
+            ? {
+                profile: updated,
+                zikrs: srvData.saved_items?.zikrs || [],
+                history: srvData.saved_items?.historySessions || [],
+                settings: srvData.settings as any,
+                lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
+                aamalLogs: srvData.activity?.aamalLogs || {},
+                lastSyncedAt: srvData.activity?.lastSyncedAt || Date.now(),
+                foundInCloud: true,
+                hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
+              }
+            : undefined;
           saveAccountToRegistry(updated);
-          handleUpdateProfileRef.current(updated).catch(() => {});
+          handleUpdateProfileRef.current(updated, preloadedCloudData).catch(() => {});
         }
       })
         .then((unsub) => {
@@ -1434,7 +1486,7 @@ export default function App() {
     }
   };
 
-  const handleUpdateProfile = async (updated: UserProfile) => {
+  const handleUpdateProfile = async (updated: UserProfile, preloadedCloudData?: CloudZikrState) => {
     const wasSignedIn = userProfile.isSignedIn;
     const oldEmail = (userProfile.emailOrPhone || '').toLowerCase().trim();
     const newEmail = (updated.emailOrPhone || '').toLowerCase().trim();
@@ -1504,7 +1556,7 @@ export default function App() {
         return;
       }
 
-      // 2. Handle LOGIN or SWITCHING ACCOUNT (strict per-user isolation!)
+      // 2. Handle LOGIN or SWITCHING ACCOUNT (strict per-user isolation + Cloud/Server merge!)
       if (isLoginOrSwitch && newEmail) {
         if (cloudSyncDebounceRef.current) clearTimeout(cloudSyncDebounceRef.current);
         isCloudSyncReadyRef.current = false;
@@ -1556,11 +1608,32 @@ export default function App() {
         saveAccountToRegistry(updated);
         navigateToMyAccount('profile');
 
-        // Fetch cloud data strictly for newEmail
+        // Fetch cloud + server DB data strictly for newEmail and merge deterministically with preloadedCloudData
         const cloudData = await loadUserDataFromCloud(newEmail);
+        let resolvedCloudData: CloudZikrState | null = cloudData;
+        if (cloudData?.foundInCloud && preloadedCloudData?.foundInCloud) {
+          resolvedCloudData = await mergeCloudZikrStates(cloudData, preloadedCloudData);
+        } else if (preloadedCloudData?.foundInCloud) {
+          resolvedCloudData = preloadedCloudData;
+        }
 
-        if (cloudData && cloudData.foundInCloud) {
-          applyCloudDataToState(cloudData, true, true, true);
+        if (resolvedCloudData && resolvedCloudData.foundInCloud) {
+          applyCloudDataToState(resolvedCloudData, true, true, true);
+          if (
+            preloadedCloudData?.foundInCloud &&
+            (!cloudData?.foundInCloud ||
+              (preloadedCloudData.lifetimeTotalCount || 0) > (cloudData?.lifetimeTotalCount || 0))
+          ) {
+            saveUserDataToCloud(
+              newEmail,
+              updated,
+              resolvedCloudData.zikrs || [],
+              resolvedCloudData.history || [],
+              resolvedCloudData.lifetimeTotalCount || 0,
+              (resolvedCloudData.settings as AppSettings) || settings,
+              resolvedCloudData.aamalLogs || {}
+            ).catch(() => {});
+          }
           showToast(
             selectedLanguage === 'bn'
               ? `✨ স্বাগতম ${updated.name || 'ইউজার'}! আপনার আলাদা অ্যাকাউন্ট ডাটা ও রিপোর্ট লোড হয়েছে।`
@@ -2852,6 +2925,7 @@ export default function App() {
                 localStorage.setItem(TOUR_STORAGE_KEY, 'true');
               } catch {}
               setShowFirstDownloadWelcome(false);
+              setAutoOpenAuthModal(true);
               handleOpenProfileModal('profile');
             }}
           />

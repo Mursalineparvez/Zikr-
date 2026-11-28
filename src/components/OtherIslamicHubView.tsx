@@ -97,7 +97,7 @@ interface OtherIslamicHubViewProps {
   onNavigateToQuran?: () => void;
   onNavigateToNamaj?: () => void;
   userProfile?: UserProfile;
-  onUpdateProfile?: (updated: UserProfile) => void;
+  onUpdateProfile?: (updated: UserProfile, preloadedCloudData?: CloudZikrState) => void | Promise<void>;
   onNavigateModule?: (module: NavModule) => void;
   onToggleThemeMode?: () => void;
   onToggleSound?: () => void;

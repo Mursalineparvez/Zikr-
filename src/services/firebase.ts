@@ -75,7 +75,7 @@ export interface GoogleAuthResult {
  * Real Firebase Google Sign-In with account chooser ('select_account')
  * Shows all Gmail accounts logged into the user's phone or laptop browser.
  */
-export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
+export async function signInWithGoogleAuth(loginHintEmail?: string): Promise<GoogleAuthResult> {
   try {
     let authInstance = auth;
     if (!authInstance) {
@@ -99,16 +99,20 @@ export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
     }
 
     const googleProvider = new GoogleAuthProvider();
-    googleProvider.setCustomParameters({
+    const customParams: Record<string, string> = {
       prompt: 'select_account',
-    });
+    };
+    if (loginHintEmail && loginHintEmail.includes('@')) {
+      customParams.login_hint = loginHintEmail.toLowerCase().trim();
+    }
+    googleProvider.setCustomParameters(customParams);
     googleProvider.addScope('profile');
     googleProvider.addScope('email');
 
     // Primary: Popup sign-in (shows Google's native account picker with all phone/laptop Gmail accounts)
     const popupStartMs = Date.now();
     try {
-      const result = await signInWithPopup(authInstance, googleProvider);
+      const result = await signInWithPopup(authInstance, googleProvider, browserPopupRedirectResolver);
       const user = result.user;
       const idToken = await user.getIdToken().catch(() => '');
       return {
@@ -142,18 +146,18 @@ export async function signInWithGoogleAuth(): Promise<GoogleAuthResult> {
         };
       }
 
-      // On standalone mobile/desktop browser tabs (not inside an iframe), fall back to full-page redirect
+      // Never trigger signInWithRedirect for auth/unauthorized-domain (prevents redirect loops on unauthorized hosts)
+      // On standalone mobile/desktop/PWA tabs (not inside an iframe), fall back to full-page Google account chooser redirect
       if (
         !inIframe &&
         (code === 'auth/popup-blocked' ||
           code === 'auth/operation-not-supported-in-this-environment' ||
-          code === 'auth/internal-error' ||
-          code === 'auth/unauthorized-domain')
+          code === 'auth/internal-error')
       ) {
         try {
           sessionStorage.setItem('zikrmate_google_redirect_in_progress', 'true');
         } catch {}
-        await signInWithRedirect(authInstance, googleProvider);
+        await signInWithRedirect(authInstance, googleProvider, browserPopupRedirectResolver);
         return {
           success: false,
           isRedirecting: true,
@@ -222,18 +226,20 @@ export async function checkGoogleRedirectResult(): Promise<{
  * Real-time listener for Firebase Auth session changes (supports cross-device & PWA restarts)
  */
 export function listenToAuthChanges(
-  callback: (user: { name: string; email: string; photoUrl: string; uid: string } | null) => void
+  callback: (user: { name: string; email: string; photoUrl: string; uid: string; idToken?: string } | null) => void
 ): Unsubscribe {
   try {
     const authInstance = auth || getAuth(app);
     if (!authInstance) return () => {};
-    return onAuthStateChanged(authInstance, (user: FirebaseUser | null) => {
+    return onAuthStateChanged(authInstance, async (user: FirebaseUser | null) => {
       if (user && user.email) {
+        const idToken = await user.getIdToken().catch(() => '');
         callback({
           name: user.displayName || user.email.split('@')[0] || 'User',
           email: user.email,
           photoUrl: user.photoURL || '',
           uid: user.uid,
+          idToken,
         });
       } else {
         callback(null);
@@ -552,13 +558,169 @@ export async function saveUserDataToCloud(
 }
 
 /**
- * Load user data from Firebase Firestore across any device
+ * Deterministic merge of two CloudZikrState snapshots (e.g. Firestore + Server DB)
+ * so App and Web always converge to the exact same counts, history, aamal, and profile.
+ */
+export function mergeCloudZikrStates(
+  primary?: CloudZikrState | null,
+  secondary?: CloudZikrState | null
+): CloudZikrState {
+  if (!primary?.foundInCloud && !secondary?.foundInCloud) {
+    return primary || secondary || { foundInCloud: false, hasZikrData: false };
+  }
+  if (!primary?.foundInCloud && secondary?.foundInCloud) return secondary;
+  if (primary?.foundInCloud && !secondary?.foundInCloud) return primary;
+
+  const a = primary!;
+  const b = secondary!;
+  const aTs = a.updatedAtMs || a.lastSyncedAt || 0;
+  const bTs = b.updatedAtMs || b.lastSyncedAt || 0;
+  const newer = bTs > aTs ? b : a;
+  const older = bTs > aTs ? a : b;
+
+  // Merge zikrs by id taking highest count
+  const zikrMap = new Map<string, ZikrItem>();
+  for (const list of [older.zikrs || [], newer.zikrs || []]) {
+    for (const z of list) {
+      if (!z || !z.id) continue;
+      const prev = zikrMap.get(z.id);
+      if (!prev) {
+        zikrMap.set(z.id, z);
+      } else {
+        zikrMap.set(z.id, {
+          ...prev,
+          ...z,
+          count: Math.max(prev.count || 0, z.count || 0),
+          updatedAt: Math.max(prev.updatedAt || 0, z.updatedAt || 0),
+        });
+      }
+    }
+  }
+  const mergedZikrs = Array.from(zikrMap.values());
+
+  // Merge history sessions by id
+  const historyMap = new Map<string, HistorySession>();
+  for (const s of [...(older.history || []), ...(newer.history || [])]) {
+    if (s && s.id) historyMap.set(s.id, s);
+  }
+  const mergedHistory = Array.from(historyMap.values()).sort((x, y) => y.timestamp - x.timestamp);
+
+  // Merge aamalLogs by date key taking higher dhikrCount & union of completed item ids
+  const mergedAamalLogs: Record<string, any> = { ...(older.aamalLogs || {}) };
+  for (const [dateKey, inc] of Object.entries(newer.aamalLogs || {})) {
+    const prev = mergedAamalLogs[dateKey];
+    if (!prev || typeof prev !== 'object') {
+      mergedAamalLogs[dateKey] = inc;
+    } else if (inc && typeof inc === 'object') {
+      const prevItems = Array.isArray(prev.completedIds) ? prev.completedIds : [];
+      const incItems = Array.isArray((inc as any).completedIds) ? (inc as any).completedIds : [];
+      const mergedIds = Array.from(new Set([...prevItems, ...incItems]));
+      mergedAamalLogs[dateKey] = {
+        ...prev,
+        ...inc,
+        dhikrCount: Math.max(prev.dhikrCount || 0, (inc as any).dhikrCount || 0),
+        ...(mergedIds.length > 0 ? { completedIds: mergedIds } : {}),
+      };
+    }
+  }
+
+  let aamalDhikrSum = 0;
+  for (const dayLog of Object.values(mergedAamalLogs)) {
+    if (dayLog && typeof (dayLog as any).dhikrCount === 'number') {
+      aamalDhikrSum += (dayLog as any).dhikrCount;
+    }
+  }
+  const historyDhikrSum = mergedHistory.reduce((acc, s) => acc + (s.totalCount || 0), 0);
+  const activeDhikrSum = mergedZikrs.reduce((acc, z) => acc + (z.count || 0), 0);
+
+  const mergedLifetime = Math.max(
+    a.lifetimeTotalCount || 0,
+    b.lifetimeTotalCount || 0,
+    a.totalCount || 0,
+    b.totalCount || 0,
+    aamalDhikrSum,
+    historyDhikrSum,
+    activeDhikrSum
+  );
+
+  const mergedProfile: Partial<UserProfile> = {
+    ...(older.profile || {}),
+    ...(newer.profile || {}),
+    name: newer.profile?.name || older.profile?.name,
+    photoUrl: newer.profile?.photoUrl || older.profile?.photoUrl,
+    location: newer.profile?.location || older.profile?.location,
+    isSignedIn: true,
+    isVerified: true,
+  };
+
+  const mergedSettings =
+    older.settings || newer.settings
+      ? ({ ...(older.settings || {}), ...(newer.settings || {}) } as AppSettings)
+      : undefined;
+
+  return {
+    profile: mergedProfile,
+    zikrs: mergedZikrs,
+    history: mergedHistory,
+    settings: mergedSettings,
+    lifetimeTotalCount: mergedLifetime,
+    totalCount: activeDhikrSum,
+    aamalLogs: mergedAamalLogs,
+    updatedAtMs: Math.max(aTs, bTs) || Date.now(),
+    lastSyncedAt: Math.max(a.lastSyncedAt || 0, b.lastSyncedAt || 0) || Date.now(),
+    senderDeviceId: newer.senderDeviceId || older.senderDeviceId,
+    foundInCloud: true,
+    hasZikrData: mergedZikrs.length > 0 || Boolean(a.hasZikrData) || Boolean(b.hasZikrData),
+  };
+}
+
+/**
+ * Load user data from BOTH Firebase Firestore and authenticated Server DB,
+ * then merge them so App and Web show identical counts & profile on every sign-in.
  */
 export async function loadUserDataFromCloud(
   emailOrPhone: string
 ): Promise<CloudZikrState | null> {
   if (!emailOrPhone) return null;
   const userKey = sanitizeUserKey(emailOrPhone);
+
+  const fetchServerState = async (): Promise<CloudZikrState | null> => {
+    if (userKey.startsWith('guest_')) return null;
+    try {
+      const res = await Promise.race([
+        authFetch(`/api/sync-user/${encodeURIComponent(userKey)}`),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
+      ]);
+      if (res && res.ok) {
+        const json = await res.json();
+        if (json?.success && json?.user) {
+          const u = json.user;
+          return {
+            profile: {
+              name: u.name,
+              emailOrPhone: u.email || u.emailOrPhone || emailOrPhone,
+              photoUrl: u.photoUrl || '',
+              location: u.location || '',
+              deviceModel: u.deviceModel || '',
+              osVersion: u.osVersion || '',
+              isSignedIn: true,
+              isVerified: true,
+            },
+            zikrs: Array.isArray(u.activeZikrs) ? u.activeZikrs : [],
+            history: Array.isArray(u.historySessions) ? u.historySessions : [],
+            settings: u.settings,
+            lifetimeTotalCount: typeof u.lifetimeTotalCount === 'number' ? u.lifetimeTotalCount : 0,
+            aamalLogs: u.aamalLogs || {},
+            lastSyncedAt: typeof u.lastSyncedAt === 'number' ? u.lastSyncedAt : undefined,
+            updatedAtMs: typeof u.lastSyncedAt === 'number' ? u.lastSyncedAt : undefined,
+            foundInCloud: true,
+            hasZikrData: Array.isArray(u.activeZikrs) && u.activeZikrs.length > 0,
+          };
+        }
+      }
+    } catch {}
+    return null;
+  };
 
   try {
     const profileDocRef = doc(db, 'users', userKey);
@@ -573,7 +735,11 @@ export async function loadUserDataFromCloud(
       getDoc(dataDocRef).catch(() => null),
     ]);
     const timeoutFallback = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000));
-    const snaps = await Promise.race([fetchFirestoreDocs, timeoutFallback]);
+
+    const [snaps, serverState] = await Promise.all([
+      Promise.race([fetchFirestoreDocs, timeoutFallback]),
+      fetchServerState(),
+    ]);
 
     const profileSnap = snaps ? snaps[0] : null;
     const historySnap = snaps ? snaps[1] : null;
@@ -592,39 +758,11 @@ export async function loadUserDataFromCloud(
     }
 
     if (!rawData) {
-      // Try authenticated server DB (/api/sync-user/:userKey) before falling back to local offline cache
-      try {
-        const res = await Promise.race([
-          authFetch(`/api/sync-user/${encodeURIComponent(userKey)}`),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
-        ]);
-        if (res && res.ok) {
-          const json = await res.json();
-          if (json?.success && json?.user) {
-            const u = json.user;
-            return {
-              profile: {
-                name: u.name,
-                emailOrPhone: u.email || u.emailOrPhone || emailOrPhone,
-                photoUrl: u.photoUrl || '',
-                location: u.location || '',
-                deviceModel: u.deviceModel || '',
-                osVersion: u.osVersion || '',
-                isSignedIn: true,
-                isVerified: true,
-              },
-              zikrs: Array.isArray(u.activeZikrs) ? u.activeZikrs : [],
-              history: Array.isArray(u.historySessions) ? u.historySessions : [],
-              settings: u.settings,
-              lifetimeTotalCount: typeof u.lifetimeTotalCount === 'number' ? u.lifetimeTotalCount : 0,
-              aamalLogs: u.aamalLogs,
-              foundInCloud: true,
-              hasZikrData: Array.isArray(u.activeZikrs) && u.activeZikrs.length > 0,
-            };
-          }
-        }
-      } catch {}
-      // Check offline backup cache if cloud has no record yet
+      if (serverState && serverState.foundInCloud) {
+        return serverState;
+      }
+
+      // Check offline backup cache if cloud & server have no record yet
       try {
         const cached = localStorage.getItem(`zikrmate_cloud_cache_${userKey}`);
         if (cached) {
@@ -658,8 +796,8 @@ export async function loadUserDataFromCloud(
     let loadedSettings: AppSettings | undefined = undefined;
     let loadedLifetimeTotal: number | undefined = undefined;
     let loadedAamalLogs: Record<string, any> | undefined = undefined;
-    let loadedUpdatedAtMs: number | undefined = rawData.updatedAtMs;
-    let loadedSenderDeviceId: string | undefined = rawData.senderDeviceId;
+    const loadedUpdatedAtMs: number | undefined = rawData.updatedAtMs;
+    const loadedSenderDeviceId: string | undefined = rawData.senderDeviceId;
     let hasZikrData = false;
 
     if (rawData.name) loadedProfile.name = rawData.name;
@@ -740,7 +878,7 @@ export async function loadUserDataFromCloud(
     );
     loadedLifetimeTotal = verifiedLifetime;
 
-    return {
+    const firestoreState: CloudZikrState = {
       profile: loadedProfile,
       zikrs: loadedZikrs,
       history: loadedHistory,
@@ -752,6 +890,8 @@ export async function loadUserDataFromCloud(
       foundInCloud: true,
       hasZikrData,
     };
+
+    return mergeCloudZikrStates(firestoreState, serverState);
   } catch (error) {
     console.error('Failed to load user cloud data from Firebase:', error);
     return null;
@@ -1066,203 +1206,6 @@ export async function checkUserExistsInCloud(emailOrPhone: string): Promise<bool
   }
 }
 
-/**
- * Send real verification email with security code
- */
-export async function sendRealVerificationEmail(
-  email: string,
-  code: string,
-  purpose: 'signup' | 'login' | 'reset'
-): Promise<boolean> {
-  const normalized = email.toLowerCase().trim();
-  let subject = `[Zikr+] আপনার নতুন অ্যাকাউন্ট ভেরিফিকেশন কোড: ${code}`;
-  let messageText = `আসসালামু আলাইকুম। Zikr+-এ নতুন অ্যাকাউন্ট খোলার জন্য আপনার ৬-সংখ্যার ভেরিফিকেশন কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট।`;
-
-  if (purpose === 'reset') {
-    subject = `[Zikr+] আপনার পাসওয়ার্ড রিসেট ভেরিফিকেশন কোড: ${code}`;
-    messageText = `আসসালামু আলাইকুম। Zikr+ অ্যাকাউন্টের পাসওয়ার্ড পরিবর্তনের জন্য আপনার ৬-সংখ্যার রিসেট কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট। আপনি এই অনুরোধ না করে থাকলে অবিলম্বে সতর্ক হোন।`;
-  } else if (purpose === 'login') {
-    subject = `[Zikr+] আপনার অ্যাকাউন্ট লগইন কোড: ${code}`;
-    messageText = `আসসালামু আলাইকুম। Zikr+ অ্যাকাউন্টে নিরাপদ লগইনের জন্য আপনার ৬-সংখ্যার ওটিপি কোড হলো: ${code}। কোডটির মেয়াদ ১০ মিনিট।`;
-  }
-
-  try {
-    await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(normalized)}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        _subject: subject,
-        appName: 'Zikr+ Islamic App',
-        recipient: normalized,
-        security_code: code,
-        action_type: purpose,
-        message: messageText,
-        _captcha: 'false',
-        sent_at: new Date().toISOString(),
-      }),
-    });
-    return true;
-  } catch (err) {
-    console.warn('Real email dispatch network notice:', err);
-    return true;
-  }
-}
-
-/**
- * Generate and dispatch a secure 6-digit OTP code to email or phone
- * Never leaks the code directly to unverified UI to ensure strict account protection!
- */
-export async function generateAndSendVerificationOtp(
-  target: string,
-  type: 'email' | 'phone',
-  purpose: 'signup' | 'login' | 'reset' = 'signup'
-): Promise<{ success: boolean; message: string; maskedTarget: string }> {
-  const normalizedTarget = target.toLowerCase().trim();
-  const maskedTarget = maskEmailOrPhone(normalizedTarget);
-
-  // Rate limiting check
-  const existingRaw = sessionStorage.getItem(PENDING_OTP_KEY);
-  if (existingRaw) {
-    try {
-      const prev: PendingVerification = JSON.parse(existingRaw);
-      const remainingCooldown = prev.expiresAt - (Date.now() + 9.5 * 60 * 1000);
-      if (prev.target === normalizedTarget && remainingCooldown > 0) {
-        return {
-          success: false,
-          message: 'অনুগ্রহ করে নতুন কোড চাওয়ার আগে ৩০ সেকেন্ড অপেক্ষা করুন।',
-          maskedTarget,
-        };
-      }
-    } catch {}
-  }
-
-  // Generate cryptographically secure 6-digit PIN code
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const pending: PendingVerification = {
-    target: normalizedTarget,
-    type,
-    purpose,
-    code,
-    expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-    attempts: 0,
-  };
-
-  try {
-    sessionStorage.setItem(PENDING_OTP_KEY, JSON.stringify(pending));
-  } catch {}
-
-  // Also store token in Firestore under user doc subcollection for cross-check
-  try {
-    const userKey = sanitizeUserKey(normalizedTarget);
-    const tokenDocRef = doc(db, 'users', userKey, 'data', 'verificationToken');
-    await setDoc(tokenDocRef, {
-      target: normalizedTarget,
-      code,
-      purpose,
-      type,
-      expiresAt: pending.expiresAt,
-      createdAt: new Date().toISOString(),
-    }, { merge: true });
-  } catch {}
-
-  // Dispatch to real Email
-  if (type === 'email') {
-    await sendRealVerificationEmail(normalizedTarget, code, purpose);
-  } else {
-    console.log(`[SMS Dispatch] Secure code ${code} dispatched to ${normalizedTarget}`);
-  }
-
-  const actionName = purpose === 'signup' ? 'অ্যাকাউন্ট খোলার' : (purpose === 'reset' ? 'পাসওয়ার্ড রিসেটের' : 'লগইনের');
-
-  return {
-    success: true,
-    maskedTarget,
-    message: type === 'email'
-      ? `আপনার ইমেইলে (${maskedTarget}) ${actionName} ৬-সংখ্যার ভেরিফিকেশন কোড পাঠানো হয়েছে। ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।`
-      : `আপনার মোবাইল নম্বরে (${maskedTarget}) SMS-এ ${actionName} ৬-সংখ্যার কোড পাঠানো হয়েছে। মেসেজ চেক করুন।`,
-  };
-}
-
-export function getPendingOtp(): PendingVerification | null {
-  try {
-    const raw = sessionStorage.getItem(PENDING_OTP_KEY);
-    if (raw) {
-      const parsed: PendingVerification = JSON.parse(raw);
-      if (parsed.expiresAt > Date.now()) {
-        return parsed;
-      }
-    }
-  } catch {}
-  return null;
-}
-
-/**
- * Testing helper: retrieves code only if explicitly invoked for preview/offline assistance
- */
-export function getTestingOtpCode(target: string): string | null {
-  const pending = getPendingOtp();
-  if (pending && pending.target === target.toLowerCase().trim()) {
-    return pending.code;
-  }
-  const pendingReset = getPendingPasswordReset();
-  if (pendingReset && pendingReset.target === target.toLowerCase().trim()) {
-    return pendingReset.code;
-  }
-  return null;
-}
-
-export function verifySubmittedOtp(
-  target: string,
-  enteredCode: string,
-  purpose: 'signup' | 'login' | 'reset' = 'signup'
-): { success: boolean; message: string } {
-  const pending = getPendingOtp();
-  const normalizedTarget = target.toLowerCase().trim();
-  const cleanEntered = enteredCode.replace(/\D/g, '').trim();
-
-  if (!pending) {
-    return {
-      success: false,
-      message: 'ভেরিফিকেশন কোডের মেয়াদ শেষ হয়েছে বা নতুন কোড নেওয়া হয়নি। অনুগ্রহ করে নতুন কোড নিন।',
-    };
-  }
-
-  if (pending.target !== normalizedTarget) {
-    return {
-      success: false,
-      message: 'টার্গেট ইমেইল বা ফোন নম্বরের অমিল রয়েছে। সঠিক তথ্য দিন।',
-    };
-  }
-
-  if (pending.attempts >= 5) {
-    return {
-      success: false,
-      message: 'অতিরিক্ত ভুল কোড দেওয়া হয়েছে! নিরাপত্তার জন্য নতুন কোড চেয়ে নিন।',
-    };
-  }
-
-  // Increment attempts
-  pending.attempts += 1;
-  try {
-    sessionStorage.setItem(PENDING_OTP_KEY, JSON.stringify(pending));
-  } catch {}
-
-  if (pending.code.trim() === cleanEntered) {
-    try {
-      sessionStorage.removeItem(PENDING_OTP_KEY);
-    } catch {}
-    return { success: true, message: 'ভেরিফিকেশন সফল হয়েছে!' };
-  }
-
-  return {
-    success: false,
-    message: `ভুল কোড দেওয়া হয়েছে! আপনার ইমেইল বা SMS-এ আসা কোডটি দিন। আর ${5 - pending.attempts} বার চেষ্টা বাকি আছে।`,
-  };
-}
-
 // 6. Server-side Password Update Service (never stores plaintext password in Firestore)
 export async function updateCloudUserPassword(
   _emailOrPhone: string,
@@ -1275,131 +1218,6 @@ export async function updateCloudUserPassword(
     newPassword: newPassword.trim(),
   });
   return res.ok;
-}
-
-export interface PendingPasswordReset {
-  target: string;
-  type: 'email' | 'phone';
-  code: string;
-  expiresAt: number;
-  attempts: number;
-}
-
-export async function generateAndSendPasswordResetCode(
-  target: string,
-  type: 'email' | 'phone',
-  isExistingLocally: boolean = false
-): Promise<{ success: boolean; message: string; maskedTarget: string }> {
-  const normalizedTarget = target.toLowerCase().trim();
-  const maskedTarget = maskEmailOrPhone(normalizedTarget);
-
-  // Check if account exists either in cloud or locally
-  let exists = isExistingLocally;
-  if (!exists) {
-    exists = await checkUserExistsInCloud(normalizedTarget);
-  }
-
-  if (!exists) {
-    return {
-      success: false,
-      maskedTarget,
-      message: 'এই ইমেইল বা ফোন নম্বরে কোনো নিবন্ধিত অ্যাকাউন্ট পাওয়া যায়নি। সঠিক তথ্য দিন অথবা নতুন অ্যাকাউন্ট খুলুন।',
-    };
-  }
-
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const resetData: PendingPasswordReset = {
-    target: normalizedTarget,
-    type,
-    code,
-    expiresAt: Date.now() + 15 * 60 * 1000, // 15 mins
-    attempts: 0,
-  };
-
-  try {
-    sessionStorage.setItem(PENDING_RESET_KEY, JSON.stringify(resetData));
-  } catch {}
-
-  // Dispatch real email
-  if (type === 'email') {
-    await sendRealVerificationEmail(normalizedTarget, code, 'reset');
-  } else {
-    console.log(`[SMS Reset Dispatch] Code sent to ${normalizedTarget}`);
-  }
-
-  return {
-    success: true,
-    maskedTarget,
-    message: type === 'email'
-      ? `আপনার নিবন্ধিত ইমেইলে (${maskedTarget}) ৬-সংখ্যার পাসওয়ার্ড রিসেট কোড পাঠানো হয়েছে। ইনবক্স বা স্প্যাম চেক করুন।`
-      : `আপনার নিবন্ধিত ফোনে (${maskedTarget}) ৬-সংখ্যার পাসওয়ার্ড রিসেট কোড পাঠানো হয়েছে। SMS চেক করুন।`,
-  };
-}
-
-export function getPendingPasswordReset(): PendingPasswordReset | null {
-  try {
-    const raw = sessionStorage.getItem(PENDING_RESET_KEY);
-    if (raw) {
-      const parsed: PendingPasswordReset = JSON.parse(raw);
-      if (parsed.expiresAt > Date.now()) {
-        return parsed;
-      }
-    }
-  } catch {}
-  return null;
-}
-
-export function verifyPasswordResetCode(
-  target: string,
-  enteredCode: string
-): { success: boolean; message: string } {
-  const pending = getPendingPasswordReset();
-  const normalizedTarget = target.toLowerCase().trim();
-  const entered = enteredCode.replace(/\D/g, '').trim();
-
-  if (!pending) {
-    return {
-      success: false,
-      message: 'রিসেট কোডের মেয়াদ শেষ হয়েছে বা নতুন কোড চাওয়া হয়নি। অনুগ্রহ করে পুনরায় কোড চেয়ে নিন।',
-    };
-  }
-
-  if (pending.target !== normalizedTarget) {
-    return {
-      success: false,
-      message: 'টার্গেট ইমেইল বা ফোন নম্বরের অমিল রয়েছে। অনুগ্রহ করে সঠিক তথ্য দিন।',
-    };
-  }
-
-  if (pending.attempts >= 5) {
-    return {
-      success: false,
-      message: 'অতিরিক্ত ভুল চেষ্টা করা হয়েছে। নিরাপত্তার স্বার্থে নতুন করে কোড চেয়ে নিন।',
-    };
-  }
-
-  pending.attempts += 1;
-  try {
-    sessionStorage.setItem(PENDING_RESET_KEY, JSON.stringify(pending));
-  } catch {}
-
-  if (pending.code === entered) {
-    try {
-      sessionStorage.removeItem(PENDING_RESET_KEY);
-    } catch {}
-    return { success: true, message: 'কোড সফলভাবে যাচাই করা হয়েছে!' };
-  }
-
-  return {
-    success: false,
-    message: `ভুল কোড দেওয়া হয়েছে! আপনার ইমেইল বা SMS-এ আসা ৬-সংখ্যার কোডটি দিন। আর ${5 - pending.attempts} বার চেষ্টা বাকি আছে।`,
-  };
-}
-
-export function clearPendingPasswordReset(): void {
-  try {
-    sessionStorage.removeItem(PENDING_RESET_KEY);
-  } catch {}
 }
 
 /**

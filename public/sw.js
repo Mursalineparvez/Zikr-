@@ -1,10 +1,10 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v42-network-first-nav
+// Version: zikrmate-v43-network-first-bundles
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v42-network-first-nav';
+const CACHE_NAME = 'zikrmate-v43-network-first-bundles';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
@@ -228,8 +228,11 @@ self.addEventListener('fetch', (event) => {
     (requestUrl.origin !== self.location.origin && !isMedia) ||
     requestUrl.pathname.startsWith('/__/') ||
     requestUrl.pathname.startsWith('/api/') ||
+    requestUrl.pathname.startsWith('/src/') ||
     requestUrl.pathname.startsWith('/@') ||
     requestUrl.pathname.startsWith('/node_modules/') ||
+    requestUrl.pathname.endsWith('.ts') ||
+    requestUrl.pathname.endsWith('.tsx') ||
     requestUrl.searchParams.has('t') ||
     requestUrl.searchParams.has('v')
   ) {
@@ -303,7 +306,60 @@ self.addEventListener('fetch', (event) => {
   }
 
   // D. App Bundles, Scripts, Styles, Images, Fonts:
-  // Cache-First with Stale-While-Revalidate background update
+  // Network-First for scripts & CSS so PWA & Web always run latest Google Auth/Sync code; Cache-First for static images/fonts
+  const isCodeBundle =
+    event.request.destination === 'script' ||
+    event.request.destination === 'style' ||
+    requestUrl.pathname.endsWith('.js') ||
+    requestUrl.pathname.endsWith('.css');
+
+  if (isCodeBundle) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const networkResponse = await fetch(event.request, {
+            cache: 'no-cache',
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+            const contentType = networkResponse.headers.get('content-type') || '';
+            if (!contentType.includes('text/html')) {
+              try {
+                cache.put(event.request, networkResponse.clone());
+              } catch {}
+            }
+            return networkResponse;
+          }
+          throw new Error(`HTTP ${networkResponse?.status || 'invalid'}`);
+        } catch {
+          const cached =
+            (await cache.match(event.request, { ignoreSearch: true })) ||
+            (await cache.match(requestUrl.pathname, { ignoreSearch: true }));
+          if (cached) return cached;
+          return new Response(
+            event.request.destination === 'style' || requestUrl.pathname.endsWith('.css')
+              ? '/* offline css fallback */'
+              : '/* offline script fallback */',
+            {
+              headers: {
+                'Content-Type':
+                  event.request.destination === 'style' || requestUrl.pathname.endsWith('.css')
+                    ? 'text/css'
+                    : 'application/javascript',
+              },
+            }
+          );
+        }
+      })()
+    );
+    return;
+  }
+
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE_NAME);

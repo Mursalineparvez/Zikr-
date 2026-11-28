@@ -4,6 +4,7 @@ import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import zlib from 'zlib';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import { HADIS_LIBRARY_BOOKS, translateChapterNameBn } from './src/data/hadisCatalog';
@@ -25,6 +26,7 @@ import {
 } from './server/database';
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = 3000;
 
 app.use(
@@ -118,8 +120,21 @@ function extractSessionToken(req: express.Request): { token: string; source: 'be
   return { token: '', source: 'none' };
 }
 
-function isSameOriginOrCustomHeader(_req: express.Request): boolean {
-  return true;
+function isSameOriginOrCustomHeader(req: express.Request): boolean {
+  const customHeader = String(req.headers['x-requested-with'] || '').trim();
+  if (customHeader === 'ZikrPlus') return true;
+  const origin = req.headers.origin;
+  if (!origin) return false;
+  try {
+    const originHost = new URL(origin).host.toLowerCase();
+    const hostHeader = String(req.headers['x-forwarded-host'] || req.headers.host || '')
+      .split(',')[0]
+      .trim()
+      .toLowerCase();
+    return Boolean(hostHeader && originHost === hostHeader);
+  } catch {
+    return false;
+  }
 }
 
 interface AuthenticatedRequest extends express.Request {
@@ -362,56 +377,175 @@ app.post('/api/auth/google', async (req, res) => {
   }
 });
 
-// POST /api/auth/google-direct — Direct Gmail login / signup fallback when Firebase domain popup is blocked
-app.post('/api/auth/google-direct', (req, res) => {
+// Server-side Email OTP store (hashed codes, 10-min TTL, max 5 attempts, 30s rate limit)
+interface ServerOtpChallenge {
+  email: string;
+  codeHash: string;
+  purpose: 'login' | 'signup' | 'reset';
+  expiresAt: number;
+  lastSentAt: number;
+  attempts: number;
+}
+const serverOtpStore = new Map<string, ServerOtpChallenge>();
+
+function hashOtpCode(email: string, code: string): string {
+  return crypto.createHash('sha256').update(`${email.toLowerCase().trim()}::${code}`).digest('hex');
+}
+
+function maskEmailDisplay(email: string): string {
+  const [user, domain] = email.split('@');
+  if (!user || !domain) return email;
+  if (user.length <= 2) return `${user[0]}*@${domain}`;
+  return `${user[0]}${'*'.repeat(Math.min(user.length - 2, 4))}${user[user.length - 1]}@${domain}`;
+}
+
+// POST /api/auth/otp/send — Generates CSPRNG 6-digit OTP on server, stores SHA-256 hash, never exposes OTP to client
+app.post('/api/auth/otp/send', async (req, res) => {
   try {
     if (!isSameOriginOrCustomHeader(req)) {
       return res.status(403).json({ error: 'Origin check failed' });
     }
-    const { email, name, photo, device, location } = req.body || {};
+    const { email, purpose } = req.body || {};
     const emailClean = typeof email === 'string' ? email.toLowerCase().trim() : '';
-    if (!emailClean || !emailClean.includes('@') || !emailClean.includes('.')) {
-      return res.status(400).json({ error: 'সঠিক Gmail অ্যাড্রেস দিন।' });
+    if (!emailClean || !emailClean.includes('@') || !emailClean.includes('.') || emailClean.length > 200) {
+      return res.status(400).json({ error: 'সঠিক জিমেইল বা ইমেইল অ্যাড্রেস দিন।' });
     }
+
+    const now = Date.now();
+    const existingChallenge = serverOtpStore.get(emailClean);
+    if (existingChallenge && now - existingChallenge.lastSentAt < 30_000) {
+      return res.status(429).json({
+        error: 'অনুগ্রহ করে নতুন কোড চাওয়ার আগে ৩০ সেকেন্ড অপেক্ষা করুন।',
+      });
+    }
+
+    const safePurpose: 'login' | 'signup' | 'reset' =
+      purpose === 'signup' || purpose === 'reset' ? purpose : 'login';
+
+    const rawCode = String(crypto.randomInt(100000, 1000000));
+    serverOtpStore.set(emailClean, {
+      email: emailClean,
+      codeHash: hashOtpCode(emailClean, rawCode),
+      purpose: safePurpose,
+      expiresAt: now + 10 * 60 * 1000,
+      lastSentAt: now,
+      attempts: 0,
+    });
+
+    const subject =
+      safePurpose === 'reset'
+        ? `[Zikr+] আপনার পাসওয়ার্ড রিসেট ভেরিফিকেশন কোড: ${rawCode}`
+        : safePurpose === 'signup'
+        ? `[Zikr+] আপনার নতুন অ্যাকাউন্ট ভেরিফিকেশন কোড: ${rawCode}`
+        : `[Zikr+] আপনার অ্যাকাউন্ট লগইন কোড: ${rawCode}`;
+    const messageText = `আসসালামু আলাইকুম। আপনার Zikr+ ৬-সংখ্যার ভেরিফিকেশন কোড হলো: ${rawCode}। কোডটির মেয়াদ ১০ মিনিট।`;
+
+    let emailDispatched = false;
+    try {
+      const dispatchRes = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailClean)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          _subject: subject,
+          appName: 'Zikr+ Islamic App',
+          recipient: emailClean,
+          security_code: rawCode,
+          action_type: safePurpose,
+          message: messageText,
+          _captcha: 'false',
+          sent_at: new Date(now).toISOString(),
+        }),
+      });
+      emailDispatched = dispatchRes.ok;
+    } catch {
+      emailDispatched = false;
+    }
+
+    const maskedTarget = maskEmailDisplay(emailClean);
+    return res.json({
+      success: true,
+      maskedTarget,
+      emailDispatched,
+      message: `আপনার ইমেইলে (${maskedTarget}) ৬-সংখ্যার ভেরিফিকেশন কোড পাঠানো হয়েছে। ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।`,
+    });
+  } catch (err: any) {
+    console.error('[API /api/auth/otp/send] Error:', err);
+    return res.status(500).json({ error: err?.message || 'Failed sending OTP' });
+  }
+});
+
+// POST /api/auth/otp/verify — Verifies server-stored OTP hash and issues authenticated session
+app.post('/api/auth/otp/verify', (req, res) => {
+  try {
+    if (!isSameOriginOrCustomHeader(req)) {
+      return res.status(403).json({ error: 'Origin check failed' });
+    }
+    const { email, code, name, device, location } = req.body || {};
+    const emailClean = typeof email === 'string' ? email.toLowerCase().trim() : '';
+    const codeClean = typeof code === 'string' ? code.replace(/\D/g, '').trim() : '';
+
+    if (!emailClean || codeClean.length !== 6) {
+      return res.status(400).json({ error: 'সঠিক ইমেইল এবং ৬-সংখ্যার কোড দিন।' });
+    }
+
+    const challenge = serverOtpStore.get(emailClean);
+    if (!challenge || challenge.expiresAt <= Date.now()) {
+      serverOtpStore.delete(emailClean);
+      return res.status(400).json({ error: 'ভেরিফিকেশন কোডের মেয়াদ শেষ হয়েছে। অনুগ্রহ করে নতুন কোড নিন।' });
+    }
+
+    if (challenge.attempts >= 5) {
+      serverOtpStore.delete(emailClean);
+      return res.status(429).json({ error: 'অতিরিক্ত ভুল কোড দেওয়া হয়েছে! নতুন কোড চেয়ে নিন।' });
+    }
+
+    challenge.attempts += 1;
+    const expectedBuf = Buffer.from(challenge.codeHash, 'hex');
+    const providedBuf = Buffer.from(hashOtpCode(emailClean, codeClean), 'hex');
+    if (expectedBuf.length !== providedBuf.length || !crypto.timingSafeEqual(expectedBuf, providedBuf)) {
+      return res.status(401).json({
+        error: `ভুল কোড দেওয়া হয়েছে! আর ${Math.max(0, 5 - challenge.attempts)} বার চেষ্টা বাকি আছে।`,
+      });
+    }
+
+    serverOtpStore.delete(emailClean);
 
     let user = findUserByEmail(emailClean);
     let bundle;
-    const displayName = typeof name === 'string' && name.trim() ? name.trim().slice(0, 120) : emailClean.split('@')[0];
-    const photoUrl = typeof photo === 'string' ? photo.slice(0, 2000) : '';
+    const displayName =
+      typeof name === 'string' && name.trim() ? name.trim().slice(0, 120) : emailClean.split('@')[0];
 
     if (!user) {
       bundle = createUserAccount({
         name: displayName,
         email: emailClean,
-        auth_provider: 'google',
+        auth_provider: 'email',
         email_verified: true,
-        photo: photoUrl,
         preferences: {
           location: typeof location === 'string' && location ? location.slice(0, 120) : 'Dhaka, Bangladesh',
         },
       });
     } else {
       user.email_verified = true;
-      if (!user.name && displayName) user.name = displayName;
       bundle = ensureUserBundle(user.id)!;
-      if (!bundle.profile.photo && photoUrl) {
-        bundle.profile.photo = photoUrl;
-        bundle.profile.updated_at = new Date().toISOString();
-      }
       saveDatabase();
     }
 
-    const deviceLabel = typeof device === 'string' && device.trim()
-      ? device.trim()
-      : String(req.headers['user-agent'] || 'Web Browser').slice(0, 120);
+    const deviceLabel =
+      typeof device === 'string' && device.trim()
+        ? device.trim()
+        : String(req.headers['user-agent'] || 'Web Browser').slice(0, 120);
 
     const { rawToken, session } = createSessionForUser(bundle.user.id, deviceLabel);
     setSessionCookie(res, rawToken);
 
     return res.json(formatSessionResponse({ ...bundle, session }, rawToken));
   } catch (err: any) {
-    console.error('[API /api/auth/google-direct] Error:', err);
-    return res.status(500).json({ error: err?.message || 'Google direct auth failed' });
+    console.error('[API /api/auth/otp/verify] Error:', err);
+    return res.status(500).json({ error: err?.message || 'OTP verification failed' });
   }
 });
 

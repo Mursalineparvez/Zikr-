@@ -71,9 +71,6 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
 import { InstallAppModal } from './InstallAppModal';
 import { useBackLayer } from '../utils/backNavigation';
 import {
-  generateAndSendVerificationOtp,
-  verifySubmittedOtp,
-  getPendingOtp,
   loadUserDataFromCloud,
   signInWithGoogleAuth,
   CloudZikrState,
@@ -83,13 +80,15 @@ import {
   signupWithEmailSession,
   loginWithEmailSession,
   loginWithGoogleTokenSession,
-  loginWithGoogleDirectSession,
+  sendServerEmailOtp,
+  verifyServerEmailOtp,
   logoutServerSession,
   fetchActiveDeviceSessions,
   revokeDeviceSession,
   saveServerProfile,
   ServerSessionInfo,
 } from '../services/authClient';
+import { mergeSavedHighlights } from '../utils/savedItems';
 
 const COUNTRY_CODES = [
   { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
@@ -129,7 +128,7 @@ interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   userProfile: UserProfile;
-  onUpdateProfile: (updated: UserProfile) => void;
+  onUpdateProfile: (updated: UserProfile, preloadedCloudData?: CloudZikrState) => void | Promise<void>;
   onNavigateModule: (module: NavModule) => void;
   themeMode: ThemeMode;
   onToggleThemeMode?: () => void;
@@ -475,83 +474,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     errorCode?: string;
     message?: string;
   } | null>(null);
-  const [fallbackGmailInput, setFallbackGmailInput] = useState('');
   const authEmailInputRef = useRef<HTMLInputElement | null>(null);
   const [activeSessions, setActiveSessions] = useState<ServerSessionInfo[]>([]);
   const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
-
-  const handleDirectGoogleLogin = async () => {
-    const cleanEmail = fallbackGmailInput.toLowerCase().trim();
-    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      setOtpErrorMessage(t('সঠিক Gmail অ্যাড্রেস দিন।', 'أدخل بريد Gmail صحيح.', 'Please enter a valid Gmail address.'));
-      return;
-    }
-    setIsVerifying(true);
-    setOtpErrorMessage(null);
-    try {
-      const detected = getDetectedDeviceInfo();
-      const existing = findSavedAccount(cleanEmail);
-      const serverAuth = await loginWithGoogleDirectSession({
-        email: cleanEmail,
-        name: existing?.name || cleanEmail.split('@')[0],
-        photo: existing?.photoUrl || DEFAULT_AVATARS[0],
-        device: detected.model,
-        location: existing?.location || userProfile.location || detected.location || 'Bangladesh',
-      });
-      if (!serverAuth.ok || !serverAuth.data.authenticated) {
-        setOtpErrorMessage(serverAuth.data.error || 'Direct Google login failed');
-        setIsVerifying(false);
-        return;
-      }
-      const srvUser = serverAuth.data.user;
-      const srvProfile = serverAuth.data.profile;
-      const srvData = serverAuth.data.userData;
-
-      const updated: UserProfile = {
-        name: srvUser?.name || existing?.name || cleanEmail.split('@')[0],
-        emailOrPhone: cleanEmail,
-        photoUrl: srvProfile?.photo || existing?.photoUrl || DEFAULT_AVATARS[0],
-        location: srvProfile?.preferences?.location || existing?.location || userProfile.location || detected.location || 'Bangladesh',
-        deviceModel: detected.model,
-        osVersion: detected.osVersion,
-        isSignedIn: true,
-        isVerified: true,
-        verificationMethod: 'google',
-        verificationDate: srvUser?.created_at || new Date().toISOString(),
-        authProvider: 'google',
-        lastSyncedAt: Date.now(),
-      };
-      saveAccountToRegistry(updated);
-      onUpdateProfile(updated);
-      if (srvData && onCloudDataLoaded) {
-        onCloudDataLoaded(
-          {
-            profile: updated,
-            zikrs: srvData.saved_items?.zikrs || [],
-            history: srvData.saved_items?.historySessions || [],
-            settings: srvData.settings as any,
-            lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
-            aamalLogs: srvData.activity?.aamalLogs || {},
-            foundInCloud: true,
-            hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
-          },
-          cleanEmail
-        );
-      }
-      fetchActiveDeviceSessions().then(setActiveSessions).catch(() => {});
-      setIsVerifying(false);
-      setActiveSubModal('none');
-      setGoogleFallbackInfo(null);
-      confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
-      if (soundEnabled) soundHaptics.playMilestone();
-      setTimeout(() => {
-        onClose();
-      }, 800);
-    } catch (err: any) {
-      setIsVerifying(false);
-      setOtpErrorMessage(err?.message || 'Direct Google login error');
-    }
-  };
 
   const savedDeviceAccounts = useMemo(() => {
     try {
@@ -799,29 +724,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       lastSyncedAt: Date.now(),
     };
 
-    saveAccountToRegistry(updated);
-    onUpdateProfile(updated);
+    if (srvData?.saved_items?.libraryHighlights?.length) {
+      mergeSavedHighlights(srvData.saved_items.libraryHighlights);
+    }
 
-    if (!isSignupFlow && srvData && onCloudDataLoaded) {
-      onCloudDataLoaded(
-        {
+    const preloadedState: CloudZikrState | undefined = srvData
+      ? {
           profile: updated,
           zikrs: srvData.saved_items?.zikrs || [],
           history: srvData.saved_items?.historySessions || [],
           settings: srvData.settings as any,
           lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
           aamalLogs: srvData.activity?.aamalLogs || {},
+          lastSyncedAt: srvData.activity?.lastSyncedAt || Date.now(),
           foundInCloud: true,
           hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
-        },
-        targetKey
-      );
-    }
+        }
+      : undefined;
+
+    saveAccountToRegistry(updated);
+    await onUpdateProfile(updated, preloadedState);
 
     if (!isSignupFlow) {
       setCloudSyncMessage(
         t(
-          'লগইন সফল! আপনার সুরক্ষিত সেশন ও ডাটা লোড হচ্ছে...',
+          'লগইন সফল! আপনার সুরক্ষিত সেশন ও ডাটা লোড হয়েছে...',
           'تم تسجيل الدخول بنجاح! جارٍ تحميل بياناتك...',
           'Sign-in successful! Loading your authenticated session & data...'
         )
@@ -846,11 +773,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setTimeout(() => {
       setActiveSubModal('none');
       setVerificationStep('input');
-      onClose();
-    }, 1200);
+      if (!embedded) onClose();
+    }, 1000);
   };
 
-  // Send Verification OTP to Gmail / Phone
+  // Send Verification OTP to Email via Server
   const handleSendOtp = async () => {
     setOtpErrorMessage(null);
     const emailClean = inputEmail.trim().toLowerCase();
@@ -867,23 +794,35 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
 
     setIsSendingCode(true);
-    const res = await generateAndSendVerificationOtp(emailClean, 'email', 'login');
+    const res = await sendServerEmailOtp({ email: emailClean, purpose: 'login' });
     setIsSendingCode(false);
 
-    if (!res.success) {
-      setOtpErrorMessage(res.message);
+    if (!res.ok) {
+      setOtpErrorMessage(
+        res.error ||
+          t(
+            'OTP পাঠানো যায়নি। একটু পরে আবার চেষ্টা করুন।',
+            'تعذر إرسال الرمز. حاول لاحقاً.',
+            'Could not send OTP. Please try again.'
+          )
+      );
       if (soundEnabled) soundHaptics.playTap();
       return;
     }
 
-    setMaskedTargetDisplay(res.maskedTarget);
+    const parts = emailClean.split('@');
+    const masked =
+      parts[0].length > 2
+        ? `${parts[0].slice(0, 2)}***@${parts[1]}`
+        : `${parts[0][0] || '*'}***@${parts[1]}`;
+    setMaskedTargetDisplay(res.maskedTarget || masked);
     setOtpDigits(['', '', '', '', '', '']);
     setOtpCountdown(60);
     setVerificationStep('otp');
     if (soundEnabled) soundHaptics.playTap();
   };
 
-  // Confirm OTP code
+  // Confirm OTP code via Server
   const handleConfirmOtp = async () => {
     const fullEntered = otpDigits.join('');
     if (fullEntered.length < 6) {
@@ -900,43 +839,70 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     const emailClean = inputEmail.trim().toLowerCase();
     setIsVerifying(true);
     setOtpErrorMessage(null);
+    const detected = getDetectedDeviceInfo();
+    const existing = findSavedAccount(emailClean);
 
-    const verificationResult = verifySubmittedOtp(emailClean, fullEntered, 'login');
-    if (!verificationResult.success) {
+    const verificationResult = await verifyServerEmailOtp({
+      email: emailClean,
+      code: fullEntered,
+      name: inputName.trim() || existing?.name || emailClean.split('@')[0],
+      device: detected.model,
+      location: existing?.location || userProfile.location || detected.location || 'Bangladesh',
+    });
+
+    if (!verificationResult.ok || !verificationResult.data?.authenticated || !verificationResult.data?.user) {
       setIsVerifying(false);
-      setOtpErrorMessage(verificationResult.message);
+      setOtpErrorMessage(
+        verificationResult.data?.error ||
+          t(
+            'কোডটি সঠিক নয় বা মেয়াদ শেষ হয়েছে।',
+            'الرمز غير صحيح أو منتهي الصلاحية.',
+            'Invalid or expired verification code.'
+          )
+      );
       if (soundEnabled) soundHaptics.playTap();
       return;
     }
 
-    const cloudData = await loadUserDataFromCloud(emailClean);
-    const existing = findSavedAccount(emailClean);
-    const detected = getDetectedDeviceInfo();
-
-    const displayName =
-      inputName.trim() ||
-      cloudData?.profile?.name ||
-      existing?.name ||
-      emailClean.split('@')[0];
+    const srvUser = verificationResult.data.user;
+    const srvProfile = verificationResult.data.profile;
+    const srvData = verificationResult.data.userData;
 
     const updated: UserProfile = {
-      name: displayName,
+      name: srvUser.name || inputName.trim() || existing?.name || emailClean.split('@')[0],
       emailOrPhone: emailClean,
-      photoUrl: cloudData?.profile?.photoUrl || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
-      password: inputPassword.trim() || existing?.password || '',
-      location: cloudData?.profile?.location || existing?.location || userProfile.location || 'Bangladesh',
+      photoUrl: srvProfile?.photo || existing?.photoUrl || userProfile.photoUrl || DEFAULT_AVATARS[0],
+      location: srvProfile?.preferences?.location || existing?.location || userProfile.location || 'Bangladesh',
       deviceModel: detected.model,
       osVersion: detected.osVersion,
       isSignedIn: true,
       isVerified: true,
       verificationMethod: 'email',
-      verificationDate: new Date().toISOString(),
+      verificationDate: srvUser.created_at || new Date().toISOString(),
       authProvider: 'email',
       lastSyncedAt: Date.now(),
     };
 
+    if (srvData?.saved_items?.libraryHighlights?.length) {
+      mergeSavedHighlights(srvData.saved_items.libraryHighlights);
+    }
+
+    const preloadedState: CloudZikrState | undefined = srvData
+      ? {
+          profile: updated,
+          zikrs: srvData.saved_items?.zikrs || [],
+          history: srvData.saved_items?.historySessions || [],
+          settings: srvData.settings as any,
+          lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
+          aamalLogs: srvData.activity?.aamalLogs || {},
+          lastSyncedAt: srvData.activity?.lastSyncedAt || Date.now(),
+          foundInCloud: true,
+          hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
+        }
+      : undefined;
+
     saveAccountToRegistry(updated);
-    onUpdateProfile(updated);
+    await onUpdateProfile(updated, preloadedState);
 
     setVerificationStep('success');
     setCloudSyncMessage(
@@ -949,21 +915,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
     if (soundEnabled) soundHaptics.playMilestone();
     setIsVerifying(false);
+    fetchActiveDeviceSessions().then(setActiveSessions).catch(() => {});
 
     setTimeout(() => {
       setActiveSubModal('none');
       setVerificationStep('input');
-    }, 1500);
+      if (!embedded) onClose();
+    }, 1000);
   };
 
   // Google Account Chooser Trigger (shows all Gmail accounts signed into phone/laptop)
-  const handleTriggerGoogleAuth = async () => {
+  const handleTriggerGoogleAuth = async (loginHintEmail?: string) => {
+    const cleanHint = typeof loginHintEmail === 'string' ? loginHintEmail.trim() : undefined;
     setIsVerifying(true);
     setOtpErrorMessage(null);
     setGoogleFallbackInfo(null);
 
     try {
-      const result = await signInWithGoogleAuth();
+      const result = await signInWithGoogleAuth(cleanHint);
       if (result.success && result.user && result.user.email) {
         const targetEmail = result.user.email.toLowerCase().trim();
         const existing = findSavedAccount(targetEmail);
@@ -997,24 +966,26 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           lastSyncedAt: Date.now(),
         };
 
-        saveAccountToRegistry(updated);
-        onUpdateProfile(updated);
+        if (srvData?.saved_items?.libraryHighlights?.length) {
+          mergeSavedHighlights(srvData.saved_items.libraryHighlights);
+        }
 
-        if (srvData && onCloudDataLoaded) {
-          onCloudDataLoaded(
-            {
+        const preloadedState: CloudZikrState | undefined = srvData
+          ? {
               profile: updated,
               zikrs: srvData.saved_items?.zikrs || [],
               history: srvData.saved_items?.historySessions || [],
               settings: srvData.settings as any,
               lifetimeTotalCount: srvData.activity?.lifetimeTotalCount || 0,
               aamalLogs: srvData.activity?.aamalLogs || {},
+              lastSyncedAt: srvData.activity?.lastSyncedAt || Date.now(),
               foundInCloud: true,
               hasZikrData: Array.isArray(srvData.saved_items?.zikrs) && srvData.saved_items.zikrs.length > 0,
-            },
-            targetEmail
-          );
-        }
+            }
+          : undefined;
+
+        saveAccountToRegistry(updated);
+        await onUpdateProfile(updated, preloadedState);
 
         fetchActiveDeviceSessions().then(setActiveSessions).catch(() => {});
 
@@ -1022,9 +993,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         setActiveSubModal('none');
         confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
         if (soundEnabled) soundHaptics.playMilestone();
-        setTimeout(() => {
-          onClose();
-        }, 800);
+        if (!embedded) {
+          setTimeout(() => {
+            onClose();
+          }, 800);
+        }
         return;
       }
 
@@ -1065,30 +1038,26 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const handleQuickSwitchSavedAccount = (record: SavedAccountRecord) => {
     const targetEmail = (record.profile.emailOrPhone || '').toLowerCase().trim();
     if (!targetEmail) return;
-    setIsVerifying(true);
     setOtpErrorMessage(null);
     setGoogleFallbackInfo(null);
-    try {
-      const detected = getDetectedDeviceInfo();
-      const updated: UserProfile = {
-        ...record.profile,
-        name: record.profile.name || targetEmail.split('@')[0],
-        emailOrPhone: targetEmail,
-        photoUrl: record.profile.photoUrl || DEFAULT_AVATARS[0],
-        deviceModel: detected.model,
-        osVersion: detected.osVersion,
-        isSignedIn: true,
-        isVerified: true,
-        lastSyncedAt: Date.now(),
-      };
-      saveAccountToRegistry(updated);
-      onUpdateProfile(updated);
-      setActiveSubModal('none');
-      confetti({ particleCount: 75, spread: 60, origin: { y: 0.6 } });
-      if (soundEnabled) soundHaptics.playMilestone();
-    } finally {
-      setIsVerifying(false);
+    if (record.profile.authProvider === 'google') {
+      handleTriggerGoogleAuth(targetEmail);
+      return;
     }
+    setInputEmail(targetEmail);
+    setInputPassword('');
+    setAuthFlowMode('signin');
+    setVerificationStep('input');
+    setOtpErrorMessage(
+      t(
+        `${targetEmail} দিয়ে প্রবেশ করতে পাসওয়ার্ড দিন অথবা OTP ব্যবহার করুন।`,
+        `أدخل كلمة المرور أو استخدم OTP للدخول إلى ${targetEmail}.`,
+        `Enter your password or use OTP to sign in to ${targetEmail}.`
+      )
+    );
+    setTimeout(() => {
+      authEmailInputRef.current?.focus();
+    }, 50);
   };
 
   // OTP digit keyboard handler
@@ -2780,42 +2749,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </p>
                     </div>
 
-                    {/* Instant OTP autofill banner */}
-                    {(() => {
-                      const pending = getPendingOtp();
-                      if (!pending || !pending.code) return null;
-                      return (
-                        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 border-2 border-amber-500/50 text-amber-950 dark:text-amber-100 text-xs font-bold space-y-2.5 shadow-md">
-                          <div className="flex items-center justify-between">
-                            <span className="flex items-center gap-1.5 font-black">
-                              <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-                              <span>{t('অটো-ফিল কোড:', 'رمز تعبئة تلقائي:', 'Auto-Fill Code:')}</span>
-                            </span>
-                            <span className="font-mono bg-amber-500 text-slate-950 px-3 py-1 rounded-xl font-black text-sm tracking-widest shadow-xs">
-                              {pending.code}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const digits = pending.code.split('');
-                              setOtpDigits(digits);
-                              if (soundEnabled) soundHaptics.playMilestone();
-                              setTimeout(() => {
-                                handleConfirmOtp();
-                              }, 50);
-                            }}
-                            className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs shadow-md flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>
-                              {t(`⚡ ১-ক্লিকে কোড বসান (${pending.code})`, `⚡ تعبئة الرمز بنقرة واحدة`, `⚡ 1-Click Auto-Fill Code`)}
-                            </span>
-                          </button>
-                        </div>
-                      );
-                    })()}
-
                     <div className="flex justify-between gap-2 pt-2">
                       {[0, 1, 2, 3, 4, 5].map((idx) => (
                         <input
@@ -3126,9 +3059,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                                   'Your browser blocked the Google popup inside the preview frame. Open in a browser tab to view all Gmail accounts on your phone or laptop:'
                                 )
                               : t(
-                                  'গুগল পপআপ ব্লক হয়েছে বা অনুমোদিত হয়নি। ব্রাউজার সেটিংস থেকে পপআপ চালু করে আবার চেষ্টা করুন, অথবা নিচে Gmail দিয়ে লগইন করুন:',
-                                  'تم حظر نافذة Google المنبثقة. اسمح بالنوافذ المنبثقة أو سجل الدخول ببريدك أدناه:',
-                                  'Google popup was blocked. Allow popups and try again, or sign in with your Gmail below:'
+                                  'গুগল সাইন-ইন পপআপ সম্পন্ন করা যায়নি। ব্রাউজার সেটিংস থেকে পপআপ চালু করে আবার "গুগল দিয়ে চালিয়ে যান" চাপুন, অথবা নিচে ইমেইল/OTP ব্যবহার করুন।',
+                                  'لم تكتمل نافذة Google المنبثقة. اسمح بالنوافذ المنبثقة وحاول مرة أخرى، أو استخدم البريد وكلمة المرور.',
+                                  'Google popup could not be completed. Allow popups in your browser settings and try again, or sign in with email & password above.'
                                 )}
                           </p>
                         </div>
@@ -3163,7 +3096,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         {savedDeviceAccounts.length > 0 && (
                           <div className="space-y-1.5 pt-1 border-t border-sky-200/70 dark:border-teal-800">
                             <div className="text-[11px] font-extrabold text-slate-600 dark:text-teal-300">
-                              {t('এই ডিভাইসে পূর্বে ব্যবহৃত অ্যাকাউন্ট (১-ক্লিকে বেছে নিন):', 'الحسابات المحفوظة على هذا الجهاز:', 'Saved accounts on this device (tap to switch):')}
+                              {t('এই ডিভাইসে পূর্বে ব্যবহৃত অ্যাকাউন্ট (বেছে নিয়ে ভেরিফাই করুন):', 'الحسابات المحفوظة على هذا الجهاز:', 'Saved accounts on this device (tap to verify):')}
                             </div>
                             <div className="space-y-1.5 max-h-40 overflow-y-auto">
                               {savedDeviceAccounts.map((rec) => (
@@ -3193,29 +3126,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             </div>
                           </div>
                         )}
-
-                        <div className="pt-2 border-t border-sky-200/70 dark:border-teal-800 space-y-2">
-                          <div className="text-[11px] font-extrabold text-slate-700 dark:text-teal-200">
-                            {t('আপনার Gmail দিয়ে সরাসরি প্রবেশ করুন:', 'سجل دخولك مباشرة ببريد Gmail:', 'Sign in directly with your Gmail:')}
-                          </div>
-                          <div className="flex gap-2">
-                            <input
-                              type="email"
-                              value={fallbackGmailInput}
-                              onChange={(e) => setFallbackGmailInput(e.target.value)}
-                              placeholder="name@gmail.com"
-                              className="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-[#05171c] border border-sky-300 dark:border-teal-700 text-xs font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-sky-500"
-                            />
-                            <button
-                              type="button"
-                              disabled={isVerifying || !fallbackGmailInput.includes('@')}
-                              onClick={handleDirectGoogleLogin}
-                              className="px-4 py-2 rounded-xl bg-[var(--app-primary,#006A4E)] hover:bg-[#00523b] text-white font-bold text-xs shrink-0 cursor-pointer disabled:opacity-50"
-                            >
-                              {isVerifying ? '...' : t('প্রবেশ করুন', 'دخول', 'Continue')}
-                            </button>
-                          </div>
-                        </div>
                       </div>
                     )}
 
@@ -3291,11 +3201,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <button
                         type="button"
                         disabled={isVerifying}
-                        onClick={handleTriggerGoogleAuth}
+                        onClick={() => handleTriggerGoogleAuth()}
                         className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-[#06191f] hover:bg-slate-50 text-slate-800 dark:text-white font-bold text-xs border border-sky-200 dark:border-teal-800 shadow-sm flex items-center justify-center gap-3 transition active:scale-95 cursor-pointer disabled:opacity-60"
                       >
                         {isVerifying ? <RefreshCw className="w-4 h-4 animate-spin text-sky-600" /> : <GoogleIcon />}
-                        <span>{t('গুগল দিয়ে চালিয়ে যান (সব Gmail দেখবে)', 'المتابعة باستخدام Google', 'Continue With Google')}</span>
+                        <span>{t('গুগল দিয়ে চালিয়ে যান (সব Gmail দেখাবে)', 'المتابعة باستخدام Google', 'Continue With Google')}</span>
                       </button>
                     </div>
 

@@ -85,8 +85,13 @@ export async function checkGoogleRedirectResult(): Promise<{
   }
 }
 
+export async function mergeCloudZikrStates(primary: any, secondary: any) {
+  const fb = await loadFirebase();
+  return fb.mergeCloudZikrStates(primary, secondary);
+}
+
 export async function listenToAuthChanges(
-  onUserChanged: (user: { email: string; name?: string; photoUrl?: string } | null) => void
+  onUserChanged: (user: { email: string; name?: string; photoUrl?: string; idToken?: string } | null) => void
 ): Promise<() => void> {
   try {
     const fb = await loadFirebase();
