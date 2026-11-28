@@ -78,13 +78,14 @@ export function prefetchView(view: PreloadableView | string): void {
  * and initial counter view has been fully rendered and displayed.
  */
 export function warmupViewsIdle(): void {
-  // If user has data saver on, do not prefetch in background
-  if ((navigator as any).connection?.saveData) {
-    return;
+  if (typeof navigator !== 'undefined') {
+    if (!navigator.onLine) return;
+    if ((navigator as any).connection?.saveData) return;
   }
 
   const scheduleIdle = (fn: () => void, delayMs: number) => {
     setTimeout(() => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
       if (typeof (window as any).requestIdleCallback === 'function') {
         (window as any).requestIdleCallback(fn, { timeout: 3000 });
       } else {
@@ -93,33 +94,18 @@ export function warmupViewsIdle(): void {
     }, delayMs);
   };
 
-  // Phase 1: High-priority core navigation pages (Quran, Salat, Aamal, Other Hub) after 4.5 seconds
+  // Phase 1: Lightweight core navigation views after 3.5s
   scheduleIdle(() => {
-    prefetchView('quran');
+    prefetchView('other');
     prefetchView('salat_time');
     prefetchView('aamal_tracker');
-    prefetchView('other');
-  }, 4500);
+  }, 3500);
 
-  // Phase 2: High-traffic Other Hub modules (Sahaba, Wars, Dua, Hadith) after 9 seconds
+  // Phase 2: Core Islamic reading views (Quran, Hadith, Settings) after 7s
   scheduleIdle(() => {
-    prefetchView('hayatus_sahaba');
-    prefetchView('islamic_history_wars');
-    prefetchView('dua');
     prefetchView('hadith');
-  }, 9000);
-
-  // Phase 3: Secondary modules and modals after 16 seconds
-  scheduleIdle(() => {
-    prefetchView('kitab');
-    prefetchView('tablig');
-    prefetchView('prophets_25');
-    prefetchView('allah_names');
-    prefetchView('hajj_checklist');
-    prefetchView('history_timeline');
-    prefetchView('daily_sunnah');
+    prefetchView('quran');
     prefetchView('settings');
-    prefetchView('zikr_modal');
-  }, 16000);
+  }, 7000);
 }
 

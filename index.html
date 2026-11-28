@@ -193,11 +193,23 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <!-- Fast Preconnect, DNS-Prefetch & Font Loading -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Noto+Naskh+Arabic:wght@400;500;600;700;800&family=Scheherazade+New:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    <!-- Fast Preconnect, DNS-Prefetch & Non-Blocking Async Font Loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Noto+Naskh+Arabic:wght@400;500;600;700;800&family=Scheherazade+New:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Noto+Naskh+Arabic:wght@400;500;600;700;800&family=Scheherazade+New:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      />
+    </noscript>
   </head>
   <body class="bg-[#f8fafc] text-slate-900 antialiased selection:bg-[#007e8a] selection:text-white overflow-x-hidden">
     <!-- Instant App Shell Splash Screen: Renders in 10ms before JS bundles execute -->

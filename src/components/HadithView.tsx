@@ -11,9 +11,13 @@ import {
   fetchChapterHadiths,
   getAllOfflineBookStatuses,
   getCachedBnTranslation,
+  getCuratedOfflineHadithsForBook,
+  listCachedChapterIdsForBook,
+  prewarmCoreHadithsOffline,
   searchBookHadiths,
   translateHadithToBn,
 } from '../services/hadisRepository';
+import { useOnlineStatus } from '../hooks/usePWAInstall';
 import { copyToClipboard } from '../utils/clipboard';
 import { HadithItem, ThemeMode, ZikrLanguage } from '../types';
 import { HADITH_TRANSLATIONS, HADITH_TOPICS, HADITH_UI } from '../utils/appTranslations';
@@ -40,6 +44,7 @@ import {
   BookmarkCheck,
   X,
   AlertCircle,
+  WifiOff,
 } from 'lucide-react';
 import { soundHaptics } from '../utils/audioHaptics';
 import { HIGHLIGHT_COLOR_STYLES } from '../utils/savedItems';
@@ -102,6 +107,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
 }) => {
   const isDay = themeMode === 'day';
   const isBn = selectedLanguage === 'bn';
+  const isOnline = useOnlineStatus();
   const { byItemKey: highlightByItemKey } = useSavedHighlightsStore();
 
   // Top-level Navigation State
@@ -159,7 +165,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
 
   // Offline Book Download Tracking
   const [offlineStatuses, setOfflineStatuses] = useState<Record<string, OfflineBookStatus>>({});
+  const [cachedChapterIds, setCachedChapterIds] = useState<string[]>([]);
   const [downloadingBookId, setDownloadingBookId] = useState<string | null>(null);
+  const [isDownloadingCorePack, setIsDownloadingCorePack] = useState(false);
+  const [corePackProgress, setCorePackProgress] = useState<{ current: number; total: number; label: string } | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
   const downloadAbortRef = useRef<AbortController | null>(null);
 
@@ -213,10 +222,23 @@ export const HadithView: React.FC<HadithViewProps> = ({
     }
   });
 
-  // Load offline book statuses on mount
+  // Prewarm core offline books & load offline book statuses on mount
   useEffect(() => {
-    void getAllOfflineBookStatuses().then(setOfflineStatuses);
-  }, []);
+    let active = true;
+    void prewarmCoreHadithsOffline(selectedLanguage).then(() => {
+      if (active) {
+        void getAllOfflineBookStatuses().then((statuses) => {
+          if (active) setOfflineStatuses(statuses);
+        });
+      }
+    });
+    void getAllOfflineBookStatuses().then((statuses) => {
+      if (active) setOfflineStatuses(statuses);
+    });
+    return () => {
+      active = false;
+    };
+  }, [selectedLanguage]);
 
   // Scroll to top when switching views cleanly
   useEffect(() => {
@@ -229,6 +251,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
   useEffect(() => {
     if (!selectedBookId) {
       setChapters([]);
+      setCachedChapterIds([]);
       setChapterFilterQuery('');
       setBookSearchQuery('');
       setIsBookSearchOpen(false);
@@ -240,6 +263,10 @@ export const HadithView: React.FC<HadithViewProps> = ({
     let cancelled = false;
     setIsLoadingChapters(true);
     setChaptersError(null);
+
+    void listCachedChapterIdsForBook(selectedBookId).then((ids) => {
+      if (!cancelled) setCachedChapterIds(ids);
+    });
 
     fetchBookChapters(selectedBookId)
       .then((list) => {
@@ -555,7 +582,7 @@ export const HadithView: React.FC<HadithViewProps> = ({
   };
 
   const handleDownloadBookOffline = async (bookId: string) => {
-    if (downloadingBookId) return;
+    if (downloadingBookId || isDownloadingCorePack) return;
     if (soundEnabled) soundHaptics.playTap();
     const controller = new AbortController();
     downloadAbortRef.current = controller;
@@ -570,12 +597,44 @@ export const HadithView: React.FC<HadithViewProps> = ({
         controller.signal
       );
       setOfflineStatuses((prev) => ({ ...prev, [bookId]: status }));
+      if (selectedBookId === bookId) {
+        void listCachedChapterIdsForBook(bookId).then(setCachedChapterIds);
+      }
       if (soundEnabled) soundHaptics.playMilestone();
     } catch {
       // Cancelled or failed softly
     } finally {
       setDownloadingBookId(null);
       downloadAbortRef.current = null;
+    }
+  };
+
+  const handleDownloadCoreKutubOffline = async () => {
+    if (isDownloadingCorePack || downloadingBookId || !isOnline) return;
+    if (soundEnabled) soundHaptics.playTap();
+    const coreIds = ['bukhari', 'muslim', 'tirmidhi', 'abudawud', 'nasai', 'ibnmajah'];
+    const pending = coreIds.filter((id) => !offlineStatuses[id]?.completed);
+    if (pending.length === 0) return;
+
+    setIsDownloadingCorePack(true);
+    try {
+      for (let i = 0; i < pending.length; i++) {
+        const bId = pending[i];
+        const bDef = HADIS_LIBRARY_BOOKS.find((b) => b.id === bId);
+        setCorePackProgress({
+          current: i + 1,
+          total: pending.length,
+          label: isBn ? bDef?.bnName || bId : bDef?.enName || bId,
+        });
+        const status = await downloadEntireBookOffline(bId, selectedLanguage, () => {});
+        setOfflineStatuses((prev) => ({ ...prev, [bId]: status }));
+      }
+      if (soundEnabled) soundHaptics.playMilestone();
+    } catch {
+      // Partial progress is preserved in IndexedDB
+    } finally {
+      setIsDownloadingCorePack(false);
+      setCorePackProgress(null);
     }
   };
 
@@ -1062,6 +1121,48 @@ export const HadithView: React.FC<HadithViewProps> = ({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+              {isOnline && (
+                (() => {
+                  const kutubIds = ['bukhari', 'muslim', 'tirmidhi', 'abudawud', 'nasai', 'ibnmajah'];
+                  const allKutubSaved = kutubIds.every((id) => offlineStatuses[id]?.completed);
+                  if (allKutubSaved) {
+                    return (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>{isBn ? 'সিহাহ সিত্তাহ অফলাইনে সেভ' : 'All 6 Books Offline'}</span>
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      type="button"
+                      disabled={isDownloadingCorePack || Boolean(downloadingBookId)}
+                      onClick={() => void handleDownloadCoreKutubOffline()}
+                      className={`min-h-[36px] px-3 py-1.5 rounded-lg border text-[11px] font-extrabold flex items-center gap-1.5 transition cursor-pointer active:scale-95 disabled:opacity-60 ${
+                        isDay
+                          ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800'
+                          : 'bg-emerald-950/60 hover:bg-emerald-900/60 border-emerald-700/60 text-emerald-300'
+                      }`}
+                    >
+                      {isDownloadingCorePack ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      <span>
+                        {isDownloadingCorePack && corePackProgress
+                          ? isBn
+                            ? `${corePackProgress.label} (${formatNum(corePackProgress.current, true)}/${formatNum(corePackProgress.total, true)})`
+                            : `${corePackProgress.label} (${corePackProgress.current}/${corePackProgress.total})`
+                          : isBn
+                          ? 'সব কিতাব অফলাইন সেভ'
+                          : 'Save All Offline'}
+                      </span>
+                    </button>
+                  );
+                })()
+              )}
+
               <button
                 type="button"
                 onClick={() => {
@@ -1091,6 +1192,23 @@ export const HadithView: React.FC<HadithViewProps> = ({
               </button>
             </div>
           </div>
+
+          {!isOnline && (
+            <div
+              className={`px-3.5 py-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
+                isDay
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : 'bg-amber-950/35 border-amber-700/50 text-amber-200'
+              }`}
+            >
+              <WifiOff className="w-4 h-4 shrink-0" />
+              <span>
+                {isBn
+                  ? 'অফলাইন মোড: চল্লিশ হাদিস, সকল কিতাবের সূচিপত্র, শুরুর অধ্যায়, বিষয়ভিত্তিক বাছাই ও সেভ করা হাদিস ইন্টারনেট ছাড়াই পড়তে পারবেন।'
+                  : 'Offline Mode: 40 Hadith collections, all 17 book indexes, starter chapters, curated topics, and saved books are ready offline.'}
+              </span>
+            </div>
+          )}
 
           {/* Expandable Global Hadith Number & Keyword Jump */}
           {(isGlobalSearchOpen || globalQuery.trim().length > 0 || globalSearchResults !== null) && (
@@ -1847,6 +1965,11 @@ export const HadithView: React.FC<HadithViewProps> = ({
                                   {isBn
                                     ? `${formatNum(ch.count, true)}টি · ${formatNum(estPages, true)} পৃষ্ঠা`
                                     : `${ch.count} hadiths · ${estPages} pg`}
+                                  {(offlineStatuses[selectedBookId]?.completed || cachedChapterIds.includes(String(ch.chapterId))) && (
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                      {isBn ? ' · অফলাইন' : ' · Offline'}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 shrink-0 transition-transform group-hover:translate-x-0.5" />
@@ -1961,20 +2084,74 @@ export const HadithView: React.FC<HadithViewProps> = ({
               </p>
             </div>
           ) : hadithsError ? (
-            <div className={`p-8 rounded-3xl border text-center space-y-3 ${isDay ? 'bg-white border-rose-200' : 'bg-[#0a2329] border-rose-500/40'}`}>
-              <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
-              <p className="text-xs font-bold text-rose-600 dark:text-rose-300">{hadithsError}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  const cid = selectedChapterId;
-                  setSelectedChapterId(null);
-                  setTimeout(() => setSelectedChapterId(cid), 10);
-                }}
-                className="px-4 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold cursor-pointer"
-              >
-                {isBn ? 'পুনরায় লোড করুন' : 'Reload Chapter'}
-              </button>
+            <div className="space-y-4">
+              <div className={`p-6 rounded-3xl border text-center space-y-3 ${isDay ? 'bg-[#fffdf7] border-amber-200' : 'bg-[#0a2329] border-amber-500/40'}`}>
+                <WifiOff className="w-8 h-8 text-amber-500 mx-auto" />
+                <p className="text-sm font-extrabold">
+                  {isBn
+                    ? 'এই অধ্যায়টি এখনো অফলাইনে সংরক্ষিত নয়'
+                    : 'This chapter is not saved offline yet'}
+                </p>
+                <p className={`text-xs max-w-md mx-auto ${isDay ? 'text-slate-600' : 'text-slate-300'}`}>
+                  {isBn
+                    ? 'ইন্টারনেট চালু হলে পুরো কিতাবটি "অফলাইন সেভ" করে নিন। নিচে এই কিতাবের সংরক্ষিত অফলাইন অধ্যায় ও বাছাইকৃত সহীহ হাদিস পড়তে পারেন:'
+                    : 'Connect to the internet once to save the full book offline. Meanwhile, you can read the offline chapters and authentic hadiths from this collection below:'}
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                  {cachedChapterIds.slice(0, 4).map((cid) => {
+                    const chMeta = chapters.find((c) => String(c.chapterId) === String(cid));
+                    return (
+                      <button
+                        key={cid}
+                        type="button"
+                        onClick={() => setSelectedChapterId(cid)}
+                        className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer"
+                      >
+                        {chMeta
+                          ? isBn
+                            ? `${chMeta.titleBn} (অফলাইন)`
+                            : `${chMeta.titleEn} (Offline)`
+                          : isBn
+                          ? `অধ্যায় ${formatNum(cid, true)} (অফলাইন)`
+                          : `Chapter ${cid} (Offline)`}
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedChapterId(null);
+                      setSelectedBookId(null);
+                      setActiveTab('topics');
+                    }}
+                    className={`px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer ${
+                      isDay ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#06181c] border-[#1a4b54] text-emerald-200'
+                    }`}
+                  >
+                    {isBn ? 'বিষয়ভিত্তিক হাদিস (অফলাইন)' : 'Curated Offline Hadiths'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cid = selectedChapterId;
+                      setSelectedChapterId(null);
+                      setTimeout(() => setSelectedChapterId(cid), 10);
+                    }}
+                    className={`px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer ${
+                      isDay ? 'bg-white border-slate-200 text-slate-700' : 'bg-[#06181c] border-[#1a4b54] text-slate-200'
+                    }`}
+                  >
+                    {isBn ? 'পুনরায় চেষ্টা করুন' : 'Retry'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3.5">
+                {getCuratedOfflineHadithsForBook(selectedBookId, selectedLanguage).map((entry) =>
+                  renderFullHadithCard(entry, true, 'card')
+                )}
+              </div>
             </div>
           ) : (
             <div

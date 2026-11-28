@@ -1,11 +1,11 @@
 // ========================================================
 // Zikr+ PWA Bulletproof Offline-First Service Worker
-// Zikr+ PWA Bulletproof Offline-First Service Worker
-// Version: zikrmate-v43-network-first-bundles
+// Version: zikrmate-v44-fast-offline-hadith
 // ========================================================
 
-const CACHE_NAME = 'zikrmate-v43-network-first-bundles';
+const CACHE_NAME = 'zikrmate-v44-fast-offline-hadith';
 const AUDIO_CACHE_NAME = 'zikrmate-audio-v6';
+const HADIS_OFFLINE_CACHE = 'zikrmate-hadis-static-v1';
 
 // Core assets to precache on installation (Lightweight App Shell < 500KB)
 const ESSENTIAL_PRECACHE_URLS = [
@@ -18,11 +18,15 @@ const ESSENTIAL_PRECACHE_URLS = [
   '/pwa-512x512.png',
   '/pwa-maskable-512x512.png',
   '/apple-touch-icon.png',
-  '/zikr-tasbeeh-standalone.html',
+  '/offline-hadis/chapters-index.json',
+  '/offline-hadis/core-books.json',
 ];
 
 // Secondary on-demand chunks warmed up gently in background during idle time (non-blocking)
-const SECONDARY_PRECACHE_URLS = [];
+const SECONDARY_PRECACHE_URLS = [
+  '/offline-hadis/starter-chapters.json',
+  '/zikr-tasbeeh-standalone.html',
+];
 
 // Guaranteed embedded offline shell (rendered if no cache entry exists for index.html)
 const OFFLINE_EMBEDDED_SHELL = `<!doctype html>
@@ -166,7 +170,7 @@ self.addEventListener('activate', (event) => {
       const keys = await caches.keys();
       await Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME && key !== AUDIO_CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== AUDIO_CACHE_NAME && key !== HADIS_OFFLINE_CACHE) {
             console.log('[SW] Purging outdated cache:', key);
             return caches.delete(key);
           }
@@ -178,6 +182,7 @@ self.addEventListener('activate', (event) => {
       if (Array.isArray(SECONDARY_PRECACHE_URLS) && SECONDARY_PRECACHE_URLS.length > 0) {
         setTimeout(async () => {
           try {
+            if (typeof navigator !== 'undefined' && !navigator.onLine) return;
             const cache = await caches.open(CACHE_NAME);
             for (const url of SECONDARY_PRECACHE_URLS) {
               try {
@@ -187,13 +192,12 @@ self.addEventListener('activate', (event) => {
                   if (res && (res.status === 200 || res.type === 'opaque')) {
                     await cache.put(url, res);
                   }
-                  // Pause 180ms between requests to never saturate CPU or network
-                  await new Promise((resolve) => setTimeout(resolve, 180));
+                  await new Promise((resolve) => setTimeout(resolve, 120));
                 }
               } catch {}
             }
           } catch {}
-        }, 4000); // Wait 4 full seconds after app start so user experiences zero latency
+        }, 2500);
       }
     })()
   );
@@ -216,12 +220,18 @@ function isAudioOrMedia(request) {
   );
 }
 
-// 3. Fetch Event: 100% Guaranteed Offline Coverage
+// Helper: Check if URL is a Vite content-hashed immutable bundle
+function isImmutableAsset(pathname) {
+  return pathname.startsWith('/assets/') && !pathname.endsWith('.html');
+}
+
+// 3. Fetch Event: Instant Cache-First for immutable assets & offline-hadis + Fast Network-First for HTML
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const requestUrl = new URL(event.request.url);
   const isMedia = isAudioOrMedia(event.request);
+  const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 
   // A. Skip cross-origin requests (except explicitly cached audio media), Firebase auth handlers, API routes, and Vite dev internals
   if (
@@ -240,12 +250,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   // B. Audio & Media files: Cache-First
-  if (isAudioOrMedia(event.request)) {
+  if (isMedia) {
     event.respondWith(
       (async () => {
         const audioCache = await caches.open(AUDIO_CACHE_NAME);
         const cached = await audioCache.match(event.request, { ignoreSearch: false });
         if (cached) return cached;
+        if (isOffline) return new Response(null, { status: 404, statusText: 'Audio Not Cached' });
 
         try {
           const networkRes = await fetch(event.request);
@@ -263,16 +274,58 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // B2. Static Offline Hadith Bundles: Cache-First with silent background refresh
+  if (requestUrl.pathname.startsWith('/offline-hadis/')) {
+    event.respondWith(
+      (async () => {
+        const hadisCache = await caches.open(HADIS_OFFLINE_CACHE);
+        const mainCache = await caches.open(CACHE_NAME);
+        const cached =
+          (await hadisCache.match(requestUrl.pathname, { ignoreSearch: true })) ||
+          (await mainCache.match(requestUrl.pathname, { ignoreSearch: true }));
+        if (cached) {
+          if (!isOffline) {
+            fetch(event.request)
+              .then((fresh) => {
+                if (fresh && fresh.status === 200) hadisCache.put(requestUrl.pathname, fresh);
+              })
+              .catch(() => {});
+          }
+          return cached;
+        }
+        try {
+          const networkRes = await fetch(event.request);
+          if (networkRes && networkRes.status === 200) {
+            hadisCache.put(requestUrl.pathname, networkRes.clone()).catch(() => {});
+          }
+          return networkRes;
+        } catch {
+          return new Response('{}', { status: 404, headers: { 'Content-Type': 'application/json' } });
+        }
+      })()
+    );
+    return;
+  }
+
   // C. Navigation Requests (User opening app, refreshing, or WebAPK launch):
-  // Network-First with short timeout fallback to cache so new deployments apply immediately while preserving offline resilience
+  // Instant cache when offline; fast 1000ms Network-First when online so slow networks don't hang splash screen
   if (event.request.mode === 'navigate' || requestUrl.pathname === '/' || requestUrl.pathname === '/index.html') {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE_NAME);
 
+        if (isOffline) {
+          const instantCached =
+            (await cache.match('/index.html', { ignoreSearch: true })) ||
+            (await cache.match('/', { ignoreSearch: true })) ||
+            (await cache.match(event.request, { ignoreSearch: true })) ||
+            (await cache.match('/offline-emergency.html'));
+          if (instantCached) return instantCached;
+        }
+
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const timeoutId = setTimeout(() => controller.abort(), 1100);
           const networkResponse = await fetch(event.request, {
             cache: 'no-cache',
             signal: controller.signal,
@@ -287,7 +340,7 @@ self.addEventListener('fetch', (event) => {
             return networkResponse;
           }
           throw new Error(`HTTP ${networkResponse?.status || 'invalid'}`);
-        } catch (networkErr) {
+        } catch {
           const fallbackCached =
             (await cache.match('/index.html', { ignoreSearch: true })) ||
             (await cache.match('/', { ignoreSearch: true })) ||
@@ -305,8 +358,41 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // D. App Bundles, Scripts, Styles, Images, Fonts:
-  // Network-First for scripts & CSS so PWA & Web always run latest Google Auth/Sync code; Cache-First for static images/fonts
+  // D. Immutable Vite Content-Hashed Bundles (/assets/*.js, /assets/*.css, /assets/*):
+  // Strictly Cache-First for 0ms instant startup (Vite updates hashes on every build)
+  if (isImmutableAsset(requestUrl.pathname)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached =
+          (await cache.match(event.request, { ignoreSearch: true })) ||
+          (await cache.match(requestUrl.pathname, { ignoreSearch: true }));
+        if (cached) return cached;
+
+        try {
+          const networkResponse = await fetch(event.request);
+          if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+            const contentType = networkResponse.headers.get('content-type') || '';
+            if (!contentType.includes('text/html')) {
+              cache.put(event.request, networkResponse.clone()).catch(() => {});
+            }
+          }
+          return networkResponse;
+        } catch {
+          if (requestUrl.pathname.endsWith('.css')) {
+            return new Response('/* offline css */', { headers: { 'Content-Type': 'text/css' } });
+          }
+          if (requestUrl.pathname.endsWith('.js')) {
+            return new Response('/* offline script */', { headers: { 'Content-Type': 'application/javascript' } });
+          }
+          return new Response(null, { status: 404 });
+        }
+      })()
+    );
+    return;
+  }
+
+  // E. Non-hashed Scripts & CSS: Fast 1100ms Network-First (or instant cache when offline)
   const isCodeBundle =
     event.request.destination === 'script' ||
     event.request.destination === 'style' ||
@@ -317,9 +403,15 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE_NAME);
+        if (isOffline) {
+          const instant =
+            (await cache.match(event.request, { ignoreSearch: true })) ||
+            (await cache.match(requestUrl.pathname, { ignoreSearch: true }));
+          if (instant) return instant;
+        }
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const timeoutId = setTimeout(() => controller.abort(), 1100);
           const networkResponse = await fetch(event.request, {
             cache: 'no-cache',
             signal: controller.signal,
@@ -329,9 +421,7 @@ self.addEventListener('fetch', (event) => {
           if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
             const contentType = networkResponse.headers.get('content-type') || '';
             if (!contentType.includes('text/html')) {
-              try {
-                cache.put(event.request, networkResponse.clone());
-              } catch {}
+              cache.put(event.request, networkResponse.clone()).catch(() => {});
             }
             return networkResponse;
           }
@@ -360,6 +450,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // F. Other Static Images / Manifest / Icons: Cache-First with background revalidate
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
@@ -368,8 +459,7 @@ self.addEventListener('fetch', (event) => {
         (await cache.match(requestUrl.pathname, { ignoreSearch: true }));
 
       if (cachedResponse) {
-        // In background when online, revalidate
-        if (typeof navigator !== 'undefined' && navigator.onLine) {
+        if (!isOffline) {
           fetch(event.request)
             .then((fresh) => {
               if (fresh && (fresh.status === 200 || fresh.type === 'opaque')) {
@@ -381,7 +471,6 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
 
-      // Not in cache: fetch from network and store
       try {
         const networkResponse = await fetch(event.request);
         if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
@@ -391,18 +480,14 @@ self.addEventListener('fetch', (event) => {
             contentType.includes('text/html');
 
           if (!isInvalidHtml) {
-            try {
-              cache.put(event.request, networkResponse.clone());
-            } catch {}
+            cache.put(event.request, networkResponse.clone()).catch(() => {});
           }
         }
         return networkResponse;
       } catch (fetchErr) {
-        // If offline and request failed, attempt matching without query params
         const matchPath = await cache.match(requestUrl.pathname, { ignoreSearch: true });
         if (matchPath) return matchPath;
 
-        // Provide benign fallback for scripts/styles to avoid fatal crash
         if (event.request.destination === 'script' || requestUrl.pathname.endsWith('.js')) {
           return new Response('/* offline script fallback */', {
             headers: { 'Content-Type': 'application/javascript' },
@@ -413,7 +498,6 @@ self.addEventListener('fetch', (event) => {
             headers: { 'Content-Type': 'text/css' },
           });
         }
-        // Transparent 1x1 GIF fallback for images
         if (event.request.destination === 'image' || requestUrl.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp)$/i)) {
           return new Response(
             new Uint8Array([71,73,70,56,57,97,1,0,1,0,128,0,0,0,0,0,255,255,255,33,249,4,1,0,0,0,0,44,0,0,0,0,1,0,1,0,0,2,2,68,1,0,59]),

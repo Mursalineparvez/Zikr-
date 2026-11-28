@@ -13,21 +13,20 @@ import { NAV_TRANSLATIONS } from './utils/navTranslations';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
 import { ZikirCounterView } from './components/ZikirCounterView';
-import { QuickScrollNavigator } from './components/QuickScrollNavigator';
-import { UniversalSelectionHighlighter } from './components/UniversalSelectionHighlighter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import type { OtherSubSection } from './components/OtherIslamicHubView';
 import { prefetchView, warmupViewsIdle } from './utils/viewPreloader';
 import { getSavedHighlights, mergeSavedHighlights } from './utils/savedItems';
 import { pushAppHistoryState, useBackLayer } from './utils/backNavigation';
-import {
-  FirstTimeOnboarding,
-  GuidedAppTour,
-  ONBOARDING_STORAGE_KEY,
-  TOUR_STORAGE_KEY,
-} from './components/FirstTimeOnboarding';
+
+const ONBOARDING_STORAGE_KEY = 'zikr_onboarding_v1_completed';
+const TOUR_STORAGE_KEY = 'zikr_tour_v1_completed';
 
 // Code-split heavy non-initial views and modals to make initial app launch instantaneous
+const FirstTimeOnboarding = React.lazy(() => import('./components/FirstTimeOnboarding').then((m) => ({ default: m.FirstTimeOnboarding })));
+const GuidedAppTour = React.lazy(() => import('./components/FirstTimeOnboarding').then((m) => ({ default: m.GuidedAppTour })));
+const QuickScrollNavigator = React.lazy(() => import('./components/QuickScrollNavigator').then((m) => ({ default: m.QuickScrollNavigator })));
+const UniversalSelectionHighlighter = React.lazy(() => import('./components/UniversalSelectionHighlighter').then((m) => ({ default: m.UniversalSelectionHighlighter })));
 const QuranView = React.lazy(() => import('./components/QuranView').then((m) => ({ default: m.QuranView })));
 const SalatTimeView = React.lazy(() => import('./components/SalatTimeView').then((m) => ({ default: m.SalatTimeView })));
 const NamajView = React.lazy(() => import('./components/NamajView').then((m) => ({ default: m.NamajView })));
@@ -433,10 +432,7 @@ export default function App() {
     };
   }, []);
 
-  // Pre-warm all view chunks during idle time so page loads are instantaneous
-  useEffect(() => {
-    warmupViewsIdle();
-  }, []);
+  // View warmup runs inside deferred startup effect below to avoid blocking initial mount
 
   // Auto-scroll to top whenever entering or switching any page/module
   useEffect(() => {
@@ -2741,22 +2737,24 @@ export default function App() {
 
 
 
-      {/* Universal Text-Selection Highlighter (Works across Quran, Hadith, Dua, Stories & all views) */}
-      <UniversalSelectionHighlighter
-        activeModule={activeModule}
-        themeMode={settings.themeMode}
-        selectedLanguage={selectedLanguage}
-        soundEnabled={settings.soundEnabled}
-        onHighlightSaved={(msg) => showToast(msg)}
-      />
+      <React.Suspense fallback={null}>
+        {/* Universal Text-Selection Highlighter (Works across Quran, Hadith, Dua, Stories & all views) */}
+        <UniversalSelectionHighlighter
+          activeModule={activeModule}
+          themeMode={settings.themeMode}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={settings.soundEnabled}
+          onHighlightSaved={(msg) => showToast(msg)}
+        />
 
-      {/* Universal Floating Scroll Navigator (Scroll To Top, Scroll To Bottom & Live Progress) */}
-      <QuickScrollNavigator
-        themeMode={settings.themeMode}
-        selectedLanguage={selectedLanguage}
-        soundEnabled={settings.soundEnabled}
-        activeModule={activeModule}
-      />
+        {/* Universal Floating Scroll Navigator (Scroll To Top, Scroll To Bottom & Live Progress) */}
+        <QuickScrollNavigator
+          themeMode={settings.themeMode}
+          selectedLanguage={selectedLanguage}
+          soundEnabled={settings.soundEnabled}
+          activeModule={activeModule}
+        />
+      </React.Suspense>
 
       {/* Universal Bottom Dock across all pages & sub-pages */}
       {!(isAdminPanelOpen || isProfileModalOpen || isStandaloneModalOpen || showFirstDownloadWelcome) && (
