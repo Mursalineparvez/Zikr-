@@ -3098,6 +3098,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                               setAuthFlowMode('signin');
                               setOtpErrorMessage(null);
                               setAuthErrorCode(null);
+                              setGoogleFallbackInfo(null);
                             }}
                             className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[11px] transition cursor-pointer"
                           >
@@ -3122,11 +3123,34 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                                 setConfirmPasswordInput('');
                                 setOtpErrorMessage(null);
                                 setAuthErrorCode(null);
+                                setGoogleFallbackInfo(null);
                               }}
                               className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#06191f] border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-200 font-bold text-[11px] transition cursor-pointer"
                             >
                               {t('অন্য ইমেইল দিয়ে Sign up', 'تسجيل ببريد آخر', 'Sign up with another email')}
                             </button>
+                          </div>
+                        )}
+                        {authErrorCode === 'BACKEND_API_UNAVAILABLE' && (
+                          <div className="flex flex-wrap gap-2 pt-0.5">
+                            <a
+                              href="https://ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-[11px] inline-flex items-center gap-1.5 transition"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                              <span>{t('পূর্ণ অ্যাপ লিংকে লগইন করুন', 'فتح التطبيق الكامل', 'Open Full App URL')}</span>
+                            </a>
+                            <a
+                              href="https://console.firebase.google.com/project/imperial-oven-c83d0/authentication/settings"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#06191f] border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-200 font-bold text-[11px] inline-flex items-center gap-1.5 transition"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                              <span>{t('Firebase-এ ডোমেইন যোগ করুন', 'إضافة النطاق في Firebase', 'Add Domain in Firebase')}</span>
+                            </a>
                           </div>
                         )}
                       </div>
@@ -3139,9 +3163,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           <p className="font-bold leading-relaxed">
                             {googleFallbackInfo.unauthorizedDomain || googleFallbackInfo.errorCode === 'auth/unauthorized-domain'
                               ? t(
-                                  `এই ডোমেইন (${googleFallbackInfo.currentHostname || (typeof window !== 'undefined' ? window.location.hostname : '')}) Firebase Authentication-এ অনুমোদিত নয়। উপরে ইমেইল ও পাসওয়ার্ড দিয়ে লগইন/সাইন আপ করুন অথবা অনুমোদিত অ্যাপ লিংকে খুলুন।`,
-                                  `النطاق الحالي (${googleFallbackInfo.currentHostname || ''}) غير مصرح به في Firebase. استخدم البريد الإلكتروني وكلمة المرور أعلاه أو افتح الرابط المعتمد.`,
-                                  `Domain "${googleFallbackInfo.currentHostname || ''}" is not in Firebase Authorized Domains. Sign in with Email & Password above or open the authorized app URL.`
+                                  `এই ডোমেইন (${googleFallbackInfo.currentHostname || (typeof window !== 'undefined' ? window.location.hostname : '')}) Firebase Authentication-এ অনুমোদিত নয়। সরাসরি এই ডোমেইনে গুগল লগইন চালু করতে Firebase Console-এ ডোমেইনটি যোগ করুন, অথবা অনুমোদিত পূর্ণ অ্যাপ লিংকে খুলুন:`,
+                                  `النطاق الحالي (${googleFallbackInfo.currentHostname || ''}) غير مصرح به في Firebase. أضف النطاق في Firebase Console أو افتح رابط التطبيق المعتمد:`,
+                                  `Domain "${googleFallbackInfo.currentHostname || ''}" is not in Firebase Authorized Domains. Add it in Firebase Console -> Authentication -> Settings -> Authorized domains, or open the authorized app URL:`
                                 )
                               : googleFallbackInfo.inIframe
                               ? t(
@@ -3158,25 +3182,38 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         </div>
 
                         {(googleFallbackInfo.unauthorizedDomain || googleFallbackInfo.errorCode === 'auth/unauthorized-domain') &&
-                          typeof window !== 'undefined' &&
-                          ![
-                            'ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
-                            'ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
-                            'tablig.vercel.app',
-                          ].includes(window.location.hostname) && (
-                            <a
-                              href={
-                                window.location.hostname.endsWith('.vercel.app')
-                                  ? 'https://tablig.vercel.app/?open_auth=1'
-                                  : 'https://ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1'
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95"
-                            >
-                              <ExternalLink className="w-4 h-4 shrink-0" />
-                              <span>{t('অনুমোদিত অ্যাপ লিংকে গুগল লগইন করুন', 'فتح الرابط المعتمد لتسجيل الدخول', 'Open Authorized App URL for Google Sign-In')}</span>
-                            </a>
+                          typeof window !== 'undefined' && (
+                            <div className="space-y-2">
+                              {![
+                                'ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
+                                'ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
+                              ].includes(window.location.hostname) && (
+                                <a
+                                  href="https://ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95"
+                                >
+                                  <ExternalLink className="w-4 h-4 shrink-0" />
+                                  <span>{t('অনুমোদিত অ্যাপ লিংকে গুগল লগইন করুন', 'فتح الرابط المعتمد لتسجيل الدخول', 'Open Authorized App URL for Google Sign-In')}</span>
+                                </a>
+                              )}
+                              <a
+                                href="https://console.firebase.google.com/project/imperial-oven-c83d0/authentication/settings"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full py-2 px-3 rounded-xl bg-white dark:bg-[#05171c] hover:bg-sky-100/70 dark:hover:bg-[#0d2e36] border border-sky-300 dark:border-teal-700 text-sky-700 dark:text-sky-300 font-extrabold text-[11px] flex items-center justify-center gap-2 transition"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                                <span>
+                                  {t(
+                                    `Firebase Console-এ "${googleFallbackInfo.currentHostname || window.location.hostname}" যোগ করুন`,
+                                    `إضافة النطاق في Firebase Console`,
+                                    `Add "${googleFallbackInfo.currentHostname || window.location.hostname}" in Firebase Console`
+                                  )}
+                                </span>
+                              </a>
+                            </div>
                           )}
 
                         {!googleFallbackInfo.unauthorizedDomain &&

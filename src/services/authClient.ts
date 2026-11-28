@@ -120,6 +120,27 @@ export async function restoreServerSession(): Promise<ServerAuthResponse> {
   }
 }
 
+const STATIC_BACKEND_UNAVAILABLE_MSG =
+  'এই ডোমেইনে ইমেইল লগইন সার্ভার (/api) চালু নেই। পূর্ণ অ্যাপ লিংক থেকে লগইন করুন অথবা Firebase Console-এ ডোমেইন যোগ করে গুগল দিয়ে চালিয়ে যান।';
+
+async function parseAuthResponse(res: Response, fallbackError: string): Promise<ServerAuthResponse> {
+  const ct = res.headers.get('content-type') || '';
+  if (ct.includes('application/json')) {
+    const parsed = (await res.json().catch(() => null)) as ServerAuthResponse | null;
+    if (parsed && typeof parsed === 'object') {
+      return parsed;
+    }
+  }
+  if (res.status === 404) {
+    return {
+      authenticated: false,
+      errorCode: 'BACKEND_API_UNAVAILABLE',
+      error: STATIC_BACKEND_UNAVAILABLE_MSG,
+    };
+  }
+  return { authenticated: false, error: fallbackError };
+}
+
 export async function signupWithEmailSession(payload: {
   name?: string;
   email: string;
@@ -135,7 +156,7 @@ export async function signupWithEmailSession(payload: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = (await res.json().catch(() => ({ authenticated: false }))) as ServerAuthResponse;
+    const data = await parseAuthResponse(res, 'অ্যাকাউন্ট তৈরি করা যায়নি।');
     if (res.ok && data.sessionToken) {
       setInMemorySessionToken(data.sessionToken);
     }
@@ -160,7 +181,7 @@ export async function loginWithEmailSession(payload: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = (await res.json().catch(() => ({ authenticated: false }))) as ServerAuthResponse;
+    const data = await parseAuthResponse(res, 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।');
     if (res.ok && data.sessionToken) {
       setInMemorySessionToken(data.sessionToken);
     }
@@ -185,7 +206,7 @@ export async function loginWithGoogleTokenSession(payload: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = (await res.json().catch(() => ({ authenticated: false }))) as ServerAuthResponse;
+    const data = await parseAuthResponse(res, 'Google sign-in session could not be created.');
     if (res.ok && data.sessionToken) {
       setInMemorySessionToken(data.sessionToken);
     }
@@ -209,6 +230,13 @@ export async function sendServerEmailOtp(payload: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if (res.status === 404) {
+      return {
+        ok: false,
+        errorCode: 'BACKEND_API_UNAVAILABLE',
+        error: STATIC_BACKEND_UNAVAILABLE_MSG,
+      };
+    }
     const data = await res.json().catch(() => ({}));
     return {
       ok: res.ok,
@@ -235,7 +263,7 @@ export async function verifyServerEmailOtp(payload: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = (await res.json().catch(() => ({ authenticated: false }))) as ServerAuthResponse;
+    const data = await parseAuthResponse(res, 'OTP verification failed.');
     if (res.ok && data.sessionToken) {
       setInMemorySessionToken(data.sessionToken);
     }

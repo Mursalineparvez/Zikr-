@@ -106,6 +106,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [authErrorCode, setAuthErrorCode] = useState<string | null>(null);
   const [googlePopupBlockedInIframe, setGooglePopupBlockedInIframe] = useState(false);
   const [googleUnauthorizedHost, setGoogleUnauthorizedHost] = useState<string | null>(null);
 
@@ -138,6 +139,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
   const handleGoogleSignIn = async () => {
     setIsLoadingGoogle(true);
     setErrorMessage(null);
+    setAuthErrorCode(null);
     setGooglePopupBlockedInIframe(false);
     setGoogleUnauthorizedHost(null);
     if (soundEnabled) soundHaptics.playTap();
@@ -272,6 +274,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setAuthErrorCode(null);
 
     const targetEmail = emailInput.trim().toLowerCase();
     const detected = getDetectedDeviceInfo();
@@ -284,6 +287,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
       });
 
       if (!loginRes.ok || !loginRes.data?.authenticated || !loginRes.data?.user) {
+        setAuthErrorCode(loginRes.data?.errorCode || null);
         setErrorMessage(
           loginRes.data?.error ||
             (isBn ? 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।' : 'Incorrect email or password.')
@@ -371,6 +375,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setAuthErrorCode(null);
 
     const targetEmail = emailInput.trim().toLowerCase();
     const detected = getDetectedDeviceInfo();
@@ -394,6 +399,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
       });
 
       if (!signupRes.ok || !signupRes.data?.authenticated || !signupRes.data?.user) {
+        setAuthErrorCode(signupRes.data?.errorCode || null);
         setErrorMessage(
           signupRes.data?.error ||
             (isBn ? 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।' : 'Could not create account.')
@@ -531,25 +537,32 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                   <span>{errorMessage}</span>
                 </div>
                 {googleUnauthorizedHost &&
-                  typeof window !== 'undefined' &&
-                  ![
-                    'ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
-                    'ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
-                    'tablig.vercel.app',
-                  ].includes(window.location.hostname) && (
-                    <a
-                      href={
-                        window.location.hostname.endsWith('.vercel.app')
-                          ? 'https://tablig.vercel.app/?open_auth=1'
-                          : 'https://ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1'
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 transition"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      <span>{isBn ? 'অনুমোদিত অ্যাপ লিংকে গুগল লগইন করুন' : 'Open Authorized App URL for Google Sign-In'}</span>
-                    </a>
+                  typeof window !== 'undefined' && (
+                    <div className="space-y-2">
+                      {![
+                        'ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
+                        'ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app',
+                      ].includes(window.location.hostname) && (
+                        <a
+                          href="https://ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 transition"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          <span>{isBn ? 'অনুমোদিত অ্যাপ লিংকে গুগল লগইন করুন' : 'Open Authorized App URL for Google Sign-In'}</span>
+                        </a>
+                      )}
+                      <a
+                        href="https://console.firebase.google.com/project/imperial-oven-c83d0/authentication/settings"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2 px-3 rounded-xl bg-white dark:bg-[#05171c] border border-sky-300 dark:border-teal-700 text-sky-700 dark:text-sky-300 font-extrabold text-[11px] flex items-center justify-center gap-2 transition"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>{isBn ? `Firebase-এ "${googleUnauthorizedHost}" যোগ করুন` : `Add "${googleUnauthorizedHost}" in Firebase Console`}</span>
+                      </a>
+                    </div>
                   )}
                 {googlePopupBlockedInIframe && typeof window !== 'undefined' && (
                   <a
@@ -634,9 +647,22 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
             </div>
 
             {errorMessage && (
-              <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-                <span>{errorMessage}</span>
+              <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                  <span>{errorMessage}</span>
+                </div>
+                {authErrorCode === 'BACKEND_API_UNAVAILABLE' && (
+                  <a
+                    href="https://ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 transition"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>{isBn ? 'পূর্ণ অ্যাপ লিংকে লগইন করুন' : 'Open Full App URL'}</span>
+                  </a>
+                )}
               </div>
             )}
 
@@ -734,9 +760,22 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
             </div>
 
             {errorMessage && (
-              <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-                <span>{errorMessage}</span>
+              <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                  <span>{errorMessage}</span>
+                </div>
+                {authErrorCode === 'BACKEND_API_UNAVAILABLE' && (
+                  <a
+                    href="https://ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 transition"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>{isBn ? 'পূর্ণ অ্যাপ লিংকে লগইন করুন' : 'Open Full App URL'}</span>
+                  </a>
+                )}
               </div>
             )}
 
