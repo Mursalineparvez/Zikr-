@@ -468,9 +468,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [profileSetupStep, setProfileSetupStep] = useState<1 | 2 | 3>(1);
   const [profileGender, setProfileGender] = useState('Male');
   const [profileDob, setProfileDob] = useState('1995-01-01');
+  const [authErrorCode, setAuthErrorCode] = useState<string | null>(null);
   const [googleFallbackInfo, setGoogleFallbackInfo] = useState<{
     inIframe?: boolean;
     popupBlocked?: boolean;
+    unauthorizedDomain?: boolean;
+    currentHostname?: string;
     errorCode?: string;
     message?: string;
   } | null>(null);
@@ -602,6 +605,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setVerificationStep('input');
       setAuthFlowMode('signin');
       setOtpErrorMessage(null);
+      setAuthErrorCode(null);
       setGoogleFallbackInfo(null);
       setOtpDigits(['', '', '', '', '', '']);
       setCloudSyncMessage(null);
@@ -638,6 +642,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   // Process Server Session Sign-In / Sign-Up (scrypt + HttpOnly Cookie + Session Store)
   const handleInstantPasswordAuth = async () => {
     setOtpErrorMessage(null);
+    setAuthErrorCode(null);
     const emailClean = inputEmail.trim().toLowerCase();
     const phoneClean = inputPhone.trim().replace(/\D/g, '');
 
@@ -692,6 +697,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
     if (!authResult.ok || !authResult.data?.authenticated || !authResult.data?.user) {
       setIsVerifying(false);
+      setAuthErrorCode(authResult.data?.errorCode || null);
       setOtpErrorMessage(
         authResult.data?.error ||
           t(
@@ -780,14 +786,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   // Send Verification OTP to Email via Server
   const handleSendOtp = async () => {
     setOtpErrorMessage(null);
+    setAuthErrorCode(null);
     const emailClean = inputEmail.trim().toLowerCase();
 
     if (!emailClean || !emailClean.includes('@') || !emailClean.includes('.')) {
       setOtpErrorMessage(
         t(
-          'অনুগ্রহ করে সঠিক জিমেইল বা ইমেইল লিখুন (যেমন: name@gmail.com)',
+          'OTP পেতে আগে সঠিক জিমেইল বা ইমেইল লিখুন (যেমন: name@gmail.com)',
           'يرجى إدخال بريد إلكتروني صحيح (مثل: name@gmail.com)',
-          'Please enter a valid email address (e.g. name@gmail.com)'
+          'Please enter a valid email address first (e.g. name@gmail.com)'
         )
       );
       return;
@@ -798,12 +805,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setIsSendingCode(false);
 
     if (!res.ok) {
+      setAuthErrorCode(res.errorCode || null);
       setOtpErrorMessage(
         res.error ||
           t(
-            'OTP পাঠানো যায়নি। একটু পরে আবার চেষ্টা করুন।',
-            'تعذر إرسال الرمز. حاول لاحقاً.',
-            'Could not send OTP. Please try again.'
+            'OTP পাঠানো যায়নি। দয়া করে ইমেইল ও পাসওয়ার্ড দিয়ে লগইন বা নতুন অ্যাকাউন্ট তৈরি করুন।',
+            'تعذر إرسال الرمز. استخدم البريد الإلكتروني وكلمة المرور.',
+            'Could not deliver OTP email right now. Please sign in or sign up with Email & Password.'
           )
       );
       if (soundEnabled) soundHaptics.playTap();
@@ -1021,15 +1029,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setGoogleFallbackInfo({
         inIframe: result.inIframe,
         popupBlocked: result.popupBlocked,
+        unauthorizedDomain: result.unauthorizedDomain,
+        currentHostname: result.currentHostname,
         errorCode: result.errorCode,
         message: result.error,
       });
     } catch (err: any) {
       setIsVerifying(false);
+      const code = String(err?.code || '');
       setGoogleFallbackInfo({
         inIframe: typeof window !== 'undefined' && window.self !== window.top,
-        popupBlocked: true,
-        errorCode: err?.code,
+        popupBlocked: code !== 'auth/unauthorized-domain',
+        unauthorizedDomain: code === 'auth/unauthorized-domain',
+        currentHostname: typeof window !== 'undefined' ? window.location.hostname : '',
+        errorCode: code,
         message: err?.message,
       });
     }
@@ -2903,6 +2916,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </div>
                     </div>
 
+                    {otpErrorMessage && (
+                      <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 shrink-0 text-rose-500" />
+                        <span>{otpErrorMessage}</span>
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       disabled={isVerifying}
@@ -2925,9 +2945,30 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <p className="text-xs sm:text-sm text-slate-600 dark:text-teal-200 font-medium">
                         {authFlowMode === 'signin'
                           ? t('আপনার অ্যাকাউন্টে প্রবেশ করতে ইমেইল ও পাসওয়ার্ড দিন বা Google বেছে নিন', 'أدخل بريدك وكلمة المرور لتسجيل الدخول أو اختر Google', 'Please enter your email & password or choose a Gmail via Google')
-                          : t('নতুন অ্যাকাউন্ট খুলতে ইমেইল ও পাসওয়ার্ড দিন বা Google বেছে নিন', 'أدخل بريدك وكلمة المرور لإنشاء حساب أو اختر Google', 'Create an account with your email & password or choose a Gmail via Google')}
+                          : t('নতুন অ্যাকাউন্ট খুলতে ইমেইল ও পাসওয়ার্ড দিন (১ ধাপেই সম্পন্ন হবে)', 'أدخل بريدك وكلمة المرور لإنشاء حساب جديد', 'Create a new account in one quick step with your email & password')}
                       </p>
                     </div>
+
+                    {authFlowMode === 'signup' && (
+                      <div className="space-y-1 animate-in fade-in">
+                        <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
+                          {t('আপনার নাম (ঐচ্ছিক)', 'الاسم الكامل (اختياري)', 'Your Name (Optional)')}
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+                          <input
+                            type="text"
+                            value={inputName}
+                            onChange={(e) => {
+                              setInputName(e.target.value);
+                              setEditName(e.target.value);
+                            }}
+                            placeholder={t('যেমন: Mursaline Parvez', 'مثل: Mursaline Parvez', 'e.g. Mursaline Parvez')}
+                            className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-4 py-3.5 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-slate-700 dark:text-teal-200">
@@ -2940,7 +2981,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           type="email"
                           required
                           value={inputEmail}
-                          onChange={(e) => setInputEmail(e.target.value)}
+                          onChange={(e) => {
+                            setInputEmail(e.target.value);
+                            setOtpErrorMessage(null);
+                            setAuthErrorCode(null);
+                          }}
                           placeholder="name@gmail.com"
                           className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-10 py-3.5 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition"
                         />
@@ -3041,9 +3086,49 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </div>
 
                     {otpErrorMessage && (
-                      <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 shrink-0 text-rose-500" />
-                        <span>{otpErrorMessage}</span>
+                      <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-200 text-xs font-bold space-y-2">
+                        <div className="flex items-start gap-2">
+                          <ShieldAlert className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+                          <span>{otpErrorMessage}</span>
+                        </div>
+                        {authErrorCode === 'EMAIL_EXISTS' && authFlowMode === 'signup' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAuthFlowMode('signin');
+                              setOtpErrorMessage(null);
+                              setAuthErrorCode(null);
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[11px] transition cursor-pointer"
+                          >
+                            {t('লগইন পেজে যান (Sign In)', 'الذهاب لتسجيل الدخول', 'Switch to Sign In')}
+                          </button>
+                        )}
+                        {authErrorCode === 'GOOGLE_ONLY_ACCOUNT' && authFlowMode === 'signin' && (
+                          <div className="flex flex-wrap gap-2 pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleTriggerGoogleAuth(inputEmail.trim().toLowerCase())}
+                              className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-[11px] transition cursor-pointer"
+                            >
+                              {t('গুগল দিয়ে প্রবেশ করুন', 'تسجيل عبر Google', 'Continue with Google')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAuthFlowMode('signup');
+                                setInputEmail('');
+                                setInputPassword('');
+                                setConfirmPasswordInput('');
+                                setOtpErrorMessage(null);
+                                setAuthErrorCode(null);
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#06191f] border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-200 font-bold text-[11px] transition cursor-pointer"
+                            >
+                              {t('অন্য ইমেইল দিয়ে Sign up', 'تسجيل ببريد آخر', 'Sign up with another email')}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -3052,39 +3137,64 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         <div className="flex items-start gap-2">
                           <Info className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
                           <p className="font-bold leading-relaxed">
-                            {googleFallbackInfo.inIframe
+                            {googleFallbackInfo.unauthorizedDomain || googleFallbackInfo.errorCode === 'auth/unauthorized-domain'
+                              ? t(
+                                  `এই ডোমেইন (${googleFallbackInfo.currentHostname || (typeof window !== 'undefined' ? window.location.hostname : '')}) Firebase Authentication-এ অনুমোদিত নয়। উপরে ইমেইল ও পাসওয়ার্ড দিয়ে লগইন/সাইন আপ করুন অথবা অনুমোদিত অ্যাপ লিংকে খুলুন।`,
+                                  `النطاق الحالي (${googleFallbackInfo.currentHostname || ''}) غير مصرح به في Firebase. استخدم البريد الإلكتروني وكلمة المرور أعلاه أو افتح الرابط المعتمد.`,
+                                  `Domain "${googleFallbackInfo.currentHostname || ''}" is not in Firebase Authorized Domains. Sign in with Email & Password above or open the authorized app URL.`
+                                )
+                              : googleFallbackInfo.inIframe
                               ? t(
                                   'প্রিভিউ উইন্ডোতে ব্রাউজার গুগল পপআপ আটকে দিয়েছে। আপনার ফোন বা ল্যাপটপের সব Gmail অ্যাকাউন্ট সরাসরি দেখতে নিচের বাটনে ট্যাপ করে অ্যাপটি নতুন ব্রাউজার ট্যাবে খুলুন:',
                                   'تم حظر نافذة Google المنبثقة داخل المعاينة. افتح التطبيق في علامة تبويب جديدة لعرض جميع حسابات Gmail على جهازك:',
                                   'Your browser blocked the Google popup inside the preview frame. Open in a browser tab to view all Gmail accounts on your phone or laptop:'
                                 )
                               : t(
-                                  'গুগল সাইন-ইন পপআপ সম্পন্ন করা যায়নি। ব্রাউজার সেটিংস থেকে পপআপ চালু করে আবার "গুগল দিয়ে চালিয়ে যান" চাপুন, অথবা নিচে ইমেইল/OTP ব্যবহার করুন।',
+                                  'গুগল সাইন-ইন পপআপ সম্পন্ন করা যায়নি। ব্রাউজার সেটিংস থেকে পপআপ চালু করে আবার "গুগল দিয়ে চালিয়ে যান" চাপুন, অথবা উপরে ইমেইল ও পাসওয়ার্ড ব্যবহার করুন।',
                                   'لم تكتمل نافذة Google المنبثقة. اسمح بالنوافذ المنبثقة وحاول مرة أخرى، أو استخدم البريد وكلمة المرور.',
                                   'Google popup could not be completed. Allow popups in your browser settings and try again, or sign in with email & password above.'
                                 )}
                           </p>
                         </div>
 
-                        {googleFallbackInfo.inIframe && typeof window !== 'undefined' && (
-                          <a
-                            href={(() => {
-                              try {
-                                const u = new URL(window.location.href);
-                                u.searchParams.set('open_auth', '1');
-                                return u.toString();
-                              } catch {
-                                return window.location.href;
-                              }
-                            })()}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95"
-                          >
-                            <ExternalLink className="w-4 h-4 shrink-0" />
-                            <span>{t('নতুন ট্যাবে খুলুন (সব Gmail দেখাবে)', 'فتح في علامة تبويب جديدة', 'Open in Browser Tab (Show All Gmail)')}</span>
-                          </a>
-                        )}
+                        {(googleFallbackInfo.unauthorizedDomain || googleFallbackInfo.errorCode === 'auth/unauthorized-domain') &&
+                          typeof window !== 'undefined' &&
+                          !['ais-dev-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app', 'ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app'].includes(
+                            window.location.hostname
+                          ) && (
+                            <a
+                              href="https://ais-pre-kyejffxgvcxgaczth75fiz-14069114036.asia-southeast1.run.app/?open_auth=1"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95"
+                            >
+                              <ExternalLink className="w-4 h-4 shrink-0" />
+                              <span>{t('অনুমোদিত অ্যাপ লিংকে গুগল লগইন করুন', 'فتح الرابط المعتمد لتسجيل الدخول', 'Open Authorized App URL for Google Sign-In')}</span>
+                            </a>
+                          )}
+
+                        {!googleFallbackInfo.unauthorizedDomain &&
+                          googleFallbackInfo.errorCode !== 'auth/unauthorized-domain' &&
+                          googleFallbackInfo.inIframe &&
+                          typeof window !== 'undefined' && (
+                            <a
+                              href={(() => {
+                                try {
+                                  const u = new URL(window.location.href);
+                                  u.searchParams.set('open_auth', '1');
+                                  return u.toString();
+                                } catch {
+                                  return window.location.href;
+                                }
+                              })()}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95"
+                            >
+                              <ExternalLink className="w-4 h-4 shrink-0" />
+                              <span>{t('নতুন ট্যাবে খুলুন (সব Gmail দেখাবে)', 'فتح في علامة تبويب جديدة', 'Open in Browser Tab (Show All Gmail)')}</span>
+                            </a>
+                          )}
 
                         {(googleFallbackInfo.errorCode || googleFallbackInfo.message) && !googleFallbackInfo.inIframe && (
                           <div className="text-[11px] font-mono opacity-80 break-all px-1">
@@ -3176,8 +3286,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                               );
                               return;
                             }
-                            setOtpErrorMessage(null);
-                            setAuthFlowMode('profile_setup');
+                            handleInstantPasswordAuth();
                           } else {
                             handleInstantPasswordAuth();
                           }

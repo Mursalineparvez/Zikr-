@@ -441,34 +441,95 @@ app.post('/api/auth/otp/send', async (req, res) => {
     const messageText = `আসসালামু আলাইকুম। আপনার Zikr+ ৬-সংখ্যার ভেরিফিকেশন কোড হলো: ${rawCode}। কোডটির মেয়াদ ১০ মিনিট।`;
 
     let emailDispatched = false;
-    try {
-      const dispatchRes = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailClean)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          _subject: subject,
-          appName: 'Zikr+ Islamic App',
-          recipient: emailClean,
-          security_code: rawCode,
-          action_type: safePurpose,
-          message: messageText,
-          _captcha: 'false',
-          sent_at: new Date(now).toISOString(),
-        }),
+    let dispatchFailureReason = '';
+
+    // 1. Prefer real transactional email API if configured in environment (Resend)
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    const mailFrom = process.env.MAIL_FROM?.trim() || 'Zikr+ <onboarding@resend.dev>';
+    if (resendKey) {
+      try {
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: mailFrom,
+            to: [emailClean],
+            subject,
+            text: messageText,
+          }),
+        });
+        emailDispatched = resendRes.ok;
+        if (!resendRes.ok) {
+          dispatchFailureReason = `Resend HTTP ${resendRes.status}`;
+        }
+      } catch (e: any) {
+        emailDispatched = false;
+        dispatchFailureReason = e?.message || 'Resend network error';
+      }
+    }
+
+    // 2. Fallback to FormSubmit only if response JSON explicitly confirms success === true/'true'
+    if (!emailDispatched) {
+      try {
+        const appOrigin =
+          process.env.APP_URL?.trim() ||
+          (req.headers.origin ? String(req.headers.origin) : '') ||
+          `https://${String(req.headers['x-forwarded-host'] || req.headers.host || 'localhost')}`;
+        const dispatchRes = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(emailClean)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Origin: appOrigin,
+            Referer: `${appOrigin.replace(/\/+$/, '')}/`,
+          },
+          body: JSON.stringify({
+            _subject: subject,
+            appName: 'Zikr+ Islamic App',
+            recipient: emailClean,
+            security_code: rawCode,
+            action_type: safePurpose,
+            message: messageText,
+            _captcha: 'false',
+            sent_at: new Date(now).toISOString(),
+          }),
+        });
+        const dispatchBody: any = await dispatchRes.json().catch(() => null);
+        const confirmed = Boolean(
+          dispatchRes.ok &&
+            dispatchBody &&
+            (dispatchBody.success === true || String(dispatchBody.success).toLowerCase() === 'true')
+        );
+        emailDispatched = confirmed;
+        if (!confirmed && dispatchBody?.message) {
+          dispatchFailureReason = String(dispatchBody.message);
+        }
+      } catch (e: any) {
+        emailDispatched = false;
+        dispatchFailureReason = e?.message || 'Mailer error';
+      }
+    }
+
+    if (!emailDispatched) {
+      serverOtpStore.delete(emailClean);
+      return res.status(503).json({
+        success: false,
+        emailDispatched: false,
+        errorCode: 'EMAIL_OTP_UNAVAILABLE',
+        reason: dispatchFailureReason || undefined,
+        error:
+          'এই মুহূর্তে ইমেইলে OTP কোড পাঠানো সম্ভব হয়নি। দয়া করে ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন অথবা নতুন পাসওয়ার্ড অ্যাকাউন্ট (Sign up) তৈরি করুন।',
       });
-      emailDispatched = dispatchRes.ok;
-    } catch {
-      emailDispatched = false;
     }
 
     const maskedTarget = maskEmailDisplay(emailClean);
     return res.json({
       success: true,
       maskedTarget,
-      emailDispatched,
+      emailDispatched: true,
       message: `আপনার ইমেইলে (${maskedTarget}) ৬-সংখ্যার ভেরিফিকেশন কোড পাঠানো হয়েছে। ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।`,
     });
   } catch (err: any) {

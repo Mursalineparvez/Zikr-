@@ -66,6 +66,8 @@ export interface GoogleAuthResult {
   isRedirecting?: boolean;
   cancelled?: boolean;
   popupBlocked?: boolean;
+  unauthorizedDomain?: boolean;
+  currentHostname?: string;
   inIframe?: boolean;
   errorCode?: string;
   error?: string;
@@ -76,6 +78,7 @@ export interface GoogleAuthResult {
  * Shows all Gmail accounts logged into the user's phone or laptop browser.
  */
 export async function signInWithGoogleAuth(loginHintEmail?: string): Promise<GoogleAuthResult> {
+  const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
   try {
     let authInstance = auth;
     if (!authInstance) {
@@ -94,6 +97,7 @@ export async function signInWithGoogleAuth(loginHintEmail?: string): Promise<Goo
     if (!authInstance) {
       return {
         success: false,
+        currentHostname,
         error: 'Google Sign-In is initializing. Please try again in a moment.',
       };
     }
@@ -129,7 +133,7 @@ export async function signInWithGoogleAuth(loginHintEmail?: string): Promise<Goo
       const elapsed = Date.now() - popupStartMs;
       const code = String(popupError?.code || '');
       const inIframe = typeof window !== 'undefined' && window.self !== window.top;
-      console.warn('Google Sign-In popup notice:', code, popupError?.message, { inIframe, elapsed });
+      console.warn('Google Sign-In popup notice:', code, popupError?.message, { inIframe, elapsed, currentHostname });
 
       const isFastIframeClose =
         inIframe &&
@@ -141,15 +145,19 @@ export async function signInWithGoogleAuth(loginHintEmail?: string): Promise<Goo
           success: false,
           cancelled: true,
           inIframe,
+          currentHostname,
           errorCode: code,
           error: 'Google sign-in popup was closed before selecting an account.',
         };
       }
 
+      const isUnauthorizedDomain = code === 'auth/unauthorized-domain';
+
       // Never trigger signInWithRedirect for auth/unauthorized-domain (prevents redirect loops on unauthorized hosts)
       // On standalone mobile/desktop/PWA tabs (not inside an iframe), fall back to full-page Google account chooser redirect
       if (
         !inIframe &&
+        !isUnauthorizedDomain &&
         (code === 'auth/popup-blocked' ||
           code === 'auth/operation-not-supported-in-this-environment' ||
           code === 'auth/internal-error')
@@ -168,10 +176,13 @@ export async function signInWithGoogleAuth(loginHintEmail?: string): Promise<Goo
       return {
         success: false,
         popupBlocked:
-          isFastIframeClose ||
-          code === 'auth/popup-blocked' ||
-          code === 'auth/internal-error' ||
-          code === 'auth/operation-not-supported-in-this-environment',
+          !isUnauthorizedDomain &&
+          (isFastIframeClose ||
+            code === 'auth/popup-blocked' ||
+            code === 'auth/internal-error' ||
+            code === 'auth/operation-not-supported-in-this-environment'),
+        unauthorizedDomain: isUnauthorizedDomain,
+        currentHostname,
         inIframe,
         errorCode: code,
         error: popupError?.message || 'Google Sign-In popup could not be opened.',
@@ -183,6 +194,8 @@ export async function signInWithGoogleAuth(loginHintEmail?: string): Promise<Goo
     console.warn('Google Sign-In error:', code, error);
     return {
       success: false,
+      unauthorizedDomain: code === 'auth/unauthorized-domain',
+      currentHostname,
       inIframe,
       errorCode: code,
       error: error?.message || 'Google sign-in could not be completed.',

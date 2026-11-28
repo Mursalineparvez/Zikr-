@@ -238,9 +238,14 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
             : 'Google account selection was cancelled. Please try again.'
         );
       } else {
-        setGooglePopupBlockedInIframe(Boolean(result.inIframe));
+        const isUnauthorizedDomain = Boolean(result.unauthorizedDomain || result.errorCode === 'auth/unauthorized-domain');
+        setGooglePopupBlockedInIframe(Boolean(result.inIframe && !isUnauthorizedDomain));
         setErrorMessage(
-          result.inIframe
+          isUnauthorizedDomain
+            ? isBn
+              ? `এই ডোমেইন (${result.currentHostname || (typeof window !== 'undefined' ? window.location.hostname : '')}) Firebase-এ অনুমোদিত নয়। অনুগ্রহ করে ইমেইল ও পাসওয়ার্ড দিয়ে সাইন ইন বা সাইন আপ করুন।`
+              : `Domain "${result.currentHostname || ''}" is not authorized in Firebase. Please sign in or sign up with Email & Password below.`
+            : result.inIframe
             ? isBn
               ? 'প্রিভিউ উইন্ডোতে গুগল পপআপ ব্লক হয়েছে। ফোনের/ল্যাপটপের সব Gmail দেখতে নিচের বাটনে ট্যাপ করে নতুন ট্যাবে খুলুন।'
               : 'Google popup was blocked inside the preview frame. Open in a browser tab below to view all your Gmail accounts.'
@@ -342,14 +347,20 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
     }
   };
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!emailInput.trim() || !passwordInput.trim() || !nameInput.trim()) {
-      setErrorMessage(isBn ? 'সকল তথ্য পূরণ করা আবশ্যক।' : 'All fields are required.');
+  const handleEmailSignUp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanEmail = emailInput.trim().toLowerCase();
+    const cleanPassword = passwordInput.trim();
+    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+      setErrorMessage(isBn ? 'অনুগ্রহ করে সঠিক ইমেইল অ্যাড্রেস দিন।' : 'Please enter a valid email address.');
+      return;
+    }
+    if (cleanPassword.length < 4) {
+      setErrorMessage(isBn ? 'কমপক্ষে ৪ অক্ষরের পাসওয়ার্ড দিন।' : 'Password must be at least 4 characters.');
       return;
     }
 
-    if (passwordInput !== confirmPasswordInput) {
+    if (cleanPassword !== confirmPasswordInput.trim()) {
       setErrorMessage(isBn ? 'পাসওয়ার্ড দুটি মিলছে না।' : 'Passwords do not match.');
       return;
     }
@@ -365,7 +376,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
 
     try {
       const signupRes = await signupWithEmailSession({
-        name: nameInput.trim(),
+        name: nameInput.trim() || targetEmail.split('@')[0],
         email: targetEmail,
         password: passwordInput.trim(),
         phone: fullPhone,
@@ -616,7 +627,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                     required
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="hello@designpicko.com"
+                    placeholder="name@gmail.com"
                     className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-4 py-3.5 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
@@ -705,27 +716,18 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
             )}
 
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!emailInput.trim() || !passwordInput.trim() || !nameInput.trim()) {
-                  setErrorMessage(isBn ? 'সকল তথ্য পূরণ করুন।' : 'All fields required.');
-                  return;
-                }
-                setAuthMode('profile_setup');
-                setErrorMessage(null);
-              }}
+              onSubmit={handleEmailSignUp}
               className="space-y-3.5"
             >
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 dark:text-teal-200">{isBn ? 'পূর্ণ নাম' : 'Full Name'}</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-teal-200">{isBn ? 'পূর্ণ নাম (ঐচ্ছিক)' : 'Full Name (Optional)'}</label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
-                    required
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
-                    placeholder="Muhammad Mursaline"
+                    placeholder="Mursaline Parvez"
                     className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-4 py-3 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
@@ -740,7 +742,7 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                     required
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="hello@designpicko.com"
+                    placeholder="name@gmail.com"
                     className="w-full rounded-2xl bg-white/90 dark:bg-[#06191f] pl-10 pr-4 py-3 border border-sky-200 dark:border-teal-800 text-xs font-bold text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
@@ -791,16 +793,17 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
                   className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 cursor-pointer"
                 />
                 <span className="font-bold text-slate-700 dark:text-teal-200">
-                  {isBn ? 'আমি উইম্বো পাবলিক এগ্রিমেন্ট ও প্রাইভেসি পলিসিতে সম্মত আছি' : 'I agree to Wimbo Public Agreement, Terms & Privacy Policy'}
+                  {isBn ? 'আমি Zikr+ এর শর্তাবলি ও প্রাইভেসি পলিসিতে সম্মত আছি' : 'I agree to Zikr+ Terms & Privacy Policy'}
                 </span>
               </label>
 
               <button
                 type="submit"
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer mt-2"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer mt-2 disabled:opacity-50"
               >
-                <span>{isBn ? 'এগিয়ে চলুন' : 'Continue'}</span>
-                <ArrowRight className="w-4 h-4" />
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                <span>{isBn ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account'}</span>
               </button>
             </form>
 
@@ -916,10 +919,17 @@ export const FirstDownloadWelcomeView: React.FC<FirstDownloadWelcomeViewProps> =
               </div>
             </div>
 
+            {errorMessage && (
+              <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             <button
               type="button"
               disabled={isSubmitting}
-              onClick={handleEmailSignUp}
+              onClick={() => handleEmailSignUp()}
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer mt-4 disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}

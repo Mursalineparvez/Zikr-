@@ -202,7 +202,7 @@ export async function loginWithGoogleTokenSession(payload: {
 export async function sendServerEmailOtp(payload: {
   email: string;
   purpose?: 'login' | 'signup' | 'reset';
-}): Promise<{ ok: boolean; maskedTarget?: string; message?: string; error?: string }> {
+}): Promise<{ ok: boolean; maskedTarget?: string; message?: string; error?: string; errorCode?: string }> {
   try {
     const res = await authFetch('/api/auth/otp/send', {
       method: 'POST',
@@ -215,6 +215,7 @@ export async function sendServerEmailOtp(payload: {
       maskedTarget: data?.maskedTarget,
       message: data?.message,
       error: data?.error,
+      errorCode: data?.errorCode,
     };
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Network error while sending OTP' };
